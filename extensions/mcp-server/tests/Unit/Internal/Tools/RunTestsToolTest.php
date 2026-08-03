@@ -45,7 +45,7 @@ final class RunTestsToolTest extends TestCase
     public function executeRejectsPathTraversal(): void
     {
         $this->expectException(McpException::class);
-        $this->expectExceptionMessage('Path traversal');
+        $this->expectExceptionMessageIsOrContains('Path traversal');
 
         $this->tool->execute(['path' => '../../../etc/passwd']);
     }

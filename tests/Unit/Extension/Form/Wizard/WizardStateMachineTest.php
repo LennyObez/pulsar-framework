@@ -112,7 +112,7 @@ final class WizardStateMachineTest extends TestCase
         $state = $this->wizard->advance($state, ['name' => 'John']);
 
         $this->expectException(WizardException::class);
-        $this->expectExceptionMessage('already been completed');
+        $this->expectExceptionMessageIsOrContains('already been completed');
         $this->wizard->validateStepCounter($state, 0);
     }
 
@@ -163,7 +163,7 @@ final class WizardStateMachineTest extends TestCase
         $this->wizard->resume('wizard-1', $token);
 
         $this->expectException(WizardException::class);
-        $this->expectExceptionMessage('invalid or has already been used');
+        $this->expectExceptionMessageIsOrContains('invalid or has already been used');
         $this->wizard->resume('wizard-1', $token);
     }
 
@@ -184,7 +184,7 @@ final class WizardStateMachineTest extends TestCase
         sleep(1);
 
         $this->expectException(WizardException::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
         $wizard->load('wizard-ttl');
     }
 

@@ -82,7 +82,7 @@ final class MailChannelTest extends TestCase
         $notification = $this->createMailNotification();
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }

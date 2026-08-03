@@ -17,7 +17,7 @@ final class SafeRedirectCoverageTest extends TestCase
     public function rejectsFtpScheme(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('scheme "ftp" is not allowed');
+        $this->expectExceptionMessageIsOrContains('scheme "ftp" is not allowed');
 
         SafeRedirect::validate('ftp://evil.com/file', ['evil.com']);
     }
@@ -26,7 +26,7 @@ final class SafeRedirectCoverageTest extends TestCase
     public function rejectsSshScheme(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('is not allowed');
+        $this->expectExceptionMessageIsOrContains('is not allowed');
 
         SafeRedirect::validate('ssh://host.com/repo', ['host.com']);
     }

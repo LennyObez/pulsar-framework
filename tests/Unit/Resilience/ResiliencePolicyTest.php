@@ -100,7 +100,7 @@ final class ResiliencePolicyTest extends TestCase
         $policy = ResiliencePolicy::create()->withRetry($retry);
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Retry exhausted');
+        $this->expectExceptionMessageIsOrContains('Retry exhausted');
 
         $policy->execute(function (): never {
             throw new RuntimeException('always fails');
@@ -116,7 +116,7 @@ final class ResiliencePolicyTest extends TestCase
         $policy = ResiliencePolicy::create()->withCircuitBreaker($cb);
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Circuit breaker "api" is open');
+        $this->expectExceptionMessageIsOrContains('Circuit breaker "api" is open');
 
         $policy->execute(fn(): string => 'should not run');
     }
@@ -140,7 +140,7 @@ final class ResiliencePolicyTest extends TestCase
         $policy = ResiliencePolicy::create()->withBulkhead($bulkhead);
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Bulkhead for "db" is full');
+        $this->expectExceptionMessageIsOrContains('Bulkhead for "db" is full');
 
         $policy->execute(function () use ($policy): void {
             $policy->execute(fn(): string => 'inner');

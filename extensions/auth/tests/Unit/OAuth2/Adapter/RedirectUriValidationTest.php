@@ -80,7 +80,7 @@ final class RedirectUriValidationTest extends TestCase
     public function unsafeUriIsRejected(string $uri, string $expectedReason): void
     {
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage($expectedReason);
+        $this->expectExceptionMessageIsOrContains($expectedReason);
 
         $this->invoke($uri);
     }

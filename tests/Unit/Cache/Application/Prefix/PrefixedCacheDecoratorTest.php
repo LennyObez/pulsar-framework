@@ -75,7 +75,7 @@ final class PrefixedCacheDecoratorTest extends TestCase
         $decorator = new PrefixedCacheDecorator(inner: $blind, prefix: 'p.');
 
         $this->expectException(UnsupportedCapabilityException::class);
-        $this->expectExceptionMessage('cannot enumerate keys');
+        $this->expectExceptionMessageIsOrContains('cannot enumerate keys');
 
         $decorator->clear();
     }

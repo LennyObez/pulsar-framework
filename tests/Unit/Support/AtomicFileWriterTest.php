@@ -86,7 +86,7 @@ final class AtomicFileWriterTest extends TestCase
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent' . DIRECTORY_SEPARATOR . 'file.txt';
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to write temporary file');
+        $this->expectExceptionMessageIsOrContains('Failed to write temporary file');
 
         AtomicFileWriter::write($path, 'content');
     }

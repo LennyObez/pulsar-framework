@@ -43,7 +43,7 @@ final class ViewRendererTest extends TestCase
         $renderer = new ViewRenderer($this->templateDir);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Template not found:');
+        $this->expectExceptionMessageIsOrContains('Template not found:');
 
         $renderer->render('nonexistent');
     }
@@ -133,7 +133,7 @@ final class ViewRendererTest extends TestCase
         $renderer = new ViewRenderer($this->templateDir);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Template error');
+        $this->expectExceptionMessageIsOrContains('Template error');
 
         $renderer->render('throwing');
     }

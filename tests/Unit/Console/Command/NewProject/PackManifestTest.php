@@ -55,7 +55,7 @@ final class PackManifestTest extends TestCase
     public function it_throws_on_missing_required_field(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('missing required fields');
+        $this->expectExceptionMessageIsOrContains('missing required fields');
 
         (void) PackManifest::fromArray([
             'name' => 'test',
@@ -67,7 +67,7 @@ final class PackManifestTest extends TestCase
     public function it_throws_on_empty_name(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"name" must be a non-empty string');
+        $this->expectExceptionMessageIsOrContains('"name" must be a non-empty string');
 
         (void) PackManifest::fromArray([
             'name' => '',
@@ -81,7 +81,7 @@ final class PackManifestTest extends TestCase
     public function it_throws_on_invalid_compliance_presets_type(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"compliancePresets" must be an array');
+        $this->expectExceptionMessageIsOrContains('"compliancePresets" must be an array');
 
         (void) PackManifest::fromArray([
             'name' => 'test',
@@ -96,7 +96,7 @@ final class PackManifestTest extends TestCase
     public function it_throws_on_invalid_files_type(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"files" must be an array');
+        $this->expectExceptionMessageIsOrContains('"files" must be an array');
 
         (void) PackManifest::fromArray([
             'name' => 'test',
@@ -111,7 +111,7 @@ final class PackManifestTest extends TestCase
     public function it_throws_on_invalid_post_install_commands_type(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"postInstallCommands" must be an array');
+        $this->expectExceptionMessageIsOrContains('"postInstallCommands" must be an array');
 
         (void) PackManifest::fromArray([
             'name' => 'test',

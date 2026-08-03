@@ -91,7 +91,7 @@ final class BanServiceTest extends TestCase
         $this->profileRepo->method('findByUser')->willReturn(null);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ForumProfile not found');
+        $this->expectExceptionMessageIsOrContains('ForumProfile not found');
 
         $this->service->ban('unknown-user', 'mod-001', 'reason', BanType::Permanent);
     }
@@ -103,7 +103,7 @@ final class BanServiceTest extends TestCase
         $this->profileRepo->method('findByUser')->willReturn($profile);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('banned');
+        $this->expectExceptionMessageIsOrContains('banned');
 
         $this->service->ban('user-001', 'mod-001', 'reason', BanType::Permanent);
     }
@@ -199,7 +199,7 @@ final class BanServiceTest extends TestCase
         $this->profileRepo->method('findByUser')->willReturn(null);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ForumProfile not found');
+        $this->expectExceptionMessageIsOrContains('ForumProfile not found');
 
         $this->service->unban('unknown-user', 'mod-001');
     }

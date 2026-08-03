@@ -31,7 +31,7 @@ final class StorageFacadeTest extends TestCase
     public function throwsWhenNotBound(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('not been initialized');
+        $this->expectExceptionMessageIsOrContains('not been initialized');
 
         (void) Storage::get('any-file');
     }

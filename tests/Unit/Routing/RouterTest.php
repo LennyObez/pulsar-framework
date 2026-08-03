@@ -307,7 +307,7 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Route "unknown" not found');
+        $this->expectExceptionMessageIsOrContains('Route "unknown" not found');
 
         $router->url('unknown');
     }

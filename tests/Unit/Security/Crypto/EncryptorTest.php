@@ -65,7 +65,7 @@ final class EncryptorTest extends TestCase
         $tampered[strlen($tampered) - 1] = chr((ord($tampered[strlen($tampered) - 1]) ^ 0xFF) & 0xFF);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('tampered');
+        $this->expectExceptionMessageIsOrContains('tampered');
 
         $this->encryptor->decrypt(base64_encode($tampered));
     }
@@ -181,7 +181,7 @@ final class EncryptorTest extends TestCase
         $encryptor23 = Encryptor::fromMasterKey($master23);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('tampered');
+        $this->expectExceptionMessageIsOrContains('tampered');
 
         $encryptor23->decrypt($ciphertext);
     }
@@ -190,7 +190,7 @@ final class EncryptorTest extends TestCase
     public function serializationThrows(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization');
+        $this->expectExceptionMessageIsOrContains('Serialization');
 
         serialize($this->encryptor);
     }
@@ -321,7 +321,7 @@ final class EncryptorTest extends TestCase
         $encryptor = Encryptor::fromMasterKey($masterKey);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization of Encryptor is forbidden');
+        $this->expectExceptionMessageIsOrContains('Serialization of Encryptor is forbidden');
 
         $encryptor->__unserialize([]);
     }

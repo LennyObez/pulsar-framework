@@ -101,7 +101,7 @@ final class FunctionsTest extends TestCase
     public function abortSetsCorrectStatusCode(): void
     {
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIsOrContains('Forbidden');
 
         abort(403, 'Forbidden');
     }

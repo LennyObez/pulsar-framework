@@ -40,7 +40,7 @@ final class CurlMailHttpClientTest extends TestCase
         $client = new CurlMailHttpClient(timeoutSeconds: 2, connectTimeoutSeconds: 1);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('cURL request to mail provider failed');
+        $this->expectExceptionMessageIsOrContains('cURL request to mail provider failed');
 
         $client->request('POST', 'http://127.0.0.1:1/messages', ['X-Test' => 'yes'], 'payload=1');
     }
@@ -49,7 +49,7 @@ final class CurlMailHttpClientTest extends TestCase
     public function throwsOnEmptyMethod(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('method must not be empty');
+        $this->expectExceptionMessageIsOrContains('method must not be empty');
 
         new CurlMailHttpClient()->request('', 'https://api.example.com/send', [], '{}');
     }
@@ -58,7 +58,7 @@ final class CurlMailHttpClientTest extends TestCase
     public function throwsOnEmptyUrl(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('URL must not be empty');
+        $this->expectExceptionMessageIsOrContains('URL must not be empty');
 
         new CurlMailHttpClient()->request('POST', '', [], '{}');
     }

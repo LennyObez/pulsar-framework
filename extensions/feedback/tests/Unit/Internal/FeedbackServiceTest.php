@@ -48,7 +48,7 @@ final class FeedbackServiceTest extends TestCase
     public function submitRejectsDescriptionTooShort(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Description must be between');
+        $this->expectExceptionMessageIsOrContains('Description must be between');
 
         $this->service->submit('user-1', FeedbackCategory::Bug, 'Short', []);
     }
@@ -57,7 +57,7 @@ final class FeedbackServiceTest extends TestCase
     public function submitRejectsDescriptionTooLong(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Description must be between');
+        $this->expectExceptionMessageIsOrContains('Description must be between');
 
         $this->service->submit('user-1', FeedbackCategory::Bug, str_repeat('x', 5001), []);
     }
@@ -88,7 +88,7 @@ final class FeedbackServiceTest extends TestCase
         $this->repository->method('countByUserToday')->willReturn(10);
 
         $this->expectException(OverflowException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Rate limit exceeded');
 
         $this->service->submit('user-1', FeedbackCategory::Bug, 'Valid description for feedback', []);
     }

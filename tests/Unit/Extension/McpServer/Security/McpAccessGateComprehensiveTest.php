@@ -105,7 +105,7 @@ final class McpAccessGateComprehensiveTest extends TestCase
         $gate = $this->createGate(EnvironmentMode::Staging);
 
         $this->expectException(McpSecurityException::class);
-        $this->expectExceptionMessage('staging');
+        $this->expectExceptionMessageIsOrContains('staging');
 
         $gate->assertEnvironmentAllowed();
     }
@@ -149,7 +149,7 @@ final class McpAccessGateComprehensiveTest extends TestCase
         $gate = $this->createGate(EnvironmentMode::Production);
 
         $this->expectException(McpSecurityException::class);
-        $this->expectExceptionMessage('production');
+        $this->expectExceptionMessageIsOrContains('production');
 
         $gate->assertEnvironmentAllowed();
     }
@@ -336,7 +336,7 @@ final class McpAccessGateComprehensiveTest extends TestCase
         $gate->assertConcurrencyAllowed(); // 2
 
         $this->expectException(McpSecurityException::class);
-        $this->expectExceptionMessage('concurrent');
+        $this->expectExceptionMessageIsOrContains('concurrent');
 
         $gate->assertConcurrencyAllowed(); // 3 - rejected
     }

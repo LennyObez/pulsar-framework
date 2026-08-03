@@ -68,7 +68,7 @@ final class CausationIdTest extends TestCase
     public function constructorRejectsInvalidLength(): void
     {
         $this->expectException(ContextException::class);
-        $this->expectExceptionMessage('Invalid causation ID');
+        $this->expectExceptionMessageIsOrContains('Invalid causation ID');
 
         new CausationId('abc');
     }

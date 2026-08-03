@@ -139,7 +139,7 @@ final class MigrationRepositoryTest extends TestCase
         $repo = new MigrationRepository($this->tempDir);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Duplicate migration version: 20240101120000');
+        $this->expectExceptionMessageIsOrContains('Duplicate migration version: 20240101120000');
 
         $repo->discover();
     }
@@ -212,7 +212,7 @@ final class MigrationRepositoryTest extends TestCase
         $repo = new MigrationRepository($this->tempDir);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Duplicate migration version: 20240101120000');
+        $this->expectExceptionMessageIsOrContains('Duplicate migration version: 20240101120000');
 
         $repo->discover();
     }
@@ -250,7 +250,7 @@ final class MigrationRepositoryTest extends TestCase
         $repo = new MigrationRepository($this->tempDir);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('must return a MigrationInterface instance');
+        $this->expectExceptionMessageIsOrContains('must return a MigrationInterface instance');
 
         $repo->load($filePath);
     }
@@ -298,7 +298,7 @@ final class MigrationRepositoryTest extends TestCase
         $repo = new MigrationRepository([$this->tempDir, $dir2]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Duplicate migration version: 20240101120000');
+        $this->expectExceptionMessageIsOrContains('Duplicate migration version: 20240101120000');
 
         $repo->discover();
     }

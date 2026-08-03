@@ -86,7 +86,7 @@ final class HealthCheckRunnerTest extends TestCase
         $runner = new HealthCheckRunner();
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('health check not registered');
+        $this->expectExceptionMessageIsOrContains('health check not registered');
 
         $runner->run('nonexistent');
     }

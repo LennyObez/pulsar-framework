@@ -75,7 +75,7 @@ final class ConsoleIntegrationTest extends TestCase
     public function getThrowsCommandNotFoundForUnknown(): void
     {
         $this->expectException(CommandNotFoundException::class);
-        $this->expectExceptionMessage('nonexistent');
+        $this->expectExceptionMessageIsOrContains('nonexistent');
 
         (void) $this->app->get('nonexistent');
     }

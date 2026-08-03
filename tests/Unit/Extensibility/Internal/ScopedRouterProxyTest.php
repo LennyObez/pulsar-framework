@@ -116,7 +116,7 @@ final class ScopedRouterProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('RouteRegister');
+        $this->expectExceptionMessageIsOrContains('RouteRegister');
         $proxy->get('/anything', fn() => 'ok');
     }
 

@@ -79,7 +79,7 @@ final class CsrfProtectionTest extends TestCase
             });
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Step-up authentication is required');
+        $this->expectExceptionMessageIsOrContains('Step-up authentication is required');
 
         $this->controller->enroll($request);
     }
@@ -101,7 +101,7 @@ final class CsrfProtectionTest extends TestCase
             });
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Step-up authentication is required');
+        $this->expectExceptionMessageIsOrContains('Step-up authentication is required');
 
         $this->controller->confirm($request);
     }
@@ -123,7 +123,7 @@ final class CsrfProtectionTest extends TestCase
             });
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Step-up authentication is required');
+        $this->expectExceptionMessageIsOrContains('Step-up authentication is required');
 
         $this->controller->disable($request);
     }

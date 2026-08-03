@@ -122,7 +122,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
     public function verifyChallengeThrowsOnNotFound(): void
     {
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->verifyChallenge(
             challengeId: 'nonexistent',
@@ -152,7 +152,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
 
         $service->verifyChallenge(
             challengeId: $challenge->challengeId,
@@ -175,7 +175,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('do not match');
+        $this->expectExceptionMessageIsOrContains('do not match');
 
         $this->service->verifyChallenge(
             challengeId: $challenge->challengeId,
@@ -198,7 +198,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('do not match');
+        $this->expectExceptionMessageIsOrContains('do not match');
 
         $this->service->verifyChallenge(
             challengeId: $challenge->challengeId,
@@ -221,7 +221,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('Invalid authentication code');
+        $this->expectExceptionMessageIsOrContains('Invalid authentication code');
 
         $this->service->verifyChallenge(
             challengeId: $challenge->challengeId,
@@ -257,7 +257,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         self::assertNotSame($challenge->authenticationCode, $forged, 'code must not be the unkeyed public hash');
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('Invalid authentication code');
+        $this->expectExceptionMessageIsOrContains('Invalid authentication code');
 
         $this->service->verifyChallenge(
             challengeId: $challenge->challengeId,
@@ -290,7 +290,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('secret key');
+        $this->expectExceptionMessageIsOrContains('secret key');
 
         $service->createChallenge('tx_001', 5000, 'EUR', 'payee_001', 'Acme Corp');
     }

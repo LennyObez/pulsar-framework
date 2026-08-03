@@ -172,7 +172,7 @@ final class AesGcmCipherSuiteTest extends TestCase
     public function encryptRejectsWrongKeyLength(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('32-byte key');
+        $this->expectExceptionMessageIsOrContains('32-byte key');
 
         $this->suite->encrypt('test', random_bytes(16));
     }
@@ -183,7 +183,7 @@ final class AesGcmCipherSuiteTest extends TestCase
         $ciphertext = $this->suite->encrypt('test', $this->key);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('32-byte key');
+        $this->expectExceptionMessageIsOrContains('32-byte key');
 
         $this->suite->decrypt($ciphertext, random_bytes(16));
     }

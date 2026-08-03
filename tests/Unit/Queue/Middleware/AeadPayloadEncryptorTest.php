@@ -70,7 +70,7 @@ final class AeadPayloadEncryptorTest extends TestCase
         $tamperedAad = AeadPayloadEncryptor::composeAad('tenant-EVIL', 'default', 'App\\Jobs\\Foo', 1, 'corr-1');
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('authentication tag mismatch');
+        $this->expectExceptionMessageIsOrContains('authentication tag mismatch');
         $this->encryptor->decrypt($result['ciphertext'], $tamperedAad, $result['keyId']);
     }
 
@@ -191,7 +191,7 @@ final class AeadPayloadEncryptorTest extends TestCase
         $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('invalid ciphertext format');
+        $this->expectExceptionMessageIsOrContains('invalid ciphertext format');
         $this->encryptor->decrypt('not-valid-base64!@#$', $aad, null);
     }
 

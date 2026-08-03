@@ -88,7 +88,7 @@ final class LiveCssServiceImplTest extends TestCase
         $service = new LiveCssService($this->repo, $this->validator, $this->hashComputer, null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('CSS validation failed');
+        $this->expectExceptionMessageIsOrContains('CSS validation failed');
 
         $service->saveOverrides('theme-1', 'body { background: url(evil); }', [], 'Test', 'user-1');
     }

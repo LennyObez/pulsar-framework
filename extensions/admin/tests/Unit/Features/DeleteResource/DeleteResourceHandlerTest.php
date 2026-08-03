@@ -97,7 +97,7 @@ final class DeleteResourceHandlerTest extends TestCase
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Delete operation not supported');
+        $this->expectExceptionMessageIsOrContains('Delete operation not supported');
 
         $this->handler->execute($request);
     }

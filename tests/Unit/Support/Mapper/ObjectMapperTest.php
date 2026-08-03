@@ -168,7 +168,7 @@ final class ObjectMapperTest extends TestCase
     public function testThrowsOnMissingRequiredField(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage("Missing required parameter 'age'");
+        $this->expectExceptionMessageIsOrContains("Missing required parameter 'age'");
 
         (void) $this->mapper->map(['name' => 'Alice'], SimpleDto::class);
     }
@@ -176,7 +176,7 @@ final class ObjectMapperTest extends TestCase
     public function testThrowsOnInvalidEnumValue(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('Cannot map value');
+        $this->expectExceptionMessageIsOrContains('Cannot map value');
 
         (void) $this->mapper->map(
             ['name' => 'Test', 'status' => 'nonexistent'],
@@ -187,7 +187,7 @@ final class ObjectMapperTest extends TestCase
     public function testThrowsOnInvalidListItem(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('not an array');
+        $this->expectExceptionMessageIsOrContains('not an array');
 
         /** @var list<array<mixed>> $invalid */
         $invalid = [['name' => 'Alice', 'age' => 30], 'not-an-array'];
@@ -200,7 +200,7 @@ final class ObjectMapperTest extends TestCase
     public function testThrowsOnNonexistentClass(): void
     {
         $this->expectException(MappingException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         // Build a class-string that PHPStan cannot resolve to a real class
         /** @var class-string $classString */

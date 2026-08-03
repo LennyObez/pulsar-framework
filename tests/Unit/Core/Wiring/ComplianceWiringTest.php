@@ -149,7 +149,7 @@ final class ComplianceWiringTest extends TestCase
     public function strictModeFailsClosedOnANonCompliantSetting(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('Compliance strict mode');
+        $this->expectExceptionMessageIsOrContains('Compliance strict mode');
 
         $this->bootAndWire(
             "'session' => ['idle_timeout' => 99999]",
@@ -258,7 +258,7 @@ final class ComplianceWiringTest extends TestCase
     public function strictModeFailsClosedWhenEncryptionAtRestRequiredButDisabled(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('encryption at rest');
+        $this->expectExceptionMessageIsOrContains('encryption at rest');
 
         $this->bootAndWire(
             "'session' => ['encryption' => false]",
@@ -353,7 +353,7 @@ final class ComplianceWiringTest extends TestCase
     public function strictModeFailsClosedWhenHttpsIsAssertedNowhere(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('HSTS assertion');
+        $this->expectExceptionMessageIsOrContains('HSTS assertion');
 
         $this->bootAndWire(
             "'headers' => ['hsts' => ['enabled' => false]]",
@@ -420,7 +420,7 @@ final class ComplianceWiringTest extends TestCase
     public function strictModeFailsClosedWhenMfaRequiredButDisabled(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('multi-factor authentication');
+        $this->expectExceptionMessageIsOrContains('multi-factor authentication');
 
         $this->bootAndWire(
             "'auth' => ['two_factor' => ['enabled' => false]]",
@@ -455,7 +455,7 @@ final class ComplianceWiringTest extends TestCase
     public function strictModeFailsClosedWhenMfaRequiredAndNoAuthSectionExists(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('no auth section configured');
+        $this->expectExceptionMessageIsOrContains('no auth section configured');
 
         $this->bootAndWire(
             "'session' => ['cookie_name' => 'T']",
@@ -604,7 +604,7 @@ final class ComplianceWiringTest extends TestCase
     public function strictModeFailsClosedOnTooShortAuditRetention(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('audit log retention');
+        $this->expectExceptionMessageIsOrContains('audit log retention');
 
         $this->bootAndWire(
             "'session' => ['cookie_name' => 'T']",

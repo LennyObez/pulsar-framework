@@ -210,7 +210,7 @@ final class JsonPathTest extends TestCase
     public function testInvalidPathMissingDollar(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("must start with '\$'");
+        $this->expectExceptionMessageIsOrContains("must start with '\$'");
 
         (void) JsonPath::query([], 'store.book');
     }
@@ -287,7 +287,7 @@ final class JsonPathTest extends TestCase
     public function testSliceStepZeroThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('step cannot be zero');
+        $this->expectExceptionMessageIsOrContains('step cannot be zero');
 
         (void) JsonPath::query(['items' => [1, 2, 3]], '$.items[::0]');
     }

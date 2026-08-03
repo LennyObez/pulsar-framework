@@ -108,7 +108,7 @@ final class CmsPluginIsolationTest extends TestCase
     public function deniesMasterKeyResolution(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
 
         $this->proxy->get(MasterKey::class);
     }
@@ -117,7 +117,7 @@ final class CmsPluginIsolationTest extends TestCase
     public function deniesAuditLoggerInterfaceResolution(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
 
         $this->proxy->get(AuditLoggerInterface::class);
     }
@@ -126,7 +126,7 @@ final class CmsPluginIsolationTest extends TestCase
     public function deniesRoleRegistryInterfaceResolution(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
 
         $this->proxy->get(RoleRegistryInterface::class);
     }
@@ -135,7 +135,7 @@ final class CmsPluginIsolationTest extends TestCase
     public function deniesContainerInterfaceResolution(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
 
         $this->proxy->get(ContainerInterface::class);
     }
@@ -144,7 +144,7 @@ final class CmsPluginIsolationTest extends TestCase
     public function deniesArbitraryClassResolution(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
 
         $this->proxy->get(stdClass::class);
     }
@@ -197,7 +197,7 @@ final class CmsPluginIsolationTest extends TestCase
             ->willReturn(false);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         $this->proxy->get(LoggerInterface::class);
     }

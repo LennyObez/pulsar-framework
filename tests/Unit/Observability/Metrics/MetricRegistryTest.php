@@ -60,7 +60,7 @@ final class MetricRegistryTest extends TestCase
         $registry->counter('metric');
 
         $this->expectException(MetricsException::class);
-        $this->expectExceptionMessage('already registered as counter');
+        $this->expectExceptionMessageIsOrContains('already registered as counter');
 
         $registry->gauge('metric');
     }

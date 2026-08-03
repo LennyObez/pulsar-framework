@@ -110,7 +110,7 @@ final class SiteDefinitionParserTest extends TestCase
     public function invalidJsonThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         SiteDefinition::fromJson('not valid json');
     }
@@ -121,7 +121,7 @@ final class SiteDefinitionParserTest extends TestCase
     public function missingVersionThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing required keys');
+        $this->expectExceptionMessageIsOrContains('Missing required keys');
 
         SiteDefinition::fromJson(json_encode(['site' => ['name' => 'Test']], JSON_THROW_ON_ERROR));
     }
@@ -130,7 +130,7 @@ final class SiteDefinitionParserTest extends TestCase
     public function missingSiteThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing required keys');
+        $this->expectExceptionMessageIsOrContains('Missing required keys');
 
         SiteDefinition::fromJson(json_encode(['version' => '1.0'], JSON_THROW_ON_ERROR));
     }
@@ -141,7 +141,7 @@ final class SiteDefinitionParserTest extends TestCase
     public function unsupportedVersionThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported site definition version');
+        $this->expectExceptionMessageIsOrContains('Unsupported site definition version');
 
         SiteDefinition::fromJson(json_encode([
             'version' => '2.0',
@@ -155,7 +155,7 @@ final class SiteDefinitionParserTest extends TestCase
     public function siteMustBeObject(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"site" key must be an object');
+        $this->expectExceptionMessageIsOrContains('"site" key must be an object');
 
         SiteDefinition::fromJson(json_encode([
             'version' => '1.0',

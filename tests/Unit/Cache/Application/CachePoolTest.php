@@ -157,7 +157,7 @@ final class CachePoolTest extends TestCase
         );
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('failing');
+        $this->expectExceptionMessageIsOrContains('failing');
 
         $criticalPool->getItem('any-key');
     }

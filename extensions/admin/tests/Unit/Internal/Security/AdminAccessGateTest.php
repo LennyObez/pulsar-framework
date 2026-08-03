@@ -46,7 +46,7 @@ final class AdminAccessGateTest extends TestCase
         $gate = new AdminAccessGate($policy);
 
         $this->expectException(AdminAccessDeniedException::class);
-        $this->expectExceptionMessage('admin');
+        $this->expectExceptionMessageIsOrContains('admin');
 
         $gate->assertCanAccess($identity);
     }
@@ -99,7 +99,7 @@ final class AdminAccessGateTest extends TestCase
         $gate = new AdminAccessGate($policy);
 
         $this->expectException(AdminAccessDeniedException::class);
-        $this->expectExceptionMessage('users');
+        $this->expectExceptionMessageIsOrContains('users');
 
         $gate->assertCanPerform($identity, 'users', ResourceOperation::Delete);
     }

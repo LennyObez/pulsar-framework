@@ -49,7 +49,7 @@ final class DefaultCertificateValidatorTest extends TestCase
         $validator = new DefaultCertificateValidator(new CertificateConfig());
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('trust list');
+        $this->expectExceptionMessageIsOrContains('trust list');
 
         $validator->validate($this->selfSigned('Any Cert'));
     }
@@ -66,7 +66,7 @@ final class DefaultCertificateValidatorTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('does not chain');
+        $this->expectExceptionMessageIsOrContains('does not chain');
 
         $validator->validate($this->selfSigned('Self-Signed Attacker'));
     }
@@ -96,7 +96,7 @@ final class DefaultCertificateValidatorTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('has been revoked');
+        $this->expectExceptionMessageIsOrContains('has been revoked');
 
         $validator->validate($leafPem);
     }
@@ -123,7 +123,7 @@ final class DefaultCertificateValidatorTest extends TestCase
         );
 
         $this->expectException(Psd2Exception::class);
-        $this->expectExceptionMessage('could not be verified');
+        $this->expectExceptionMessageIsOrContains('could not be verified');
 
         $validator->validate($leafPem);
     }

@@ -187,7 +187,7 @@ final class CmsRateLimiterTest extends TestCase
         $limiter = new CmsRateLimiter($cache, $lock);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('cache failure');
+        $this->expectExceptionMessageIsOrContains('cache failure');
 
         $limiter->attempt('test_key', 5, 60);
     }

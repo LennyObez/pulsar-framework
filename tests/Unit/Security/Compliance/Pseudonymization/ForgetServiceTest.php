@@ -98,7 +98,7 @@ final class ForgetServiceTest extends TestCase
     public function forgetThrowsWhenSubjectNotFound(): void
     {
         $this->expectException(ComplianceException::class);
-        $this->expectExceptionMessage('Pseudonym not found for the given identifier.');
+        $this->expectExceptionMessageIsOrContains('Pseudonym not found for the given identifier.');
 
         $this->service->forget('nonexistent');
     }

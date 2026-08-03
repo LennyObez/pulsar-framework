@@ -32,7 +32,7 @@ final class SmsProviderInterfaceTest extends TestCase
         );
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('SMS delivery via twilio failed');
+        $this->expectExceptionMessageIsOrContains('SMS delivery via twilio failed');
 
         $stub->send('+invalid', 'Test');
     }

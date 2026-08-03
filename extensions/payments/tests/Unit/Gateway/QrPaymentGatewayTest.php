@@ -81,7 +81,7 @@ final class QrPaymentGatewayTest extends TestCase
     public function generateEpcQrRejectsNonEurCurrency(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('EPC QR codes only support EUR');
+        $this->expectExceptionMessageIsOrContains('EPC QR codes only support EUR');
 
         $this->gateway->generateEpcQr(
             amount: Money::of(1000, Currency::USD),
@@ -130,7 +130,7 @@ final class QrPaymentGatewayTest extends TestCase
         );
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('merchant ID');
+        $this->expectExceptionMessageIsOrContains('merchant ID');
 
         $gateway->generatePayconiqQr(Money::of(1000, Currency::EUR), 'pay_id');
     }

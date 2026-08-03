@@ -164,7 +164,7 @@ final class StreamingTest extends TestCase
     public function rejectsZeroHighWatermark(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('High watermark must be at least 1');
+        $this->expectExceptionMessageIsOrContains('High watermark must be at least 1');
 
         new BackpressureController(highWatermark: 0, lowWatermark: 0);
     }
@@ -173,7 +173,7 @@ final class StreamingTest extends TestCase
     public function rejectsNegativeLowWatermark(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Low watermark must be non-negative');
+        $this->expectExceptionMessageIsOrContains('Low watermark must be non-negative');
 
         new BackpressureController(highWatermark: 10, lowWatermark: -1);
     }
@@ -182,7 +182,7 @@ final class StreamingTest extends TestCase
     public function rejectsLowWatermarkEqualToHigh(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Low watermark must be less than high watermark');
+        $this->expectExceptionMessageIsOrContains('Low watermark must be less than high watermark');
 
         new BackpressureController(highWatermark: 5, lowWatermark: 5);
     }
@@ -191,7 +191,7 @@ final class StreamingTest extends TestCase
     public function rejectsLowWatermarkGreaterThanHigh(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Low watermark must be less than high watermark');
+        $this->expectExceptionMessageIsOrContains('Low watermark must be less than high watermark');
 
         new BackpressureController(highWatermark: 5, lowWatermark: 10);
     }

@@ -62,14 +62,14 @@ through to the default now resolve.
 
 ## Decision drivers — why a process-global is acceptable here
 
-CLAUDE.md mandates *"avoid global state."* That rule targets **mutable
+CLAUDE.md mandates _"avoid global state."_ That rule targets **mutable
 service/dependency global state** — service locators, swappable singletons,
 ambient request context — because it hides dependencies and defeats testing. The
 active `Environment` is a different category:
 
 1. **It is bootstrap configuration, not a service.** It is set once at boot from
    immutable, already-merged data; it is never a behavioural dependency that code
-   resolves to *do* work.
+   resolves to _do_ work.
 2. **There is no alternative for a free function.** `env()` is, by definition, a
    global helper invoked where no container is in scope (config files, helpers).
    Every mature PHP framework (Laravel, Symfony) resolves `env()` against exactly

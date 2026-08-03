@@ -63,7 +63,7 @@ final class ContainerTest extends TestCase
         $container = new Container();
 
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No binding found for "unbound"');
+        $this->expectExceptionMessageIsOrContains('No binding found for "unbound"');
 
         $_ = $container->get('unbound');
     }
@@ -263,7 +263,7 @@ final class ContainerTest extends TestCase
         $container->bind('b', fn(ContainerInterface $c) => $c->get('a'));
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Circular dependency');
+        $this->expectExceptionMessageIsOrContains('Circular dependency');
 
         $_ = $container->get('a');
     }
@@ -277,7 +277,7 @@ final class ContainerTest extends TestCase
         $container->bind('service', $nonExistent);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         $_ = $container->get('service');
     }
@@ -289,7 +289,7 @@ final class ContainerTest extends TestCase
         $container->bind('service', fn() => 'not an object');
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('must return an object');
+        $this->expectExceptionMessageIsOrContains('must return an object');
 
         $_ = $container->get('service');
     }
@@ -410,7 +410,7 @@ final class ContainerTest extends TestCase
         $container->bind(UntypedParamStub::class, UntypedParamStub::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('no type hint');
+        $this->expectExceptionMessageIsOrContains('no type hint');
 
         $_ = $container->get(UntypedParamStub::class);
     }
@@ -422,7 +422,7 @@ final class ContainerTest extends TestCase
         $container->bind(BuiltinTypeStub::class, BuiltinTypeStub::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('non-class type');
+        $this->expectExceptionMessageIsOrContains('non-class type');
 
         $_ = $container->get(BuiltinTypeStub::class);
     }
@@ -434,7 +434,7 @@ final class ContainerTest extends TestCase
         $container->bind(AbstractStub::class, AbstractStub::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('not instantiable');
+        $this->expectExceptionMessageIsOrContains('not instantiable');
 
         $_ = $container->get(AbstractStub::class);
     }

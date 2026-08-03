@@ -70,7 +70,7 @@ final class CookieHandlerTest extends TestCase
         $oversizedData = str_repeat('x', 2049);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
 
         $handler->write('session-1', $oversizedData);
     }
@@ -122,7 +122,7 @@ final class CookieHandlerTest extends TestCase
         $handler = new CookieHandler($this->encryption, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session listing');
+        $this->expectExceptionMessageIsOrContains('does not support session listing');
 
         $handler->listSessions('user-1');
     }
@@ -133,7 +133,7 @@ final class CookieHandlerTest extends TestCase
         $handler = new CookieHandler($this->encryption, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session revocation');
+        $this->expectExceptionMessageIsOrContains('does not support session revocation');
 
         $handler->revokeSession('session-1');
     }
@@ -144,7 +144,7 @@ final class CookieHandlerTest extends TestCase
         $handler = new CookieHandler($this->encryption, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support concurrency control');
+        $this->expectExceptionMessageIsOrContains('does not support concurrency control');
 
         $handler->getActiveSessions('user-1');
     }

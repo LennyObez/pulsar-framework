@@ -119,7 +119,7 @@ final class RevisionDiffTest extends TestCase
         $this->revisionRepository->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Revision not found: rev-missing');
+        $this->expectExceptionMessageIsOrContains('Revision not found: rev-missing');
 
         $this->service->computeDiff('rev-missing', 'rev-bbb');
     }
@@ -137,7 +137,7 @@ final class RevisionDiffTest extends TestCase
         );
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Revision not found: rev-bbb');
+        $this->expectExceptionMessageIsOrContains('Revision not found: rev-bbb');
 
         $this->service->computeDiff('rev-aaa', 'rev-bbb');
     }

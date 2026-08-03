@@ -51,7 +51,7 @@ final class SlackChannelTest extends TestCase
         $channel = new SlackChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         $channel->send($notifiable, $notification);
     }
@@ -71,7 +71,7 @@ final class SlackChannelTest extends TestCase
         $channel = new SlackChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }
@@ -91,7 +91,7 @@ final class SlackChannelTest extends TestCase
         $channel = new SlackChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }
@@ -110,7 +110,7 @@ final class SlackChannelTest extends TestCase
         $channel = new SlackChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('private');
+        $this->expectExceptionMessageIsOrContains('private');
 
         $channel->send($notifiable, $notification);
     }
@@ -129,7 +129,7 @@ final class SlackChannelTest extends TestCase
         $channel = new SlackChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('private');
+        $this->expectExceptionMessageIsOrContains('private');
 
         $channel->send($notifiable, $notification);
     }
@@ -148,7 +148,7 @@ final class SlackChannelTest extends TestCase
         $channel = new SlackChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('blocked');
+        $this->expectExceptionMessageIsOrContains('blocked');
 
         $channel->send($notifiable, $notification);
     }

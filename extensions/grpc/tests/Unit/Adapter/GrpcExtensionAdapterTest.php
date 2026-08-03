@@ -47,7 +47,7 @@ final class GrpcExtensionAdapterTest extends TestCase
         $handler = $this->createStub(GrpcRequestHandler::class);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('grpc PHP extension is not loaded');
+        $this->expectExceptionMessageIsOrContains('grpc PHP extension is not loaded');
 
         $adapter->listen('0.0.0.0', 50051, $handler);
     }
@@ -91,7 +91,7 @@ final class GrpcExtensionAdapterTest extends TestCase
     public function constructor_refuses_a_client_ca_because_the_extension_cannot_request_client_certificates(): void
     {
         $this->expectException(GrpcException::class);
-        $this->expectExceptionMessage('GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE');
+        $this->expectExceptionMessageIsOrContains('GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE');
 
         new GrpcExtensionAdapter(
             certChain: 'cert-data',

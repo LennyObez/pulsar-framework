@@ -60,7 +60,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('insufficient_funds');
+        $this->expectExceptionMessageIsOrContains('insufficient_funds');
 
         $provider->createIntent(Money::of(9999, Currency::USD), 'key-decline');
     }
@@ -71,7 +71,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('card_expired');
+        $this->expectExceptionMessageIsOrContains('card_expired');
 
         $provider->createIntent(Money::of(9998, Currency::USD), 'key-expired');
     }
@@ -82,7 +82,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('card_declined');
+        $this->expectExceptionMessageIsOrContains('card_declined');
 
         $provider->createIntent(Money::of(9997, Currency::USD), 'key-declined');
     }
@@ -93,7 +93,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('processing_error');
+        $this->expectExceptionMessageIsOrContains('processing_error');
 
         $provider->createIntent(Money::of(9996, Currency::USD), 'key-processing');
     }
@@ -104,7 +104,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('fraud_suspected');
+        $this->expectExceptionMessageIsOrContains('fraud_suspected');
 
         $provider->createIntent(Money::of(9995, Currency::USD), 'key-fraud');
     }
@@ -115,7 +115,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('timed out');
+        $this->expectExceptionMessageIsOrContains('timed out');
 
         $provider->createIntent(Money::of(9994, Currency::USD), 'key-timeout');
     }
@@ -126,7 +126,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('network error');
+        $this->expectExceptionMessageIsOrContains('network error');
 
         $provider->createIntent(Money::of(9993, Currency::USD), 'key-network');
     }
@@ -137,7 +137,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('rate limit');
+        $this->expectExceptionMessageIsOrContains('rate limit');
 
         $provider->createIntent(Money::of(9992, Currency::USD), 'key-rate');
     }
@@ -189,7 +189,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $charge = $provider->captureIntent($intent->id, 'key-3030-cap');
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('simulated_refund_failure');
+        $this->expectExceptionMessageIsOrContains('simulated_refund_failure');
 
         $provider->refund($charge->id, null, 'key-3030-refund');
     }
@@ -210,7 +210,7 @@ final class SimulatorProviderTest extends PaymentProviderContractTestCase
         $provider = new SimulatorProvider($this->clock);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $provider->getIntent('nonexistent');
     }

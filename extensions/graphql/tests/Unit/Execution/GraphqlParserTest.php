@@ -244,7 +244,7 @@ final class GraphqlParserTest extends TestCase
             GQL;
 
         $this->expectException(GraphqlException::class);
-        $this->expectExceptionMessage('Circular fragment spread detected');
+        $this->expectExceptionMessageIsOrContains('Circular fragment spread detected');
         $this->parser->parse($query);
     }
 
@@ -270,7 +270,7 @@ final class GraphqlParserTest extends TestCase
             GQL;
 
         $this->expectException(GraphqlException::class);
-        $this->expectExceptionMessage('Circular fragment spread detected');
+        $this->expectExceptionMessageIsOrContains('Circular fragment spread detected');
         $this->parser->parse($query);
     }
 
@@ -327,7 +327,7 @@ final class GraphqlParserTest extends TestCase
             GQL;
 
         $this->expectException(GraphqlException::class);
-        $this->expectExceptionMessage('Circular fragment spread detected');
+        $this->expectExceptionMessageIsOrContains('Circular fragment spread detected');
         $this->parser->parse($query);
     }
 }

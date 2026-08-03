@@ -550,7 +550,7 @@ final class SagaOrchestratorTest extends TestCase
         $orchestrator = $this->createOrchestrator();
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $orchestrator->resume('saga-done', SagaDefinitionBuilder::create('test')
             ->step('s')->forward(stdClass::class)->build());
@@ -576,7 +576,7 @@ final class SagaOrchestratorTest extends TestCase
         $orchestrator = $this->createOrchestrator();
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $orchestrator->resume('saga-failed', SagaDefinitionBuilder::create('test')
             ->step('s')->forward(stdClass::class)->build());
@@ -626,7 +626,7 @@ final class SagaOrchestratorTest extends TestCase
         $orchestrator = $this->createOrchestrator();
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $orchestrator->resume('nonexistent', SagaDefinitionBuilder::create('test')
             ->step('s')->forward(stdClass::class)->build());
@@ -684,7 +684,7 @@ final class SagaOrchestratorTest extends TestCase
         $orchestrator = $this->createOrchestrator();
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $orchestrator->compensate('saga-done', SagaDefinitionBuilder::create('test')
             ->step('s')->forward(stdClass::class)->build());
@@ -725,7 +725,7 @@ final class SagaOrchestratorTest extends TestCase
         $orchestrator = $this->createOrchestrator();
 
         $this->expectException(CompensationFailedException::class);
-        $this->expectExceptionMessage('charge');
+        $this->expectExceptionMessageIsOrContains('charge');
 
         $orchestrator->execute($definition, []);
     }

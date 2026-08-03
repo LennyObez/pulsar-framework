@@ -101,7 +101,7 @@ final class ThreadTest extends TestCase
         $closed = $thread->close();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Invalid status transition');
+        $this->expectExceptionMessageIsOrContains('Invalid status transition');
         $closed->close();
     }
 
@@ -188,7 +188,7 @@ final class ThreadTest extends TestCase
         $thread = $this->createOpenThread();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Invalid status transition');
+        $this->expectExceptionMessageIsOrContains('Invalid status transition');
         $thread->solve('post-1');
     }
 
@@ -208,7 +208,7 @@ final class ThreadTest extends TestCase
         $solved = $thread->solve('post-1');
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already has an accepted solution');
+        $this->expectExceptionMessageIsOrContains('already has an accepted solution');
         $solved->solve('post-2');
     }
 

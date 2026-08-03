@@ -47,7 +47,7 @@ final class FormCsrfManagerTest extends TestCase
         $this->manager->generate('form1', '/submit');
 
         $this->expectException(CsrfException::class);
-        $this->expectExceptionMessage('missing');
+        $this->expectExceptionMessageIsOrContains('missing');
         $this->manager->validate('', 'form1', '/submit');
     }
 
@@ -57,7 +57,7 @@ final class FormCsrfManagerTest extends TestCase
         $this->manager->generate('form1', '/submit');
 
         $this->expectException(CsrfException::class);
-        $this->expectExceptionMessage('invalid');
+        $this->expectExceptionMessageIsOrContains('invalid');
         $this->manager->validate('wrong-token', 'form1', '/submit');
     }
 
@@ -89,7 +89,7 @@ final class FormCsrfManagerTest extends TestCase
         sleep(1);
 
         $this->expectException(CsrfException::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
         $manager->validate($token, 'form1', '/submit');
     }
 

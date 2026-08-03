@@ -187,7 +187,7 @@ final class StatefulSingletonAnalyzerTest extends TestCase
         );
 
         $this->expectException(StatefulSingletonException::class);
-        $this->expectExceptionMessage('stateful singleton violation');
+        $this->expectExceptionMessageIsOrContains('stateful singleton violation');
 
         $analyzer->report([$violation]);
     }

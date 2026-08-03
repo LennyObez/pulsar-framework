@@ -37,7 +37,7 @@ final class SchemaIdentifierTest extends TestCase
     public function emptyStringThrows(): void
     {
         $this->expectException(SchemaException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
         SchemaIdentifier::validateTable('');
     }
 
@@ -45,7 +45,7 @@ final class SchemaIdentifierTest extends TestCase
     public function startsWithNumberThrows(): void
     {
         $this->expectException(SchemaException::class);
-        $this->expectExceptionMessage('must start with a letter or underscore');
+        $this->expectExceptionMessageIsOrContains('must start with a letter or underscore');
         SchemaIdentifier::validateTable('1table');
     }
 
@@ -67,7 +67,7 @@ final class SchemaIdentifierTest extends TestCase
     public function tooLongThrows(): void
     {
         $this->expectException(SchemaException::class);
-        $this->expectExceptionMessage('must not exceed 64 characters');
+        $this->expectExceptionMessageIsOrContains('must not exceed 64 characters');
         SchemaIdentifier::validateTable(str_repeat('a', 65));
     }
 
@@ -76,7 +76,7 @@ final class SchemaIdentifierTest extends TestCase
     public function reservedWordThrows(string $word): void
     {
         $this->expectException(SchemaException::class);
-        $this->expectExceptionMessage('reserved SQL word');
+        $this->expectExceptionMessageIsOrContains('reserved SQL word');
         SchemaIdentifier::validateTable($word);
     }
 

@@ -58,7 +58,7 @@ final class ResumeTokenManagerTest extends TestCase
         $this->manager->issue('wizard-abc');
 
         $this->expectException(WizardException::class);
-        $this->expectExceptionMessage('Resume token is invalid');
+        $this->expectExceptionMessageIsOrContains('Resume token is invalid');
         $this->manager->consume('wizard-abc', 'wrong-token-value');
     }
 
@@ -66,7 +66,7 @@ final class ResumeTokenManagerTest extends TestCase
     public function consumeThrowsWhenNoTokenStored(): void
     {
         $this->expectException(WizardException::class);
-        $this->expectExceptionMessage('Resume token is invalid');
+        $this->expectExceptionMessageIsOrContains('Resume token is invalid');
         $this->manager->consume('nonexistent-wizard', 'some-token');
     }
 
@@ -77,7 +77,7 @@ final class ResumeTokenManagerTest extends TestCase
         $this->manager->consume('wizard-abc', $token);
 
         $this->expectException(WizardException::class);
-        $this->expectExceptionMessage('Resume token is invalid');
+        $this->expectExceptionMessageIsOrContains('Resume token is invalid');
         $this->manager->consume('wizard-abc', $token);
     }
 

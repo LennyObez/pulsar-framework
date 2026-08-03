@@ -194,7 +194,7 @@ final class ParamValidatorComprehensiveTest extends TestCase
     {
         $this->expectException(McpException::class);
         $this->expectExceptionCode(-32602);
-        $this->expectExceptionMessage('traversal');
+        $this->expectExceptionMessageIsOrContains('traversal');
 
         ParamValidator::validatePath('../../etc/passwd', $this->tmpDir);
     }

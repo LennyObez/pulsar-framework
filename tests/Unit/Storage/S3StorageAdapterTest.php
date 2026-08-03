@@ -290,7 +290,7 @@ final class S3StorageAdapterTest extends TestCase
 
         try {
             $this->expectException(StorageException::class);
-            $this->expectExceptionMessage('credentials not configured');
+            $this->expectExceptionMessageIsOrContains('credentials not configured');
 
             $this->callPrivateMethod($adapter, 'getSigner');
         } finally {

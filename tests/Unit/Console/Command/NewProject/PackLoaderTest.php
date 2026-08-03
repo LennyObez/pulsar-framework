@@ -58,7 +58,7 @@ final class PackLoaderTest extends TestCase
         $loader = new PackLoader($this->tempDir);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         (void) $loader->load('nonexistent');
     }
@@ -71,7 +71,7 @@ final class PackLoaderTest extends TestCase
         $loader = new PackLoader($this->tempDir);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('missing its pack.json');
+        $this->expectExceptionMessageIsOrContains('missing its pack.json');
 
         (void) $loader->load('empty-pack');
     }
@@ -86,7 +86,7 @@ final class PackLoaderTest extends TestCase
         $loader = new PackLoader($this->tempDir);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         (void) $loader->load('bad-json');
     }
@@ -101,7 +101,7 @@ final class PackLoaderTest extends TestCase
         $loader = new PackLoader($this->tempDir);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid pack manifest');
+        $this->expectExceptionMessageIsOrContains('Invalid pack manifest');
 
         (void) $loader->load('invalid-manifest');
     }

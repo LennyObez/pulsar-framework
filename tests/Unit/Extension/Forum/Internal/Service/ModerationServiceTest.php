@@ -87,7 +87,7 @@ final class ModerationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already has a pending report');
+        $this->expectExceptionMessageIsOrContains('already has a pending report');
 
         $service->submitThreadReport('thread-1', 'reporter-1', 'Duplicate');
     }
@@ -119,7 +119,7 @@ final class ModerationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already has a pending report');
+        $this->expectExceptionMessageIsOrContains('already has a pending report');
 
         $service->submitPostReport('post-1', 'reporter-1', 'Duplicate');
     }
@@ -152,7 +152,7 @@ final class ModerationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ThreadReport not found');
+        $this->expectExceptionMessageIsOrContains('ThreadReport not found');
 
         $service->reviewThreadReport('missing', ReportStatus::UnderReview, 'mod-1');
     }
@@ -185,7 +185,7 @@ final class ModerationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('PostReport not found');
+        $this->expectExceptionMessageIsOrContains('PostReport not found');
 
         $service->reviewPostReport('missing', ReportStatus::UnderReview, 'mod-1');
     }
@@ -336,7 +336,7 @@ final class ModerationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ForumProfile not found');
+        $this->expectExceptionMessageIsOrContains('ForumProfile not found');
 
         $service->banUser('unknown', 'reason');
     }
@@ -390,7 +390,7 @@ final class ModerationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ForumProfile not found');
+        $this->expectExceptionMessageIsOrContains('ForumProfile not found');
 
         $service->unbanUser('unknown');
     }

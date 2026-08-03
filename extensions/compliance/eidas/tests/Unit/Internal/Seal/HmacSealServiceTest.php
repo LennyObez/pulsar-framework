@@ -33,7 +33,7 @@ final class HmacSealServiceTest extends TestCase
         $service = new HmacSealService([]);
 
         $this->expectException(EidasException::class);
-        $this->expectExceptionMessage('Unknown seal key');
+        $this->expectExceptionMessageIsOrContains('Unknown seal key');
 
         $service->seal('data', 'nonexistent');
     }

@@ -51,7 +51,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://127.0.0.1/');
     }
@@ -62,7 +62,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://10.0.0.1/');
     }
@@ -73,7 +73,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://172.16.0.1/');
     }
@@ -84,7 +84,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://192.168.1.1/');
     }
@@ -95,7 +95,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://169.254.169.254/latest/meta-data/');
     }
@@ -108,7 +108,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://[::1]/');
     }
@@ -119,7 +119,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://[fc00::1]/');
     }
@@ -130,7 +130,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://[fe80::1]/');
     }
@@ -143,7 +143,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://[::ffff:127.0.0.1]/');
     }
@@ -154,7 +154,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://[::ffff:10.0.0.1]/');
     }
@@ -167,7 +167,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Port 8080');
+        $this->expectExceptionMessageIsOrContains('Port 8080');
 
         $client->request('GET', 'http://8.8.8.8:8080/');
     }
@@ -213,7 +213,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Port 22');
+        $this->expectExceptionMessageIsOrContains('Port 22');
 
         $client->request('GET', 'http://8.8.8.8:22/');
     }
@@ -226,7 +226,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('metadata');
+        $this->expectExceptionMessageIsOrContains('metadata');
 
         $client->request('GET', 'http://metadata.google.internal/computeMetadata/v1/');
     }
@@ -274,7 +274,7 @@ final class SsrfProtectionTest extends TestCase
         $client = new SafeHttpClient($config, new NullLogger());
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://1.2.3.4/');
     }
@@ -299,7 +299,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://0.0.0.0/');
     }
@@ -310,7 +310,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://100.64.0.1/');
     }
@@ -321,7 +321,7 @@ final class SsrfProtectionTest extends TestCase
         $client = $this->createClient();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('SSRF');
+        $this->expectExceptionMessageIsOrContains('SSRF');
 
         $client->request('GET', 'http://198.18.0.1/');
     }

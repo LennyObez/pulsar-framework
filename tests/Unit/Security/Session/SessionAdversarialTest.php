@@ -123,7 +123,7 @@ final class SessionAdversarialTest extends TestCase
         $handler = new CookieHandler($encryption, $config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
 
         $handler->write('session-1', str_repeat('x', 513));
     }
@@ -257,7 +257,7 @@ final class SessionAdversarialTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Session validation failed: remote_address');
+        $this->expectExceptionMessageIsOrContains('Session validation failed: remote_address');
 
         $manager2->startWithRequest($request2);
     }
@@ -351,7 +351,7 @@ final class SessionAdversarialTest extends TestCase
 
         // Third session should be rejected
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Concurrent session limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Concurrent session limit exceeded');
 
         $manager->enforceConcurrencyLimit('user-1');
     }
@@ -395,7 +395,7 @@ final class SessionAdversarialTest extends TestCase
 
         // After destroy, operations should throw
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $_ = $manager->get('key');
     }

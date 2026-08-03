@@ -72,7 +72,7 @@ final class ArrayHandlerTest extends TestCase
     public function listSessionsThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session listing');
+        $this->expectExceptionMessageIsOrContains('does not support session listing');
 
         $this->handler->listSessions('user-1');
     }
@@ -81,7 +81,7 @@ final class ArrayHandlerTest extends TestCase
     public function revokeSessionThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session revocation');
+        $this->expectExceptionMessageIsOrContains('does not support session revocation');
 
         $this->handler->revokeSession('session-1');
     }
@@ -90,7 +90,7 @@ final class ArrayHandlerTest extends TestCase
     public function getActiveSessionsThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support concurrency control');
+        $this->expectExceptionMessageIsOrContains('does not support concurrency control');
 
         $this->handler->getActiveSessions('user-1');
     }

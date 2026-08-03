@@ -76,7 +76,7 @@ final class InMemoryModelRegistryTest extends TestCase
         $this->registry->register($this->createModel('m1', status: AiModelStatus::Development));
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid status transition');
+        $this->expectExceptionMessageIsOrContains('Invalid status transition');
 
         $this->registry->transitionStatus('m1', AiModelStatus::Production);
     }
@@ -85,7 +85,7 @@ final class InMemoryModelRegistryTest extends TestCase
     public function transitionStatusThrowsOnUnknownModel(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->registry->transitionStatus('unknown', AiModelStatus::Testing);
     }

@@ -86,7 +86,7 @@ final class ResultTest extends TestCase
         $result = new Result([]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Query returned an empty result set');
+        $this->expectExceptionMessageIsOrContains('Query returned an empty result set');
 
         $result->firstOrFail();
     }

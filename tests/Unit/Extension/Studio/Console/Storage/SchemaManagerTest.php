@@ -325,7 +325,7 @@ final class SchemaManagerTest extends TestCase
             ->willThrowException(new PDOException('disk I/O error'));
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('Studio schema error');
+        $this->expectExceptionMessageIsOrContains('Studio schema error');
 
         SchemaManager::ensureSchema($pdo);
     }

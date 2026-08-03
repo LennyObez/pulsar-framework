@@ -148,7 +148,7 @@ final class QueueWiringTest extends TestCase
         $configManager->load();
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('database');
+        $this->expectExceptionMessageIsOrContains('database');
 
         new QueueWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
     }
@@ -198,7 +198,7 @@ final class QueueWiringTest extends TestCase
         $configManager->load();
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('encrypt_payloads');
+        $this->expectExceptionMessageIsOrContains('encrypt_payloads');
 
         new QueueWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
     }

@@ -44,7 +44,7 @@ final class PulsarVersionConfigTest extends TestCase
 
         try {
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('pulsar.min_version');
+            $this->expectExceptionMessageIsOrContains('pulsar.min_version');
 
             (void) PulsarVersionConfig::fromArray([]);
         } finally {

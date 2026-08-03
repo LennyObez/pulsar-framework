@@ -56,7 +56,7 @@ final class JsonLinesFileWriterTest extends TestCase
         $writer = new JsonLinesFileWriter('/nonexistent/path/file.jsonl');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to open file');
+        $this->expectExceptionMessageIsOrContains('Failed to open file');
 
         @$writer->write('data');
     }

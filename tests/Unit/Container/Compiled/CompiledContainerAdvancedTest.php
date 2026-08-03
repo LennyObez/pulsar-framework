@@ -26,7 +26,7 @@ final class CompiledContainerAdvancedTest extends TestCase
         $container = new AdvancedTestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->when('Consumer');
     }
@@ -37,7 +37,7 @@ final class CompiledContainerAdvancedTest extends TestCase
         $container = new AdvancedTestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         /** @var class-string $concrete */
         $concrete = trim('Concrete');
@@ -50,7 +50,7 @@ final class CompiledContainerAdvancedTest extends TestCase
         $container = new AdvancedTestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->processCompilerPasses(new PassRunner());
     }
@@ -62,7 +62,7 @@ final class CompiledContainerAdvancedTest extends TestCase
         $provider = $this->createStub(DeferredServiceProviderInterface::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->registerDeferredProvider($provider);
     }
@@ -145,7 +145,7 @@ final class CompiledContainerAdvancedTest extends TestCase
         $container = new CircularCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Circular dependency');
+        $this->expectExceptionMessageIsOrContains('Circular dependency');
 
         $_ = $container->get('a');
     }

@@ -63,7 +63,7 @@ final class GrpcServerTest extends TestCase
         $server = new GrpcServer($this->config, $registry, $this->adapter, $this->pipeline);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('no services registered');
+        $this->expectExceptionMessageIsOrContains('no services registered');
 
         $server->start();
     }
@@ -85,7 +85,7 @@ final class GrpcServerTest extends TestCase
         $server = new GrpcServer($this->config, $registry, $adapter, $this->pipeline);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('transport adapter "test-adapter" is not available');
+        $this->expectExceptionMessageIsOrContains('transport adapter "test-adapter" is not available');
 
         $server->start();
     }

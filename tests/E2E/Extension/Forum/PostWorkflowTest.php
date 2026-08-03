@@ -110,7 +110,7 @@ final class PostWorkflowTest extends TestCase
         $stack->forumService->lockThread($thread->id);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('locked');
+        $this->expectExceptionMessageIsOrContains('locked');
 
         $stack->forumService->createPost(
             threadId: $thread->id,
@@ -149,7 +149,7 @@ final class PostWorkflowTest extends TestCase
         );
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('non-author');
+        $this->expectExceptionMessageIsOrContains('non-author');
 
         $stack->forumService->editPost(
             postId: $post->id,

@@ -155,7 +155,7 @@ final class ReleaseSignerServiceTest extends TestCase
     public function signDirectoryThrowsForNonexistentDirectory(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         (void) $this->service->signDirectory('/nonexistent/directory', $this->secretKey);
     }
@@ -164,7 +164,7 @@ final class ReleaseSignerServiceTest extends TestCase
     public function signDirectoryThrowsForPathTraversal(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Path traversal');
+        $this->expectExceptionMessageIsOrContains('Path traversal');
 
         (void) $this->service->signDirectory('/some/../../../etc', $this->secretKey);
     }
@@ -173,7 +173,7 @@ final class ReleaseSignerServiceTest extends TestCase
     public function verifyDirectoryThrowsForPathTraversal(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Path traversal');
+        $this->expectExceptionMessageIsOrContains('Path traversal');
 
         (void) $this->service->verifyDirectory('/some/../../../etc', [], $this->publicKey);
     }

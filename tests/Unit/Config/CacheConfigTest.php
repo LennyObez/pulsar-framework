@@ -147,7 +147,7 @@ final class CacheConfigTest extends TestCase
     public function anUnknownDriverThrowsInsteadOfSilentlyFallingBackToFilesystem(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('unknown cache driver "redys"');
+        $this->expectExceptionMessageIsOrContains('unknown cache driver "redys"');
 
         (void) CacheConfig::fromArray([
             'pools' => [
@@ -199,7 +199,7 @@ final class CacheConfigTest extends TestCase
     public function anUnknownSerializerThrowsInsteadOfSilentlyBecomingJson(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('unknown cache serializer "igbinry"');
+        $this->expectExceptionMessageIsOrContains('unknown cache serializer "igbinry"');
 
         (void) CacheConfig::fromArray([
             'pools' => [
@@ -222,7 +222,7 @@ final class CacheConfigTest extends TestCase
         }
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('requires ext-igbinary');
+        $this->expectExceptionMessageIsOrContains('requires ext-igbinary');
 
         (void) CacheConfig::fromArray([
             'pools' => ['fast' => ['serializer' => 'igbinary']],
@@ -233,7 +233,7 @@ final class CacheConfigTest extends TestCase
     public function anUnknownCompressionValueThrows(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('unknown compression "gzip"');
+        $this->expectExceptionMessageIsOrContains('unknown compression "gzip"');
 
         (void) CacheConfig::fromArray([
             'pools' => ['pages' => ['compression' => 'gzip']],
@@ -260,7 +260,7 @@ final class CacheConfigTest extends TestCase
     public function compressingAnEncryptedPoolRequiresExplicitOracleAcknowledgement(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('CRIME-class oracle');
+        $this->expectExceptionMessageIsOrContains('CRIME-class oracle');
 
         (void) CacheConfig::fromArray([
             'pools' => [
@@ -290,7 +290,7 @@ final class CacheConfigTest extends TestCase
     public function aPrefixWithGlobMetacharactersOrExcessLengthThrows(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('prefix must match');
+        $this->expectExceptionMessageIsOrContains('prefix must match');
 
         (void) CacheConfig::fromArray([
             'pools' => ['shared' => ['prefix' => 'app*']],

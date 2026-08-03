@@ -28,7 +28,7 @@ final class RowTest extends TestCase
         $row = new Row(['name' => 'Alice']);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Column "missing" not found in row');
+        $this->expectExceptionMessageIsOrContains('Column "missing" not found in row');
 
         $_ = $row->get('missing');
     }
@@ -80,7 +80,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => 'abc']);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to int');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to int');
 
         $row->getInt('value');
     }
@@ -115,7 +115,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => null]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to string');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to string');
 
         $row->getString('value');
     }
@@ -174,7 +174,7 @@ final class RowTest extends TestCase
         $row = new Row(['active' => 'yes']);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "active" to bool');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "active" to bool');
 
         $row->getBool('active');
     }
@@ -209,7 +209,7 @@ final class RowTest extends TestCase
         $row = new Row(['price' => 'abc']);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "price" to float');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "price" to float');
 
         $row->getFloat('price');
     }
@@ -309,7 +309,7 @@ final class RowTest extends TestCase
         $row = new Row(['count' => 'abc']);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "count" to int');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "count" to int');
 
         $row->getNullableInt('count');
     }
@@ -336,7 +336,7 @@ final class RowTest extends TestCase
         $row = new Row(['data' => []]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "data" to string');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "data" to string');
 
         $row->getNullableString('data');
     }
@@ -347,7 +347,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => null]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to float');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to float');
 
         $row->getFloat('value');
     }
@@ -358,7 +358,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => '']);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to int');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to int');
 
         $row->getInt('value');
     }
@@ -392,7 +392,7 @@ final class RowTest extends TestCase
         $row = new Row(['data' => 42]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "data" to binary');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "data" to binary');
 
         $row->getBinary('data');
     }
@@ -413,7 +413,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => 3.14]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to int');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to int');
 
         $row->getInt('value');
     }
@@ -424,7 +424,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => ['nested']]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to string');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to string');
 
         $row->getString('value');
     }
@@ -435,7 +435,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => null]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to bool');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to bool');
 
         $row->getBool('value');
     }
@@ -446,7 +446,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => true]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to float');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to float');
 
         $row->getFloat('value');
     }
@@ -473,7 +473,7 @@ final class RowTest extends TestCase
         $row = new Row(['value' => true]);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Cannot cast column "value" to string');
+        $this->expectExceptionMessageIsOrContains('Cannot cast column "value" to string');
 
         $row->getNullableString('value');
     }

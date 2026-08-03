@@ -188,7 +188,7 @@ final class InMemoryIdempotencyStoreTest extends TestCase
         $store = new InMemoryIdempotencyStore();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('TTL must be a positive');
+        $this->expectExceptionMessageIsOrContains('TTL must be a positive');
 
         $store->claim('key-1', 'hash-1', 'op', new DateTimeImmutable(), 0);
     }

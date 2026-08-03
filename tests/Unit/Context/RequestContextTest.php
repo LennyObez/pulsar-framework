@@ -158,7 +158,7 @@ final class RequestContextTest extends TestCase
     public function fromArrayThrowsForNonStringCorrelationId(): void
     {
         $this->expectException(\Pulsar\Context\Exception\ContextException::class);
-        $this->expectExceptionMessage('Invalid correlation ID');
+        $this->expectExceptionMessageIsOrContains('Invalid correlation ID');
 
         (void) RequestContext::fromArray([
             'correlation_id' => 12345,

@@ -64,7 +64,7 @@ final class InListBuilderTest extends TestCase
     public function compileThrowsOnZeroCount(Driver $driver): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('at least one value');
+        $this->expectExceptionMessageIsOrContains('at least one value');
 
         InListBuilder::compile($driver, 'id', 'ids', 0);
     }
@@ -141,7 +141,7 @@ final class InListBuilderTest extends TestCase
     public function expandParamsThrowsOnEmptyValues(Driver $driver): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('at least one value');
+        $this->expectExceptionMessageIsOrContains('at least one value');
 
         InListBuilder::expandParams($driver, 'ids', []);
     }

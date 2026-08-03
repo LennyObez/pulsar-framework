@@ -128,7 +128,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $_ = $manager->get('key');
     }
@@ -139,7 +139,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->set('key', 'value');
     }
@@ -150,7 +150,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->has('key');
     }
@@ -161,7 +161,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->remove('key');
     }
@@ -172,7 +172,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->all();
     }
@@ -183,7 +183,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->regenerate();
     }
@@ -341,7 +341,7 @@ final class SessionManagerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Session validation failed');
+        $this->expectExceptionMessageIsOrContains('Session validation failed');
 
         $manager2->startWithRequest($request2);
     }
@@ -387,7 +387,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($dbHandler, $config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Concurrent session limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Concurrent session limit exceeded');
 
         $manager->enforceConcurrencyLimit('user-1');
     }
@@ -651,7 +651,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->setUserId('user-1');
     }

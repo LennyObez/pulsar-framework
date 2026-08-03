@@ -83,7 +83,7 @@ final class HelpersTest extends TestCase
     public function retryThrowsLastExceptionWhenAllAttemptsFail(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('attempt 3');
+        $this->expectExceptionMessageIsOrContains('attempt 3');
 
         $attempt = 0;
         Helpers::retry(

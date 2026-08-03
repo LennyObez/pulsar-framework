@@ -51,7 +51,7 @@ final class InMemoryWebhookEventLogTest extends TestCase
         $log->claim('evt_1', $now, 3600);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('currently being processed');
+        $this->expectExceptionMessageIsOrContains('currently being processed');
 
         $log->claim('evt_1', $now, 3600);
     }

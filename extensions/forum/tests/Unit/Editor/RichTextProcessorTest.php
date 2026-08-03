@@ -105,7 +105,7 @@ final class RichTextProcessorTest extends TestCase
         $oversized = str_repeat('x', 100_001);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('exceeds maximum length');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum length');
 
         $this->processor->process($oversized, EditorFormat::PlainText);
     }

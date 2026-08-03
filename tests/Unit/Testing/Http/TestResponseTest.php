@@ -28,7 +28,7 @@ final class TestResponseTest extends TestCase
         $response = new TestResponse(new Response(404));
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected status code 200, but received 404');
+        $this->expectExceptionMessageIsOrContains('Expected status code 200, but received 404');
 
         $response->assertOk();
     }
@@ -108,7 +108,7 @@ final class TestResponseTest extends TestCase
         $response = new TestResponse(new Response(400));
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected a successful status code (2xx)');
+        $this->expectExceptionMessageIsOrContains('Expected a successful status code (2xx)');
 
         $response->assertSuccessful();
     }

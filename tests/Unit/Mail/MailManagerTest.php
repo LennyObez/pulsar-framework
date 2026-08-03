@@ -75,7 +75,7 @@ final class MailManagerTest extends TestCase
         $manager = new MailManager($this->config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('not configured');
+        $this->expectExceptionMessageIsOrContains('not configured');
 
         $manager->driver('nonexistent');
     }
@@ -107,7 +107,7 @@ final class MailManagerTest extends TestCase
         $manager = new MailManager($config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('MailHttpClientInterface is required');
+        $this->expectExceptionMessageIsOrContains('MailHttpClientInterface is required');
 
         $manager->driver('mailgun');
     }
@@ -180,7 +180,7 @@ final class MailManagerTest extends TestCase
         $manager = new MailManager($config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('LoggerInterface is required');
+        $this->expectExceptionMessageIsOrContains('LoggerInterface is required');
 
         $manager->driver();
     }

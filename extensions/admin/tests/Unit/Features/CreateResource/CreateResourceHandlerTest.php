@@ -101,7 +101,7 @@ final class CreateResourceHandlerTest extends TestCase
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Create operation not supported');
+        $this->expectExceptionMessageIsOrContains('Create operation not supported');
 
         $this->handler->execute($request);
     }

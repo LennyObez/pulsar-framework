@@ -50,7 +50,7 @@ final class AttestationVerifierTest extends TestCase
         $verifier = new AttestationVerifier(['none']);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage("'packed' is not allowed");
+        $this->expectExceptionMessageIsOrContains("'packed' is not allowed");
         $verifier->verify('packed', '', '');
     }
 
@@ -92,7 +92,7 @@ final class AttestationVerifierTest extends TestCase
         $attestationObject = $this->buildCborAttestationObjectWithNonEmptyStmt($authData);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('None attestation must have empty attStmt');
+        $this->expectExceptionMessageIsOrContains('None attestation must have empty attStmt');
         $verifier->verify('none', $attestationObject, '{}');
     }
 
@@ -112,7 +112,7 @@ final class AttestationVerifierTest extends TestCase
         $attestationObject = $this->buildCborAttestationObject('packed', [], $authData);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Packed attestation requires alg and sig');
+        $this->expectExceptionMessageIsOrContains('Packed attestation requires alg and sig');
         $verifier->verify('packed', $attestationObject, '{}');
     }
 

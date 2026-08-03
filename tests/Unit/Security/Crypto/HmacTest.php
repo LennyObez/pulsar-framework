@@ -101,7 +101,7 @@ final class HmacTest extends TestCase
     public function throwsForKeyTooShort(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('HMAC key must be at least');
+        $this->expectExceptionMessageIsOrContains('HMAC key must be at least');
 
         $_ = Hmac::computeHex('message', 'short');
     }

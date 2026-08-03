@@ -167,7 +167,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         $service->castThreadVote('voter-1', 'thread-1', VoteDirection::Up);
     }
@@ -181,7 +181,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Thread not found');
+        $this->expectExceptionMessageIsOrContains('Thread not found');
 
         $service->castThreadVote('voter-1', 'thread-1', VoteDirection::Up);
     }
@@ -196,7 +196,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('cannot vote on your own');
+        $this->expectExceptionMessageIsOrContains('cannot vote on your own');
 
         $service->castThreadVote('voter-1', 'thread-1', VoteDirection::Up);
     }
@@ -214,7 +214,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Insufficient reputation');
+        $this->expectExceptionMessageIsOrContains('Insufficient reputation');
 
         $service->castThreadVote('voter-1', 'thread-1', VoteDirection::Down);
     }
@@ -270,7 +270,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         $service->castPostVote('voter-1', 'post-1', VoteDirection::Up);
     }
@@ -284,7 +284,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Post not found');
+        $this->expectExceptionMessageIsOrContains('Post not found');
 
         $service->castPostVote('voter-1', 'post-1', VoteDirection::Up);
     }
@@ -299,7 +299,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('cannot vote on your own');
+        $this->expectExceptionMessageIsOrContains('cannot vote on your own');
 
         $service->castPostVote('voter-1', 'post-1', VoteDirection::Up);
     }
@@ -315,7 +315,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Insufficient reputation');
+        $this->expectExceptionMessageIsOrContains('Insufficient reputation');
 
         $service->castPostVote('voter-1', 'post-1', VoteDirection::Down);
     }
@@ -347,7 +347,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ThreadVote not found');
+        $this->expectExceptionMessageIsOrContains('ThreadVote not found');
 
         $service->removeThreadVote('voter-1', 'thread-1');
     }
@@ -362,7 +362,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Thread not found');
+        $this->expectExceptionMessageIsOrContains('Thread not found');
 
         $service->removeThreadVote('voter-1', 'thread-1');
     }
@@ -394,7 +394,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('PostVote not found');
+        $this->expectExceptionMessageIsOrContains('PostVote not found');
 
         $service->removePostVote('voter-1', 'post-1');
     }
@@ -409,7 +409,7 @@ final class VoteServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Post not found');
+        $this->expectExceptionMessageIsOrContains('Post not found');
 
         $service->removePostVote('voter-1', 'post-1');
     }

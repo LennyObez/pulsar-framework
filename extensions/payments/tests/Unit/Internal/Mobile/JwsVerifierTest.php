@@ -44,7 +44,7 @@ final class JwsVerifierTest extends TestCase
     public function throwsOnEmptyToken(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('empty JWS token');
+        $this->expectExceptionMessageIsOrContains('empty JWS token');
 
         JwsVerifier::verifyAndDecode('');
     }

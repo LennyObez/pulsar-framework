@@ -105,7 +105,7 @@ final class UploadedFileTest extends TestCase
             $uploaded = new UploadedFile($tmpFile, 14, UPLOAD_ERR_OK, sapiUpload: true);
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('not a file uploaded via HTTP POST');
+            $this->expectExceptionMessageIsOrContains('not a file uploaded via HTTP POST');
 
             (void) $uploaded->getStream();
         } finally {
@@ -129,7 +129,7 @@ final class UploadedFileTest extends TestCase
             $uploaded = new UploadedFile($tmpFile, 14, UPLOAD_ERR_OK, sapiUpload: true);
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('not a file uploaded via HTTP POST');
+            $this->expectExceptionMessageIsOrContains('not a file uploaded via HTTP POST');
 
             $uploaded->moveTo($target);
         } finally {
@@ -157,7 +157,7 @@ final class UploadedFileTest extends TestCase
             $uploaded->moveTo($target);
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('already been moved');
+            $this->expectExceptionMessageIsOrContains('already been moved');
 
             (void) $uploaded->getStream();
         } finally {
@@ -230,7 +230,7 @@ final class UploadedFileTest extends TestCase
             $uploaded->moveTo($target1);
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('already been moved');
+            $this->expectExceptionMessageIsOrContains('already been moved');
 
             $uploaded->moveTo($target2);
         } finally {

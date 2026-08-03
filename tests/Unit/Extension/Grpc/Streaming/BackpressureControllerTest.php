@@ -38,7 +38,7 @@ final class BackpressureControllerTest extends TestCase
     public function highWatermarkMustBePositive(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('High watermark must be at least 1');
+        $this->expectExceptionMessageIsOrContains('High watermark must be at least 1');
 
         new BackpressureController(highWatermark: 0);
     }
@@ -47,7 +47,7 @@ final class BackpressureControllerTest extends TestCase
     public function lowWatermarkMustBeNonNegative(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Low watermark must be non-negative');
+        $this->expectExceptionMessageIsOrContains('Low watermark must be non-negative');
 
         new BackpressureController(highWatermark: 10, lowWatermark: -1);
     }
@@ -56,7 +56,7 @@ final class BackpressureControllerTest extends TestCase
     public function lowMustBeLessThanHigh(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Low watermark must be less than high watermark');
+        $this->expectExceptionMessageIsOrContains('Low watermark must be less than high watermark');
 
         new BackpressureController(highWatermark: 10, lowWatermark: 10);
     }

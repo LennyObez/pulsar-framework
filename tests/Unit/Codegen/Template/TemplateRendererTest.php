@@ -125,7 +125,7 @@ final class TemplateRendererTest extends TestCase
     public function renderThrowsForUnknownFilter(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown template filter: UPPERCASE');
+        $this->expectExceptionMessageIsOrContains('Unknown template filter: UPPERCASE');
 
         $this->renderer->render(
             '{{name|UPPERCASE}}',

@@ -37,7 +37,7 @@ final class SpanIdTest extends TestCase
     public function rejectsInvalidSpanId(): void
     {
         $this->expectException(TracingException::class);
-        $this->expectExceptionMessage('Invalid span ID');
+        $this->expectExceptionMessageIsOrContains('Invalid span ID');
 
         new SpanId('invalid');
     }

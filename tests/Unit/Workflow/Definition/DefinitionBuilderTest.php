@@ -226,7 +226,7 @@ final class DefinitionBuilderTest extends TestCase
     public function test_build_validates_definition(): void
     {
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('no initial state defined');
+        $this->expectExceptionMessageIsOrContains('no initial state defined');
 
         (void) DefinitionBuilder::create('bad')
             ->state('middle')
@@ -239,7 +239,7 @@ final class DefinitionBuilderTest extends TestCase
     public function test_build_rejects_definition_without_final_state(): void
     {
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('no final state defined');
+        $this->expectExceptionMessageIsOrContains('no final state defined');
 
         (void) DefinitionBuilder::create('bad')
             ->initialState('start')

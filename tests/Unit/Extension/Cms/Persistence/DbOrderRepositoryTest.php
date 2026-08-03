@@ -34,7 +34,7 @@ final class DbOrderRepositoryTest extends TestCase
         $this->db->method('query')->willReturn(new Result([]));
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Order not found: non-existent-id');
+        $this->expectExceptionMessageIsOrContains('Order not found: non-existent-id');
 
         $this->repository->updateStatus('non-existent-id', OrderStatus::Confirmed);
     }
@@ -47,7 +47,7 @@ final class DbOrderRepositoryTest extends TestCase
         ]));
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'cart' to 'fulfilled'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'cart' to 'fulfilled'");
 
         $this->repository->updateStatus('order-1', OrderStatus::Fulfilled);
     }

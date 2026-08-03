@@ -385,7 +385,7 @@ final class ModerationApiControllerTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('forum.moderate');
+        $this->expectExceptionMessageIsOrContains('forum.moderate');
 
         $controller->reports($request);
     }
@@ -408,7 +408,7 @@ final class ModerationApiControllerTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('forum.moderate');
+        $this->expectExceptionMessageIsOrContains('forum.moderate');
 
         $controller->reviewReport($request, 'tr-1');
     }
@@ -431,7 +431,7 @@ final class ModerationApiControllerTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('forum.moderate');
+        $this->expectExceptionMessageIsOrContains('forum.moderate');
 
         $controller->ban($request, 'user-1');
     }
@@ -453,7 +453,7 @@ final class ModerationApiControllerTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('forum.moderate');
+        $this->expectExceptionMessageIsOrContains('forum.moderate');
 
         $controller->unban($request, 'user-1');
     }

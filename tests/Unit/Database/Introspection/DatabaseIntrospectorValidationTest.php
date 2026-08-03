@@ -40,7 +40,7 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     public function columnsThrowsForEmptyTableName(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid database identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid database identifier');
 
         $this->introspector->columns('');
     }
@@ -49,7 +49,7 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     public function columnsThrowsForTableNameStartingWithDigit(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid database identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid database identifier');
 
         $this->introspector->columns('123table');
     }
@@ -58,7 +58,7 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     public function columnsThrowsForTableNameWithSpecialCharacters(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid database identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid database identifier');
 
         $this->introspector->columns('table; DROP TABLE users--');
     }
@@ -67,7 +67,7 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     public function columnsThrowsForTableNameWithSpaces(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid database identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid database identifier');
 
         $this->introspector->columns('my table');
     }
@@ -77,7 +77,7 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     public function columnsRejectsSqlInjectionPayloads(string $payload): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid database identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid database identifier');
 
         $this->introspector->columns($payload);
     }
@@ -147,7 +147,7 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     public function primaryKeyRejectsInvalidIdentifier(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid database identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid database identifier');
 
         $this->introspector->primaryKey('table; DROP TABLE users--');
     }

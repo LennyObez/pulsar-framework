@@ -113,7 +113,7 @@ final class BarNumberTest extends TestCase
     public function invalidPatternThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('valid regular expression');
+        $this->expectExceptionMessageIsOrContains('valid regular expression');
 
         new BarNumber(pattern: '/[invalid');
     }
@@ -122,7 +122,7 @@ final class BarNumberTest extends TestCase
     public function excessivelyLongPatternThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('maximum length');
+        $this->expectExceptionMessageIsOrContains('maximum length');
 
         new BarNumber(pattern: '/' . str_repeat('a', 500) . '/');
     }

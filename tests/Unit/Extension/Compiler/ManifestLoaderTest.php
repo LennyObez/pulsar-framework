@@ -74,7 +74,7 @@ final class ManifestLoaderTest extends TestCase
         $missingPath = $this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent.php';
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         (void) $loader->load($missingPath);
     }

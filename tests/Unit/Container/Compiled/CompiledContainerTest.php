@@ -77,7 +77,7 @@ final class CompiledContainerTest extends TestCase
         $container = new TestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->bind('foo', stdClass::class);
     }
@@ -88,7 +88,7 @@ final class CompiledContainerTest extends TestCase
         $container = new TestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->singleton('foo', stdClass::class);
     }
@@ -99,7 +99,7 @@ final class CompiledContainerTest extends TestCase
         $container = new TestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->bindWithLifetime('foo', stdClass::class);
     }
@@ -110,7 +110,7 @@ final class CompiledContainerTest extends TestCase
         $container = new TestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->tag('foo', 'tag');
     }
@@ -121,7 +121,7 @@ final class CompiledContainerTest extends TestCase
         $container = new TestCompiledContainer();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container');
 
         $container->decorate('foo', stdClass::class);
     }
@@ -168,7 +168,7 @@ final class CompiledContainerTest extends TestCase
         $container->freeze();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container after freeze');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container after freeze');
 
         $container->instance('post.freeze', new stdClass());
     }
@@ -181,7 +181,7 @@ final class CompiledContainerTest extends TestCase
         $container->freeze();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot modify a compiled container after freeze');
+        $this->expectExceptionMessageIsOrContains('Cannot modify a compiled container after freeze');
 
         $container->forgetInstance('svc');
     }

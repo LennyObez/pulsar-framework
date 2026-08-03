@@ -51,7 +51,7 @@ final class TenantRateLimiterTest extends TestCase
         $envelope = $this->createEnvelope(queue: 'high-volume', tenantId: 'acme');
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Rate limit exceeded');
 
         $limiter->handle($envelope, static fn(JobEnvelope $e): string => 'never');
     }

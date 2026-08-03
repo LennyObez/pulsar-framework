@@ -26,7 +26,7 @@ final class MoneyTest extends TestCase
     public function ofRejectsNegativeAmount(): void
     {
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
         (void) Money::of(-100, Currency::USD);
     }
 
@@ -64,7 +64,7 @@ final class MoneyTest extends TestCase
     public function addThrowsOnCurrencyMismatch(): void
     {
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('mismatch');
+        $this->expectExceptionMessageIsOrContains('mismatch');
         (void) Money::of(100, Currency::USD)->add(Money::of(200, Currency::EUR));
     }
 

@@ -80,7 +80,7 @@ final class ValidateDecoratorPassTest extends TestCase
         $pass = new ValidateDecoratorPass();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         $pass->process($builder);
     }

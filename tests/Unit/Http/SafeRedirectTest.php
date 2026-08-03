@@ -33,7 +33,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsEmptyUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
         SafeRedirect::validate('');
     }
 
@@ -41,7 +41,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsProtocolRelativeUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Protocol-relative');
+        $this->expectExceptionMessageIsOrContains('Protocol-relative');
         SafeRedirect::validate('//evil.com/phish');
     }
 
@@ -49,7 +49,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsJavascriptScheme(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('relative path');
+        $this->expectExceptionMessageIsOrContains('relative path');
         SafeRedirect::validate('javascript:alert(1)');
     }
 
@@ -57,7 +57,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsDataScheme(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('relative path');
+        $this->expectExceptionMessageIsOrContains('relative path');
         SafeRedirect::validate('data:text/html,<script>alert(1)</script>');
     }
 
@@ -65,7 +65,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsAbsoluteUrlWithoutAllowedHosts(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('require a non-empty allowed-hosts list');
+        $this->expectExceptionMessageIsOrContains('require a non-empty allowed-hosts list');
         SafeRedirect::validate('https://example.com/path');
     }
 
@@ -73,7 +73,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsAbsoluteUrlWithUnallowedHost(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
         SafeRedirect::validate('https://evil.com/phish', ['example.com']);
     }
 
@@ -97,7 +97,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsMalformedUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('relative path');
+        $this->expectExceptionMessageIsOrContains('relative path');
         SafeRedirect::validate('not-a-url');
     }
 
@@ -111,7 +111,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsBackslashObfuscatedProtocolRelativeUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Protocol-relative');
+        $this->expectExceptionMessageIsOrContains('Protocol-relative');
         SafeRedirect::validate('/\\evil.com/phish');
     }
 
@@ -119,7 +119,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsLeadingDoubleBackslashUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Protocol-relative');
+        $this->expectExceptionMessageIsOrContains('Protocol-relative');
         SafeRedirect::validate('\\\\evil.com/phish');
     }
 
@@ -127,7 +127,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsBackslashSlashProtocolRelativeUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Protocol-relative');
+        $this->expectExceptionMessageIsOrContains('Protocol-relative');
         SafeRedirect::validate('/\\/evil.com');
     }
 
@@ -135,7 +135,7 @@ final class SafeRedirectTest extends TestCase
     public function rejectsCarriageReturnLineFeedForHeaderInjection(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('control characters');
+        $this->expectExceptionMessageIsOrContains('control characters');
         SafeRedirect::validate("/dashboard\r\nSet-Cookie: session=hijacked");
     }
 

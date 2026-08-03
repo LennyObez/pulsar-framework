@@ -27,7 +27,7 @@ final class DatabaseFailureTest extends TestCase
             ->willThrowException(new PDOException('Connection timed out after 30 seconds'));
 
         $this->expectException(PDOException::class);
-        $this->expectExceptionMessage('Connection timed out');
+        $this->expectExceptionMessageIsOrContains('Connection timed out');
 
         $connection->query('SELECT 1');
     }

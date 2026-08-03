@@ -83,7 +83,7 @@ final class JsonRpcCodecComprehensiveTest extends TestCase
     {
         $this->expectException(McpException::class);
         $this->expectExceptionCode(-32600);
-        $this->expectExceptionMessage('jsonrpc version');
+        $this->expectExceptionMessageIsOrContains('jsonrpc version');
 
         $this->codec->decode('{"jsonrpc":"1.0","id":1,"method":"ping"}');
     }
@@ -102,7 +102,7 @@ final class JsonRpcCodecComprehensiveTest extends TestCase
     {
         $this->expectException(McpException::class);
         $this->expectExceptionCode(-32600);
-        $this->expectExceptionMessage('method');
+        $this->expectExceptionMessageIsOrContains('method');
 
         $this->codec->decode('{"jsonrpc":"2.0","id":1,"method":""}');
     }
@@ -130,7 +130,7 @@ final class JsonRpcCodecComprehensiveTest extends TestCase
     {
         $this->expectException(McpException::class);
         $this->expectExceptionCode(-32600);
-        $this->expectExceptionMessage('id must be');
+        $this->expectExceptionMessageIsOrContains('id must be');
 
         $this->codec->decode('{"jsonrpc":"2.0","id":1.5,"method":"ping"}');
     }

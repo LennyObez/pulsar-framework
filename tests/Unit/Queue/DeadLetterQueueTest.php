@@ -99,7 +99,7 @@ final class DeadLetterQueueTest extends TestCase
     public function it_throws_when_retrying_nonexistent_failed_job(): void
     {
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->dlq->retry('nonexistent-id');
     }

@@ -117,7 +117,7 @@ final class ProjectGeneratorTest extends TestCase
         $output = $this->createStub(OutputInterface::class);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('already exists');
+        $this->expectExceptionMessageIsOrContains('already exists');
 
         $generator->generate('my-app', ProjectPreset::Minimal, EnvironmentPreset::Local, $this->tempDir, $output);
     }

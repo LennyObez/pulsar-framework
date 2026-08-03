@@ -67,7 +67,7 @@ final class TransactionTest extends TestCase
         $transaction->commit();
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Transaction has already been committed or rolled back');
+        $this->expectExceptionMessageIsOrContains('Transaction has already been committed or rolled back');
 
         $transaction->commit();
     }
@@ -81,7 +81,7 @@ final class TransactionTest extends TestCase
         $transaction->rollback();
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Transaction has already been committed or rolled back');
+        $this->expectExceptionMessageIsOrContains('Transaction has already been committed or rolled back');
 
         $transaction->rollback();
     }

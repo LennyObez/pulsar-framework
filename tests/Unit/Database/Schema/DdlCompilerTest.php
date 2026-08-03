@@ -210,7 +210,7 @@ final class DdlCompilerTest extends TestCase
     {
         $compiler = $this->compiler(Driver::SQLite); // no connection, defaults to unsupported
         $this->expectException(SchemaException::class);
-        $this->expectExceptionMessage('not supported');
+        $this->expectExceptionMessageIsOrContains('not supported');
         $compiler->compileAlterDropColumn('users', 'email');
     }
 

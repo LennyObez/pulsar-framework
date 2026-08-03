@@ -96,7 +96,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['typ' => 'JWT'], $this->validPayload());
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('missing algorithm');
+        $this->expectExceptionMessageIsOrContains('missing algorithm');
         $verifier->verify($token, $this->makeContext());
     }
 
@@ -117,7 +117,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"iss"');
+        $this->expectExceptionMessageIsOrContains('"iss"');
         $verifier->verify($token, $context);
     }
 
@@ -138,7 +138,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"aud"');
+        $this->expectExceptionMessageIsOrContains('"aud"');
         $verifier->verify($token, $context);
     }
 
@@ -159,7 +159,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"exp"');
+        $this->expectExceptionMessageIsOrContains('"exp"');
         $verifier->verify($token, $context);
     }
 
@@ -180,7 +180,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"iat"');
+        $this->expectExceptionMessageIsOrContains('"iat"');
         $verifier->verify($token, $context);
     }
 
@@ -223,7 +223,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('nonce');
+        $this->expectExceptionMessageIsOrContains('nonce');
         $verifier->verify($token, $context);
     }
 
@@ -262,7 +262,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         );
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('no keys');
+        $this->expectExceptionMessageIsOrContains('no keys');
         $verifier->verify($token, $context);
     }
 
@@ -284,7 +284,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('azp');
+        $this->expectExceptionMessageIsOrContains('azp');
         $verifier->verify($token, $context);
     }
 
@@ -306,7 +306,7 @@ final class JwksIdTokenVerifierDeepTest extends TestCase
 
         // exp defaults to 0, which is expired
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
         $verifier->verify($token, $context);
     }
 

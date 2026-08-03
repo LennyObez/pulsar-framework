@@ -329,7 +329,7 @@ final class DatabaseWorkflowStorageTest extends TestCase
         $this->connection->method('execute')->willReturn(0); // 0 rows affected = version mismatch
 
         $this->expectException(ConcurrentTransitionException::class);
-        $this->expectExceptionMessage('inst-1');
+        $this->expectExceptionMessageIsOrContains('inst-1');
 
         $this->storage()->updateState(
             'inst-1',
@@ -345,7 +345,7 @@ final class DatabaseWorkflowStorageTest extends TestCase
         $this->connection->method('query')->willReturn(new Result([]));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->storage()->updateState(
             'missing',

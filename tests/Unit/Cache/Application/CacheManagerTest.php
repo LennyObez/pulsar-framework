@@ -290,7 +290,7 @@ final class CacheManagerTest extends TestCase
         $manager = new CacheManager($config);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('encryption');
+        $this->expectExceptionMessageIsOrContains('encryption');
         $manager->driver('encrypted');
     }
 

@@ -70,7 +70,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('no initial state defined');
+        $this->expectExceptionMessageIsOrContains('no initial state defined');
 
         $definition->getInitialState();
     }
@@ -90,7 +90,7 @@ final class WorkflowDefinitionTest extends TestCase
         $definition = $this->buildSimpleDefinition();
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         $definition->getState('nonexistent');
     }
@@ -126,7 +126,7 @@ final class WorkflowDefinitionTest extends TestCase
         $definition = $this->buildSimpleDefinition();
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('not valid');
+        $this->expectExceptionMessageIsOrContains('not valid');
 
         $definition->getTransition('nonexistent');
     }
@@ -230,7 +230,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('no initial state defined');
+        $this->expectExceptionMessageIsOrContains('no initial state defined');
 
         $definition->validate();
     }
@@ -249,7 +249,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('multiple initial states');
+        $this->expectExceptionMessageIsOrContains('multiple initial states');
 
         $definition->validate();
     }
@@ -267,7 +267,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('no final state defined');
+        $this->expectExceptionMessageIsOrContains('no final state defined');
 
         $definition->validate();
     }
@@ -287,7 +287,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('unknown source state');
+        $this->expectExceptionMessageIsOrContains('unknown source state');
 
         $definition->validate();
     }
@@ -307,7 +307,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('unknown target state');
+        $this->expectExceptionMessageIsOrContains('unknown target state');
 
         $definition->validate();
     }
@@ -328,7 +328,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('final state');
+        $this->expectExceptionMessageIsOrContains('final state');
 
         $definition->validate();
     }
@@ -351,7 +351,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('unreachable states detected: orphaned');
+        $this->expectExceptionMessageIsOrContains('unreachable states detected: orphaned');
 
         $definition->validate();
     }
@@ -374,7 +374,7 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('unreachable states detected');
+        $this->expectExceptionMessageIsOrContains('unreachable states detected');
 
         $definition->validate();
     }

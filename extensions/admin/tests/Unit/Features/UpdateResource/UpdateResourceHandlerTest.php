@@ -103,7 +103,7 @@ final class UpdateResourceHandlerTest extends TestCase
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Update operation not supported');
+        $this->expectExceptionMessageIsOrContains('Update operation not supported');
 
         $this->handler->execute($request);
     }

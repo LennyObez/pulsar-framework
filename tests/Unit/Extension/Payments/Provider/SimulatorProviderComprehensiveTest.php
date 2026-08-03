@@ -155,7 +155,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function captureNonExistentIntentThrows(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->provider->captureIntent('nonexistent-id', 'key-miss');
     }
@@ -176,7 +176,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function cancelNonExistentIntentThrows(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->provider->cancelIntent('nonexistent-id', 'key-miss');
     }
@@ -215,7 +215,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function refundNonExistentChargeThrows(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->provider->refund('nonexistent-charge', null, 'key-miss');
     }
@@ -292,7 +292,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function getIntentThrowsForNonExistentId(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('PaymentIntent not found');
+        $this->expectExceptionMessageIsOrContains('PaymentIntent not found');
 
         $this->provider->getIntent('does-not-exist');
     }
@@ -313,7 +313,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function getChargeThrowsForNonExistentId(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Charge not found');
+        $this->expectExceptionMessageIsOrContains('Charge not found');
 
         $this->provider->getCharge('does-not-exist');
     }
@@ -335,7 +335,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function getRefundThrowsForNonExistentId(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Refund not found');
+        $this->expectExceptionMessageIsOrContains('Refund not found');
 
         $this->provider->getRefund('does-not-exist');
     }

@@ -265,7 +265,7 @@ final class StorageIntegrationTest extends TestCase
     public function pathTraversalIsBlocked(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('path traversal');
+        $this->expectExceptionMessageIsOrContains('path traversal');
 
         $this->storage->put('../escape.txt', 'malicious');
     }
@@ -274,7 +274,7 @@ final class StorageIntegrationTest extends TestCase
     public function emptyKeyIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
 
         $this->storage->put('', 'content');
     }
@@ -283,7 +283,7 @@ final class StorageIntegrationTest extends TestCase
     public function absolutePathKeyIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('directory separator');
+        $this->expectExceptionMessageIsOrContains('directory separator');
 
         $this->storage->put('/etc/passwd', 'hack');
     }
@@ -292,7 +292,7 @@ final class StorageIntegrationTest extends TestCase
     public function backslashAbsolutePathIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('directory separator');
+        $this->expectExceptionMessageIsOrContains('directory separator');
 
         $this->storage->put('\\windows\\system', 'hack');
     }

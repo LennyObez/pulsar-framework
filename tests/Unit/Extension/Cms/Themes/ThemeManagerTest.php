@@ -93,7 +93,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->activate('nonexistent', 'admin');
     }
@@ -105,7 +105,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn($theme);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('already active');
+        $this->expectExceptionMessageIsOrContains('already active');
 
         $this->manager->activate('t1', 'admin');
     }
@@ -145,7 +145,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->deactivate('nonexistent', 'admin');
     }
@@ -157,7 +157,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn($theme);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not active');
+        $this->expectExceptionMessageIsOrContains('not active');
 
         $this->manager->deactivate('t1', 'admin');
     }
@@ -182,7 +182,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->delete('nonexistent', 'admin', 'cleanup');
     }
@@ -194,7 +194,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn($theme);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('active');
+        $this->expectExceptionMessageIsOrContains('active');
 
         $this->manager->delete('t1', 'admin', 'cleanup');
     }
@@ -218,7 +218,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->preview('nonexistent', 'user-01');
     }
@@ -244,7 +244,7 @@ final class ThemeManagerTest extends TestCase
         $this->repo->method('findAll')->willReturn([]);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('previous');
+        $this->expectExceptionMessageIsOrContains('previous');
 
         $this->manager->rollback('admin');
     }

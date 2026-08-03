@@ -69,7 +69,7 @@ final class JsonSerializerTest extends TestCase
         $serializer = new JsonSerializer($this->typeRegistry, $this->schemaRegistry);
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not registered');
+        $this->expectExceptionMessageIsOrContains('not registered');
 
         $serializer->deserialize('{}', 'App\\Jobs\\Unregistered');
     }
@@ -80,7 +80,7 @@ final class JsonSerializerTest extends TestCase
         $serializer = new JsonSerializer($this->typeRegistry, $this->schemaRegistry);
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('serialize/deserialize');
+        $this->expectExceptionMessageIsOrContains('serialize/deserialize');
 
         $serializer->deserialize('"just a string"', 'App\\Jobs\\SendEmail');
     }
@@ -117,7 +117,7 @@ final class JsonSerializerTest extends TestCase
         $serializer = new JsonSerializer($this->typeRegistry, $this->schemaRegistry);
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not compatible');
+        $this->expectExceptionMessageIsOrContains('not compatible');
 
         $serializer->deserialize('{"_schema_version":3}', 'App\\Jobs\\SendEmail');
     }
@@ -133,7 +133,7 @@ final class JsonSerializerTest extends TestCase
         $serializer = new JsonSerializer($this->typeRegistry, $this->schemaRegistry, [$transformer]);
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not compatible');
+        $this->expectExceptionMessageIsOrContains('not compatible');
 
         $serializer->deserialize('{"_schema_version":1}', 'App\\Jobs\\SendEmail');
     }

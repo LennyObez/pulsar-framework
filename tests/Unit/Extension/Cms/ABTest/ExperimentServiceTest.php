@@ -94,7 +94,7 @@ final class ExperimentServiceTest extends TestCase
         $this->repository->method('findById')->willReturn($experiment);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Cannot add variants to a non-draft experiment');
+        $this->expectExceptionMessageIsOrContains('Cannot add variants to a non-draft experiment');
         $this->service->addVariant('exp-1', 'Variant', 'content', 50);
     }
 
@@ -146,7 +146,7 @@ final class ExperimentServiceTest extends TestCase
         ]);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('at least 2 variants');
+        $this->expectExceptionMessageIsOrContains('at least 2 variants');
         $this->service->startExperiment('exp-1');
     }
 
@@ -189,7 +189,7 @@ final class ExperimentServiceTest extends TestCase
         $this->repository->method('findById')->willReturn($experiment);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Only running experiments can be stopped');
+        $this->expectExceptionMessageIsOrContains('Only running experiments can be stopped');
         $this->service->stopExperiment('exp-1');
     }
 

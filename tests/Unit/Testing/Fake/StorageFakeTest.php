@@ -123,7 +123,7 @@ final class StorageFakeTest extends TestCase
     public function assert_exists_fails_when_file_missing(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected file [missing.txt] to exist');
+        $this->expectExceptionMessageIsOrContains('Expected file [missing.txt] to exist');
 
         $this->fake->assertExists('missing.txt');
     }
@@ -148,7 +148,7 @@ final class StorageFakeTest extends TestCase
         $this->fake->put('file.txt', 'Hello');
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected file [file.txt] to have specific content');
+        $this->expectExceptionMessageIsOrContains('Expected file [file.txt] to have specific content');
 
         $this->fake->assertContent('file.txt', 'World');
     }

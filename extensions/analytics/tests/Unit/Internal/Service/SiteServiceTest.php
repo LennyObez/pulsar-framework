@@ -56,7 +56,7 @@ final class SiteServiceTest extends TestCase
         $service = new SiteService($repo);
 
         $this->expectException(AnalyticsException::class);
-        $this->expectExceptionMessage('Site with ID "nonexistent" not found');
+        $this->expectExceptionMessageIsOrContains('Site with ID "nonexistent" not found');
 
         $service->update('nonexistent', 'example.com', 'Example', 'UTC');
     }

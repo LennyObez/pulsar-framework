@@ -69,7 +69,7 @@ final class PathValidatorTest extends TestCase
         $validator = new PathValidator('/project');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('directory traversal');
+        $this->expectExceptionMessageIsOrContains('directory traversal');
 
         $validator->validate('/project/src/../../../etc/passwd');
     }
@@ -80,7 +80,7 @@ final class PathValidatorTest extends TestCase
         $validator = new PathValidator('/project');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('outside allowed directories');
+        $this->expectExceptionMessageIsOrContains('outside allowed directories');
 
         $validator->validate('/project/vendor/package/file.php');
     }
@@ -91,7 +91,7 @@ final class PathValidatorTest extends TestCase
         $validator = new PathValidator('/project');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('outside allowed directories');
+        $this->expectExceptionMessageIsOrContains('outside allowed directories');
 
         $validator->validate('/other/project/src/file.php');
     }

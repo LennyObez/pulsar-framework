@@ -21,7 +21,7 @@ final class SnapshotCaptureTest extends TestCase
     public function captureRefusesWithEmptyFields(): void
     {
         $this->expectException(ComplianceException::class);
-        $this->expectExceptionMessage('Snapshot capture refused: no fields provided');
+        $this->expectExceptionMessageIsOrContains('Snapshot capture refused: no fields provided');
 
         (void) SnapshotCapture::capture('User', 'u-1');
     }

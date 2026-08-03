@@ -137,7 +137,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('No credentials found for the user');
+        $this->expectExceptionMessageIsOrContains('No credentials found for the user');
 
         $ceremony->generateOptions('user-empty');
     }
@@ -195,7 +195,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('credential is not registered');
+        $this->expectExceptionMessageIsOrContains('credential is not registered');
 
         $ceremony->verify($credential, 'challenge');
     }
@@ -227,7 +227,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('does not belong to the expected user');
+        $this->expectExceptionMessageIsOrContains('does not belong to the expected user');
 
         $ceremony->verify($credential, 'challenge', 'user-B');
     }
@@ -259,7 +259,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Invalid client data JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid client data JSON');
 
         $ceremony->verify($credential, 'challenge', 'user-1');
     }
@@ -297,7 +297,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage("Expected type 'webauthn.get'");
+        $this->expectExceptionMessageIsOrContains("Expected type 'webauthn.get'");
 
         $ceremony->verify($credential, 'test-challenge', 'user-1');
     }
@@ -335,7 +335,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('challenge');
+        $this->expectExceptionMessageIsOrContains('challenge');
 
         $ceremony->verify($credential, 'expected-challenge', 'user-1');
     }
@@ -374,7 +374,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Origin mismatch');
+        $this->expectExceptionMessageIsOrContains('Origin mismatch');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -415,7 +415,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Authenticator data too short');
+        $this->expectExceptionMessageIsOrContains('Authenticator data too short');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -457,7 +457,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('RP ID hash mismatch');
+        $this->expectExceptionMessageIsOrContains('RP ID hash mismatch');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -499,7 +499,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User presence flag not set');
+        $this->expectExceptionMessageIsOrContains('User presence flag not set');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -545,7 +545,7 @@ final class AuthenticationCeremonyTest extends TestCase
         $ceremony = new AuthenticationCeremony($config, $credentialRepository, $this->auditLogger);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User verification required but not performed');
+        $this->expectExceptionMessageIsOrContains('User verification required but not performed');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -595,7 +595,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('clone detected');
+        $this->expectExceptionMessageIsOrContains('clone detected');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -639,7 +639,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('clone detected');
+        $this->expectExceptionMessageIsOrContains('clone detected');
 
         $ceremony->verify($credential, $challenge, 'user-1');
     }
@@ -755,7 +755,7 @@ final class AuthenticationCeremonyTest extends TestCase
 
         // Will fail at clientData validation, but the credential lookup should use 'id' field
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Invalid client data JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid client data JSON');
 
         $ceremony->verify($credential, 'challenge', 'user-1');
     }
@@ -831,7 +831,7 @@ final class AuthenticationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User handle does not match credential owner');
+        $this->expectExceptionMessageIsOrContains('User handle does not match credential owner');
 
         // Null expectedUserId = discoverable flow, userHandle will be checked
         $ceremony->verify($credential, $challenge, null);

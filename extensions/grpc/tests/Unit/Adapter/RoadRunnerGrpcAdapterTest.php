@@ -42,7 +42,7 @@ final class RoadRunnerGrpcAdapterTest extends TestCase
         }
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('RoadRunner gRPC worker is not available');
+        $this->expectExceptionMessageIsOrContains('RoadRunner gRPC worker is not available');
 
         $adapter->listen('0.0.0.0', 50051, $handler);
     }

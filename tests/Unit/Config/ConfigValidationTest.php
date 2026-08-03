@@ -70,8 +70,8 @@ final class ConfigValidationTest extends TestCase
 
         // Assert
         $this->expectException(MissingConfigException::class);
-        $this->expectExceptionMessage('config/app.php');
-        $this->expectExceptionMessage('pulsar new:config');
+        $this->expectExceptionMessageIsOrContains('config/app.php');
+        $this->expectExceptionMessageIsOrContains('pulsar new:config');
 
         // Act
         $manager->validateRequiredConfigs();
@@ -88,7 +88,7 @@ final class ConfigValidationTest extends TestCase
 
         // Assert
         $this->expectException(MissingConfigException::class);
-        $this->expectExceptionMessage('config/security.php');
+        $this->expectExceptionMessageIsOrContains('config/security.php');
 
         // Act
         $manager->validateRequiredConfigs();
@@ -105,7 +105,7 @@ final class ConfigValidationTest extends TestCase
 
         // Assert
         $this->expectException(MissingConfigException::class);
-        $this->expectExceptionMessage('config/observability.php');
+        $this->expectExceptionMessageIsOrContains('config/observability.php');
 
         // Act
         $manager->validateRequiredConfigs();
@@ -119,9 +119,9 @@ final class ConfigValidationTest extends TestCase
 
         // Assert
         $this->expectException(MissingConfigException::class);
-        $this->expectExceptionMessage('config/app.php');
-        $this->expectExceptionMessage('config/security.php');
-        $this->expectExceptionMessage('config/observability.php');
+        $this->expectExceptionMessageIsOrContains('config/app.php');
+        $this->expectExceptionMessageIsOrContains('config/security.php');
+        $this->expectExceptionMessageIsOrContains('config/observability.php');
 
         // Act
         $manager->validateRequiredConfigs();
@@ -137,7 +137,7 @@ final class ConfigValidationTest extends TestCase
 
         // Assert
         $this->expectException(MissingConfigException::class);
-        $this->expectExceptionMessage('config/custom-b.php');
+        $this->expectExceptionMessageIsOrContains('config/custom-b.php');
 
         // Act
         $manager->validateRequiredConfigs(['custom-a', 'custom-b']);

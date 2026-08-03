@@ -52,7 +52,7 @@ final class PublishingStateMachineTest extends TestCase
         $content = Content::create('c1', ContentType::Article, 'a1');
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'draft' to 'archived'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'draft' to 'archived'");
 
         $sm->transition($content, PublishingStatus::Archived);
     }

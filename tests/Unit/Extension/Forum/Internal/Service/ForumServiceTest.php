@@ -122,7 +122,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService(categories: $categories);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Category not found');
+        $this->expectExceptionMessageIsOrContains('Category not found');
 
         $service->createThread('cat-999', 'author-1', 'Title', 'slug', ThreadType::Discussion, 'body', '<p>body</p>', 'ip', 'ua');
     }
@@ -139,7 +139,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService(categories: $categories);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Category is locked');
+        $this->expectExceptionMessageIsOrContains('Category is locked');
 
         $service->createThread('cat-1', 'author-1', 'Title', 'slug', ThreadType::Discussion, 'body', '<p>body</p>', 'ip', 'ua');
     }
@@ -192,7 +192,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Thread not found');
+        $this->expectExceptionMessageIsOrContains('Thread not found');
 
         $service->createPost('missing', 'author-1', 'body', '<p>body</p>', 'ip', 'ua');
     }
@@ -217,7 +217,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('locked');
+        $this->expectExceptionMessageIsOrContains('locked');
 
         $service->createPost('thread-1', 'author-2', 'body', '<p>body</p>', 'ip', 'ua');
     }
@@ -258,7 +258,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Post not found');
+        $this->expectExceptionMessageIsOrContains('Post not found');
 
         $service->editPost('missing', 'body', '<p>body</p>', 'user-1');
     }
@@ -281,7 +281,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Unauthorized');
+        $this->expectExceptionMessageIsOrContains('Unauthorized');
 
         $service->editPost('post-1', 'New body', '<p>New body</p>', 'other-user');
     }
@@ -351,7 +351,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Post not found');
+        $this->expectExceptionMessageIsOrContains('Post not found');
 
         $service->deletePost('missing', 'author-1');
     }
@@ -446,7 +446,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Thread not found');
+        $this->expectExceptionMessageIsOrContains('Thread not found');
 
         $service->acceptSolution('missing', 'post-1');
     }
@@ -471,7 +471,7 @@ final class ForumServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Post not found');
+        $this->expectExceptionMessageIsOrContains('Post not found');
 
         $service->acceptSolution('thread-1', 'missing');
     }

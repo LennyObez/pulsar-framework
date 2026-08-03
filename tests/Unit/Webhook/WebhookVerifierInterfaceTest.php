@@ -48,7 +48,7 @@ final class WebhookVerifierInterfaceTest extends TestCase
         };
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
         $verifier->verify('tampered', 'v1=bad', 'secret', 300);
     }
 
@@ -67,7 +67,7 @@ final class WebhookVerifierInterfaceTest extends TestCase
         };
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
         $verifier->verify('payload', 'sig', 'secret', 300);
     }
 
@@ -116,7 +116,7 @@ final class WebhookVerifierInterfaceTest extends TestCase
         };
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('Malformed');
+        $this->expectExceptionMessageIsOrContains('Malformed');
         $verifier->verify('payload', 'bad-header', 'secret', 300);
     }
 }

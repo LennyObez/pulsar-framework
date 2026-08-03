@@ -23,7 +23,7 @@ final class SagaContainerGuardTest extends TestCase
         $guard = new SagaContainerGuard(enabled: true);
 
         $this->expectException(ForbiddenInjectionException::class);
-        $this->expectExceptionMessage('IntegrationEventBusPort');
+        $this->expectExceptionMessageIsOrContains('IntegrationEventBusPort');
 
         $guard->assertAllowed(IntegrationEventBusPort::class, 'App\\Saga\\Step\\ChargePaymentHandler');
     }

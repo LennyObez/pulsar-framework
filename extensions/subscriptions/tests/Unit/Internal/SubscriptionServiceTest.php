@@ -121,7 +121,7 @@ final class SubscriptionServiceTest extends TestCase
         $service = new SubscriptionService($verifier, $subscriptionRepo, $webhookRepo, $logger);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Purchase verification failed');
+        $this->expectExceptionMessageIsOrContains('Purchase verification failed');
 
         $service->verifyAndSave('user-1', Store::Apple, 'bad-token', 'plan');
     }

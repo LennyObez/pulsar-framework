@@ -125,7 +125,7 @@ final class JsonStreamReaderTest extends TestCase
         file_put_contents($this->tempFile, '{"key": "value"}');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Expected JSON array');
+        $this->expectExceptionMessageIsOrContains('Expected JSON array');
 
         iterator_to_array($this->reader->readArray($this->tempFile));
     }
@@ -137,7 +137,7 @@ final class JsonStreamReaderTest extends TestCase
         file_put_contents($this->tempFile, "[$nested]");
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('nesting exceeds maximum depth');
+        $this->expectExceptionMessageIsOrContains('nesting exceeds maximum depth');
 
         iterator_to_array($this->reader->readArray($this->tempFile, maxDepth: 3));
     }

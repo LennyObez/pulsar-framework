@@ -132,7 +132,7 @@ final class ExtensionLoaderTest extends TestCase
         ]);
 
         $this->expectException(DependencyException::class);
-        $this->expectExceptionMessage('Circular dependency');
+        $this->expectExceptionMessageIsOrContains('Circular dependency');
 
         $this->loader->resolveDependencies([$manifestA, $manifestB]);
     }

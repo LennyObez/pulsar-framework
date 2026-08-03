@@ -62,7 +62,7 @@ final class DeviceServiceTest extends TestCase
         $this->repository->method('countByUser')->willReturn(3);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Device limit reached');
+        $this->expectExceptionMessageIsOrContains('Device limit reached');
 
         $this->service->register('u1', 'Phone', Platform::iOS, '1.0');
     }
@@ -97,7 +97,7 @@ final class DeviceServiceTest extends TestCase
         $this->repository->method('findById')->willReturn(null);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->rotateToken('nonexistent', 'u1');
     }
@@ -109,7 +109,7 @@ final class DeviceServiceTest extends TestCase
         $this->repository->method('findById')->willReturn($device);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('does not belong to user');
+        $this->expectExceptionMessageIsOrContains('does not belong to user');
 
         $this->service->rotateToken($device->id, 'u2');
     }

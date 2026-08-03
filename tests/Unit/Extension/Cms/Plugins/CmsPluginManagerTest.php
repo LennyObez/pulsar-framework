@@ -58,7 +58,7 @@ final class CmsPluginManagerTest extends TestCase
     public function enableThrowsWhenPluginNotFound(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->enable('nonexistent', 'admin');
     }
@@ -70,7 +70,7 @@ final class CmsPluginManagerTest extends TestCase
         $this->repository->save($plugin);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('already enabled');
+        $this->expectExceptionMessageIsOrContains('already enabled');
 
         $this->manager->enable('p1', 'admin');
     }
@@ -92,7 +92,7 @@ final class CmsPluginManagerTest extends TestCase
     public function disableThrowsWhenPluginNotFound(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->disable('nonexistent', 'admin');
     }
@@ -104,7 +104,7 @@ final class CmsPluginManagerTest extends TestCase
         $this->repository->save($plugin);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not enabled');
+        $this->expectExceptionMessageIsOrContains('not enabled');
 
         $this->manager->disable('p1', 'admin');
     }
@@ -125,7 +125,7 @@ final class CmsPluginManagerTest extends TestCase
     public function deleteThrowsWhenPluginNotFound(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->manager->delete('nonexistent', 'admin', 'cleanup');
     }
@@ -137,7 +137,7 @@ final class CmsPluginManagerTest extends TestCase
         $this->repository->save($plugin);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('enabled plugin');
+        $this->expectExceptionMessageIsOrContains('enabled plugin');
 
         $this->manager->delete('p1', 'admin', 'cleanup');
     }

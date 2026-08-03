@@ -77,7 +77,7 @@ final class KlarnaGatewayTest extends TestCase
     public function createIntentRejectsUnsupportedCurrency(): void
     {
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('does not support currency: JPY');
+        $this->expectExceptionMessageIsOrContains('does not support currency: JPY');
 
         $this->gateway->createIntent(Money::of(10000, Currency::JPY), 'key');
     }
@@ -134,7 +134,7 @@ final class KlarnaGatewayTest extends TestCase
         );
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('Stripe secret key');
+        $this->expectExceptionMessageIsOrContains('Stripe secret key');
 
         $gateway->createIntent(Money::of(1000, Currency::EUR), 'key');
     }

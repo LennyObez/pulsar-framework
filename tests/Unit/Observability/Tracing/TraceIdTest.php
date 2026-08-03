@@ -37,7 +37,7 @@ final class TraceIdTest extends TestCase
     public function rejectsInvalidTraceId(): void
     {
         $this->expectException(TracingException::class);
-        $this->expectExceptionMessage('Invalid trace ID');
+        $this->expectExceptionMessageIsOrContains('Invalid trace ID');
 
         new TraceId('not-valid');
     }

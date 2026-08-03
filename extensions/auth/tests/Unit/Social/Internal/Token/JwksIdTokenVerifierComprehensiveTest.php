@@ -116,7 +116,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $verifier = new JwksIdTokenVerifier($this->fetcher, $this->driver);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('three segments');
+        $this->expectExceptionMessageIsOrContains('three segments');
 
         $verifier->verify('only-one-segment', $this->makeContext());
     }
@@ -127,7 +127,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $verifier = new JwksIdTokenVerifier($this->fetcher, $this->driver);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('three segments');
+        $this->expectExceptionMessageIsOrContains('three segments');
 
         $verifier->verify('a.b.c.d', $this->makeContext());
     }
@@ -138,7 +138,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $verifier = new JwksIdTokenVerifier($this->fetcher, $this->driver);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('three segments');
+        $this->expectExceptionMessageIsOrContains('three segments');
 
         $verifier->verify('', $this->makeContext());
     }
@@ -158,7 +158,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $headerB64 . '.' . $payloadB64 . '.' . $sigB64;
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('missing algorithm');
+        $this->expectExceptionMessageIsOrContains('missing algorithm');
 
         $verifier->verify($token, $this->makeContext());
     }
@@ -227,7 +227,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
 
         $verifier->verify($token, $context);
     }
@@ -266,7 +266,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('future');
+        $this->expectExceptionMessageIsOrContains('future');
 
         $verifier->verify($token, $context);
     }
@@ -285,7 +285,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
 
         $verifier->verify($token, $context);
     }
@@ -306,7 +306,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('azp');
+        $this->expectExceptionMessageIsOrContains('azp');
 
         $verifier->verify($token, $context);
     }
@@ -344,7 +344,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('nonce');
+        $this->expectExceptionMessageIsOrContains('nonce');
 
         $verifier->verify($token, $context);
     }
@@ -385,7 +385,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $headerB64 . '.' . $payloadB64 . '.' . $sigB64;
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('not a valid JSON object');
+        $this->expectExceptionMessageIsOrContains('not a valid JSON object');
 
         $verifier->verify($token, $this->makeContext());
     }
@@ -407,7 +407,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $headerB64 . '.' . $payloadB64 . '.' . $sigB64;
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"sub"');
+        $this->expectExceptionMessageIsOrContains('"sub"');
 
         $verifier->verify($token, $this->makeContext());
     }
@@ -449,7 +449,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"sub"');
+        $this->expectExceptionMessageIsOrContains('"sub"');
 
         $verifier->verify($token, $this->makeContext());
     }
@@ -466,7 +466,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
 
         $this->expectException(SsoException::class);
-        $this->expectExceptionMessage('"iss"');
+        $this->expectExceptionMessageIsOrContains('"iss"');
 
         $verifier->verify($token, $this->makeContext());
     }

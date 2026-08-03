@@ -129,7 +129,7 @@ final class DbContentRepositoryFindByIdsTest extends TestCase
         $this->connection->expects(self::never())->method('query');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid UUID in findByIds: not-a-uuid');
+        $this->expectExceptionMessageIsOrContains('Invalid UUID in findByIds: not-a-uuid');
 
         $this->repository->findByIds([$validUuid, $invalidId]);
     }

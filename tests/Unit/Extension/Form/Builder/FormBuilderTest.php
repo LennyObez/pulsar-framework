@@ -54,7 +54,7 @@ final class FormBuilderTest extends TestCase
     public function it_throws_when_id_is_missing(): void
     {
         $this->expectException(FormException::class);
-        $this->expectExceptionMessage('Form ID is required');
+        $this->expectExceptionMessageIsOrContains('Form ID is required');
 
         $this->builder
             ->action('/submit')
@@ -101,7 +101,7 @@ final class FormBuilderTest extends TestCase
         $builder = new FormBuilder($config, new Validator());
 
         $this->expectException(UploadException::class);
-        $this->expectExceptionMessage('AntivirusPort must be configured');
+        $this->expectExceptionMessageIsOrContains('AntivirusPort must be configured');
 
         $builder
             ->id('upload-form')
@@ -134,7 +134,7 @@ final class FormBuilderTest extends TestCase
         $form->submit(['x' => 'val']);
 
         $this->expectException(FormException::class);
-        $this->expectExceptionMessage('already been submitted');
+        $this->expectExceptionMessageIsOrContains('already been submitted');
         $form->submit(['x' => 'val2']);
     }
 

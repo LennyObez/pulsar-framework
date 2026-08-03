@@ -119,7 +119,7 @@ final class CircuitBreakerCoverageTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('primary-failed');
+        $this->expectExceptionMessageIsOrContains('primary-failed');
 
         $breaker->executeWithFallback(
             fn(): never => throw new RuntimeException('primary-failed'),

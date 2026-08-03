@@ -83,7 +83,7 @@ final class BidirectionalStreamTest extends TestCase
         $stream->close();
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Cannot write to a closed stream.');
+        $this->expectExceptionMessageIsOrContains('Cannot write to a closed stream.');
 
         $stream->write('should-fail');
     }

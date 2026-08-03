@@ -57,7 +57,7 @@ final class IdealGatewayTest extends TestCase
     public function createIntentRejectsNonEurCurrency(): void
     {
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('only supports EUR');
+        $this->expectExceptionMessageIsOrContains('only supports EUR');
 
         $this->gateway->createIntent(Money::of(1000, Currency::USD), 'key');
     }
@@ -73,7 +73,7 @@ final class IdealGatewayTest extends TestCase
         );
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('Stripe secret key');
+        $this->expectExceptionMessageIsOrContains('Stripe secret key');
 
         $gateway->createIntent(Money::of(1000, Currency::EUR), 'key');
     }

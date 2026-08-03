@@ -53,7 +53,7 @@ final class AbstractGeneratorTest extends TestCase
         $config = new GeneratorConfig('/project/src');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('outside allowed directories');
+        $this->expectExceptionMessageIsOrContains('outside allowed directories');
 
         $generator->generate($entity, $config);
     }
@@ -73,7 +73,7 @@ final class AbstractGeneratorTest extends TestCase
         $config = new GeneratorConfig($projectRoot);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('overwrite policy is Fail');
+        $this->expectExceptionMessageIsOrContains('overwrite policy is Fail');
 
         $generator->generate($entity, $config);
     }

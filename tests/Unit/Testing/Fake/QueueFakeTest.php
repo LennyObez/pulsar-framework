@@ -118,7 +118,7 @@ final class QueueFakeTest extends TestCase
     public function assert_pushed_fails_when_missing(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected job [App\Jobs\SendEmail] to be pushed');
+        $this->expectExceptionMessageIsOrContains('Expected job [App\Jobs\SendEmail] to be pushed');
 
         $this->fake->assertPushed('App\Jobs\SendEmail');
     }
@@ -146,7 +146,7 @@ final class QueueFakeTest extends TestCase
         $this->fake->push('default', 'App\Jobs\Notify', '{}');
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('pushed on queue [notifications]');
+        $this->expectExceptionMessageIsOrContains('pushed on queue [notifications]');
 
         $this->fake->assertPushedOn('notifications', 'App\Jobs\Notify');
     }

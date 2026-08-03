@@ -82,7 +82,7 @@ final class PciDssComplianceTest extends TestCase
     public function assert_no_pan_throws_for_raw_card_in_data(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('PCI-DSS violation');
+        $this->expectExceptionMessageIsOrContains('PCI-DSS violation');
 
         PciDssCompliance::assertNoPan([
             'name' => 'Jane Doe',
@@ -94,7 +94,7 @@ final class PciDssComplianceTest extends TestCase
     public function assert_no_pan_checks_nested_arrays(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('PCI-DSS violation');
+        $this->expectExceptionMessageIsOrContains('PCI-DSS violation');
 
         PciDssCompliance::assertNoPan([
             'billing' => [

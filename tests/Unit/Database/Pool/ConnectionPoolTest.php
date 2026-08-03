@@ -128,7 +128,7 @@ final class ConnectionPoolTest extends TestCase
         $conn = $pool->checkout();
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Connection pool exhausted (max: 1)');
+        $this->expectExceptionMessageIsOrContains('Connection pool exhausted (max: 1)');
 
         $pool->checkout();
     }

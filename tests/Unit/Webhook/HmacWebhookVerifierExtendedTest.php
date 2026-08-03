@@ -50,7 +50,7 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $oldTimestamp, $signature);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
 
         $verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -70,7 +70,7 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $now->getTimestamp(), str_repeat('0', 64));
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature');
+        $this->expectExceptionMessageIsOrContains('signature');
 
         $verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -81,7 +81,7 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $verifier = new HmacWebhookVerifier();
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('empty header');
+        $this->expectExceptionMessageIsOrContains('empty header');
 
         $verifier->verify('payload', '', self::SECRET, 300);
     }
@@ -92,7 +92,7 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $verifier = new HmacWebhookVerifier();
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('missing timestamp');
+        $this->expectExceptionMessageIsOrContains('missing timestamp');
 
         $verifier->verify('payload', 'v1=abc123', self::SECRET, 300);
     }
@@ -103,7 +103,7 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $verifier = new HmacWebhookVerifier();
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('no v1 signatures');
+        $this->expectExceptionMessageIsOrContains('no v1 signatures');
 
         $verifier->verify('payload', 't=1700000000', self::SECRET, 300);
     }
@@ -139,7 +139,7 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $verifier = new HmacWebhookVerifier(new DateTimeImmutable('@1700000000'));
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage($expectedMessagePart);
+        $this->expectExceptionMessageIsOrContains($expectedMessagePart);
 
         $verifier->verify('payload', $header, self::SECRET, 300);
     }

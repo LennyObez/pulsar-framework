@@ -133,7 +133,7 @@ final class DatabaseConfigTest extends TestCase
         ], $env);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Database connection "unknown" is not configured');
+        $this->expectExceptionMessageIsOrContains('Database connection "unknown" is not configured');
 
         $config->connection('unknown');
     }

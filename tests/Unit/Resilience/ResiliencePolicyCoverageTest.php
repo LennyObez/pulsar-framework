@@ -78,7 +78,7 @@ final class ResiliencePolicyCoverageTest extends TestCase
             ->withCircuitBreaker($cb);
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Circuit breaker');
+        $this->expectExceptionMessageIsOrContains('Circuit breaker');
 
         $policy->execute(fn(): string => 'should not run');
     }
@@ -146,7 +146,7 @@ final class ResiliencePolicyCoverageTest extends TestCase
         $policy = ResiliencePolicy::create()->withRetry($retry);
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Retry exhausted');
+        $this->expectExceptionMessageIsOrContains('Retry exhausted');
 
         try {
             $policy->execute(static function (): never {

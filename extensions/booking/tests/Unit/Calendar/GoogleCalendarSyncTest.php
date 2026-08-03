@@ -150,7 +150,7 @@ final class GoogleCalendarSyncTest extends TestCase
         $appointment = $this->makeAppointment();
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('not configured');
+        $this->expectExceptionMessageIsOrContains('not configured');
 
         $sync->createEvent($appointment);
     }
@@ -174,7 +174,7 @@ final class GoogleCalendarSyncTest extends TestCase
         $this->expectException(BookingException::class);
         // A nonexistent path fails the is_file/is_readable guard; the "Cannot
         // read" message is only for a readable file whose contents fail to load.
-        $this->expectExceptionMessage('missing or not readable');
+        $this->expectExceptionMessageIsOrContains('missing or not readable');
 
         $sync->createEvent($appointment);
     }

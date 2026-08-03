@@ -57,7 +57,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnAssociativeServices(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.services');
+        $this->expectExceptionMessageIsOrContains('provides.services');
 
         $_ = ProvidesConfig::fromArray([
             'services' => ['key' => 'value'],
@@ -68,7 +68,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnAssociativeCommands(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.commands');
+        $this->expectExceptionMessageIsOrContains('provides.commands');
 
         $_ = ProvidesConfig::fromArray([
             'commands' => ['key' => 'value'],
@@ -79,7 +79,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnAssociativeMiddleware(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.middleware');
+        $this->expectExceptionMessageIsOrContains('provides.middleware');
 
         $_ = ProvidesConfig::fromArray([
             'middleware' => ['key' => 'value'],
@@ -208,7 +208,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnNonArrayMigrations(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.migrations');
+        $this->expectExceptionMessageIsOrContains('provides.migrations');
 
         $_ = ProvidesConfig::fromArray([
             'migrations' => 'not-an-array',
@@ -219,7 +219,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnAssociativeMigrations(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.migrations');
+        $this->expectExceptionMessageIsOrContains('provides.migrations');
 
         $_ = ProvidesConfig::fromArray([
             'migrations' => ['key' => 'value'],

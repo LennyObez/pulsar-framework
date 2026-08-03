@@ -49,7 +49,7 @@ final class SignalRetentionPolicyTest extends TestCase
     public function rejects_negative_retention(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('retention');
+        $this->expectExceptionMessageIsOrContains('retention');
 
         new SignalRetentionPolicy(
             source: ClaimSource::DeviceSignal,

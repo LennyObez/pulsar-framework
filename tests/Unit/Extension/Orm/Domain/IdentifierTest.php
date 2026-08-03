@@ -50,7 +50,7 @@ final class IdentifierTest extends TestCase
     public function fromRejectsEmptyString(): void
     {
         $this->expectException(QueryBuilderException::class);
-        $this->expectExceptionMessage('Invalid SQL identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid SQL identifier');
 
         $_ = Identifier::from('');
     }

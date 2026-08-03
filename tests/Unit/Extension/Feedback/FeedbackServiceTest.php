@@ -55,7 +55,7 @@ final class FeedbackServiceTest extends TestCase
         $this->repo->method('countByUserToday')->willReturn(0);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('between 10 and 5000');
+        $this->expectExceptionMessageIsOrContains('between 10 and 5000');
 
         $this->service->submit('user-001', FeedbackCategory::Bug, 'Short', []);
     }
@@ -66,7 +66,7 @@ final class FeedbackServiceTest extends TestCase
         $this->repo->method('countByUserToday')->willReturn(0);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('between 10 and 5000');
+        $this->expectExceptionMessageIsOrContains('between 10 and 5000');
 
         $this->service->submit('user-001', FeedbackCategory::Bug, str_repeat('a', 5001), []);
     }
@@ -103,7 +103,7 @@ final class FeedbackServiceTest extends TestCase
         $this->repo->method('countByUserToday')->willReturn(10);
 
         $this->expectException(OverflowException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Rate limit exceeded');
 
         $this->service->submit(
             'user-001',

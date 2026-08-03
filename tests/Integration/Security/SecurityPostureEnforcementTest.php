@@ -88,7 +88,7 @@ final class SecurityPostureEnforcementTest extends TestCase
         putenv('PULSAR_SECURITY_POSTURE_ENFORCE=true');
 
         $this->expectException(SecurityPostureException::class);
-        $this->expectExceptionMessage('debug_mode');
+        $this->expectExceptionMessageIsOrContains('debug_mode');
 
         $this->kernel()->boot();
     }

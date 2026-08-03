@@ -111,7 +111,7 @@ final class ValidationCompilerTest extends TestCase
     public function rejectsPathWithTraversalSequence(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('traversal');
+        $this->expectExceptionMessageIsOrContains('traversal');
 
         new CompiledValidationMap('/some/../path/artifact.php');
     }
@@ -120,7 +120,7 @@ final class ValidationCompilerTest extends TestCase
     public function rejectsPathWithoutPhpExtension(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('.php');
+        $this->expectExceptionMessageIsOrContains('.php');
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'val_') . '.txt';
         file_put_contents($tmpFile, '<?php return [];');

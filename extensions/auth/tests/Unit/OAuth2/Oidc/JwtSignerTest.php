@@ -103,7 +103,7 @@ final class JwtSignerTest extends TestCase
     public function signThrowsForUnknownKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Signing key 'nonexistent' not found");
+        $this->expectExceptionMessageIsOrContains("Signing key 'nonexistent' not found");
 
         $this->signer->sign(['sub' => 'user'], 'nonexistent');
     }

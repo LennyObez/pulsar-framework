@@ -72,7 +72,7 @@ final class SiteDefinitionTest extends TestCase
     public function rejectsInvalidJson(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         SiteDefinition::fromJson('{not valid json');
     }
@@ -85,7 +85,7 @@ final class SiteDefinitionTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing required keys');
+        $this->expectExceptionMessageIsOrContains('Missing required keys');
 
         SiteDefinition::fromJson($json);
     }
@@ -99,7 +99,7 @@ final class SiteDefinitionTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported site definition version');
+        $this->expectExceptionMessageIsOrContains('Unsupported site definition version');
 
         SiteDefinition::fromJson($json);
     }

@@ -29,7 +29,7 @@ final class ImportRequestTest extends TestCase
     public function rejectsEmptyContent(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Import content must not be empty');
+        $this->expectExceptionMessageIsOrContains('Import content must not be empty');
 
         new ImportRequest(content: '');
     }
@@ -38,7 +38,7 @@ final class ImportRequestTest extends TestCase
     public function rejectsInvalidFormat(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid import format 'toml'");
+        $this->expectExceptionMessageIsOrContains("Invalid import format 'toml'");
 
         new ImportRequest(content: 'data', format: 'toml');
     }

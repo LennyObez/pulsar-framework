@@ -147,7 +147,7 @@ final class InstrumentedQueueDriverTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Queue full');
+        $this->expectExceptionMessageIsOrContains('Queue full');
 
         try {
             $driver->push('queue', 'Job', '{}');

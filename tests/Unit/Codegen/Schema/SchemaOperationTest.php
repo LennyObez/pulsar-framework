@@ -89,7 +89,7 @@ final class SchemaOperationTest extends TestCase
     public function fromArrayThrowsCatchableExceptionForUnknownType(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid schema operation type "not_a_real_op"');
+        $this->expectExceptionMessageIsOrContains('Invalid schema operation type "not_a_real_op"');
 
         (void) SchemaOperation::fromArray([
             'type' => 'not_a_real_op',

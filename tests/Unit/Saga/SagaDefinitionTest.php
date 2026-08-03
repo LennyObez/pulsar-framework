@@ -86,7 +86,7 @@ final class SagaDefinitionTest extends TestCase
         );
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('step not found in definition');
+        $this->expectExceptionMessageIsOrContains('step not found in definition');
 
         $definition->getStep('nonexistent');
     }
@@ -112,7 +112,7 @@ final class SagaDefinitionTest extends TestCase
         );
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('step index out of bounds');
+        $this->expectExceptionMessageIsOrContains('step index out of bounds');
 
         $definition->getStepAtIndex(5);
     }
@@ -150,7 +150,7 @@ final class SagaDefinitionTest extends TestCase
         $definition = new SagaDefinition(name: 'empty_saga', steps: []);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('has no steps defined');
+        $this->expectExceptionMessageIsOrContains('has no steps defined');
 
         $definition->validate();
     }

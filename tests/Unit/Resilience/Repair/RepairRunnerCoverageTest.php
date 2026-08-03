@@ -118,7 +118,7 @@ final class RepairRunnerCoverageTest extends TestCase
         $runner = new RepairRunner();
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('not registered');
+        $this->expectExceptionMessageIsOrContains('not registered');
 
         $runner->repair('unknown-job');
     }

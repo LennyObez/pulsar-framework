@@ -52,7 +52,7 @@ final class IgbinaryCacheSerializerTest extends TestCase
     public function rejectsTopLevelObjectsOnSerialize(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('scalars and arrays only');
+        $this->expectExceptionMessageIsOrContains('scalars and arrays only');
 
         $this->serializer->serialize(new stdClass());
     }
@@ -78,7 +78,7 @@ final class IgbinaryCacheSerializerTest extends TestCase
         self::assertIsString($foreign);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('data-only');
+        $this->expectExceptionMessageIsOrContains('data-only');
 
         $this->serializer->deserialize($foreign);
     }

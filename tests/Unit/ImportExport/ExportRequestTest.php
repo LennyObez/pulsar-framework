@@ -48,7 +48,7 @@ final class ExportRequestTest extends TestCase
     public function rejectsInvalidFormat(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid export format 'yaml'");
+        $this->expectExceptionMessageIsOrContains("Invalid export format 'yaml'");
 
         new ExportRequest(format: 'yaml');
     }
