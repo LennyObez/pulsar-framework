@@ -66,7 +66,6 @@ final readonly class UserBan
     /**
      * Revoke this ban, marking it as no longer active.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function revoke(): self
     {

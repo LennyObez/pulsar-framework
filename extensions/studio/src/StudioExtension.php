@@ -45,7 +45,6 @@ use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
 use Pulsar\Extension\Studio\Internal\StudioModuleRegistry;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\FeatureFlag\FlagEvaluationLogInterface;
-use Pulsar\Supervisor\SupervisorInterface;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Pulsar\Observability\ErrorTracking\ErrorAggregatorInterface;
@@ -61,6 +60,7 @@ use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Supervisor\SupervisorInterface;
 use Pulsar\Tenancy\TenantContext;
 use Random\Randomizer;
 
@@ -115,7 +115,6 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
 
         // Load Studio config
         /**
-         * @psalm-suppress UnresolvableInclude Studio config path is validated by is_file() above
          * @var mixed $studioData
          */
         $studioData = require $configPath . DIRECTORY_SEPARATOR . 'studio.php';

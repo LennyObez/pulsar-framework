@@ -69,7 +69,6 @@ final readonly class ThreadReport
      * Review this report: transition to the given status with moderator details.
      *
      * @throws ForumException If the transition is invalid
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function review(
         ReportStatus $target,

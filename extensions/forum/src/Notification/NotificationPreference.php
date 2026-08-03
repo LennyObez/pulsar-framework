@@ -53,7 +53,6 @@ final readonly class NotificationPreference
     /**
      * Update delivery settings.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function update(
         bool $inApp,

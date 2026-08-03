@@ -68,7 +68,6 @@ final readonly class JobEnvelope
     /**
      * Create a new envelope with an incremented attempt number.
      */
-    /** @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement */
     #[NoDiscard]
     public function withNextAttempt(): self
     {
@@ -80,7 +79,6 @@ final readonly class JobEnvelope
      *
      * @param array<string, mixed> $metadata
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withMetadata(array $metadata): self

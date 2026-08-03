@@ -50,7 +50,6 @@ final readonly class CategoryTranslation
     /**
      * Update the translated name and description.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function update(string $name, string $description): self
     {

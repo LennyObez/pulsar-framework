@@ -251,7 +251,6 @@ final class I18nCatalogCompiler
      */
     private function extractKeysFromPhp(string $path): array
     {
-        /** @psalm-suppress UnresolvableInclude: dynamic translation file path resolved at build time */
         $data = require $path;
 
         if (!is_array($data)) {

@@ -282,7 +282,6 @@ final class ObservabilityExtension implements ExtensionInterface, PreBootExtensi
 
                 if (is_file($filePath)) {
                     /**
-                     * @psalm-suppress UnresolvableInclude
                      * @var mixed $data
                      */
                     $data = require $filePath;

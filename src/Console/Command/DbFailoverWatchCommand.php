@@ -155,10 +155,8 @@ final class DbFailoverWatchCommand extends Command
             $this->shouldStop = true;
         };
 
-        /** @psalm-suppress UndefinedConstant SIGINT/SIGTERM are POSIX-only, guarded above. */
-        $sigint = (int) SIGINT;
-        /** @psalm-suppress UndefinedConstant */
-        $sigterm = (int) SIGTERM;
+        $sigint = SIGINT;
+        $sigterm = SIGTERM;
 
         pcntl_signal($sigint, $handler);
         pcntl_signal($sigterm, $handler);

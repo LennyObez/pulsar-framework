@@ -237,12 +237,9 @@ final class RoadRunnerRuntime implements ReloadableRuntimeInterface
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant POSIX-only, guarded by OS check */
-        $sigint = (int) SIGINT;
-        /** @psalm-suppress UndefinedConstant */
-        $sigterm = (int) SIGTERM;
-        /** @psalm-suppress UndefinedConstant */
-        $sigusr1 = (int) SIGUSR1;
+        $sigint = SIGINT;
+        $sigterm = SIGTERM;
+        $sigusr1 = SIGUSR1;
 
         pcntl_signal($sigint, function (): void {
             $this->stop();

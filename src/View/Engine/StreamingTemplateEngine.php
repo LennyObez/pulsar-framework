@@ -242,7 +242,6 @@ final readonly class StreamingTemplateEngine
         ob_start();
 
         try {
-            /** @psalm-suppress UnresolvableInclude */
             include $_path_;
         } catch (Throwable $e) {
             ob_end_clean();

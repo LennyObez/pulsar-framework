@@ -118,7 +118,6 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'forum.php')) {
                 /**
-                 * @psalm-suppress UnresolvableInclude
                  * @var mixed $forumData
                  */
                 $forumData = require $configPath . DIRECTORY_SEPARATOR . 'forum.php';
