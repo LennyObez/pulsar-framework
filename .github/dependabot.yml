@@ -1,0 +1,112 @@
+# Automated dependency PROPOSALS, never automated adoption.
+#
+# The distinction is the whole design. A toolchain that updates itself in place
+# adopts a regressed or compromised release with nobody having looked — not a
+# posture a framework aimed at banking and healthcare can hold. Dependabot opens a
+# pull request instead: the full quality gate runs on it, and a human merges.
+#
+# It also closes the drift this repo actually had. Nothing proposed ordinary
+# version bumps at all; the alerts on the security tab are GitHub's automatic
+# vulnerability notices, which fire only once something is already known-bad. That
+# is detection, not maintenance.
+#
+# Updates are grouped so a week's patches arrive as one reviewable PR rather than
+# forty. Majors stay ungrouped and separate, because a major is a decision.
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # PHP — the root tree
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    commit-message:
+      prefix: build
+      prefix-development: build
+      include: scope
+    groups:
+      php-patch-and-minor:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # Three ceilings are real and documented in composer.json; a PR raising them
+      # would fail to install and waste a review each week. They are lifted by
+      # hand when upstream unblocks, not by a bot that cannot read the reason.
+      - dependency-name: jetbrains/phpstorm-stubs
+        versions: ["> 2026.1"]
+      - dependency-name: psalm/plugin-phpunit
+        versions: [">= 0.20"]
+
+  # ---------------------------------------------------------------------------
+  # PHP — the isolated analyser tree (bamarni/composer-bin-plugin)
+  #
+  # A separate directory means a separate entry: Dependabot does not discover
+  # vendor-bin/* on its own, so without this the analyser toolchain would silently
+  # never be proposed for update — the same blind spot in a different place.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: composer
+    directory: /vendor-bin/psalm
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      analyser-toolchain:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # ---------------------------------------------------------------------------
+  # JavaScript / TypeScript
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      js-patch-and-minor:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions
+  #
+  # Actions are pinned by SHA here, which is the supply-chain-correct form but
+  # also the one that rots invisibly: a pinned SHA never warns that it is two
+  # majors behind, and six of ours were still on the deprecated Node 20 runtime
+  # before anyone checked. This entry is what makes that visible weekly.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
