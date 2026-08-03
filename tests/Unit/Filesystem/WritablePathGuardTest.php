@@ -93,6 +93,35 @@ final class WritablePathGuardTest extends TestCase
         (void) WritablePathGuard::resolveState('var/../public/cache', 'cache.path');
     }
 
+    /**
+     * A webroot that is not on disk yet is still the webroot.
+     *
+     * isWithin() used to return false when the boundary could not be resolved, which
+     * callers read as "provably outside" and acted on. So a container binding public/
+     * after boot, or a deployment mid-flight, disabled the guard entirely — the one
+     * moment it matters most, since nothing has been created yet.
+     */
+    #[Test]
+    public function containmentIsDecidedEvenWhenTheWebrootDoesNotExistYet(): void
+    {
+        $absentWebroot = $this->base . DIRECTORY_SEPARATOR . 'not_created_yet';
+
+        self::assertTrue(
+            SafePath::isWithin($absentWebroot . DIRECTORY_SEPARATOR . 'cache', $absentWebroot),
+            'a path inside an unborn boundary is inside it',
+        );
+
+        self::assertFalse(
+            SafePath::isWithin($this->base . DIRECTORY_SEPARATOR . 'var', $absentWebroot),
+            'and a sibling is still outside',
+        );
+
+        self::assertFalse(
+            SafePath::isWithin($absentWebroot . '_html' . DIRECTORY_SEPARATOR . 'x', $absentWebroot),
+            'the name-prefix trap must not reopen on the textual path',
+        );
+    }
+
     #[Test]
     public function anAbsolutePathOutsideTheTreePassesUntouched(): void
     {

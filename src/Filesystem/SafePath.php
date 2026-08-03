@@ -6,16 +6,22 @@ namespace Pulsar\Filesystem;
 
 use Pulsar\Api\Api;
 
+use function array_pop;
 use function dirname;
+use function end;
 use function getcwd;
+use function implode;
 use function is_dir;
 use function is_file;
 use function preg_match;
+use function preg_split;
 use function realpath;
 use function rtrim;
 use function str_contains;
 use function str_replace;
 use function str_starts_with;
+use function strlen;
+use function substr;
 
 /**
  * Path-traversal-safe filesystem path.
@@ -168,7 +174,23 @@ final readonly class SafePath
         $boundaryReal = realpath($boundaryDir);
 
         if ($boundaryReal === false) {
-            return false;
+            // A boundary that does not exist yet is still a boundary. Containment is a
+            // property of the intended tree, not of today's filesystem: `<base>/public`
+            // is the document root whether or not the directory has been created, and a
+            // cache configured inside it is unsafe either way.
+            //
+            // Returning false here meant "provably outside", which is what callers act
+            // on — so a webroot not yet mounted (a container that binds it after boot, a
+            // deployment mid-flight) silently permitted every path. Two very different
+            // facts, "outside" and "cannot tell", shared one return value.
+            //
+            // Both sides are folded and compared textually. Mixing a realpath'd
+            // candidate with a merely-folded boundary would disagree the moment any
+            // parent is a symlink, which is the failure this class exists to prevent.
+            return self::isWithinBoundary(
+                self::foldTraversal($candidate),
+                self::foldTraversal($boundaryDir),
+            );
         }
 
         return self::verifyUnderBoundary($candidate, $boundaryReal) !== null;
@@ -181,13 +203,33 @@ final readonly class SafePath
      */
     private static function verifyUnderBoundary(string $candidate, string $boundaryReal): ?string
     {
+        // Collapse `..` before touching the filesystem. realpath() resolves `..` by
+        // walking the tree, so on POSIX it returns false when any component along the
+        // way is missing — `<base>/var/../public` fails outright while `var/` does not
+        // exist yet. The ancestor walk below then climbs past `public` entirely, lands
+        // on `<base>`, finds it outside the boundary and reports "not contained": the
+        // containment check failed OPEN, on exactly the fresh-deployment state it
+        // exists to police. Windows hid this for a year because its realpath() folds
+        // `..` lexically and never needed the directory to exist.
+        //
+        // Folding first removes that dependency. The realpath() call still runs on the
+        // result, so a symlink pointing out of the boundary is still caught on the part
+        // of the path that does exist.
+        $candidate = self::foldTraversal($candidate);
         $real = realpath($candidate);
 
         if ($real === false) {
             // Path doesn't exist yet — verify the nearest existing
             // ancestor still lives under boundaryReal.
             $ancestorReal = self::nearestExistingAncestor($candidate);
+
             if ($ancestorReal === false) {
+                // Deliberately still a refusal. This `false` carries two meanings —
+                // nothing along the path exists, and a regular file blocks it — and the
+                // second must stay rejected: <file>/sub can never be created. Deciding
+                // it lexically instead would report it containable. The boundary-missing
+                // case that needed fixing is handled in isWithin(), where the two facts
+                // are not entangled.
                 return null;
             }
             if (!self::isWithinBoundary($ancestorReal, $boundaryReal)) {
@@ -201,6 +243,51 @@ final readonly class SafePath
         }
 
         return $real;
+    }
+
+    /**
+     * Resolve `.` and `..` textually, without consulting the filesystem.
+     *
+     * Both separators are treated as one because a path assembled on Windows mixes
+     * them freely (`C:\app\var/../public`), and a `..` that would climb above the root
+     * is discarded rather than escaping it.
+     */
+    private static function foldTraversal(string $path): string
+    {
+        // Keep the root prefix aside: it is the one part that must not be folded.
+        $root = '';
+
+        if (preg_match('#^([A-Za-z]:[\\\\/]|\\\\\\\\|/)#', $path, $matches) === 1) {
+            $root = $matches[1];
+            $path = substr($path, strlen($root));
+            $root = rtrim($root, '\\/') . DIRECTORY_SEPARATOR;
+        }
+
+        $segments = [];
+
+        foreach (preg_split('#[\\\\/]+#', $path) ?: [] as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+
+            if ($segment !== '..') {
+                $segments[] = $segment;
+                continue;
+            }
+
+            // `..` past the last real segment is dropped: a relative path may legitimately
+            // start with one, and an absolute path has nowhere above its root to go.
+            if ($segments !== [] && end($segments) !== '..') {
+                array_pop($segments);
+                continue;
+            }
+
+            if ($root === '') {
+                $segments[] = '..';
+            }
+        }
+
+        return $root . implode(DIRECTORY_SEPARATOR, $segments);
     }
 
     /**
