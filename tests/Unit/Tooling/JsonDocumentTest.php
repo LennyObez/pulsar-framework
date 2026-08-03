@@ -43,7 +43,7 @@ final class JsonDocumentTest extends TestCase
         self::assertSame(0.0, $doc->floatOr('label', 0.0));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('test.name is not a string.');
+        $this->expectExceptionMessageIsOrContains('test.name is not a string.');
         $doc->string('name');
     }
 
@@ -51,7 +51,7 @@ final class JsonDocumentTest extends TestCase
     public function rejectsInvalidJson(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('composer.lock is not valid JSON');
+        $this->expectExceptionMessageIsOrContains('composer.lock is not valid JSON');
 
         JsonDocument::fromString('{not json', 'composer.lock');
     }
@@ -60,7 +60,7 @@ final class JsonDocumentTest extends TestCase
     public function rejectsAScalarDocument(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('did not decode to a JSON object or array');
+        $this->expectExceptionMessageIsOrContains('did not decode to a JSON object or array');
 
         JsonDocument::fromString('"just a string"', 'baseline.json');
     }
@@ -69,7 +69,7 @@ final class JsonDocumentTest extends TestCase
     public function rejectsAnUnreadableFile(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Could not read JSON from');
+        $this->expectExceptionMessageIsOrContains('Could not read JSON from');
 
         JsonDocument::fromFile(__DIR__ . '/does-not-exist.json');
     }
@@ -108,7 +108,7 @@ final class JsonDocumentTest extends TestCase
         $doc = JsonDocument::fromString('{"violations":[{"file":"a.php"},"oops"]}', 'baseline');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('baseline.violations[1] is not an object.');
+        $this->expectExceptionMessageIsOrContains('baseline.violations[1] is not an object.');
 
         $doc->children('violations');
     }
@@ -119,7 +119,7 @@ final class JsonDocumentTest extends TestCase
         $doc = JsonDocument::fromString('{"violations":{"a":{"file":"a.php"}}}', 'baseline');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('baseline.violations is an object, not a list of objects.');
+        $this->expectExceptionMessageIsOrContains('baseline.violations is an object, not a list of objects.');
 
         $doc->children('violations');
     }
@@ -144,7 +144,7 @@ final class JsonDocumentTest extends TestCase
         self::assertSame([], $doc->childOrEmpty('absent')->toArray());
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('clover.absent is not an object.');
+        $this->expectExceptionMessageIsOrContains('clover.absent is not an object.');
         $doc->child('absent');
     }
 
