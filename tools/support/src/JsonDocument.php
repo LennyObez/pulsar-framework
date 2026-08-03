@@ -164,6 +164,20 @@ final readonly class JsonDocument
         return is_int($value) ? $value : $default;
     }
 
+    /**
+     * An optional integer, distinguishing "absent or not a number" from a real 0.
+     *
+     * A metric that is genuinely zero and one the runtime could not report mean
+     * different things, and collapsing them into a default would print one as the
+     * other.
+     */
+    public function intOrNull(string $key): ?int
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_int($value) ? $value : null;
+    }
+
     public function floatOr(string $key, float $default): float
     {
         $value = $this->data[$key] ?? null;
