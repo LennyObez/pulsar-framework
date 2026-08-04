@@ -7,7 +7,13 @@
          executionOrder="depends,defects"
          failOnRisky="true"
          failOnWarning="true"
-         beStrictAboutOutputDuringTests="true">
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         failOnNotice="true"
+         failOnEmptyTestSuite="true"
+         beStrictAboutOutputDuringTests="true"
+         beStrictAboutChangesToGlobalState="true"
+         beStrictAboutTestsThatDoNotTestAnything="true">
     <testsuites>
         <testsuite name="Unit">
             <directory>../../tests/Unit</directory>
