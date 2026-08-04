@@ -93,6 +93,44 @@ final class DatabaseException extends RuntimeException
     }
 
     /**
+     * The work could not be undone, because the engine had already committed it.
+     *
+     * MySQL commits implicitly at every DDL statement. A rollback issued after one of
+     * those has nothing left to reverse, and reporting success would tell the caller its
+     * changes were withdrawn when they are permanent.
+     *
+     * The reason the caller was abandoning its work is attached by
+     * {@see \Pulsar\Database\PdoConnection::transaction()}, which holds it; this factory
+     * describes only what the engine did.
+     */
+    #[NoDiscard]
+    public static function rollbackImpossibleAfterImplicitCommit(): self
+    {
+        return new self(
+            'Rollback is impossible: the engine ended the transaction on its own — MySQL '
+            . 'does this at every DDL statement — so any changes it committed are permanent.',
+        );
+    }
+
+    /**
+     * The rollback itself failed.
+     *
+     * The original failure is attached rather than discarded: a rollback fault replacing
+     * it leaves the operator holding a message about savepoints and no idea what went
+     * wrong in the first place.
+     *
+     * @param Throwable $cause The failure the rollback was abandoning
+     */
+    #[NoDiscard]
+    public static function rollbackFailed(string $reason, Throwable $cause): self
+    {
+        return new self(
+            sprintf('Rollback failed (%s). The failure it was abandoning is attached.', $reason),
+            previous: $cause,
+        );
+    }
+
+    /**
      * Transaction is already finished (committed or rolled back).
      */
     #[NoDiscard]
