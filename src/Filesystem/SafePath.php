@@ -41,6 +41,28 @@ use function substr;
  * distinguish "untrusted input was malicious" from "path was
  * legitimately empty"; rejecting via a thrown exception would force
  * try/catch on every option-parse path.
+ *
+ * ## Two doors, two policies on `..` — deliberately
+ *
+ * This class answers two different questions and treats traversal differently for
+ * each. The divergence is intentional, and saying so here is the point: it was
+ * undocumented, and the seam between the two is where a fail-open lived for a
+ * release cycle.
+ *
+ * - {@see resolveUnder()} and {@see resolveUnderCwd()} take **untrusted input** — a
+ *   CLI `--path` fragment. They reject any `..` outright, before resolution. There is
+ *   no legitimate reason for a user-supplied scaffold fragment to climb, so the
+ *   cheapest correct answer is to refuse the shape rather than reason about where it
+ *   lands.
+ * - {@see isWithin()} answers **"is this configured path inside the document root?"**
+ *   for an operator's own value. `var/../public/cache` is a perfectly ordinary thing
+ *   to write in a config file, so refusing the shape would refuse valid input. It
+ *   folds `..` and judges the destination instead.
+ *
+ * Both are right for their caller. What is not acceptable is a third behaviour
+ * emerging from the gap — which is exactly what happened when folding depended on
+ * realpath() and POSIX returned false for a path whose parent did not exist yet.
+ *
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -161,16 +183,33 @@ final readonly class SafePath
     /**
      * Whether $candidate lies within (or is) $boundaryDir.
      *
-     * Uses realpath + the nearest-existing-ancestor walk, so it defeats symlink
-     * escapes and works for a path that does not exist yet (e.g. a var/cache
-     * about to be created). Returns false when the boundary itself does not
-     * exist. This is the correct primitive for a "is this path inside the
-     * document root?" check — unlike str_starts_with on raw strings, it is not
-     * bypassable via `..`/symlinks and does not false-match a sibling like
-     * `public_html` against `public`.
+     * The right primitive for "is this path inside the document root?": unlike
+     * str_starts_with on raw strings it cannot be walked out of with `..`, and it does
+     * not false-match a sibling whose name is a prefix (`public_html` against `public`).
+     * A path that does not exist yet is still decided, which matters because the thing
+     * being checked is usually a directory about to be created.
+     *
+     * Two strengths, and they are not the same:
+     *
+     * - **When the boundary resolves**, `..` is folded textually and then realpath()
+     *   confirms the result, so a symlink pointing out of the boundary is caught.
+     * - **When it does not** — a webroot bound into a container after boot, a deployment
+     *   mid-flight — the decision is textual on both sides. Containment still holds for
+     *   `..` and for prefix siblings, but nothing about symlinks is verified, because
+     *   there is no resolved tree to verify against. This is stated rather than glossed:
+     *   the previous wording promised symlink resistance unconditionally, and a caller
+     *   who needs that guarantee must ensure the boundary exists.
+     *
+     * Never returns false to mean "cannot tell". False means outside, and callers act
+     * on it — {@see \Pulsar\Filesystem\WritablePathGuard} treats it as permission to
+     * proceed, which is why the undeterminable case is decided rather than refused.
      */
     public static function isWithin(string $candidate, string $boundaryDir): bool
     {
+        if (str_contains($candidate, "\0") || str_contains($boundaryDir, "\0")) {
+            return false;
+        }
+
         $boundaryReal = realpath($boundaryDir);
 
         if ($boundaryReal === false) {
@@ -187,10 +226,25 @@ final readonly class SafePath
             // Both sides are folded and compared textually. Mixing a realpath'd
             // candidate with a merely-folded boundary would disagree the moment any
             // parent is a symlink, which is the failure this class exists to prevent.
-            return self::isWithinBoundary(
-                self::foldTraversal($candidate),
-                self::foldTraversal($boundaryDir),
-            );
+            $foldedCandidate = self::foldTraversal($candidate);
+            $foldedBoundary = self::foldTraversal($boundaryDir);
+
+            // An 8.3 short name (`PUBLIC~1`) is an alias for a long one, and only the
+            // filesystem knows which. With no boundary to resolve against there is
+            // nothing to canonicalise, so `…\PUBLIC~1\cache` simply fails to match a
+            // boundary written `…\public_files` — and a false here means "outside",
+            // which WritablePathGuard acts on as permission to proceed. That is the
+            // same fail-open, reached by a different alias.
+            //
+            // Undecidable leans to contained: reporting "inside" makes the guard refuse
+            // the path. Refusing a legitimate directory whose name happens to look like
+            // a short name costs an operator one rename; allowing a writable directory
+            // into the document root costs rather more.
+            if (self::hasShortNameSegment($foldedCandidate) || self::hasShortNameSegment($foldedBoundary)) {
+                return true;
+            }
+
+            return self::isWithinBoundary($foldedCandidate, $foldedBoundary);
         }
 
         return self::verifyUnderBoundary($candidate, $boundaryReal) !== null;
@@ -215,6 +269,16 @@ final readonly class SafePath
         // Folding first removes that dependency. The realpath() call still runs on the
         // result, so a symlink pointing out of the boundary is still caught on the part
         // of the path that does exist.
+        // A NUL byte reaches realpath() as a ValueError, not a false. resolveUnder()
+        // rejects NUL carefully and returns null; this path did not, so the same input
+        // that one door refuses cleanly took the other down with an uncaught exception —
+        // during boot, where the configured path is read. Refusing here makes both doors
+        // agree, and a path containing NUL is not inside any boundary because it cannot
+        // exist at all.
+        if (str_contains($candidate, "\0") || str_contains($boundaryReal, "\0")) {
+            return null;
+        }
+
         $candidate = self::foldTraversal($candidate);
         $real = realpath($candidate);
 
@@ -243,6 +307,27 @@ final readonly class SafePath
         }
 
         return $real;
+    }
+
+    /**
+     * Whether any segment looks like an NTFS 8.3 short name (`PUBLIC~1`, `PROGRA~1.TXT`).
+     *
+     * Only the filesystem knows what such a name aliases, so a textual comparison cannot
+     * decide containment for one. Detection is deliberately applied on every platform
+     * rather than gated on Windows: the two hosts then answer identically for the same
+     * string, and today's lessons are entirely about verdicts that differ by platform.
+     * The cost is refusing a POSIX directory genuinely named `backup~1` under a boundary
+     * that does not exist — rare, and it fails towards refusal.
+     */
+    private static function hasShortNameSegment(string $path): bool
+    {
+        foreach (preg_split('#[\\\\/]+#', $path) ?: [] as $segment) {
+            if (preg_match('#^[^.]{1,8}~[0-9]+(\.[^.]{1,3})?$#', $segment) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
