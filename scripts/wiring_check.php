@@ -17,6 +17,7 @@ declare(strict_types=1);
  *   php scripts/wiring_check.php --json                  # JSON output
  */
 
+use Pulsar\Api\CompositionRoots;
 use Pulsar\Tooling\Support\JsonDocument;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
@@ -28,18 +29,6 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 final class WiringAnalyzer
 {
     /** FQCNs that are composition roots — they wire others, aren't wired themselves. */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\\Core\\Kernel',
-        'Pulsar\\Console\\Application',
-        'Pulsar\\Console\\Command\\OptimizeCommand',
-        'Pulsar\\Console\\Command\\BuildCommand',
-    ];
-
-    /** Namespace prefixes for composition roots. */
-    private const array COMPOSITION_ROOT_NAMESPACES = [
-        'Pulsar\\Core\\Wiring\\',
-    ];
-
     /** Path segments that indicate exempt files. */
     private const array EXEMPT_PATH_SEGMENTS = [
         '/Migration/', // Migrations execute by naming convention
@@ -131,13 +120,10 @@ final class WiringAnalyzer
      */
     public function isExempt(string $fqcn, string $relativePath): bool
     {
-        // Composition root classes
-        if (in_array($fqcn, self::COMPOSITION_ROOTS, true)) {
-            return true;
-        }
-
-        // Composition root namespaces
-        if (array_any(self::COMPOSITION_ROOT_NAMESPACES, static fn(string $p): bool => str_starts_with($fqcn, $p))) {
+        // Delegated, not restated. This checker held a third copy of the list, and the
+        // narrowest of the three: it recognised Pulsar\Core\Wiring\ but not
+        // Pulsar\Core\Boot\, so boot-time assembly classes were reported as unwired.
+        if (CompositionRoots::contains($fqcn)) {
             return true;
         }
 

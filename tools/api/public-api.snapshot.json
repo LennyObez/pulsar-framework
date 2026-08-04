@@ -64313,6 +64313,7 @@
         "Pulsar\\AI\\VectorStore\\MySqlVectorStore",
         "Pulsar\\AI\\VectorStore\\PgVectorStore",
         "Pulsar\\AI\\VectorStore\\SqliteVecStore",
+        "Pulsar\\Api\\CompositionRoots",
         "Pulsar\\Api\\OpenApi\\EndpointScanner",
         "Pulsar\\Api\\OpenApi\\OpenApiWiring",
         "Pulsar\\Api\\Resource\\ResourceMetadataCache",

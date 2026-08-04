@@ -267,8 +267,18 @@ final class ArchitectureRulesTest extends TestCase
                     continue;
                 }
 
-                // The Api attribute classes themselves are always accessible
-                if ($ref === 'Pulsar\Api\Api' || $ref === 'Pulsar\Api\Internal') {
+                // Architecture metadata is accessible from everywhere by nature: it is
+                // what the rules are written in, not something the rules govern. The two
+                // attributes have always been here; CompositionRoots joins them because
+                // it is the same kind of thing — the single definition of which classes
+                // may cross module boundaries. It lived in triplicate precisely because
+                // sharing it looked like a boundary violation, so each consumer wrote its
+                // own, and the three drifted.
+                if (
+                    $ref === 'Pulsar\Api\Api'
+                    || $ref === 'Pulsar\Api\Internal'
+                    || $ref === 'Pulsar\Api\CompositionRoots'
+                ) {
                     continue;
                 }
 

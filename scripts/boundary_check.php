@@ -20,6 +20,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Pulsar\Api\Api;
+use Pulsar\Api\CompositionRoots;
 use Pulsar\Extensibility\ExtensionAutoloader;
 
 // Extensions are not in the root composer.json autoload (ADR-0004: no privileged
@@ -35,20 +36,6 @@ ExtensionAutoloader::registerForPaths([__DIR__ . '/../extensions']);
 
 final class BoundaryAnalyzer
 {
-    /** FQCNs that are composition roots — exempt from cross-module rules. */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\\Core\\Kernel',
-        'Pulsar\\Console\\Application',
-        'Pulsar\\Console\\Command\\OptimizeCommand',
-        'Pulsar\\Console\\Command\\BuildCommand',
-    ];
-
-    /** Namespace prefixes that are composition roots (all classes within are exempt). */
-    private const array COMPOSITION_ROOT_NAMESPACES = [
-        'Pulsar\\Core\\Wiring\\',
-        'Pulsar\\Core\\Boot\\',
-    ];
-
     /** The Api/Internal attribute FQCNs are always accessible. */
     private const array ALWAYS_ACCESSIBLE = [
         'Pulsar\\Api\\Api',
@@ -149,11 +136,12 @@ final class BoundaryAnalyzer
      */
     public function isCompositionRoot(string $fqcn): bool
     {
-        if (in_array($fqcn, self::COMPOSITION_ROOTS, true)) {
-            return true;
-        }
-
-        return array_any(self::COMPOSITION_ROOT_NAMESPACES, static fn(string $prefix): bool => str_starts_with($fqcn, $prefix));
+        // Delegated, not restated. This list existed three times — here, in the wiring
+        // checker, and in the runtime BoundaryGuard — and the copies had already
+        // diverged: Pulsar\Core\Boot\ was a root for this checker and not for the guard,
+        // so a class there passed the static gate and would have been refused when it
+        // ran. Three copies of a rule are three rules.
+        return CompositionRoots::contains($fqcn);
     }
 
     /**

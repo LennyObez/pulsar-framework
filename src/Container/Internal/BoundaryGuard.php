@@ -7,11 +7,11 @@ namespace Pulsar\Container\Internal;
 use NoDiscard;
 use Override;
 use Psr\Log\LoggerInterface;
+use Pulsar\Api\CompositionRoots;
 use Pulsar\Container\BindingType;
 use Pulsar\Container\ContainerInterface;
 use RuntimeException;
 
-use function array_any;
 use function debug_backtrace;
 use function preg_match;
 use function str_contains;
@@ -34,15 +34,6 @@ use const DEBUG_BACKTRACE_IGNORE_ARGS;
  */
 final readonly class BoundaryGuard implements ContainerInterface
 {
-    /** Namespace prefixes for composition roots (exempt from boundary checks). */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\\Core\\Kernel',
-        'Pulsar\\Console\\Application',
-        'Pulsar\\Core\\Wiring\\',
-        'Pulsar\\Console\\Command\\OptimizeCommand',
-        'Pulsar\\Console\\Command\\BuildCommand',
-    ];
-
     public function __construct(
         private ContainerInterface $inner,
         private LoggerInterface $logger,
@@ -176,10 +167,13 @@ final readonly class BoundaryGuard implements ContainerInterface
 
     private function isCompositionRoot(string $fqcn): bool
     {
-        return array_any(
-            self::COMPOSITION_ROOTS,
-            static fn(string $root): bool => $fqcn === $root || str_starts_with($fqcn, $root),
-        );
+        // Delegated rather than restated. This guard used to carry its own copy of the
+        // list, one of three that had already drifted: the static boundary checker
+        // treated Pulsar\Core\Boot\ as a root and this one did not, so a class there
+        // passed the gate and would have been refused when it ran. The local copy also
+        // prefix-matched its exact class names, quietly exempting anything starting with
+        // `Pulsar\Core\Kernel` — KernelHandler included.
+        return CompositionRoots::contains($fqcn);
     }
 
     /**
