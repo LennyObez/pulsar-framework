@@ -5,7 +5,20 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
+/**
+ * The three tables second-factor authentication needs.
+ *
+ * The indexes go through {@see IndexOperations} rather than raw SQL. Written by hand this
+ * migration said `CREATE INDEX IF NOT EXISTS`, which MySQL rejects as a syntax error, and
+ * it did so on the statement that follows the second table — so on MySQL the run died
+ * there, `auth_totp_replay_guard` was never created, and the runner never recorded the
+ * migration. Second-factor authentication has therefore never installed on that engine.
+ * Because the record was never written, a corrected run replays this file from the top
+ * and converges: the two tables that exist are `CREATE TABLE IF NOT EXISTS` no-ops, the
+ * indexes are created, and the third table finally appears.
+ */
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
@@ -85,13 +98,9 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_recovery_codes_user ON auth_recovery_codes (user_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_recovery_codes_user_hash ON auth_recovery_codes (user_id, code_hash)
-            SQL);
+        $indexes = new IndexOperations($connection);
+        $indexes->ensure('auth_recovery_codes', 'idx_recovery_codes_user', ['user_id']);
+        $indexes->ensure('auth_recovery_codes', 'idx_recovery_codes_user_hash', ['user_id', 'code_hash']);
     }
 
     private function createReplayGuardTable(ConnectionInterface $connection, Driver $driver): void
@@ -113,8 +122,10 @@ return new class implements MigrationInterface {
             SQL);
 
         // Index for efficient pruning of expired entries
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_replay_guard_used_at ON auth_totp_replay_guard (used_at)
-            SQL);
+        new IndexOperations($connection)->ensure(
+            'auth_totp_replay_guard',
+            'idx_replay_guard_used_at',
+            ['used_at'],
+        );
     }
 };
