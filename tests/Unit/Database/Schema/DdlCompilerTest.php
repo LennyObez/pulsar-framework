@@ -223,12 +223,17 @@ final class DdlCompilerTest extends TestCase
         self::assertSame('ALTER TABLE `users` DROP COLUMN `email`', $stmts[0]);
     }
 
+    /**
+     * No `IF EXISTS`: MySQL has none for `DROP INDEX` and rejects the clause with
+     * error 1064. This assertion used to pin the invalid form, so every drop through the
+     * compiler failed on MySQL while the suite reported the SQL as correct.
+     */
     #[Test]
     public function dropIndexMysqlWithTableName(): void
     {
         $compiler = $this->compiler(Driver::MySQL);
         $stmts = $compiler->compileDropIndex('users', 'idx_email');
-        self::assertSame('DROP INDEX IF EXISTS `idx_email` ON `users`', $stmts[0]);
+        self::assertSame('DROP INDEX `idx_email` ON `users`', $stmts[0]);
     }
 
     #[Test]

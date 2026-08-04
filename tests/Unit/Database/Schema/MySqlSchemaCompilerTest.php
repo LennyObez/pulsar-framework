@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Schema;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -197,11 +198,15 @@ final class MySqlSchemaCompilerTest extends TestCase
         self::assertSame('ALTER TABLE `users` DROP COLUMN `email`', $stmts[0]);
     }
 
+    /**
+     * MySQL names the owning table and accepts no `IF EXISTS` — the clause is a parse
+     * error, not a tolerated no-op.
+     */
     #[Test]
     public function dropIndexIncludesTableName(): void
     {
         $stmts = $this->compiler->compileDropIndex('users', 'idx_email');
-        self::assertSame('DROP INDEX IF EXISTS `idx_email` ON `users`', $stmts[0]);
+        self::assertSame('DROP INDEX `idx_email` ON `users`', $stmts[0]);
     }
 
     #[Test]
@@ -218,11 +223,24 @@ final class MySqlSchemaCompilerTest extends TestCase
         self::assertStringContainsString('DEFAULT 1', $stmts[0]);
     }
 
+    /**
+     * A name carrying the delimiter is refused, not escaped.
+     *
+     * Escaping and validation are different postures, and this is the stronger one.
+     * Escaping accepts any name and stakes correctness on doubling the delimiter every
+     * time, everywhere; validation refuses any name that could carry a delimiter, a
+     * comment introducer or a statement separator at all, so there is nothing left to get
+     * right. Identifiers cannot be bound as parameters, which is exactly why the
+     * conservative answer is the correct one — and the name arriving here may have come
+     * from a user through the admin schema editor.
+     */
     #[Test]
-    public function backtickInIdentifierIsEscaped(): void
+    public function backtickInIdentifierIsRefused(): void
     {
-        $stmts = $this->compiler->compileDropTable('my`table');
-        self::assertStringContainsString('`my``table`', $stmts[0]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid SQL identifier');
+
+        $this->compiler->compileDropTable('my`table');
     }
 
     #[Test]
