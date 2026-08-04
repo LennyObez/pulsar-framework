@@ -395,10 +395,11 @@ final class Environment
      */
     private static function normalizeKeys(array $vars): array
     {
-        if (!self::isCaseInsensitiveEnv()) {
-            return $vars;
-        }
-
+        // Case folding is platform-dependent; rejecting fold-prone keys is not. It is a
+        // property of PHP arrays, so it applies on every host — putting the guard only
+        // in the branch below left POSIX passing int keys straight through, which is
+        // what the regression test caught the first time it ran on Linux.
+        $caseInsensitive = self::isCaseInsensitiveEnv();
         $normalized = [];
 
         foreach ($vars as $key => $value) {
@@ -421,7 +422,7 @@ final class Environment
                 continue;
             }
 
-            $canonical = strtoupper($key);
+            $canonical = $caseInsensitive ? strtoupper($key) : $key;
 
             // PHP folds a key back to an int if — and only if — it is the canonical
             // decimal form of one, which is exactly what this comparison tests: "1" and
