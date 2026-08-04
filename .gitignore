@@ -72,6 +72,11 @@ CLAUDE.md
 .agents/
 .codex/
 AGENTS.md
+
+# Working notes and handover records. They describe how the work was done rather than
+# what the code is, and they name internal tooling — neither belongs in a public history.
+# Deliberately not under docs/, which is published documentation.
+.worklog/
 tests/Support/
 docs/internal/
 
