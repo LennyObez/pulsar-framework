@@ -15,6 +15,7 @@ use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Integrity\FileVerificationResult;
 use Pulsar\Integrity\FileVerificationStatus;
+use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Integrity\VerificationResult;
 
@@ -324,11 +325,12 @@ final class IntegrityVerifyCommandTest extends TestCase
     private function writeManifest(): void
     {
         $content = json_encode([
-            'version' => 1,
+            'version' => IntegrityManifest::VERSION,
             'algorithm' => 'blake2b',
             'generated_at' => 1700000000,
             'framework_version' => '1.0.0',
             'entry_count' => 0,
+            'scope' => ['include' => [], 'exclude' => []],
             'entries' => [],
         ]);
 
