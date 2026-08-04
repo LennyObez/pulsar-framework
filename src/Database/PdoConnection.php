@@ -10,9 +10,12 @@ use PDO;
 use PDOException;
 use PDOStatement;
 use Pulsar\Config\ConnectionConfig;
+use Pulsar\Database\Dialect\DialectInterface;
+use Pulsar\Database\Dialect\Dialects;
 use Pulsar\Database\Exception\DatabaseException;
 use Throwable;
 
+use function array_replace;
 use function is_bool;
 use function is_int;
 use function sprintf;
@@ -26,6 +29,12 @@ final class PdoConnection implements ConnectionInterface
 {
     private ?PDO $connection = null;
     private int $transactionDepth = 0;
+
+    /**
+     * Cached because establishing it costs a round trip on MySQL, and because the answer
+     * cannot change for the life of a connection.
+     */
+    private ?DriverVariant $cachedVariant = null;
 
     public function __construct(
         private readonly string $connectionName,
@@ -146,7 +155,15 @@ final class PdoConnection implements ConnectionInterface
             return $result;
         } catch (Throwable $e) {
             if ($transaction->active) {
-                $transaction->rollback();
+                try {
+                    $transaction->rollback();
+                } catch (Throwable $rollbackFailure) {
+                    // Attached, never substituted. The rollback used to throw straight
+                    // out of here and take the original failure with it, so an operator
+                    // whose migration had died on a real error was handed a message about
+                    // savepoints instead — and the reason the work was abandoned was gone.
+                    throw DatabaseException::rollbackFailed($rollbackFailure->getMessage(), $e);
+                }
             }
 
             throw $e;
@@ -163,6 +180,47 @@ final class PdoConnection implements ConnectionInterface
     public function driver(): Driver
     {
         return $this->driver;
+    }
+
+    /**
+     * Ask the server which member of its family it is, once.
+     *
+     * Only the MySQL driver has more than one member, and only the server's own
+     * `VERSION()` string distinguishes them — the DSN, the port and the client library
+     * are identical for MySQL, MariaDB and Percona. SQLite and PostgreSQL answer without
+     * a round trip because there is nothing to ask.
+     *
+     * A failure to read the version answers Standard rather than throwing. The variant
+     * refines a dialect; it is not a precondition for connecting, and a server that
+     * cannot answer `SELECT VERSION()` will fail on the caller's own query a moment later
+     * with a far more useful message than one raised here.
+     */
+    #[Override]
+    public function variant(): DriverVariant
+    {
+        if ($this->driver !== Driver::MySQL) {
+            return DriverVariant::Standard;
+        }
+
+        if ($this->cachedVariant === null) {
+            try {
+                $result = $this->query('SELECT VERSION() AS version');
+
+                $this->cachedVariant = $result->rows === []
+                    ? DriverVariant::Standard
+                    : DriverVariant::detect($result->rows[0]->getString('version'));
+            } catch (DatabaseException) {
+                $this->cachedVariant = DriverVariant::Standard;
+            }
+        }
+
+        return $this->cachedVariant;
+    }
+
+    #[Override]
+    public function dialect(): DialectInterface
+    {
+        return Dialects::for($this->driver, $this->variant());
     }
 
     #[Override]
@@ -202,7 +260,13 @@ final class PdoConnection implements ConnectionInterface
                 PDO::ATTR_EMULATE_PREPARES => false,
             ];
 
-            $mergedOptions = [...$defaultOptions, ...$this->options];
+            // array_replace, never spread. PDO's option constants are integers, and array
+            // unpacking RENUMBERS integer keys from zero — so a spread turns
+            // [ATTR_ERRMODE => …, ATTR_DEFAULT_FETCH_MODE => …, ATTR_EMULATE_PREPARES => …]
+            // into [0 => …, 1 => …, 2 => …], which PDO reads as ATTR_AUTOCOMMIT,
+            // ATTR_PREFETCH and ATTR_TIMEOUT. Every intended option is silently lost and
+            // three unintended ones are set, with no error to say so.
+            $mergedOptions = array_replace($defaultOptions, $this->options);
 
             $this->connection = new PDO(
                 $this->dsn,
