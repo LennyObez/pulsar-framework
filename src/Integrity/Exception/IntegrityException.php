@@ -38,6 +38,20 @@ final class IntegrityException extends RuntimeException
     }
 
     /**
+     * The manifest declares no scope, so what ought to be on disk is undefined.
+     *
+     * Without it the verifier cannot tell an added file from an untracked one,
+     * so it refuses to answer rather than guess in either direction.
+     */
+    #[NoDiscard]
+    public static function scopeMissing(): self
+    {
+        return new self(
+            'Integrity manifest declares no scope: rebuild it with "php bin/pulsar integrity:build"',
+        );
+    }
+
+    /**
      * HMAC signature verification failed for the manifest.
      */
     #[NoDiscard]

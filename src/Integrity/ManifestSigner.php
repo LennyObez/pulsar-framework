@@ -6,6 +6,7 @@ namespace Pulsar\Integrity;
 
 use JsonException;
 use Pulsar\Api\Internal;
+use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use SodiumException;
@@ -47,6 +48,7 @@ final class ManifestSigner implements ManifestSignerInterface
      *
      * @throws SodiumException
      * @throws JsonException If JSON encoding fails during canonicalization
+     * @throws IntegrityException If the manifest declares no scope
      */
     public function sign(IntegrityManifest $manifest): string
     {
@@ -66,7 +68,10 @@ final class ManifestSigner implements ManifestSignerInterface
      */
     public function verify(IntegrityManifest $manifest): bool
     {
-        if ($manifest->signature === null) {
+        // A manifest that names no scope was never produced by this signer:
+        // signing requires one. Refuse rather than authenticate a document
+        // whose coverage is undefined.
+        if ($manifest->signature === null || $manifest->scope === null) {
             return false;
         }
 
@@ -82,9 +87,14 @@ final class ManifestSigner implements ManifestSignerInterface
      * sign-then-verify without circularity.
      *
      * @throws JsonException If JSON encoding fails
+     * @throws IntegrityException If the manifest declares no scope
      */
     private function canonicalize(IntegrityManifest $manifest): string
     {
+        if ($manifest->scope === null) {
+            throw IntegrityException::scopeMissing();
+        }
+
         $entries = [];
 
         foreach ($manifest->entries as $entry) {
@@ -101,6 +111,13 @@ final class ManifestSigner implements ManifestSignerInterface
             'generated_at' => $manifest->generatedAt,
             'framework_version' => $manifest->frameworkVersion,
             'entry_count' => $manifest->entryCount,
+            // The scope is signed alongside the entries. Leaving it out would
+            // let anyone who can write the manifest add an exclude pattern that
+            // hides a file, without the signature noticing.
+            'scope' => [
+                'include' => $manifest->scope->include,
+                'exclude' => $manifest->scope->exclude,
+            ],
             'entries' => $entries,
         ];
 

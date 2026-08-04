@@ -28,12 +28,14 @@ use Pulsar\Extension\HealthStatus\Server\Controller\StatusApiController;
 use Pulsar\Extension\HealthStatus\Server\Controller\StatusDashboardController;
 use Pulsar\Extension\HealthStatus\Server\Middleware\StatusAccessMiddleware;
 use Pulsar\Http\Method;
+use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface as CoreHealthCheckRunnerInterface;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistryInterface;
 use Pulsar\Scheduler\Schedule;
+use Throwable;
 
 use function is_array;
 use function is_file;
@@ -119,6 +121,7 @@ final readonly class HealthStatusExtension implements ExtensionInterface, PostBo
                 IntegrityVerificationRunnerInterface::class,
                 static fn(ContainerInterface $c): CoreIntegrityVerificationAdapter => new CoreIntegrityVerificationAdapter(
                     $c->get(ManifestVerifierInterface::class),
+                    self::resolveManifest($c),
                 ),
             );
         }
@@ -134,6 +137,26 @@ final readonly class HealthStatusExtension implements ExtensionInterface, PostBo
         }
 
         $this->registerRoutes($router, $config);
+    }
+
+    /**
+     * The authenticated manifest, or null when there is none to be had.
+     *
+     * The core composition root binds it only where a signer exists, and the
+     * binding throws on an absent, corrupt or wrongly-signed file. Either way
+     * the adapter reports a failed verification, never a passing one.
+     */
+    private static function resolveManifest(ContainerInterface $container): ?IntegrityManifest
+    {
+        if (!$container->has(IntegrityManifest::class)) {
+            return null;
+        }
+
+        try {
+            return $container->get(IntegrityManifest::class);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     #[Override]

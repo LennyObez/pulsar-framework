@@ -17,6 +17,7 @@ use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestEntry;
+use Pulsar\Integrity\ManifestScope;
 use Pulsar\Integrity\ManifestSignerInterface;
 use SodiumException;
 
@@ -63,7 +64,7 @@ final class IntegrityBuildCommandTest extends TestCase
     public function buildsManifestSuccessfully(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0',
@@ -72,6 +73,7 @@ final class IntegrityBuildCommandTest extends TestCase
                 new ManifestEntry('src/Foo.php', 'abc123', 100),
                 new ManifestEntry('src/Bar.php', 'def456', 200),
             ],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $builder = $this->createStub(ManifestBuilderInterface::class);
@@ -182,12 +184,13 @@ final class IntegrityBuildCommandTest extends TestCase
     private function createMinimalManifest(): IntegrityManifest
     {
         return new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0',
             entryCount: 1,
             entries: [new ManifestEntry('src/Foo.php', 'abc123', 100)],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
     }
 

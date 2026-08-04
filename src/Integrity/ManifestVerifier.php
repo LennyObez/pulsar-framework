@@ -4,17 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
-use FilesystemIterator;
 use Pulsar\Api\Internal;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
+use Pulsar\Integrity\Exception\IntegrityException;
 
-use function array_diff_key;
-use function array_keys;
-use function dirname;
 use function hash_file;
-use function is_dir;
 use function is_file;
 use function str_replace;
 
@@ -24,13 +17,17 @@ use const DIRECTORY_SEPARATOR;
  * Verifies an integrity manifest against the current filesystem state.
  *
  * Detects modified files (hash mismatch), missing files (no longer on disk),
- * and added files (on disk but not in manifest).
+ * and added files (covered by the manifest's scope but absent from it). All
+ * three fail: a manifest that tolerates additions cannot detect a dropped
+ * webshell, which is the attack this control exists to catch.
+ *
+ * Additions are found by re-running the manifest's own scope, so the verifier
+ * looks exactly where the builder looked — no wider, which would flag untracked
+ * files as tampering, and no narrower, which would leave somewhere to hide.
  */
 #[Internal]
 final readonly class ManifestVerifier implements ManifestVerifierInterface
 {
-    use BasePathResolveTrait;
-
     public function __construct(
         private string $basePath,
     ) {}
@@ -38,26 +35,31 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
     /**
      * Verify an integrity manifest against the current filesystem.
      *
-     * Checks every manifest entry for existence and hash correctness,
-     * and scans for files present on disk but absent from the manifest.
+     * Checks every manifest entry for existence and hash correctness, and
+     * rediscovers the manifest's scope to find files that were added to it.
+     * The result passes only when nothing was modified, removed or added.
+     *
+     * @throws IntegrityException If the manifest declares no scope, leaving the
+     *         set of files that ought to exist undefined.
      */
     public function verify(IntegrityManifest $manifest): VerificationResult
     {
+        if ($manifest->scope === null) {
+            throw IntegrityException::scopeMissing();
+        }
+
         $files = [];
         $verified = 0;
         $modified = 0;
         $missing = 0;
         $added = 0;
 
-        // Build a lookup of manifest entries by path
         $manifestPaths = [];
-        foreach ($manifest->entries as $entry) {
-            $manifestPaths[$entry->path] = $entry;
-        }
 
-        // Check each manifest entry against the filesystem
         foreach ($manifest->entries as $entry) {
-            $absolutePath = $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $entry->path);
+            $manifestPaths[$entry->path] = true;
+
+            $absolutePath = $this->absolutePath($entry->path);
 
             if (!is_file($absolutePath)) {
                 $files[] = new FileVerificationResult(
@@ -104,16 +106,15 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
             $verified++;
         }
 
-        // Scan for added files (present on disk but not in manifest)
-        $currentFiles = $this->scanCurrentFiles($manifest);
-        $addedPaths = array_diff_key($currentFiles, $manifestPaths);
+        foreach ($manifest->scope->discover($this->basePath) as $path) {
+            if (isset($manifestPaths[$path])) {
+                continue;
+            }
 
-        foreach (array_keys($addedPaths) as $addedPath) {
-            $absolutePath = $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $addedPath);
-            $actualHash = hash_file($manifest->algorithm, $absolutePath);
+            $actualHash = hash_file($manifest->algorithm, $this->absolutePath($path));
 
             $files[] = new FileVerificationResult(
-                path: $addedPath,
+                path: $path,
                 status: FileVerificationStatus::Added,
                 expectedHash: null,
                 actualHash: $actualHash !== false ? $actualHash : null,
@@ -121,10 +122,8 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
             $added++;
         }
 
-        $passed = $modified === 0 && $missing === 0;
-
         return new VerificationResult(
-            passed: $passed,
+            passed: $modified === 0 && $missing === 0 && $added === 0,
             verified: $verified,
             modified: $modified,
             missing: $missing,
@@ -133,56 +132,8 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
         );
     }
 
-    /**
-     * Scan the filesystem for files in the same directories as manifest entries.
-     *
-     * This discovers files that exist on disk to detect "added" files not
-     * present in the manifest.
-     *
-     * @return array<string, true> Map of relative paths to true
-     */
-    private function scanCurrentFiles(IntegrityManifest $manifest): array
+    private function absolutePath(string $relativePath): string
     {
-        // Collect unique base directories from manifest entries
-        $directories = [];
-        foreach ($manifest->entries as $entry) {
-            $dir = dirname($entry->path);
-            if ($dir === '.') {
-                $dir = '';
-            }
-            $directories[$dir] = true;
-        }
-
-        $currentFiles = [];
-
-        foreach (array_keys($directories) as $dir) {
-            $scanPath = $dir !== ''
-                ? $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $dir)
-                : $this->basePath;
-
-            if (!is_dir($scanPath)) {
-                continue;
-            }
-
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator(
-                    $scanPath,
-                    FilesystemIterator::SKIP_DOTS,
-                ),
-            );
-
-            /** @var SplFileInfo $file */
-            foreach ($iterator as $file) {
-                if (!$file->isFile()) {
-                    continue;
-                }
-
-                $relativePath = $this->toRelativePath($file->getPathname());
-                $currentFiles[$relativePath] = true;
-            }
-        }
-
-        return $currentFiles;
+        return $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
     }
-
 }
