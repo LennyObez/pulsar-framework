@@ -9,7 +9,7 @@ use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
+use Pulsar\Database\Dialect\Dialects;
 use Pulsar\Extension\Analytics\Contracts\AggregationServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\DailyStatsRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\DailyStats;
@@ -95,7 +95,7 @@ final readonly class AggregationService implements AggregationServiceInterface
 
     // --- Daily breakdown: Pages ---
 
-    private const string SQL_DAILY_PAGES_PGSQL = <<<'SQL'
+    private const string SQL_DAILY_PAGES = <<<'SQL'
         INSERT INTO analytics_daily_pages (site_id, date, pathname, visitors, pageviews, entries, exits, avg_time_on_page)
         SELECT
             site_id,
@@ -110,54 +110,11 @@ final readonly class AggregationService implements AggregationServiceInterface
         WHERE created_at >= :from AND created_at < :to
             AND site_id = :site_id
         GROUP BY site_id, DATE(created_at), pathname
-        ON CONFLICT (site_id, date, pathname) DO UPDATE SET
-            visitors = EXCLUDED.visitors,
-            pageviews = EXCLUDED.pageviews
-        SQL;
-
-    private const string SQL_DAILY_PAGES_MYSQL = <<<'SQL'
-        INSERT INTO analytics_daily_pages (site_id, date, pathname, visitors, pageviews, entries, exits, avg_time_on_page)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            pathname,
-            COUNT(DISTINCT visitor_id) AS visitors,
-            COUNT(*) AS pageviews,
-            0 AS entries,
-            0 AS exits,
-            0 AS avg_time_on_page
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-        GROUP BY site_id, DATE(created_at), pathname
-        ON DUPLICATE KEY UPDATE
-            visitors = VALUES(visitors),
-            pageviews = VALUES(pageviews)
-        SQL;
-
-    private const string SQL_DAILY_PAGES_SQLITE = <<<'SQL'
-        INSERT INTO analytics_daily_pages (site_id, date, pathname, visitors, pageviews, entries, exits, avg_time_on_page)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            pathname,
-            COUNT(DISTINCT visitor_id) AS visitors,
-            COUNT(*) AS pageviews,
-            0 AS entries,
-            0 AS exits,
-            0 AS avg_time_on_page
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-        GROUP BY site_id, DATE(created_at), pathname
-        ON CONFLICT (site_id, date, pathname) DO UPDATE SET
-            visitors = excluded.visitors,
-            pageviews = excluded.pageviews
         SQL;
 
     // --- Daily breakdown: Referrers ---
 
-    private const string SQL_DAILY_REFERRERS_PGSQL = <<<'SQL'
+    private const string SQL_DAILY_REFERRERS = <<<'SQL'
         INSERT INTO analytics_daily_referrers (site_id, date, referrer_source, visitors, pageviews)
         SELECT
             site_id,
@@ -170,50 +127,11 @@ final readonly class AggregationService implements AggregationServiceInterface
             AND site_id = :site_id
             AND referrer_source != ''
         GROUP BY site_id, DATE(created_at), referrer_source
-        ON CONFLICT (site_id, date, referrer_source) DO UPDATE SET
-            visitors = EXCLUDED.visitors,
-            pageviews = EXCLUDED.pageviews
-        SQL;
-
-    private const string SQL_DAILY_REFERRERS_MYSQL = <<<'SQL'
-        INSERT INTO analytics_daily_referrers (site_id, date, referrer_source, visitors, pageviews)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            referrer_source,
-            COUNT(DISTINCT visitor_id) AS visitors,
-            COUNT(*) AS pageviews
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-            AND referrer_source != ''
-        GROUP BY site_id, DATE(created_at), referrer_source
-        ON DUPLICATE KEY UPDATE
-            visitors = VALUES(visitors),
-            pageviews = VALUES(pageviews)
-        SQL;
-
-    private const string SQL_DAILY_REFERRERS_SQLITE = <<<'SQL'
-        INSERT INTO analytics_daily_referrers (site_id, date, referrer_source, visitors, pageviews)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            referrer_source,
-            COUNT(DISTINCT visitor_id) AS visitors,
-            COUNT(*) AS pageviews
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-            AND referrer_source != ''
-        GROUP BY site_id, DATE(created_at), referrer_source
-        ON CONFLICT (site_id, date, referrer_source) DO UPDATE SET
-            visitors = excluded.visitors,
-            pageviews = excluded.pageviews
         SQL;
 
     // --- Daily breakdown: Devices ---
 
-    private const string SQL_DAILY_DEVICES_PGSQL = <<<'SQL'
+    private const string SQL_DAILY_DEVICES = <<<'SQL'
         INSERT INTO analytics_daily_devices (site_id, date, device_type, browser, os, visitors)
         SELECT
             site_id,
@@ -226,47 +144,11 @@ final readonly class AggregationService implements AggregationServiceInterface
         WHERE created_at >= :from AND created_at < :to
             AND site_id = :site_id
         GROUP BY site_id, DATE(created_at), device_type, browser, os
-        ON CONFLICT (site_id, date, device_type, browser, os) DO UPDATE SET
-            visitors = EXCLUDED.visitors
-        SQL;
-
-    private const string SQL_DAILY_DEVICES_MYSQL = <<<'SQL'
-        INSERT INTO analytics_daily_devices (site_id, date, device_type, browser, os, visitors)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            device_type,
-            browser,
-            os,
-            COUNT(DISTINCT visitor_id) AS visitors
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-        GROUP BY site_id, DATE(created_at), device_type, browser, os
-        ON DUPLICATE KEY UPDATE
-            visitors = VALUES(visitors)
-        SQL;
-
-    private const string SQL_DAILY_DEVICES_SQLITE = <<<'SQL'
-        INSERT INTO analytics_daily_devices (site_id, date, device_type, browser, os, visitors)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            device_type,
-            browser,
-            os,
-            COUNT(DISTINCT visitor_id) AS visitors
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-        GROUP BY site_id, DATE(created_at), device_type, browser, os
-        ON CONFLICT (site_id, date, device_type, browser, os) DO UPDATE SET
-            visitors = excluded.visitors
         SQL;
 
     // --- Daily breakdown: Locations ---
 
-    private const string SQL_DAILY_LOCATIONS_PGSQL = <<<'SQL'
+    private const string SQL_DAILY_LOCATIONS = <<<'SQL'
         INSERT INTO analytics_daily_locations (site_id, date, country_code, region, visitors, pageviews)
         SELECT
             site_id,
@@ -280,48 +162,26 @@ final readonly class AggregationService implements AggregationServiceInterface
             AND site_id = :site_id
             AND country_code != ''
         GROUP BY site_id, DATE(created_at), country_code
-        ON CONFLICT (site_id, date, country_code, region) DO UPDATE SET
-            visitors = EXCLUDED.visitors,
-            pageviews = EXCLUDED.pageviews
         SQL;
 
-    private const string SQL_DAILY_LOCATIONS_MYSQL = <<<'SQL'
-        INSERT INTO analytics_daily_locations (site_id, date, country_code, region, visitors, pageviews)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            country_code,
-            '' AS region,
-            COUNT(DISTINCT visitor_id) AS visitors,
-            COUNT(*) AS pageviews
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-            AND country_code != ''
-        GROUP BY site_id, DATE(created_at), country_code
-        ON DUPLICATE KEY UPDATE
-            visitors = VALUES(visitors),
-            pageviews = VALUES(pageviews)
-        SQL;
+    /**
+     * The conflict target and the columns re-aggregation overwrites, per breakdown.
+     *
+     * These are the only parts of an upsert that differ between breakdowns; the parts
+     * that differ between ENGINES are the dialect's business, not this service's. Twelve
+     * hand-written statements — four breakdowns times three engines — collapsed to four
+     * once the dialect was asked to compile the conflict clause instead of each variant
+     * being maintained by hand. A fifth engine adds nothing here.
+     *
+     * @var array<string, array{list<string>, list<string>}>
+     */
+    private const array UPSERT_KEYS = [
+        'pages' => [['site_id', 'date', 'pathname'], ['visitors', 'pageviews']],
+        'referrers' => [['site_id', 'date', 'referrer_source'], ['visitors', 'pageviews']],
+        'devices' => [['site_id', 'date', 'device_type', 'browser', 'os'], ['visitors']],
+        'locations' => [['site_id', 'date', 'country_code', 'region'], ['visitors', 'pageviews']],
+    ];
 
-    private const string SQL_DAILY_LOCATIONS_SQLITE = <<<'SQL'
-        INSERT INTO analytics_daily_locations (site_id, date, country_code, region, visitors, pageviews)
-        SELECT
-            site_id,
-            DATE(created_at) AS date,
-            country_code,
-            '' AS region,
-            COUNT(DISTINCT visitor_id) AS visitors,
-            COUNT(*) AS pageviews
-        FROM analytics_page_views
-        WHERE created_at >= :from AND created_at < :to
-            AND site_id = :site_id
-            AND country_code != ''
-        GROUP BY site_id, DATE(created_at), country_code
-        ON CONFLICT (site_id, date, country_code, region) DO UPDATE SET
-            visitors = excluded.visitors,
-            pageviews = excluded.pageviews
-        SQL;
 
     public function __construct(
         private DailyStatsRepositoryInterface $dailyStatsRepository,
@@ -426,35 +286,26 @@ final readonly class AggregationService implements AggregationServiceInterface
     }
 
     /**
-     * Select the driver-appropriate upsert SQL for a breakdown table.
+     * The upsert for a breakdown table, in the SQL this connection's engine accepts.
+     *
+     * This method used to select between twelve statements written by hand, one per
+     * breakdown per engine, and adding an engine meant writing four more. It now states
+     * the aggregation once and asks the dialect how that engine spells a conflict clause,
+     * so what varies by engine is expressed in the one place that knows about engines.
      */
     private function upsertSql(string $table): string
     {
-        $driver = $this->connection->driver();
-
-        /** @var Driver $driver */
-        return match ($table) {
-            'pages' => match ($driver) {
-                Driver::MySQL => self::SQL_DAILY_PAGES_MYSQL,
-                Driver::SQLite => self::SQL_DAILY_PAGES_SQLITE,
-                Driver::PostgreSQL => self::SQL_DAILY_PAGES_PGSQL,
-            },
-            'referrers' => match ($driver) {
-                Driver::MySQL => self::SQL_DAILY_REFERRERS_MYSQL,
-                Driver::SQLite => self::SQL_DAILY_REFERRERS_SQLITE,
-                Driver::PostgreSQL => self::SQL_DAILY_REFERRERS_PGSQL,
-            },
-            'devices' => match ($driver) {
-                Driver::MySQL => self::SQL_DAILY_DEVICES_MYSQL,
-                Driver::SQLite => self::SQL_DAILY_DEVICES_SQLITE,
-                Driver::PostgreSQL => self::SQL_DAILY_DEVICES_PGSQL,
-            },
-            'locations' => match ($driver) {
-                Driver::MySQL => self::SQL_DAILY_LOCATIONS_MYSQL,
-                Driver::SQLite => self::SQL_DAILY_LOCATIONS_SQLITE,
-                Driver::PostgreSQL => self::SQL_DAILY_LOCATIONS_PGSQL,
-            },
+        $insert = match ($table) {
+            'pages' => self::SQL_DAILY_PAGES,
+            'referrers' => self::SQL_DAILY_REFERRERS,
+            'devices' => self::SQL_DAILY_DEVICES,
+            'locations' => self::SQL_DAILY_LOCATIONS,
             default => throw new InvalidArgumentException("Unknown aggregation table: $table"),
         };
+
+        [$conflictColumns, $updateColumns] = self::UPSERT_KEYS[$table];
+
+        return Dialects::for($this->connection->driver())
+            ->compileUpsert($insert, $conflictColumns, $updateColumns);
     }
 }
