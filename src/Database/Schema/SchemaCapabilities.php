@@ -21,6 +21,8 @@ final class SchemaCapabilities
 {
     private ?string $cachedSqliteVersion = null;
 
+    private ?string $cachedServerVersion = null;
+
     public function __construct(
         private readonly Driver $driver,
         private readonly ?ConnectionInterface $connection = null,
@@ -157,35 +159,50 @@ final class SchemaCapabilities
     }
 
     /**
-     * Whether CHECK constraints are enforced (not just parsed and ignored).
+     * Whether CHECK constraints are ENFORCED, rather than parsed and ignored.
      *
-     * MariaDB 10.2+ enforces CHECK constraints; MySQL 8.0.16+ does too.
-     * SQLite has enforced CHECK constraints.
-     * PostgreSQL has always enforced them.
+     * The distinction is the whole point of this method. MySQL before 8.0.16 accepts
+     * CHECK in a CREATE TABLE and silently discards it, so a constraint the schema
+     * appears to carry does not exist at runtime — the worst shape a data-integrity
+     * guarantee can take, because the DDL succeeds.
+     *
+     * MySQL enforces from 8.0.16, MariaDB from 10.2.1. PostgreSQL always has.
+     * SQLite has since 3.3.0 (2006), which predates any runtime this framework
+     * supports, so it needs no probe.
      */
     public function supportsCheckConstraints(): bool
     {
-        return true;
+        return match ($this->driver) {
+            Driver::MySQL => $this->serverVersionAtLeast('8.0.16', '10.2.1'),
+            Driver::PostgreSQL, Driver::SQLite => true,
+        };
     }
 
     /**
      * Whether the driver supports window functions (OVER, PARTITION BY).
+     *
+     * MySQL gained them in 8.0 and MariaDB in 10.2; 5.7 is still widely deployed and
+     * rejects them outright.
      */
     public function supportsWindowFunctions(): bool
     {
         return match ($this->driver) {
-            Driver::MySQL, Driver::PostgreSQL => true,
+            Driver::MySQL => $this->serverVersionAtLeast('8.0.0', '10.2.0'),
+            Driver::PostgreSQL => true,
             Driver::SQLite => $this->sqliteVersionAtLeast('3.25.0'),
         };
     }
 
     /**
      * Whether the driver supports Common Table Expressions (WITH ... AS).
+     *
+     * Same version boundary as window functions: MySQL 8.0, MariaDB 10.2.1.
      */
     public function supportsCte(): bool
     {
         return match ($this->driver) {
-            Driver::MySQL, Driver::PostgreSQL => true,
+            Driver::MySQL => $this->serverVersionAtLeast('8.0.0', '10.2.1'),
+            Driver::PostgreSQL => true,
             Driver::SQLite => $this->sqliteVersionAtLeast('3.8.3'),
         };
     }
@@ -220,6 +237,50 @@ final class SchemaCapabilities
             'supportsCte' => $this->supportsCte(),
             'driverVariant' => $this->variant->value,
         ];
+    }
+
+    /**
+     * Whether the MySQL-family server is at least the given version.
+     *
+     * MySQL and MariaDB share a driver but not a version line — MariaDB 10.2 is newer
+     * than MySQL 8.0 — so each gets its own floor and the answer depends on which
+     * server actually answered. The variant is read from the live `VERSION()` string
+     * rather than from the one supplied at construction: that one is a caller's hint,
+     * and a hint that is wrong here reports a capability the server does not have.
+     *
+     * With no connection the answer is false, matching {@see sqliteVersionAtLeast()}.
+     * The asymmetry of being wrong decides it: a capability wrongly reported absent
+     * costs a fallback path, while one wrongly reported present emits SQL the server
+     * rejects — or, for CHECK constraints, silently discards.
+     */
+    private function serverVersionAtLeast(string $mysqlMinimum, string $mariaDbMinimum): bool
+    {
+        if ($this->connection === null) {
+            return false;
+        }
+
+        if ($this->cachedServerVersion === null) {
+            $result = $this->connection->query('SELECT VERSION() AS version');
+
+            if ($result->rows === []) {
+                return false;
+            }
+
+            $this->cachedServerVersion = $result->rows[0]->getString('version');
+        }
+
+        $minimum = DriverVariant::detect($this->cachedServerVersion) === DriverVariant::MariaDb
+            ? $mariaDbMinimum
+            : $mysqlMinimum;
+
+        // "10.5.18-MariaDB" and "8.0.35-26-Percona Server" carry a suffix that
+        // version_compare would weigh as a trailing string part; only the numeric head
+        // is being compared here.
+        $numeric = preg_match('/^\d+(\.\d+)*/', $this->cachedServerVersion, $matches) === 1
+            ? $matches[0]
+            : $this->cachedServerVersion;
+
+        return version_compare($numeric, $minimum, '>=');
     }
 
     /**
