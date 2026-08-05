@@ -7,7 +7,9 @@ namespace Pulsar\Console\Repl;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\DriverVariant;
 use Pulsar\Database\Result;
 use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
@@ -103,6 +105,18 @@ final class SandboxConnection implements ConnectionInterface
     public function driver(): Driver
     {
         return $this->inner->driver();
+    }
+
+    #[Override]
+    public function variant(): DriverVariant
+    {
+        return $this->inner->variant();
+    }
+
+    #[Override]
+    public function dialect(): DialectInterface
+    {
+        return $this->inner->dialect();
     }
 
     #[Override]

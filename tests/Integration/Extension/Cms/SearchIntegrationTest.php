@@ -497,6 +497,16 @@ final class InMemorySearchConnection implements ConnectionInterface
         return Driver::PostgreSQL;
     }
 
+    public function variant(): \Pulsar\Database\DriverVariant
+    {
+        return \Pulsar\Database\DriverVariant::Standard;
+    }
+
+    public function dialect(): \Pulsar\Database\Dialect\DialectInterface
+    {
+        return \Pulsar\Database\Dialect\Dialects::for($this->driver(), $this->variant());
+    }
+
     public function name(): string
     {
         return 'test';

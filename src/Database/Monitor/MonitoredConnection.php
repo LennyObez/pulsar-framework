@@ -7,7 +7,9 @@ namespace Pulsar\Database\Monitor;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\DriverVariant;
 use Pulsar\Database\Result;
 use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
@@ -89,6 +91,18 @@ final readonly class MonitoredConnection implements ConnectionInterface
     public function driver(): Driver
     {
         return $this->wrapped->driver();
+    }
+
+    #[Override]
+    public function variant(): DriverVariant
+    {
+        return $this->wrapped->variant();
+    }
+
+    #[Override]
+    public function dialect(): DialectInterface
+    {
+        return $this->wrapped->dialect();
     }
 
     #[Override]
