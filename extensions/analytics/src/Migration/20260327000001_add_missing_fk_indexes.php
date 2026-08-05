@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
 
 /**
@@ -14,31 +13,25 @@ use Pulsar\Database\Migration\MigrationInterface;
  * on visitor_id improves cross-site visitor queries and DELETE cascades.
  */
 return new class implements MigrationInterface {
+    private const string INDEX = 'idx_page_views_visitor';
+    private const string TABLE = 'analytics_page_views';
+
     public function up(ConnectionInterface $connection): void
     {
-        $driver = $connection->driver();
-
-        match ($driver) {
-            Driver::MySQL => $connection->execute(
-                'CREATE INDEX idx_page_views_visitor ON analytics_page_views (visitor_id)',
+        $connection->execute(
+            $connection->dialect()->compileCreateIndex(
+                self::INDEX,
+                self::TABLE,
+                ['visitor_id'],
+                ifNotExists: true,
             ),
-            Driver::SQLite, Driver::PostgreSQL => $connection->execute(
-                'CREATE INDEX IF NOT EXISTS idx_page_views_visitor ON analytics_page_views (visitor_id)',
-            ),
-        };
+        );
     }
 
     public function down(ConnectionInterface $connection): void
     {
-        $driver = $connection->driver();
-
-        match ($driver) {
-            Driver::MySQL => $connection->execute(
-                'ALTER TABLE analytics_page_views DROP INDEX idx_page_views_visitor',
-            ),
-            Driver::SQLite, Driver::PostgreSQL => $connection->execute(
-                'DROP INDEX IF EXISTS idx_page_views_visitor',
-            ),
-        };
+        $connection->execute(
+            $connection->dialect()->compileDropIndex(self::INDEX, self::TABLE),
+        );
     }
 };

@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
 
 /**
@@ -13,31 +12,25 @@ use Pulsar\Database\Migration\MigrationInterface;
  * causing slow JOIN and WHERE queries on moderation audit trails.
  */
 return new class implements MigrationInterface {
+    private const string INDEX = 'idx_forum_posts_edited_by';
+    private const string TABLE = 'forum_posts';
+
     public function up(ConnectionInterface $connection): void
     {
-        $driver = $connection->driver();
-
-        match ($driver) {
-            Driver::MySQL => $connection->execute(
-                'CREATE INDEX idx_forum_posts_edited_by ON forum_posts (edited_by)',
+        $connection->execute(
+            $connection->dialect()->compileCreateIndex(
+                self::INDEX,
+                self::TABLE,
+                ['edited_by'],
+                ifNotExists: true,
             ),
-            Driver::SQLite, Driver::PostgreSQL => $connection->execute(
-                'CREATE INDEX IF NOT EXISTS idx_forum_posts_edited_by ON forum_posts (edited_by)',
-            ),
-        };
+        );
     }
 
     public function down(ConnectionInterface $connection): void
     {
-        $driver = $connection->driver();
-
-        match ($driver) {
-            Driver::MySQL => $connection->execute(
-                'ALTER TABLE forum_posts DROP INDEX idx_forum_posts_edited_by',
-            ),
-            Driver::SQLite, Driver::PostgreSQL => $connection->execute(
-                'DROP INDEX IF EXISTS idx_forum_posts_edited_by',
-            ),
-        };
+        $connection->execute(
+            $connection->dialect()->compileDropIndex(self::INDEX, self::TABLE),
+        );
     }
 };
