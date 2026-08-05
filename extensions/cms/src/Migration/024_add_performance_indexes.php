@@ -55,11 +55,24 @@ return new class implements MigrationInterface {
         }
     }
 
+    /**
+     * MySQL drops an index through the table that owns it and accepts no `IF EXISTS`, so
+     * the standard form written by hand here failed there — on a path that runs rarely
+     * enough for nobody to notice. The dialect knows each engine's spelling.
+     */
     public function down(ConnectionInterface $connection): void
     {
-        $connection->execute('DROP INDEX IF EXISTS idx_content_parent_active');
-        $connection->execute('DROP INDEX IF EXISTS idx_content_taxonomy_term_reverse');
-        $connection->execute('DROP INDEX IF EXISTS idx_taxonomy_term_parent_sort');
-        $connection->execute('DROP INDEX IF EXISTS idx_content_status_published_at');
+        $dialect = $connection->dialect();
+
+        foreach (
+            [
+                'idx_content_parent_active' => 'cms_contents',
+                'idx_content_taxonomy_term_reverse' => 'cms_content_taxonomy_terms',
+                'idx_taxonomy_term_parent_sort' => 'cms_taxonomy_terms',
+                'idx_content_status_published_at' => 'cms_contents',
+            ] as $index => $table
+        ) {
+            $connection->execute($dialect->compileDropIndex($index, $table));
+        }
     }
 };

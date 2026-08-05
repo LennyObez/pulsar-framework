@@ -16,9 +16,15 @@ return new class implements MigrationInterface {
         };
     }
 
+    /**
+     * MySQL accepts no `IF EXISTS` on `DROP INDEX`, so the branch written for it here was
+     * invalid syntax rather than a portability nicety — on a path that runs rarely enough
+     * for nobody to notice. The dialect knows each engine's spelling, including that
+     * MySQL needs the owning table named.
+     */
     public function down(ConnectionInterface $connection): void
     {
-        $driver = $connection->driver();
+        $dialect = $connection->dialect();
 
         // Map each index to its correct table
         $indexTableMap = [
@@ -40,11 +46,7 @@ return new class implements MigrationInterface {
         ];
 
         foreach ($indexTableMap as $index => $table) {
-            if ($driver === Driver::MySQL) {
-                $connection->execute("DROP INDEX IF EXISTS $index ON $table");
-            } else {
-                $connection->execute("DROP INDEX IF EXISTS $index");
-            }
+            $connection->execute($dialect->compileDropIndex($index, $table));
         }
     }
 
