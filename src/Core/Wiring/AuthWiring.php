@@ -156,49 +156,89 @@ final readonly class AuthWiring implements ServiceWiringInterface
             );
             $recoveryCodeVerifier = new RecoveryCodeVerifier();
 
-            // Replay guard: use app-provided, database-backed, or fall back to in-memory
-            if ($container->has(TotpReplayGuardInterface::class)) {
-                /** @var TotpReplayGuardInterface $replayGuard */
-                $replayGuard = $container->get(TotpReplayGuardInterface::class);
-            } elseif ($container->has(ConnectionManagerInterface::class)) {
-                /** @var ConnectionManagerInterface $connManager */
-                $connManager = $container->get(ConnectionManagerInterface::class);
-                $replayGuard = new DatabaseTotpReplayGuard(
-                    $connManager->connection(),
-                    $authConfig->twoFactor->codePeriod,
+            // Every store below is bound lazily, and the reason is the same for all three.
+            //
+            // Each used to pick its implementation from
+            // `$container->has(ConnectionManagerInterface::class)` evaluated *here*, while
+            // AuthWiring runs — which made the answer a property of where DatabaseWiring
+            // sits in WiringList rather than of how the application is configured. It sat
+            // behind AuthWiring, so the answer was false on every installation and the
+            // whole second factor lived in process memory: an enrolment one worker
+            // confirmed was unknown to the next, a consumed recovery code stayed valid
+            // elsewhere, and a replayed TOTP code met an empty guard and was accepted.
+            //
+            // Deferring the decision to first resolution removes the ordering question
+            // rather than answering it. No future tidying of WiringList can bring this
+            // back, and no comment has to defend a line's position.
+            $appProvidedReplayGuard = $container->has(TotpReplayGuardInterface::class);
+            $appProvidedSecretStore = $container->has(TotpSecretStoreInterface::class);
+            $appProvidedRecoveryStore = $container->has(RecoveryCodeStoreInterface::class);
+
+            if (!$appProvidedReplayGuard) {
+                $container->bind(
+                    TotpReplayGuardInterface::class,
+                    static function (ContainerInterface $c) use ($authConfig): TotpReplayGuardInterface {
+                        if ($c->has(ConnectionManagerInterface::class)) {
+                            /** @var ConnectionManagerInterface $connManager */
+                            $connManager = $c->get(ConnectionManagerInterface::class);
+                            $guard = new DatabaseTotpReplayGuard(
+                                $connManager->connection(),
+                                $authConfig->twoFactor->codePeriod,
+                                $authConfig->twoFactor->verificationWindow,
+                            );
+                            $c->instance(DatabaseTotpReplayGuard::class, $guard);
+
+                            return $guard;
+                        }
+
+                        // Both arguments are mandatory in practice: a guard that does not
+                        // know the verifier's envelope forgets codes the verifier still
+                        // accepts.
+                        $guard = new InMemoryTotpReplayGuard(
+                            $authConfig->twoFactor->codePeriod,
+                            $authConfig->twoFactor->verificationWindow,
+                        );
+                        $c->instance(InMemoryTotpReplayGuard::class, $guard);
+
+                        return $guard;
+                    },
                 );
-                $container->instance(DatabaseTotpReplayGuard::class, $replayGuard);
-                $container->instance(TotpReplayGuardInterface::class, $replayGuard);
-            } else {
-                $replayGuard = new InMemoryTotpReplayGuard();
-                $container->instance(InMemoryTotpReplayGuard::class, $replayGuard);
-                $container->instance(TotpReplayGuardInterface::class, $replayGuard);
             }
 
-            // Secret store: use app-provided, database-backed, or fall back to in-memory
-            $totpEncryptor = null;
-            if ($container->has(MasterKey::class)) {
-                /** @var MasterKey $masterKey */
-                $masterKey = $container->get(MasterKey::class);
-                $totpEncryptor = Encryptor::fromDerivedKey($masterKey, 4, 'totpscrt');
-            }
+            // Secret store: use app-provided, database-backed, or fall back to in-memory.
+            //
+            // The encryptor is resolved inside the factory for the same reason the
+            // connection is: deciding here would make the store's implementation a
+            // property of when this ran, and secrets are only ever written encrypted —
+            // so a master key that arrives late would silently cost persistence rather
+            // than costing encryption.
+            if (!$appProvidedSecretStore) {
+                $container->bind(
+                    TotpSecretStoreInterface::class,
+                    static function (ContainerInterface $c): TotpSecretStoreInterface {
+                        $totpEncryptor = null;
 
-            if ($container->has(TotpSecretStoreInterface::class)) {
-                /** @var TotpSecretStoreInterface $secretStore */
-                $secretStore = $container->get(TotpSecretStoreInterface::class);
-            } elseif ($container->has(ConnectionManagerInterface::class) && $totpEncryptor !== null) {
-                /** @var ConnectionManagerInterface $connManager */
-                $connManager = $container->get(ConnectionManagerInterface::class);
-                $secretStore = new DatabaseTotpSecretStore(
-                    $connManager->connection(),
-                    $totpEncryptor,
+                        if ($c->has(MasterKey::class)) {
+                            /** @var MasterKey $masterKey */
+                            $masterKey = $c->get(MasterKey::class);
+                            $totpEncryptor = Encryptor::fromDerivedKey($masterKey, 4, 'totpscrt');
+                        }
+
+                        if ($c->has(ConnectionManagerInterface::class) && $totpEncryptor !== null) {
+                            /** @var ConnectionManagerInterface $connManager */
+                            $connManager = $c->get(ConnectionManagerInterface::class);
+                            $store = new DatabaseTotpSecretStore($connManager->connection(), $totpEncryptor);
+                            $c->instance(DatabaseTotpSecretStore::class, $store);
+
+                            return $store;
+                        }
+
+                        $store = new InMemoryTotpSecretStore($totpEncryptor);
+                        $c->instance(InMemoryTotpSecretStore::class, $store);
+
+                        return $store;
+                    },
                 );
-                $container->instance(DatabaseTotpSecretStore::class, $secretStore);
-                $container->instance(TotpSecretStoreInterface::class, $secretStore);
-            } else {
-                $secretStore = new InMemoryTotpSecretStore($totpEncryptor);
-                $container->instance(InMemoryTotpSecretStore::class, $secretStore);
-                $container->instance(TotpSecretStoreInterface::class, $secretStore);
             }
 
             // Recovery code hasher + store
@@ -211,76 +251,110 @@ final readonly class AuthWiring implements ServiceWiringInterface
                 $container->instance(RecoveryCodeHasher::class, $recoveryCodeHasher);
             }
 
-            if ($container->has(RecoveryCodeStoreInterface::class)) {
-                /** @var RecoveryCodeStoreInterface $recoveryCodeStore */
-                $recoveryCodeStore = $container->get(RecoveryCodeStoreInterface::class);
-            } elseif ($container->has(ConnectionManagerInterface::class)) {
-                /** @var ConnectionManagerInterface $connManager */
-                $connManager = $container->get(ConnectionManagerInterface::class);
-                $recoveryCodeStore = new DatabaseRecoveryCodeStore($connManager->connection());
-                $container->instance(DatabaseRecoveryCodeStore::class, $recoveryCodeStore);
-                $container->instance(RecoveryCodeStoreInterface::class, $recoveryCodeStore);
-            } else {
-                $recoveryCodeStore = new InMemoryRecoveryCodeStore();
-                $container->instance(InMemoryRecoveryCodeStore::class, $recoveryCodeStore);
-                $container->instance(RecoveryCodeStoreInterface::class, $recoveryCodeStore);
+            if (!$appProvidedRecoveryStore) {
+                $container->bind(
+                    RecoveryCodeStoreInterface::class,
+                    static function (ContainerInterface $c): RecoveryCodeStoreInterface {
+                        if ($c->has(ConnectionManagerInterface::class)) {
+                            /** @var ConnectionManagerInterface $connManager */
+                            $connManager = $c->get(ConnectionManagerInterface::class);
+                            $store = new DatabaseRecoveryCodeStore($connManager->connection());
+                            $c->instance(DatabaseRecoveryCodeStore::class, $store);
+
+                            return $store;
+                        }
+
+                        $store = new InMemoryRecoveryCodeStore();
+                        $c->instance(InMemoryRecoveryCodeStore::class, $store);
+
+                        return $store;
+                    },
+                );
             }
-
-            // Rate limiter (only if app provides one)
-            $rateLimiter = $container->has(TwoFactorRateLimiterInterface::class)
-                ? $container->get(TwoFactorRateLimiterInterface::class)
-                : null;
-            /** @var TwoFactorRateLimiterInterface|null $rateLimiter */
-
-            // Event collector (only if bound; e.g., by Studio)
-            $eventCollector = $container->has(AuthEventCollectorInterface::class)
-                ? $container->get(AuthEventCollectorInterface::class)
-                : null;
-            /** @var AuthEventCollectorInterface|null $eventCollector */
-
-            $twoFactorManager = new TwoFactorManager(
-                generator: $totpGenerator,
-                verifier: $totpVerifier,
-                recoveryCodeGenerator: $recoveryCodeGenerator,
-                recoveryCodeVerifier: $recoveryCodeVerifier,
-                issuer: $authConfig->twoFactor->issuer,
-                recoveryCodeCount: $authConfig->twoFactor->recoveryCodeCount,
-                replayGuard: $replayGuard,
-                secretStore: $secretStore,
-                recoveryCodeHasher: $recoveryCodeHasher,
-                recoveryCodeStore: $recoveryCodeStore,
-                auditLogger: $auditLoggerForTwoFactor,
-                session: $session,
-                rateLimiter: $rateLimiter,
-                eventCollector: $eventCollector,
-            );
 
             $container->instance(TotpGenerator::class, $totpGenerator);
             $container->instance(TotpVerifier::class, $totpVerifier);
             $container->instance(RecoveryCodeGenerator::class, $recoveryCodeGenerator);
             $container->instance(RecoveryCodeVerifier::class, $recoveryCodeVerifier);
-            $container->instance(TwoFactorManager::class, $twoFactorManager);
-            $container->instance(TwoFactorManagerInterface::class, $twoFactorManager);
 
-            // Production guardrail: warn when in-memory stores are active
-            if ($logger !== null && !$authConfig->twoFactor->allowInMemory) {
-                $inMemoryStores = [];
-                if ($secretStore instanceof InMemoryTotpSecretStore) {
-                    $inMemoryStores[] = 'InMemoryTotpSecretStore';
-                }
-                if ($recoveryCodeStore instanceof InMemoryRecoveryCodeStore) {
-                    $inMemoryStores[] = 'InMemoryRecoveryCodeStore';
-                }
-                if ($replayGuard instanceof InMemoryTotpReplayGuard) {
-                    $inMemoryStores[] = 'InMemoryTotpReplayGuard';
+            // Lazy too, because it consumes all three stores: building it here would
+            // resolve them here, and the deferral above would buy nothing.
+            $twoFactorFactory = static function (ContainerInterface $c) use (
+                $authConfig,
+                $totpGenerator,
+                $totpVerifier,
+                $recoveryCodeGenerator,
+                $recoveryCodeVerifier,
+                $recoveryCodeHasher,
+                $auditLoggerForTwoFactor,
+                $session,
+                $logger,
+            ): TwoFactorManager {
+                /** @var TotpReplayGuardInterface $replayGuard */
+                $replayGuard = $c->get(TotpReplayGuardInterface::class);
+                /** @var TotpSecretStoreInterface $secretStore */
+                $secretStore = $c->get(TotpSecretStoreInterface::class);
+                /** @var RecoveryCodeStoreInterface $recoveryCodeStore */
+                $recoveryCodeStore = $c->get(RecoveryCodeStoreInterface::class);
+
+                // Resolved here rather than at wire time for the same reason as the
+                // stores: an application binding one of these later must still be seen.
+                $rateLimiter = $c->has(TwoFactorRateLimiterInterface::class)
+                    ? $c->get(TwoFactorRateLimiterInterface::class)
+                    : null;
+                /** @var TwoFactorRateLimiterInterface|null $rateLimiter */
+                $eventCollector = $c->has(AuthEventCollectorInterface::class)
+                    ? $c->get(AuthEventCollectorInterface::class)
+                    : null;
+                /** @var AuthEventCollectorInterface|null $eventCollector */
+
+                // Production guardrail: warn when in-memory stores are active. It reports
+                // from here because here is where the choice is finally made — and it was
+                // telling the truth all along, naming all three on every boot, while the
+                // database path was unreachable. TwoFactorPersistenceBootTest is the same
+                // statement in a form that stops a release rather than filling a log.
+                if ($logger !== null && !$authConfig->twoFactor->allowInMemory) {
+                    $inMemory = [];
+
+                    if ($secretStore instanceof InMemoryTotpSecretStore) {
+                        $inMemory[] = 'InMemoryTotpSecretStore';
+                    }
+
+                    if ($recoveryCodeStore instanceof InMemoryRecoveryCodeStore) {
+                        $inMemory[] = 'InMemoryRecoveryCodeStore';
+                    }
+
+                    if ($replayGuard instanceof InMemoryTotpReplayGuard) {
+                        $inMemory[] = 'InMemoryTotpReplayGuard';
+                    }
+
+                    foreach ($inMemory as $store) {
+                        $logger->warning(
+                            "In-memory 2FA store [$store] is active: data will not persist across restarts. Bind a persistent implementation.",
+                        );
+                    }
                 }
 
-                foreach ($inMemoryStores as $store) {
-                    $logger->warning(
-                        "In-memory 2FA store [$store] is active: data will not persist across restarts. Bind a persistent implementation.",
-                    );
-                }
-            }
+                return new TwoFactorManager(
+                    generator: $totpGenerator,
+                    verifier: $totpVerifier,
+                    recoveryCodeGenerator: $recoveryCodeGenerator,
+                    recoveryCodeVerifier: $recoveryCodeVerifier,
+                    issuer: $authConfig->twoFactor->issuer,
+                    recoveryCodeCount: $authConfig->twoFactor->recoveryCodeCount,
+                    replayGuard: $replayGuard,
+                    secretStore: $secretStore,
+                    recoveryCodeHasher: $recoveryCodeHasher,
+                    recoveryCodeStore: $recoveryCodeStore,
+                    auditLogger: $auditLoggerForTwoFactor,
+                    session: $session,
+                    rateLimiter: $rateLimiter,
+                    eventCollector: $eventCollector,
+                );
+            };
+
+            $container->bind(TwoFactorManager::class, $twoFactorFactory);
+            $container->bind(TwoFactorManagerInterface::class, $twoFactorFactory);
         }
 
         // Middleware
