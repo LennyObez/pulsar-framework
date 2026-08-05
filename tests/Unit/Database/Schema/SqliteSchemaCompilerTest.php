@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Schema;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,10 +36,20 @@ final class SqliteSchemaCompilerTest extends TestCase
      */
     public static function columnTypeProvider(): iterable
     {
-        yield 'id (bigint auto)' => [
+        // INTEGER, not BIGINT: SQLite accepts AUTOINCREMENT only on a column declared
+        // exactly `INTEGER PRIMARY KEY`, which is what makes it an alias of the rowid.
+        // This expectation previously read BIGINT, matched the compiler, and described a
+        // statement the engine rejects — which is what a contract test executing the
+        // generated DDL against a real database found and a string comparison could not.
+        yield 'id (bigint auto becomes INTEGER, the only form SQLite allows)' => [
             SchemaColumnType::BigInt,
-            'BIGINT PRIMARY KEY AUTOINCREMENT',
+            'INTEGER PRIMARY KEY AUTOINCREMENT',
             ['primaryKey' => true, 'autoIncrement' => true],
+        ];
+        yield 'bigint without auto-increment stays BIGINT' => [
+            SchemaColumnType::BigInt,
+            'BIGINT',
+            [],
         ];
         yield 'uuid' => [SchemaColumnType::Uuid, 'VARCHAR(36)', []];
         yield 'string' => [SchemaColumnType::String, 'VARCHAR(255)', ['length' => 255]];
@@ -129,7 +140,9 @@ final class SqliteSchemaCompilerTest extends TestCase
 
         $sql = $stmts[0];
         self::assertStringContainsString('CREATE TABLE "comprehensive"', $sql);
-        self::assertStringContainsString('BIGINT PRIMARY KEY AUTOINCREMENT', $sql);
+        // INTEGER, the only declaration SQLite accepts AUTOINCREMENT on.
+        self::assertStringContainsString('"id" INTEGER PRIMARY KEY AUTOINCREMENT', $sql);
+        self::assertStringNotContainsString('BIGINT PRIMARY KEY', $sql);
         self::assertStringContainsString('"name" VARCHAR(255)', $sql);
         self::assertStringContainsString('"body" TEXT', $sql);
         self::assertStringContainsString('"count" INTEGER', $sql);
@@ -366,10 +379,16 @@ final class SqliteSchemaCompilerTest extends TestCase
         self::assertStringContainsString('DEFAULT 0', $stmts[0]);
     }
 
+    /**
+     * A name carrying the delimiter is refused, not escaped — see the equivalent test on
+     * the MySQL compiler for why validation is the stronger of the two postures.
+     */
     #[Test]
-    public function identifierWithDoubleQuoteIsEscaped(): void
+    public function identifierWithDoubleQuoteIsRefused(): void
     {
-        $stmts = $this->compiler->compileDropTable('my"table');
-        self::assertStringContainsString('"my""table"', $stmts[0]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid SQL identifier');
+
+        $this->compiler->compileDropTable('my"table');
     }
 }

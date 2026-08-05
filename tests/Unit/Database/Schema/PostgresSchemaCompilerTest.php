@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Schema;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -302,11 +303,17 @@ final class PostgresSchemaCompilerTest extends TestCase
         self::assertStringContainsString('"token" UUID', $sql);
     }
 
+    /**
+     * A name carrying the delimiter is refused, not escaped — see the equivalent test on
+     * the MySQL compiler for why validation is the stronger of the two postures.
+     */
     #[Test]
-    public function doubleQuoteInIdentifierIsEscaped(): void
+    public function doubleQuoteInIdentifierIsRefused(): void
     {
-        $stmts = $this->compiler->compileDropTable('my"table');
-        self::assertStringContainsString('"my""table"', $stmts[0]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid SQL identifier');
+
+        $this->compiler->compileDropTable('my"table');
     }
 
     #[Test]

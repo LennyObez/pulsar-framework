@@ -6,6 +6,7 @@ namespace Pulsar\Database\Portable;
 
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
+use Pulsar\Database\SqlIdentifier;
 
 use function array_map;
 use function implode;
@@ -146,13 +147,14 @@ final class UpsertBuilder
     }
 
     /**
-     * Return the identifier quote character for the given driver.
+     * The identifier delimiter for the given engine.
+     *
+     * Delegates to {@see SqlIdentifier}, which is the single authority on how each engine
+     * delimits a name. A local copy of this answer is a copy that will disagree with the
+     * others the first time an engine is added.
      */
     private static function quoteChar(Driver $driver): string
     {
-        return match ($driver) {
-            Driver::MySQL => '`',
-            Driver::PostgreSQL, Driver::SQLite => '"',
-        };
+        return SqlIdentifier::delimiter($driver);
     }
 }
