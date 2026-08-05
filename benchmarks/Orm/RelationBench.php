@@ -381,6 +381,16 @@ final class PreloadedConnection implements \Pulsar\Database\ConnectionInterface
         return \Pulsar\Database\Driver::SQLite;
     }
 
+    public function variant(): \Pulsar\Database\DriverVariant
+    {
+        return \Pulsar\Database\DriverVariant::Standard;
+    }
+
+    public function dialect(): \Pulsar\Database\Dialect\DialectInterface
+    {
+        return \Pulsar\Database\Dialect\Dialects::for($this->driver(), $this->variant());
+    }
+
     public function name(): string
     {
         return 'bench';

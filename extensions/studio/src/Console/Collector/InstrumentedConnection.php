@@ -110,6 +110,18 @@ final class InstrumentedConnection implements ConnectionInterface, CollectorInte
     }
 
     #[Override]
+    public function variant(): \Pulsar\Database\DriverVariant
+    {
+        return $this->inner->variant();
+    }
+
+    #[Override]
+    public function dialect(): \Pulsar\Database\Dialect\DialectInterface
+    {
+        return $this->inner->dialect();
+    }
+
+    #[Override]
     public function name(): string
     {
         return $this->inner->name();
