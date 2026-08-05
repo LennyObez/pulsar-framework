@@ -158,6 +158,13 @@ final readonly class SchemaApiController
         $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $column */
         $column = $body['column'] ?? '';
+
+        if ($column === '') {
+            // Answering 200 here used to hand the operator `DROP COLUMN ""` as the change
+            // they were about to approve. A preview of nothing is not a preview.
+            return Response::json(['error' => 'A "column" field is required'], 400);
+        }
+
         $result = $this->previewHandler->previewDropColumn($table, $column);
 
         return Response::json($result);
@@ -177,6 +184,11 @@ final readonly class SchemaApiController
         $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $indexName */
         $indexName = $body['name'] ?? '';
+
+        if ($indexName === '') {
+            return Response::json(['error' => 'A "name" field is required'], 400);
+        }
+
         $result = $this->previewHandler->previewDropIndex($table, $indexName);
 
         return Response::json($result);

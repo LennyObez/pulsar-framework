@@ -19,11 +19,21 @@ use function json_decode;
 use function sprintf;
 
 /**
- * Verifies that installed Composer packages match composer.lock.
+ * Compares composer.lock against vendor/composer/installed.json.
  *
- * Detects unauthorized modifications to vendor/ without updating
- * the lock file: a supply chain integrity control required by
- * DORA Art.28 and NIS2 Art.21(d).
+ * For every locked package the check compares the version string, the
+ * `dist.reference` (the exact commit the archive was cut from) and the
+ * `dist.shasum`. That detects a vendor tree installed from a different lock
+ * revision, and an upstream re-tag that keeps the version string while moving
+ * the commit behind it — a supply chain integrity signal required by DORA
+ * Art.28 and NIS2 Art.21(d). Composer leaves `shasum` empty for VCS dists, so
+ * the reference is usually the field that carries the comparison.
+ *
+ * It does not re-hash the files on disk. Both sides of the comparison are
+ * Composer's own records, so an edit made directly to a file under vendor/
+ * leaves both unchanged and passes this check; that class of tampering is what
+ * the integrity manifest covers. Path repositories record neither field and are
+ * compared by version only.
  */
 #[Internal]
 final readonly class DependencyIntegrityCheck implements DeployCheckInterface
@@ -43,7 +53,7 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
     #[Override]
     public function getDescription(): string
     {
-        return 'Verifies installed packages match composer.lock checksums';
+        return 'Compares composer.lock versions, dist references and checksums against vendor/composer/installed.json';
     }
 
     #[Override]
@@ -161,16 +171,56 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
      */
     public function comparePackages(array $lockData, array $installedData): array
     {
-        $lockedPackages = $this->extractLockedVersions($lockData);
-        $installedPackages = $this->extractInstalledVersions($installedData);
+        /** @var mixed $lockedRaw */
+        $lockedRaw = $lockData['packages'] ?? null;
+        $lockedPackages = $this->extractPackages(is_array($lockedRaw) ? $lockedRaw : []);
+
+        // Composer 2 format: { "packages": [...], "dev": true, ... }
+        /** @var mixed $installedRaw */
+        $installedRaw = $installedData['packages'] ?? null;
+        $installedPackages = $this->extractPackages(is_array($installedRaw) ? $installedRaw : $installedData);
 
         $mismatches = [];
 
-        foreach ($lockedPackages as $name => $version) {
+        foreach ($lockedPackages as $name => $locked) {
             if (!isset($installedPackages[$name])) {
                 $mismatches[] = sprintf('%s (missing)', $name);
-            } elseif ($installedPackages[$name] !== $version) {
-                $mismatches[] = sprintf('%s (locked: %s, installed: %s)', $name, $version, $installedPackages[$name]);
+                continue;
+            }
+
+            $installed = $installedPackages[$name];
+
+            if ($installed['version'] !== $locked['version']) {
+                $mismatches[] = sprintf(
+                    '%s (locked: %s, installed: %s)',
+                    $name,
+                    $locked['version'],
+                    $installed['version'],
+                );
+                continue;
+            }
+
+            // A re-tagged upstream release keeps its version string while the
+            // commit and the archive behind it change, so the version
+            // comparison alone cannot see it. Compared only when both sides
+            // carry the field: Composer leaves `shasum` empty for VCS dists and
+            // records neither field for path repositories.
+            foreach (['reference' => 'dist reference', 'shasum' => 'dist checksum'] as $field => $label) {
+                // isset() rather than a null comparison: both keys are optional, so a path
+                // repository — which records neither — reached the comparison through an
+                // undefined index and warned twice per package before answering.
+                if (
+                    isset($locked[$field], $installed[$field])
+                    && $locked[$field] !== $installed[$field]
+                ) {
+                    $mismatches[] = sprintf(
+                        '%s (%s differs: locked %s, installed %s)',
+                        $name,
+                        $label,
+                        $locked[$field],
+                        $installed[$field],
+                    );
+                }
             }
         }
 
@@ -178,16 +228,12 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
     }
 
     /**
-     * @param array<string, mixed> $lockData
-     * @return array<string, string> package name → version
+     * @param array<mixed> $packages Raw package list from a lock or installed file
+     * @return array<string, array{version: string, reference: string|null, shasum: string|null}>
      */
-    private function extractLockedVersions(array $lockData): array
+    private function extractPackages(array $packages): array
     {
-        $versions = [];
-
-        /** @var mixed $packagesRaw */
-        $packagesRaw = $lockData['packages'] ?? null;
-        $packages = is_array($packagesRaw) ? $packagesRaw : [];
+        $extracted = [];
 
         /** @var mixed $package */
         foreach ($packages as $package) {
@@ -200,43 +246,26 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
             /** @var mixed $version */
             $version = $package['version'] ?? null;
 
-            if (is_string($name) && is_string($version)) {
-                $versions[$name] = $version;
-            }
-        }
-
-        return $versions;
-    }
-
-    /**
-     * @param array<string, mixed> $installedData
-     * @return array<string, string> package name → version
-     */
-    private function extractInstalledVersions(array $installedData): array
-    {
-        $versions = [];
-
-        // Composer 2 format: { "packages": [...], "dev": true, ... }
-        /** @var mixed $packagesRaw */
-        $packagesRaw = $installedData['packages'] ?? null;
-        $packages = is_array($packagesRaw) ? $packagesRaw : $installedData;
-
-        /** @var mixed $package */
-        foreach ($packages as $package) {
-            if (!is_array($package)) {
+            if (!is_string($name) || !is_string($version)) {
                 continue;
             }
 
-            /** @var mixed $name */
-            $name = $package['name'] ?? null;
-            /** @var mixed $version */
-            $version = $package['version'] ?? null;
+            /** @var mixed $dist */
+            $dist = $package['dist'] ?? null;
+            $dist = is_array($dist) ? $dist : [];
 
-            if (is_string($name) && is_string($version)) {
-                $versions[$name] = $version;
-            }
+            /** @var mixed $reference */
+            $reference = $dist['reference'] ?? null;
+            /** @var mixed $shasum */
+            $shasum = $dist['shasum'] ?? null;
+
+            $extracted[$name] = [
+                'version' => $version,
+                'reference' => is_string($reference) && $reference !== '' ? $reference : null,
+                'shasum' => is_string($shasum) && $shasum !== '' ? $shasum : null,
+            ];
         }
 
-        return $versions;
+        return $extracted;
     }
 }

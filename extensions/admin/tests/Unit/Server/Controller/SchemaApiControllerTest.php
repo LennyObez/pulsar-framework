@@ -400,11 +400,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewDropColumnReturnsStatements(): void
     {
-        $request = new ServerRequest(
-            method: 'POST',
-            uri: '/admin/api/schema/preview/test_tbl/column/drop',
-            headers: ['Accept' => 'application/json'],
-        );
+        $request = $this->makeJsonRequest('POST', bodyData: ['column' => 'email']);
 
         $response = $this->controller->previewDropColumn($request, 'test_tbl');
 
@@ -415,6 +411,27 @@ final class SchemaApiControllerTest extends TestCase
         /** @var list<string> $statements */
         $statements = $body['statements'];
         self::assertNotEmpty($statements);
+    }
+
+    /**
+     * A preview with no column named is a malformed request, not a preview of nothing.
+     *
+     * This test used to send exactly this body and assert 200 — so the endpoint answered
+     * with `DROP COLUMN ""` as the change the operator was about to approve, and the
+     * schema change log recorded that as evidence.
+     */
+    #[Test]
+    public function previewDropColumnRejectsAMissingColumn(): void
+    {
+        $request = new ServerRequest(
+            method: 'POST',
+            uri: '/admin/api/schema/preview/test_tbl/column/drop',
+            headers: ['Accept' => 'application/json'],
+        );
+
+        $response = $this->controller->previewDropColumn($request, 'test_tbl');
+
+        self::assertSame(400, $response->getStatusCode());
     }
 
     #[Test]
@@ -440,11 +457,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewDropIndexReturnsStatements(): void
     {
-        $request = new ServerRequest(
-            method: 'POST',
-            uri: '/admin/api/schema/preview/test_tbl/index/drop',
-            headers: ['Accept' => 'application/json'],
-        );
+        $request = $this->makeJsonRequest('POST', bodyData: ['name' => 'idx_email']);
 
         $response = $this->controller->previewDropIndex($request, 'test_tbl');
 
@@ -455,5 +468,19 @@ final class SchemaApiControllerTest extends TestCase
         /** @var list<string> $statements */
         $statements = $body['statements'];
         self::assertNotEmpty($statements);
+    }
+
+    #[Test]
+    public function previewDropIndexRejectsAMissingName(): void
+    {
+        $request = new ServerRequest(
+            method: 'POST',
+            uri: '/admin/api/schema/preview/test_tbl/index/drop',
+            headers: ['Accept' => 'application/json'],
+        );
+
+        $response = $this->controller->previewDropIndex($request, 'test_tbl');
+
+        self::assertSame(400, $response->getStatusCode());
     }
 }
