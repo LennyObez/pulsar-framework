@@ -22,6 +22,7 @@ use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_keys;
+use function array_values;
 use function explode;
 use function implode;
 use function in_array;
@@ -30,6 +31,7 @@ use function is_resource;
 use function is_string;
 use function json_decode;
 use function json_validate;
+use function preg_match;
 use function str_contains;
 use function strlen;
 use function strpos;
@@ -102,6 +104,16 @@ final class ServerRequest implements ServerRequestInterface
      * @param array<UploadedFileInterface> $uploadedFiles
      * @param null|array<string, mixed>|object $parsedBody
      * @param array<string, mixed> $attributes
+     *
+     * @throws InvalidArgumentException when a header name is not an RFC 7230
+     *                                  token or a value carries CR, LF or NUL.
+     *                                  `withHeader()` has always rejected
+     *                                  those; the constructor holds the same
+     *                                  invariant so no instance can carry a
+     *                                  header the mutators would refuse.
+     *                                  Request ingress never reaches this
+     *                                  throw — {@see extractHeadersFromServer()}
+     *                                  drops malformed headers first.
      */
     public function __construct(
         string $method = 'GET',
@@ -132,9 +144,13 @@ final class ServerRequest implements ServerRequestInterface
         $this->headerNames = [];
 
         foreach ($headers as $name => $value) {
+            HeaderValidator::assertValidName($name);
+            /** @var list<string> $values */
+            $values = is_array($value) ? array_values($value) : [$value];
+            HeaderValidator::assertValidValue($values);
             $lowered = strtolower($name);
             $this->headerNames[$lowered] = $name;
-            $this->headers[$lowered] = is_array($value) ? $value : [$value];
+            $this->headers[$lowered] = $values;
         }
 
         // Set Host header from URI if not present
@@ -154,15 +170,14 @@ final class ServerRequest implements ServerRequestInterface
 
     /**
      * Create a ServerRequest from PHP superglobals.
-     * Default body cap applied by {@see self::fromGlobals()} — SEC-HTTP-01.
      *
      * @param array<string, mixed>|null $server
      * @param array<string, mixed>|null $get
      * @param array<string, mixed>|null $post
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $files
-     * @param int $maxBodyBytes SEC-HTTP-01: hard cap on bytes read from
-     *                          php://input; a request exceeding this throws
+     * @param int $maxBodyBytes Hard cap on bytes read from php://input;
+     *                          a request exceeding this throws
      *                          {@see BodyTooLargeException}.
      */
     #[NoDiscard]
@@ -232,10 +247,9 @@ final class ServerRequest implements ServerRequestInterface
         $protocol = $serverData['SERVER_PROTOCOL'] ?? null;
         $protocolVersion = is_string($protocol) ? str_replace('HTTP/', '', $protocol) : '1.1';
 
-        // Extract headers from $_SERVER
         $headers = self::extractHeadersFromServer($serverData);
 
-        // SEC-HTTP-01: read php://input with a hard cap. stream_get_contents
+        // Read php://input with a hard cap. stream_get_contents
         // with $length+1 lets us detect overflow without buffering megabytes
         // we are about to reject anyway. Chunked transfer is handled
         // transparently — fgets/fread on php://input return decoded bytes.
@@ -361,7 +375,7 @@ final class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withHeader(string $name, $value): static
     {
-        // SEC-IN-01: validate RFC 7230 token name + CRLF/NUL-free value.
+        // Validate RFC 7230 token name + CRLF/NUL-free value.
         HeaderValidator::assertValidName($name);
         /** @var list<string> $values */
         $values = is_array($value) ? array_values($value) : [$value];
@@ -379,7 +393,7 @@ final class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withAddedHeader(string $name, $value): static
     {
-        // SEC-IN-01: same validation as withHeader for the additive variant.
+        // Same validation as withHeader for the additive variant.
         HeaderValidator::assertValidName($name);
         /** @var list<string> $values */
         $values = is_array($value) ? array_values($value) : [$value];
@@ -825,7 +839,7 @@ final class ServerRequest implements ServerRequestInterface
     /**
      * Check if the request is over HTTPS.
      *
-     * F2.9: a load balancer that terminates TLS rewrites the
+     * A load balancer that terminates TLS rewrites the
      * scheme to plain HTTP before the request reaches PHP, so
      * `$this->uri->getScheme()` reads `http` even though the
      * client connection was encrypted. Honour `X-Forwarded-Proto`
@@ -969,14 +983,7 @@ final class ServerRequest implements ServerRequestInterface
     }
 
     /**
-     * Extract HTTP headers from a $_SERVER-style array.
-     *
-     * @param array<string, mixed> $server
-     *
-     * @return array<string, string>
-     */
-    /**
-     * SEC-HTTP-01: read php://input up to maxBodyBytes, throw on overflow.
+     * Read php://input up to maxBodyBytes, throw on overflow.
      *
      * Reads `$maxBodyBytes + 1` so the overflow path is distinguishable from
      * an exactly-at-limit request. Returns a StringStream for compatibility
@@ -1015,10 +1022,37 @@ final class ServerRequest implements ServerRequestInterface
         return new StringStream($contents);
     }
 
-    /** SEC-HTTP-01: default body cap (10 MB). */
+    /** Default body cap (10 MB). */
     public const int DEFAULT_MAX_BODY_BYTES = 10_485_760;
 
     /**
+     * CGI meta-variable name (RFC 3875 §4.1.18) that a SAPI can have produced
+     * from a hyphen-separated field-name: uppercase alphanumeric runs joined
+     * by single underscores. A leading, trailing or doubled underscore cannot
+     * come from that transform, so the raw name carried an underscore of its
+     * own and the reverse mapping is guesswork.
+     */
+    private const string CGI_HEADER_KEY_PATTERN = '/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/';
+
+    /**
+     * Extract HTTP headers from a $_SERVER-style array.
+     *
+     * This is the ingress boundary, so it drops rather than throws: a request
+     * from an arbitrary client must not surface as an uncaught exception from
+     * `fromGlobals()`. Three classes are dropped — keys the SAPI transform
+     * cannot have produced, names that are not RFC 7230 tokens, and values
+     * carrying CR, LF or NUL (the response-splitting payload, which would
+     * otherwise sit in the request object waiting for app code to echo it).
+     *
+     * One ambiguity survives and cannot be closed here: the SAPI transform is
+     * lossy, so a client header named `X_Forwarded_Proto` and a proxy's
+     * `X-Forwarded-Proto` arrive as the same `HTTP_X_FORWARDED_PROTO` key with
+     * nothing left to tell them apart. Those are the trust inputs of
+     * {@see \Pulsar\Http\TrustedProxy::resolveClientIp()}. Rejecting the key
+     * would also reject every legitimate multi-word header, so the web server
+     * has to refuse underscore-bearing field names — nginx does by default
+     * (`underscores_in_headers off`).
+     *
      * @param array<string, mixed> $server
      * @return array<string, string>
      */
@@ -1032,12 +1066,24 @@ final class ServerRequest implements ServerRequestInterface
             }
 
             if (str_starts_with($key, 'HTTP_')) {
-                $name = str_replace('_', '-', substr($key, 5));
-                $headers[$name] = $value;
+                $suffix = substr($key, 5);
+
+                if (preg_match(self::CGI_HEADER_KEY_PATTERN, $suffix) !== 1) {
+                    continue;
+                }
+
+                $name = str_replace('_', '-', $suffix);
             } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH', 'CONTENT_MD5'], true)) {
                 $name = str_replace('_', '-', $key);
-                $headers[$name] = $value;
+            } else {
+                continue;
             }
+
+            if (!HeaderValidator::isValidName($name) || !HeaderValidator::isValidValue($value)) {
+                continue;
+            }
+
+            $headers[$name] = $value;
         }
 
         return $headers;

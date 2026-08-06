@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Fuzz;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Message\HeaderValidator;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Message\Uri;
 use Pulsar\Http\Method;
@@ -15,6 +18,7 @@ use Pulsar\Http\Request;
 use ValueError;
 
 #[CoversClass(ServerRequest::class)]
+#[CoversClass(HeaderValidator::class)]
 #[CoversClass(Request::class)]
 #[CoversClass(Uri::class)]
 #[Group('fuzz')]
@@ -65,16 +69,16 @@ final class HttpRequestFuzzTest extends TestCase
     #[Test]
     public function malformedContentTypeHeadersAreHandled(): void
     {
+        // Garbage that is still a legal RFC 7230 field-value: it must be
+        // carried, not rejected, and must not derail content negotiation.
         $contentTypes = [
             '',
             'invalid',
             'application/',
             '/json',
-            "application/json\x00",
             'application/json; charset=',
             'application/json; charset=utf-8; boundary=',
             str_repeat('application/json; ', 500),
-            "text/html\r\nX-Injected: value",
         ];
 
         foreach ($contentTypes as $contentType) {
@@ -85,10 +89,85 @@ final class HttpRequestFuzzTest extends TestCase
                 body: '{"key":"value"}',
             );
 
-            $json = $request->json();
-            // json() returns array — verify it completed without throwing
-            self::addToAssertionCount(1);
+            $expected = str_contains($contentType, 'application/json') ? ['key' => 'value'] : [];
+
+            self::assertSame($contentType, $request->getHeaderLine('Content-Type'));
+            self::assertSame($expected, $request->json());
         }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function headerValuesOutsideFieldContent(): iterable
+    {
+        yield 'response splitting' => ["text/html\r\nX-Injected: value"];
+        yield 'bare carriage return' => ["text/html\rX-Injected: value"];
+        yield 'bare line feed' => ["text/html\nX-Injected: value"];
+        yield 'nul terminator' => ["application/json\x00"];
+        yield 'early body' => ["text/html\r\n\r\n<script>alert(1)</script>"];
+    }
+
+    #[DataProvider('headerValuesOutsideFieldContent')]
+    #[Test]
+    public function headerValuesOutsideFieldContentAreRejectedByTheConstructor(string $value): void
+    {
+        // `withHeader()` has always refused these. The constructor used to
+        // wave them through, so a request object could hold a header the
+        // mutators would not accept.
+        $this->expectException(InvalidArgumentException::class);
+
+        new ServerRequest(
+            method: 'POST',
+            uri: '/',
+            headers: ['Content-Type' => $value],
+            body: '{"key":"value"}',
+        );
+    }
+
+    #[Test]
+    public function headerNamesOutsideTheTokenAlphabetAreRejectedByTheConstructor(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new ServerRequest(method: 'GET', uri: '/', headers: ["X-Foo\r\nX-Injected" => 'value']);
+    }
+
+    #[Test]
+    public function hostileServerEntriesNeverBecomeHeaders(): void
+    {
+        // Ingress drops instead of throwing: `fromGlobals()` runs before the
+        // pipeline exists, so an exception here has nowhere to go.
+        $request = ServerRequest::fromGlobals(
+            server: [
+                'REQUEST_METHOD' => 'GET',
+                'REQUEST_URI' => '/',
+                'HTTP_ACCEPT' => 'text/html',
+                'HTTP_X_EVIL' => "ok\r\nX-Injected: yes",
+                'HTTP_X_NUL' => "ok\0",
+                // Undecodable underscore placement: no hyphen-separated
+                // field-name mangles to any of these.
+                'HTTP__X_FORWARDED_PROTO' => 'https',
+                'HTTP_X__FORWARDED_PROTO' => 'https',
+                'HTTP_X_FORWARDED_PROTO_' => 'https',
+                // Not a CGI meta-variable name at all.
+                'HTTP_X-FORWARDED-PROTO' => 'https',
+                'HTTP_X FOO' => 'bar',
+                'HTTP_' => 'bar',
+            ],
+            get: [],
+            post: [],
+            cookies: [],
+            files: [],
+        );
+
+        self::assertSame('text/html', $request->getHeaderLine('Accept'));
+        self::assertFalse($request->hasHeader('X-Evil'));
+        self::assertFalse($request->hasHeader('X-Nul'));
+        self::assertFalse($request->hasHeader('X-Forwarded-Proto'));
+        self::assertFalse($request->hasHeader('-X-Forwarded-Proto'));
+        self::assertFalse($request->hasHeader('X--Forwarded-Proto'));
+        self::assertFalse($request->hasHeader('X-Forwarded-Proto-'));
     }
 
     #[Test]
