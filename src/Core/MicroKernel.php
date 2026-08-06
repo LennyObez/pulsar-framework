@@ -11,18 +11,24 @@ use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Api;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Http\Message\BodyTooLargeException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
+use Throwable;
 
+use function error_log;
 use function is_array;
 use function is_callable;
 use function is_object;
 use function is_scalar;
 use function is_string;
+use function sprintf;
 
 /**
  * Minimal kernel for single-file applications.
@@ -169,12 +175,16 @@ final class MicroKernel
 
     /**
      * Handle a request and return a response.
+     *
+     * Returns a response for every input. Only RoutingException used to be
+     * caught, so anything a handler or a middleware threw escaped to the SAPI
+     * and was printed there with its class, message and absolute source path.
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $this->boot();
-
         try {
+            $this->boot();
+
             if ($this->pipeline->count() > 0) {
                 return $this->pipeline->dispatch(
                     $request,
@@ -188,18 +198,65 @@ final class MicroKernel
                 ['error' => 'Not Found', 'message' => $e->getMessage()],
                 404,
             );
+        } catch (Throwable $e) {
+            error_log(sprintf('[Pulsar] Unhandled %s: %s', $e::class, $e->getMessage()));
+
+            return new ProductionRenderer()->response(ResponseStatus::InternalServerError);
         }
     }
 
     /**
      * Handle a request from PHP superglobals and emit the response.
+     *
+     * Guarded end to end: this is the outermost frame the framework controls,
+     * and whatever escapes it is rendered by the SAPI with `display_errors`
+     * deciding whether the client sees a stack trace.
      */
     public function run(): void
     {
-        $request = ServerRequest::fromGlobals();
+        try {
+            $request = ServerRequest::fromGlobals();
+        } catch (Throwable $e) {
+            // No request object means no pipeline; the page carries its own
+            // security headers. A body over the cap used to reach the SAPI as
+            // an uncaught BodyTooLargeException with a full trace.
+            $this->emitPreRequestFailure($e);
+
+            return;
+        }
+
         $response = $this->handle($request);
 
-        new ResponseEmitter()->emit($response, $request->getMethod());
+        try {
+            new ResponseEmitter()->emit($response, $request->getMethod());
+        } catch (Throwable $e) {
+            error_log('[Pulsar] Response emission failed: ' . $e->getMessage());
+        }
+    }
+
+    private function emitPreRequestFailure(Throwable $e): void
+    {
+        error_log(sprintf('[Pulsar] Request construction failed (%s): %s', $e::class, $e->getMessage()));
+
+        try {
+            new ResponseEmitter()->emit($this->preRequestFailureResponse($e));
+        } catch (Throwable $emitFailure) {
+            error_log('[Pulsar] Pre-request error emission failed: ' . $emitFailure->getMessage());
+        }
+    }
+
+    /**
+     * A body over the cap is the one pre-request failure with an answer the
+     * client can act on, and the ceiling is server policy rather than a secret.
+     * Anything else that stops a request being parsed is a malformed request.
+     */
+    private function preRequestFailureResponse(Throwable $e): ResponseInterface
+    {
+        $status = $e instanceof BodyTooLargeException
+            ? ResponseStatus::PayloadTooLarge
+            : ResponseStatus::BadRequest;
+
+        return new ProductionRenderer()->response($status);
     }
 
     private function boot(): void
@@ -218,7 +275,7 @@ final class MicroKernel
 
     private function dispatch(ServerRequestInterface $request): ResponseInterface
     {
-        // FR-22: an unrecognized verb maps to 501 Not Implemented, not a 500.
+        // An unrecognized verb maps to 501 Not Implemented, not a 500 (RFC 9110 §15.6.2).
         $method = \Pulsar\Http\Method::tryFrom($request->getMethod())
             ?? throw \Pulsar\Routing\RoutingException::notImplemented($request->getMethod());
         $path = $request->getUri()->getPath();
