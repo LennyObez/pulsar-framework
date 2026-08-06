@@ -35,11 +35,88 @@ if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
     putenv('PULSAR_BASE_PATH=' . $basePath);
 }
 
+/*
+|--------------------------------------------------------------------------
+| Error Display
+|--------------------------------------------------------------------------
+|
+| Set before anything else can fail. php.ini decides display_errors by
+| default, and a distribution default of On turns any uncaught error into a
+| page containing the exception class, its message, absolute source paths and
+| the full call stack — appended to whatever had already been written, so the
+| response can even carry HTTP 200. Only APP_DEBUG in the real process
+| environment opts back in; the dotenv file has not been read at this point
+| and must not be trusted to decide this.
+|
+*/
+
+$pulsarDebug = in_array(strtolower((string) getenv('APP_DEBUG')), ['1', 'true', 'on', 'yes'], true);
+
+ini_set('display_errors', $pulsarDebug ? '1' : '0');
+ini_set('log_errors', '1');
+
 require $basePath . '/vendor/autoload.php';
 
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
+use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Extensibility\ExtensionBootstrap;
+use Pulsar\Http\ResponseEmitter;
+use Pulsar\Http\ResponseStatus;
+
+/*
+|--------------------------------------------------------------------------
+| Last-Resort Error Handlers
+|--------------------------------------------------------------------------
+|
+| The kernel guards its own request cycle, but nothing guards the frame
+| around it: config loading, extension discovery, an out-of-memory kill, a
+| parse error in an extension file. Those bypass every try/catch in the
+| framework and land on the SAPI's own error output.
+|
+| These two handlers are the floor. They discard whatever partial output
+| exists and emit the same generic ProductionRenderer page the kernel would
+| have produced, with its security headers. When the response is already
+| committed (headers_sent) nothing can be corrected, so they stand down and
+| leave the record to the error log.
+|
+*/
+
+$pulsarLastResort = static function (): void {
+    if (headers_sent()) {
+        return;
+    }
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    try {
+        new ResponseEmitter()->emit(
+            new ProductionRenderer()->response(ResponseStatus::InternalServerError),
+        );
+    } catch (Throwable) {
+        // Emitting failed too — a bare status line still beats a blank 200.
+        http_response_code(ResponseStatus::InternalServerError->value);
+    }
+};
+
+set_exception_handler(static function (Throwable $e) use ($pulsarLastResort): void {
+    error_log(sprintf('[Pulsar] Uncaught %s: %s', $e::class, (string) $e));
+    $pulsarLastResort();
+});
+
+register_shutdown_function(static function () use ($pulsarLastResort): void {
+    $last = error_get_last();
+
+    // Warnings and notices left the script alive and are not ours to answer.
+    // Only the classes that end execution get the last-resort page.
+    if ($last === null || ($last['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR)) === 0) {
+        return;
+    }
+
+    $pulsarLastResort();
+});
 
 /*
 |--------------------------------------------------------------------------

@@ -45,6 +45,7 @@ use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
+use Pulsar\Http\Message\BodyTooLargeException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
@@ -75,6 +76,7 @@ use SodiumException;
 use Throwable;
 
 use function dirname;
+use function error_log;
 use function getenv;
 use function is_array;
 use function is_callable;
@@ -353,7 +355,7 @@ final class Kernel implements KernelInterface
 
         // Engage the extension capability sandbox before any extension registers
         // or boots. Without a policy the scoping proxies are bypassed and every
-        // extension runs with full host privileges (RC-4). Deny-by-default:
+        // extension runs with full host privileges. Deny-by-default:
         // extensions not listed in config/extensions.php are capped at Community
         // regardless of the tier their manifest requests. A no-op when a policy
         // was already configured explicitly.
@@ -606,7 +608,7 @@ final class Kernel implements KernelInterface
     /**
      * Add global middleware.
      *
-     * F2.18: refuses to mutate the middleware pipeline after the
+     * Refuses to mutate the middleware pipeline after the
      * kernel has booted. The pipeline is cached after the first
      * `handle()` call so a post-boot `addMiddleware()` would
      * silently take effect only on a few requests (those that
@@ -621,7 +623,7 @@ final class Kernel implements KernelInterface
     public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
         if ($this->booted) {
-            // F2.18: a programming error, not a runtime
+            // A programming error, not a runtime
             // condition — caller registered middleware in the
             // wrong phase of the lifecycle. LogicException
             // is the right base class.
@@ -638,24 +640,31 @@ final class Kernel implements KernelInterface
     /**
      * Handle an HTTP request and return a response.
      *
-     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
+     * Returns a response for every input. Nothing escapes to the caller — and
+     * therefore to the SAPI, which would print the class, the message, the
+     * absolute source path and the stack trace with `display_errors` on.
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $this->boot();
-
-        // Set the dispatch handler once (cached by the pipeline for subsequent requests)
-        if ($this->middleware->count() > 0 && !$this->dispatchHandlerSet) {
-            $this->middleware->setHandler(new CallableRequestHandler(
-                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchWithErrorHandling($req),
-            ));
-            $this->dispatchHandlerSet = true;
-        }
-
-        // Reset route context for this request (worker reuse safety)
-        $this->routeContext?->reset();
-
         try {
+            // boot() used to sit outside this guard, so a poisoned config, a
+            // failing wiring or an extension that threw during registration
+            // escaped handle() entirely and reached the SAPI as an uncaught
+            // fatal. Inside the guard it becomes a rendered error response like
+            // any other failure.
+            $this->boot();
+
+            // Set the dispatch handler once (cached by the pipeline for subsequent requests)
+            if ($this->middleware->count() > 0 && !$this->dispatchHandlerSet) {
+                $this->middleware->setHandler(new CallableRequestHandler(
+                    fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchWithErrorHandling($req),
+                ));
+                $this->dispatchHandlerSet = true;
+            }
+
+            // Reset route context for this request (worker reuse safety)
+            $this->routeContext?->reset();
+
             if ($this->dispatchHandlerSet) {
                 return $this->middleware->handle($request);
             }
@@ -663,10 +672,10 @@ final class Kernel implements KernelInterface
             // No global middleware: dispatch directly (still error-guarded).
             return $this->dispatchWithErrorHandling($request);
         } catch (Throwable $e) {
-            // Last-resort safety net: reached only when a global middleware — or
-            // the exception handler itself — throws. The route-dispatch path is
-            // already guarded inside dispatchWithErrorHandling(), so its errors
-            // are converted to a Response at the innermost handler and flow back
+            // Last-resort safety net: reached when boot() fails, or when a
+            // global middleware throws. The route-dispatch path is already
+            // guarded inside dispatchWithErrorHandling(), so its errors are
+            // converted to a Response at the innermost handler and flow back
             // out through the pipeline, picking up security headers like any 200.
             return $this->handleException($e, $request);
         }
@@ -692,20 +701,32 @@ final class Kernel implements KernelInterface
     /**
      * Convert a Throwable into an error Response via the registered exception
      * handler, falling back to the minimum-leak ProductionRenderer when none is
-     * wired (F4.11: never re-throw to the SAPI, which would leak file paths and
-     * a stack trace).
+     * wired. Never re-throw to the SAPI: that would leak file paths and a
+     * stack trace.
      */
     private function handleException(Throwable $e, ServerRequestInterface $request): ResponseInterface
     {
         if ($this->exceptionHandler !== null) {
-            return $this->exceptionHandler->handle($e, $request);
+            try {
+                return $this->exceptionHandler->handle($e, $request);
+            } catch (Throwable $handlerFailure) {
+                // A handler wired against a half-booted container can throw
+                // while rendering. Letting that escape would replace a generic
+                // page with a SAPI stack trace — exactly what the handler
+                // exists to prevent.
+                error_log(sprintf(
+                    '[Pulsar] Exception handler failed while rendering %s: %s',
+                    $e::class,
+                    $handlerFailure->getMessage(),
+                ));
+            }
         }
 
         return $this->renderFallbackError($e, $request);
     }
 
     /**
-     * F4.11: minimum-leak fallback when no `ExceptionHandler` is
+     * Minimum-leak fallback when no `ExceptionHandler` is
      * registered. ProductionRenderer emits a generic 5xx page with
      * neither stack trace nor request internals. The caller is
      * expected to wire a real handler in normal app boot — this
@@ -720,6 +741,14 @@ final class Kernel implements KernelInterface
             $e instanceof RoutingException && $e->isNotImplemented() => ResponseStatus::NotImplemented,
             default => ResponseStatus::InternalServerError,
         };
+
+        // This branch runs when no logger reached the client's error either —
+        // the exception handler is absent or itself failed. Without this line
+        // a boot failure would be invisible everywhere: generic page to the
+        // client, nothing in any log.
+        if ($status->isServerError()) {
+            error_log(sprintf('[Pulsar] Unhandled %s: %s', $e::class, $e->getMessage()));
+        }
 
         $response = Response::html(
             $renderer->render($e, $request, $status),
@@ -737,16 +766,75 @@ final class Kernel implements KernelInterface
     /**
      * Handle a request from PHP superglobals and emit the response.
      *
-     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
+     * Every phase is guarded. Nothing throws past this method: it is the outermost
+     * frame the framework controls, and whatever escapes it is rendered by the SAPI
+     * with `display_errors` deciding whether the client sees a stack trace.
      */
     public function run(): void
     {
-        $request = ServerRequest::fromGlobals();
+        try {
+            $request = ServerRequest::fromGlobals();
+        } catch (Throwable $e) {
+            // fromGlobals() builds the request that the pipeline needs, so a
+            // failure here has no request to hand to handle() and no pipeline
+            // to travel back out through. A body over the 10 MiB cap used to
+            // land in the SAPI as an uncaught BodyTooLargeException: HTTP 200
+            // with the class, the message, the absolute path and the trace.
+            $this->emitPreRequestFailure($e);
+
+            return;
+        }
+
         $response = $this->handle($request);
 
-        new ResponseEmitter()->emit($response, $request->getMethod());
+        try {
+            new ResponseEmitter()->emit($response, $request->getMethod());
+        } catch (Throwable $e) {
+            error_log('[Pulsar] Response emission failed: ' . $e->getMessage());
 
-        $this->terminate($request, $response);
+            return;
+        }
+
+        try {
+            $this->terminate($request, $response);
+        } catch (Throwable $e) {
+            // The response is already on the wire. A throw here would append a
+            // trace to the body the client is part-way through reading.
+            error_log('[Pulsar] terminate() failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Emit a response for a failure that happened before a request object existed.
+     *
+     * No pipeline can run without a request, so the page carries its own
+     * security headers ({@see ProductionRenderer::response()}). The request
+     * method is unknown — parsing is what failed — so the emitter is not told
+     * one, and writes a body.
+     */
+    private function emitPreRequestFailure(Throwable $e): void
+    {
+        error_log(sprintf('[Pulsar] Request construction failed (%s): %s', $e::class, $e->getMessage()));
+
+        try {
+            new ResponseEmitter()->emit($this->preRequestFailureResponse($e));
+        } catch (Throwable $emitFailure) {
+            error_log('[Pulsar] Pre-request error emission failed: ' . $emitFailure->getMessage());
+        }
+    }
+
+    /**
+     * A body over the cap is the one pre-request failure with an answer the
+     * client can act on, and the ceiling is server policy rather than a secret.
+     * Anything else that stops a request being parsed is a malformed request.
+     */
+    private function preRequestFailureResponse(Throwable $e): ResponseInterface
+    {
+        $status = $e instanceof BodyTooLargeException
+            ? ResponseStatus::PayloadTooLarge
+            : ResponseStatus::BadRequest;
+
+        return new ProductionRenderer()->response($status);
     }
 
     /**
@@ -763,9 +851,9 @@ final class Kernel implements KernelInterface
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
-        // FR-22: an unrecognized verb (PROPFIND, garbage) must not surface as a
-        // 500. tryFrom yields null instead of throwing, mapped to 501 Not
-        // Implemented via the routing exception handler.
+        // An unrecognized verb (PROPFIND, garbage) must not surface as a 500.
+        // tryFrom yields null instead of throwing, mapped to 501 Not
+        // Implemented via the routing exception handler — RFC 9110 §15.6.2.
         $methodEnum = Method::tryFrom($method) ?? throw RoutingException::notImplemented($method);
 
         if ($this->metricsRegistry !== null) {
@@ -1032,7 +1120,7 @@ final class Kernel implements KernelInterface
      *
      * Performs cleanup and releases resources.
      *
-     * F3.14: every loaded extension that implements
+     * Every loaded extension that implements
      * `ShutdownAwareExtensionInterface` gets a `shutdown()`
      * call before the kernel marks itself unbooted. Required
      * for long-running SAPIs (RoadRunner, FrankenPHP, Swoole,
