@@ -127,6 +127,67 @@ final class ServerRequestTest extends TestCase
         self::assertTrue($request->hasHeader('CONTENT-TYPE'));
     }
 
+    #[Test]
+    public function constructorRejectsHeaderValuesCarryingCrlf(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Header value contains an illegal CR, LF, or NUL character/');
+
+        new ServerRequest(headers: ['X-Evil' => "ok\r\nX-Injected: yes"]);
+    }
+
+    #[Test]
+    public function constructorRejectsHeaderValuesCarryingNul(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new ServerRequest(headers: ['X-Evil' => "ok\0"]);
+    }
+
+    #[Test]
+    public function constructorRejectsCrlfInsideAListOfValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new ServerRequest(headers: ['Accept-Encoding' => ['gzip', "deflate\r\nX-Injected: 1"]]);
+    }
+
+    #[Test]
+    public function constructorRejectsHeaderNamesOutsideTheTokenAlphabet(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/is not a valid RFC 7230 token/');
+
+        new ServerRequest(headers: ['Bad Name' => 'value']);
+    }
+
+    #[Test]
+    public function constructorHoldsTheSameInvariantAsWithHeader(): void
+    {
+        // The two entry points used to disagree: `withHeader()` threw on a
+        // split value while the constructor stored it, so an instance could
+        // hold a header its own mutators would refuse.
+        $probe = "ok\r\nX-Injected: yes";
+        $constructorThrew = false;
+
+        try {
+            new ServerRequest(headers: ['X-Evil' => $probe]);
+        } catch (InvalidArgumentException) {
+            $constructorThrew = true;
+        }
+
+        $mutatorThrew = false;
+
+        try {
+            (void) new ServerRequest()->withHeader('X-Evil', $probe);
+        } catch (InvalidArgumentException) {
+            $mutatorThrew = true;
+        }
+
+        self::assertTrue($constructorThrew);
+        self::assertSame($mutatorThrew, $constructorThrew);
+    }
+
     // ── PSR-7 MessageInterface ────────────────────────────────────────
 
     #[Test]
@@ -799,7 +860,7 @@ final class ServerRequestTest extends TestCase
     }
 
     /**
-     * F2.9: a load balancer that terminates TLS leaves PHP with a
+     * A load balancer that terminates TLS leaves PHP with a
      * plain `http://` scheme. The framework only honours
      * `X-Forwarded-Proto: https` when the immediate hop is a
      * trusted proxy; an arbitrary client cannot smuggle the
@@ -820,7 +881,7 @@ final class ServerRequestTest extends TestCase
     }
 
     /**
-     * F2.9: without a trusted-proxy chain, the X-Forwarded-Proto
+     * Without a trusted-proxy chain, the X-Forwarded-Proto
      * header is ignored — the framework will not promote a
      * plaintext request to "secure" based on a client-supplied
      * header.
@@ -838,7 +899,7 @@ final class ServerRequestTest extends TestCase
     }
 
     /**
-     * F2.9: when REMOTE_ADDR is outside the trusted-proxy CIDR,
+     * When REMOTE_ADDR is outside the trusted-proxy CIDR,
      * the forwarded header is rejected. A real client behind a
      * legitimate LB cannot impersonate the LB's `proto=https`
      * by talking directly to PHP-FPM.
@@ -858,7 +919,7 @@ final class ServerRequestTest extends TestCase
     }
 
     /**
-     * F2.9: RFC 7239 `Forwarded: proto=https` is honoured under
+     * RFC 7239 `Forwarded: proto=https` is honoured under
      * the same trusted-proxy gate as `X-Forwarded-Proto`.
      */
     #[Test]
@@ -1001,9 +1062,9 @@ final class ServerRequestTest extends TestCase
     #[Test]
     public function fromGlobalsParsesBracketedIpv6Host(): void
     {
-        // FR-23: a bracketed IPv6 authority "[::1]:8080" must split into host
-        // "[::1]" and port 8080. The old explode(":") split on every colon,
-        // yielding host "[" and port 0.
+        // A bracketed IPv6 authority "[::1]:8080" must split into host "[::1]"
+        // and port 8080. Only the colon after the closing bracket separates the
+        // port — splitting on every colon yields host "[" and port 0.
         $request = ServerRequest::fromGlobals(
             server: ['HTTP_HOST' => '[::1]:8080'],
             get: [],
@@ -1018,7 +1079,7 @@ final class ServerRequestTest extends TestCase
     #[Test]
     public function fromGlobalsParsesBracketedIpv6HostWithoutPort(): void
     {
-        // FR-23: a bracketed IPv6 literal with no port keeps the whole address.
+        // A bracketed IPv6 literal with no port keeps the whole address.
         $request = ServerRequest::fromGlobals(
             server: ['HTTP_HOST' => '[2001:db8::1]'],
             get: [],
@@ -1162,6 +1223,79 @@ final class ServerRequestTest extends TestCase
         self::assertTrue($request->hasHeader('Accept'));
         self::assertFalse($request->hasHeader('Array-Value'));
         self::assertFalse($request->hasHeader('Content-Type'));
+    }
+
+    #[Test]
+    public function fromGlobalsDropsHeaderValuesCarryingCrlf(): void
+    {
+        // Ingress drops rather than throws: `fromGlobals()` runs before there
+        // is a pipeline for an exception to travel back out through.
+        $server = [
+            'HTTP_ACCEPT' => 'text/html',
+            'HTTP_X_EVIL' => "ok\r\nX-Injected: yes",
+        ];
+
+        $request = ServerRequest::fromGlobals(server: $server, get: [], post: [], cookies: [], files: []);
+
+        self::assertSame('text/html', $request->getHeaderLine('Accept'));
+        self::assertFalse($request->hasHeader('X-Evil'));
+        self::assertSame('', $request->getHeaderLine('X-Injected'));
+    }
+
+    #[Test]
+    public function fromGlobalsDropsHeaderValuesCarryingNul(): void
+    {
+        $server = ['HTTP_X_EVIL' => "ok\0", 'CONTENT_TYPE' => "application/json\0"];
+
+        $request = ServerRequest::fromGlobals(server: $server, get: [], post: [], cookies: [], files: []);
+
+        self::assertFalse($request->hasHeader('X-Evil'));
+        self::assertFalse($request->hasHeader('Content-Type'));
+    }
+
+    #[Test]
+    public function fromGlobalsDropsServerKeysNoSapiTransformCouldProduce(): void
+    {
+        // A field-name is hyphen-separated, so the SAPI transform yields
+        // uppercase alphanumeric runs joined by single underscores. Anything
+        // else means the raw name carried an underscore of its own and the
+        // reverse mapping is a guess — including a guess that lands on a
+        // trusted-proxy header name.
+        $server = [
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP__X_FORWARDED_PROTO' => 'spoofed',
+            'HTTP_X__FORWARDED_PROTO' => 'spoofed',
+            'HTTP_X_FORWARDED_PROTO_' => 'spoofed',
+            'HTTP_X-FORWARDED-PROTO' => 'spoofed',
+            'HTTP_X FOO' => 'spoofed',
+            'HTTP_' => 'spoofed',
+        ];
+
+        $request = ServerRequest::fromGlobals(server: $server, get: [], post: [], cookies: [], files: []);
+
+        self::assertCount(1, $request->getHeaders());
+        self::assertSame('https', $request->getHeaderLine('X-Forwarded-Proto'));
+    }
+
+    #[Test]
+    public function fromGlobalsKeepsWellFormedHeaders(): void
+    {
+        $server = [
+            'HTTP_HOST' => 'example.com',
+            'HTTP_ACCEPT_ENCODING' => 'gzip, deflate, br',
+            'HTTP_USER_AGENT' => 'Mozilla/5.0 (X11; Linux x86_64)',
+            'HTTP_X_HTTP2_PUSH' => '1',
+            'CONTENT_TYPE' => 'application/json',
+            'CONTENT_LENGTH' => '15',
+        ];
+
+        $request = ServerRequest::fromGlobals(server: $server, get: [], post: [], cookies: [], files: []);
+
+        self::assertSame('gzip, deflate, br', $request->getHeaderLine('Accept-Encoding'));
+        self::assertSame('Mozilla/5.0 (X11; Linux x86_64)', $request->getHeaderLine('User-Agent'));
+        self::assertSame('1', $request->getHeaderLine('X-Http2-Push'));
+        self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
+        self::assertSame('15', $request->getHeaderLine('Content-Length'));
     }
 
     #[Test]
