@@ -61,7 +61,7 @@ final class TwoFactorManagerTest extends TestCase
         $this->recoveryCodeVerifier = new RecoveryCodeVerifier();
         $this->replayGuard = new InMemoryTotpReplayGuard();
 
-        // SEC-2FA-01: verifyCode/verifyCodeWithSecret are fail-closed when no
+        // verifyCode/verifyCodeWithSecret are fail-closed when no
         // rate limiter is wired. The test exercises the verification path, so
         // wire AllowAllTwoFactorRateLimiter explicitly to make the absence of
         // rate limiting visible in the test (production refuses this binding
@@ -189,6 +189,13 @@ final class TwoFactorManagerTest extends TestCase
 
         self::assertTrue($result->verified);
         self::assertSame(TwoFactorPurpose::StepUp, $result->purpose);
+
+        // The purpose labels the result and scopes the rate limiter. It does not
+        // buy the code a second redemption.
+        $replay = $this->manager->verifyCodeWithSecret('user-1', $secret, $code, TwoFactorPurpose::Login);
+
+        self::assertFalse($replay->verified);
+        self::assertSame(VerifyReason::InvalidCode, $replay->reason);
     }
 
     #[Test]
@@ -883,7 +890,7 @@ final class TwoFactorManagerTest extends TestCase
     }
 
     #[Test]
-    public function verifyCodeWithDifferentPurpose(): void
+    public function verifyCodeRefusesTheSameCodeUnderADifferentPurpose(): void
     {
         $secretStore = new InMemoryTotpSecretStore();
         $secret = $this->generator->generateSecret();
@@ -906,6 +913,13 @@ final class TwoFactorManagerTest extends TestCase
 
         self::assertTrue($result->verified);
         self::assertSame(TwoFactorPurpose::StepUp, $result->purpose);
+
+        // ASVS 2.8.4: one code, one redemption within its validity period. A
+        // purpose-keyed guard sold the same code once per purpose.
+        $replay = $manager->verifyCode('user-1', $code, TwoFactorPurpose::Login);
+
+        self::assertFalse($replay->verified);
+        self::assertSame(VerifyReason::InvalidCode, $replay->reason);
     }
 
     #[Test]

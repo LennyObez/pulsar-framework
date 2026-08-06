@@ -506,7 +506,7 @@ Threat model, secure defaults, and deployment guidance for Pulsar's authenticati
 | Brute force (TOTP)           | Exhaustive 6-digit code enumeration (10^6 combinations)           | Rate limiter blocks after threshold; replay guard prevents reuse of already-accepted time steps                                     |
 | Session hijacking            | Stolen session cookie via XSS or network sniffing                 | `HttpOnly`, `Secure`, `SameSite=Strict` cookie flags; session regeneration on privilege escalation                                  |
 | Session fixation             | Attacker pre-sets session ID before victim authenticates          | `regenerate()` called after 2FA verification and step-up authentication; `use_strict_mode` rejects uninitialized session IDs        |
-| TOTP replay                  | Re-submitting a previously valid TOTP code within the time window | Replay guard keyed on `(identityId, purpose, timeStep)` rejects duplicate time steps                                                |
+| TOTP replay                  | Re-submitting a previously valid TOTP code within the time window | Replay guard keyed on `(identityId, timeStep)` rejects duplicate time steps for the whole span the verifier accepts them            |
 | TOTP clock drift abuse       | Submitting codes from far-future or far-past time steps           | Verification window limits accepted time steps (default: 1 step = +/- 30 seconds)                                                   |
 | Recovery code guessing       | Brute-forcing 64-bit recovery codes                               | 64-bit entropy (2^64 combinations); keyed BLAKE2b hashing; rate limiter integration                                                 |
 | Recovery code race condition | Two concurrent requests consuming the same recovery code          | Atomic `consume()` in `RecoveryCodeStoreInterface`; exactly one request succeeds, the other receives `AlreadyUsed`                  |
@@ -607,7 +607,7 @@ Same defaults as production (security by default). Exceptions:
 1. Call `verifyCode()` with identity ID, code, and purpose
 2. The manager loads the secret from `TotpSecretStoreInterface`
 3. The verifier checks the code against the current and adjacent time steps
-4. The replay guard rejects previously-accepted `(identityId, purpose, timeStep)` tuples
+4. The replay guard rejects previously-accepted `(identityId, timeStep)` tuples. The purpose is deliberately outside the key: ASVS 2.8.4 requires a one-time verifier to be redeemable once within its validity period, so a code spent on `Login` cannot afterwards buy a `Setup` or a `StepUp`
 5. `Verify2faResult` contains:
    - `verified`: boolean success/failure
    - `reason`: `Valid`, `InvalidCode`, `Replayed`, `Expired`, `NotEnrolled`, `RateLimited`
@@ -753,7 +753,32 @@ In-memory implementations are suitable for development and testing only. For mul
 
 #### Replay guard
 
-Bind a persistent `TotpReplayGuardInterface` implementation backed by a shared data store (Redis, database). The composite key `(identityId, purpose, timeStep)` must be globally unique across all nodes. TTL = `windowSteps * period + driftPadding` (e.g., `1 * 30 + 30 = 60` seconds).
+Bind a persistent `TotpReplayGuardInterface` implementation backed by a shared data store (Redis, database). The composite key `(identityId, timeStep)` must be globally unique across all nodes.
+
+Retention must cover the verifier's whole acceptance envelope, or the guard forgets a code while the verifier still accepts it:
+
+```
+TTL = (2 * verificationWindow + 1) * codePeriod + driftPadding
+```
+
+At shipped defaults that is `3 * 30 + 30 = 120` seconds. The bundled guards derive this themselves from the `code_period` and `verification_window` you configure; a custom implementation must do the same, and must not shorten it to `windowSteps * period`, which leaves the tail of the envelope unguarded.
+
+Expiry must also be scoped to the identity whose entry it is. A store that retires expired entries globally lets unrelated traffic decide when a victim's blocking record disappears.
+
+**Upgrading from 1.0.0-rc.10 or earlier:** the `auth_totp_replay_guard` table was keyed on `(user_id, purpose, time_step)`, which sold each code once per purpose. Re-key it before deploying — the table holds no durable state, only records younger than one acceptance envelope:
+
+```sql
+DROP TABLE auth_totp_replay_guard;
+CREATE TABLE auth_totp_replay_guard (
+    user_id VARCHAR(36) NOT NULL,
+    time_step INTEGER NOT NULL,
+    used_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, time_step)
+);
+CREATE INDEX idx_replay_guard_user_used_at ON auth_totp_replay_guard (user_id, used_at);
+```
+
+`SqliteTotpReplayGuard` re-keys itself: it drops its legacy `totp_used` table on first construction.
 
 #### Recovery code store
 
