@@ -103,7 +103,6 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
             $code,
             replayGuard: $this->replayGuard,
             identityId: $identityId,
-            purpose: TwoFactorPurpose::Setup,
         );
 
         if ($timeStep === null) {
@@ -140,7 +139,7 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Verify2faResult {
         assert($identityId !== '', 'identityId must not be empty');
 
-        // SEC-2FA-01: fail-closed. A missing rate limiter must DENY the attempt,
+        // Fail-closed. A missing rate limiter must DENY the attempt,
         // not allow unlimited tries. Production deployments wire a real limiter
         // (token bucket, leaky bucket, identity+IP+timeframe). Dev/test wire
         // `AllowAllTwoFactorRateLimiter` explicitly so the lack of rate limiting
@@ -184,7 +183,7 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Verify2faResult {
         assert($identityId !== '', 'identityId must not be empty');
 
-        // SEC-2FA-01: see verifyCode() — missing rate limiter denies fail-closed.
+        // See verifyCode() — a missing rate limiter denies, fail-closed.
         if ($this->rateLimiter === null || !$this->rateLimiter->attempt($identityId, $purpose)) {
             $this->emitAudit(
                 AuditEvent::Authentication,
@@ -316,7 +315,6 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
             $code,
             replayGuard: $this->replayGuard,
             identityId: $identityId,
-            purpose: $purpose,
         );
 
         if ($timeStep === null) {

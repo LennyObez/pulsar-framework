@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
-use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
 
 final class InMemoryTotpReplayGuardTest extends TestCase
 {
@@ -16,7 +15,7 @@ final class InMemoryTotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        $result = $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
+        $result = $guard->markUsed('user-1', 100, 1700000000);
 
         self::assertTrue($result);
     }
@@ -26,21 +25,10 @@ final class InMemoryTotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
-        $result = $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000001);
+        $guard->markUsed('user-1', 100, 1700000000);
+        $result = $guard->markUsed('user-1', 100, 1700000001);
 
         self::assertFalse($result);
-    }
-
-    #[Test]
-    public function different_purposes_are_independent(): void
-    {
-        $guard = new InMemoryTotpReplayGuard();
-
-        $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
-        $result = $guard->markUsed('user-1', TwoFactorPurpose::StepUp, 100, 1700000000);
-
-        self::assertTrue($result);
     }
 
     #[Test]
@@ -48,8 +36,8 @@ final class InMemoryTotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
-        $result = $guard->markUsed('user-2', TwoFactorPurpose::Login, 100, 1700000000);
+        $guard->markUsed('user-1', 100, 1700000000);
+        $result = $guard->markUsed('user-2', 100, 1700000000);
 
         self::assertTrue($result);
     }
@@ -59,35 +47,64 @@ final class InMemoryTotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
-        $result = $guard->markUsed('user-1', TwoFactorPurpose::Login, 101, 1700000000);
+        $guard->markUsed('user-1', 100, 1700000000);
+        $result = $guard->markUsed('user-1', 101, 1700000000);
 
         self::assertTrue($result);
     }
 
+    /**
+     * The key omits the purpose, so the Login/Setup/StepUp sequence that a
+     * purpose-keyed guard sold three times now sells once (ASVS 2.8.4).
+     */
     #[Test]
-    public function expired_entries_are_pruned(): void
+    public function one_time_step_is_redeemable_once_however_many_flows_ask(): void
     {
-        $guard = new InMemoryTotpReplayGuard(ttl: 60);
+        $guard = new InMemoryTotpReplayGuard();
 
-        $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
-
-        // 61 seconds later the entry should be expired and pruned
-        $result = $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000061);
-
-        self::assertTrue($result);
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000000));
     }
 
     #[Test]
-    public function entries_within_ttl_are_not_pruned(): void
+    public function retention_outlasts_the_acceptance_envelope(): void
     {
-        $guard = new InMemoryTotpReplayGuard(ttl: 60);
+        // 30 s period, +/-1 step: the verifier accepts the code for 90 s.
+        $guard = new InMemoryTotpReplayGuard();
 
-        $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000000);
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000089));
+    }
 
-        // 59 seconds later the entry should still be present
-        $result = $guard->markUsed('user-1', TwoFactorPurpose::Login, 100, 1700000059);
+    #[Test]
+    public function retention_scales_with_the_code_period(): void
+    {
+        // 60 s period, +/-1 step: a 180 s envelope.
+        $guard = new InMemoryTotpReplayGuard(codePeriod: 60, verificationWindow: 1);
 
-        self::assertFalse($result);
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000179));
+    }
+
+    #[Test]
+    public function retention_scales_with_the_verification_window(): void
+    {
+        // 30 s period, +/-2 steps: a 150 s envelope.
+        $guard = new InMemoryTotpReplayGuard(codePeriod: 30, verificationWindow: 2);
+
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000149));
+    }
+
+    #[Test]
+    public function entries_expire_once_the_retention_window_closes(): void
+    {
+        // 90 s envelope plus one period of clock-skew margin.
+        $guard = new InMemoryTotpReplayGuard();
+
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000119));
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000120));
     }
 }

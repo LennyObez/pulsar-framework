@@ -28,8 +28,8 @@ final readonly class TotpVerifier
      * Verify a TOTP code against the given secret.
      *
      * Checks the code against the current time step and ±window adjacent steps.
-     * When a replay guard, identity ID, and purpose are provided, ensures the same
-     * time step cannot be accepted twice within the window.
+     * When a replay guard and identity ID are provided, ensures the same time step
+     * cannot be accepted twice, for any purpose, anywhere in the acceptance envelope.
      *
      * Returns the accepted time step on match (for replay guard keying), or null on failure.
      *
@@ -38,7 +38,6 @@ final readonly class TotpVerifier
      * @param int|null $timestamp Unix timestamp (defaults to current time)
      * @param TotpReplayGuardInterface|null $replayGuard Replay protection (recommended for production)
      * @param string|null $identityId Identity submitting the code (required with replay guard)
-     * @param TwoFactorPurpose $purpose The verification purpose
      */
     public function verify(
         #[SensitiveParameter]
@@ -48,7 +47,6 @@ final readonly class TotpVerifier
         ?int $timestamp = null,
         ?TotpReplayGuardInterface $replayGuard = null,
         ?string $identityId = null,
-        TwoFactorPurpose $purpose = TwoFactorPurpose::Login,
     ): ?int {
         $timestamp ??= time();
         $period = $this->generator->period();
@@ -60,7 +58,7 @@ final readonly class TotpVerifier
             if (hash_equals($expected, $code)) {
                 $timeStep = intdiv($checkTime, $period);
 
-                // SEC-2FA-01: fail-closed on replay protection. When the caller
+                // Fail-closed on replay protection. When the caller
                 // identifies the identity, a replay guard MUST be provided —
                 // otherwise the same TOTP code can be replayed within the time
                 // window. Pass `null` for `identityId` to bypass replay checks
@@ -72,7 +70,7 @@ final readonly class TotpVerifier
                         return null;
                     }
 
-                    if (!$replayGuard->markUsed($identityId, $purpose, $timeStep, $timestamp)) {
+                    if (!$replayGuard->markUsed($identityId, $timeStep, $timestamp)) {
                         return null;
                     }
                 }

@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
-use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
+
+use function intdiv;
+use function sprintf;
 
 #[CoversClass(TotpVerifier::class)]
 final class TotpVerifierTest extends TestCase
@@ -23,6 +26,19 @@ final class TotpVerifierTest extends TestCase
     {
         $this->generator = new TotpGenerator();
         $this->verifier = new TotpVerifier($this->generator, window: 1);
+    }
+
+    /**
+     * Configurations whose acceptance envelope differs from the guard's former
+     * fixed retention: shipped defaults, a longer period, and a wider window.
+     *
+     * @return iterable<string, array{int, int}> period, window
+     */
+    public static function envelopeConfigurations(): iterable
+    {
+        yield 'shipped defaults' => [30, 1];
+        yield 'longer period' => [60, 1];
+        yield 'wider window' => [30, 2];
     }
 
     #[Test]
@@ -90,6 +106,70 @@ final class TotpVerifierTest extends TestCase
     }
 
     #[Test]
+    public function verifyWithReplayGuardRejectsReplayAtA61SecondGap(): void
+    {
+        // Gap zero is the one gap every possible retention survives. At shipped
+        // defaults the verifier keeps accepting a code for 90 s, so a guard that
+        // forgets after 60 s hands the attacker the tail of the envelope.
+        $secret = $this->generator->generateSecret();
+        $timeStep = 33333;
+        $firstUse = 999980;              // step 33332: the code is reached via +1
+        $replay = $firstUse + 61;        // step 33334: the code is reached via -1
+        $code = $this->generator->computeCode($secret, $timeStep * 30);
+        $guard = new InMemoryTotpReplayGuard();
+
+        // Both submissions are inside the acceptance envelope, so a rejection can
+        // only come from the guard.
+        self::assertNotNull($this->verifier->verify($secret, $code, $firstUse));
+        self::assertNotNull($this->verifier->verify($secret, $code, $replay));
+
+        self::assertNotNull($this->verifier->verify($secret, $code, $firstUse, $guard, 'user-1'));
+        self::assertNull($this->verifier->verify($secret, $code, $replay, $guard, 'user-1'));
+    }
+
+    /**
+     * A code is redeemable exactly once, at every pair of submission instants the
+     * verifier will accept it -- not merely at the identical instant.
+     */
+    #[Test]
+    #[DataProvider('envelopeConfigurations')]
+    public function verifyWithReplayGuardRejectsEveryReplayInsideTheEnvelope(int $period, int $window): void
+    {
+        $generator = new TotpGenerator(period: $period);
+        $verifier = new TotpVerifier($generator, window: $window);
+        $secret = $generator->generateSecret();
+
+        $timeStep = intdiv(1000000, $period);
+        $code = $generator->computeCode($secret, $timeStep * $period);
+
+        $first = ($timeStep - $window) * $period;
+        $last = ($timeStep + $window + 1) * $period - 1;
+
+        // Sampling stride keeps the pair count bounded while still crossing every
+        // period boundary in the envelope.
+        $stride = 7;
+
+        for ($use = $first; $use <= $last; $use += $stride) {
+            for ($replay = $use; $replay <= $last; $replay += $stride) {
+                $guard = new InMemoryTotpReplayGuard($period, $window);
+
+                self::assertNotNull(
+                    $verifier->verify($secret, $code, $use, $guard, 'user-1'),
+                    sprintf('First use at offset %d must be accepted', $use - $first),
+                );
+                self::assertNull(
+                    $verifier->verify($secret, $code, $replay, $guard, 'user-1'),
+                    sprintf(
+                        'Replay %d s later (offset %d) must be rejected',
+                        $replay - $use,
+                        $replay - $first,
+                    ),
+                );
+            }
+        }
+    }
+
+    #[Test]
     public function verifyWithReplayGuardAllowsDifferentIdentities(): void
     {
         $secret = $this->generator->generateSecret();
@@ -99,18 +179,6 @@ final class TotpVerifierTest extends TestCase
 
         self::assertNotNull($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-1'));
         self::assertNotNull($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-2'));
-    }
-
-    #[Test]
-    public function verifyWithReplayGuardAllowsDifferentPurposes(): void
-    {
-        $secret = $this->generator->generateSecret();
-        $timestamp = 1000000;
-        $code = $this->generator->computeCode($secret, $timestamp);
-        $guard = new InMemoryTotpReplayGuard();
-
-        self::assertNotNull($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-1', TwoFactorPurpose::Login));
-        self::assertNotNull($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-1', TwoFactorPurpose::StepUp));
     }
 
     #[Test]

@@ -90,6 +90,39 @@ final class AuthWiringTest extends TestCase
         self::assertTrue($container->has(RecoveryCodeStoreInterface::class));
     }
 
+    /**
+     * The fallback guard used to be constructed with no arguments at all, so a
+     * non-default `code_period` or `verification_window` widened the verifier's
+     * acceptance envelope while the guard kept forgetting after 90 seconds.
+     */
+    #[Test]
+    public function wiredReplayGuardRetainsTheConfiguredAcceptanceEnvelope(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // 60 s period, +/-2 steps: the verifier accepts a code for 300 s.
+        $configManager = $this->createConfigManager(
+            authEnabled: true,
+            twoFactorEnabled: true,
+            codePeriod: 60,
+            verificationWindow: 2,
+        );
+        $configManager->load();
+
+        $wiring = new AuthWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        /** @var TotpReplayGuardInterface $guard */
+        $guard = $container->get(TotpReplayGuardInterface::class);
+
+        self::assertTrue($guard->markUsed('user-1', 100, 1700000000));
+        self::assertFalse($guard->markUsed('user-1', 100, 1700000299));
+    }
+
     #[Test]
     public function wireRegistersAuthServicesWithTwoFactorDisabled(): void
     {
@@ -155,8 +188,12 @@ final class AuthWiringTest extends TestCase
         self::assertNotNull($registry->findByName('editor'));
     }
 
-    private function createConfigManager(bool $authEnabled, bool $twoFactorEnabled): ConfigManager
-    {
+    private function createConfigManager(
+        bool $authEnabled,
+        bool $twoFactorEnabled,
+        int $codePeriod = 30,
+        int $verificationWindow = 1,
+    ): ConfigManager {
         $configPath = sys_get_temp_dir() . '/pulsar_auth_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
 
@@ -166,7 +203,7 @@ final class AuthWiringTest extends TestCase
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
 
         if ($authEnabled) {
-            file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => [], "auth" => ["default_guard" => "session", "two_factor" => ["enabled" => ' . $twoFactorStr . ', "issuer" => "PulsarTest", "allow_in_memory" => true], "authorization" => ["roles" => [], "super_roles" => []]]];');
+            file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => [], "auth" => ["default_guard" => "session", "two_factor" => ["enabled" => ' . $twoFactorStr . ', "issuer" => "PulsarTest", "allow_in_memory" => true, "code_period" => ' . $codePeriod . ', "verification_window" => ' . $verificationWindow . '], "authorization" => ["roles" => [], "super_roles" => []]]];');
         } else {
             file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
         }
