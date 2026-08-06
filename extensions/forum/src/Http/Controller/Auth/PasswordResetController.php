@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Forum\Http\Controller\Auth;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Auth\Password\PasswordHasherInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Forum\Http\Controller\Page\RendersForumView;
 use Pulsar\Extension\Forum\Internal\Mail\PasswordResetMailable;
@@ -18,12 +19,11 @@ use function bin2hex;
 use function hash;
 use function is_array;
 use function is_string;
+use function max;
 use function mb_strlen;
-use function password_hash;
 use function random_bytes;
+use function sprintf;
 use function trim;
-
-use const PASSWORD_BCRYPT;
 
 /**
  * Password reset controller: request and complete password resets.
@@ -33,10 +33,22 @@ final readonly class PasswordResetController
 {
     use RendersForumView;
 
+    /**
+     * @param PasswordHasherInterface|null $passwordHasher Bound by the composition
+     *                                                     root; completing a reset
+     *                                                     refuses to run without it
+     *                                                     rather than fall back to a
+     *                                                     weaker algorithm.
+     * @param int                          $passwordMinLength Minimum accepted password
+     *                                                        length. The shipped templates
+     *                                                        state 8; raise both together.
+     */
     public function __construct(
         private ConnectionInterface $connection,
         private ?MailManagerInterface $mailManager = null,
         private ?TemplateEngineInterface $templateEngine = null,
+        private ?PasswordHasherInterface $passwordHasher = null,
+        private int $passwordMinLength = PasswordHasherInterface::MIN_LENGTH,
     ) {}
 
     private function getTemplateEngine(): ?TemplateEngineInterface
@@ -144,6 +156,14 @@ final readonly class PasswordResetController
      */
     public function resetPassword(ServerRequestInterface $request): Response
     {
+        if ($this->passwordHasher === null) {
+            return $this->respondWithView($request, 'auth.reset-password', [
+                'page_title' => 'Set New Password',
+                'token' => '',
+                'errors' => ['form' => 'Password reset is unavailable: no password hasher is configured.'],
+            ], 503);
+        }
+
         $parsed = $request->getParsedBody();
 
         if (!is_array($parsed)) {
@@ -173,8 +193,13 @@ final readonly class PasswordResetController
             $errors['token'] = 'Invalid or expired reset token.';
         }
 
-        if (mb_strlen($password) < 8) {
-            $errors['password'] = 'Password must be at least 8 characters.';
+        $minLength = max(PasswordHasherInterface::MIN_LENGTH, $this->passwordMinLength);
+        $passwordLength = mb_strlen($password);
+
+        if ($passwordLength < $minLength) {
+            $errors['password'] = sprintf('Password must be at least %d characters.', $minLength);
+        } elseif ($passwordLength > PasswordHasherInterface::MAX_LENGTH) {
+            $errors['password'] = sprintf('Password must be at most %d characters.', PasswordHasherInterface::MAX_LENGTH);
         }
 
         if ($password !== $passwordConfirm) {
@@ -209,7 +234,7 @@ final readonly class PasswordResetController
         }
 
         $userId = $resetResult->rows[0]->getString('user_id');
-        $newHash = password_hash($password, PASSWORD_BCRYPT);
+        $newHash = $this->passwordHasher->hash($password);
 
         $this->connection->execute(
             'UPDATE auth_users SET password_hash = :hash WHERE id = :id',

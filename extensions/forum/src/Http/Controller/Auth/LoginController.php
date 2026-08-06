@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Identity\Identity;
+use Pulsar\Auth\Password\PasswordHasherInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Forum\Http\Controller\Page\RendersForumView;
 use Pulsar\Http\Message\Response;
@@ -15,6 +16,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function is_array;
 use function is_string;
+use function mb_strlen;
 use function password_verify;
 use function trim;
 
@@ -26,10 +28,18 @@ final readonly class LoginController
 {
     use RendersForumView;
 
+    /**
+     * @param PasswordHasherInterface|null $passwordHasher Bound by the composition
+     *                                                     root. Without it a login can
+     *                                                     still be checked, but no hash
+     *                                                     can be written, so legacy
+     *                                                     hashes are not migrated.
+     */
     public function __construct(
         private ConnectionInterface $connection,
         private ?SessionGuard $sessionGuard = null,
         private ?TemplateEngineInterface $templateEngine = null,
+        private ?PasswordHasherInterface $passwordHasher = null,
     ) {}
 
     private function getTemplateEngine(): ?TemplateEngineInterface
@@ -100,7 +110,7 @@ final readonly class LoginController
         $userRow = $result->rows[0];
         $passwordHash = $userRow->getString('password_hash');
 
-        if (!password_verify($password, $passwordHash)) {
+        if (!$this->verifyPassword($password, $passwordHash)) {
             return $this->respondWithView($request, 'auth.login', [
                 'page_title' => 'Sign In',
                 'errors' => ['form' => 'Invalid email or password.'],
@@ -117,6 +127,7 @@ final readonly class LoginController
         }
 
         $userId = $userRow->getString('id');
+        $this->rehashIfNeeded($userId, $password, $passwordHash);
         $identity = new Identity(
             id: $userId,
             displayName: $email,
@@ -126,6 +137,51 @@ final readonly class LoginController
         $this->sessionGuard?->login($identity);
 
         return Response::redirect('/');
+    }
+
+    /**
+     * A candidate past the cap cannot have produced any hash the framework wrote,
+     * so it is refused before the KDF runs — the same bound the hasher applies,
+     * kept here for the case where none is wired.
+     */
+    private function verifyPassword(string $password, string $hash): bool
+    {
+        if (mb_strlen($password) > PasswordHasherInterface::MAX_LENGTH) {
+            return false;
+        }
+
+        return $this->passwordHasher?->verify($password, $hash)
+            ?? password_verify($password, $hash);
+    }
+
+    /**
+     * Migrate a hash left by an older algorithm or cost, now that the plaintext
+     * is in hand and proven correct.
+     *
+     * A password outside the current length policy keeps its old hash: rehashing
+     * it would throw, and refusing the login would lock out an account that was
+     * created under a laxer rule.
+     */
+    private function rehashIfNeeded(string $userId, string $password, string $currentHash): void
+    {
+        if ($this->passwordHasher === null) {
+            return;
+        }
+
+        $length = mb_strlen($password);
+
+        if ($length < PasswordHasherInterface::MIN_LENGTH || $length > PasswordHasherInterface::MAX_LENGTH) {
+            return;
+        }
+
+        if (!$this->passwordHasher->needsRehash($currentHash)) {
+            return;
+        }
+
+        $this->connection->execute(
+            'UPDATE auth_users SET password_hash = :hash WHERE id = :id',
+            ['hash' => $this->passwordHasher->hash($password), 'id' => $userId],
+        );
     }
 
     /**
