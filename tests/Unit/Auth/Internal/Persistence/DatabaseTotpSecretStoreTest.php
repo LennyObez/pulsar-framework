@@ -12,15 +12,31 @@ use Pulsar\Auth\Internal\Persistence\DatabaseTotpSecretStore;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
-use Pulsar\Database\Row;
+use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Exception\SecurityException;
 use RuntimeException;
 use Throwable;
+
+use function base64_decode;
+use function base64_encode;
+use function bin2hex;
+use function random_bytes;
+use function sodium_bin2hex;
 
 #[CoversClass(DatabaseTotpSecretStore::class)]
 final class DatabaseTotpSecretStoreTest extends TestCase
 {
+    /**
+     * The derivation AuthWiring.php:190 gives the production store. Repeating it
+     * here is what makes the at-rest assertions below evidence for ASVS 6.1: the
+     * column is opened by the key the framework actually uses, not by a key the
+     * test invented.
+     */
+    private const int TOTP_SUB_KEY_ID = 4;
+    private const string TOTP_KDF_CONTEXT = 'totpscrt';
+
     private PDO $pdo;
     private EncryptorInterface $encryptor;
     private DatabaseTotpSecretStore $store;
@@ -73,15 +89,55 @@ final class DatabaseTotpSecretStoreTest extends TestCase
     #[Test]
     public function store_encrypts_secret_before_persisting(): void
     {
+        $secret = 'JBSWY3DPEHPK3PXP';
+
+        $this->store->store('user-1', $secret);
+
+        $raw = $this->rawColumn('user-1');
+
+        // "Not equal to the plaintext" would also pass for base64, hex or a
+        // truncation, so each of those is ruled out explicitly, including inside
+        // the base64 envelope the Encryptor wraps its ciphertext in.
+        self::assertStringNotContainsString($secret, $raw);
+        self::assertStringNotContainsString(base64_encode($secret), $raw);
+        self::assertStringNotContainsString(bin2hex($secret), $raw);
+
+        $envelope = base64_decode($raw, true);
+        self::assertIsString($envelope, 'Column is not the base64 envelope the Encryptor writes');
+        self::assertStringNotContainsString($secret, $envelope);
+
+        // And it is ciphertext rather than a digest: the production key opens it.
+        self::assertSame($secret, $this->encryptor->decrypt($raw));
+    }
+
+    #[Test]
+    public function store_writes_a_fresh_nonce_so_a_repeated_secret_is_not_recognisable(): void
+    {
+        $this->store->store('user-1', 'JBSWY3DPEHPK3PXP');
+        $first = $this->rawColumn('user-1');
+
+        $this->store->store('user-1', 'JBSWY3DPEHPK3PXP');
+        $second = $this->rawColumn('user-1');
+
+        // Deterministic ciphertext would let anyone holding the table tell which
+        // accounts share a seed without holding the key.
+        self::assertNotSame($first, $second);
+    }
+
+    #[Test]
+    public function stored_secret_does_not_open_under_a_different_master_key(): void
+    {
         $this->store->store('user-1', 'JBSWY3DPEHPK3PXP');
 
-        // Read raw from the database to verify it is NOT plaintext
-        $stmt = $this->pdo->prepare('SELECT encrypted_secret FROM auth_totp_secrets WHERE user_id = ?');
-        $stmt->execute(['user-1']);
-        $raw = $stmt->fetchColumn();
+        $foreign = Encryptor::fromDerivedKey(
+            MasterKey::fromHex(sodium_bin2hex(random_bytes(32))),
+            self::TOTP_SUB_KEY_ID,
+            self::TOTP_KDF_CONTEXT,
+        );
 
-        self::assertIsString($raw);
-        self::assertNotSame('JBSWY3DPEHPK3PXP', $raw, 'Secret must be encrypted at rest');
+        $this->expectException(SecurityException::class);
+
+        $foreign->decrypt($this->rawColumn('user-1'));
     }
 
     #[Test]
@@ -153,50 +209,31 @@ final class DatabaseTotpSecretStoreTest extends TestCase
     }
 
     /**
-     * Create a real encryptor using sodium for actual encrypt/decrypt.
-     *
-     * Uses a deterministic test key to avoid relying on environment variables.
+     * The shipped Encryptor under a subkey derived exactly as the composition
+     * root derives it. A stub encryptor here would leave the ASVS 6.1 claim
+     * resting on the stub rather than on the framework's at-rest control.
      */
     private function createEncryptor(): EncryptorInterface
     {
-        $key = str_repeat("\x01", SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
 
-        return new class ($key) implements EncryptorInterface {
-            public function __construct(
-                private readonly string $key,
-            ) {}
+        return Encryptor::fromDerivedKey($masterKey, self::TOTP_SUB_KEY_ID, self::TOTP_KDF_CONTEXT);
+    }
 
-            public function encrypt(string $plaintext): string
-            {
-                $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-                $ciphertext = sodium_crypto_secretbox($plaintext, $nonce, $this->key);
+    /**
+     * Read the stored column without going through the store, so the assertion
+     * sees what the database sees.
+     */
+    private function rawColumn(string $userId): string
+    {
+        $stmt = $this->pdo->prepare('SELECT encrypted_secret FROM auth_totp_secrets WHERE user_id = ?');
+        $stmt->execute([$userId]);
 
-                return base64_encode($nonce . $ciphertext);
-            }
+        /** @var mixed $raw */
+        $raw = $stmt->fetchColumn();
+        self::assertIsString($raw, 'No row was written for ' . $userId);
 
-            public function decrypt(string $encoded): string
-            {
-                $decoded = base64_decode($encoded, true);
-                if ($decoded === false) {
-                    throw new RuntimeException('Invalid base64');
-                }
-
-                $nonce = substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-                $ciphertext = substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-
-                $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $this->key);
-                if ($plaintext === false) {
-                    throw new RuntimeException('Decryption failed');
-                }
-
-                return $plaintext;
-            }
-
-            public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): EncryptorInterface
-            {
-                return $this;
-            }
-        };
+        return $raw;
     }
 
     /**
@@ -258,6 +295,16 @@ final class DatabaseTotpSecretStoreTest extends TestCase
             public function driver(): Driver
             {
                 return Driver::SQLite;
+            }
+
+            public function variant(): \Pulsar\Database\DriverVariant
+            {
+                return \Pulsar\Database\DriverVariant::Standard;
+            }
+
+            public function dialect(): \Pulsar\Database\Dialect\DialectInterface
+            {
+                return \Pulsar\Database\Dialect\Dialects::for($this->driver(), $this->variant());
             }
 
             public function name(): string
