@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use Override;
 use SensitiveParameter;
 
+use function mb_strlen;
 use function password_hash;
 use function password_needs_rehash;
 use function password_verify;
@@ -20,6 +21,10 @@ use const PASSWORD_ARGON2ID;
  *
  * Defaults follow OWASP 2024 recommendations for Argon2id:
  * memory_cost=19456 (19 MiB), time_cost=2, threads=1.
+ *
+ * Argon2id consumes the whole password, so the interface's length bounds are
+ * policy, not an algorithmic limit — unlike bcrypt, which silently authenticates
+ * on the first 72 bytes and makes every longer suffix equivalent.
  *
  * @see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
  */
@@ -85,13 +90,37 @@ final readonly class PasswordHasher implements PasswordHasherInterface
     #[Override]
     public function hash(#[SensitiveParameter] string $password): string
     {
+        // Only the upper bound is enforced here, and it is a resource guard rather
+        // than policy: Argon2id reads the whole input, so an unbounded password is
+        // CPU an unauthenticated caller can spend.
+        //
+        // The minimum is deliberately NOT checked. It is policy, it belongs to the
+        // validation layer, and throwing on it converts a rejected form field into
+        // an uncaught exception — which is what a surface accepting a shorter
+        // password than the floor produced: a 500 instead of a message.
+        $length = mb_strlen($password);
+
+        if ($length > self::MAX_LENGTH) {
+            throw new InvalidArgumentException(sprintf(
+                'Password exceeds the %d-character cap (got %d); refusing to hash it.',
+                self::MAX_LENGTH,
+                $length,
+            ));
+        }
+
         return password_hash($password, PASSWORD_ARGON2ID, $this->options);
     }
 
+    /**
+     * A candidate longer than the cap cannot have produced any hash this class
+     * wrote, so it is refused before the KDF runs. The lower bound is not applied
+     * here: raising the minimum must not lock out an account whose password was
+     * accepted under the old one.
+     */
     #[Override]
     public function verify(#[SensitiveParameter] string $password, string $hash): bool
     {
-        return password_verify($password, $hash);
+        return mb_strlen($password) <= self::MAX_LENGTH && password_verify($password, $hash);
     }
 
     #[Override]
