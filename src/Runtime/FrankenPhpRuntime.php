@@ -11,7 +11,8 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Core\KernelInterface;
-use Pulsar\Http\Message\Response;
+use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Http\Message\BodyTooLargeException;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Exception\RuntimeException;
@@ -106,39 +107,68 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface, SupportsEar
     /**
      * Handle a single request inside the FrankenPHP worker callback.
      *
+     * `ServerRequest::fromGlobals()` used to run before the try. It throws on a
+     * body over the cap, so a single oversized upload escaped the callback and
+     * took the whole worker down with it — every in-flight and queued request on
+     * that process, from one request nobody had to authenticate to send.
+     *
      * @codeCoverageIgnore Requires FrankenPHP runtime environment
      */
     private function handleRequest(): void
     {
         $this->workerContext->beginRequest();
 
-        $request = ServerRequest::fromGlobals();
-
-        // Health endpoint (bypass kernel)
-        if ($this->config->healthEndpoint && $request->getUri()->getPath() === '/_health') {
-            $this->emitHealthResponse();
-            $this->workerContext->endRequest();
-
-            return;
-        }
+        $request = null;
 
         try {
+            $request = ServerRequest::fromGlobals();
+
+            // Health endpoint (bypass kernel)
+            if ($this->config->healthEndpoint && $request->getUri()->getPath() === '/_health') {
+                $this->emitHealthResponse();
+                $this->workerContext->endRequest();
+
+                return;
+            }
+
             $request = $this->beforeRequest($request);
             $response = $this->kernel->handle($request);
         } catch (Throwable $e) {
             $this->logger?->error('Request handler error', [
                 'exception' => $e->getMessage(),
-                'path' => $request->getUri()->getPath(),
+                'path' => $request?->getUri()->getPath() ?? '(request not parsed)',
             ]);
-            $response = new Response(
-                statusCode: ResponseStatus::InternalServerError->value,
-                body: 'Internal Server Error',
-            );
+            $response = $this->errorResponse($e);
         }
 
-        $this->afterRequest($request, $response);
+        // No request object when fromGlobals() threw: the sandbox has nothing to
+        // reset against, and calling it with a fabricated request would reset
+        // state the failed request never touched.
+        if ($request !== null) {
+            $this->afterRequest($request, $response);
+        }
+
         $this->emitResponse($response);
         $this->workerContext->endRequest();
+    }
+
+    /**
+     * Generic error response for a request the worker could not complete.
+     *
+     * Body-too-large is the one failure the client can act on, and the ceiling
+     * is server policy rather than a secret, so it earns its own status.
+     * Everything else is a 500 with no detail: the previous plain-text
+     * `Internal Server Error` carried neither the security headers nor the
+     * `Cache-Control: no-store` that an error page emitted outside the pipeline
+     * has to supply itself.
+     */
+    private function errorResponse(Throwable $e): ResponseInterface
+    {
+        $status = $e instanceof BodyTooLargeException
+            ? ResponseStatus::PayloadTooLarge
+            : ResponseStatus::InternalServerError;
+
+        return new ProductionRenderer()->response($status);
     }
 
     #[Override]
