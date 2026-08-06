@@ -12,6 +12,7 @@ use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Security\Session\SessionInterface;
 
+use function array_keys;
 use function count;
 use function sprintf;
 
@@ -71,11 +72,29 @@ final class SessionGuard implements GuardInterface
     /**
      * Log out of the session.
      *
-     * Removes the identity and regenerates the session ID.
+     * Discards every session key, not only the identity. `regenerate()`
+     * carries the data array over to the new id, so dropping the identity
+     * alone leaves the rest of the session — OAuth state, wizard progress,
+     * flash, CSRF token — readable by whoever authenticates next in the same
+     * browser. `SessionInterface` has no flush primitive, so the guard clears
+     * the keys it can enumerate and then rotates: `regenerate()` destroys the
+     * old server-side record (ASVS V3.3.1) and mints a fresh id, while keeping
+     * the request-binding metadata the session validators compare against.
+     *
+     * The identity is dropped explicitly before the sweep rather than relying
+     * on it turning up in `all()`. `SessionInterface` is public API and its
+     * implementations are not all this repository's; one whose `all()` under-
+     * reports would otherwise leave the session authenticated, which is a
+     * strictly worse failure than leaking a residual key.
      */
     public function logout(): void
     {
         $this->session->remove(self::SESSION_KEY);
+
+        foreach (array_keys($this->session->all()) as $key) {
+            $this->session->remove($key);
+        }
+
         $this->session->regenerate();
     }
 
@@ -83,15 +102,14 @@ final class SessionGuard implements GuardInterface
      * Update the stored identity, regenerating the session ID on
      * privilege escalation.
      *
-     * F12.15: a 2FA verification flips the identity's
-     * `twoFactorStatus` from Pending to Verified — that's a
-     * privilege change, and OWASP ASVS V3.5.3 / PSD2 SCA mandate
-     * a session-id rotation at that boundary so any session-fixation
-     * attempt cannot ride along with the elevated state. The guard
-     * compares the previous and new identities; when the new one
-     * is more privileged (TwoFactorStatus advanced from Pending /
-     * Disabled to Verified, OR roles strictly grew), it issues
-     * `regenerate(true)` before storing the new identity.
+     * A 2FA verification flips the identity's `twoFactorStatus` from
+     * Pending to Verified — that is a privilege change, and OWASP
+     * ASVS V3.5.3 / PSD2 SCA mandate a session-id rotation at that
+     * boundary so a session-fixation attempt cannot ride along with
+     * the elevated state. The guard compares the previous and new
+     * identities; when the new one is more privileged (TwoFactorStatus
+     * advanced from Pending / Disabled to Verified, OR roles strictly
+     * grew), it issues `regenerate(true)` before storing the identity.
      */
     public function updateIdentity(IdentityInterface $identity): void
     {
@@ -107,8 +125,8 @@ final class SessionGuard implements GuardInterface
     }
 
     /**
-     * F12.15: a privilege escalation triggers a session-id rotation.
-     * We currently treat two events as escalation:
+     * A privilege escalation triggers a session-id rotation.
+     * Two events count as escalation:
      *   - twoFactorStatus advances from Disabled / Pending to Verified
      *   - the role set strictly grows (every previous role still
      *     present + at least one new role)
@@ -144,12 +162,12 @@ final class SessionGuard implements GuardInterface
     }
 
     /**
-     * F12.9: refuses to silently drop a custom `IdentityInterface`
-     * implementation. The previous `if ($identity instanceof Identity)`
-     * check would let `login()` succeed with a domain-specific
-     * identity object while leaving the session empty — a confusing
-     * race where the auth flow appeared to work but the next request
-     * found no logged-in user.
+     * Refuses to silently drop a custom `IdentityInterface`
+     * implementation. Skipping storage for an identity this guard
+     * cannot serialise would let `login()` return successfully while
+     * leaving the session empty — the auth flow would appear to work
+     * and the next request would find no logged-in user. Failing loudly
+     * here is the only way the caller learns it needs its own guard.
      */
     private function storeIdentity(IdentityInterface $identity): void
     {
