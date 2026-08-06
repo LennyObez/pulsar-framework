@@ -24,7 +24,7 @@ use function is_string;
  *       public function rules(): array {
  *           return [
  *               'email' => ['required', 'email'],
- *               'password' => ['required', 'min:8'],
+ *               'password' => ['required', 'min_length:8'],
  *           ];
  *       }
  *   }
@@ -177,8 +177,19 @@ abstract class LiveForm
         return match ($ruleName) {
             'required' => $this->validateRequired($field, $value),
             'email' => $this->validateEmail($field, $value),
+            // `min` and `max` are overloaded: a browser submits every field as a
+            // string, so they cannot tell a text field from a numeric one and judge
+            // by both readings. That is right for a quantity typed into a form and
+            // wrong for a password — "1234567890" is ten characters and also a
+            // number well past any character cap, so `max:4096` refused it.
+            //
+            // `min_length` and `max_length` say which reading was meant, and match
+            // the names ValidatorBuilder already uses for the same distinction.
+            // Prefer them on anything that is text.
             'min' => $this->validateMin($field, $value, $parameter),
             'max' => $this->validateMax($field, $value, $parameter),
+            'min_length' => $this->validateMinLength($field, $value, $parameter),
+            'max_length' => $this->validateMaxLength($field, $value, $parameter),
             'url' => $this->validateUrl($field, $value),
             'numeric' => $this->validateNumeric($field, $value),
             'confirmed' => $this->validateConfirmed($field, $value),
@@ -214,6 +225,31 @@ abstract class LiveForm
 
         if (is_numeric($value) && (float) $value < $min) {
             return "{$field} must be at least {$min}.";
+        }
+
+        return null;
+    }
+
+    /**
+     * Length only, whatever the string happens to look like as a number.
+     */
+    private function validateMinLength(string $field, mixed $value, ?string $param): ?string
+    {
+        $min = $param !== null ? (int) $param : 0;
+
+        if (is_string($value) && mb_strlen($value) < $min) {
+            return "{$field} must be at least {$min} characters.";
+        }
+
+        return null;
+    }
+
+    private function validateMaxLength(string $field, mixed $value, ?string $param): ?string
+    {
+        $max = $param !== null ? (int) $param : 0;
+
+        if (is_string($value) && mb_strlen($value) > $max) {
+            return "{$field} must not exceed {$max} characters.";
         }
 
         return null;

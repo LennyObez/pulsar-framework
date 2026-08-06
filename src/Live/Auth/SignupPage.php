@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Live\Auth;
 
 use Pulsar\Api\Api;
+use Pulsar\Auth\Password\PasswordHasherInterface;
 use Pulsar\Live\CssColor;
 use Pulsar\Live\LiveAction;
 use Pulsar\Live\LiveComponent;
@@ -12,6 +13,7 @@ use Pulsar\Live\LiveProp;
 
 use function htmlspecialchars;
 use function implode;
+use function max;
 
 use const ENT_QUOTES;
 
@@ -61,10 +63,24 @@ final class SignupPage extends LiveComponent
         $this->authenticator = $auth instanceof AuthenticatorInterface ? $auth : null;
     }
 
+    /**
+     * The one password minimum this component knows: rendered as the hint and the
+     * `minlength` attribute, and enforced by {@see SignupForm} on submit. A
+     * configured value below the framework floor is raised to it rather than
+     * shown, so the number on screen is always the number that is applied.
+     */
+    private function minimumPasswordLength(): int
+    {
+        $config = $this->config ?? new AuthUiConfig();
+
+        return max(PasswordHasherInterface::MIN_LENGTH, $config->passwordMinLength);
+    }
+
     #[LiveAction]
     public function submit(): void
     {
         $form = new SignupForm();
+        $form->minPasswordLength = $this->minimumPasswordLength();
         $form->name = $this->name;
         $form->email = $this->email;
         $form->password = $this->password;
@@ -174,7 +190,7 @@ final class SignupPage extends LiveComponent
 
         $nameVal = $e($this->name);
         $emailVal = $e($this->email);
-        $minLen = $config->passwordMinLength;
+        $minLen = $this->minimumPasswordLength();
 
         return <<<HTML
             <div class="pulsar-auth{$darkClass}" style="--pulsar-accent: {$accentVar}">
@@ -182,7 +198,7 @@ final class SignupPage extends LiveComponent
                     {$logo}{$brandTitle}
                     <h2 class="pulsar-auth__heading">Create your account</h2>
                     {$errorHtml}
-                    <form wire:submit="submit" class="pulsar-auth__form" novalidate>
+                    <form wire:submit="submit" class="pulsar-auth__form">
                         <div class="pulsar-auth__field">
                             <label for="signup-name" class="pulsar-auth__label">Full name</label>
                             <input id="signup-name" type="text" wire:model="name" value="{$nameVal}"
