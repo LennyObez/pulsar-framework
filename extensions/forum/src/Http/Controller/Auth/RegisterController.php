@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Forum\Http\Controller\Auth;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Auth\Password\PasswordHasherInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Forum\Http\Controller\Page\RendersForumView;
 use Pulsar\Extension\Forum\Support\UuidGenerator;
@@ -14,12 +15,11 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function is_array;
 use function is_string;
+use function max;
 use function mb_strlen;
-use function password_hash;
 use function preg_match;
+use function sprintf;
 use function trim;
-
-use const PASSWORD_BCRYPT;
 
 /**
  * Registration controller: create a new forum account.
@@ -29,9 +29,21 @@ final readonly class RegisterController
 {
     use RendersForumView;
 
+    /**
+     * @param PasswordHasherInterface|null $passwordHasher Bound by the composition
+     *                                                     root; registration refuses
+     *                                                     to run without it rather
+     *                                                     than fall back to a weaker
+     *                                                     algorithm.
+     * @param int                          $passwordMinLength Minimum accepted password
+     *                                                        length. The shipped templates
+     *                                                        state 8; raise both together.
+     */
     public function __construct(
         private ConnectionInterface $connection,
         private ?TemplateEngineInterface $templateEngine = null,
+        private ?PasswordHasherInterface $passwordHasher = null,
+        private int $passwordMinLength = PasswordHasherInterface::MIN_LENGTH,
     ) {}
 
     private function getTemplateEngine(): ?TemplateEngineInterface
@@ -55,6 +67,13 @@ final readonly class RegisterController
      */
     public function register(ServerRequestInterface $request): Response
     {
+        if ($this->passwordHasher === null) {
+            return $this->respondWithView($request, 'auth.register', [
+                'page_title' => 'Create Account',
+                'errors' => ['form' => 'Registration is unavailable: no password hasher is configured.'],
+            ], 503);
+        }
+
         $parsed = $request->getParsedBody();
 
         if (!is_array($parsed)) {
@@ -107,7 +126,7 @@ final readonly class RegisterController
         }
 
         $userId = UuidGenerator::v7();
-        $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+        $passwordHash = $this->passwordHasher->hash($password);
 
         $this->connection->execute(
             <<<'SQL'
@@ -156,8 +175,13 @@ final readonly class RegisterController
             $errors['email'] = 'A valid email address is required.';
         }
 
-        if (mb_strlen($password) < 8) {
-            $errors['password'] = 'Password must be at least 8 characters.';
+        $minLength = max(PasswordHasherInterface::MIN_LENGTH, $this->passwordMinLength);
+        $passwordLength = mb_strlen($password);
+
+        if ($passwordLength < $minLength) {
+            $errors['password'] = sprintf('Password must be at least %d characters.', $minLength);
+        } elseif ($passwordLength > PasswordHasherInterface::MAX_LENGTH) {
+            $errors['password'] = sprintf('Password must be at most %d characters.', PasswordHasherInterface::MAX_LENGTH);
         }
 
         if ($password !== $passwordConfirm) {

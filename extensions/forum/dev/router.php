@@ -19,6 +19,7 @@ while ($dir !== dirname($dir)) {
 
 require $dir . '/vendor/autoload.php';
 
+use Pulsar\Auth\Password\PasswordHasher;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Dev\DevServerBootstrap;
 use Pulsar\Dev\DevServerConfig;
@@ -73,7 +74,7 @@ DevServerBootstrap::run($dir, new DevServerConfig(
     seeders: [
         static function (ConnectionInterface $db): void {
             // Seed dev admin user
-            $devPasswordHash = password_hash('forum-dev-password', PASSWORD_BCRYPT);
+            $devPasswordHash = new PasswordHasher()->hash('forum-dev-password');
             $db->execute(
                 <<<'SQL'
                     INSERT OR IGNORE INTO auth_users (id, display_name, email, password_hash, roles, two_factor_status)
