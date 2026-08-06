@@ -153,7 +153,7 @@ final class Encryptor implements EncryptorInterface
      * @throws RandomException
      * @throws SodiumException
      */
-    public function encrypt(string $plaintext): string
+    public function encrypt(#[SensitiveParameter] string $plaintext): string
     {
         if ($this->cipherSuite !== null) {
             $raw = $this->cipherSuite->encrypt($plaintext, $this->key);

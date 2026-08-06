@@ -6,6 +6,7 @@ namespace Pulsar\Security\Crypto;
 
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameter;
 
 /**
  * Pluggable cipher suite abstraction for FIPS compliance.
@@ -28,31 +29,59 @@ interface CipherSuiteInterface
      *
      * Returns raw ciphertext bytes prefixed with a version byte.
      *
+     * Implementations must repeat the `#[SensitiveParameter]` markers below:
+     * the attribute is read from the frame that is actually on the stack, so an
+     * implementation that omits it puts the key in every backtrace taken beneath it.
+     *
      * @throws SecurityException If encryption fails
      */
-    public function encrypt(string $plaintext, string $key, string $aad = ''): string;
+    public function encrypt(
+        #[SensitiveParameter]
+        string $plaintext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad = '',
+    ): string;
 
     /**
      * Decrypt ciphertext previously produced by encrypt().
      *
      * @throws SecurityException If decryption fails (wrong key, tampered data, AAD mismatch)
      */
-    public function decrypt(string $ciphertext, string $key, string $aad = ''): string;
+    public function decrypt(
+        string $ciphertext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad = '',
+    ): string;
 
     /**
      * Compute a keyed MAC and return raw bytes.
      */
-    public function hmac(string $data, string $key): string;
+    public function hmac(
+        string $data,
+        #[SensitiveParameter]
+        string $key,
+    ): string;
 
     /**
      * Compute a keyed MAC and return as hex string.
      */
-    public function hmacHex(string $data, string $key): string;
+    public function hmacHex(
+        string $data,
+        #[SensitiveParameter]
+        string $key,
+    ): string;
 
     /**
      * Verify a keyed MAC using constant-time comparison.
      */
-    public function verifyHmac(string $data, string $expected, string $key): bool;
+    public function verifyHmac(
+        string $data,
+        string $expected,
+        #[SensitiveParameter]
+        string $key,
+    ): bool;
 
     /**
      * Return the cipher suite identifier (e.g. 'sodium', 'aes-gcm').

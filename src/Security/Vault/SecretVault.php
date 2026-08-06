@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameter;
 use SodiumException;
 
 use function array_keys;
@@ -72,8 +73,11 @@ final class SecretVault
      *
      * @throws SecurityException If encryption fails
      */
-    public function set(string $key, string $value): void
-    {
+    public function set(
+        string $key,
+        #[SensitiveParameter]
+        string $value,
+    ): void {
         $this->ensureLoaded();
         $this->secrets[$key] = $this->encryptor->encrypt($value);
         $this->persist();

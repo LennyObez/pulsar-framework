@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Crypto;
 
 use Pulsar\Api\Internal;
+use SensitiveParameter;
 use SodiumException;
 
 use function in_array;
@@ -23,6 +24,7 @@ final readonly class EnvKeyRing implements KeyRingInterface
      * @param list<string>          $aliases Internal aliases excluded from all()
      */
     public function __construct(
+        #[SensitiveParameter]
         private array $keys,
         private array $aliases = [],
     ) {}

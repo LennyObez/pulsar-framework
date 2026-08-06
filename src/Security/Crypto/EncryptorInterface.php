@@ -7,17 +7,24 @@ namespace Pulsar\Security\Crypto;
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 use Random\RandomException;
+use SensitiveParameter;
 use SodiumException;
 
 #[Api(since: '1.0.0')]
 interface EncryptorInterface
 {
     /**
+     * Implementations must repeat the `#[SensitiveParameter]` marker: the attribute
+     * is read from the frame on the stack, not from the interface.
+     *
      * @throws SecurityException
      * @throws RandomException
      * @throws SodiumException
      */
-    public function encrypt(string $plaintext): string;
+    public function encrypt(
+        #[SensitiveParameter]
+        string $plaintext,
+    ): string;
 
     /**
      * @throws SecurityException
