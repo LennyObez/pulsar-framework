@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Live\Auth;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Auth\Password\PasswordHasherInterface;
 use Pulsar\Live\Auth\AuthenticatorInterface;
 use Pulsar\Live\Auth\AuthResult;
 use Pulsar\Live\Auth\AuthUiConfig;
@@ -31,8 +32,13 @@ final class SignupPageTest extends TestCase
         self::assertStringContainsString('wire:model="passwordConfirmation"', $html);
     }
 
+    /**
+     * The rendered number used to come from configuration while the server
+     * enforced a compiled-in 8, inside a form marked `novalidate` so the
+     * `minlength` attribute never fired either.
+     */
     #[Test]
-    public function renderShowsPasswordMinLength(): void
+    public function displayedPasswordMinimumIsTheEnforcedOne(): void
     {
         $page = new SignupPage();
         $page->mount(['config' => new AuthUiConfig(passwordMinLength: 12)]);
@@ -40,6 +46,60 @@ final class SignupPageTest extends TestCase
         $html = $page->render();
 
         self::assertStringContainsString('Minimum 12 characters', $html);
+        self::assertStringContainsString('minlength="12"', $html);
+        self::assertStringNotContainsString('novalidate', $html);
+
+        $page->name = 'John Doe';
+        $page->email = 'john@example.com';
+        $page->password = 'elevenchars';
+        $page->passwordConfirmation = 'elevenchars';
+
+        $page->submit();
+
+        self::assertFalse($page->registered);
+        self::assertStringContainsString('at least 12 characters', $page->error);
+    }
+
+    #[Test]
+    public function aConfiguredMinimumBelowTheFloorIsRaisedNotDisplayed(): void
+    {
+        $page = new SignupPage();
+        $page->mount(['config' => new AuthUiConfig(passwordMinLength: 4)]);
+
+        $html = $page->render();
+
+        self::assertStringContainsString('Minimum ' . PasswordHasherInterface::MIN_LENGTH . ' characters', $html);
+
+        $page->name = 'John Doe';
+        $page->email = 'john@example.com';
+        $page->password = str_repeat('a', PasswordHasherInterface::MIN_LENGTH - 1);
+        $page->passwordConfirmation = $page->password;
+
+        $page->submit();
+
+        self::assertFalse($page->registered);
+        self::assertStringContainsString(
+            'at least ' . PasswordHasherInterface::MIN_LENGTH . ' characters',
+            $page->error,
+        );
+    }
+
+    #[Test]
+    public function anUnmountedPageStillEnforcesTheFloor(): void
+    {
+        $page = new SignupPage();
+        $page->name = 'John Doe';
+        $page->email = 'john@example.com';
+        $page->password = 'short';
+        $page->passwordConfirmation = 'short';
+
+        $page->submit();
+
+        self::assertFalse($page->registered);
+        self::assertStringContainsString(
+            'at least ' . PasswordHasherInterface::MIN_LENGTH . ' characters',
+            $page->error,
+        );
     }
 
     #[Test]
