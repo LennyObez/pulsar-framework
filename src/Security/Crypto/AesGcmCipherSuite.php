@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\Randomizer;
+use SensitiveParameter;
 
 use function chr;
 use function hash_equals;
@@ -88,8 +89,13 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
         }
     }
 
-    public function encrypt(string $plaintext, string $key, string $aad = ''): string
-    {
+    public function encrypt(
+        #[SensitiveParameter]
+        string $plaintext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad = '',
+    ): string {
         self::validateKeyLength($key);
 
         $nonce = $this->randomizer->getBytes(self::NONCE_LENGTH);
@@ -123,8 +129,12 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
         return chr(self::VERSION_BYTE) . $nonce . $tag . $ciphertext;
     }
 
-    public function decrypt(string $ciphertext, string $key, string $aad = ''): string
-    {
+    public function decrypt(
+        string $ciphertext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad = '',
+    ): string {
         self::validateKeyLength($key);
 
         $headerLength = 1 + self::NONCE_LENGTH + self::TAG_LENGTH;
@@ -175,20 +185,30 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
         return $plaintext;
     }
 
-    public function hmac(string $data, string $key): string
-    {
+    public function hmac(
+        string $data,
+        #[SensitiveParameter]
+        string $key,
+    ): string {
         return hash_hmac('sha256', $data, $key, true);
     }
 
     #[NoDiscard]
-    public function hmacHex(string $data, string $key): string
-    {
+    public function hmacHex(
+        string $data,
+        #[SensitiveParameter]
+        string $key,
+    ): string {
         return hash_hmac('sha256', $data, $key);
     }
 
     #[NoDiscard]
-    public function verifyHmac(string $data, string $expected, string $key): bool
-    {
+    public function verifyHmac(
+        string $data,
+        string $expected,
+        #[SensitiveParameter]
+        string $key,
+    ): bool {
         $computed = $this->hmac($data, $key);
 
         return hash_equals($expected, $computed);
@@ -237,8 +257,10 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
         return 'aes-gcm';
     }
 
-    private static function validateKeyLength(string $key): void
-    {
+    private static function validateKeyLength(
+        #[SensitiveParameter]
+        string $key,
+    ): void {
         if (strlen($key) !== self::KEY_LENGTH) {
             throw new InvalidArgumentException(
                 sprintf('AES-256-GCM requires a %d-byte key, got %d', self::KEY_LENGTH, strlen($key)),

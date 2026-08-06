@@ -6,6 +6,7 @@ namespace Pulsar\Security\Crypto;
 
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameter;
 
 /**
  * Contract for tokenizing sensitive data such as PANs (Primary Account Numbers).
@@ -29,9 +30,16 @@ interface TokenizationServiceInterface
      *
      * @return string The generated token
      *
+     * Implementations must repeat the `#[SensitiveParameter]` marker: the attribute
+     * is read from the frame on the stack, not from the interface.
+     *
      * @throws SecurityException If tokenization fails
      */
-    public function tokenize(string $sensitiveData, string $context): string;
+    public function tokenize(
+        #[SensitiveParameter]
+        string $sensitiveData,
+        string $context,
+    ): string;
 
     /**
      * Retrieve the original sensitive value for a given token.

@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameter;
 use SodiumException;
 
 use function sodium_bin2hex;
@@ -29,10 +30,8 @@ use function substr;
  * Supports an optional previous key for key rotation. The previous key enables
  * fallback decryption and audit verification during rotation windows.
  *
- * Sub-key IDs:
- * - 1 = encryption (used by Encryptor)
- * - 2 = audit HMAC chain
- * - 3 = pseudonymization (used by PseudonymizationService)
+ * Sub-key ids are listed in {@see SubKeyId}; that enum, not this docblock, is
+ * the registry. Callers must not reuse an (id, context) pair across subsystems.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -51,8 +50,12 @@ final class MasterKey implements KeyProviderInterface
     private string $rawKey;
     private ?string $previousRawKey;
 
-    private function __construct(string $rawKey, ?string $previousRawKey = null)
-    {
+    private function __construct(
+        #[SensitiveParameter]
+        string $rawKey,
+        #[SensitiveParameter]
+        ?string $previousRawKey = null,
+    ) {
         $this->rawKey = $rawKey;
         $this->previousRawKey = $previousRawKey;
     }
@@ -109,8 +112,12 @@ final class MasterKey implements KeyProviderInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromHex(string $hex, ?string $previousHex = null): self
-    {
+    public static function fromHex(
+        #[SensitiveParameter]
+        string $hex,
+        #[SensitiveParameter]
+        ?string $previousHex = null,
+    ): self {
         $raw = sodium_hex2bin($hex);
 
         if (strlen($raw) !== self::KEY_LENGTH) {
@@ -142,9 +149,9 @@ final class MasterKey implements KeyProviderInterface
      * `$envValue` parameter or use `fromHex()` with a secrets manager instead
      * of relying on `getenv()` in these contexts.
      *
-     * F9.8: this method calls `getenv()` directly, bypassing
+     * This method calls `getenv()` directly, bypassing
      * {@see Environment::loadFiltered()}'s allowlist. Production
-     * deployments that hardened the environment loader should use
+     * deployments that harden the environment loader should use
      * {@see fromConfigEnvironment()} instead so master-key access
      * goes through the same allowlist as every other secret.
      *
@@ -152,8 +159,10 @@ final class MasterKey implements KeyProviderInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromEnvironment(?string $envValue = null): self
-    {
+    public static function fromEnvironment(
+        #[SensitiveParameter]
+        ?string $envValue = null,
+    ): self {
         $hex = $envValue ?? getenv('PULSAR_MASTER_KEY');
 
         if ($hex === false || $hex === '') {
@@ -169,11 +178,11 @@ final class MasterKey implements KeyProviderInterface
     }
 
     /**
-     * F9.8: load master key through a {@see Environment} instance so
-     * the access goes through the same allowlist (and any other
-     * filtering) the operator has wired. Preferred over
-     * {@see fromEnvironment()} in production deployments because the
-     * `getenv()` global pollution path is bypassed entirely.
+     * Load the master key through a {@see Environment} instance so the
+     * access goes through the same allowlist (and any other filtering)
+     * the operator has wired. Preferred over {@see fromEnvironment()} in
+     * production deployments because the `getenv()` global pollution
+     * path is bypassed entirely.
      *
      * @throws SecurityException If the variable is missing or invalid
      * @throws SodiumException

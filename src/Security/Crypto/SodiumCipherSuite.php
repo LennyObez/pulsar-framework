@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\Randomizer;
+use SensitiveParameter;
 use SodiumException;
 
 use function chr;
@@ -48,8 +49,13 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
         $this->randomizer = new Randomizer(new Secure());
     }
 
-    public function encrypt(string $plaintext, string $key, string $aad = ''): string
-    {
+    public function encrypt(
+        #[SensitiveParameter]
+        string $plaintext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad = '',
+    ): string {
         try {
             if ($aad !== '') {
                 return $this->encryptAead($plaintext, $key, $aad);
@@ -61,8 +67,12 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
         }
     }
 
-    public function decrypt(string $ciphertext, string $key, string $aad = ''): string
-    {
+    public function decrypt(
+        string $ciphertext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad = '',
+    ): string {
         if ($ciphertext === '') {
             throw SecurityException::decryptionFailed();
         }
@@ -83,8 +93,11 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
         }
     }
 
-    public function hmac(string $data, string $key): string
-    {
+    public function hmac(
+        string $data,
+        #[SensitiveParameter]
+        string $key,
+    ): string {
         try {
             return sodium_crypto_generichash($data, $key, self::HASH_LENGTH);
         } catch (SodiumException $e) {
@@ -93,8 +106,11 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
     }
 
     #[NoDiscard]
-    public function hmacHex(string $data, string $key): string
-    {
+    public function hmacHex(
+        string $data,
+        #[SensitiveParameter]
+        string $key,
+    ): string {
         try {
             $raw = sodium_crypto_generichash($data, $key, self::HASH_LENGTH);
 
@@ -105,8 +121,12 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
     }
 
     #[NoDiscard]
-    public function verifyHmac(string $data, string $expected, string $key): bool
-    {
+    public function verifyHmac(
+        string $data,
+        string $expected,
+        #[SensitiveParameter]
+        string $key,
+    ): bool {
         $computed = $this->hmac($data, $key);
 
         return hash_equals($expected, $computed);
@@ -118,16 +138,23 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
         return 'sodium';
     }
 
-    private function encryptSecretbox(string $plaintext, string $key): string
-    {
+    private function encryptSecretbox(
+        #[SensitiveParameter]
+        string $plaintext,
+        #[SensitiveParameter]
+        string $key,
+    ): string {
         $nonce = $this->randomizer->getBytes(self::SECRETBOX_NONCE_LENGTH);
         $ciphertext = sodium_crypto_secretbox($plaintext, $nonce, $key);
 
         return chr(self::VERSION_BYTE) . $nonce . $ciphertext;
     }
 
-    private function decryptSecretbox(string $ciphertext, string $key): string
-    {
+    private function decryptSecretbox(
+        string $ciphertext,
+        #[SensitiveParameter]
+        string $key,
+    ): string {
         $minLength = 1 + self::SECRETBOX_NONCE_LENGTH + SODIUM_CRYPTO_SECRETBOX_MACBYTES;
 
         if (strlen($ciphertext) < $minLength) {
@@ -146,16 +173,25 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
         return $plaintext;
     }
 
-    private function encryptAead(string $plaintext, string $key, string $aad): string
-    {
+    private function encryptAead(
+        #[SensitiveParameter]
+        string $plaintext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad,
+    ): string {
         $nonce = $this->randomizer->getBytes(self::AEAD_NONCE_LENGTH);
         $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt($plaintext, $aad, $nonce, $key);
 
         return chr(self::VERSION_BYTE) . $nonce . $ciphertext;
     }
 
-    private function decryptAead(string $ciphertext, string $key, string $aad): string
-    {
+    private function decryptAead(
+        string $ciphertext,
+        #[SensitiveParameter]
+        string $key,
+        string $aad,
+    ): string {
         $minLength = 1 + self::AEAD_NONCE_LENGTH + SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_ABYTES;
 
         if (strlen($ciphertext) < $minLength) {

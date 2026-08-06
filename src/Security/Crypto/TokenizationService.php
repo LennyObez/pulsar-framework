@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\Randomizer;
+use SensitiveParameter;
 use SodiumException;
 
 use function bin2hex;
@@ -92,8 +93,11 @@ final class TokenizationService implements TokenizationServiceInterface
         $this->randomizer = new Randomizer(new Secure());
     }
 
-    public function tokenize(string $sensitiveData, string $context): string
-    {
+    public function tokenize(
+        #[SensitiveParameter]
+        string $sensitiveData,
+        string $context,
+    ): string {
         if ($sensitiveData === '') {
             throw SecurityException::encryptionFailed('Cannot tokenize empty data');
         }
@@ -142,8 +146,10 @@ final class TokenizationService implements TokenizationServiceInterface
      * Preserves first 6 (BIN/IIN) and last 4 digits. Middle digits are replaced
      * with random digits. The full PAN is encrypted and stored in the token vault.
      */
-    private function tokenizePan(string $pan): string
-    {
+    private function tokenizePan(
+        #[SensitiveParameter]
+        string $pan,
+    ): string {
         $digits = $pan;
 
         if (!ctype_digit($digits) || strlen($digits) < self::PAN_MIN_LENGTH || strlen($digits) > self::PAN_MAX_LENGTH) {
@@ -181,8 +187,11 @@ final class TokenizationService implements TokenizationServiceInterface
     /**
      * Generic tokenization for non-PAN sensitive data.
      */
-    private function tokenizeGeneric(string $sensitiveData, string $context): string
-    {
+    private function tokenizeGeneric(
+        #[SensitiveParameter]
+        string $sensitiveData,
+        string $context,
+    ): string {
         $randomHex = bin2hex($this->randomizer->getBytes(self::TOKEN_RANDOM_BYTES));
         $token = self::TOKEN_PREFIX . $randomHex;
 
