@@ -16,8 +16,11 @@ use Pulsar\Extension\Payments\Http\Controller\CheckoutController;
 use Pulsar\Extension\Payments\Http\Controller\InvoiceController;
 use Pulsar\Extension\Payments\Http\Controller\SubscriptionController;
 use Pulsar\Extension\Payments\Http\Controller\WebhookController;
+use Pulsar\Extension\Payments\Http\Middleware\PaymentSecurityMiddleware;
 use Pulsar\Extension\Payments\ImportExport\PaymentsImportExportProvider;
+use Pulsar\Http\Method;
 use Pulsar\ImportExport\ImportExportRegistry;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -57,15 +60,15 @@ final class PaymentsExtension implements ExtensionInterface, PostBootExtensionIn
         );
 
         // Checkout routes
-        $router->post('/payments/checkout', [CheckoutController::class, 'create'], 'payments.checkout.create');
-        $router->post('/payments/checkout/{intentId}/capture', [CheckoutController::class, 'capture'], 'payments.checkout.capture');
+        $this->screenedPost($router, '/payments/checkout', [CheckoutController::class, 'create'], 'payments.checkout.create');
+        $this->screenedPost($router, '/payments/checkout/{intentId}/capture', [CheckoutController::class, 'capture'], 'payments.checkout.capture');
 
         // Subscription routes
-        $router->post('/payments/subscriptions', [SubscriptionController::class, 'create'], 'payments.subscriptions.create');
+        $this->screenedPost($router, '/payments/subscriptions', [SubscriptionController::class, 'create'], 'payments.subscriptions.create');
         $router->get('/payments/subscriptions', [SubscriptionController::class, 'list'], 'payments.subscriptions.list');
-        $router->post('/payments/subscriptions/{id}/cancel', [SubscriptionController::class, 'cancel'], 'payments.subscriptions.cancel');
-        $router->post('/payments/subscriptions/{id}/pause', [SubscriptionController::class, 'pause'], 'payments.subscriptions.pause');
-        $router->post('/payments/subscriptions/{id}/resume', [SubscriptionController::class, 'resume'], 'payments.subscriptions.resume');
+        $this->screenedPost($router, '/payments/subscriptions/{id}/cancel', [SubscriptionController::class, 'cancel'], 'payments.subscriptions.cancel');
+        $this->screenedPost($router, '/payments/subscriptions/{id}/pause', [SubscriptionController::class, 'pause'], 'payments.subscriptions.pause');
+        $this->screenedPost($router, '/payments/subscriptions/{id}/resume', [SubscriptionController::class, 'resume'], 'payments.subscriptions.resume');
 
         // Invoice routes
         $router->get('/payments/invoices', [InvoiceController::class, 'list'], 'payments.invoices.list');
@@ -89,10 +92,10 @@ final class PaymentsExtension implements ExtensionInterface, PostBootExtensionIn
 
         // Cart routes (front-office)
         $router->get('/cart', [Http\Controller\CartController::class, 'show'], 'payments.cart.show');
-        $router->post('/cart/add', [Http\Controller\CartController::class, 'add'], 'payments.cart.add');
-        $router->post('/cart/remove/{itemId}', [Http\Controller\CartController::class, 'remove'], 'payments.cart.remove');
-        $router->post('/cart/update/{itemId}', [Http\Controller\CartController::class, 'updateQuantity'], 'payments.cart.update');
-        $router->post('/cart/coupon', [Http\Controller\CartController::class, 'applyCoupon'], 'payments.cart.coupon');
+        $this->screenedPost($router, '/cart/add', [Http\Controller\CartController::class, 'add'], 'payments.cart.add');
+        $this->screenedPost($router, '/cart/remove/{itemId}', [Http\Controller\CartController::class, 'remove'], 'payments.cart.remove');
+        $this->screenedPost($router, '/cart/update/{itemId}', [Http\Controller\CartController::class, 'updateQuantity'], 'payments.cart.update');
+        $this->screenedPost($router, '/cart/coupon', [Http\Controller\CartController::class, 'applyCoupon'], 'payments.cart.coupon');
 
         // Shipping admin routes
         $router->get('/admin/shipping', [Http\Controller\Admin\ShippingMethodController::class, 'index'], 'payments.admin.shipping.index');
@@ -101,6 +104,27 @@ final class PaymentsExtension implements ExtensionInterface, PostBootExtensionIn
         $router->get('/admin/shipping/{id}/edit', [Http\Controller\Admin\ShippingMethodController::class, 'edit'], 'payments.admin.shipping.edit');
         $router->put('/admin/shipping/{id}', [Http\Controller\Admin\ShippingMethodController::class, 'update'], 'payments.admin.shipping.update');
         $router->delete('/admin/shipping/{id}', [Http\Controller\Admin\ShippingMethodController::class, 'delete'], 'payments.admin.shipping.delete');
+    }
+
+    /**
+     * Register a POST route behind the PCI-DSS body screen.
+     *
+     * The gateway webhook routes deliberately do not get it. Apple and Google
+     * send purely numeric transaction identifiers of card-number length, and
+     * about one in ten arbitrary numbers of that length passes the Luhn check
+     * the screen uses, so screening them would reject live receipts.
+     *
+     * @param mixed $handler
+     */
+    private function screenedPost(RouterInterface $router, string $path, mixed $handler, string $name): void
+    {
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: $path,
+            handler: $handler,
+            name: $name,
+            middleware: [PaymentSecurityMiddleware::class],
+        ));
     }
 
     public function postBoot(ContainerInterface $container): void

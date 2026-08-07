@@ -111,4 +111,98 @@ final class CheckoutControllerContentNegotiationTest extends TestCase
         self::assertStringContainsString('<!DOCTYPE html>', $body);
         self::assertStringContainsString('Order ID is required', $body);
     }
+
+    /**
+     * The storefront checkout is the form a shopper actually posts to, so it
+     * screens its own body: PCI-DSS 3.4/4.2, no PAN reaches the server.
+     */
+    #[Test]
+    public function processRejectsARawCardNumberInTheBody(): void
+    {
+        $checkout = $this->createMock(CheckoutServiceInterface::class);
+        $checkout->expects(self::never())->method('createOrder');
+        $controller = new CheckoutController($checkout);
+
+        $response = $controller->process($this->postWithBody([
+            'email' => 'shopper@example.com',
+            'card_number' => '4111111111111111',
+        ]));
+
+        $body = (string) $response->getBody();
+
+        self::assertSame(400, $response->getStatusCode());
+        self::assertStringContainsString('PCI-DSS violation', $body);
+        self::assertStringContainsString('card_number', $body);
+        self::assertStringNotContainsString('4111111111111111', $body);
+    }
+
+    #[Test]
+    public function processRejectsARawCardNumberNestedUnderThePaymentKey(): void
+    {
+        $checkout = $this->createMock(CheckoutServiceInterface::class);
+        $checkout->expects(self::never())->method('createOrder');
+        $controller = new CheckoutController($checkout);
+
+        $response = $controller->process($this->postWithBody([
+            'email' => 'shopper@example.com',
+            'payment' => ['details' => ['number' => '5500-0000-0000-0004']],
+        ]));
+
+        self::assertSame(400, $response->getStatusCode());
+        self::assertStringContainsString('payment.details.number', (string) $response->getBody());
+    }
+
+    /**
+     * An unquoted JSON card number decodes to an int, not a string.
+     */
+    #[Test]
+    public function processRejectsACardNumberSentAsAnInteger(): void
+    {
+        $checkout = $this->createMock(CheckoutServiceInterface::class);
+        $checkout->expects(self::never())->method('createOrder');
+        $controller = new CheckoutController($checkout);
+
+        $response = $controller->process($this->postWithBody([
+            'email' => 'shopper@example.com',
+            'payment' => ['number' => 4111111111111111],
+        ]));
+
+        self::assertSame(400, $response->getStatusCode());
+    }
+
+    /**
+     * The screen must not fire on the ordinary fields of a tokenized checkout:
+     * a false positive here is a shopper who cannot pay.
+     */
+    #[Test]
+    public function processDoesNotMistakeTokenizedPaymentDataForAPan(): void
+    {
+        $checkout = $this->createStub(CheckoutServiceInterface::class);
+        $controller = new CheckoutController($checkout);
+
+        $response = $controller->process($this->postWithBody([
+            'email' => 'shopper@example.com',
+            'payment' => ['token' => 'tok_1QZk9x2eZvKYlo2C', 'last4' => '4242', 'brand' => 'visa'],
+            'phone' => '+32 470 12 34 56',
+        ]));
+
+        $body = (string) $response->getBody();
+
+        // The screen passed; the request then fails on the empty cart instead.
+        self::assertStringNotContainsString('PCI-DSS violation', $body);
+        self::assertStringContainsString('Cart is empty', $body);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function postWithBody(array $body): ServerRequest
+    {
+        return new ServerRequest(
+            method: 'POST',
+            uri: '/en/checkout',
+            headers: ['Accept' => 'application/json'],
+            parsedBody: $body,
+        );
+    }
 }
