@@ -661,6 +661,62 @@ final class SmtpTransportTest extends TestCase
         self::assertSame('smtp', $transport->name());
     }
 
+    // --- applyTransparency (RFC 5321 §4.5.2, SMTP command injection prevention) ---
+
+    /**
+     * The exploit the audit demonstrated: a contact form body ends the DATA phase
+     * early, and everything after it is executed as SMTP commands on a connection
+     * the framework has already authenticated. The result is an open relay sending
+     * DKIM-signed, SPF-aligned mail from the victim's own domain.
+     */
+    #[Test]
+    public function applyTransparencyDefeatsTheDataPhaseEscape(): void
+    {
+        $body = "hello\r\n.\r\nMAIL FROM:<ceo@victim.com>\r\nRCPT TO:<target@partner.com>\r\n"
+            . "DATA\r\nFrom: CEO <ceo@victim.com>\r\nSubject: Wire transfer\r\n\r\npayload";
+
+        $result = $this->callPrivateStaticMethod('applyTransparency', $body);
+        assert(is_string($result));
+
+        // The terminator the attacker planted is now a literal period.
+        self::assertStringNotContainsString("\r\n.\r\n", $result);
+        self::assertStringContainsString("\r\n..\r\n", $result);
+
+        // And the injected commands are still there — as body text, which is the point.
+        self::assertStringContainsString('MAIL FROM:<ceo@victim.com>', $result);
+    }
+
+    #[Test]
+    #[DataProvider('transparencyProvider')]
+    public function applyTransparencyEscapesLeadingPeriods(string $input, string $expected): void
+    {
+        $result = $this->callPrivateStaticMethod('applyTransparency', $input);
+        assert(is_string($result));
+
+        self::assertSame($expected, $result);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function transparencyProvider(): iterable
+    {
+        yield 'a line that is only a period' => ["a\r\n.\r\nb", "a\r\n..\r\nb"];
+        yield 'a period opening a line' => ["a\r\n.hidden", "a\r\n..hidden"];
+        yield 'a period opening the message' => ['.leading', '..leading'];
+        yield 'consecutive periods' => ["a\r\n...\r\nb", "a\r\n....\r\nb"];
+
+        // Bare LF is why normalisation comes first: a CRLF-only rule would not see
+        // this period at the start of a line, and quoted_printable_encode preserves
+        // whatever line endings the caller supplied.
+        yield 'bare LF is normalised before escaping' => ["a\n.\nb", "a\r\n..\r\nb"];
+        yield 'bare CR is normalised before escaping' => ["a\r.\rb", "a\r\n..\r\nb"];
+
+        // A period anywhere but the start of a line is ordinary text.
+        yield 'a period inside a line is untouched' => ["visit example.com\r\nnow", "visit example.com\r\nnow"];
+        yield 'an empty message' => ['', ''];
+    }
+
     private function callPrivateMethod(object $object, string $method, mixed ...$args): mixed
     {
         $ref = new ReflectionMethod($object, $method);
