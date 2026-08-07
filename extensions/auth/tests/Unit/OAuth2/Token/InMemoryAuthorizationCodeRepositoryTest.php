@@ -11,6 +11,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\OAuth2\Token\AuthorizationCode;
 use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAuthorizationCodeRepository;
 
+use function print_r;
+
 #[CoversClass(InMemoryAuthorizationCodeRepository::class)]
 final class InMemoryAuthorizationCodeRepositoryTest extends TestCase
 {
@@ -143,5 +145,34 @@ final class InMemoryAuthorizationCodeRepositoryTest extends TestCase
 
         // Consumed codes are treated as revoked
         self::assertTrue($this->repo->isRevoked('ac-mem-005'));
+    }
+
+    #[Test]
+    public function persistedCodeIsNotRetainedInPlaintext(): void
+    {
+        $codeValue = 'super-secret-code-value';
+        $code = new AuthorizationCode(
+            id: 'ac-mem-006',
+            clientId: 'client-1',
+            subjectId: 'user-42',
+            redirectUri: 'https://app.example.com/callback',
+            scopes: ['openid'],
+            codeChallenge: 'challenge',
+            codeChallengeMethod: 'S256',
+            expiresAt: new DateTimeImmutable('+10 minutes'),
+            issuedAt: new DateTimeImmutable(),
+            codeValue: $codeValue,
+        );
+
+        $this->repo->persist($code);
+
+        $consumed = $this->repo->consume($codeValue);
+        self::assertNotNull($consumed);
+        self::assertNull($consumed->codeValue);
+
+        // print_r walks real properties (unlike var_dump it ignores
+        // __debugInfo), so this fails if any part of the repository's state
+        // still holds the raw code.
+        self::assertStringNotContainsString($codeValue, print_r($this->repo, true));
     }
 }

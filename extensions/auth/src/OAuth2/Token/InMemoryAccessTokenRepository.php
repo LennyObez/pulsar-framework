@@ -16,13 +16,14 @@ use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES;
 /**
  * In-memory access token repository for testing and development.
  *
- * SEC-CRYPTO-01: Lookups use BLAKE2b keyed (libsodium) over the raw token,
- * not SHA-256 non-keyed. The index key is generated at construction time
- * and lives for the lifetime of the repository instance — appropriate for
- * the in-memory variant where the store itself dies with the process. A
- * memory dump from one instance cannot be replayed against another, and an
- * attacker who exfiltrates the index alone cannot iterate over a
- * pre-computed token dictionary.
+ * The raw token is dropped on persist: only a keyed BLAKE2b digest of it is
+ * retained, as the lookup index. Lookups use BLAKE2b keyed (libsodium) over
+ * the raw token, not SHA-256 non-keyed. The index key is generated at
+ * construction time and lives for the lifetime of the repository instance —
+ * appropriate for the in-memory variant where the store itself dies with the
+ * process. A memory dump from one instance cannot be replayed against
+ * another, and an attacker who exfiltrates the index alone cannot iterate
+ * over a pre-computed token dictionary.
  */
 #[Internal(reason: 'In-memory implementation for testing; not for production use')]
 final class InMemoryAccessTokenRepository implements AccessTokenRepositoryInterface
@@ -45,7 +46,7 @@ final class InMemoryAccessTokenRepository implements AccessTokenRepositoryInterf
 
     public function persist(AccessToken $token): void
     {
-        $this->tokensById[$token->id] = $token;
+        $this->tokensById[$token->id] = $this->withoutPlaintext($token);
 
         if ($token->tokenValue !== null) {
             $this->hashIndex[$this->hashTokenForIndex($token->tokenValue)] = $token->id;
@@ -110,5 +111,27 @@ final class InMemoryAccessTokenRepository implements AccessTokenRepositoryInterf
     private function hashTokenForIndex(string $tokenValue): string
     {
         return sodium_bin2hex(sodium_crypto_generichash($tokenValue, $this->indexKey, 32));
+    }
+
+    /**
+     * The stored copy carries everything but the credential itself; the raw
+     * token survives only as the index digest.
+     */
+    private function withoutPlaintext(AccessToken $token): AccessToken
+    {
+        if ($token->tokenValue === null) {
+            return $token;
+        }
+
+        return new AccessToken(
+            id: $token->id,
+            clientId: $token->clientId,
+            subjectId: $token->subjectId,
+            scopes: $token->scopes,
+            expiresAt: $token->expiresAt,
+            issuedAt: $token->issuedAt,
+            revoked: $token->revoked,
+            tokenValue: null,
+        );
     }
 }

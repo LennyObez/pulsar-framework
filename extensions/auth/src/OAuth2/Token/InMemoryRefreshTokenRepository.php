@@ -16,9 +16,10 @@ use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES;
 /**
  * In-memory refresh token repository with rotation and replay detection.
  *
- * SEC-CRYPTO-01: BLAKE2b keyed (libsodium) index, per-instance random key.
- * When a consumed (rotated-out) token is reused, the entire token family is
- * revoked as a breach indicator.
+ * BLAKE2b keyed (libsodium) index, per-instance random key. The raw token is
+ * dropped on persist and survives only as that index digest. When a consumed
+ * (rotated-out) token is reused, the entire token family is revoked as a
+ * breach indicator.
  */
 #[Internal(reason: 'In-memory implementation for testing; not for production use')]
 final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInterface
@@ -50,7 +51,7 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
 
     public function persist(RefreshToken $token): void
     {
-        $this->tokensById[$token->id] = $token;
+        $this->tokensById[$token->id] = $this->withoutPlaintext($token);
         $this->families[$token->familyId][] = $token->id;
 
         if ($token->tokenValue !== null) {
@@ -161,5 +162,30 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
     private function hashTokenForIndex(string $tokenValue): string
     {
         return sodium_bin2hex(sodium_crypto_generichash($tokenValue, $this->indexKey, 32));
+    }
+
+    /**
+     * The stored copy carries everything but the credential itself; the raw
+     * token survives only as the index digest.
+     */
+    private function withoutPlaintext(RefreshToken $token): RefreshToken
+    {
+        if ($token->tokenValue === null) {
+            return $token;
+        }
+
+        return new RefreshToken(
+            id: $token->id,
+            clientId: $token->clientId,
+            subjectId: $token->subjectId,
+            sessionId: $token->sessionId,
+            familyId: $token->familyId,
+            scopes: $token->scopes,
+            expiresAt: $token->expiresAt,
+            issuedAt: $token->issuedAt,
+            revoked: $token->revoked,
+            consumed: $token->consumed,
+            tokenValue: null,
+        );
     }
 }
