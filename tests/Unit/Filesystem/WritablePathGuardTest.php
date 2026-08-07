@@ -129,4 +129,51 @@ final class WritablePathGuardTest extends TestCase
 
         self::assertSame($external, WritablePathGuard::resolveState($external, 'compliance_logging.path'));
     }
+
+    /**
+     * The webroot itself, not only something under it. An upload directory
+     * configured as `public` writes straight into the served tree, and a
+     * containment check that only looked below the boundary would wave it past.
+     */
+    #[Test]
+    public function theDocumentRootItselfIsRefused(): void
+    {
+        $this->expectException(UnsafeWritablePathException::class);
+
+        (void) WritablePathGuard::resolveState('public', 'form.upload.directory');
+    }
+
+    /**
+     * The relative default an upload directory ships with is only safe because it
+     * is resolved against the project root; unresolved, it means whatever the
+     * process CWD happens to mean.
+     */
+    #[Test]
+    public function aRelativeUploadDefaultResolvesOutsideTheWebrootUnderAProperProjectRoot(): void
+    {
+        self::assertSame(
+            $this->base . DIRECTORY_SEPARATOR . 'storage/uploads',
+            WritablePathGuard::resolveState('storage/uploads', 'form.upload.directory'),
+        );
+    }
+
+    /**
+     * The limit of the guard, pinned so a passing boot is not read as more than
+     * it is: containment is judged relative to the configured project root. Point
+     * that root at the webroot — which is what PHP-FPM's CWD does when
+     * PULSAR_BASE_PATH is unset — and the configured path and public_path() shift
+     * together, so `storage/uploads` under the served tree still reads "outside".
+     * Setting PULSAR_BASE_PATH is a deployment contract, not something this class
+     * can verify.
+     */
+    #[Test]
+    public function aWrongProjectRootIsNotSomethingTheGuardCanSee(): void
+    {
+        putenv('PULSAR_BASE_PATH=' . $this->base . DIRECTORY_SEPARATOR . 'public');
+
+        self::assertSame(
+            $this->base . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'storage/uploads',
+            WritablePathGuard::resolveState('storage/uploads', 'form.upload.directory'),
+        );
+    }
 }
