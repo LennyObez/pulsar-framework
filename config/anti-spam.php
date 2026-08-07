@@ -28,15 +28,34 @@ return [
     'max_uppercase_ratio' => 0.8,
     'max_repeated_char_ratio' => 0.5,
 
-    // CAPTCHA: external verification (hCaptcha or Cloudflare Turnstile)
+    // CAPTCHA: external verification (hCaptcha or Cloudflare Turnstile).
+    // Off by default because it cannot work without operator-supplied provider
+    // keys: enabled with empty keys, every verification call fails. Turn it on
+    // together with CAPTCHA_SITE_KEY / CAPTCHA_SECRET_KEY.
     'captcha_enabled' => false,
     'captcha_provider' => 'hcaptcha', // 'hcaptcha' or 'turnstile'
     'captcha_site_key' => env('CAPTCHA_SITE_KEY', ''),
     'captcha_secret_key' => env('CAPTCHA_SECRET_KEY', ''),
 
-    // Account age gate: require minimum account age before posting
+    // Account age gate: require minimum account age before posting.
+    // Off by default because it needs an account-age source: a submission whose
+    // context carries no age (the common case for an application that has not
+    // populated it) is scored as spam, so enabling it blind penalises real users.
     'account_age_gate_enabled' => false,
     'min_account_age_seconds' => 300,
+
+    // Time trap (ASVS 11.1.2): a signed, server-rendered stamp proves how long
+    // the form was on screen, so a submission filled faster than a human could
+    // type is identifiable without JavaScript. Requires PULSAR_MASTER_KEY (the
+    // stamp is HMAC-signed); the check disables itself with a warning if none is
+    // configured. Off by default — the form must render the stamp
+    // (@timetrap/@shield) before the check can see it.
+    'time_trap_enabled' => false,
+    'time_trap_min_seconds' => 3,
+    'time_trap_field_name' => 'pulsar-form-ts',
+    // What a standalone TimeTrapGuard does on a too-fast submit:
+    // 'score_only' (advisory, never blocks) | 'silent_accept' | 'hard_reject'.
+    'time_trap_failure_policy' => 'score_only',
 
     // Reputation cooldown: per-tier rate limits between submissions
     'reputation_cooldown_enabled' => true,

@@ -43,6 +43,9 @@ use Pulsar\Security\AntiSpam\Risk\DatacenterIpConfig;
 use Pulsar\Security\AntiSpam\Risk\Ja4Config;
 use Pulsar\Security\AntiSpam\Risk\RiskDecision;
 use Pulsar\Security\AntiSpam\Risk\VelocityConfig;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapGuard;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
+use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Tests\Unit\Security\AntiSpam\PrivacyPass\PrivacyPassTokenFactory;
 use RuntimeException;
 use Stringable;
@@ -57,6 +60,7 @@ use function rtrim;
 use function str_contains;
 use function strtr;
 use function sys_get_temp_dir;
+use function time;
 
 final class AntiSpamWiringTest extends TestCase
 {
@@ -358,6 +362,77 @@ final class AntiSpamWiringTest extends TestCase
         (void) $engine->assess($request); // count 1 (== threshold)
         // count 2 is over threshold => velocity contributes maxScore => block.
         self::assertSame(RiskDecision::Block, $engine->assess($request)->decision);
+    }
+
+    /**
+     * ASVS 11.1.2 — "steps processed in realistic human time". The matrix cites
+     * TimeTrapGuard as the control, so prove the wiring produces a guard that
+     * shares the renderer's signing key rather than merely constructing one:
+     * a stamp minted by the bound service must be readable by the bound guard.
+     */
+    #[Test]
+    public function timeTrapGuardIsWiredAndDetectsASubmissionFasterThanAHuman(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $container->instance(MasterKey::class, MasterKey::fromHex(bin2hex(random_bytes(32))));
+
+        $this->wire($container, $pipeline, "'time_trap_enabled' => true, 'time_trap_min_seconds' => 30");
+
+        self::assertTrue($container->has(TimeTrapGuard::class), 'the standalone gate must be bound when the check is enabled');
+
+        $guard = $container->get(TimeTrapGuard::class);
+        self::assertInstanceOf(TimeTrapGuard::class, $guard);
+
+        $service = $container->get(TimeTrapService::class);
+        self::assertInstanceOf(TimeTrapService::class, $service);
+
+        // Same key, same field name: a stamp the renderer would emit is one the
+        // guard can verify.
+        $submission = [$guard->fieldName() => $service->issue('contact')];
+
+        self::assertTrue(
+            $guard->isTooFast($submission, 'contact'),
+            'a form submitted the instant it rendered is faster than a human can fill it',
+        );
+        self::assertFalse(
+            $guard->isTooFast($submission, 'contact', time() + 31),
+            'the same stamp past the minimum fill time is a human, not a bot',
+        );
+        self::assertFalse(
+            $guard->isTooFast($submission, 'newsletter'),
+            'a stamp replayed against another form is no signal',
+        );
+    }
+
+    #[Test]
+    public function timeTrapIsInertWhenNotEnabled(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $container->instance(MasterKey::class, MasterKey::fromHex(bin2hex(random_bytes(32))));
+
+        // time_trap_enabled absent => opt-in default, as shipped.
+        $this->wire($container, $pipeline, "'honeypot_enabled' => true");
+
+        self::assertFalse($container->has(TimeTrapGuard::class));
+        self::assertFalse($container->has(TimeTrapService::class));
+    }
+
+    #[Test]
+    public function timeTrapDisablesItselfLoudlyWithoutAMasterKey(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+
+        // Enabled but no master key: the stamp cannot be signed, so the check
+        // must announce that it is off rather than fail boot or run unsigned.
+        $this->wire($container, $pipeline, "'time_trap_enabled' => true");
+
+        self::assertFalse($container->has(TimeTrapGuard::class));
+        self::assertTrue($logger->hasWarningContaining('PULSAR_MASTER_KEY'));
     }
 
     #[Test]
