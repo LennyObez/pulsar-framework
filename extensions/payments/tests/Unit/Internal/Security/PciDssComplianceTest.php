@@ -103,6 +103,59 @@ final class PciDssComplianceTest extends TestCase
         ]);
     }
 
+    /**
+     * An unquoted JSON card number decodes to an int, so a string-only check
+     * would wave the commonest machine-generated body straight through.
+     */
+    #[Test]
+    public function assert_no_pan_rejects_a_card_number_sent_as_an_integer(): void
+    {
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessageIsOrContains('PCI-DSS violation');
+
+        PciDssCompliance::assertNoPan(['card_number' => 4111111111111111]);
+    }
+
+    #[Test]
+    public function assert_no_pan_names_the_full_path_of_a_nested_violation(): void
+    {
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessageIsOrContains("field 'payment.details.number'");
+
+        PciDssCompliance::assertNoPan([
+            'payment' => [
+                'details' => [
+                    'number' => '4111111111111111',
+                ],
+            ],
+        ]);
+    }
+
+    #[Test]
+    public function assert_no_pan_never_repeats_the_card_number_in_the_message(): void
+    {
+        try {
+            PciDssCompliance::assertNoPan(['card_number' => '4111111111111111']);
+        } catch (PaymentException $e) {
+            self::assertStringNotContainsString('4111111111111111', $e->getMessage());
+
+            return;
+        }
+
+        self::fail('A raw card number was accepted');
+    }
+
+    #[Test]
+    public function assert_no_pan_scans_list_shaped_values(): void
+    {
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessageIsOrContains("field 'items.1'");
+
+        PciDssCompliance::assertNoPan([
+            'items' => ['sku-1', '4111111111111111'],
+        ]);
+    }
+
     #[Test]
     #[DataProvider('maskDataProvider')]
     public function mask_card_number_returns_masked_format(string $last4, string $expected): void

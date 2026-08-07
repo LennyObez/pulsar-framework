@@ -9,11 +9,13 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Commerce\CheckoutServiceInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Http\Message\Response;
+use Pulsar\Http\Validation\Rule\Regulated\Financial\Pan;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function filter_var;
 use function is_array;
+use function is_int;
 use function is_string;
 use function str_contains;
 
@@ -80,6 +82,15 @@ final readonly class CheckoutController
     {
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
+
+        $panField = $this->findPanField($body, new Pan());
+
+        if ($panField !== null) {
+            return Response::json([
+                'error' => "PCI-DSS violation: raw card number detected in field '$panField'. "
+                    . 'Card data must be tokenized client-side.',
+            ], 400);
+        }
 
         /** @var mixed $rawEmail */
         $rawEmail = $body['email'] ?? null;
@@ -188,6 +199,53 @@ final readonly class CheckoutController
     private function isValidEmail(string $email): bool
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Find the first field of a posted body that carries a raw card number.
+     *
+     * PCI-DSS 3.4 and 4.2: a PAN must never reach the server in the clear —
+     * the gateway's client-side SDK tokenizes it first. The storefront
+     * checkout is the form a shopper actually posts to, so it screens its own
+     * body; the CMS may not reach into the payments extension's internals, so
+     * the detector here is the framework's own PAN rule, which reports no
+     * violation exactly when the value is a 13-19 digit Luhn-valid number.
+     *
+     * Integers are screened as well as strings, since an unquoted JSON card
+     * number decodes to an int. Returns the dotted path of the offending
+     * field; the value itself is never returned or logged.
+     *
+     * @param array<array-key, mixed> $data
+     * @param string $path Dotted path of $data within the enclosing body
+     */
+    private function findPanField(array $data, Pan $rule, string $path = ''): ?string
+    {
+        /** @var mixed $value */
+        foreach ($data as $key => $value) {
+            $field = $path === '' ? (string) $key : "$path.$key";
+
+            if (is_array($value)) {
+                $nested = $this->findPanField($value, $rule, $field);
+
+                if ($nested !== null) {
+                    return $nested;
+                }
+
+                continue;
+            }
+
+            $candidate = match (true) {
+                is_string($value) => $value,
+                is_int($value) => (string) $value,
+                default => null,
+            };
+
+            if ($candidate !== null && $candidate !== '' && $rule->validate($field, $candidate, []) === null) {
+                return $field;
+            }
+        }
+
+        return null;
     }
 
     /**
