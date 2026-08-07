@@ -6,11 +6,18 @@ namespace Pulsar\Tests\Unit\Http\Middleware;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Middleware\CompressionMiddleware;
 use Pulsar\Http\Middleware\CorsMiddleware;
 use Pulsar\Http\Middleware\MiddlewareAliasConfig;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\Middleware\RateLimitMiddleware;
+use Pulsar\Http\Middleware\RequestNormalizationMiddleware;
 use Pulsar\Security\Csrf\CsrfMiddleware;
+
+use function class_exists;
+use function implode;
+use function in_array;
+use function interface_exists;
 
 final class MiddlewareAliasConfigTest extends TestCase
 {
@@ -37,28 +44,54 @@ final class MiddlewareAliasConfigTest extends TestCase
         self::assertArrayHasKey('api', $groups);
     }
 
+    /**
+     * Asserting per-group membership one middleware at a time is what let a group
+     * ship missing an entry: every assertion passed, and the absent one was the one
+     * nobody named. Pin the whole ordered composition instead, so a removal fails.
+     *
+     * Anti-automation is not in either list. That claim belongs to
+     * MiddlewareGroupBootTest, which reads the registry a real boot produces.
+     */
     #[Test]
-    public function webGroupIncludesCsrf(): void
+    public function defaultGroupsCarryTheirFullComposition(): void
     {
         $groups = MiddlewareAliasConfig::defaultGroups();
 
-        self::assertContains(CsrfMiddleware::class, $groups['web']);
+        self::assertSame(
+            [
+                RequestNormalizationMiddleware::class,
+                CsrfMiddleware::class,
+                CompressionMiddleware::class,
+            ],
+            $groups['web'],
+        );
+
+        self::assertSame(
+            [
+                RequestNormalizationMiddleware::class,
+                CorsMiddleware::class,
+            ],
+            $groups['api'],
+        );
     }
 
+    /**
+     * The limiter is bound only when `rate_limiting.enabled` is true. A static group
+     * naming it costs nothing at boot and returns 500 on the first request to that
+     * group, for an operator whose only action was turning rate limiting off.
+     */
     #[Test]
-    public function apiGroupIncludesRateLimit(): void
+    public function noDefaultGroupNamesTheConditionalRateLimiter(): void
     {
-        $groups = MiddlewareAliasConfig::defaultGroups();
+        $named = [];
 
-        self::assertContains(RateLimitMiddleware::class, $groups['api']);
-    }
+        foreach (MiddlewareAliasConfig::defaultGroups() as $name => $middleware) {
+            if (in_array(RateLimitMiddleware::class, $middleware, true)) {
+                $named[] = $name;
+            }
+        }
 
-    #[Test]
-    public function apiGroupIncludesCors(): void
-    {
-        $groups = MiddlewareAliasConfig::defaultGroups();
-
-        self::assertContains(CorsMiddleware::class, $groups['api']);
+        self::assertSame([], $named, 'static group(s) naming the conditional limiter: ' . implode(', ', $named));
     }
 
     #[Test]

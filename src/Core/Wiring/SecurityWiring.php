@@ -238,7 +238,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                 if ($obsConfig->audit->enabled) {
                     $auditKey = $masterKey->deriveSubKey(2, 'audit___');
 
-                    // F24.3: route AuditFileSink corruption diagnostics
+                    // Route AuditFileSink corruption diagnostics
                     // through the application logger when one is wired,
                     // so operators see them in the same structured
                     // pipeline as other security warnings. Falls back to
@@ -409,7 +409,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf, $errorRendererResolver);
         $container->instance(CsrfMiddleware::class, $csrfMiddleware);
 
-        // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs (CFR-71).
+        // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs.
         // Reuses the $trustedProxies resolved above for the session/IP stack.
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
@@ -439,12 +439,12 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
             }
         }
 
-        // Pipe globally (F9.1, F12.10): every response — including routes
+        // Pipe globally: every response — including routes
         // that do not opt into the `web` / `api` middleware groups — must
         // carry the X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
-        // CSP, and Cross-Origin baseline. Relying on per-route opt-in left
+        // CSP, and Cross-Origin baseline. Per-route opt-in would leave
         // diagnostics endpoints, JSON APIs declared outside groups, error
-        // pages, and ad-hoc routes exposed with no headers at all. The
+        // pages, and ad-hoc routes with no headers at all. The
         // middleware is idempotent for header VALUES (it sets `withHeader`,
         // which replaces existing values) so groups that include it again
         // produce the same result — but it must be piped exactly once into
@@ -579,16 +579,33 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
             $middlewareRegistry->alias('throttle', RateLimitMiddleware::class);
         }
 
-        // Middleware groups: composable sets for common route profiles
-        $middlewareRegistry->group('web', [
+        // Middleware groups: composable sets for common route profiles.
+        //
+        // The limiter is added only when it was bound above. A group naming a class
+        // the container cannot resolve does not fail at boot — it fails at dispatch,
+        // on the first request to any route in the group, as a 500 for an operator
+        // whose only action was to turn rate limiting off.
+        $webGroup = [
             SecurityHeadersMiddleware::class,
             SessionMiddleware::class,
-            CsrfMiddleware::class,
-        ]);
+        ];
 
-        $middlewareRegistry->group('api', [
+        $apiGroup = [
             SecurityHeadersMiddleware::class,
-        ]);
+        ];
+
+        if ($securityConfig->rateLimit->enabled) {
+            // After the session, because a composite key strategy reads the
+            // authenticated user; before CSRF, so a flood is refused without
+            // spending a token comparison on it.
+            $webGroup[] = RateLimitMiddleware::class;
+            $apiGroup[] = RateLimitMiddleware::class;
+        }
+
+        $webGroup[] = CsrfMiddleware::class;
+
+        $middlewareRegistry->group('web', $webGroup);
+        $middlewareRegistry->group('api', $apiGroup);
     }
 
     private function buildSessionHandler(
