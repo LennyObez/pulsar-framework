@@ -22,6 +22,7 @@ use function fgets;
 use function fwrite;
 use function implode;
 use function in_array;
+use function preg_replace;
 use function quoted_printable_encode;
 use function random_bytes;
 use function sprintf;
@@ -166,10 +167,39 @@ final class SmtpTransport implements TransportInterface
         $messageId = sprintf('<%s@%s>', bin2hex(random_bytes(16)), $this->config->host);
         $rawMessage = $this->buildRawMessage($message, $messageId);
 
-        $this->sendRaw($rawMessage . "\r\n.\r\n");
+        $this->sendRaw(self::applyTransparency($rawMessage) . "\r\n.\r\n");
         $this->readResponse('250');
 
         return $messageId;
+    }
+
+    /**
+     * RFC 5321 §4.5.2: escape a line that begins with a period.
+     *
+     * The DATA phase ends at a line containing a single period, so any body line
+     * starting with one has to be doubled or the message terminates early and the
+     * rest of it is read by the server as SMTP commands — on a connection that is
+     * already authenticated. Message bodies routinely carry user-supplied text, and
+     * `quoted_printable_encode()` leaves both the period and the CRLF pairs intact.
+     *
+     * Line endings are normalised first. Without that, a body arriving with bare LFs
+     * would put a period at the start of a line the CRLF-only rule cannot see.
+     */
+    private static function applyTransparency(string $rawMessage): string
+    {
+        $normalised = preg_replace('/\r\n|\r|\n/', "\r\n", $rawMessage);
+
+        if ($normalised === null) {
+            throw MailException::driverError('smtp', 'Could not normalise message line endings');
+        }
+
+        $stuffed = preg_replace('/^\./m', '..', $normalised);
+
+        if ($stuffed === null) {
+            throw MailException::driverError('smtp', 'Could not apply SMTP dot-stuffing to the message body');
+        }
+
+        return $stuffed;
     }
 
     private function quit(): void
