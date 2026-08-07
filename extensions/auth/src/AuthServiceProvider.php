@@ -11,6 +11,9 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Auth\Config\AuthConfig;
+use Pulsar\Extension\Auth\Http\Controller\OAuth2Controller;
+use Pulsar\Extension\Auth\Http\Controller\OidcDiscoveryController;
+use Pulsar\Extension\Auth\Http\Controller\UserInfoController;
 use Pulsar\Extension\Auth\OAuth2\Adapter\OAuth2AuthorizationServer;
 use Pulsar\Extension\Auth\OAuth2\Client\InMemoryClientRepository;
 use Pulsar\Extension\Auth\OAuth2\Config\OAuth2Config;
@@ -64,8 +67,10 @@ use Pulsar\Extension\Auth\WebAuthn\Contract\AttestationVerifierInterface;
 use Pulsar\Extension\Auth\WebAuthn\Contract\AuthenticatorRepositoryInterface;
 use Pulsar\Extension\Auth\WebAuthn\Contract\CredentialRepositoryInterface;
 use Pulsar\Extension\Auth\WebAuthn\Contract\WebAuthnServerInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\Session\SessionInterface;
+use RuntimeException;
 
 /**
  * Unified service provider for the auth extension.
@@ -81,6 +86,7 @@ final class AuthServiceProvider implements ServiceProviderInterface
         $this->registerSocialSso($container);
         $this->registerOAuth2($container);
         $this->registerWebAuthn($container);
+        $this->registerControllers($container);
     }
 
     public function provides(): array
@@ -129,6 +135,11 @@ final class AuthServiceProvider implements ServiceProviderInterface
             AuthenticationCeremony::class,
             WebAuthnServerInterface::class,
             WebAuthnServer::class,
+
+            // Route handlers
+            OAuth2Controller::class,
+            OidcDiscoveryController::class,
+            UserInfoController::class,
         ];
     }
 
@@ -229,22 +240,43 @@ final class AuthServiceProvider implements ServiceProviderInterface
         $container->bind(ConsentRepositoryInterface::class, InMemoryConsentRepository::class);
         $container->bind(AccessTokenRepositoryInterface::class, InMemoryAccessTokenRepository::class);
         $container->bind(RefreshTokenRepositoryInterface::class, InMemoryRefreshTokenRepository::class);
-        // F385.12: production deployments select `database` so codes survive
-        // worker restarts; in-memory remains the dev/test default.
+        // Production deployments select `database` so codes survive worker
+        // restarts; in-memory remains the dev/test default.
         $container->bind(AuthorizationCodeRepositoryInterface::class, static function () use ($container): AuthorizationCodeRepositoryInterface {
             /** @var OAuth2Config $config */
             $config = $container->get(OAuth2Config::class);
 
-            if ($config->authorizationCodeStore === 'database' && $container->has(ConnectionInterface::class)) {
-                /** @var ConnectionInterface $connection */
-                $connection = $container->get(ConnectionInterface::class);
-                $repo = new DbAuthorizationCodeRepository($connection);
-                $repo->installSchema();
-
-                return $repo;
+            if ($config->authorizationCodeStore !== 'database') {
+                return new InMemoryAuthorizationCodeRepository();
             }
 
-            return new InMemoryAuthorizationCodeRepository();
+            // `database` is an explicit operator choice, so a missing
+            // dependency stops boot instead of silently downgrading to a
+            // store that loses every code on worker restart.
+            if (!$container->has(ConnectionInterface::class)) {
+                throw new RuntimeException(
+                    'OAuth2 authorization_code_store is "database" but no '
+                    . ConnectionInterface::class . ' is bound.',
+                );
+            }
+
+            if (!$container->has(KeyProviderInterface::class)) {
+                throw new RuntimeException(
+                    'OAuth2 authorization_code_store is "database" but no '
+                    . KeyProviderInterface::class . ' is bound; the code lookup '
+                    . 'digest is keyed from the master key (set PULSAR_MASTER_KEY).',
+                );
+            }
+
+            /** @var ConnectionInterface $connection */
+            $connection = $container->get(ConnectionInterface::class);
+            /** @var KeyProviderInterface $keyProvider */
+            $keyProvider = $container->get(KeyProviderInterface::class);
+
+            $repo = new DbAuthorizationCodeRepository($connection, $keyProvider);
+            $repo->installSchema();
+
+            return $repo;
         });
 
         // JWT signing (RS256 via KeyRing-managed RSA private keys)
@@ -382,5 +414,19 @@ final class AuthServiceProvider implements ServiceProviderInterface
             /** @var WebAuthnServer */
             return $container->get(WebAuthnServerInterface::class);
         });
+    }
+
+    /**
+     * Bind the route handlers registered by {@see AuthExtension::boot()}.
+     *
+     * `UserInfoController` is bound unconditionally but only routed when a
+     * `UserClaimsProviderInterface` exists, so the binding stays inert in
+     * deployments that do not expose UserInfo.
+     */
+    private function registerControllers(ContainerInterface $container): void
+    {
+        $container->bind(OAuth2Controller::class, OAuth2Controller::class);
+        $container->bind(OidcDiscoveryController::class, OidcDiscoveryController::class);
+        $container->bind(UserInfoController::class, UserInfoController::class);
     }
 }

@@ -10,22 +10,25 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Auth\OAuth2\Contract\AuthorizationCodeRepositoryInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use SodiumException;
 
-use function bin2hex;
 use function explode;
 use function implode;
+use function sodium_bin2hex;
 use function sodium_crypto_generichash;
+
+use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES;
 
 /**
  * Database-backed authorization code repository.
  *
- * F385.12: ships a production-grade alternative to
+ * The production-grade alternative to
  * {@see InMemoryAuthorizationCodeRepository}, which is explicitly
  * not production-safe (codes vanish on worker restart). This
- * repository persists every code in the configured database with
- * BLAKE2b-hashed lookup (codes are never stored in plaintext)
- * and atomic single-use semantics enforced at the SQL level.
+ * repository persists every code in the configured database under a
+ * keyed BLAKE2b digest (codes are never stored in plaintext) with
+ * atomic single-use semantics enforced at the SQL level.
  *
  * Schema (created via {@see installSchema()}):
  *
@@ -34,7 +37,7 @@ use function sodium_crypto_generichash;
  *   subject_id              varchar(255) NOT NULL
  *   redirect_uri            varchar(2048) NOT NULL
  *   scopes                  text          -- space-separated
- *   code_hash               varchar(64)  UNIQUE   -- BLAKE2b hex of plaintext code
+ *   code_hash               varchar(64)  UNIQUE   -- keyed BLAKE2b hex of the code
  *   code_challenge          varchar(255) NOT NULL
  *   code_challenge_method   varchar(16)  NOT NULL
  *   expires_at              datetime     NOT NULL
@@ -53,17 +56,38 @@ use function sodium_crypto_generichash;
 final readonly class DbAuthorizationCodeRepository implements AuthorizationCodeRepositoryInterface
 {
     /**
-     * BLAKE2b context for OAuth2 authorisation-code lookup hashing.
-     * Domain-bound so a leaked entry from another subsystem cannot
-     * be replayed against this code store.
+     * KDF sub-key id and context for the authorisation-code lookup digest.
+     *
+     * 19 is claimed by no case of {@see \Pulsar\Security\Crypto\SubKeyId} and
+     * by no other live `deriveSubKey()` call site; the context is the
+     * exactly-8-byte string {@see KeyProviderInterface::deriveSubKey()} requires.
      */
-    private const string HASH_CONTEXT = 'pulsar.oauth2.authcode';
+    private const int HASH_SUB_KEY_ID = 19;
+
+    private const string HASH_KDF_CONTEXT = 'oa2_code';
 
     private const string TABLE = 'oauth2_authorization_codes';
 
+    /**
+     * Keys the lookup digest, so a stolen `oauth2_authorization_codes` table
+     * cannot be matched against candidate codes computed offline. Rotating the
+     * master key invalidates codes still in flight, bounded by the code TTL.
+     */
+    private string $codeHashKey;
+
+    /**
+     * @throws SodiumException
+     */
     public function __construct(
         private ConnectionInterface $connection,
-    ) {}
+        KeyProviderInterface $keyProvider,
+    ) {
+        $this->codeHashKey = $keyProvider->deriveSubKey(
+            self::HASH_SUB_KEY_ID,
+            self::HASH_KDF_CONTEXT,
+            SODIUM_CRYPTO_GENERICHASH_KEYBYTES,
+        );
+    }
 
     /**
      * Create the schema if it does not exist. Safe to call repeatedly.
@@ -203,13 +227,13 @@ final readonly class DbAuthorizationCodeRepository implements AuthorizationCodeR
     }
 
     /**
-     * Domain-bound BLAKE2b digest of a raw authorisation-code value.
+     * Keyed BLAKE2b digest of a raw authorisation-code value.
      *
      * @throws SodiumException
      */
     private function hashCode(string $codeValue): string
     {
-        return bin2hex(sodium_crypto_generichash($codeValue, self::HASH_CONTEXT, 32));
+        return sodium_bin2hex(sodium_crypto_generichash($codeValue, $this->codeHashKey, 32));
     }
 
     private function sqliteSchema(): string

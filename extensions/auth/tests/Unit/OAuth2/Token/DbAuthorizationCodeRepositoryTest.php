@@ -12,16 +12,22 @@ use Pulsar\Database\Driver;
 use Pulsar\Database\PdoConnection;
 use Pulsar\Extension\Auth\OAuth2\Token\AuthorizationCode;
 use Pulsar\Extension\Auth\OAuth2\Token\DbAuthorizationCodeRepository;
+use Pulsar\Security\Crypto\MasterKey;
+
+use function str_repeat;
+use function var_export;
 
 #[CoversClass(DbAuthorizationCodeRepository::class)]
 final class DbAuthorizationCodeRepositoryTest extends TestCase
 {
+    private PdoConnection $connection;
+
     private DbAuthorizationCodeRepository $repository;
 
     protected function setUp(): void
     {
         // SQLite in-memory: no file cleanup, fast, isolated per test.
-        $connection = new PdoConnection(
+        $this->connection = new PdoConnection(
             connectionName: 'test',
             driver: Driver::SQLite,
             dsn: 'sqlite::memory:',
@@ -29,7 +35,10 @@ final class DbAuthorizationCodeRepositoryTest extends TestCase
             password: null,
         );
 
-        $this->repository = new DbAuthorizationCodeRepository($connection);
+        $this->repository = new DbAuthorizationCodeRepository(
+            $this->connection,
+            MasterKey::fromHex(str_repeat('a', 64)),
+        );
         $this->repository->installSchema();
     }
 
@@ -154,6 +163,42 @@ final class DbAuthorizationCodeRepositoryTest extends TestCase
         // The repository hashes the code on persist; the hydrated value
         // never re-exposes the plaintext (codeValue stays null).
         self::assertNull($consumed->codeValue);
+    }
+
+    #[Test]
+    public function persistedRowHoldsNoPlaintextCode(): void
+    {
+        $this->repository->persist($this->makeCode('code-9', 'super-secret-plaintext-99999'));
+
+        $row = $this->connection->query(
+            'SELECT * FROM oauth2_authorization_codes WHERE id = :id',
+            ['id' => 'code-9'],
+        )->first();
+
+        self::assertNotNull($row);
+
+        // Every column of the stored row, not just code_hash: nothing the
+        // repository writes may carry the code itself.
+        self::assertStringNotContainsString(
+            'super-secret-plaintext-99999',
+            var_export($row->toArray(), true),
+        );
+    }
+
+    #[Test]
+    public function codeDigestIsKeyedToTheMasterKey(): void
+    {
+        // Same table, different master key: the lookup digest must not match,
+        // which a domain-separated but unkeyed digest would.
+        $foreign = new DbAuthorizationCodeRepository(
+            $this->connection,
+            MasterKey::fromHex(str_repeat('b', 64)),
+        );
+
+        $this->repository->persist($this->makeCode('code-10', 'plaintext-code-10'));
+
+        self::assertNull($foreign->consume('plaintext-code-10'));
+        self::assertNotNull($this->repository->consume('plaintext-code-10'));
     }
 
     /**
