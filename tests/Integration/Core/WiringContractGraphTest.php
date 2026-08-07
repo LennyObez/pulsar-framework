@@ -15,9 +15,12 @@ use Pulsar\Core\Wiring\Contract\WiringContractInspector;
 use Pulsar\Core\Wiring\WiringList;
 use Pulsar\Filesystem\SafeFilesystem;
 use Pulsar\Filesystem\SafePath;
+use Pulsar\Http\Middleware\RateLimitMiddleware;
+use Pulsar\Http\RateLimit\RateLimiterInterface;
 
 use function file_put_contents;
 use function getcwd;
+use function implode;
 use function in_array;
 use function is_dir;
 use function ltrim;
@@ -29,11 +32,12 @@ use function uniqid;
 
 /**
  * Boots the full kernel and verifies the contract of every wiring that
- * describes one — the regression guard for the silent-unbound-optional bug
- * class (CacheWiring failing to bind TaggedCacheInterface left three anti-spam
- * features inert in every app, caught by nothing). CI fails here if any shipped
- * wiring leaves a feature degraded by a binding that another shipped wiring
- * declares it provides, or hard-requires a binding the graph never provides.
+ * describes one. Optional bindings are the dangerous class: a feature that
+ * degrades silently when its binding is absent stays inert in every app and no
+ * unit test notices, because each unit passes in isolation. CI fails here if
+ * any shipped wiring leaves a feature degraded by a binding that another
+ * shipped wiring declares it provides, or hard-requires a binding the graph
+ * never provides.
  */
 #[CoversClass(WiringList::class)]
 #[CoversClass(WiringContractInspector::class)]
@@ -53,7 +57,7 @@ final class WiringContractGraphTest extends TestCase
         file_put_contents($this->tempDir . '/security.php', '<?php return ["session" => [], "csrf" => ["enabled" => false], "headers" => [], "rate_limiting" => ["enabled" => false]];');
         // Cache ENABLED so CacheWiring actually binds TaggedCacheInterface — the
         // binding anti-spam's features depend on. With it bound, anti-spam must
-        // report no degradation; if the binding regressed, this test fails.
+        // report no degradation.
         file_put_contents($this->tempDir . '/cache.php', '<?php return ["enabled" => true];');
     }
 
@@ -139,7 +143,7 @@ final class WiringContractGraphTest extends TestCase
         $inspector = new WiringContractInspector($kernel->container());
 
         // A feature degraded because a binding ANOTHER wiring declares it
-        // provides is missing = an intra-framework gap (the TaggedCache bug).
+        // provides is missing = an intra-framework gap, not an app's choice.
         $gaps = [];
         foreach ($inspector->degradedFeatures($contracts) as $degraded) {
             if (isset($provided[$degraded->missingBinding])) {
@@ -162,13 +166,68 @@ final class WiringContractGraphTest extends TestCase
         self::assertSame([], $unsatisfied, 'A wiring requires a binding the graph never provides');
     }
 
+    /**
+     * ASVS 11.1.4. Composition and binding asserted together, after a real boot: a
+     * group naming a class the graph never binds throws at dispatch rather than at
+     * boot, so no unit test sees it.
+     *
+     * The composition is read from the registry the boot produced, not from
+     * MiddlewareAliasConfig::defaultGroups(). That static table deliberately omits
+     * the limiter, because naming a conditionally bound class there is the very
+     * dispatch-time 500 this test exists to catch.
+     */
+    #[Test]
+    public function antiAutomationIsCarriedByEveryDefaultGroupAndBoundAfterBoot(): void
+    {
+        // rate_limiting enabled, as shipped in config/security.php.
+        file_put_contents(
+            $this->tempDir . '/security.php',
+            '<?php return ["session" => [], "csrf" => ["enabled" => false], "headers" => [], "rate_limiting" => ["enabled" => true]];',
+        );
+
+        $kernel = new Kernel(configManager: new ConfigManager(configPath: $this->tempDir));
+        $kernel->boot();
+
+        $ungoverned = [];
+        foreach (['web', 'api'] as $name) {
+            $carried = false;
+
+            foreach ($kernel->middlewareRegistry()->resolve($name) as $middleware) {
+                if ($middleware === RateLimitMiddleware::class || $middleware instanceof RateLimitMiddleware) {
+                    $carried = true;
+                    break;
+                }
+            }
+
+            if (!$carried) {
+                $ungoverned[] = $name;
+            }
+        }
+
+        self::assertSame([], $ungoverned, 'default middleware group(s) carrying no rate limiting: ' . implode(', ', $ungoverned));
+
+        self::assertTrue(
+            $kernel->container()->has(RateLimiterInterface::class),
+            'the default groups name RateLimitMiddleware, so the boot must bind a limiter for it',
+        );
+        self::assertTrue(
+            $kernel->container()->has(RateLimitMiddleware::class),
+            'RateLimitMiddleware is named by both default groups but is not bound after boot',
+        );
+        self::assertTrue(
+            $kernel->middlewareRegistry()->hasAlias('throttle'),
+            'the per-route opt-in alias must exist for routes outside a default group',
+        );
+    }
+
     #[Test]
     public function taggedCacheIsBoundAndAntiSpamHasNoDegradationWhenCacheEnabled(): void
     {
         $kernel = new Kernel(configManager: new ConfigManager(configPath: $this->tempDir));
         $kernel->boot();
 
-        // Direct regression assertion: the binding that silently went missing.
+        // Assert the binding directly, not just the absence of degradation:
+        // degradedFeatures() reports nothing if the contract itself is dropped.
         self::assertTrue(
             $kernel->container()->has(\Pulsar\Cache\Application\TaggedCacheInterface::class),
             'CacheWiring must bind TaggedCacheInterface when cache is enabled',

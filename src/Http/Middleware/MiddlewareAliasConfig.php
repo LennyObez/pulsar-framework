@@ -14,6 +14,11 @@ use Pulsar\Security\Csrf\CsrfMiddleware;
  *
  * Registers common short names ('auth', 'csrf', 'rate-limit', etc.)
  * and groups ('web', 'api') with the MiddlewareRegistry.
+ *
+ * Applied by the composition root, not by the kernel: {@see applyDefaults()}
+ * has no framework-side caller, and `group()` replaces rather than merges, so
+ * an application calling it takes over the 'web' and 'api' definitions that
+ * SecurityWiring registered at boot and owns their contents from then on.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -31,7 +36,7 @@ final class MiddlewareAliasConfig
             'cors' => CorsMiddleware::class,
             'csrf' => CsrfMiddleware::class,
             'rate-limit' => RateLimitMiddleware::class,
-            // F12.18: a stricter, separate-budget rate limiter for
+            // A stricter, separate-budget rate limiter for
             // authentication entry points (login, password-reset,
             // 2FA-verify). Using `rate-limit` for these endpoints
             // shares the bucket with general API traffic, which a
@@ -60,6 +65,12 @@ final class MiddlewareAliasConfig
     #[NoDiscard]
     public static function defaultGroups(): array
     {
+        // RateLimitMiddleware is absent from both groups. SecurityWiring binds it
+        // only when `rate_limiting.enabled` is true, so naming it in a static array
+        // makes any application that calls applyDefaults() with rate limiting off
+        // return 500 on the first request to that group — resolution happens at
+        // dispatch, not at boot. SecurityWiring adds it to both, conditionally,
+        // which is where the boot-time answer lives.
         return [
             'web' => [
                 RequestNormalizationMiddleware::class,
@@ -68,7 +79,6 @@ final class MiddlewareAliasConfig
             ],
             'api' => [
                 RequestNormalizationMiddleware::class,
-                RateLimitMiddleware::class,
                 CorsMiddleware::class,
             ],
         ];
