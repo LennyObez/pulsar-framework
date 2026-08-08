@@ -18,6 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
@@ -31,30 +33,71 @@ jobs:
       - name: Run Composer audit
         run: composer audit --format=json | tee audit-results.json
 
+      # The inline version this replaces exited 0 when the report could not be
+      # parsed, so an audit that failed to produce JSON read as "no
+      # vulnerabilities". The script fails closed and separates the two outcomes.
       - name: Fail on ANY vulnerability advisory (zero-tolerance)
+        run: composer security:audit
+
+      # The root lockfile is not the whole dependency surface. Bundled extensions
+      # ship their own manifest and no lockfile, so the audit above cannot see
+      # what they require: extensions/auth alone declares league/oauth2-server,
+      # web-auth/webauthn-lib and web-token/jwt-framework — the OAuth2, WebAuthn
+      # and JWT implementations the framework ships for authentication — and none
+      # of the three appears in composer.lock. Each manifest is resolved to a
+      # throwaway lock here and audited against that.
+      - name: Audit every extension manifest that requires third-party code
         run: |
-          if php -r '
-            $json = file_get_contents("audit-results.json");
-            $data = json_decode($json, true);
-            if (!is_array($data)) { exit(0); }
-            $advisories = $data["advisories"] ?? [];
-            $total = 0;
-            foreach ($advisories as $package => $issues) {
-              foreach ($issues as $issue) {
-                $severity = strtoupper($issue["severity"] ?? "UNKNOWN");
-                $title = $issue["title"] ?? "(no title)";
-                $cve = $issue["cve"] ?? "(no CVE)";
-                echo "{$severity}: {$package} — {$cve} — {$title}\n";
-                $total++;
-              }
-            }
-            exit($total > 0 ? 1 : 0);
-          '; then
-            echo "No vulnerability advisories found (any severity)."
-          else
-            echo "::error::One or more vulnerability advisories detected. Zero-tolerance policy: all severities fail the build."
+          set -euo pipefail
+
+          manifests=$(find extensions -name composer.json -not -path '*/vendor/*' | sort)
+
+          if [ -z "$manifests" ]; then
+            echo "::error::No extension manifest found under extensions/. Discovery is broken — an empty set is how this gate silently stops gating."
             exit 1
           fi
+
+          audited=0
+
+          while IFS= read -r manifest; do
+            directory=$(dirname "$manifest")
+
+            # Third-party is everything that is not the interpreter, a PHP
+            # extension, or a sibling first-party package.
+            requirements=$(jq -r '
+              (.require // {})
+              | keys[]
+              | select(. != "php")
+              | select(startswith("ext-") | not)
+              | select(startswith("pulsar/") | not)
+            ' "$manifest")
+
+            if [ -z "$requirements" ]; then
+              echo "$manifest — no third-party requirements"
+              continue
+            fi
+
+            echo "::group::$manifest"
+            echo "$requirements"
+
+            # Auditing catches a vulnerable version; only Dependabot proposes a
+            # newer one. A manifest monitored by one and not the other is the
+            # blind spot this whole step exists to close, so the list in
+            # dependabot.yml is checked rather than trusted.
+            if ! grep -qE "^[[:space:]]*(directory: |- )/$directory[[:space:]]*\$" .github/dependabot.yml; then
+              echo "::error::$manifest requires third-party code, but /$directory has no entry in .github/dependabot.yml — nothing will ever propose an update for it."
+              exit 1
+            fi
+
+            composer update --working-dir="$directory" --no-install --no-audit --no-interaction --no-progress
+            composer audit --working-dir="$directory" --locked --format=json > "$directory/audit-results.json" || true
+            php tools/ci/assert-no-advisories.php "$directory/audit-results.json"
+
+            echo "::endgroup::"
+            audited=$((audited + 1))
+          done <<< "$manifests"
+
+          echo "Audited $audited extension manifest(s) declaring third-party requirements."
 
       - name: Report abandoned packages
         run: |
@@ -68,7 +111,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dependency-audit-results
-          path: audit-results.json
+          path: |
+            audit-results.json
+            extensions/**/audit-results.json
           retention-days: 30
 
   js-audit:
@@ -77,6 +122,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -86,25 +133,34 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
 
+      # The zero-tolerance check is one PHP script for both ecosystems, so PHP is
+      # set up here too. It parses a report; it needs no vendor/ tree.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          coverage: none
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run pnpm audit
-        run: pnpm audit --audit-level=info || true
+      # `|| true` covers pnpm's non-zero exit when it finds something, and nothing
+      # else: the script below refuses to read a report pnpm failed to write.
+      - name: Capture pnpm audit report
+        run: pnpm audit --json > pnpm-audit-results.json || true
 
+      # This step used to sum `jq '... // 0'` into a shell arithmetic expansion.
+      # A failed audit left the capture empty, every jq call produced an empty
+      # string, `$((...))` coerced them to 0, and the step reported a clean tree
+      # for an audit that never ran — the exact defect the PHP half was rewritten
+      # to remove, left standing twelve lines below the comment recording the fix.
       - name: Fail on ANY vulnerability advisory (zero-tolerance)
-        run: |
-          RESULT=$(pnpm audit --json 2>/dev/null || true)
-          CRITICAL=$(echo "$RESULT" | jq '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
-          HIGH=$(echo "$RESULT" | jq '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo "0")
-          MODERATE=$(echo "$RESULT" | jq '.metadata.vulnerabilities.moderate // 0' 2>/dev/null || echo "0")
-          LOW=$(echo "$RESULT" | jq '.metadata.vulnerabilities.low // 0' 2>/dev/null || echo "0")
-          INFO=$(echo "$RESULT" | jq '.metadata.vulnerabilities.info // 0' 2>/dev/null || echo "0")
-          TOTAL=$((CRITICAL + HIGH + MODERATE + LOW + INFO))
+        run: php tools/ci/assert-no-advisories.php --ecosystem=pnpm pnpm-audit-results.json
 
-          if [ "$TOTAL" -gt 0 ]; then
-            echo "::error::Found $TOTAL JS vulnerabilities (critical=$CRITICAL high=$HIGH moderate=$MODERATE low=$LOW info=$INFO). Zero-tolerance policy: all severities fail the build."
-            exit 1
-          fi
-
-          echo "No JS vulnerability advisories found (any severity)."
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: js-dependency-audit-results
+          path: pnpm-audit-results.json
+          retention-days: 30
