@@ -17,11 +17,105 @@ use Pulsar\Database\PdoConnection;
 use Pulsar\Database\Result;
 use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
+use ReflectionProperty;
 use RuntimeException;
 
 #[CoversClass(PdoConnection::class)]
 final class PdoConnectionTest extends TestCase
 {
+    /**
+     * A caller-supplied option must not displace a default.
+     *
+     * This is the exact shape of a defect that shipped: the merge was written as
+     * `[...$defaults, ...$options]`, and array unpacking RENUMBERS integer keys from
+     * zero. Every PDO option constant is an integer, so the three declared defaults
+     * landed on ATTR_AUTOCOMMIT, ATTR_PREFETCH and ATTR_TIMEOUT instead of the
+     * attributes they name, and a fourth option pushed its value onto slot 3 —
+     * ATTR_ERRMODE — where PDO rejected it outright.
+     *
+     * Passing ATTR_TIMEOUT reproduces that precisely: under the spread it made the
+     * constructor throw, and it needs no particular engine to demonstrate.
+     */
+    #[Test]
+    public function aCallerOptionDoesNotDisplaceTheDefaults(): void
+    {
+        $connection = new PdoConnection(
+            connectionName: 'options',
+            driver: Driver::SQLite,
+            dsn: 'sqlite::memory:',
+            username: null,
+            password: null,
+            options: [PDO::ATTR_TIMEOUT => 5],
+        );
+
+        self::assertSame(1, $connection->query('SELECT 1 AS n')->rows[0]->getInt('n'));
+    }
+
+    /**
+     * The declared defaults actually reach the handle.
+     *
+     * The other half of the same defect, and the silent half: with no caller options at
+     * all, the spread still renumbered the defaults, so none of the three was ever
+     * applied. Exception error mode survived only because PHP 8 makes it PDO's own
+     * default — the right behaviour by luck rather than by instruction.
+     *
+     * Reflection is used deliberately. The class exposes no accessor for its handle, and
+     * the property being guarded here is precisely that the handle was configured as
+     * declared; asserting it any other way would test a downstream effect instead of the
+     * thing that was wrong.
+     */
+    #[Test]
+    public function theDeclaredDefaultsReachThePdoHandle(): void
+    {
+        $connection = new PdoConnection(
+            connectionName: 'defaults',
+            driver: Driver::SQLite,
+            dsn: 'sqlite::memory:',
+            username: null,
+            password: null,
+        );
+
+        $connection->query('SELECT 1');
+
+        $pdo = $this->handleOf($connection);
+
+        self::assertSame(PDO::ERRMODE_EXCEPTION, $pdo->getAttribute(PDO::ATTR_ERRMODE));
+        self::assertSame(PDO::FETCH_ASSOC, $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE));
+    }
+
+    /**
+     * Where a caller names the same attribute as a default, the caller wins.
+     */
+    #[Test]
+    public function aCallerOptionOverridesTheDefaultItNames(): void
+    {
+        $connection = new PdoConnection(
+            connectionName: 'override',
+            driver: Driver::SQLite,
+            dsn: 'sqlite::memory:',
+            username: null,
+            password: null,
+            options: [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NUM],
+        );
+
+        $connection->query('SELECT 1');
+
+        self::assertSame(
+            PDO::FETCH_NUM,
+            $this->handleOf($connection)->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE),
+        );
+    }
+
+    private function handleOf(PdoConnection $connection): PDO
+    {
+        $property = new ReflectionProperty(PdoConnection::class, 'connection');
+        $handle = $property->getValue($connection);
+
+        self::assertInstanceOf(PDO::class, $handle, 'the connection was never opened');
+
+        return $handle;
+    }
+
     private PdoConnection $connection;
 
     protected function setUp(): void
