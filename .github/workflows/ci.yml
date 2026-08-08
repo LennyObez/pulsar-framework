@@ -9,15 +9,24 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   php-quality:
     name: PHP Quality (CS, PHPStan, Psalm, Boundaries)
     runs-on: ubuntu-latest
 
+    # The PR size gate (ADR-0031) reads labels and the CODEOWNER comment via `gh`.
+    permissions:
+      contents: read
+      pull-requests: read
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -41,9 +50,8 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      # F23.1 / F385.1 / F385.M2 / F387.1 / F387.M3: assert that the
-      # version reported by Pulsar\Core\Version matches composer.json,
-      # so a release PR cannot bump one without bumping the other.
+      # Assert that the version reported by Pulsar\Core\Version matches
+      # composer.json, so a release PR cannot bump one without the other.
       - name: Version constants consistency
         run: bash tools/ci/check-version-consistency.sh
 
@@ -59,10 +67,9 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: git fetch origin "$BASE_REF" --depth=1
 
-      # F387.4 / F387.M2 / F380.M1: PR titles using `chore:` or `docs:`
-      # while adding new src/ modules or new extensions get less
-      # reviewer attention than they need. Block at CI time so the
-      # title gets renamed before merge.
+      # PR titles using `chore:` or `docs:` while adding new src/ modules
+      # or new extensions get less reviewer attention than they need.
+      # Block at CI time so the title gets renamed before merge.
       - name: PR title scope strictness
         if: github.event_name == 'pull_request'
         env:
@@ -70,9 +77,9 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: bash tools/ci/check-pr-title-scope.sh
 
-      # F387.M1 / ADR-0031: enforce the 1500-line PR cap. Mega-PRs
-      # that bundle whole release cycles into single squash-merge
-      # diffs are review-resistant and break git-bisect granularity.
+      # ADR-0031: enforce the 1500-line PR cap. A PR that bundles a
+      # whole release cycle into one squash-merge diff is review-
+      # resistant and destroys git-bisect granularity.
       # Hard cap at 1500 lines of substantive diff (excluding
       # lockfiles + generated code per .size-limit-ignore); above
       # that, the PR needs the `oversize-pr-acknowledged` label
@@ -110,6 +117,23 @@ jobs:
       - name: Boundary enforcement (API targeting, full scan)
         if: github.event_name != 'pull_request'
         run: php scripts/boundary_check.php
+
+      # Baselined: it fails on findings that are NEW relative to
+      # tools/php/substitutability-baseline.json, not on the 1237 already there.
+      # Regenerate deliberately with `composer class-shape:baseline`, never to
+      # silence a finding — the baseline is a floor that only moves down.
+      - name: Substitutability and immutability
+        run: composer class-shape
+
+      # ASVS 10.1.1 asks for a tool that can detect potentially malicious code.
+      # `composer audit` below is not it: it matches third-party versions against
+      # a CVE feed and never reads first-party source. This step reads the source
+      # — eval, shell execution, unbounded unserialize, dynamic include,
+      # decoder-then-call, weak RNG — and exits non-zero on anything outside the
+      # reviewed list in the script. The two are separate clauses (V10.1, V14.2)
+      # and must not be cited as one control.
+      - name: Malicious-code analysis (ASVS 10.1.1)
+        run: composer security:malicious
 
       - name: Audit dependencies for vulnerabilities
         run: composer audit --abandoned=report
@@ -158,8 +182,26 @@ jobs:
       DB_PASSWORD: password
       DB_DATABASE: pulsar_test
 
+      # Per-engine settings, because the two servers above do not share credentials and
+      # do not listen on the same port. Without these the contract suite finds no engine
+      # configured and skips — which would leave both containers running for the whole
+      # job without a single statement being sent to either.
+      DB_MYSQL_HOST: 127.0.0.1
+      DB_MYSQL_PORT: '3306'
+      DB_MYSQL_USERNAME: root
+      DB_MYSQL_PASSWORD: password
+      DB_MYSQL_DATABASE: pulsar_test
+
+      DB_PGSQL_HOST: 127.0.0.1
+      DB_PGSQL_PORT: '5432'
+      DB_PGSQL_USERNAME: postgres
+      DB_PGSQL_PASSWORD: password
+      DB_PGSQL_DATABASE: pulsar_test
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -214,11 +256,23 @@ jobs:
       - name: Assert the optional-extension contract
         run: php tools/ci/assert-extensions.php redis memcached apcu igbinary zstd brotli
 
+      # The driver contract executes generated SQL against real engines instead of
+      # comparing it to a string. All three servers exist in this job, so every contract
+      # test must RUN here — --fail-on-skipped turns a mis-set variable into a failure
+      # rather than a silent skip, which is the only way this step can be trusted to mean
+      # what its name says. It runs before the full suite so it fails in seconds.
+      - name: Driver contract, executed against every engine
+        run: |
+          php vendor/bin/phpunit \
+            -c tools/php/phpunit.xml \
+            --testsuite Contract \
+            --fail-on-skipped
+
       # Fast, no-coverage parallel run FIRST: it fails in minutes instead of after
       # the full path-coverage pass, and it is the only thing that guards test
       # isolation. A helper class declared inside a sibling test file, or a fixture
       # written to a literal temp path, works under sequential execution and breaks
-      # here — which is exactly how 66 such errors were found. Coverage stays on the
+      # here, which is what makes this pass worth running first. Coverage stays on the
       # sequential run below: merging PATH coverage across workers is far less
       # exercised, and wrong numbers in a threshold gate are worse than a slow gate.
       - name: Run all tests in parallel (isolation guard, no coverage)
@@ -229,7 +283,20 @@ jobs:
               vendor/bin/paratest \
                 -c tools/php/phpunit.xml \
                 --runner=WrapperRunner \
-                --processes=$(nproc)
+                --processes="$(nproc)" \
+                --log-junit junit-linux.xml
+
+      # A successful suite means one of two very different things: everything ran, or
+      # very little did. The floor catches a directory or file dropping out of
+      # discovery; the ceiling catches an absent extension or service turning many
+      # tests into silent abstentions. Both bounds are set well clear of the current
+      # figures — wide enough not to fire on ordinary growth, narrow enough that a
+      # collapse cannot pass unnoticed.
+      - name: Assert the run actually exercised the suite
+        run: |
+          php tools/ci/assert-test-yield.php junit-linux.xml \
+            --min-tests=43000 \
+            --max-skipped-percent=1.0
 
       - name: Run all tests with line + branch + path coverage
         env:
@@ -242,41 +309,12 @@ jobs:
                 --coverage-clover coverage/clover.xml \
                 --path-coverage
 
-      - name: Enforce coverage threshold (lines + branches + paths)
-        run: |
-          php -r '
-            $xml = simplexml_load_file("coverage/clover.xml");
-            $metrics = $xml->project->metrics;
-            $stmts = (int) $metrics["statements"];
-            $stmtsCov = (int) $metrics["coveredstatements"];
-            $stmtPct = $stmts > 0 ? round(($stmtsCov / $stmts) * 100, 2) : 0;
-
-            $conds = (int) ($metrics["conditionals"] ?? 0);
-            $condsCov = (int) ($metrics["coveredconditionals"] ?? 0);
-            $condPct = $conds > 0 ? round(($condsCov / $conds) * 100, 2) : 0;
-
-            $methods = (int) ($metrics["methods"] ?? 0);
-            $methodsCov = (int) ($metrics["coveredmethods"] ?? 0);
-            $methodPct = $methods > 0 ? round(($methodsCov / $methods) * 100, 2) : 0;
-
-            echo "Statements : {$stmtPct}% ({$stmtsCov}/{$stmts})\n";
-            echo "Conditions : {$condPct}% ({$condsCov}/{$conds})\n";
-            echo "Methods    : {$methodPct}% ({$methodsCov}/{$methods})\n";
-
-            // QUAL-COV-01 (external audit): coverage gate ramps over the rc.x
-            // window. Step 1 (rc.12): 80 for core, brings the security path
-            // up to par. Step 2 (rc.13): per-module gates at 95 for
-            // auth/security/crypto/audit. Step 3 (1.0.0 GA): 90 global.
-            $threshold = 80;
-            $failed = false;
-            foreach (["Statements" => $stmtPct, "Conditions" => $condPct, "Methods" => $methodPct] as $name => $pct) {
-                if ($pct < $threshold) {
-                    echo "FAIL: {$name} coverage {$pct}% is below the {$threshold}% threshold.\n";
-                    $failed = true;
-                }
-            }
-            exit($failed ? 1 : 0);
-          '
+      # Was an inline `php -r` duplicating tools/ci/assert-coverage-threshold.php,
+      # which exists precisely so the same check runs locally via
+      # `composer coverage:floor`. Two copies of a gate drift; this one had already
+      # started to.
+      - name: Enforce coverage threshold (statements + conditions + methods)
+        run: composer coverage:floor
 
       - name: Upload coverage artifact
         if: always()
@@ -294,6 +332,97 @@ jobs:
           path: .phpunit.cache/
           retention-days: 7
 
+  # Windows is a supported deployment target, so the suite runs there too.
+  #
+  # This is a separate job rather than a `runs-on: [ubuntu, windows]` matrix on
+  # php-tests. That job carries four service containers, and GitHub's service
+  # containers require a Linux runner; it also builds ext-brotli through apt-get and
+  # sizes its worker pool with nproc. A matrix would have to branch on the operating
+  # system at nearly every step, producing one job pretending to be two. A leaner
+  # job that states exactly what it covers is clearer.
+  #
+  # Scope, stated rather than implied: this job exercises the filesystem, path,
+  # environment and boot behaviour where the two platforms differ, and the symlink
+  # containment cases that require elevation — GitHub's Windows runners have it. The
+  # MySQL, PostgreSQL, Redis and Memcached driver contracts, brotli and zstd
+  # compression, and coverage measurement remain on the Linux jobs.
+  php-tests-windows:
+    name: PHP Tests (Windows)
+    runs-on: windows-latest
+    needs: php-quality
+
+    defaults:
+      run:
+        # Git Bash ships on the Windows runners. Using it keeps every command in this
+        # job textually identical to its Linux twin, so the two cannot drift apart
+        # through shell dialect rather than through anything real.
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          # The Windows-installable subset. redis and memcached are omitted on
+          # purpose: the client extensions would load with no server behind them,
+          # which is worse than absent — the driver tests would connect to nothing
+          # and skip, while the job appeared to cover them.
+          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium
+          ini-values: apc.enable_cli=1
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          # Keyed apart from the Linux jobs. Composer resolves platform-dependent
+          # packages against the running PHP, so a tree built on one runner is not
+          # a safe restore for the other.
+          key: composer-windows-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-windows-
+
+      - run: composer install --no-interaction --no-progress
+
+      # Same reasoning as the Linux job: a silently missing extension turns every
+      # test behind its guard into a skip and the job still reports green.
+      - name: Assert the optional-extension contract
+        run: php tools/ci/assert-extensions.php pdo_sqlite apcu igbinary intl sodium
+
+      - name: Run all tests in parallel (isolation guard, no coverage)
+        env:
+          XDEBUG_MODE: 'off'
+        run: |
+          php -d memory_limit=2G \
+              vendor/bin/paratest \
+                -c tools/php/phpunit.xml \
+                --runner=WrapperRunner \
+                --processes="${NUMBER_OF_PROCESSORS:-4}" \
+                --log-junit junit-windows.xml
+
+      # The ceiling matters more here than on Linux: this job runs without the
+      # database, cache and compression services, so a real drop in what Windows
+      # exercises would otherwise be indistinguishable from ordinary skipping.
+      - name: Assert the run actually exercised the suite
+        run: |
+          php tools/ci/assert-test-yield.php junit-windows.xml \
+            --min-tests=43000 \
+            --max-skipped-percent=1.0
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-windows
+          path: |
+            junit-windows.xml
+            .phpunit.cache/
+          retention-days: 7
+
   php-benchmark-tier-a:
     name: 'Tier A: Performance Budgets (Hard Gate)'
     runs-on: ubuntu-latest
@@ -301,6 +430,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -339,10 +470,10 @@ jobs:
           php tests/Benchmark/Scenarios/memory_compliance.php > /dev/null && echo "PASS: memory_compliance"
 
       - name: Run OPcache/JIT/preload profile matrix
-        # PERF-JIT-01: previously continue-on-error to tolerate unstable JIT
-        # output. Removed so the gate actually blocks GA releases on a broken
-        # profile matrix. Genuine timing variance is handled inside
-        # `composer bench:profiles:ci` via warmup + statistical thresholds.
+        # Deliberately NOT continue-on-error: this gate must block a release
+        # on a broken profile matrix. Genuine timing variance is absorbed
+        # inside `composer bench:profiles:ci` by warmup + statistical
+        # thresholds, so a failure here is a real regression.
         run: composer bench:profiles:ci | tee benchmark-profiles.txt
 
       - name: Upload benchmark results
@@ -359,19 +490,22 @@ jobs:
       - name: Add benchmark results to job summary
         if: always()
         run: |
-          echo '## Tier A: Performance Budget Results (Hard Gate)' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo "Pipeline manifest SHA-256: \`${{ env.manifest_hash }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-tier-a.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '## OPcache / JIT / Preload Profile Matrix' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-profiles.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## Tier A: Performance Budget Results (Hard Gate)'
+            echo ''
+            # Read from the environment, not expanded into the script.
+            echo "Pipeline manifest SHA-256: \`${manifest_hash}\`"
+            echo ''
+            echo '```'
+            cat benchmark-tier-a.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+            echo ''
+            echo '## OPcache / JIT / Preload Profile Matrix'
+            echo ''
+            echo '```'
+            cat benchmark-profiles.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   php-mutation:
     name: Mutation Testing (Infection)
@@ -380,6 +514,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -424,6 +560,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -468,19 +606,40 @@ jobs:
       - name: Add benchmark results to job summary
         if: always()
         run: |
-          echo '## PHPBench Library Benchmarks' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-library.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## PHPBench Library Benchmarks'
+            echo ''
+            echo '```'
+            cat benchmark-library.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
+  # This one IS a genuine matrix, unlike php-tests: no service containers, no
+  # compiled extension, no nproc — nothing that would have to branch on the OS.
+  # And it is the job with the most to say about Windows, because booting the
+  # kernel and warming the cache is almost entirely path resolution, directory
+  # creation and file writing, which is exactly where the two platforms differ.
   cache-warmup:
-    name: Cache Warmup Smoke Test
-    runs-on: ubuntu-latest
+    name: Cache Warmup Smoke Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     needs: php-quality
+
+    strategy:
+      # Report both. A Windows-only boot failure is precisely the finding this
+      # matrix exists to surface, and cancelling its sibling would hide whether
+      # the fault is platform-specific or general.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -497,8 +656,11 @@ jobs:
           path: |
             vendor
             vendor-bin/*/vendor
-          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
-          restore-keys: composer-
+          # Scoped by runner OS: Composer resolves platform-dependent packages
+          # against the running PHP, so one runner's tree is not a safe restore
+          # for the other's.
+          key: composer-${{ matrix.os }}-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-${{ matrix.os }}-
 
       - run: composer install --no-interaction --no-progress
 
@@ -510,19 +672,25 @@ jobs:
         # the guard that the cache-warmup probe below (which pipes through grep)
         # cannot provide on its own.
         run: |
-          export PULSAR_MASTER_KEY="$(openssl rand -hex 32)"
+          # Assigned then exported: `export X="$(cmd)"` returns export's status,
+          # so a failing key generation would go unnoticed.
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
           php bin/pulsar list > /dev/null
 
       - name: Verify cache warmup pipeline
-        # F28.4: do not bake a fixed master key into CI yaml. The
-        # previous hardcoded `0123...cdef` value was 32 bytes of
-        # entirely-public-knowledge entropy; cache artefacts encrypted
-        # under it (uploaded by later steps) were trivially decryptable
-        # by anyone reading the workflow file. Generate per-run instead
-        # via openssl. The key is exported only inside this step and
-        # is not persisted between jobs.
+        # The master key is generated per run and never written into this
+        # file: a key committed to a workflow is public, and any artefact
+        # encrypted under it would be readable by anyone who can read the
+        # workflow. It comes from PHP's own CSPRNG rather than an openssl
+        # binary, PHP being the one tool this job is guaranteed to have on
+        # either runner. It is exported inside this step only and is not
+        # persisted between jobs.
         run: |
-          export PULSAR_MASTER_KEY="$(openssl rand -hex 32)"
+          # Assigned then exported: `export X="$(cmd)"` returns export's status,
+          # so a failing key generation would go unnoticed.
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
           if php bin/pulsar list 2>/dev/null | grep -q 'optimize:validate'; then
             php bin/pulsar optimize:validate --strict
           else
@@ -535,7 +703,10 @@ jobs:
         # every supported locale and no per-locale slug collisions. Empty config
         # passes as a no-op; downstream projects inherit the same gate.
         run: |
-          export PULSAR_MASTER_KEY="$(openssl rand -hex 32)"
+          # Assigned then exported: `export X="$(cmd)"` returns export's status,
+          # so a failing key generation would go unnoticed.
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
           php bin/pulsar i18n:slugs:lint
 
   adr-check:
@@ -547,11 +718,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Fetch base ref (fork-safe)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        # F28.8: depth=1 only fetches the base SHA. The downstream
+        # depth=1 only fetches the base SHA. The downstream
         # `check-adr.sh` does `git diff "${BASE_SHA}...HEAD"`, which
         # requires a reachable common ancestor — for PRs with multiple
         # commits this either fails with "fatal: object not in fetch"
@@ -571,6 +743,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
 
