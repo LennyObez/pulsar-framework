@@ -1,28 +1,16 @@
 # Dependabot security PR policy and SLA
 
 This document records the project's policy for handling Dependabot
-security PRs. Closes audit findings **F388.1**, **F388.2**, and the
-meta-finding **F388.M1**.
+security PRs.
 
 ## Background
 
-Audit reviews observed that Dependabot security PRs against the
-framework were repeatedly closed without merge while the maintainer
-applied a manual, intermediate-version bump several days later — the
-canonical case being `league/commonmark`:
-
-- PR #386 (Dependabot, `2.8.0` → `2.8.1`) — closed without merge.
-- The maintainer manually bumped to `2.8.1` on `chore/quality-and-performance`.
-- PR #388 (Dependabot, `2.8.0` → `2.8.2`) — closed without merge three
-  days later.
-- The maintainer eventually bumped to `2.8.2` (the version this branch
-  ships).
-
-For a framework targeting banking / healthcare / legal compliance the
-gap between upstream patch availability and project patch is a
-PCI-DSS 6.3.3 and EU CRA reportable concern. Without a documented
-policy a future regression of this pattern is invisible to outside
-reviewers.
+For a framework targeting banking / healthcare / legal compliance, the
+gap between upstream patch availability and the project adopting that
+patch is a PCI-DSS 6.3.3 and EU CRA reportable concern. The window has
+to be bounded by policy and the disposition of every security PR has to
+be legible from the outside — an unexplained close leaves downstream
+consumers unable to tell a deliberate deferral from an oversight.
 
 ## Decision
 
@@ -36,8 +24,8 @@ either:
 - **explicitly closed with a maintainer comment** that records the
   compensating control and the planned remediation.
 
-"Closed without merge and without comment" is no longer an acceptable
-disposition for security PRs.
+"Closed without merge and without comment" is not an acceptable
+disposition for a security PR.
 
 ### 2. SLA by severity
 
@@ -74,67 +62,108 @@ can surface the still-open exposure.
 
 ### 4. Manual intermediate-version bumps require justification
 
-The pattern observed in PR #386 / #388 — Dependabot offers `2.8.2`,
-the maintainer rejects and manually bumps to `2.8.1` first — is
-explicitly discouraged because:
+Rejecting the version Dependabot offers in order to hand-apply an
+older patch release first is discouraged because:
 
-- It doubles the work (two PRs vs one).
-- It widens the exposure window (the project sits on the older fix
-  longer than necessary).
-- It signals to outside reviewers that the project has a process the
-  maintainer disagrees with — better to fix the process.
+- It doubles the work (two PRs instead of one).
+- It widens the exposure window — the project sits on the older fix
+  longer than necessary.
 
-When a manual intermediate bump IS applied (e.g. `2.8.2` was found
-to contain an unrelated regression), the manual-bump PR description
-MUST link the original Dependabot PR and explain why the latest
-upstream version was not adopted. Closing the Dependabot PR without
-explanation is a process violation surfaced in the next release
-retrospective.
+When a manual intermediate bump IS warranted (e.g. the latest patch
+release carries an unrelated regression), the manual-bump PR
+description MUST link the original Dependabot PR and explain why the
+latest upstream version was not adopted. Closing the Dependabot PR
+without that explanation is a process violation surfaced in the next
+release retrospective.
 
-### 5. Auto-merge eligibility
+### 5. No auto-merge
 
-A Dependabot PR is eligible for auto-merge when:
+Every Dependabot PR is merged by a human, including security PRs, and
+including patch bumps. `.github/dependabot.yml` proposes and never
+adopts: a toolchain that updates itself in place takes a regressed or
+compromised release with nobody having looked, which is not a posture
+this market allows.
 
-- The targeted package is in the `auto-merge-allowlist` (`dependabot.yml`);
-- CI is fully green (PHP quality gates, test suite, security scans);
-- The PR is a patch or minor bump of a package whose changelog the
-  maintainers reviewed at intake time.
-
-Major version bumps and bumps of packages outside the allowlist are
-manual-review-only.
+Earlier revisions of this section made auto-merge conditional on the
+package appearing in an `auto-merge-allowlist` in `dependabot.yml`.
+No such key existed, in that file or in any workflow, and Dependabot
+has no such setting — the one clause here written as a machine-checkable
+rule pointed at nothing. Green CI is a precondition for a maintainer to
+merge, not a trigger that merges.
 
 ## Scope
 
 This policy applies to:
 
 - Dependabot security PRs against the `pulsar/framework` repo.
-- Dependabot security PRs against bundled extensions
-  (`extensions/*/composer.json`) when their lockfile is shared with
-  the framework's root lockfile.
+- Dependabot security PRs against bundled extension manifests
+  (`extensions/*/composer.json`), whether or not they resolve against
+  the framework's root lockfile. They do not:
+  `extensions/auth/composer.json` declares `league/oauth2-server`,
+  `web-auth/webauthn-lib` and `web-token/jwt-framework`, none of which
+  appears in the root `composer.lock`. An earlier revision of this
+  section scoped those out on exactly that ground, which left the
+  framework's OAuth2, WebAuthn and JWT dependencies covered by no
+  policy at all.
 
 It does NOT apply to non-security version bumps (Dependabot's regular
 update cadence), which follow the standard PR-size and review-
 cadence policies described in ADR-0031.
 
-## Implementation
+### What enforces the scope
 
-Phase 1 (this document): record the policy.
+- `.github/dependabot.yml` carries one entry per manifest directory:
+  `/`, `/vendor-bin/psalm`, `/extensions/auth`, npm `/`, and GitHub
+  Actions. A directory absent from that list is proposed nothing, ever.
+- `.github/workflows/dependency-audit.yml` audits the root tree, then
+  every extension manifest declaring third-party requirements — it
+  resolves each to a throwaway lock and runs `composer audit` against
+  it — and fails the build when such a manifest has no `dependabot.yml`
+  entry, so the list above cannot silently fall behind the tree.
+- Both halves of the audit, PHP and JavaScript, assert through
+  `tools/ci/assert-no-advisories.php`, which fails closed: a report that
+  is missing, empty, unparseable or shaped differently than expected
+  stops the build instead of reading as a clean tree.
+- `roave/security-advisories` sits in `require-dev` of every manifest it
+  has to protect, the root and `extensions/auth`. Composer ignores a
+  dependency's `require-dev`, so the root entry never reached the
+  extension: its `web-auth/webauthn-lib: ^5.0` overlapped roave's own
+  `>=4.5,<5.3.5` vulnerable range and nothing objected. Resolution in
+  that directory now refuses a known-vulnerable version outright, before
+  any audit runs.
 
-Phase 2 (next quality sprint): translate the policy into machine-
-readable rules:
+The same checks run locally as `composer security:audit` and
+`composer security:audit:js`. For one extension:
 
-- `dependabot.yml` schedules tuned per the SLA.
-- A GitHub Actions workflow that reads PR labels and posts a reminder
-  comment when the SLA is approaching expiry.
-- The `security-deferred` label registered with consistent metadata.
+```bash
+composer update --working-dir=extensions/auth --no-install --no-audit
+composer audit --working-dir=extensions/auth --locked --format=json > extensions/auth/audit-results.json
+php tools/ci/assert-no-advisories.php extensions/auth/audit-results.json
+```
+
+## What is machine-enforced, and what is not
+
+Enforced by CI today: which manifests are watched, which are audited,
+and that the two sets agree — see "What enforces the scope" above.
+
+Not enforced by any machine today, and honestly so:
+
+- **The merge SLA itself.** No workflow reads PR labels or measures
+  time-to-merge, so the table in §2 is upheld by review, not by a gate.
+  Auditors should read it as policy, not as a control.
+- **The `security-deferred` label** is applied by hand and carries no
+  registered metadata.
+- **A reminder before SLA expiry.** Nothing warns; the maintainer
+  watches the queue.
+
+Closing these means a scheduled workflow that queries open Dependabot
+PRs, reads severity from the GHSA reference in the body, and fails or
+comments on any PR past its window. Until that exists, no document in
+this repository should describe the SLA as enforced.
 
 ## Cross-references
 
 - ADR-0031 — Pull-request size limits (separate cap for non-security
   bumps; this policy supersedes for the security path).
-- Audit finding F386.1 — the original commonmark patch.
-- Audit finding F388.1 — manual intermediate-version bump pattern.
-- Audit finding F388.2 — recurring Dependabot security PR rejections.
-- Audit finding F388.M1 — meta-finding that prompted this policy.
 - PCI-DSS 6.3.3 — timely security patches (regulator anchor).
 - EU CRA Article 13 — vulnerability handling obligations.

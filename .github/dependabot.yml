@@ -68,6 +68,40 @@ updates:
         update-types: [minor, patch]
 
   # ---------------------------------------------------------------------------
+  # PHP — the bundled auth extension
+  #
+  # extensions/auth/composer.json declares three third-party runtime
+  # requirements — league/oauth2-server, web-auth/webauthn-lib and
+  # web-token/jwt-framework — and not one of them appears in the root
+  # composer.lock, because the extension is a separate package with a separate
+  # dependency tree. So neither the root entry above nor a root `composer audit`
+  # had ever looked at the OAuth2, WebAuthn and JWT implementations the framework
+  # actually ships. Dependabot reads a manifest with no lockfile directly, which
+  # is what this entry is for.
+  #
+  # Any other extension manifest that grows a third-party requirement needs an
+  # entry here too; the extension-audit step in dependency-audit.yml discovers
+  # those manifests and fails the build when one is missing from this file.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: composer
+    directory: /extensions/auth
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    commit-message:
+      prefix: build
+      prefix-development: build
+      include: scope
+    groups:
+      auth-extension-patch-and-minor:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # ---------------------------------------------------------------------------
   # JavaScript / TypeScript
   # ---------------------------------------------------------------------------
   - package-ecosystem: npm

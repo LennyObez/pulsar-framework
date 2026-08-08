@@ -10,6 +10,9 @@
     "web-auth/webauthn-lib": "^5.0",
     "web-token/jwt-framework": "^4.0"
   },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  },
   "autoload": {
     "psr-4": {
       "Pulsar\\Extension\\Auth\\": "src/"
