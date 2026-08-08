@@ -8,13 +8,25 @@
 # Run locally:
 #   semgrep --config=.semgrep.yml
 #
-# The CI pipeline and the MCP scanner also honour this file.
+# Any local Semgrep invocation honours this file. No CI job is among them:
+# nothing under `.github/` runs Semgrep.
 #
-# Pulsar-specific custom rules (e.g. ADR-0006 libsodium-only enforcement)
-# live in `tools/security/semgrep-pulsar-rules.yml` and are wired up via
-# the `composer security:lint` and `composer security:lint:strict` scripts.
+# Pulsar-specific advisory rules live in `tools/security/semgrep-pulsar-rules.yml`
+# and are wired up via the `composer security:lint` script.
 # Run together:
 #   semgrep --config=.semgrep.yml --config=tools/security/semgrep-pulsar-rules.yml
+#
+# Every Pulsar rule is severity WARNING, so nothing here gates a merge. A
+# companion `security:lint:strict` script used to pass `--severity=ERROR --error`;
+# because no rule was ever ERROR, it selected an empty rule set and exited 0 on
+# every run, which read as a passing security gate. It has been deleted rather than
+# repaired. ADR-0006's weak-algorithm clause is enforced instead by
+# `Pulsar\PHPStan\Rules\ForbidBrokenHashRule` under `composer phpstan`.
+#
+# The ASVS 10.1.1 malicious-code gate is likewise not a Semgrep rule: its PHP
+# frontend cannot parse four fifths of `src/` (readonly classes, named arguments
+# in attributes), and a parse failure skips the file silently. See
+# `tools/security/assert-no-malicious-code.php`.
 
 # Paths completely excluded from Semgrep scanning.
 # Vendor code is scanned by the supply-chain audit job separately.

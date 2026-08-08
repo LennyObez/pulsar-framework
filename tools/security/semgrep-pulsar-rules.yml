@@ -1,30 +1,59 @@
+# NOTHING IN CI RUNS THIS FILE. No workflow under `.github/` invokes Semgrep;
+# the only entry point is `composer security:lint`, which is part of the local
+# `composer qa` sequence and exits 0 whatever it finds, because `--error` is not
+# passed and every rule here is severity WARNING. Read the findings as review
+# material, not as a gate — a rule in this file cannot stop a merge.
+#
+# The one clause of ADR-0006 that IS gated lives elsewhere: MD2/MD4/MD5/SHA-1
+# are rejected by `Pulsar\PHPStan\Rules\ForbidBrokenHashRule`, registered in
+# `tools/php/phpstan.neon`, so `composer phpstan` — a required CI context —
+# fails the build on a broken digest. That rule used to be
+# `pulsar.security.forbidden-broken-hash` here and was removed rather than
+# duplicated: two copies of one policy drift, and the copy that cannot fail is
+# the one people stop reading.
+#
+# The ASVS 10.1.1 malicious-code rules are deliberately NOT here either. Measured
+# with semgrep 1.155.0: its PHP frontend fails to parse 2064 of the 2579 files
+# under `src/` — it rejects the `readonly` class modifier and named arguments
+# inside attributes, both of which this codebase uses everywhere — and a parse
+# failure truncates the file rather than degrading. The gate is
+# `tools/security/assert-no-malicious-code.php`, built on PHP's own tokenizer,
+# and `composer security:malicious` runs it in CI.
 rules:
-  # ADR-0006 enforcement: the framework restricts itself to libsodium primitives
+  # ADR-0006 preference: the framework restricts itself to libsodium primitives
   # for all security-critical hashing. `hash('sha256', ...)` is allowed only in
   # explicit RFC-compatibility zones (AWS Signature v4, WebAuthn, PKCE, file
   # build fingerprints, audit chain export hashes that interoperate with
-  # external verifiers). Any other call site must use
-  # `sodium_crypto_generichash($input, $context, 32)` (BLAKE2b) or
-  # `hash_hmac('sha256', $input, $key)` (HMAC) instead.
+  # external verifiers). Any other call site should use BLAKE2b via
+  # `sodium_crypto_generichash()`, or `hash_hmac('sha256', $input, $key)` (HMAC)
+  # where an external party must verify the digest.
   #
-  # New code introducing `hash('sha256', ...)` outside the allowlist below is a
-  # boundary violation and will fail CI. To extend the allowlist, document the
-  # external interoperability requirement in an ADR amendment and add the path
-  # to `paths.exclude`.
+  # Mind the second parameter of `sodium_crypto_generichash()`: it is a KEY, and
+  # libsodium accepts only `''` or 16-64 bytes there. Passing a short domain
+  # string throws SodiumException at runtime.
+  #
+  # This preference is NOT enforced and must not be cited as a control. Roughly
+  # 57 call sites outside the allowlist below still hash with unkeyed SHA-256,
+  # several of them over credential material, and no gate rejects the next one.
+  # SHA-256 is an ASVS-approved algorithm, so the gap is an ADR-0006 migration
+  # debt rather than an ASVS V6.2 failure — see the V6.2 row of
+  # `docs/security/asvs-l2-matrix.md`, which states it. Promoting this rule to
+  # ERROR means migrating those call sites first; it is not a severity edit.
   - id: pulsar.security.forbidden-sha256
     languages: [php]
-    # WARNING (not ERROR) so the rule does not break CI on the existing
-    # call sites still on SHA-256. Each finding is a remediation candidate
-    # for future sessions of `memory/remediation-plan.md`. New code introducing
-    # a SHA-256 call outside the allowlist below is expected to be rejected
-    # by the same warning during review.
     severity: WARNING
     message: >
       `hash('sha256', ...)` is discouraged outside RFC interoperability zones
-      (ADR-0006 libsodium-only policy). Replace with
-      `sodium_crypto_generichash($input, '<context>', 32)` and hex-encode if
-      a fixed-width digest is required, or with `hash_hmac('sha256', $input,
-      $key)` if a keyed signature is needed for external verification.
+      (ADR-0006 libsodium-only policy). Replace with BLAKE2b, hex-encoding the
+      result if a fixed-width digest is required. The second argument of
+      `sodium_crypto_generichash()` is a key, not a label: it must be `''` or
+      16-64 bytes, so a short domain string throws. Use one of the two correct
+      forms -- `sodium_crypto_generichash($domain . "\0" . $input, '', 32)` for
+      an unkeyed digest with the domain folded into the message, or
+      `sodium_crypto_generichash($input, $subKey, 32)` with a 32-byte key
+      derived from MasterKey when the digest must resist forgery. Use
+      `hash_hmac('sha256', $input, $key)` only when an external party has to
+      verify the digest.
     pattern-either:
       - pattern: hash('sha256', ...)
       - pattern: hash("sha256", ...)
@@ -41,9 +70,6 @@ rules:
 
         # WebAuthn: RP ID hash and clientDataJSON hash mandated by W3C spec.
         - 'extensions/auth/src/WebAuthn/**'
-
-        # PKCE: SHA-256 challenge mandated by RFC 7636.
-        - 'extensions/social-sso/**'
 
         # Build / cache fingerprints — non-security usage. SHA-256 is fine for
         # accidental-corruption detection on local artefacts.
@@ -67,36 +93,15 @@ rules:
         - 'extensions/observability/src/**'
         - 'extensions/subscriptions/src/**'
 
-  # Forbid raw `md5(...)` and `sha1(...)` outside the same allowlist —
-  # neither is collision-resistant and neither has a keyed mode in stdlib.
-  - id: pulsar.security.forbidden-broken-hash
-    languages: [php]
-    severity: WARNING
-    message: >
-      `md5()` and `sha1()` are broken hash functions (collision attacks
-      exist). Use `sodium_crypto_generichash($input, '<context>', 32)`
-      (BLAKE2b) for any non-RFC-mandated digest.
-    pattern-either:
-      - pattern: md5(...)
-      - pattern: sha1(...)
-      - pattern: hash('md5', ...)
-      - pattern: hash("md5", ...)
-      - pattern: hash('sha1', ...)
-      - pattern: hash("sha1", ...)
-    paths:
-      exclude:
-        - 'vendor/**'
-        - 'node_modules/**'
-        - 'storage/**'
-        - 'public/build/**'
-        - 'tests/**'
-        - 'extensions/*/tests/**'
-        # WebSocket handshake: RFC 6455 §1.3 mandates SHA-1 of the client
-        # key concatenated with the magic GUID. SHA-1 is required by the
-        # spec; a BLAKE2b replacement would break browser interoperability.
-        - 'src/WebSocket/**'
+  # `pulsar.security.forbidden-broken-hash` used to sit here, forbidding raw
+  # `md5()` and `sha1()`. It is now `Pulsar\PHPStan\Rules\ForbidBrokenHashRule`,
+  # which `composer phpstan` runs on every pull request and which fails the
+  # build. It also covers what the pattern list here missed: `md5_file()`,
+  # `sha1_file()`, `hash_file()`, `hash_init()`, `hash_hmac()`, `hash_pbkdf2()`,
+  # named arguments, and an algorithm held in a class constant. Do not restore a
+  # copy in this file.
 
-  # SEC-DB-01 (external audit): the Database\Statement::execute() default path
+  # The Database\Statement::execute() default path
   # materialises results via PDOStatement::fetchAll(), which OOMs on
   # exports / reporting / tenant-wide dumps. The framework already exposes a
   # streaming variant (Statement::executeStreaming()) that yields rows lazily.
