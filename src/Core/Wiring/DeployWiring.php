@@ -10,7 +10,6 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DeployConfig;
-use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Deploy\Check\AuditLoggerReadinessCheck;
@@ -146,14 +145,16 @@ final readonly class DeployWiring implements ServiceWiringInterface
 
         $this->registerCheckOrSkip($deployCheck, 'trusted-proxies', $deployConfig, static fn(): DeployCheckInterface => new TrustedProxyCheck($deployConfig));
 
+        // Composed by IntegrityWiring, which owns the verifier, the signer and
+        // the base path the manifest is resolved against.
         $this->registerCheckOrSkip($deployCheck, 'integrity', $deployConfig, static function () use ($container): ?DeployCheckInterface {
-            if (!$container->has(IntegrityConfig::class)) {
+            if (!$container->has(IntegrityCheck::class)) {
                 return null;
             }
-            /** @var IntegrityConfig $integrityConfig */
-            $integrityConfig = $container->get(IntegrityConfig::class);
+            /** @var IntegrityCheck $integrityCheck */
+            $integrityCheck = $container->get(IntegrityCheck::class);
 
-            return new IntegrityCheck($integrityConfig);
+            return $integrityCheck;
         });
 
         $this->registerCheckOrSkip($deployCheck, 'audit-logger', $deployConfig, static fn(): DeployCheckInterface => new AuditLoggerReadinessCheck($container));
