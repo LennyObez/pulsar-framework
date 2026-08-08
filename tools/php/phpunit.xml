@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.0/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.2/phpunit.xsd"
          bootstrap="bootstrap.php"
          cacheDirectory="../../.phpunit.cache"
          colors="true"
@@ -47,6 +47,14 @@
             <directory>../../tests/Integration</directory>
             <directory>../../extensions/accessibility/tests/Integration</directory>
         </testsuite>
+        <!--
+            Executes generated SQL against real engines. SQLite always runs; MySQL and
+            PostgreSQL run when a server is configured and FAIL rather than skip when one
+            is configured but unreachable, so a dead server cannot pass for an absent one.
+        -->
+        <testsuite name="Contract">
+            <directory>../../tests/Contract</directory>
+        </testsuite>
         <testsuite name="E2E">
             <directory>../../tests/E2E</directory>
         </testsuite>
@@ -62,6 +70,14 @@
     </testsuites>
     <extensions>
         <bootstrap class="Pulsar\Tests\Runner\ResetActiveEnvironmentExtension"/>
+        <!--
+            Records why each skipped test skipped. Inert unless PULSAR_SKIP_LEDGER_DIR
+            names a directory, so an ordinary local run is untouched. It exists because
+            the JUnit report cannot answer the question: PHPUnit writes `<skipped/>` as
+            an empty element with no message and no setting to change it, so the report
+            knows how many tests abstained and never why.
+        -->
+        <bootstrap class="Pulsar\Tests\Runner\SkipLedgerExtension"/>
     </extensions>
     <php>
         <ini name="memory_limit" value="3G"/>
@@ -69,7 +85,7 @@
             Test-only escape hatch for AbstractAdminController::authorize().
             Lets unit tests that instantiate admin controllers without a
             GateInterface (because they exercise business logic, not the
-            authorization layer itself) bypass the MED-3 deny-by-default
+            authorization layer itself) bypass the deny-by-default
             check. Never defined in production — see the constant guard in
             extensions/cms/src/Http/Controller/Admin/AbstractAdminController.php.
         -->
