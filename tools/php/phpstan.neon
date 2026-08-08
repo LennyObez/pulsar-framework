@@ -13,6 +13,17 @@ services:
         class: Pulsar\PHPStan\Rules\ForbidIntegrationEventBusInSagaStepRule
         tags:
             - phpstan.rules.rule
+    # ADR-0006's weak-algorithm clause used to live in Semgrep at severity
+    # WARNING, which no workflow ran and which could not fail a build even when
+    # it did. Here it is an error in a gate CI already requires. The argument is
+    # the repository root; `composer phpstan` runs from it, and a wrong value
+    # makes the rule over-report rather than fall silent.
+    -
+        class: Pulsar\PHPStan\Rules\ForbidBrokenHashRule
+        arguments:
+            projectRoot: %currentWorkingDirectory%
+        tags:
+            - phpstan.rules.rule
 
 parameters:
     level: max
@@ -126,19 +137,16 @@ parameters:
     # PHPStan needs no such refinement, and loading it through stubFiles makes
     # PHPStan analyse the partial re-declaration on its own terms, where it cannot
     # resolve the parent RequestInterface it does not restate.
-    # F1.10: at level=max, `treatPhpDocTypesAsCertain: false`
-    # tells PHPStan to treat PHPDoc type declarations as
-    # advisory rather than authoritative. We intentionally
-    # keep this off because the codebase blends inferred PHP
-    # types (param/return types on the language level) with
-    # PHPDoc generics, and at max-level the strict mode
-    # surfaces hundreds of "PHPDoc claims X but inference
-    # says Y" hits in code that is provably correct (e.g.
-    # `array<string, mixed>` from json_decode that PHP infers
-    # as `mixed`). Flipping to true would require a
-    # multi-week sweep through generic-heavy files; the
-    # current setting captures the genuine type safety wins
-    # without the false-positive flood.
+    # At level=max, `treatPhpDocTypesAsCertain: false` tells
+    # PHPStan to treat PHPDoc type declarations as advisory
+    # rather than authoritative. This is deliberate: the
+    # codebase blends language-level param/return types with
+    # PHPDoc generics, and the strict mode reports "PHPDoc
+    # claims X but inference says Y" on code that is provably
+    # correct (e.g. `array<string, mixed>` from json_decode,
+    # which PHP infers as `mixed`). Flipping it to true is a
+    # sweep through every generic-heavy file, for no type
+    # safety the current setting does not already provide.
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true
     ignoreErrors:
