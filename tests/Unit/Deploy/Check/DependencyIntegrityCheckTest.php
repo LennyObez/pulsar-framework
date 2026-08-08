@@ -28,7 +28,11 @@ final class DependencyIntegrityCheckTest extends TestCase
     {
         $check = new DependencyIntegrityCheck(__DIR__);
 
+        // The description names the records it compares. It used to promise
+        // "composer.lock checksums" while only version strings were read.
         self::assertStringContainsString('composer.lock', $check->getDescription());
+        self::assertStringContainsString('dist references', $check->getDescription());
+        self::assertStringContainsString('installed.json', $check->getDescription());
     }
 
     #[Test]
@@ -101,6 +105,119 @@ final class DependencyIntegrityCheckTest extends TestCase
         self::assertStringContainsString('vendor/alpha', $mismatches[0]);
         self::assertStringContainsString('v1.0.0', $mismatches[0]);
         self::assertStringContainsString('v1.0.1', $mismatches[0]);
+    }
+
+    #[Test]
+    public function comparePackagesDetectsDistReferenceMismatchAtTheSameVersion(): void
+    {
+        $check = new DependencyIntegrityCheck(__DIR__);
+
+        // An upstream re-tag keeps the version string and moves the commit the
+        // archive was cut from, so a version-only comparison sees nothing.
+        $lockData = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'aaaa1111', 'shasum' => '']],
+            ],
+        ];
+
+        $installedData = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'bbbb2222', 'shasum' => '']],
+            ],
+        ];
+
+        $mismatches = $check->comparePackages($lockData, $installedData);
+
+        self::assertCount(1, $mismatches);
+        self::assertStringContainsString('vendor/alpha', $mismatches[0]);
+        self::assertStringContainsString('dist reference differs', $mismatches[0]);
+        self::assertStringContainsString('aaaa1111', $mismatches[0]);
+        self::assertStringContainsString('bbbb2222', $mismatches[0]);
+    }
+
+    #[Test]
+    public function comparePackagesDetectsDistChecksumMismatchAtTheSameReference(): void
+    {
+        $check = new DependencyIntegrityCheck(__DIR__);
+
+        $lockData = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'aaaa1111', 'shasum' => 'cccc3333']],
+            ],
+        ];
+
+        $installedData = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'aaaa1111', 'shasum' => 'dddd4444']],
+            ],
+        ];
+
+        $mismatches = $check->comparePackages($lockData, $installedData);
+
+        self::assertCount(1, $mismatches);
+        self::assertStringContainsString('dist checksum differs', $mismatches[0]);
+    }
+
+    #[Test]
+    public function comparePackagesAcceptsMatchingDistMetadata(): void
+    {
+        $check = new DependencyIntegrityCheck(__DIR__);
+
+        $packages = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'aaaa1111', 'shasum' => 'cccc3333']],
+            ],
+        ];
+
+        self::assertSame([], $check->comparePackages($packages, $packages));
+    }
+
+    #[Test]
+    public function comparePackagesComparesByVersionOnlyWhenDistMetadataIsAbsent(): void
+    {
+        $check = new DependencyIntegrityCheck(__DIR__);
+
+        // Composer leaves shasum empty for VCS dists and records no dist block
+        // at all for path repositories; neither is a mismatch.
+        $lockData = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'aaaa1111', 'shasum' => '']],
+                ['name' => 'vendor/beta', 'version' => 'v2.0.0'],
+            ],
+        ];
+
+        $installedData = [
+            'packages' => [
+                ['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => ['reference' => 'aaaa1111', 'shasum' => 'cccc3333']],
+                ['name' => 'vendor/beta', 'version' => 'v2.0.0', 'dist' => ['reference' => 'bbbb2222', 'shasum' => '']],
+            ],
+        ];
+
+        self::assertSame([], $check->comparePackages($lockData, $installedData));
+    }
+
+    #[Test]
+    public function comparePackagesDetectsARetagInTheRealLockfileShape(): void
+    {
+        $check = new DependencyIntegrityCheck(__DIR__);
+
+        // The shape Composer actually writes for a GitHub-hosted package: a
+        // populated dist.reference and an empty shasum. Comparing shasum alone
+        // would be a check that never fires.
+        $dist = static fn(string $reference): array => [
+            'type' => 'zip',
+            'url' => 'https://api.github.com/repos/vendor/alpha/zipball/' . $reference,
+            'reference' => $reference,
+            'shasum' => '',
+        ];
+
+        $mismatches = $check->comparePackages(
+            ['packages' => [['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => $dist('a23a2bf4')]]],
+            ['packages' => [['name' => 'vendor/alpha', 'version' => 'v1.0.0', 'dist' => $dist('deadbeef')]]],
+        );
+
+        self::assertCount(1, $mismatches);
+        self::assertStringContainsString('dist reference differs', $mismatches[0]);
     }
 
     #[Test]
