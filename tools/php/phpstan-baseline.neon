@@ -1,12 +1,10 @@
 ###############################################################################
 # PHPStan baseline — documented floor entries.
 #
-# external audit QUAL-STA-01 asked for the baseline to ratchet toward zero. After
-# session 2026-05-12 cleanup, the remaining 9 entries fall into TWO categories
-# that are documented as the accepted floor — each entry below has a rationale.
-# Any NEW addition to this baseline must follow the same pattern: identifier +
-# reason. Adding a baseline entry without rationale is a CI-blocking review red
-# flag.
+# The baseline ratchets toward zero. The entries that remain fall into the TWO
+# categories below, which are the accepted floor — each entry carries a
+# rationale. Any NEW addition must follow the same pattern: identifier + reason.
+# Adding a baseline entry without a rationale is a CI-blocking review red flag.
 #
 # Category A — PHPStan can statically prove the test assertion is tautological
 #              because the production code's return type is narrowed to a

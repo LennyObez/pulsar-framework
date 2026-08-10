@@ -116,8 +116,9 @@
 │     └─ performance-budgets.json
 ├─ .editorconfig
 ├─ .gitignore
+├─ .php-version                 # Toolchain pin read by every workflow
+├─ .nvmrc                       # Toolchain pin read by every workflow
 ├─ composer.json
-├─ qodana.yaml
 └─ README.md
 ```
 

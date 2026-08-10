@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# F387.M1 / ADR-0031: enforce the 1500-line PR size cap. Pre-merge
-# guard against the unreviewable mega-PR pattern that audit
-# findings F33.M2 / F385.M1 / F387.M1 documented across the
-# rc.x cycle.
+# ADR-0031: enforce the 1500-line PR size cap. Review effectiveness
+# collapses well before that figure, so a diff above it cannot honestly
+# be called peer-reviewed — which matters because that claim is a
+# documented change-control for regulated deployments.
 #
 # Counts lines of *substantive* diff between the PR base and HEAD,
 # excluding paths in `.size-limit-ignore` (lockfile updates,
@@ -10,7 +10,8 @@
 # 1500; PRs exceeding it require both:
 #   - the `oversize-pr-acknowledged` label, AND
 #   - a `/oversize-pr-approved` comment by a CODEOWNER who is not
-#     the PR author (same shape as the F28.3 adr-exempt guard).
+#     the PR author (same shape as the adr-exempt guard in
+#     scripts/check-adr.sh).
 #
 # Exit codes:
 #   0 - PR is under the cap, OR exempt and properly approved
@@ -81,8 +82,9 @@ fi
 
 echo "PR exceeds the ${LIMIT}-line cap (${total} lines). Checking exemption…"
 
-# Exemption requires both signals (mirrors F28.3 adr-exempt
-# guard): label present AND CODEOWNER approval comment.
+# Exemption requires both signals (mirrors the adr-exempt guard):
+# label present AND CODEOWNER approval comment. One alone is
+# self-service; two make the exemption a two-party decision.
 if [[ -z "${PR_NUMBER:-}" || -z "${REPO_FULL:-}" ]]; then
     echo "FAIL: PR metadata unavailable; cannot check exemption"
     exit 1

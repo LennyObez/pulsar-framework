@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# F387.4 / F387.M2 / F380.M1: pre-merge guard against title-deception.
+# Pre-merge guard against title-deception: a `chore:` or `docs:` prefix
+# on a diff that adds new core modules or new extensions.
 #
-# Pattern observed across PR #380, #385, #387: the PR title used a
-# `chore:` or `docs:` prefix even though the diff added new core
-# modules (`src/Workflow/`, `src/Saga/`, `src/Codegen/`) or new
-# extensions. Reviewers skim PR titles when triaging, and a `chore:`
-# label invites less scrutiny than `feat(core):`. For a banking
-# framework, that scrutiny gap is a compliance gap.
+# Reviewers skim PR titles when triaging, and a `chore:` label invites
+# less scrutiny than `feat(core):`. For a banking framework, that
+# scrutiny gap is a compliance gap. The prefix also drives release-note
+# generation, so an understated title omits the feature downstream.
 #
 # This guard reads the PR title from $PR_TITLE (set by the calling
 # workflow) and fails when the title prefix is `chore:` or `docs:`
@@ -130,7 +129,7 @@ fi
 
 # Title-deception: chore/docs prefix but the diff adds modules.
 echo "==============================================================="
-echo "PR title-scope mismatch (F387.M2)"
+echo "PR title-scope mismatch"
 echo "==============================================================="
 echo
 echo "PR title:        $PR_TITLE"

@@ -3,10 +3,10 @@
 # Pre-merge assertion that the version reported by `Pulsar\Core\Version`
 # at runtime matches the `version` field declared in composer.json.
 #
-# Closes audit findings F23.1, F385.1, F385.M2, F387.1, F387.M3 — the
-# `Version::PRERELEASE_SUFFIX` constant has drifted from composer.json
-# every release cycle since rc.5, and without an automated check the
-# pattern keeps recurring at every milestone bump.
+# The two values are edited in different files by different steps of a
+# release, so nothing but this check couples them. Without it a release
+# PR can bump composer.json alone and the framework reports a version
+# that no longer exists.
 #
 # Usage:
 #   tools/ci/check-version-consistency.sh
@@ -75,10 +75,8 @@ public diagnostics. A mismatch with composer.json::version means a
 release PR bumped one without the other and the framework will report
 a wrong version to every consumer.
 
-Recurring audit finding (F23.1 / F385.1 / F385.M2 / F387.1 / F387.M3):
-historically the constant trails composer.json by one release cycle
-because release PRs only touch composer.json. Edit src/Core/Version.php
-in the same commit so both values move together.
+Edit src/Core/Version.php in the same commit as composer.json so both
+values move together.
 EOF
     exit 1
 fi

@@ -1,8 +1,8 @@
 # Dependency security policy
 
-> external audit finding **SEC-SC-02**: Dependabot security PRs cannot be closed
-> without either a merging replacement or a documented waiver. This policy
-> formalises the requirement and the workflow.
+> Dependabot security PRs cannot be closed without either a merging
+> replacement or a documented waiver. This policy formalises the
+> requirement and the workflow.
 
 ## Scope
 

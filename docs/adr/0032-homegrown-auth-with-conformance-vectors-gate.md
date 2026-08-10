@@ -29,9 +29,10 @@ Re-examination during the external audit cycle (2026-05-12) showed:
    line item, not a structural blocker.
 
 3. **The framework already has the foundations of a conformance-driven
-   approach.** The F385.18 commit (May 2026) imported the RFC 8949 Appendix
-   A CBOR vectors into the WebAuthn extension and the run exposed a real
-   bug in `unpack('n', …)` parsing. The pattern works.
+   approach.** The RFC 8949 Appendix A CBOR vectors run against the
+   WebAuthn extension's decoder in CI. That corpus exercises the
+   length-prefix and integer-width edge cases hand-written tests
+   routinely miss. The pattern works.
 
 4. **Adopting external libraries trades protocol-correctness risk for
    supply-chain risk.** Both are real; neither dominates the other. With
@@ -135,17 +136,14 @@ document the decision history.
 
 ## Tracking
 
-- Closes audit finding **SEC-WA-01** (revoked, no longer applicable in
-  the original "MUST swap library" form).
-- Closes audit finding **SEC-SC-01** (revoked, no longer applicable).
-- New finding **VECTORS-WA-01**: W3C WebAuthn conformance suite must run
-  green in CI before 1.0.0 GA.
-- New finding **VECTORS-OAUTH-01**: OAuth2 / OIDC conformance suite must
-  run green in CI before 1.0.0 GA.
-- New finding **VECTORS-JOSE-01**: JOSE / JWT conformance suite must run
-  green in CI before 1.0.0 GA.
-- **F385.M4** moves from "1.0.0 blocker" to "1.1.0 blocker": external
-  security audit required before 1.1.0 tag.
+GA blockers established by this ADR:
+
+- The W3C WebAuthn conformance suite must run green in CI before 1.0.0 GA.
+- The OAuth2 / OIDC conformance suite must run green in CI before 1.0.0 GA.
+- The JOSE / JWT conformance suite must run green in CI before 1.0.0 GA.
+
+The external security audit moves from a 1.0.0 blocker to a 1.1.0
+blocker; the library-swap mandate of ADR-0030 is retracted outright.
 
 ## Cross-references
 

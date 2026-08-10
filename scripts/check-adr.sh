@@ -12,11 +12,10 @@ CORE_PATHS=(
   "src/Config/"
 )
 
-# Escape hatch: skip check when an ADR exemption has been formally
-# approved. F28.3: previously the gate accepted the `adr-exempt`
-# label alone — anyone with write access could apply the label to
-# their own PR and bypass the architectural review without leaving
-# any audit trail. The gate now demands TWO independent signals:
+# Escape hatch: skip the check when an ADR exemption has been formally
+# approved. The label alone is not enough — anyone with write access
+# could apply it to their own PR and bypass architectural review with
+# no audit trail. The gate demands TWO independent signals:
 #
 #   (1) the `adr-exempt` label is present; AND
 #   (2) a maintainer left a review-comment containing the literal
@@ -105,10 +104,10 @@ for path in "${CORE_PATHS[@]}"; do
 done
 
 if [ "$CORE_CHANGED" = true ]; then
-  # F28.6: count only numbered ADRs (NNNN-...). The previous pattern
-  # `^docs/adr/.*\.md$` matched the template (`0000-template.md`) and
-  # any unrelated `.md` under adr/ — a typo fix on the template alone
-  # was enough to satisfy the gate without writing an actual ADR.
+  # Count only numbered ADRs (NNNN-...). A looser `^docs/adr/.*\.md$`
+  # would match `0000-template.md` and any unrelated `.md` under adr/,
+  # so a typo fix on the template would satisfy the gate without an
+  # actual ADR being written.
   ADR_COUNT=$(echo "$CHANGED" | grep -E "^docs/adr/0*[1-9][0-9]*-.*\.md$" | grep -v "^docs/adr/0000-" | wc -l)
   if [ "$ADR_COUNT" -eq 0 ]; then
     echo "FAIL: Core architecture paths changed without an ADR."

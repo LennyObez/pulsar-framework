@@ -44,9 +44,10 @@ dist/
 extensions/cms/frontend/dist/
 /build/
 coverage/
+# Default output of `pulsar vex`, written to the root unless -o says otherwise.
+/vex.json
 .eslintcache
 .prettier-cache
-.qodana/
 
 # Env / secrets
 .env
