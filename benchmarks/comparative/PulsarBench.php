@@ -36,7 +36,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
  *   - Template rendering
  *
  * Usage:
- *   php benchmarks/comparative/PulsarBench.php [--iterations=10000] [--warmup=100] [--json]
+ *   php benchmarks/Comparative/PulsarBench.php [--iterations=10000] [--warmup=100] [--json]
  */
 final class PulsarBench
 {
