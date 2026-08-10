@@ -13,6 +13,8 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Command\VerifyCommand;
 
+use function dirname;
+
 #[CoversClass(VerifyCommand::class)]
 final class VerifyCommandTest extends TestCase
 {
@@ -23,6 +25,16 @@ final class VerifyCommandTest extends TestCase
 
         self::assertSame('supply-chain:verify', $command->name);
         self::assertSame('Verify release artifact Ed25519 signatures', $command->description);
+    }
+
+    #[Test]
+    public function theConsoleEntrypointRegistersTheCommand(): void
+    {
+        // Same gap as SignCommand: an Ed25519 verifier nothing could invoke.
+        $entrypoint = file_get_contents(dirname(__DIR__, 4) . '/bin/pulsar');
+
+        self::assertIsString($entrypoint);
+        self::assertStringContainsString('new \\Pulsar\\SupplyChain\\Command\\VerifyCommand(', $entrypoint);
     }
 
     #[Test]
