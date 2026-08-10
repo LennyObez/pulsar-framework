@@ -1,17 +1,18 @@
 <?xml version="1.0"?>
 <!--
-    F1.11: `findUnusedBaselineEntry="true"` + `findUnusedCode="true"`
-    are intentionally aggressive at errorLevel=1. The combination
-    keeps the baseline pruned (any baseline entry that no longer
-    matches a real Psalm error fails CI) and forces unused private
-    methods / dead code to surface in review.
+    `findUnusedBaselineEntry="true"` + `findUnusedCode="true"` are
+    intentionally aggressive at errorLevel=1. The combination keeps
+    the baseline pruned (any baseline entry that no longer matches a
+    real Psalm error fails CI) and forces unused private methods /
+    dead code to surface in review.
 
-    DO NOT switch to per-file suppression via `psalm \-\-alter` when
-    Unused* / PossiblyUnused* / InvalidReturnType issues fire,
-    that pass has been observed to delete legitimate methods
-    (incident 2026-04-28). Either suppress at the call site with
-    a precise `@psalm-suppress UnusedMethod reason: ...` tag, or
-    restructure the code so the dead path is genuinely removed.
+    DO NOT reach for `psalm \-\-alter` when Unused* / PossiblyUnused* /
+    InvalidReturnType issues fire: that pass deletes what it judges
+    unused, and Psalm's judgement of "unused" includes methods reached
+    only through a container binding or an interface it cannot see.
+    Either suppress at the call site with a precise
+    `@psalm-suppress UnusedMethod reason: ...` tag, or restructure the
+    code so the dead path is genuinely removed.
 
     STRICTNESS SWITCHES — measured, not guessed (2026-07-26)
 
@@ -25,23 +26,20 @@
       sealAllMethods, sealAllProperties,
       findUnusedIssueHandlerSuppression  -> 0 errors each
 
-    findUnusedPsalmSuppress is ON, and its debt is PAID: it reported
-    150 suppressions that no longer suppressed anything, all removed.
-    One of them was load-bearing in the worst way — it hid a console
-    command whose loop could never exit — and fifteen (int) casts on
-    SIG* constants existed only because ext-pcntl was unstubbed, so
-    the analyser could not see they were already ints.
+    findUnusedPsalmSuppress is ON. A stale `@psalm-suppress` is worse
+    than no suppression: it keeps suppressing whatever error later
+    appears at that line, so the switch must stay on and the tags must
+    stay accurate.
 
-    Measured and NOT yet enabled, with the exact debt each carries:
-      ensureArrayIntOffsetsExist         -> 267 errors
-      ensureArrayStringOffsetsExist      -> 219 errors
+    Measured and NOT yet enabled, with the work each one requires:
+      ensureArrayIntOffsetsExist         -> ~270 sites
+      ensureArrayStringOffsetsExist      -> ~220 sites
 
-    These are real findings, not noise, and paying them means giving
-    486 array accesses a proved-present offset — array shapes, not
-    casts. Turning them on first makes `composer qa` red for everyone,
-    and a gate that is always red is a gate nobody reads. The counts
-    above are the definition of done, and they are written here so the
-    debt cannot be quietly forgotten.
+    Both are real findings rather than noise, and satisfying them
+    means giving each array access a proved-present offset — array
+    shapes, not casts. Enabling them before that work is done makes
+    `composer qa` red for everyone, and a gate that is always red is a
+    gate nobody reads.
 
     Deliberately NOT enabled, because they would make things worse:
       disableSuppressAll  - the policy above depends on precise,
@@ -112,20 +110,19 @@
 
     <!--
         Extension signatures come from jetbrains/phpstorm-stubs, which tracks the
-        extensions upstream, and never from files we write: the hand-written copies
-        that used to live in stubs/ had drifted (Redis::sRem was typed `int` where
-        phpredis returns `int|false`, Redis::exists `int` where it returns
-        `Redis|int|bool`, close()/quit() were missing), and a stub that is merely
+        extensions upstream, and never from a hand-written copy. A hand-written
+        stub drifts from the extension it describes (a return type widened
+        upstream to `int|false`, a method added), and a stub that is merely
         plausible makes the analyser confidently wrong.
 
         Psalm does ship curated stubs of its own for redis/memcached/amqp/apcu in
         vendor/vimeo/psalm/stubs/extensions/ — but it only loads them when the
         extension is actually present in the analysing PHP. None of these are
-        installed here or in CI, so relying on that left Psalm with no declaration at
-        all: dropping these four entries produced 148 UndefinedClass errors and a
-        cascade of Mixed* findings behind them. They are listed explicitly for that
-        reason, and the upstream path is what makes them trustworthy rather than the
-        listing itself.
+        installed here or in CI, so relying on that would leave Psalm with no
+        declaration at all: dropping these four entries yields UndefinedClass
+        errors and a cascade of Mixed* findings behind them. They are listed
+        explicitly for that reason, and the upstream path is what makes them
+        trustworthy rather than the listing itself.
 
         The remaining entries are hand-written because nothing upstream exists to
         copy: suggested composer packages that are not installed, a runtime that
@@ -138,6 +135,7 @@
         <file name="../../vendor/jetbrains/phpstorm-stubs/apcu/apcu.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/imagick/imagick.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/igbinary/igbinary.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/msgpack/msgpack.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/brotli/brotli.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/frankenphp/frankenphp.php"/>
@@ -183,23 +181,17 @@
 
     <issueHandlers>
         <!--
-            Zero-tolerance policy (tech-debt TD-001).
+            Zero-tolerance policy.
             Every remaining suppression below must fall in one of three categories:
               (A) Psalm 6.x parser/analyser bug with documented upstream link and
                   expected resolution in a later Psalm version.
               (B) Protocol or PSR interface shape that Psalm legitimately cannot
                   derive (e.g. named-argument mismatch forced by interface stability).
               (C) Single-file narrow suppression for a specific edge case.
-            Broad Mixed*/Unused*/ClassMustBeFinal blanket suppressions have been
-            removed 2026-04-23. The 357 -> (n) error counts surfaced will be
-            burnt down per-file.
+            Broad Mixed*/Unused*/ClassMustBeFinal blanket suppressions are not
+            allowed: they hide whole issue classes across the whole codebase.
 
-            === external audit QUAL-PSA-01 ratchet plan ===
-            Counts as of 2026-05-12:
-              (A) Psalm 6.x / 7-beta upstream bugs ........... 11 suppressions
-              (B) PSR / structural limitations ............... 5 suppressions
-              (C) File-narrow specific suppressions .......... 5+ suppressions
-
+            === ratchet plan ===
             Ratchet triggers (per category):
               (A) When Psalm 7 stable lands, audit each (A) entry against the
                   release notes — most should disappear. Failing entries get
@@ -214,15 +206,14 @@
                   an inline `@psalm-suppress` with a tighter reason tag.
 
             Adding a new suppression: classify (A/B/C), add a 2-line rationale
-            comment, link an upstream issue or local tech-debt entry. Adding
-            a suppression without this metadata is a CI-blocking review red
-            flag.
+            comment, and link the upstream issue where one exists. Adding a
+            suppression without this metadata is a CI-blocking review red flag.
         -->
 
         <!-- (A) Psalm 6.x does not fully support PHP 8.5 #[Override] on
              methods implementing interface contracts. PHPStan max is authoritative
              for override validation. Re-evaluate after Psalm 7 stable.
-             Upstream: https://github.com/vimeo/psalm/issues (tracked locally in tech-debt.md TD-001c) -->
+             Upstream: https://github.com/vimeo/psalm/issues -->
         <InvalidAttribute errorLevel="suppress"/>
         <MissingOverrideAttribute errorLevel="suppress"/>
 
@@ -340,7 +331,7 @@
                 <file name="../../src/Runtime/RequestSandbox.php"/>
                 <!-- (C) WebAuthnAttestationVerifier reserved signature parameters
                      for the COSE signature / attestation chain verification work
-                     tracked under F385.M4 (OAuth2/WebAuthn external audit). -->
+                     still to land. -->
                 <file name="../../src/Security/ZeroTrust/DeviceIdentity/Internal/WebAuthnAttestationVerifier.php"/>
             </errorLevel>
         </UnusedParam>
