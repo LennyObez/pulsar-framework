@@ -13,6 +13,8 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Command\SignCommand;
 
+use function dirname;
+
 #[CoversClass(SignCommand::class)]
 final class SignCommandTest extends TestCase
 {
@@ -23,6 +25,18 @@ final class SignCommandTest extends TestCase
 
         self::assertSame('supply-chain:sign', $command->name);
         self::assertSame('Sign release artifacts with Ed25519', $command->description);
+    }
+
+    #[Test]
+    public function theConsoleEntrypointRegistersTheCommand(): void
+    {
+        // The command was written, tested and reachable from nowhere: no
+        // service provider or command registry named it, so "supply-chain:sign"
+        // did not exist as far as bin/pulsar was concerned.
+        $entrypoint = file_get_contents(dirname(__DIR__, 4) . '/bin/pulsar');
+
+        self::assertIsString($entrypoint);
+        self::assertStringContainsString('new \\Pulsar\\SupplyChain\\Command\\SignCommand(', $entrypoint);
     }
 
     #[Test]
