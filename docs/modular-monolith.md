@@ -188,12 +188,12 @@ The service provider wires all components:
 $container->bind(PaymentProviderInterface::class, fn () => match ($config->provider) {
     'null' => new NullProvider($clock),
     'simulator' => new SimulatorProvider($clock),
-    // F22.3 / F3.1: NEVER `$container->get($config->provider)` directly —
-    // the operator-controlled config string would let any class registered
-    // in the container be instantiated by name (the F3.1 / F17.1 / F21.2
-    // arbitrary-class-instantiation vector). Pipe the config through
-    // `TypedServiceResolver::resolve()` so the container call is
-    // type-narrowed to a subtype of the expected interface.
+    // NEVER `$container->get($config->provider)` directly — the
+    // operator-controlled config string would let any class registered in
+    // the container be instantiated by name (arbitrary-class-instantiation
+    // vector). Pipe the config through `TypedServiceResolver::resolve()` so
+    // the container call is type-narrowed to a subtype of the expected
+    // interface.
     default => TypedServiceResolver::resolve(
         $container,
         $config->provider,

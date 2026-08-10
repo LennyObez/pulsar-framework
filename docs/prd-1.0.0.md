@@ -1,10 +1,9 @@
 # PRD — Pulsar Framework 1.0.0
 
-> external audit finding **DOC-PRD-01**: every GA-claim must have a traceable
-> entry naming the implementing files, tests, and CI gates. This document
-> is the source of truth — every line item links to the code that satisfies
-> it. Stub stage: the structure is complete, individual rows ratchet up to
-> full evidence as remaining audit findings close.
+> Every GA claim must have a traceable entry naming the implementing files,
+> tests, and CI gates. This document is the source of truth — every line
+> item links to the code that satisfies it. The structure is complete;
+> individual rows ratchet up to full evidence as the work behind them lands.
 
 ## Mission and scope
 
@@ -23,23 +22,23 @@ See `README.md` "Compliance-ready controls" for the existing disclaimer.
 
 ## Top-level deliverables for 1.0.0
 
-| Area                                  | Deliverable                                                     | Evidence                                                                                                                 | Status                                                 |
-| ------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| Core HTTP                             | PSR-7 request / response with hardened header + body validation | `src/Http/Message/{HeaderValidator,ContentDispositionBuilder,ServerRequest,Response}.php`; SEC-IN-01/02 + SEC-HTTP-01/02 | ✅                                                     |
-| Routing                               | HMVC with extension scoping and partial-trie matching           | `src/Routing/Router.php`; F2.21 + ARCH-EXT family                                                                        | ✅                                                     |
-| DI container                          | PSR-11 with autowiring + cycle detection + max-depth guard      | `src/Container/**`; F2.20                                                                                                | ✅                                                     |
-| Configuration                         | Typed DTOs + environment-aware loading                          | `src/Config/**`                                                                                                          | ✅                                                     |
-| Sessions                              | Native + CSRF + step-up + fail-closed regenerate                | `src/Security/Session/Session.php`; SEC-HTTP-02                                                                          | ✅                                                     |
-| Auth (TOTP + WebAuthn + OAuth2)       | Unified `pulsar/auth` extension, homegrown per ADR-0032         | `extensions/auth/**`; SEC-AUTH-01/02 + SEC-OIDC-01/02 + ADR-0032 conformance vector suites                               | ⚠️ (gated on VECTORS-WA-01/OAUTH-01/JOSE-01 populated) |
-| 2FA                                   | Fail-closed rate limiter and replay guard                       | `src/Auth/TwoFactor/**`; SEC-2FA-01/02                                                                                   | ✅                                                     |
-| Audit trail                           | HMAC chain + PII scrubbing + fail-closed deploy gate            | `src/Security/Audit/AuditLogger.php`, `src/Deploy/Check/AuditLoggerReadinessCheck.php`; SEC-AUDIT-01/02                  | ✅                                                     |
-| Crypto                                | libsodium-only (ADR-0006) + BLAKE2b keyed token indices         | `src/Security/Crypto/**`, repository hash indices; SEC-CRYPTO-01/02                                                      | ✅                                                     |
-| Trusted proxy                         | X-Forwarded-\* gated by allowlisted source                      | `src/Http/TrustedProxy.php`, `src/Routing/Internal/ConfigDomainResolver.php`; SEC-IN-03                                  | ✅                                                     |
-| Subprocess sandbox                    | Env allowlist + array-form exec                                 | `extensions/mcp-server/src/Internal/Subprocess/SubprocessRunner.php`; SEC-IPC-01                                         | ✅                                                     |
-| W3C WebAuthn conformance vector suite | Imported + green in CI                                          | `extensions/auth/tests/Unit/WebAuthn/Ceremony/W3cConformanceVectorTest.php`; VECTORS-WA-01, ADR-0032                     | ⚠️ (stub shipped, population is 1.0.0 GA blocker)      |
-| OAuth2/OIDC conformance vector suite  | Imported + green in CI                                          | `extensions/auth/tests/Unit/OAuth2/Rfc6749ConformanceTest.php`; VECTORS-OAUTH-01, ADR-0032                               | ⚠️ (stub shipped, population is 1.0.0 GA blocker)      |
-| JOSE / JWT conformance vector suite   | Imported + green in CI                                          | `extensions/auth/tests/Unit/OAuth2/Oidc/RfcJoseConformanceTest.php`; VECTORS-JOSE-01, ADR-0032                           | ⚠️ (stub shipped, population is 1.0.0 GA blocker)      |
-| External security audit               | Memo from independent engineer                                  | `docs/audit/`; F385.M4                                                                                                   | 🔜 (moved to 1.1.0 blocker per ADR-0032)               |
+| Area                                  | Deliverable                                                     | Evidence                                                                                  | Status                                                |
+| ------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Core HTTP                             | PSR-7 request / response with hardened header + body validation | `src/Http/Message/{HeaderValidator,ContentDispositionBuilder,ServerRequest,Response}.php` | ✅                                                    |
+| Routing                               | HMVC with extension scoping and partial-trie matching           | `src/Routing/Router.php`                                                                  | ✅                                                    |
+| DI container                          | PSR-11 with autowiring + cycle detection + max-depth guard      | `src/Container/**`                                                                        | ✅                                                    |
+| Configuration                         | Typed DTOs + environment-aware loading                          | `src/Config/**`                                                                           | ✅                                                    |
+| Sessions                              | Native + CSRF + step-up + fail-closed regenerate                | `src/Security/Session/Session.php`                                                        | ✅                                                    |
+| Auth (TOTP + WebAuthn + OAuth2)       | Unified `pulsar/auth` extension, homegrown per ADR-0032         | `extensions/auth/**`; ADR-0032 conformance vector suites                                  | ⚠️ (gated on the three vector suites being populated) |
+| 2FA                                   | Fail-closed rate limiter and replay guard                       | `src/Auth/TwoFactor/**`                                                                   | ✅                                                    |
+| Audit trail                           | HMAC chain + PII scrubbing + fail-closed deploy gate            | `src/Security/Audit/AuditLogger.php`, `src/Deploy/Check/AuditLoggerReadinessCheck.php`    | ✅                                                    |
+| Crypto                                | libsodium-only (ADR-0006) + BLAKE2b keyed token indices         | `src/Security/Crypto/**`, repository hash indices                                         | ✅                                                    |
+| Trusted proxy                         | X-Forwarded-\* gated by allowlisted source                      | `src/Http/TrustedProxy.php`, `src/Routing/Internal/ConfigDomainResolver.php`              | ✅                                                    |
+| Subprocess sandbox                    | Env allowlist + array-form exec                                 | `extensions/mcp-server/src/Internal/Subprocess/SubprocessRunner.php`                      | ✅                                                    |
+| W3C WebAuthn conformance vector suite | Imported + green in CI                                          | `extensions/auth/tests/Unit/WebAuthn/Ceremony/W3cConformanceVectorTest.php`; ADR-0032     | ⚠️ (stub shipped, population is 1.0.0 GA blocker)     |
+| OAuth2/OIDC conformance vector suite  | Imported + green in CI                                          | `extensions/auth/tests/Unit/OAuth2/Rfc6749ConformanceTest.php`; ADR-0032                  | ⚠️ (stub shipped, population is 1.0.0 GA blocker)     |
+| JOSE / JWT conformance vector suite   | Imported + green in CI                                          | `extensions/auth/tests/Unit/OAuth2/Oidc/RfcJoseConformanceTest.php`; ADR-0032             | ⚠️ (stub shipped, population is 1.0.0 GA blocker)     |
+| External security audit               | Memo from independent engineer                                  | `docs/audit/`                                                                             | 🔜 (moved to 1.1.0 blocker per ADR-0032)              |
 
 ## Compliance support claims
 
@@ -69,9 +68,9 @@ docs (`docs/compliance/<framework>.md`).
 - CI gate: line coverage ≥ 80% (ramps to 90 at GA), Infection MSI ≥ 80.
 - PHPStan baseline + Psalm suppressions reduced to documented zero (or ≤ N
   with rationale).
-- Every external audit finding in the internal findings register is either
-  closed or has an explicit waiver in this PRD.
-- External security audit memo (F385.M4) archived under `docs/audit/`.
+- Every open security review item is either closed or carries an explicit,
+  documented waiver in this PRD.
+- External security audit memo archived under `docs/audit/`.
 
 ## Out-of-scope for 1.0.0
 

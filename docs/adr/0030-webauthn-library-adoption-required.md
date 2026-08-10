@@ -19,7 +19,7 @@ Accepted (blocks 1.0.0 GA on the WebAuthn extension)
 
 ADR-0025 (OAuth2/OIDC + WebAuthn library adapters) states explicitly that Pulsar's WebAuthn extension wraps `web-auth/webauthn-lib` ^5.0 — chosen because rolling a custom WebAuthn implementation is "a liability" given the protocol's complex state machine, multiple attestation formats, and known attack surface.
 
-Audit finding **F385.7 / F385.9** identified that the as-shipped `pulsar/webauthn` extension contains a homegrown implementation:
+At the time of writing, the as-shipped `pulsar/webauthn` extension contained a homegrown implementation:
 
 - `composer.json` declares `web-auth/webauthn-lib: ^5.0` as a runtime dependency.
 - No source file under `extensions/webauthn/src/` imports any `Webauthn\…` class from the library.
@@ -29,7 +29,7 @@ For a framework targeting banking / healthcare / legal domains where WebAuthn is
 
 ## Decision drivers
 
-1. **ADR-0025 is binding.** The earlier decision is "accepted" in the ADR registry; the implementation diverged silently.
+1. **ADR-0025 is binding.** The earlier decision is "accepted" in the ADR registry; the implementation does not follow it.
 2. **W3C WebAuthn correctness depends on subtle invariants.** Any bug in challenge CSPRNG, origin check, RP-ID hash, counter monotonicity, attestation verification, or `alg:none` filtering breaks the entire authentication security model.
 3. **Audit cost.** External security audit of a homegrown WebAuthn implementation is significantly more expensive than auditing thin adapter code that wraps a battle-tested library.
 4. **Operational support.** `web-auth/webauthn-lib` is maintained by Spomky-Labs (active FIDO Alliance contributor); homegrown code becomes an internal maintenance burden the framework team cannot match.
@@ -72,7 +72,6 @@ The release manager picks one; this ADR records that staying with the current ho
 
 ### Positive
 
-- Closes audit finding F385.9.
 - Aligns the implementation with the ADR-0025 decision the maintainers already accepted.
 - Reduces audit scope and ongoing maintenance cost.
 - Makes the WebAuthn extension's security posture defensible to regulators.
@@ -84,7 +83,6 @@ The release manager picks one; this ADR records that staying with the current ho
 
 ## Tracking
 
-- Audit finding: **F385.9** in the internal findings register.
 - Cross-reference: ADR-0025 §"WebAuthn: `web-auth/webauthn-lib`".
 - Owner: WebAuthn extension maintainer (assignment pending).
 - Blocking: 1.0.0 GA tag.

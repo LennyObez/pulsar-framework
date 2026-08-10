@@ -88,46 +88,44 @@
 
 ### rc.12 → 1.0.0 - GA gating work
 
-The external audit cycle and the in-flight Pulsar audit cycle leave the
-following work between rc.11 and the 1.0.0 GA tag. Each item links to its
-audit finding ID in the internal findings register and the PRD entry in
-`docs/prd-1.0.0.md`.
+The following work stands between rc.11 and the 1.0.0 GA tag. Each item
+has a corresponding entry in `docs/prd-1.0.0.md`.
 
 **Blockers (GA tag cannot be cut while open)** — per **ADR-0032** (2026-05-12,
 supersedes ADR-0025 + ADR-0030):
 
-- **VECTORS-WA-01** — W3C WebAuthn conformance vector suite imported and
-  running green in CI. Source: <https://github.com/web-auth/webauthn-test-
-  vectors> + W3C Level 2/3 corpus. Coverage: 7 attestation formats +
-  authentication ceremony + counter monotonicity.
-- **VECTORS-OAUTH-01** — OAuth2 / OIDC conformance vector suite imported
-  and green. Source: OpenID Foundation Self-Certification + RFC 6749/7636/
-  7662/8176 examples + OAuth-in-the-Wild attack corpus.
-- **VECTORS-JOSE-01** — JOSE / JWT conformance vector suite imported and
-  green. Source: RFC 7515-7519 examples + the JWT attack corpus (alg:none,
-  RS256→HS256 confusion, kid traversal, critical header bypass).
-- **F385.M4** — moved to **1.1.0 blocker** per ADR-0032. The 1.0.0 GA tag
-  may be cut with the conformance vector suite in place; the external
-  security audit memo lands before 1.1.0.
+- **WebAuthn conformance vectors** — W3C suite imported and running green
+  in CI. Source: <https://github.com/web-auth/webauthn-test-vectors> +
+  W3C Level 2/3 corpus. Coverage: 7 attestation formats + authentication
+  ceremony + counter monotonicity.
+- **OAuth2 / OIDC conformance vectors** — imported and green. Source:
+  OpenID Foundation Self-Certification, RFC 6749/7636/7662/8176 examples,
+  and the OAuth-in-the-Wild attack corpus.
+- **JOSE / JWT conformance vectors** — imported and green. Source: RFC
+  7515-7519 examples + the JWT attack corpus (alg:none, RS256→HS256
+  confusion, kid traversal, critical header bypass).
+- **External security audit memo** — moved to a **1.1.0 blocker** per
+  ADR-0032. The 1.0.0 GA tag may be cut with the conformance vector suite
+  in place; the memo lands before 1.1.0.
 
 **High-priority (close to ship)**
 
-- **SEC-EXT-01** — extension autoload restructure (composer.json mappings
-  → manifest-driven registry).
-- **SEC-EXT-02** — CMS plugin signature enforcement in production.
-- **TOOL-DEP-01/02** — deploy check refuses production startup when
-  artifact signature is missing or invalid.
-- **QUAL-STA-01 / QUAL-PSA-01** — PHPStan baseline + Psalm suppression
-  ratchet to zero (or ≤ N documented entries).
+- Extension autoload restructure (composer.json mappings → manifest-driven
+  registry).
+- CMS plugin signature enforcement in production.
+- Deploy check refuses production startup when the artifact signature is
+  missing or invalid.
+- PHPStan baseline + Psalm suppression ratchet to zero (or ≤ N documented
+  entries).
 
 **Quality / coverage ramp**
 
-- **QUAL-COV-01** — CI coverage gate ramp: rc.12 80 (done), rc.13 per-
-  module 95 for auth/security/crypto/audit, 1.0.0 GA 90 global.
-- **QUAL-COV-02** — Infection MSI ramp: rc.12 80 (done),
-  rc.13 90 for src/Auth, src/Security, src/Audit.
-- **TOOL-GATE-01** — composer qa already enriched with `@security:lint`
-  (semgrep) in rc.12; `qa:full` adds `@mutation` + `@test:coverage`.
+- CI coverage gate ramp: rc.12 80 (done), rc.13 per-module 95 for
+  auth/security/crypto/audit, 1.0.0 GA 90 global.
+- Infection MSI ramp: rc.12 80 (done), rc.13 90 for src/Auth,
+  src/Security, src/Audit.
+- `composer qa` already runs `@security:lint` (semgrep) as of rc.12;
+  `qa:full` adds `@mutation` + `@test:coverage`.
 
 **Documentation and process**
 
@@ -135,7 +133,7 @@ supersedes ADR-0025 + ADR-0030):
 - Release notes + upgrade guide for `rc.11 → 1.0.0`.
 - Long-term maintenance and supported-versions policy.
 - Performance baseline documentation for production deployments.
-- All ADRs reviewed for code-vs-doc drift (ARCH-DRIFT-01 fixed).
+- All ADRs reviewed for code-vs-doc drift.
 
 PRD reference: `docs/prd-1.0.0.md`.
 

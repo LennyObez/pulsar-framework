@@ -1,6 +1,6 @@
 # OAuth2 authorization model
 
-This document explains how Pulsar derives an authorisation decision from an OAuth2 access token. Closes audit finding **F385.10**.
+This document explains how Pulsar derives an authorisation decision from an OAuth2 access token.
 
 ## TL;DR
 
@@ -27,7 +27,7 @@ Leaving `roles: []` is an explicit decision: **OAuth2 grants assert authenticati
 | `oauth2_scopes`    | `list<string>` | `AccessToken::scopes` — the granted OIDC scopes (`openid`, `profile`, …). |
 | `oauth2_token_id`  | `string`       | `AccessToken::id` — the introspection identifier.                         |
 
-`twoFactorStatus` is derived from the token's `amr` / `acr` claims (RFC 8176 / OIDC Core 5.1.1.1, see [`OAuth2TokenResolver::deriveTwoFactorStatus()`](../extensions/oauth2/src/Adapter/OAuth2TokenResolver.php) and audit finding F385.7).
+`twoFactorStatus` is derived from the token's `amr` / `acr` claims (RFC 8176 / OIDC Core 5.1.1.1, see [`OAuth2TokenResolver::deriveTwoFactorStatus()`](../extensions/auth/src/OAuth2/Adapter/OAuth2TokenResolver.php)).
 
 ## Writing scope-aware authorisation policies
 
@@ -102,12 +102,10 @@ Templating policies on a placeholder role grants nothing actionable; it just hid
 
 ### Don't fall back to default-allow
 
-Per the framework's default-deny policy (F12.7), an `Identity` with empty `roles` AND no recognised attribute path means the policy MUST return `false`. The scope-aware policy above does that explicitly via the `is_array($scopes)` discriminator and the local-account fallback.
+Per the framework's default-deny policy, an `Identity` with empty `roles` AND no recognised attribute path means the policy MUST return `false`. The scope-aware policy above does that explicitly via the `is_array($scopes)` discriminator and the local-account fallback.
 
 ## Cross-references
 
 - ADR-0025 — OAuth2/OIDC + WebAuthn library adapters (the OAuth2 server contracts).
 - ADR-0030 — WebAuthn library adoption (companion 2FA path).
-- Audit finding F385.7 — TwoFactorStatus derivation from amr/acr.
-- Audit finding F385.10 — this document.
-- Audit finding F385.11 — `OAuth2AuthorizationServer` naming (formerly `LeagueAuthorizationServer`).
+- RFC 8176 / OIDC Core 5.1.1.1 — `amr` / `acr` claims behind `twoFactorStatus`.

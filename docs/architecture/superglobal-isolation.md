@@ -1,11 +1,11 @@
 # Superglobal isolation in persistent runtimes
 
-> external audit finding **ARCH-GLOB-01/02**: PHP superglobals (`$_SERVER`,
-> `$_SESSION`, `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`) couple the request
-> handler to a process-wide state that survives request boundaries in
-> persistent SAPIs (FrankenPHP workers, RoadRunner, Swoole). The framework
-> must be able to handle a request without depending on superglobals being
-> in the "right" state from a previous request.
+> PHP superglobals (`$_SERVER`, `$_SESSION`, `$_GET`, `$_POST`,
+> `$_COOKIE`, `$_FILES`) couple the request handler to process-wide state
+> that survives request boundaries in persistent SAPIs (FrankenPHP
+> workers, RoadRunner, Swoole). The framework must be able to handle a
+> request without depending on superglobals being in the "right" state
+> from a previous request.
 
 ## Current state (rc.12)
 
@@ -15,18 +15,18 @@
   `$post`, `$cookies`, `$files` arguments so tests construct a request
   without touching `$_SERVER` etc. Default falls back to the real
   superglobals for production SAPI invocations.
-- **`ServerRequest::fromGlobals()` body cap** (SEC-HTTP-01) reads
-  `php://input` with a hard limit and wraps the result in a `StringStream`
-  — no streaming reference to the global resource survives the request.
-- **`SessionInterface`** + **`InMemorySession`** (F9.17) abstract the
-  session store. Tests and parallel workers wire `InMemorySession`
-  instead of touching `$_SESSION`.
-- **`TrustedProxy`** + `ConfigDomainResolver` (SEC-IN-03) gates
-  `X-Forwarded-Host` against an allowlisted source IP, so a stray
-  superglobal value from a previous request cannot poison routing.
-- **`HeaderValidator`** (SEC-IN-01) rejects CR/LF/NUL in any header
-  written via the PSR-7 surface, preventing a leaked header in `$_SERVER`
-  from being re-emitted unsanitised.
+- **`ServerRequest::fromGlobals()` body cap** reads `php://input` with a
+  hard limit and wraps the result in a `StringStream` — no streaming
+  reference to the global resource survives the request.
+- **`SessionInterface`** + **`InMemorySession`** abstract the session
+  store. Tests and parallel workers wire `InMemorySession` instead of
+  touching `$_SESSION`.
+- **`TrustedProxy`** + `ConfigDomainResolver` gate `X-Forwarded-Host`
+  against an allowlisted source IP, so a stray superglobal value from a
+  previous request cannot poison routing.
+- **`HeaderValidator`** rejects CR/LF/NUL in any header written via the
+  PSR-7 surface, preventing a leaked header in `$_SERVER` from being
+  re-emitted unsanitised.
 
 ### Remaining work
 
@@ -34,9 +34,9 @@
   `src/**` will surface them. Each one should either flow through the
   request object's `getServerParams()` or take an injected argument.
 - **FrankenPHP / Swoole workers reset between requests** — the runtime
-  adapter wraps each handler call in `beginRequest()` / `endRequest()`
-  (F2.9 work), but the contract is not yet asserted by a test that runs
-  100 sequential requests and verifies state isolation.
+  adapter wraps each handler call in `beginRequest()` / `endRequest()`,
+  but the contract is not yet asserted by a test that runs 100 sequential
+  requests and verifies state isolation.
 - **Session save handler isolation** — when a custom save handler is in
   use (Redis, DB), the handler instance lives across requests; verify
   that no per-request state leaks via static caches in the handler.
@@ -58,9 +58,8 @@
 
 ## Static analysis hook
 
-A Semgrep rule could enforce rule (1) — out of scope for the audit close
-but listed under PERF-BENCH-02/03's broader ratchet plan (`composer
-security:lint`).
+A Semgrep rule could enforce rule (1) under `composer security:lint`;
+it is not written yet.
 
 ## Related ADRs
 

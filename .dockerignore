@@ -7,6 +7,5 @@ node_modules
 .vscode
 *.log
 .php-cs-fixer.cache
-.qodana
 coverage
 tools/docker/.out

@@ -1,4 +1,4 @@
-# F387.M1 / ADR-0031 — paths excluded from the substantive-diff
+# ADR-0031 — paths excluded from the substantive-diff
 # count enforced by tools/ci/check-pr-size.sh. One pathspec per
 # line; `#` comments and blank lines are ignored.
 #

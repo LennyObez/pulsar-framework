@@ -6,9 +6,7 @@ Accepted (effective immediately, blocks 1.0.0 GA tagging if violated)
 
 ## Context
 
-Audit findings **F33.M2**, **F385.M1**, **F385.M3**, **F387.M1** — and the patterns observed across PRs #33 (51 K LOC, 1 reviewer), #380 (290 K LOC, closed), #385 (408 K LOC, 50 commits squashed/merged into the rc.11 release), and the open PR #387 (243 K LOC, 2 296 files, 1.0.0 GA target) — establish that the project's de-facto release process bundles whole release cycles into single mega-PRs.
-
-For a framework targeting banking / healthcare / legal compliance, "PR was peer reviewed" is a recurring claim in the audit trail. A 400 K-line diff cannot be reviewed in any meaningful sense by any reviewer, regardless of seniority. The claim therefore documents itself as fiction — and that fiction is the part regulators will pull on.
+Without an explicit sizing policy, a release cycle tends to arrive as one very large pull request. For a framework targeting banking / healthcare / legal compliance, "PR was peer reviewed" is a control recorded in the audit trail — and a six-figure-line diff cannot be reviewed in any meaningful sense by any reviewer, regardless of seniority. A control that the diff size makes impossible to exercise is the part regulators will pull on.
 
 ADR-0001 governance commits to ADR-bound architectural change but says nothing about PR sizing or release cadence. This ADR fills that gap.
 
@@ -16,8 +14,8 @@ ADR-0001 governance commits to ADR-bound architectural change but says nothing a
 
 1. **Reviewability.** Empirically, code-review effectiveness collapses past ~500 lines of diff and is nil past a few thousand. A peer-review claim that does not survive the empirical reality is a compliance hazard.
 2. **Bisection.** Squash-merging a release-PR of 50 commits into a single squash commit destroys `git bisect` granularity. When a regression lands, the "blame" target is a 400 K-LOC commit with no actionable owner.
-3. **Audit traceability.** PCI-DSS, SOX, and the EU CRA expect change-control documentation that links each defect to the discrete change that introduced it. Mega-PRs erase that link.
-4. **Reflection of intent.** A `chore:` title for a PR that introduces four new core modules (workflow, saga, codegen, service-discovery) — observed in PR #387 — undermines automated release-notes generation and signals to readers that the title is not load-bearing. Conventional Commits enforcement only works when the prefix matches the actual scope.
+3. **Audit traceability.** PCI-DSS, SOX, and the EU CRA expect change-control documentation that links each defect to the discrete change that introduced it. A release-sized PR erases that link.
+4. **Reflection of intent.** A `chore:` title on a PR that introduces several new core modules undermines automated release-notes generation and signals to readers that the title is not load-bearing. Conventional Commits enforcement only works when the prefix matches the actual scope.
 
 ## Decision
 
@@ -55,14 +53,14 @@ Anything else is a bundling violation and the release PR is rejected.
 Conventional Commits is already project policy. The strict additional rule for PRs:
 
 - A PR that introduces a new module under `src/<NewModule>/` or a new `src/<Existing>/<NewSubsystem>/` MUST use the `feat(...)` prefix.
-- `chore(...)`, `docs(...)`, `refactor(...)` prefixes MUST NOT be used on PRs that add features. F387.M2 (`chore:` on a PR introducing 4 core modules) is the canonical violation.
+- `chore(...)`, `docs(...)`, `refactor(...)` prefixes MUST NOT be used on PRs that add features.
 - The `(<scope>)` parenthetical MUST name the area: `feat(core)`, `feat(ext)`, `security(http)`, etc. Multiple scopes are allowed via slash separator: `feat(core/ext)`.
 
 CI lints titles against this rule using the existing Conventional Commits checker; the strict-prefix-on-new-modules check is added as a new rule in the same hook.
 
 ### 5. Release-PR-attempt-and-close events MUST be documented.
 
-PR #330 (closed without merge, replaced by PR #385) and PR #380 (290 K-LOC docs cleanup, closed) created audit gaps where regulators can ask "why was the release attempted then withdrawn?" and find no answer.
+A release PR that is opened and then closed without merging leaves an audit gap: a regulator can ask "why was the release attempted and then withdrawn?" and find no answer in the record.
 
 When a release PR is closed without merging, the maintainer who closes it MUST leave a comment on the PR explaining (a) the reason for closure, (b) what the replacement plan is, (c) whether any of the changes were salvaged into other PRs. CI cannot enforce a free-text policy, but the absence of such a comment is a release-process violation surfaced in the next release retrospective.
 
@@ -70,7 +68,7 @@ When a release PR is closed without merging, the maintainer who closes it MUST l
 
 Specifically:
 
-- PR #387 (or its successors) MUST be split before merge per §1. The currently-open 243 K-LOC mega-PR is not eligible for merge under this policy.
+- Every PR remaining between here and the tag MUST satisfy the §1 cap, split if necessary.
 - The release PR that lands the GA tag MUST satisfy §3.
 - All commits between the last `rc.x` tag and the GA tag MUST be reachable individually via `git log`, not collapsed into one squash.
 
@@ -81,9 +79,9 @@ Specifically:
 - Add `tools/ci/check-pr-size.sh` that runs `git diff --shortstat origin/main...HEAD` against the cap and exits non-zero on violation. Wire into the existing PR-checks workflow.
 - Extend the Conventional Commits title linter to flag `chore(...)` / `docs(...)` / `refactor(...)` titles on PRs that add files matching `src/[A-Z][a-zA-Z]*/` (new top-level modules) or `src/<existing>/[A-Z][a-zA-Z]*/` (new subsystems).
 
-### Phase 2: backlog audit (during rc.12 cycle)
+### Phase 2: backlog review (during rc.12 cycle)
 
-- Open the rc.11 release-PR meta-issue: enumerate the 50 commits in PR #385 and assign each to a reviewer for retrospective review. Findings flow back into the internal findings register under a rc.11 long-tail heading.
+- Enumerate the commits that merged as part of the rc.11 release PR and assign each to a reviewer, so the retrospective review the policy would have required happens after the fact.
 
 ### Phase 3: GA gate (before tagging 1.0.0)
 
@@ -96,13 +94,12 @@ Specifically:
 - Restores the credibility of "peer reviewed" as a documented control for regulated deployments.
 - Restores `git bisect` granularity for incident response.
 - Aligns release management with banking-grade change-control expectations.
-- Closes audit findings F33.M2, F385.M1, F385.M3, F387.M1 by establishing the policy whose absence those findings flagged.
 
 ### Negative
 
 - Adds CI friction; some legitimate large feature work will require more PR engineering (inter-PR dependency tracking via `Stacked PRs` or similar tooling).
-- The rc.12 retrospective on PR #385 is non-trivial work (50 commits to audit retrospectively).
-- PR #387 cannot merge as-is. Its outstanding work must be split.
+- The rc.12 retrospective review of the rc.11 commit range is non-trivial work.
+- In-flight PRs above the cap have to be split before they can merge.
 
 ### Neutral
 
@@ -110,10 +107,8 @@ Specifically:
 
 ## Tracking
 
-- Audit findings closed: F33.M2, F385.M1, F385.M3, F387.M1, F387.M2 (Conventional Commits scope alignment).
-- CI workflow: the `check-pr-size.sh` gate runs from `.github/workflows/ci.yml`
-  (the `.github/workflows/pr-checks.yml` filename referenced in earlier drafts
-  was never adopted; pr-size enforcement lives alongside the rest of CI).
+- CI workflow: the `check-pr-size.sh` gate runs from `.github/workflows/ci.yml`,
+  alongside the rest of CI.
 - Owner: release manager.
 - Blocking: 1.0.0 GA tag.
 

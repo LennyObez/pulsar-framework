@@ -5,11 +5,10 @@ declare(strict_types=1);
 /**
  * Assert the coverage floor from a Clover report.
  *
- * The CI workflow enforced this with an inline `php -r` snippet, which meant a
- * developer could only discover a coverage regression after pushing. The logic
- * lives here so `composer coverage:floor` runs exactly the same check locally,
- * and so the ramp documented for the rc.x window (QUAL-COV-01) is edited in one
- * place instead of inside a YAML string.
+ * The logic lives in a script rather than an inline `php -r` snippet inside the
+ * workflow so that `composer coverage:floor` runs exactly the same check
+ * locally — a coverage regression is visible before pushing — and so the ramp
+ * below is edited in one place instead of inside a YAML string.
  *
  * Usage:
  *   php tools/ci/assert-coverage-threshold.php [clover.xml] [threshold]
@@ -22,7 +21,7 @@ $cloverPath = $argv[1] ?? 'coverage/clover.xml';
 /**
  * Coverage floor for the current release step.
  *
- * QUAL-COV-01 (external audit) ramps this over the rc.x window:
+ * The floor ramps over the rc.x window:
  *   - rc.12 (now): 80 global, which brings the security path up to par.
  *   - rc.13: per-module gates at 95 for auth / security / crypto / audit.
  *   - 1.0.0 GA: 90 global.

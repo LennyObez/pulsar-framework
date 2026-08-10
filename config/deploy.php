@@ -59,7 +59,7 @@ return [
     | and assigned a severity level: 'fail' (blocking error), 'warn' (advisory),
     | or 'off' (disabled entirely).
     |
-    | F26.17: this template ships an EMPTY array. The framework provides
+    | This template ships an EMPTY array. The framework provides
     | sensible defaults for every built-in check via
     | `Pulsar\Config\DeployConfig::DEFAULT_CHECKS` — keep them by leaving
     | the array empty. To override a single check, list it explicitly:
@@ -70,10 +70,11 @@ return [
     |     ],
     |
     | Custom check names defined here are preserved alongside the framework
-    | defaults (F26.5). Env override:
+    | defaults. Env override:
     | DEPLOY_CHECK_{NAME}_SEVERITY=fail|warn|off (name is uppercased,
     | hyphens become underscores). `severity=off` via env is REFUSED in
-    | production (F26.3); use this config file instead.
+    | production — an environment variable is too easy to set by accident
+    | to be allowed to disable a deploy gate there; use this config file.
     |
     */
     'checks' => [],

@@ -33,7 +33,7 @@ return [
     | Session Security
     |--------------------------------------------------------------------------
     |
-    | F1.4: `cookie_secure` defaults to `true` (the secure-by-default
+    | `cookie_secure` defaults to `true` (the secure-by-default
     | choice for production), but is environment-aware:
     |   - `SESSION_COOKIE_SECURE` env var, when set, wins explicitly
     |     (accepts "true"/"false"/"1"/"0").
