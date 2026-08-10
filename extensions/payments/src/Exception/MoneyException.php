@@ -50,7 +50,7 @@ final class MoneyException extends RuntimeException
     }
 
     /**
-     * F21.8: integer overflow guard. Money arithmetic on 64-bit ints
+     * Integer overflow guard. Money arithmetic on 64-bit ints
      * silently wraps to a negative number on overflow, and a banking
      * framework cannot tolerate a `999_999_999_999 + 999_999_999_999`
      * that surfaces as a credit instead of a 500.

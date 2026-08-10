@@ -32,7 +32,7 @@ final class Application
     private array $commands = [];
 
     /**
-     * F3.16: lazily-resolvable commands. Each entry is a
+     * Lazily-resolvable commands. Each entry is a
      * (name, description, factory) triple. The command is built
      * only when `get($name)` matches its name — never at
      * registration time. Cuts CLI cold-start cost from O(N
@@ -71,7 +71,7 @@ final class Application
     }
 
     /**
-     * F3.16: register a command lazily — the factory closure
+     * Register a command lazily — the factory closure
      * runs only when the command is actually invoked. Pass
      * `$name` and `$description` so help / list output can
      * include the command without instantiating it.
@@ -98,10 +98,10 @@ final class Application
     /**
      * Get a command by name.
      *
-     * F3.16: when a name is registered lazily and not yet
-     * materialised, the factory runs here, the result is
-     * memoised in `$this->commands`, and the lazy entry is
-     * cleared so a second `get()` call does not double-build.
+     * When a name is registered lazily and not yet materialised,
+     * the factory runs here, the result is memoised in
+     * `$this->commands`, and the lazy entry is cleared so a
+     * second `get()` call does not double-build.
      *
      * @throws CommandNotFoundException If command not found
      */
@@ -126,15 +126,14 @@ final class Application
     /**
      * Get all registered commands.
      *
-     * F3.16: this only returns commands that have been
-     * materialised — either eagerly via `add()` or because
-     * `get($name)` already triggered their factory. Lazy-but-
-     * unbuilt entries do NOT appear here, since callers of
-     * `all()` (CoreRuntimeProbe, tests) iterate the values as
-     * full `CommandInterface` objects and do not tolerate the
-     * stub shape. Help / list rendering uses `allDescriptions()`
-     * instead so lazy entries still surface to the operator
-     * without paying instantiation cost.
+     * This only returns commands that have been materialised —
+     * either eagerly via `add()` or because `get($name)` already
+     * triggered their factory. Lazy-but-unbuilt entries do NOT
+     * appear here, since callers of `all()` (CoreRuntimeProbe,
+     * tests) iterate the values as full `CommandInterface` objects
+     * and do not tolerate the stub shape. Help / list rendering
+     * uses `allDescriptions()` instead so lazy entries still
+     * surface to the operator without paying instantiation cost.
      *
      * @return array<string, CommandInterface>
      */
@@ -144,7 +143,7 @@ final class Application
     }
 
     /**
-     * F3.16: name → description mapping for every registered
+     * Name → description mapping for every registered
      * command, lazy or eager. Used by `renderHelp()` and the
      * list command to render the catalogue without
      * materialising every lazy factory.
@@ -274,9 +273,9 @@ final class Application
         if ($descriptions !== []) {
             $output->writeln('Available commands:');
 
-            // F3.16: group by namespace using descriptions
-            // (covers both eager and lazy commands without
-            // materialising lazy factories).
+            // Group by namespace using descriptions: covers both
+            // eager and lazy commands without materialising lazy
+            // factories.
             $grouped = $this->groupDescriptions($descriptions);
 
             foreach ($grouped as $namespace => $commands) {
@@ -285,11 +284,11 @@ final class Application
                 }
 
                 foreach ($commands as $name => $description) {
-                    // F3.17: pad against the multi-byte character
-                    // count so UTF-8 names (accents, CJK) align
-                    // visually instead of by raw byte length —
-                    // sprintf's `%-20s` counts bytes, which off-sets
-                    // every extended-ASCII grapheme by one column.
+                    // Pad against the multi-byte character count so
+                    // UTF-8 names (accents, CJK) align visually
+                    // instead of by raw byte length — sprintf's
+                    // `%-20s` counts bytes, which off-sets every
+                    // extended-ASCII grapheme by one column.
                     $output->writeln(
                         '  ' . self::padNameForHelp($name, 20) . ' ' . $description,
                     );
@@ -321,7 +320,7 @@ final class Application
                 $output->writeln('Arguments:');
                 foreach ($arguments as $arg) {
                     $required = $arg['required'] ? '(required)' : '(optional)';
-                    // F3.17: see renderHelp for the rationale.
+                    // See renderHelp() for why this is not `%-20s`.
                     $output->writeln(
                         '  ' . self::padNameForHelp($arg['name'], 20) . ' ' . $arg['description'] . ' ' . $required,
                     );
@@ -342,7 +341,7 @@ final class Application
     }
 
     /**
-     * F3.16: group a flat name → description map into namespace
+     * Group a flat name → description map into namespace
      * buckets. Used by `renderHelp()` to render every command
      * (lazy or eager) without materialising lazy factories.
      *
@@ -365,7 +364,7 @@ final class Application
     }
 
     /**
-     * F3.17: pad a name to a target visual width using the
+     * Pad a name to a target visual width using the
      * multi-byte character count, not byte count. `sprintf`'s
      * `%-20s` counts bytes, so a name with accents or CJK
      * characters off-sets every multi-byte grapheme by one or

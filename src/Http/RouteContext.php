@@ -18,11 +18,11 @@ use WeakMap;
  * and route matching (which happens inside $next).
  *
  * Persistent-runtime workers (RoadRunner, FrankenPHP, Swoole) interleave
- * Fiber-suspended HTTP requests on the same worker process. A naive shared
- * `public ?string $pattern` field was overwritten by every concurrent
- * request, so request A's metrics could be tagged with request B's route
- * label and vice-versa (F24.2). Storage is now keyed by `Fiber::getCurrent()`
- * via a `WeakMap`, with a stable `$rootKey` for non-Fiber callers.
+ * Fiber-suspended HTTP requests on the same worker process. A shared
+ * `public ?string $pattern` field would be overwritten by every concurrent
+ * request, tagging request A's metrics with request B's route label and
+ * vice-versa. Storage is therefore keyed by `Fiber::getCurrent()` via a
+ * `WeakMap`, with a stable `$rootKey` for non-Fiber callers.
  *
  * Must be reset at the start of each request for long-lived worker safety.
  */

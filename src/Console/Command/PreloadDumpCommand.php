@@ -125,9 +125,9 @@ final class PreloadDumpCommand extends Command
         // so the framework's OWN src/ is the authoritative root — resolved from
         // this file, because in an installed application it lives under
         // vendor/pulsar/framework/src rather than <project>/src. The project's
-        // PSR-4 roots (composer.json) are unioned in; assuming a literal `src/`
-        // previously aborted this command outright for a project mapping
-        // "App\\": "app/".
+        // PSR-4 roots (composer.json) are unioned in, because a project is free
+        // to map "App\\": "app/" and assuming a literal `src/` would abort this
+        // command outright for such a layout.
         $candidateRoots = ProjectSourceRoots::discover($this->basePath);
         $candidateRoots[] = dirname(__DIR__, 2);
 

@@ -109,7 +109,6 @@ abstract class CompiledContainer implements AdvancedContainerInterface
 
         $lifetime = $this->lifetimeMap[$id] ?? Lifetime::Singleton;
 
-        // Check scoped instance cache
         if (($lifetime === Lifetime::RequestScope || $lifetime === Lifetime::TenantScope) && $this->scopeManager !== null) {
             $scopedInstance = $this->scopeManager->getScopedInstance($id, $lifetime);
             if ($scopedInstance !== null) {

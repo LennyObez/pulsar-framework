@@ -32,12 +32,11 @@ final class McpAccessGate implements McpAccessGateInterface
     private int $activeActions = 0;
 
     /**
-     * F32.4 / F26.3 family: track whether we've already logged the
-     * environment-gate pass for this gate's lifetime. Without
-     * this flag the audit warning would fire on every tool call,
-     * which both spams the log and obscures the actual pattern
-     * we want to surface (a single confirmation per process boot
-     * that the env-var gate was opened).
+     * Tracks whether the environment-gate pass has already been
+     * logged for this gate's lifetime. Without this flag the audit
+     * warning would fire on every tool call, which both spams the
+     * log and obscures the pattern worth surfacing: a single
+     * confirmation per process boot that the env-var gate opened.
      */
     private bool $environmentPassLogged = false;
 
@@ -125,15 +124,15 @@ final class McpAccessGate implements McpAccessGateInterface
     }
 
     /**
-     * F32.4 / F32.M2: environment-variable-only gates are
-     * vulnerable to the F11.1 family of env injections. We
-     * cannot prevent that at this layer (the operator owns the
-     * env), but we MUST emit a high-priority log entry so the
-     * pass shows up in centralised audit. Together with a
-     * second-factor recommendation in the docblock — operators
-     * SHOULD also pin the confirmation value via an
-     * out-of-band signed config file — this turns the gate
-     * from a silent flip into a recorded event the SOC can
+     * Environment-variable-only gates are vulnerable to env
+     * injection: anything that can set a variable in the server's
+     * environment can open the gate. That cannot be prevented at
+     * this layer (the operator owns the env), so the pass MUST
+     * emit a high-priority log entry and reach centralised audit.
+     * Combined with the second-factor recommendation carried in
+     * the log context — operators SHOULD also pin the confirmation
+     * value via an out-of-band signed config file — this turns the
+     * gate from a silent flip into a recorded event the SOC can
      * review.
      *
      * We log only once per gate lifetime to avoid drowning the

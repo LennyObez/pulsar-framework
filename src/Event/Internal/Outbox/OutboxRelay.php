@@ -18,7 +18,7 @@ use function substr;
  * Drains the {@see DatabaseOutboxPort} table and publishes pending
  * envelopes to the {@see IntegrationEventBusPort}.
  *
- * F387.7 / ADR-0027: this is the second half of the transactional
+ * ADR-0027: this is the second half of the transactional
  * outbox pattern. The producer side persists the envelope inside
  * the domain transaction; this relay reads pending rows after
  * commit and forwards them to the bus. On failure, the row stays

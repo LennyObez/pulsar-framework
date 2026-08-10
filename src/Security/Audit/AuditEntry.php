@@ -52,13 +52,13 @@ readonly class AuditEntry
      * Sentinel key replacing `metadata` when the supplied bag contains
      * non-encodable values (resources, closures, recursive structures).
      *
-     * F9.13: throwing `JsonException` out of `create()` poisoned the
-     * audit chain — the caller's mutex was released without a chain
-     * advance, the operator lost the audit trail for that operation,
-     * and downstream logic continued without a marker. The graceful
-     * degradation is to write a synthesised entry whose metadata only
-     * carries a serialisation-error indicator so the chain still
-     * advances and the incident itself is auditable.
+     * Letting `JsonException` escape `create()` would poison the audit
+     * chain: the caller's mutex is released without a chain advance,
+     * the operator loses the audit trail for that operation, and
+     * downstream logic continues with no marker. Instead a synthesised
+     * entry is written whose metadata carries only a serialisation-error
+     * indicator, so the chain still advances and the incident is itself
+     * auditable.
      */
     public const string SERIALIZATION_ERROR_KEY = 'serialization_error';
 
@@ -68,12 +68,12 @@ readonly class AuditEntry
      * The kid is always derived from the actual key bytes; callers cannot
      * accidentally omit or forge it.
      *
-     * F9.13: when `$metadata` contains values `json_encode` cannot
-     * handle (resources, closures, recursive structures), we no longer
-     * propagate `JsonException`. The entry is instead built with a
-     * `metadata` bag that records the serialisation failure, preserving
-     * the audit chain. Callers that need to flag this to operators can
-     * detect it via the {@see SERIALIZATION_ERROR_KEY} sentinel.
+     * When `$metadata` contains values `json_encode` cannot handle
+     * (resources, closures, recursive structures), `JsonException` is
+     * not propagated. The entry is built instead with a `metadata` bag
+     * that records the serialisation failure, preserving the audit
+     * chain. Callers that need to flag this to operators can detect it
+     * via the {@see SERIALIZATION_ERROR_KEY} sentinel.
      *
      * @param array<string, mixed> $metadata
      *
@@ -104,14 +104,13 @@ readonly class AuditEntry
             // computed over the sentinel, so verification on a future
             // read sees a self-consistent entry.
             //
-            // SEC-AUDIT-02: the previous code swallowed the JsonException
-            // silently, leaving the operator with no signal that an audit
-            // entry was emitted with degraded metadata. Trigger a
-            // user-warning so log scrapers, set_error_handler hooks, and
-            // observability sinks (Pulsar Studio, Sentry, Datadog) all see
-            // a measurable event each time metadata is dropped on the
-            // floor. This is observability, not failure — the audit chain
-            // remains self-consistent because the HMAC covers the sentinel.
+            // Swallowing the JsonException would leave the operator with
+            // no signal that an entry was written with degraded metadata.
+            // The user-warning gives log scrapers, set_error_handler
+            // hooks and observability sinks a measurable event each time
+            // metadata is dropped. This is observability, not failure —
+            // the chain stays self-consistent because the HMAC covers
+            // the sentinel.
             @trigger_error(
                 sprintf(
                     'AuditEntry::create() metadata serialization failed for action "%s" (event=%s): %s',

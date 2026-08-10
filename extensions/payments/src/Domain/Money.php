@@ -62,7 +62,7 @@ final readonly class Money
     {
         $this->assertSameCurrency($other);
 
-        // F21.8: both operands are non-negative ints (`Money::of()`
+        // Both operands are non-negative ints (`Money::of()`
         // rejects negative amounts), so the only overflow direction
         // is upward. Detect via `$a > PHP_INT_MAX - $b` before the
         // addition rather than after — a post-hoc `< 0` check would
@@ -105,7 +105,7 @@ final readonly class Money
             throw MoneyException::negativeMultiplier($factor);
         }
 
-        // F21.8: detect upward overflow before the multiplication.
+        // Detect upward overflow before the multiplication.
         // Special-case `$factor === 0` to avoid division-by-zero in
         // the bound check.
         if ($factor !== 0 && $this->amount > intdiv(PHP_INT_MAX, $factor)) {
@@ -123,7 +123,7 @@ final readonly class Money
      *
      * @throws MoneyException If basis points is negative or the
      *                       intermediate `amount * basisPoints` product
-     *                       would overflow PHP_INT_MAX (F21.8).
+     *                       would overflow PHP_INT_MAX.
      */
     #[NoDiscard]
     public function percentage(int $basisPoints, RoundingMode $mode = RoundingMode::HalfUp): self
@@ -132,7 +132,7 @@ final readonly class Money
             throw MoneyException::invalidBasisPoints($basisPoints);
         }
 
-        // F21.8: the implicit cast through float in
+        // The implicit cast through float in
         // `($amount * $basisPoints) / 10000` masks the overflow only
         // because the result is truncated to int by `applyRounding()`.
         // Guard the int product up-front so a 100 % rate (`basisPoints

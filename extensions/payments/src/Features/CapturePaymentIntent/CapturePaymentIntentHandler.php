@@ -34,11 +34,11 @@ use function strlen;
 /**
  * Capture-payment-intent slice handler.
  *
- * F22.1: matches the {@see CreatePaymentIntentHandler} structure
- * (Handler + Request + Result) so capture, cancel, refund and
- * create are now four self-contained vertical slices, each with
- * the same idempotency claim → provider call → commit → audit →
- * metrics orchestration.
+ * Mirrors the {@see CreatePaymentIntentHandler} structure
+ * (Handler + Request + Result): capture, cancel, refund and create
+ * are four self-contained vertical slices, each with the same
+ * idempotency claim → provider call → commit → audit → metrics
+ * orchestration.
  */
 final readonly class CapturePaymentIntentHandler
 {
@@ -53,7 +53,7 @@ final readonly class CapturePaymentIntentHandler
         private ClockInterface $clock,
         private PaymentsConfig $config,
         private SignedIdempotencyEnvelope $envelope,
-        // F13.9: optional tenant stamping. Single-tenant deployments
+        // Optional tenant stamping. Single-tenant deployments
         // leave it null; multi-tenant ones inject the active context.
         private ?TenantContext $tenantContext = null,
     ) {}
@@ -202,7 +202,7 @@ final readonly class CapturePaymentIntentHandler
             'status' => $charge->status->value,
         ];
 
-        // F13.9: stamp tenant id on the audit record when context is wired.
+        // Stamp tenant id on the audit record when context is wired.
         $tenant = $this->tenantContext?->tryGet();
         if ($tenant !== null) {
             $metadata['tenant_id'] = $tenant->id;

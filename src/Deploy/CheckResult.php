@@ -16,13 +16,13 @@ final readonly class CheckResult
 {
     /**
      * @param list<string> $recommendations Actionable suggestions for fixing the issue
-     * @param bool $overridden            F26.4: true when the severity was changed
+     * @param bool $overridden            True when the severity was changed
      *                                    by a SeverityOverrideCheck decorator
      *                                    (config or env). Surfaces the override
      *                                    in reports + audit so an operator
      *                                    cannot silently downgrade a failing
      *                                    check.
-     * @param CheckSeverity|null $originalSeverity F26.4: severity reported by
+     * @param CheckSeverity|null $originalSeverity Severity reported by
      *                                    the inner check before the override.
      *                                    Null when no override happened.
      */

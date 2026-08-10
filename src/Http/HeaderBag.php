@@ -48,7 +48,7 @@ final readonly class HeaderBag implements IteratorAggregate
      * RFC 7230 §3.2 token characters: ASCII letters, digits and a fixed set of
      * punctuation. Anything else (whitespace, CR, LF, NUL, non-ASCII) in a
      * header NAME would either confuse downstream proxies or open the door
-     * to header smuggling, so the constructor refuses it (F2.6).
+     * to header smuggling, so the constructor refuses it.
      */
     private const string HEADER_NAME_PATTERN = '/^[A-Za-z0-9!#$%&\'*+\-.^_`|~]+$/';
 

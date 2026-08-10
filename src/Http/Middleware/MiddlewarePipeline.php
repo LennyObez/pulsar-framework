@@ -227,7 +227,7 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
         if ($this->container !== null && $this->container->has($middleware)) {
             $resolved = $this->container->get($middleware);
 
-            // F2.15: prefer an explicit type guard over `assert()`. With
+            // An explicit type guard, not `assert()`. With
             // `zend.assertions=-1` (typical prod) the assertion compiles
             // out and a non-conforming binding would silently slip into
             // the pipeline, exploding deeper inside `process()`. A real

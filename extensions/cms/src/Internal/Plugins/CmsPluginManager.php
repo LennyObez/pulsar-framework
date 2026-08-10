@@ -461,19 +461,19 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
      * 3. PSR-4 autoload mappings from plugin manifest
      * 4. Fallback: direct file require from src/ directory
      *
-     * SEC-EXT-02 (external audit): when `cms.security.require_signed_plugins`
-     * is enabled, this method refuses to load a plugin whose signature
-     * was not verified at install time. The verifier
-     * ({@see PluginProvenanceVerifier}) computes the SHA-256 archive
-     * digest and validates an Ed25519 detached signature against the
-     * `trusted_public_keys` allowlist; if either step fails, the install
-     * marks `signatureVerified=false` and the load path here REFUSES to
-     * boot the entry point. Without this gate the verifier existed but
-     * was advisory — a tampered plugin still loaded.
+     * When `cms.security.require_signed_plugins` is enabled, this method
+     * refuses to load a plugin whose signature was not verified at
+     * install time. The verifier ({@see PluginProvenanceVerifier})
+     * computes the SHA-256 archive digest and validates an Ed25519
+     * detached signature against the `trusted_public_keys` allowlist; if
+     * either step fails, the install marks `signatureVerified=false` and
+     * the load path here REFUSES to boot the entry point. Without this
+     * gate the verifier's verdict is advisory only and a tampered plugin
+     * still loads.
      */
     private function loadPluginInstance(InstalledCmsPlugin $plugin): ?CmsPluginInterface
     {
-        // SEC-EXT-02 — production fail-closed when signature enforcement is on.
+        // Fail closed when signature enforcement is on.
         if ($this->config->requireSignedPlugins && !$plugin->signatureVerified) {
             $this->logger->error('Plugin refused to load: signature verification failed or not performed', [
                 'slug' => $plugin->slug,

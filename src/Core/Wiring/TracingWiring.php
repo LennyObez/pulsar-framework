@@ -53,7 +53,7 @@ final readonly class TracingWiring implements ServiceWiringInterface
 
         $traceContextParser = new W3CTraceContextParser();
 
-        // F8.7: inbound `traceparent` is honoured only from a trusted upstream.
+        // Inbound `traceparent` is honoured only from a trusted upstream.
         // Build the TrustedProxy from deploy.trusted_proxies (same source as
         // SecurityWiring — which runs after this wiring, so the container
         // binding is not available here; TrustedProxy is a stateless

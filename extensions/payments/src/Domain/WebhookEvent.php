@@ -33,7 +33,7 @@ final readonly class WebhookEvent
     /**
      * Build from a decoded JSON array.
      *
-     * F22.13: validates the payload shape explicitly so a partial
+     * Validates the payload shape explicitly so a partial
      * deserialisation (e.g. `{"id": null, "data": "junk"}`) fails
      * fast at the boundary instead of constructing a domain object
      * with empty/invalid fields that would only break later in the
@@ -60,17 +60,15 @@ final readonly class WebhookEvent
         }
         $type = $rawType;
 
-        // F22.7: cast to int before concatenation. The previous
-        // `?? 0` short-circuit only protected the missing-key case;
-        // a non-numeric `created_at` ("garbage", "1700-01-01", or any
-        // attacker-controlled JSON value) flowed through as a string
-        // and reached `new DateTimeImmutable('@<string>')`, which on
-        // PHP 8.3+ raises `DateMalformedStringException` and surfaces
-        // as 500 because the upstream handler only catches
-        // JsonException | ValueError. The (int) cast normalises any
-        // non-numeric value to 0 (Unix epoch — recognisable as
-        // malformed) and keeps the constructor signature in the
-        // safe `int|numeric-string` shape it expects.
+        // Coerce `created_at` to an int before it reaches the
+        // constructor. A non-numeric value ("garbage", "1700-01-01",
+        // or any attacker-controlled JSON) would otherwise arrive at
+        // `new DateTimeImmutable('@<string>')`, which raises
+        // `DateMalformedStringException` on PHP 8.3+ — a type the
+        // upstream handler does not catch, so it escapes as a 500.
+        // Coercing to 0 yields the Unix epoch, recognisable as
+        // malformed, and keeps the constructor in the
+        // `int|numeric-string` shape it expects.
         /** @var mixed $createdAtRaw */
         $createdAtRaw = $payload['created_at'] ?? 0;
         $timestamp = is_numeric($createdAtRaw) ? (int) $createdAtRaw : 0;

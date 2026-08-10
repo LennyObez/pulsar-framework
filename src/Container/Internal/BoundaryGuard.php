@@ -167,12 +167,11 @@ final readonly class BoundaryGuard implements ContainerInterface
 
     private function isCompositionRoot(string $fqcn): bool
     {
-        // Delegated rather than restated. This guard used to carry its own copy of the
-        // list, one of three that had already drifted: the static boundary checker
-        // treated Pulsar\Core\Boot\ as a root and this one did not, so a class there
-        // passed the gate and would have been refused when it ran. The local copy also
-        // prefix-matched its exact class names, quietly exempting anything starting with
-        // `Pulsar\Core\Kernel` — KernelHandler included.
+        // Delegated, never restated. A second copy of the composition-root list would
+        // drift from the static boundary checker's, and the two disagreeing means a
+        // class can pass the static gate and then be refused at runtime. Membership is
+        // exact and never a prefix match: prefix-matching `Pulsar\Core\Kernel` would
+        // silently exempt every class whose name merely starts with it.
         return CompositionRoots::contains($fqcn);
     }
 

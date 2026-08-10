@@ -26,7 +26,7 @@ use function trim;
  * the subdomain by stripping the configured default domain from
  * the request host, then maps it to extension scopes.
  *
- * SEC-IN-03: X-Forwarded-Host is only honored when the request originates
+ * X-Forwarded-Host is only honored when the request originates
  * from a trusted proxy (per TrustedProxy::isTrustedSource). Otherwise the
  * authoritative host comes from the request URI's Host header. Without the
  * gate, any client could spoof the routing target by sending an arbitrary
@@ -124,7 +124,7 @@ final readonly class ConfigDomainResolver implements DomainResolverInterface
     }
 
     /**
-     * SEC-IN-03: decide whether to trust forwarded headers from this request.
+     * Decide whether to trust forwarded headers from this request.
      *
      * Returns true only when (a) a TrustedProxy chain is configured and (b) the
      * direct REMOTE_ADDR is in that chain. Without a configured TrustedProxy

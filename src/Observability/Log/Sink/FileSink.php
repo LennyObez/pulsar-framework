@@ -22,14 +22,13 @@ use function sprintf;
  *
  * Creates the directory if missing. Uses LOCK_EX for concurrent safety.
  *
- * F4.5: log files routinely contain accidental PII / PHI / credentials
- * leaked through error context, request bodies surfaced in stack traces,
- * etc. The previous defaults (`0o775` directory, default umask file)
- * exposed those records to every system user. We now create the
- * directory `0o750` (owner rwx, group rx, world none) and the file
- * `0o640` (owner rw, group r, world none). Operators wanting tighter
- * `0o600` files can enforce that via the host umask; we cannot easily
- * downgrade further without breaking shared-group log collection.
+ * Log files routinely contain accidental PII / PHI / credentials leaked
+ * through error context or through request bodies surfaced in stack traces,
+ * so nothing here is ever world-readable: the directory is created `0o750`
+ * (owner rwx, group rx, world none) and the file `0o640` (owner rw, group r,
+ * world none). Operators wanting tighter `0o600` files can enforce that via
+ * the host umask; tightening further here would break shared-group log
+ * collection.
  */
 final readonly class FileSink implements LogSinkInterface
 {
@@ -55,10 +54,9 @@ final readonly class FileSink implements LogSinkInterface
         $directory = dirname($this->path);
 
         if (!is_dir($directory)) {
-            // F4.4: previously the mkdir return was ignored, so a
-            // sink configured with an unwritable parent silently
-            // dropped every entry. Throw so Logger::log can hit its
-            // fallback path (F4.2).
+            // An unwritable parent directory must not silently drop
+            // every entry: throw so Logger::log() reaches its
+            // last-resort fallback path.
             if (!@mkdir($directory, self::DIRECTORY_MODE, true) && !is_dir($directory)) {
                 throw LogException::sinkWriteFailed(
                     self::class,
@@ -71,7 +69,7 @@ final readonly class FileSink implements LogSinkInterface
 
         $line = $this->formatter->format($entry);
 
-        // F4.4: file_put_contents returns false on any I/O failure
+        // file_put_contents returns false on any I/O failure
         // (disk full, permission denied, locked by another process
         // beyond our LOCK_EX wait, etc.). Surface the failure rather
         // than silently dropping the entry.

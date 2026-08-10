@@ -139,7 +139,7 @@ final class MutableLogger implements LoggerInterface
             }
         }
 
-        // Mirror Logger::log() F4.2 durability: when every sink dropped the
+        // Mirror Logger::log() durability: when every sink dropped the
         // entry (or none were configured), persist it through the fallback
         // emitter so the audit trail is not lost. MutableLogger is the
         // persistent-worker variant where audit durability matters most, so

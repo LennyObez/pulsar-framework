@@ -42,7 +42,7 @@ final readonly class DiagnosticsWiring implements ServiceWiringInterface
             return;
         }
 
-        // F8.1: gate `/_pulsar/diagnostics` behind a Bearer-token guard.
+        // Gate `/_pulsar/diagnostics` behind a Bearer-token guard.
         // Without a configured `PULSAR_DIAGNOSTICS_TOKEN`, the guard refuses
         // every request — diagnostics are off-by-default unless an operator
         // sets the token explicitly. Token comparison is constant-time.

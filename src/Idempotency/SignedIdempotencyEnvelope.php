@@ -31,7 +31,7 @@ use function substr;
 /**
  * Signed integrity envelope for cached idempotency payloads.
  *
- * F21.3: a DB-backed idempotency store with write access compromise can
+ * A DB-backed idempotency store with write access compromise can
  * substitute the cached result for an idempotency key and replay a forged
  * response on the next idempotent retry. The envelope binds each payload
  * to the idempotency key it was generated for via a libsodium BLAKE2b

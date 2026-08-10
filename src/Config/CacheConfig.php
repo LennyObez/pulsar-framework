@@ -103,7 +103,6 @@ final readonly class CacheConfig implements ReportsUnknownKeys
             $pools[$poolName] = self::buildPoolConfig($poolName, $poolData);
         }
 
-        // Ensure default pool exists
         if (!isset($pools[$defaultPool])) {
             $pools[$defaultPool] = new CachePoolConfig(name: $defaultPool);
         }

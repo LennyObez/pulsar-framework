@@ -18,9 +18,9 @@ use WeakMap;
  *
  * Persistent-runtime workers (RoadRunner, FrankenPHP, Swoole) interleave
  * Fiber-suspended HTTP requests on the same worker process. A naive
- * `private ?RequestContext $context` field was shared across every Fiber on
- * the worker, so request A's correlation/causation IDs would leak into
- * request B's audit trail and vice-versa (F25.2).
+ * `private ?RequestContext $context` field would be shared across every Fiber
+ * on the worker, so request A's correlation/causation IDs would leak into
+ * request B's audit trail and vice-versa.
  *
  * Storage is keyed by `Fiber::getCurrent()` — or a stable `$rootKey` for
  * code running outside any Fiber — using a `WeakMap`. When a Fiber

@@ -29,9 +29,9 @@ use function substr;
  * Storage hashing: API keys are stored as a keyed BLAKE2b digest
  * (HmacInterface). The pepper is injected at construction time and
  * derived from the master key via the KDF subkey for the cms.api_key
- * domain. SHA-256 was used in earlier RC builds (MED-5); switching to
- * a keyed hash means a hash leak alone is insufficient to brute-force
- * raw keys, even though API keys themselves carry 256 bits of entropy.
+ * domain. A keyed hash — rather than a bare digest — means that leaking
+ * the stored hashes is on its own insufficient to brute-force the raw
+ * keys, even though API keys themselves carry 256 bits of entropy.
  */
 #[Internal(reason: 'CMS API key middleware; implementation detail')]
 final readonly class CmsApiKeyMiddleware implements MiddlewareInterface

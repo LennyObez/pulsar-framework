@@ -424,9 +424,9 @@ final readonly class CmsCoreServiceProvider
                 new ClientFingerprintResolver($securityConfig, $hmacKey),
             );
 
-            // CmsApiKeyMiddleware: keyed BLAKE2b hash for API key storage
-            // (MED-5). Pepper is derived from the master key via subkey 15
-            // so the on-disk hash cannot be brute-forced offline.
+            // CmsApiKeyMiddleware: keyed BLAKE2b hash for API key storage.
+            // Pepper is derived from the master key via subkey 15 so the
+            // on-disk hash cannot be brute-forced offline.
             if (
                 $container->has(HmacInterface::class)
                 && $container->has(ApiKeyRepositoryInterface::class)

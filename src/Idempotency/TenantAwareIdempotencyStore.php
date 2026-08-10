@@ -17,13 +17,13 @@ use function sprintf;
  * Without this layer, two tenants who chose the same logical idempotency
  * key collide on the same row in the underlying store. Tenant A's
  * `'POST /charges 17'` and tenant B's `'POST /charges 17'` would either
- * be served the same cached result (cross-tenant data exposure, F21.16)
- * or one tenant's call would be silently rejected as a parameter
- * mismatch when the parameters hash differs.
+ * be served the same cached result (cross-tenant data exposure) or one
+ * tenant's call would be silently rejected as a parameter mismatch when
+ * the parameters hash differs.
  *
  * The decorator owns no state — every operation forwards to an underlying
  * `IdempotencyStoreInterface` after rewriting the key. The tenant
- * identifier is read from the active `TenantContext` (per-Fiber, F13.1).
+ * identifier is read from the active `TenantContext` (per-Fiber).
  * If no tenant is currently resolved the keys flow through unchanged so
  * single-tenant deployments and bootstrap-time calls still work.
  *

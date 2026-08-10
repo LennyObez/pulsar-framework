@@ -49,8 +49,9 @@ final class I18nExtractCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         // Scan the project's PSR-4 source roots (composer.json) rather than an
-        // assumed `src/`: a project mapping "App\\": "app/" has no src/ directory
-        // and previously extracted nothing at all, silently.
+        // assumed `src/`. A project mapping "App\\": "app/" has no src/ directory,
+        // and an extractor pointed at a directory that does not exist reports no
+        // keys without reporting an error — the worst kind of failure here.
         $sourceRoots = ProjectSourceRoots::discover($this->projectRoot);
         /** @var string $outputPath */
         $outputPath = $input->getOption('output', 'var/i18n/extracted.json');

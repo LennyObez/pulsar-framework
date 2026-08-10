@@ -15,7 +15,7 @@ use function time;
  * Suitable for single-process deployments and testing; for multi-process
  * deployments, use SqliteRateLimiter or a store-backed implementation.
  *
- * F7.5: long-running workers (Roadrunner / Swoole / FrankenPHP) call
+ * Long-running workers (Roadrunner / Swoole / FrankenPHP) call
  * `hit()` once per request, each potentially with a unique key (per-IP
  * + per-user composite). Without a global GC pass, expired entries
  * for keys that never call `hit()` again accumulate indefinitely. We
@@ -27,7 +27,7 @@ use function time;
 final class RateLimiter implements RateLimiterInterface
 {
     /**
-     * F7.5: how often to sweep expired entries across every key.
+     * How often to sweep expired entries across every key.
      * 60 seconds keeps the worst-case overshoot at one window-length
      * worth of dead entries while making the GC pass amortised over
      * thousands of requests.
@@ -103,7 +103,7 @@ final class RateLimiter implements RateLimiterInterface
     }
 
     /**
-     * F7.5: drop every expired entry across the whole `$hits` map.
+     * Drop every expired entry across the whole `$hits` map.
      * Runs at most once per `GC_INTERVAL_SECONDS` so the cost
      * amortises over thousands of `hit()` calls.
      */

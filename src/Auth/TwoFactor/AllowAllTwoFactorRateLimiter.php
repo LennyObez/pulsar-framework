@@ -10,7 +10,7 @@ use Pulsar\Api\Internal;
 /**
  * Explicit "no rate limit" placeholder for dev/test contexts.
  *
- * SEC-2FA-01: TwoFactorManager and TotpVerifier are fail-closed when no rate
+ * TwoFactorManager and TotpVerifier are fail-closed when no rate
  * limiter is wired, which is correct for production but breaks development
  * setups that need to exercise the verification path without configuring a
  * real bucket. Wiring this class explicitly makes the intent visible: "I

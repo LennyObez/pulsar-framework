@@ -50,7 +50,7 @@ final readonly class TrustedProxy
      * being returned, so downstream consumers (rate limiters, audit
      * loggers) cannot be poisoned with malformed values like
      * `"); DROP TABLE"` or huge user-supplied strings injected into
-     * `X-Forwarded-For` (MED-1 / CWE-20).
+     * `X-Forwarded-For` (CWE-20).
      */
     public function resolveClientIp(ServerRequestInterface $request): string
     {
@@ -101,7 +101,7 @@ final readonly class TrustedProxy
     }
 
     /**
-     * F8.7: public predicate exposing the same trust evaluation that
+     * Public predicate exposing the same trust evaluation that
      * drives `resolveClientIp()`. `TracingMiddleware` consults this
      * to decide whether an inbound `traceparent` header is honoured
      * (only from a trusted upstream) or discarded (untrusted client

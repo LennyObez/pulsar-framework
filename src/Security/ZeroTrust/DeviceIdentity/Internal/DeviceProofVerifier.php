@@ -19,8 +19,9 @@ use function time;
 /**
  * Verifies cryptographic device proofs using challenge-response with KeyRing-based signing.
  *
- * Challenges include a nonce and timestamp for replay safety (Finding D).
- * All crypto operations go through KeyRingInterface (Finding B).
+ * Challenges include a nonce and timestamp for replay safety.
+ * All crypto operations go through KeyRingInterface, so this class never
+ * holds key material of its own.
  */
 #[Internal]
 final class DeviceProofVerifier
@@ -86,7 +87,7 @@ final class DeviceProofVerifier
 
         $now = time();
 
-        // Check challenge freshness (replay safety - Finding D)
+        // Check challenge freshness (replay safety)
         $challengeAge = $now - (int) $timestamp;
 
         if ($challengeAge < 0 || $challengeAge > $this->challengeMaxAge) {

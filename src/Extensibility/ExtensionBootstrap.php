@@ -392,16 +392,15 @@ final class ExtensionBootstrap
             $scopedContainer = $this->scopeContainer($container, $name);
 
             try {
-                // F3.4: prefer container resolution so service
-                // providers can declare constructor dependencies
-                // (logger, config, clock). The previous `new
-                // $providerClass()` direct call hardcoded the
-                // zero-argument-constructor convention into the
-                // bootstrap layer. We fall back to direct instantiation
-                // when the container cannot resolve the class — that
-                // covers extensions whose providers genuinely take
-                // no dependencies + the bootstrap path that runs
-                // before the container is fully wired.
+                // Prefer container resolution so service providers can
+                // declare constructor dependencies (logger, config,
+                // clock); calling `new $providerClass()` directly would
+                // hardcode a zero-argument-constructor convention into
+                // the bootstrap layer. Direct instantiation stays as a
+                // fallback for when the container cannot resolve the
+                // class — providers that genuinely take no dependencies,
+                // and the bootstrap path that runs before the container
+                // is fully wired.
                 foreach ($extension->providers() as $providerClass) {
                     $provider = self::instantiateProvider($providerClass, $container);
 
@@ -555,20 +554,21 @@ final class ExtensionBootstrap
     /**
      * Instantiate an extension service provider via the container.
      *
-     * ARCH-EXT-02 (external audit): the previous implementation fell back to
-     * `new $providerClass()` whenever container resolution failed. That
-     * fallback let providers escape the DI graph silently — a misconfigured
-     * provider that should have raised a binding error during boot was
-     * instead constructed with default state, masking the wiring bug until
-     * later (often in production). The extension-first contract requires
-     * every provider to flow through the container; if the container cannot
-     * resolve the class, the only acceptable answer is a clear failure that
-     * points the operator at the missing binding.
+     * The extension-first contract requires every provider to flow through
+     * the container. An unconditional `new $providerClass()` fallback on
+     * resolution failure would let providers escape the DI graph silently:
+     * a misconfigured provider that should raise a binding error at boot
+     * would instead be constructed with default state, hiding the wiring
+     * bug until it surfaces in production. So the fallback below is
+     * deliberately narrow — it covers only constructors the container would
+     * have autowired anyway.
      *
-     * The Pulsar container autowires zero-argument constructors out of the
-     * box, so existing providers continue to work unchanged. Providers with
-     * constructor dependencies must be bound explicitly in their extension's
-     * own composition root (or made autowire-friendly).
+     * Zero-argument constructors are autowired out of the box, so simple
+     * providers work with no explicit binding. A provider with required
+     * constructor dependencies must be bound in its extension's own
+     * composition root (or made autowire-friendly); if it is not, this
+     * method fails with an error naming the missing binding rather than
+     * papering over it.
      *
      * @param class-string<ServiceProviderInterface> $providerClass
      *
@@ -582,7 +582,7 @@ final class ExtensionBootstrap
         try {
             $resolved = $container->get($providerClass);
         } catch (Throwable $containerError) {
-            // F3.4: fall back to direct instantiation for providers that declare
+            // Fall back to direct instantiation for providers that declare
             // no required constructor dependencies — the common case, and the
             // path that runs before the container is fully wired. An
             // autowire-friendly (zero-argument) provider must work without an

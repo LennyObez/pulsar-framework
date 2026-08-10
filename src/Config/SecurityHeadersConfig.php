@@ -29,8 +29,8 @@ final readonly class SecurityHeadersConfig implements ReportsUnknownKeys
      *
      * Includes a restrictive default Content-Security-Policy and the three
      * Cross-Origin isolation headers so that a misconfigured `CspConfig` /
-     * `CrossOriginConfig` can never silently strip these protections (F1.3,
-     * F30.4). When a richer `CspConfig` is enabled, `effectiveHeaders()`
+     * `CrossOriginConfig` can never silently strip these protections.
+     * When a richer `CspConfig` is enabled, `effectiveHeaders()`
      * overrides the baseline `Content-Security-Policy` value with the
      * configured one. HSTS is intentionally NOT in the baseline because
      * RFC 6797 §7.2 forbids emitting it over plaintext HTTP — the

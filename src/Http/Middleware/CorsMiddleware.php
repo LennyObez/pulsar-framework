@@ -25,7 +25,7 @@ use function strtoupper;
  * with `Access-Control-Allow-Credentials: true`, because the wildcard
  * defeats the per-origin scoping that credentials require. A
  * misconfigured app would otherwise leak authenticated responses to
- * any origin (HIGH-5 / CWE-942).
+ * any origin (CWE-942).
  */
 final readonly class CorsMiddleware implements MiddlewareInterface
 {

@@ -16,7 +16,7 @@ use function strlen;
 /**
  * RFC 5987 / 6266 Content-Disposition header value builder.
  *
- * SEC-IN-02: building `Content-Disposition` with `sprintf('attachment; filename="%s"',
+ * Building `Content-Disposition` with `sprintf('attachment; filename="%s"',
  * $name)` and a basename() of an arbitrary file path lets an attacker who controls
  * the filename inject CRLF (response splitting), embed double-quotes (break out of
  * the quoted-string and add their own parameters), or hide Unicode in a header that

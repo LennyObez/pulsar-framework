@@ -20,7 +20,7 @@ use function trim;
  * Fingerprint data is NEVER stored persistently; it is evaluated and discarded.
  * Confidence is capped at 0.3 because fingerprints are easily spoofed.
  *
- * All hashing via KeyRingInterface (Finding B).
+ * All hashing goes through KeyRingInterface.
  */
 #[Internal]
 final readonly class FingerprintCollector

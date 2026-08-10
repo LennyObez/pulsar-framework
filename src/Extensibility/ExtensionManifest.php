@@ -263,11 +263,11 @@ final readonly class ExtensionManifest
     }
 
     /**
-     * F3.11: return the version constraint declared for a specific
-     * dependency in `requires.extensions[name]`. Returns null when
-     * the extension is not declared as a dependency at all, or when
-     * the dependency has no version constraint (historical "any
-     * version" default).
+     * Return the version constraint declared for a specific dependency
+     * in `requires.extensions[name]`. Returns null when the extension
+     * is not declared as a dependency at all, and also when it is
+     * declared without a constraint — both cases mean "any version",
+     * so callers must not read null as "not a dependency".
      */
     public function getDependencyVersionConstraint(string $extensionName): ?string
     {

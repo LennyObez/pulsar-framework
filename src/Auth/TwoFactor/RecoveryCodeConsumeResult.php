@@ -9,12 +9,11 @@ use Pulsar\Api\Api;
 /**
  * Result of {@see RecoveryCodeVerifier::verifyAndConsume()}.
  *
- * F12.4: forces the caller to commit to consumption. Reading
- * `matchedIndex` without persisting `remainingCodes` leaves the
- * caller stuck with the same backdoor (every recovery code stays
- * valid forever) — the verify-and-consume contract therefore
- * exposes both at once so a code review of the consume path
- * trivially detects "matched but never persisted" mistakes.
+ * Carries the match and the post-consumption state together so the
+ * caller has to commit to both. Reading `matchedIndex` without
+ * persisting `remainingCodes` keeps every recovery code valid
+ * forever; pairing them makes a "matched but never persisted" bug
+ * visible in review of the consume path.
  * @api
  */
 #[Api(since: '1.0.0')]

@@ -57,7 +57,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
     private const int DIR_PERMISSIONS = 0o750;
 
     /**
-     * F9.14: audit logs are forensic records — only the application
+     * Audit logs are forensic records — only the application
      * user (and a security-team operator with sudo) should be able to
      * read them. The file is chmod'd to `0o600` on first write,
      * tighter than the log-aggregator-friendly `0o640` used by
@@ -72,8 +72,9 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
      * entry. Sized at 64 KiB so a single audit record cannot legitimately
      * exceed it (entries are JSON Lines, well under that limit) and so
      * the read window cannot truncate the last line into something the
-     * parser would read as malformed (F24.3 fix-2). The legacy 8 KiB
-     * window made truncation possible on large metadata payloads.
+     * parser would report as malformed. A window narrower than the
+     * largest legitimate entry turns a big metadata payload into a
+     * false corruption verdict.
      */
     private const int TAIL_READ_SIZE = 65_536;
 
@@ -84,11 +85,11 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
         private readonly bool $fsync = false,
         ?LoggerInterface $logger = null,
     ) {
-        // F24.3 fix-1: corruption diagnostics flow through PSR-3 so
-        // operators can route them to the same structured pipeline as
-        // every other security warning (incident reporter, ELK, etc.)
-        // instead of being dumped to STDERR. NullLogger by default keeps
-        // existing wiring working unchanged.
+        // Corruption diagnostics flow through PSR-3 so operators can
+        // route them to the same structured pipeline as every other
+        // security warning (incident reporter, log aggregator) rather
+        // than to STDERR. NullLogger by default keeps callers that pass
+        // no logger working.
         $this->logger = $logger ?? new NullLogger();
     }
 
@@ -119,7 +120,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
             }
         }
 
-        // F9.14: clamp permissions on first write so the audit log is
+        // Clamp permissions on first write so the audit log is
         // not world-readable under default umask. `@` swallows the
         // chmod warning on systems where the call is no-op (Windows).
         if ($isNewFile) {
@@ -136,10 +137,10 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
      * contract.
      *
      * Note: callers that hold tamper-evidence guarantees should consume
-     * {@see chainState()} instead of `lastHmac()` alone — the legacy
-     * `null` shape collapses "empty, fresh chain" and "non-empty,
-     * corrupted chain" together, but `chainState()` distinguishes them
-     * so the logger can fail closed on the second case (F24.3).
+     * {@see chainState()} instead of `lastHmac()` alone — the `null`
+     * shape collapses "empty, fresh chain" and "non-empty, corrupted
+     * chain" together, but `chainState()` distinguishes them so the
+     * logger can fail closed on the second case.
      */
     #[Override]
     public function lastHmac(): ?string
@@ -148,10 +149,10 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
     }
 
     /**
-     * F24.3: report whether the chain is empty, healthy, or corrupted.
+     * Report whether the chain is empty, healthy, or corrupted.
      * `lastHmac()` collapses the last two into `null`; this method
      * separates them so `AuditLogger` can refuse to append to an
-     * unverifiable chain instead of silently re-seeding over corruption.
+     * unverifiable chain instead of re-seeding over corruption.
      */
     #[Override]
     public function chainState(): AuditChainState

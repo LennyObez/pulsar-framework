@@ -192,7 +192,7 @@ final readonly class Response
      * Create a redirect response.
      *
      * Validates the URL against three layered rules to prevent open-redirect
-     * abuse and CRLF header smuggling (F2.5 / F2.6):
+     * abuse and CRLF header smuggling:
      *
      * 1. The URL must be non-empty and contain no control characters
      *    (NUL, CR, LF, ASCII < 0x20).

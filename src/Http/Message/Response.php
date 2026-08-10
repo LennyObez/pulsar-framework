@@ -82,7 +82,7 @@ class Response implements ResponseInterface
         $this->headerNames = [];
 
         foreach ($headers as $name => $value) {
-            // SEC-IN-01: validate name and value at construction so a malformed
+            // Validate name and value at construction so a malformed
             // header cannot reach the SAPI emit path.
             HeaderValidator::assertValidName((string) $name);
             HeaderValidator::assertValidValue($value);
@@ -195,7 +195,7 @@ class Response implements ResponseInterface
 
         $headers = [
             'Content-Type' => $contentType,
-            // SEC-IN-02: RFC 5987 / 6266 canonical form, refuses CRLF/quote/control injection.
+            // RFC 5987 / 6266 canonical form, refuses CRLF/quote/control injection.
             'Content-Disposition' => ContentDispositionBuilder::attachment($filename),
         ];
 
@@ -235,7 +235,7 @@ class Response implements ResponseInterface
 
         $headers = [
             'Content-Type' => $contentType,
-            // SEC-IN-02: see download() — RFC 5987/6266 canonical form.
+            // See download() — RFC 5987/6266 canonical form.
             'Content-Disposition' => ContentDispositionBuilder::inline(basename($path)),
         ];
 
@@ -440,7 +440,7 @@ class Response implements ResponseInterface
     #[Override]
     public function withHeader(string $name, $value): static
     {
-        // SEC-IN-01: refuse CRLF/NUL injection at the public PSR-7 boundary.
+        // Refuse CRLF/NUL injection at the public PSR-7 boundary.
         HeaderValidator::assertValidName($name);
         /** @var list<string> $values */
         $values = is_array($value) ? array_values($value) : [$value];
@@ -458,7 +458,7 @@ class Response implements ResponseInterface
     #[Override]
     public function withAddedHeader(string $name, $value): static
     {
-        // SEC-IN-01: same validation as withHeader for the additive variant.
+        // Same validation as withHeader for the additive variant.
         HeaderValidator::assertValidName($name);
         /** @var list<string> $values */
         $values = is_array($value) ? array_values($value) : [$value];

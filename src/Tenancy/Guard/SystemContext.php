@@ -22,7 +22,7 @@ use WeakMap;
  * entered and exited. The active flag is keyed by `Fiber::getCurrent()`
  * so that one Fiber entering system context does not cause concurrent
  * Fibers' tenant-isolation guards to silently bypass — that would be a
- * cross-Fiber tenant bypass leak (F29.2 follow-up of F13.1 / F25.2 / F24.2).
+ * cross-Fiber tenant bypass leak.
  * @api
  */
 #[Api(since: '1.0.0')]

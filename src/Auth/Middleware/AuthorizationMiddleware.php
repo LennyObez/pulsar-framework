@@ -81,14 +81,12 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             /** @var list<string> $permissions */
             $permissions = $attributes['permissions'] ?? [];
 
-            // F12.7: a route guarded by the `auth` middleware alias but
-            // declaring no permissions used to fall through to
-            // default-allow — every authenticated user passed without
-            // any authorization check. Default-deny instead, with an
-            // explicit `_authenticated` sentinel as the operator's
-            // opt-in for "any authenticated user". This mirrors the
-            // explicit-allow contract used by every modern policy
-            // framework (Spring, Laravel post-12.x, ASP.NET).
+            // Default-deny: a route guarded by the `auth` middleware alias
+            // but declaring no permissions is a configuration mistake, not
+            // a grant. Falling through to allow here would let every
+            // authenticated user past with no authorization check at all.
+            // Operators who genuinely mean "any authenticated user" opt in
+            // with the explicit `_authenticated` sentinel below.
             if ($permissions === []) {
                 try {
                     $this->auditAuthzDenied($request, $identity->id(), 'no_permissions_declared');
@@ -101,9 +99,8 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             $path = $request->getUri()->getPath();
 
             foreach ($permissions as $permission) {
-                // F12.7: `_authenticated` is the explicit "any
-                // authenticated user" marker — caller opted in to
-                // RBAC bypass and we honour it here.
+                // `_authenticated` is the explicit "any authenticated
+                // user" marker — the caller opted in to the RBAC bypass.
                 if ($permission === '_authenticated') {
                     continue;
                 }

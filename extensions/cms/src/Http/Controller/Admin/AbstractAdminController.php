@@ -116,9 +116,8 @@ abstract readonly class AbstractAdminController
      * Authorize an identity against a specific permission.
      *
      * Deny-by-default: when no authorization gate is wired, every admin
-     * permission check is rejected. The previous trait implementation
-     * silently allowed access in that case, which turned a misconfigured
-     * container into a privilege escalation vector (MED-3).
+     * permission check is rejected. Failing open here would turn a
+     * misconfigured container into a privilege escalation vector.
      *
      * @throws AuthorizationException If the identity lacks the required permission
      */
@@ -128,7 +127,7 @@ abstract readonly class AbstractAdminController
             // Test-only escape hatch: phpunit.xml defines PULSAR_TEST_BYPASS_AUTHZ
             // so unit tests that instantiate controllers without a Gate (because
             // they exercise business logic, not authorization) don't trip the
-            // MED-3 deny-by-default check. Production deploys do not set this
+            // deny-by-default check. Production deploys do not set this
             // constant and continue to deny when no gate is wired.
             if (defined('PULSAR_TEST_BYPASS_AUTHZ')) {
                 return;

@@ -120,17 +120,15 @@ final readonly class DeployConfig implements ReportsUnknownKeys
      * Env override pattern: DEPLOY_CHECK_{NAME}_SEVERITY=fail|warn|off
      * (name is uppercased with hyphens replaced by underscores).
      *
-     * F26.3: in Production mode, env-supplied `severity=off`
-     * silently neutralised the entire deploy-gate mechanism: an
-     * attacker that controlled the orchestration env (e.g. via
-     * F11.1 env-var injection) could disable security-headers,
-     * debug-mode, opcache, etc. checks without any audit trail.
-     * Production now ignores `severity=off` from env vars; an
-     * operator who genuinely needs to disable a check must do so
-     * through the (git-tracked, code-reviewable) config file. The
-     * `fail`/`warn` overrides remain available because they
-     * cannot weaken the gate beyond what the config file already
-     * permits.
+     * In Production mode an env-supplied `severity=off` is ignored.
+     * Honouring it would let anyone who controls the orchestration
+     * environment (env-var injection, a compromised runner) switch
+     * off the security-headers, debug-mode or opcache checks with no
+     * audit trail. An operator who genuinely needs a check disabled
+     * must say so in the git-tracked, code-reviewable config file.
+     * The `fail`/`warn` overrides stay available from env because
+     * they cannot weaken the gate beyond what the config file
+     * already permits.
      *
      * @param array<string, mixed> $rawChecks
      * @return array<string, array{enabled: bool, severity: string}>
@@ -141,7 +139,7 @@ final readonly class DeployConfig implements ReportsUnknownKeys
         $result = [];
         $isProduction = $environment->resolveMode() === EnvironmentMode::Production;
 
-        // F26.5: walk the union of default check names AND user-defined
+        // Walk the union of default check names AND user-defined
         // names so an extension that registers its own deploy check
         // (e.g. `payments-webhook-secret`, custom org gate) can declare
         // its severity via `config/deploy.php` instead of being silently
@@ -177,13 +175,12 @@ final readonly class DeployConfig implements ReportsUnknownKeys
                 $isProductionOff = $envValue === 'off' && $isProduction;
 
                 if (!$isProductionOff) {
-                    // F26.3: in production, an env-supplied
-                    // `severity=off` is ignored — the file-configured
-                    // (or default) severity stays in force, so an
-                    // attacker who controls the env cannot silently
-                    // neutralise a deploy gate. fail / warn overrides
-                    // are still honoured because they can only
-                    // tighten or maintain the existing severity.
+                    // In production an env-supplied `severity=off` is
+                    // ignored: the file-configured (or default)
+                    // severity stays in force, so control of the env
+                    // cannot silently neutralise a deploy gate. fail /
+                    // warn overrides are still honoured because they
+                    // can only tighten or maintain the severity.
                     $config['severity'] = $envValue;
 
                     if ($envValue === 'off') {

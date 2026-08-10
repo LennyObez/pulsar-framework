@@ -156,14 +156,14 @@ final class ExtensionLoader
             $byName[$manifest->name] = $manifest;
         }
 
-        // F3.11: validate every dependency twice — first that the
-        // required extension is present, then that its version
-        // satisfies the constraint declared in the requiring
-        // manifest's `requires.extensions` map. Without the version
-        // check, an extension declaring `requires: { auth: ^1.0 }`
-        // happily loads against `auth: 2.0` (BC-breaking changes
-        // sneak through). Composer's Semver is the standard parser
-        // used by every PHP package manager + Composer itself.
+        // Validate every dependency twice — first that the required
+        // extension is present, then that its version satisfies the
+        // constraint declared in the requiring manifest's
+        // `requires.extensions` map. Presence alone is not enough: an
+        // extension declaring `requires: { auth: ^1.0 }` would load
+        // happily against `auth: 2.0` and BC-breaking changes would
+        // sneak through. Constraints are parsed with Composer's Semver
+        // so the syntax matches what manifest authors already know.
         /** @var list<string> $skipped */
         $skipped = [];
         $manifests = array_filter($manifests, function (ExtensionManifest $manifest) use ($byName, &$skipped): bool {

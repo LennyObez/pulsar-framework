@@ -39,22 +39,20 @@ final readonly class SeverityOverrideCheck implements DeployCheckInterface
     {
         $result = $this->inner->check($environment);
 
-        // Passing results are never modified
         if ($result->severity === CheckSeverity::Pass) {
             return $result;
         }
 
         $targetSeverity = $this->configuredSeverity->toCheckSeverity();
 
-        // If the configured severity matches the result, no change needed
         if ($result->severity === $targetSeverity) {
             return $result;
         }
 
-        // F26.4: stamp the override on the result so it shows up in
-        // every report renderer and downstream audit. Operator now
-        // sees "PASS (overridden, originally ERROR)" instead of a
-        // bare "PASS" that hides the original failure.
+        // Stamp the override on the result so it shows up in every report
+        // renderer and downstream audit: the operator sees
+        // "PASS (overridden, originally ERROR)" rather than a bare "PASS"
+        // that hides the original failure.
         return new CheckResult(
             name: $result->name,
             severity: $targetSeverity,

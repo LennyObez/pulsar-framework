@@ -46,7 +46,7 @@ final readonly class PaymentsConfig
         public int $trialMaxDays,
         public array $countryPaymentMethods = [],
         /**
-         * F13.10: when true, every `PaymentGateway` operation refuses to
+         * When true, every `PaymentGateway` operation refuses to
          * proceed unless an active `TenantContext` is resolved. Multi-
          * tenant deployments should set this to true in `config/payments.php`
          * so a payment cannot accidentally be issued outside a tenant scope

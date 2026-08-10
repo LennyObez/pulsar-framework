@@ -56,7 +56,7 @@ final class Validator
                 if ($violation !== null) {
                     $violations[] = $violation;
 
-                    // F7.7: short-circuit on Required OR any type-rule
+                    // Short-circuit on Required OR any type-rule
                     // failure. Running e.g. `Min` against a value that
                     // is not an integer in the first place stacks
                     // confusing cascade violations on top of the real

@@ -14,9 +14,10 @@ use Pulsar\Security\Jws\JwsVerificationException;
  *
  * Delegates to the framework's shared {@see AppleJwsVerifierFactory} verifier,
  * which performs the full ES256 x5c chain validation pinned to the bundled
- * Apple Root CA G3 (super-audit C13/C15). The previous implementation trusted
- * x5c[0] blindly — so a self-signed forgery passed — and never converted the
- * raw JOSE signature to DER, so it also rejected genuine Apple notifications.
+ * Apple Root CA G3. Two properties of that verifier are load-bearing: x5c[0]
+ * is never trusted on its own — a self-signed certificate would otherwise
+ * pass — and the raw JOSE signature is converted to DER before verification,
+ * without which genuine Apple notifications are rejected.
  */
 #[Internal]
 final class JwsVerifier

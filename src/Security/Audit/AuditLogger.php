@@ -52,9 +52,9 @@ final class AuditLogger implements AuditLoggerInterface
     /**
      * @throws SecurityException When the sink reports
      *                           {@see AuditChainState::Corrupted}: the
-     *                           chain cannot be safely resumed and we
-     *                           refuse to silently re-seed over the
-     *                           corrupt state (F24.3).
+     *                           chain cannot be safely resumed, and
+     *                           re-seeding over corrupt state would
+     *                           forge a fresh-looking chain.
      * @throws InvalidArgumentException When the audit key is shorter than
      *                                  the libsodium minimum and the seed
      *                                  HMAC cannot be computed.
@@ -68,10 +68,10 @@ final class AuditLogger implements AuditLoggerInterface
     ) {
         $this->previousHmac = Hmac::computeHex(self::SEED_MESSAGE, $this->auditKey);
 
-        // F24.3: state-aware sinks distinguish "empty, fresh chain"
-        // from "non-empty but unreadable" — fail closed on corruption
-        // so a tamper-evident chain cannot silently restart from the
-        // seed after a truncated or malformed last entry.
+        // State-aware sinks distinguish "empty, fresh chain" from
+        // "non-empty but unreadable" — fail closed on corruption so a
+        // tamper-evident chain cannot restart from the seed after a
+        // truncated or malformed last entry.
         if ($sink instanceof AuditChainStateAware) {
             $state = $sink->chainState();
 
@@ -90,10 +90,10 @@ final class AuditLogger implements AuditLoggerInterface
             }
             // AuditChainState::Empty -> keep the seed previousHmac.
         } elseif ($sink instanceof ChainableAuditSinkInterface) {
-            // Legacy contract: a sink that doesn't implement
-            // AuditChainStateAware can't distinguish corruption from
-            // emptiness, so a null lastHmac falls back to the seed
-            // (and forfeits the corruption-detection guarantee).
+            // A sink that doesn't implement AuditChainStateAware cannot
+            // distinguish corruption from emptiness, so a null lastHmac
+            // falls back to the seed — and forfeits the
+            // corruption-detection guarantee.
             $lastHmac = $sink->lastHmac();
 
             if ($lastHmac !== null) {
@@ -111,8 +111,9 @@ final class AuditLogger implements AuditLoggerInterface
      * and advances the chain state. The actor MUST resolve to a non-empty
      * identifier — either passed explicitly (as `AuditActor` or string) or
      * derived from the active `RequestContext`. Falling back to a generic
-     * `'system'` actor was historically used to mask null actors and is now
-     * forbidden (F25.10): an `AuditActorMissingException` is raised instead.
+     * `'system'` actor is forbidden — it masks a missing actor and makes
+     * the record useless as evidence; an `AuditActorMissingException` is
+     * raised instead.
      * Always enriches metadata with correlation_id and causation_id when
      * context is available.
      *

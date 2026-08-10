@@ -56,7 +56,7 @@ final class Environment
     }
 
     /**
-     * F4.9: prefix allowlist for OS-level environment variables when an
+     * Prefix allowlist for OS-level environment variables when an
      * operator hardens the loader via {@see loadFiltered()}. The list is
      * deliberately conservative — it covers Pulsar's own surface plus
      * common application namespaces and well-known shell-environment
@@ -95,7 +95,7 @@ final class Environment
     ];
 
     /**
-     * F4.9: explicit single-name allowlist. Some shell-environment basics
+     * Explicit single-name allowlist. Some shell-environment basics
      * are useful (`HOME`, `PATH`, `TZ`, `LANG`) but do not match any of
      * the prefix patterns. The framework keeps them available so that
      * downstream code reading `Environment::get('PATH')` still works
@@ -128,7 +128,7 @@ final class Environment
      * exposes every OS environment variable. Operators in regulated
      * deployments should switch to {@see loadFiltered()} which enforces
      * a prefix allowlist and prevents adjacent-process secrets from
-     * leaking into Pulsar's environment view (F4.9).
+     * leaking into Pulsar's environment view.
      */
     #[NoDiscard]
     public static function load(?string $envFilePath = null): self
@@ -137,7 +137,7 @@ final class Environment
     }
 
     /**
-     * F4.9: load environment with a prefix-based allowlist applied to
+     * Load environment with a prefix-based allowlist applied to
      * the OS-level vars. The `.env` file values are not filtered (they
      * are already curated by the operator). The merged set still has OS
      * vars winning over file vars for any key that survives the filter.
@@ -395,19 +395,18 @@ final class Environment
      */
     private static function normalizeKeys(array $vars): array
     {
-        // Case folding is platform-dependent; rejecting fold-prone keys is not. It is a
-        // property of PHP arrays, so it applies on every host — putting the guard only
-        // in the branch below left POSIX passing int keys straight through, which is
-        // what the regression test caught the first time it ran on Linux.
+        // Case folding is platform-dependent; rejecting fold-prone keys is not. Key
+        // folding is a property of PHP arrays, so the guards below must run on every
+        // host: gating them on the case-insensitive branch would let POSIX pass int
+        // keys straight through.
         $caseInsensitive = self::isCaseInsensitiveEnv();
         $normalized = [];
 
         foreach ($vars as $key => $value) {
             // A numerically named variable (`1=x` in the OS, or a test that putenv()s
-            // one) reaches PHP as an int key, and strtoupper() raised a TypeError on it.
-            // Inside Environment::load() during ConfigManager boot, that stopped the
-            // kernel starting over an entry nobody asked for: 57 tests died at once the
-            // first time one appeared in a worker.
+            // one) reaches PHP as an int key, and strtoupper() throws a TypeError on a
+            // non-string. Unguarded, that aborts Environment::load() inside ConfigManager
+            // boot, so the kernel never starts because of one entry nobody asked for.
             //
             // It is dropped rather than cast, and that is the whole point. Casting only
             // moves the problem: PHP folds a decimal string key straight back to an int,
@@ -433,8 +432,8 @@ final class Environment
             // Refusing here is what makes that type true for the whole class, including
             // the $variables property and applyAllowlist()'s `string $key` callback.
             // Nothing usable is lost: `1` is not a name a configuration key takes, so an
-            // entry like it is an accident or an attack, and neither deserves to stop the
-            // kernel booting — which is what it did, 57 tests at once.
+            // entry like it is an accident or an attack, and neither should be able to
+            // stop the kernel booting.
             if ((string) (int) $canonical === $canonical) {
                 continue;
             }
@@ -455,7 +454,7 @@ final class Environment
      * - Blank lines
      * - Quoted values (single and double quotes stripped from both ends)
      *
-     * F4.8: deliberate non-features. The parser is intentionally
+     * Deliberate non-features. The parser is intentionally
      * primitive — Pulsar treats `.env` as a developer-convenience
      * fallback and routes operational secrets through the OS
      * environment / KMS instead. Specifically:

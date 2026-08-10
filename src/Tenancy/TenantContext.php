@@ -18,9 +18,9 @@ use WeakMap;
  *
  * Persistent-runtime workers (RoadRunner, FrankenPHP, Swoole) interleave
  * Fiber-suspended HTTP requests on the same worker process. A naive
- * `private ?Tenant $tenant` field was shared across every Fiber on the
+ * `private ?Tenant $tenant` field would be shared across every Fiber on the
  * worker, so request A could read or overwrite request B's tenant —
- * a hard cross-tenant isolation breach (F13.1).
+ * a hard cross-tenant isolation breach.
  *
  * Storage is keyed by `Fiber::getCurrent()` — or a stable `$rootKey` for
  * code running outside any Fiber — using a `WeakMap`. When a Fiber

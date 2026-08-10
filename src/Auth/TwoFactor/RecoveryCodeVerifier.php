@@ -19,13 +19,13 @@ final readonly class RecoveryCodeVerifier
      * Uses constant-time comparison to prevent timing attacks.
      * Returns the index of the matched code, or -1 if no match.
      *
-     * F12.5: walks the entire list even after a match so the
-     * timing of a successful verify does not leak the matched
-     * index. Each `hash_equals` comparison is constant-time per
-     * pair, but an early-return broke that guarantee at the
-     * list level — a 5th-position match completed faster than a
-     * 200th-position match, leaking ~log2(N) bits of state per
-     * timing observation.
+     * Walks the entire list even after a match, so the duration of a
+     * successful verify does not leak the matched index. `hash_equals`
+     * is constant-time per pair only; returning early would reintroduce
+     * the leak at the list level, since a 5th-position match would
+     * complete faster than a 200th-position one and each timing
+     * observation would yield roughly log2(N) bits. Do not add a
+     * `break` to the loop below.
      *
      * @param list<string> $validCodes
      */
@@ -44,17 +44,16 @@ final readonly class RecoveryCodeVerifier
     }
 
     /**
-     * F12.4: verify-and-consume in one call. The previous
-     * {@see verify()} returned a matched index without consuming
-     * the code, leaving the caller responsible for removing the
-     * matched entry from the user's stored list. A developer who
-     * forgot to do that turned every match into a permanent
-     * backdoor — the same code stays valid forever.
+     * Verify-and-consume in one call, and the API to prefer over
+     * {@see verify()}. A recovery code is single-use: `verify()` alone
+     * reports a matched index and leaves removal to the caller, so a
+     * caller that forgets turns every match into a permanent backdoor,
+     * the same code staying valid forever.
      *
-     * The new API forces consumption: either the call returns a
+     * This signature makes that mistake hard: a hit returns a
      * `RecoveryCodeConsumeResult` whose `remainingCodes` MUST be
-     * persisted, or the call returns null on miss. Callers cannot
-     * read the matched code without committing to the new state.
+     * persisted, a miss returns null. The matched code cannot be read
+     * without also receiving the new state to commit.
      *
      * @param list<string> $validCodes Codes currently stored for the user
      *
@@ -68,7 +67,6 @@ final readonly class RecoveryCodeVerifier
             return null;
         }
 
-        // Strip the matched code from the list.
         $remaining = $validCodes;
         unset($remaining[$matchedIndex]);
 

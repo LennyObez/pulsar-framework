@@ -27,7 +27,7 @@ final readonly class OAuth2Config
      * @param string $tokenFormat Token format: 'reference' or 'jwt'
      * @param string $authorizationCodeStore Storage backend for authorization codes:
      *                                       'memory' (default, dev/testing only) or
-     *                                       'database' (F385.12, production-grade
+     *                                       'database' (production-grade
      *                                       persistence via {@see Pulsar\Database\ConnectionInterface}).
      */
     public function __construct(

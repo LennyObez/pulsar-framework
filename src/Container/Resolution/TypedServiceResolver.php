@@ -27,8 +27,7 @@ use function sprintf;
  * which behaves as a generic class instantiator: any class registered in
  * the container can be reached by name. If the config value reaches the
  * code path through an env var, an attacker who controls that env var
- * controls which service is constructed — F3.1 / F3.2 / F17.1 / F21.2 /
- * F22.3 / F26.5 / F32.4 in the findings register, all the same shape.
+ * controls which service is constructed.
  *
  * This resolver narrows the call-site contract to:
  *   1. The configured value must name a class that *currently exists*

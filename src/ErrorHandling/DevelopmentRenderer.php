@@ -44,7 +44,7 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
         $headersHtml = $this->renderHeaders($request);
         /** @var array<string, mixed> $queryParams */
         $queryParams = $request->getQueryParams();
-        // F4.7: scrub query params through the same allowlist used for
+        // Scrub query params through the same allowlist used for
         // headers so a query like `?token=...` does not leak to the
         // error page when an operator accidentally enables APP_DEBUG in
         // production.

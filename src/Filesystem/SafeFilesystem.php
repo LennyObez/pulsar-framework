@@ -21,7 +21,7 @@ use function usleep;
 /**
  * Filesystem helper that only operates on {@see SafePath} arguments.
  *
- * F3.3: every destructive operation (file remove, directory remove)
+ * Every destructive operation (file remove, directory remove)
  * goes through this class with a SafePath input. The SafePath value
  * object guarantees the path lives under a trust boundary, so the
  * operations cannot touch the filesystem outside the project root
@@ -57,9 +57,9 @@ final class SafeFilesystem
     /**
      * Recursively remove a directory and all its contents.
      *
-     * Includes retry logic for environments (e.g. Windows / OneDrive)
-     * where file handles may not be released immediately after
-     * removal.
+     * Includes retry logic for platforms where a file handle may not be
+     * released immediately after removal — Windows in particular, and any
+     * filesystem behind an antivirus scanner or a cloud-sync file provider.
      */
     public function removeDirectoryRecursive(SafePath $dir): void
     {
@@ -169,7 +169,8 @@ final class SafeFilesystem
     private function rmdirWithRetry(string $dir): void
     {
         // Escalating delays: 100ms, 200ms, 400ms, 800ms, 1600ms (~3.1s total).
-        // Tolerates the brief handle-release lag seen on Windows / OneDrive.
+        // Tolerates the brief handle-release lag on Windows and on any
+        // filesystem behind an antivirus scanner or cloud-sync file provider.
         $delays = [100_000, 200_000, 400_000, 800_000, 1_600_000];
 
         foreach ($delays as $delay) {

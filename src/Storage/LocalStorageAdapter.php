@@ -95,8 +95,8 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             return;
         }
 
-        // F3.3 / F17.4: resolvePath() already validated the path (basePath
-        // prefix + realpath symlink-escape rejection), so the only remaining
+        // resolvePath() already validated the path (basePath prefix +
+        // realpath symlink-escape rejection), so the only remaining
         // failure is genuine I/O (permission denied, disk error). Capture the
         // native warning without the `@` operator and translate a failed
         // unlink into a StorageException.
@@ -145,7 +145,7 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
 
         $candidate = $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $key);
 
-        // F17.4: validateKey blocks `..` segments at the string level,
+        // validateKey blocks `..` segments at the string level,
         // but a symlink inside basePath that points outside basePath
         // would still let read/write/delete escape the storage
         // boundary. Resolve realpath against the basePath realpath

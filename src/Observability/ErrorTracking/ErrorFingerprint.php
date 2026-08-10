@@ -21,21 +21,24 @@ use function substr;
  * Produces a sha256 hash of `{class}|{normalised message}|{normalised file}|{line}`
  * to group identical errors regardless of when they occur.
  *
- * F8.20: the previous fingerprint folded the raw message + raw absolute
- * file path into the hash. Both inputs are unstable in the wild:
+ * Neither the message nor the file path may enter the hash raw, because
+ * both are unstable in the wild:
  *
  *  - `getMessage()` typically embeds user-controlled values (record ids,
- *    URLs, free text) — every distinct input minted its own fingerprint
- *    so grouping by error class never coalesced on an aggregator.
+ *    URLs, free text), so a raw message mints a fresh fingerprint per
+ *    input and grouping by error class never coalesces on an aggregator.
  *  - `getFile()` is an absolute path that varies between CI agents,
- *    container images, and dev workstations — the *same* error gets
- *    different fingerprints on staging vs prod.
+ *    container images, and local checkouts, so the *same* error would
+ *    fingerprint differently on staging and on production.
  *
- * Both inputs are now normalised before hashing:
+ * Both are therefore normalised before hashing:
  *
  *  - message: strip numeric / hex / quoted-string / UUID tokens.
  *  - file: strip the longest common project root (`..../src/Foo.php` →
  *    `src/Foo.php`) and force forward slashes so Windows + Linux agree.
+ *
+ * Changing either normalisation changes every fingerprint, which splits
+ * already-grouped errors on downstream aggregators.
  * @api
  */
 #[Api(since: '1.0.0')]

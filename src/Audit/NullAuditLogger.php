@@ -18,7 +18,7 @@ use Pulsar\Security\Audit\AuditOutcome;
  * registered, allowing security-critical services like SafeHtmlPolicy to
  * function without a full audit chain. Events are silently discarded.
  *
- * SEC-AUDIT-01: production deployments are refused via
+ * Production deployments are refused via
  * {@see \Pulsar\Deploy\Check\AuditLoggerReadinessCheck} — silent audit
  * loss in regulated environments (PCI Req 10, HIPAA §164.312(b), SOX ITGC,
  * GDPR Art 30) is not acceptable. Wire AuditLogger (HMAC chain + persistent

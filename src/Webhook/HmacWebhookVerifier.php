@@ -25,17 +25,17 @@ use function substr;
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {
     /**
-     * F25.8: HMAC-SHA256 produces 32 bytes = 64 hex chars. Any v1=
+     * HMAC-SHA256 produces 32 bytes = 64 hex chars. Any v1=
      * value with a different length is malformed and must be
-     * rejected before reaching `hash_equals` (defence-in-depth — an
-     * attacker who can submit any non-empty v1= forced the verifier
-     * to compare against arbitrary attacker-supplied bytes, even
-     * though the constant-time guarantee holds).
+     * rejected before reaching `hash_equals` (defence-in-depth —
+     * without this gate any non-empty v1= makes the verifier compare
+     * against arbitrary attacker-supplied bytes, even though the
+     * constant-time guarantee holds).
      */
     private const int HMAC_HEX_LENGTH = 64;
 
     /**
-     * F25.8: a 13+ digit timestamp saturates the (int) cast toward
+     * A 13+ digit timestamp saturates the (int) cast toward
      * PHP_INT_MAX on 64-bit. 12 digits covers Unix seconds through the
      * year 33658, so any legitimate timestamp fits and overflow inputs
      * are rejected as malformed.
@@ -43,7 +43,7 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
     private const int MAX_TIMESTAMP_DIGITS = 12;
 
     /**
-     * F25.8: cap the number of v1= candidates a single header may carry.
+     * Cap the number of v1= candidates a single header may carry.
      * Each candidate forces one HMAC computation in verify(); without a
      * cap a single request can demand thousands of HMACs (CPU
      * amplification). Five comfortably covers any key-rotation window.
@@ -150,7 +150,7 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
             throw WebhookException::malformedHeader('no v1 signatures');
         }
 
-        // F25.8: validate each v1 is exactly 64 lowercase hex chars
+        // Validate each v1 is exactly 64 lowercase hex chars
         // AFTER the timestamp / signatures-present checks so error
         // priority is consistent.
         $validated = [];

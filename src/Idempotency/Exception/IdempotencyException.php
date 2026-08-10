@@ -14,7 +14,7 @@ use function sprintf;
 /**
  * Idempotency violation exceptions.
  *
- * F22.9: every factory tags the exception with an `IdempotencyErrorKind`
+ * Every factory tags the exception with an `IdempotencyErrorKind`
  * so HTTP / controller layers can map each failure to a consistent response
  * code via `match ($e->kind)` without parsing exception messages. See
  * `IdempotencyErrorKind` for the recommended HTTP-status mapping table.
@@ -77,7 +77,7 @@ final class IdempotencyException extends RuntimeException
     }
 
     /**
-     * F21.3: a stored idempotency payload failed signature verification.
+     * A stored idempotency payload failed signature verification.
      * Always treated as tampering rather than a transient error: a
      * compromised store (forged row, replayed envelope, key-rotation
      * mismatch) cannot be safely served back to the caller.
@@ -96,7 +96,7 @@ final class IdempotencyException extends RuntimeException
     }
 
     /**
-     * F22.6: serialisation of an idempotency payload (or deserialisation
+     * Serialisation of an idempotency payload (or deserialisation
      * of a previously-stored one) raised a low-level error such as
      * `JsonException`. The interface contract should not leak the
      * concrete `JsonException` to consumers — they have no business

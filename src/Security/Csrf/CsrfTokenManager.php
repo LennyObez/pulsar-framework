@@ -192,12 +192,11 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      * Rotate the CSRF token (generate a new one, invalidating the old)
      * AND regenerate the underlying session ID.
      *
-     * F9.6: rotating only the CSRF token without regenerating the session
-     * ID is a half measure. The canonical anti-fixation flow on a state
-     * boundary (post-login, privilege change, password reset) requires
-     * `Session::regenerate(true)` so any session ID an attacker may have
-     * fixated is destroyed alongside the old token. Skipping the session
-     * regeneration left a viable session-fixation window.
+     * Rotating only the CSRF token without regenerating the session ID
+     * leaves a session-fixation window open. The canonical anti-fixation
+     * flow on a state boundary (post-login, privilege change, password
+     * reset) requires `Session::regenerate(true)` so any session ID an
+     * attacker may have fixated is destroyed alongside the old token.
      *
      * Order matters: regenerate the session first so the new token is
      * stored under the new session id; otherwise the freshly stored

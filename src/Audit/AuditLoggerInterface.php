@@ -31,7 +31,7 @@ interface AuditLoggerInterface
      * - a non-empty string identifier (legacy form, accepted for migration),
      * - `null` only if the active `RequestContext` already carries an actor;
      *   otherwise an `AuditActorMissingException` is raised. There is no
-     *   silent `'system'` fallback (F25.10).
+     *   silent `'system'` fallback.
      *
      * @param array<string, mixed> $metadata
      *

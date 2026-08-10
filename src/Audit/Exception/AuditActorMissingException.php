@@ -11,11 +11,11 @@ use RuntimeException;
  * Raised when `AuditLogger::log()` is invoked without a resolvable actor.
  *
  * Audit records must always identify a responsible party. Falling back to a
- * generic `'system'` placeholder hides unauthenticated activity, blinds
- * compliance reviewers, and is a known historical defect (F25.10). When the
- * actor parameter is null and the active `RequestContext` does not carry an
- * actor either, this exception is thrown to force callers to pass an explicit
- * `AuditActor` (e.g. `AuditActor::system('mail.webhook')`).
+ * generic `'system'` placeholder hides unauthenticated activity and blinds
+ * compliance reviewers. When the actor parameter is null and the active
+ * `RequestContext` does not carry an actor either, this exception is thrown
+ * to force callers to pass an explicit `AuditActor`
+ * (e.g. `AuditActor::system('mail.webhook')`).
  * @api
  */
 #[Api(since: '1.0.0')]

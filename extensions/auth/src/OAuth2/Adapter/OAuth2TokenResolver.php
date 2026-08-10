@@ -92,14 +92,13 @@ final readonly class OAuth2TokenResolver implements TokenResolverInterface
     /**
      * Derive the identity's 2FA status from OIDC `amr` / `acr` claims.
      *
-     * F385.7: hardcoding `TwoFactorStatus::Disabled` here turned every
-     * OAuth2-authenticated request into an effective 2FA bypass — a
-     * route protected by `StepUpMiddleware` saw "two_factor=disabled"
-     * regardless of how the underlying user actually authenticated at
-     * the IdP. The fix reads the standard OIDC `amr` (authentication
-     * method references, RFC 8176) and `acr` (authentication context
-     * class reference, OIDC Core 5.1.1.1) claims and maps them onto
-     * the framework's `TwoFactorStatus` enum:
+     * The status MUST be derived from the token, never hardcoded: a
+     * constant value here would make every OAuth2-authenticated request
+     * report the same 2FA state to `StepUpMiddleware`, regardless of how
+     * the user actually authenticated at the IdP. This reads the standard
+     * OIDC `amr` (authentication method references, RFC 8176) and `acr`
+     * (authentication context class reference, OIDC Core 5.1.1.1) claims
+     * and maps them onto the framework's `TwoFactorStatus` enum:
      *
      * - `amr` containing any MFA-grade factor (mfa, otp, hwk, fido,
      *   fpt, iris, swk, sms) -> `Verified`.

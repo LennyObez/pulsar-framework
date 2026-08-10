@@ -43,14 +43,11 @@ use function substr;
  * Handles the authorization, token, introspection, and revocation endpoints
  * per RFC 6749, RFC 7662, and RFC 7009.
  *
- * Note on naming (F385.11): the class was previously called
- * `LeagueAuthorizationServer` despite never importing `league/oauth2-server`.
- * The "League" prefix gave reviewers and auditors the impression that the
- * implementation was a thin adapter over the battle-tested upstream library
- * - it is in fact a homegrown implementation. ADR-0025 mandates the
- * `league/oauth2-server` swap before 1.0.0 GA; until that refactor lands
- * the class keeps the neutral name `OAuth2AuthorizationServer` so its
- * homegrown status is not obscured.
+ * Note on naming: this is a homegrown implementation — it does not wrap
+ * `league/oauth2-server` or any other upstream library. The name is
+ * deliberately vendor-neutral so reviewers and auditors are not led to
+ * assume the guarantees of a battle-tested third-party server. ADR-0025
+ * mandates the `league/oauth2-server` swap before 1.0.0 GA.
  */
 #[Internal(reason: 'Adapter implementation; use AuthorizationServerInterface contract')]
 final readonly class OAuth2AuthorizationServer implements AuthorizationServerInterface
@@ -158,13 +155,12 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
             throw OAuth2Exception::unauthorizedClient('Client is not authorized for authorization_code grant');
         }
 
-        // F385.14: validate the redirect_uri before delegating to the
-        // client-registered allowlist. Even though `hasRedirectUri()`
-        // does a strict in_array() exact match, an admin who
-        // accidentally registers an unsafe URI (fragment present,
-        // `javascript:` scheme, etc.) would still match. Reject those
-        // shapes at request time so the misconfiguration cannot reach
-        // the redirect helper that builds the response.
+        // Order matters: validate the redirect_uri shape before consulting
+        // the client-registered allowlist. `hasRedirectUri()` is a strict
+        // exact match, so an admin who registers an unsafe URI (fragment
+        // present, `javascript:` scheme, etc.) would still match it.
+        // Rejecting those shapes at request time keeps the
+        // misconfiguration from reaching the redirect helper.
         self::assertSafeRedirectUri($redirectUri);
 
         // Validate redirect URI (strict exact match)
@@ -523,7 +519,7 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
     }
 
     /**
-     * F385.14: defense-in-depth redirect_uri validation.
+     * Defense-in-depth redirect_uri validation.
      *
      * RFC 6749 §3.1.2 forbids fragments in redirect URIs because the
      * authorization-server-issued query parameters (`code`, `state`,

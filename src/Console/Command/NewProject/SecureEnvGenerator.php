@@ -32,7 +32,7 @@ final readonly class SecureEnvGenerator
     }
 
     /**
-     * F17.7: app names that contain newlines / `=` / quotes would let
+     * App names that contain newlines / `=` / quotes would let
      * a hostile / careless caller inject extra env keys into the
      * generated `.env` file (`MyApp\nINJECTED=evil` becomes a real
      * `INJECTED` line on the next read). The check below restricts

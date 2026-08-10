@@ -32,8 +32,8 @@ enum Driver: string
      * Each component is validated against the structural delimiters of the
      * PDO DSN format (`;`, `=`, NUL, CR, LF) before substitution so an
      * environment variable that contains one of those bytes cannot override
-     * a later parameter (`dbname=`, `unix_socket=`, `charset=`) — F11.1
-     * DSN injection guard.
+     * a later parameter (`dbname=`, `unix_socket=`, `charset=`). This is
+     * the DSN injection guard.
      *
      * @throws InvalidDsnComponentException
      */
@@ -83,7 +83,7 @@ enum Driver: string
      * prefer passing absolute paths via ConnectionConfig to avoid
      * working-directory ambiguity in symlinked projects.
      *
-     * F11.4: this method does NOT confine absolute paths to a base
+     * This method does NOT confine absolute paths to a base
      * directory. A `DB_DATABASE` env var pointing to `/etc/passwd`
      * would resolve there. Multi-tenant deployments that pass user-
      * derived strings into ConnectionConfig MUST validate the path
@@ -95,7 +95,7 @@ enum Driver: string
      * here would break them.
      *
      * Defence against the env-var injection path itself is at
-     * {@see assertSafeDsnComponent()} (F11.1), which rejects `;`,
+     * {@see assertSafeDsnComponent()}, which rejects `;`,
      * `=`, NUL, CR, LF in the database string before it reaches
      * the DSN. The remaining attack surface is operator-controlled.
      */

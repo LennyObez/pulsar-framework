@@ -7,7 +7,7 @@ namespace Pulsar\Idempotency\Exception;
 use Pulsar\Api\Api;
 
 /**
- * F22.9: programmatic classification of `IdempotencyException` failures so
+ * Programmatic classification of `IdempotencyException` failures so
  * HTTP / controller layers can map each kind to a consistent response code
  * without parsing exception messages.
  *
