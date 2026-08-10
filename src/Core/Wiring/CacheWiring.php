@@ -91,10 +91,10 @@ final readonly class CacheWiring implements ServiceWiringInterface, DescribesWir
 
         /** @var LoggerInterface|null $logger */
 
-        // Unknown cache-config keys are now surfaced centrally at boot by
+        // Unknown cache-config keys are surfaced centrally at boot by
         // ConfigManager's unknown-key audit (CacheConfig implements
-        // ReportsUnknownKeys), so the per-wiring warning that used to live here
-        // was removed to avoid double-reporting.
+        // ReportsUnknownKeys). Do not warn about them again here — a per-wiring
+        // warning would report every unknown key twice.
 
         // Redis and Memcached store keys raw and pools share connections per
         // host:port, so without a prefix a pool's clear() is FLUSHDB / flush —

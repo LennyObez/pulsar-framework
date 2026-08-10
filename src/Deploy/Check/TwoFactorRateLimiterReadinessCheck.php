@@ -15,7 +15,7 @@ use Pulsar\Deploy\DeployCheckInterface;
 /**
  * Validates that a real two-factor rate limiter is wired in production.
  *
- * SEC-2FA-01: TwoFactorManager fails closed when no rate limiter is present,
+ * TwoFactorManager fails closed when no rate limiter is present,
  * but a {@see NonEnforcingTwoFactorRateLimiterInterface} (e.g. the dev/test
  * AllowAllTwoFactorRateLimiter) lets every attempt through. Deploying one to
  * production would silently disable 2FA brute-force protection, so the deploy

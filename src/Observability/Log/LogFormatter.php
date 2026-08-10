@@ -100,9 +100,9 @@ final class LogFormatter
      * Uses getTrace() and strips function arguments from each frame to prevent
      * PII leaks (passwords, tokens, secrets) that getTraceAsString() would include.
      *
-     * F4.6: file paths from `getFile()` and trace frames are normalised to
+     * File paths from `getFile()` and trace frames are normalised to
      * project-relative form so absolute paths (`/var/www/.../src/Foo.php`,
-     * `D:\dev\...`) do not leak deployment topology to log aggregators.
+     * `C:\...\src\Foo.php`) do not leak deployment topology to log aggregators.
      *
      * @return array<string, mixed>
      */
@@ -110,7 +110,7 @@ final class LogFormatter
     {
         return [
             'class' => $throwable::class,
-            // F8.5: Throwable messages frequently embed user-supplied
+            // Throwable messages frequently embed user-supplied
             // values (record ids, URLs, free text). When that includes
             // a credit-card number, JWT, or long token, the message
             // surfaces the secret to log aggregators. The scrubber's
@@ -163,11 +163,11 @@ final class LogFormatter
     }
 
     /**
-     * F4.6: collapse an absolute path to project-relative form so trace
-     * frames do not advertise the deployment root. Anchors on the
-     * standard repository directories. Mirrors the same trick used by
-     * ErrorFingerprint::normaliseFile so a fingerprint and its trace
-     * frames stay consistent.
+     * Collapse an absolute path to project-relative form so trace frames
+     * do not advertise the deployment root. Anchors on the standard
+     * repository directories. Must stay in step with
+     * ErrorFingerprint::normaliseFile: both use the same anchors so a
+     * fingerprint and the trace frames beside it name the same file.
      */
     private static function redactPath(string $file): string
     {

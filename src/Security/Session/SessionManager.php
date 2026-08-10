@@ -194,7 +194,7 @@ final class SessionManager implements SessionInterface, ResettableInterface
 
         $this->handler->open($this->config->savePath, $this->config->effectiveCookieName());
 
-        // FR-10: feed the stateless cookie handler the encrypted payload from its
+        // Feed the stateless cookie handler the encrypted payload from its
         // companion request cookie before read(), so the session body persists
         // across requests instead of every request starting empty.
         if ($this->handler instanceof CookieSessionHandlerInterface) {
@@ -214,7 +214,7 @@ final class SessionManager implements SessionInterface, ResettableInterface
             $this->loadStoredPayload($decrypted);
         }
 
-        // FR-42: an existing session record whose metadata is absent (missing
+        // An existing session record whose metadata is absent (missing
         // _pulsar_meta, corrupt, or legacy) is untrusted. Adopting it would
         // re-home the session to the current IP/User-Agent with no validation or
         // idle-timeout check, so rotate to a fresh id and discard the loaded
@@ -231,7 +231,7 @@ final class SessionManager implements SessionInterface, ResettableInterface
         if ($this->metadata === null) {
             // New (or rotated) session: stamp baseline metadata and seed each
             // validator's initial state — notably the request fingerprint — so a
-            // value exists to validate against on subsequent requests (FR-9).
+            // value exists to validate against on subsequent requests.
             $metadata = new SessionMetadata(
                 createdAt: time(),
                 lastActivity: time(),
@@ -254,10 +254,10 @@ final class SessionManager implements SessionInterface, ResettableInterface
                 }
             }
 
-            // FR-28: preserve ALL stored metadata fields (notably the
-            // fingerprint) on reload. withLastActivity copies them, unlike the
-            // previous partial reconstruction that reset the fingerprint to null
-            // and so silently disabled the fingerprint validator.
+            // Preserve ALL stored metadata fields (notably the fingerprint)
+            // on reload: withLastActivity copies them. Rebuilding the
+            // metadata field-by-field here would drop the fingerprint and
+            // silently disable the fingerprint validator.
             $this->metadata = $this->metadata->withLastActivity(time());
 
             foreach ($this->validators as $validator) {
@@ -671,11 +671,11 @@ final class SessionManager implements SessionInterface, ResettableInterface
     /**
      * Persist the current session data to the handler.
      *
-     * Storage format is JSON. Pulsar 1.0.0-rc.12 switched away from PHP
-     * serialize() to eliminate the unserialize() attack surface (HIGH-4):
-     * if encryption is disabled and an attacker can write to the session
-     * storage location (e.g. shared temp dirs in multi-tenant hosting),
-     * a serialized payload could trigger nested-array DoS or
+     * Storage format is JSON rather than PHP serialize(), which
+     * eliminates the unserialize() attack surface: if encryption is
+     * disabled and an attacker can write to the session storage location
+     * (e.g. shared temp dirs in multi-tenant hosting), a serialized
+     * payload could trigger nested-array DoS or
      * `__PHP_Incomplete_Class` shenanigans even with `allowed_classes:false`.
      * JSON cannot instantiate classes, has bounded depth, and is the
      * recommended substitute per CWE-502.
@@ -684,6 +684,12 @@ final class SessionManager implements SessionInterface, ResettableInterface
      * or `JsonSerializable` instances). Storing raw object instances
      * will throw a `SecurityException` at save time so the application
      * fails loudly instead of silently dropping data.
+     *
+     * Operationally relevant on upgrade: JSON is the on-disk format from
+     * 1.0.0-rc.12 onward. Payloads written by an earlier release are
+     * `serialize()` output and are not decodable here, so a deployment
+     * crossing that boundary starts sessions afresh rather than reading
+     * what is already in its store.
      *
      * @throws SecurityException If session data is not JSON-encodable.
      */
@@ -716,11 +722,10 @@ final class SessionManager implements SessionInterface, ResettableInterface
      * Decode and apply a stored session payload.
      *
      * Silently discards malformed payloads (treats them as a fresh
-     * session) — this matches the previous unserialize-based behavior
-     * for graceful recovery from corrupted storage. The critical
-     * difference vs `unserialize()` is that JSON has zero code-execution
-     * attack surface: malformed input cannot construct objects or
-     * trigger magic methods.
+     * session) so corrupted storage degrades to a new session instead
+     * of a hard failure. Unlike `unserialize()`, JSON has zero
+     * code-execution attack surface: malformed input cannot construct
+     * objects or trigger magic methods.
      */
     private function loadStoredPayload(string $decrypted): void
     {

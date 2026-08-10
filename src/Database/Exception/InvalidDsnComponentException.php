@@ -21,7 +21,7 @@ use function substr;
  * component sourced from an environment variable that contains any of
  * those bytes can override later parameters (`dbname=`, `unix_socket=`,
  * `charset=`) — the canonical "DSN injection" attack against frameworks
- * that build DSN strings via `sprintf()` (F11.1).
+ * that build DSN strings via `sprintf()`.
  * @api
  */
 #[Api(since: '1.0.0')]

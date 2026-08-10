@@ -18,9 +18,9 @@ use function preg_match;
  * depths, and configuration excerpts. Without a guard, anyone who can
  * reach the worker — including unauthenticated users on a misconfigured
  * load balancer — can fingerprint the application and lift sensitive
- * operational data (F8.1, F8.2). Per-route auth checks are awkward to
- * compose into the routing layer, so this guard is invoked from the
- * route handler itself.
+ * operational data. Per-route auth checks are awkward to compose into
+ * the routing layer, so this guard is invoked from the route handler
+ * itself.
  *
  * The guard is configured with a single Bearer token taken from an env
  * variable (so it never lives in committed config). The expected wire

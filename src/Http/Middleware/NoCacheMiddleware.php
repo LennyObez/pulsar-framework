@@ -24,8 +24,7 @@ use function is_string;
  * The attribute lookup is cached per `ClassName::methodName` key. Route
  * handlers are resolved once at route registration and never change at
  * runtime, so the cache is safe for the entire process lifetime and
- * eliminates the per-request `ReflectionMethod` allocation (M-2
- * audit response).
+ * eliminates the per-request `ReflectionMethod` allocation.
  * @api
  */
 #[Api(since: '1.0.0')]

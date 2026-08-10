@@ -34,7 +34,7 @@ use function strlen;
 /**
  * Refund-charge slice handler.
  *
- * F22.1: matches the {@see CreatePaymentIntentHandler} structure
+ * Mirrors the {@see CreatePaymentIntentHandler} structure
  * (Handler + Request + Result).
  */
 final readonly class RefundChargeHandler
@@ -50,7 +50,7 @@ final readonly class RefundChargeHandler
         private ClockInterface $clock,
         private PaymentsConfig $config,
         private SignedIdempotencyEnvelope $envelope,
-        // F13.9: optional tenant stamping.
+        // Optional tenant stamping.
         private ?TenantContext $tenantContext = null,
     ) {}
 

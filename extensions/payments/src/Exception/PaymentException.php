@@ -44,7 +44,7 @@ final class PaymentException extends RuntimeException
     }
 
     /**
-     * F13.10: refused payment operation because the deployment is
+     * Refused payment operation because the deployment is
      * configured for `requireTenantContext = true` but no `TenantContext`
      * is currently resolved (the request pipeline did not enter a tenant
      * scope, or the gateway was invoked from a CLI / test path that

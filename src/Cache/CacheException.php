@@ -54,10 +54,10 @@ final class CacheException extends RuntimeException
     }
 
     /**
-     * F26.2: an `ALWAYS_ALLOWED` class on the cache deserialization
-     * allowlist disappeared from the codebase between snapshot and
-     * scan. Refusing to scan rather than silently dropping the entry
-     * keeps the allowlist's invariants honest.
+     * An `ALWAYS_ALLOWED` class on the cache deserialization allowlist
+     * disappeared from the codebase between snapshot and scan. Refusing
+     * to scan rather than silently dropping the entry keeps the
+     * allowlist's invariants honest.
      */
     #[NoDiscard]
     public static function alwaysAllowedClassMissing(string $className): self
@@ -69,8 +69,8 @@ final class CacheException extends RuntimeException
     }
 
     /**
-     * F26.2: an `ALWAYS_ALLOWED` class violates the safety guards that
-     * other allowlisted classes pass via `isEligible()` (Serializable
+     * An `ALWAYS_ALLOWED` class violates the safety guards that other
+     * allowlisted classes pass via `isEligible()` (Serializable
      * implementations or dangerous magic methods turn the class into
      * a deserialization gadget chain).
      */

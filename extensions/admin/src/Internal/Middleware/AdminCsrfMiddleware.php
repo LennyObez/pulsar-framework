@@ -28,7 +28,7 @@ use function random_bytes;
  * When csrf_rotation is enabled, a fresh token is returned in the
  * X-CSRF-Token response header after each mutation.
  *
- * F33.4: the token can be supplied either as the `X-CSRF-Token`
+ * The token can be supplied either as the `X-CSRF-Token`
  * header (preferred for SPA / fetch / XHR workflows) or as the
  * `_csrf_token` POST body field (fallback for plain HTML forms,
  * including the noscript path). Both are checked under the same
@@ -85,8 +85,8 @@ final readonly class AdminCsrfMiddleware implements MiddlewareInterface
             return $header;
         }
 
-        // F33.4: HTML form fallback. Plain `<form>` POSTs cannot
-        // set a header, so the canonical CSRF-token-in-hidden-input
+        // HTML form fallback. Plain `<form>` POSTs cannot set a
+        // header, so the canonical CSRF-token-in-hidden-input
         // pattern (`_csrf_token`) is honoured here too.
         $body = $request->getParsedBody();
         if (is_array($body) && isset($body[self::POST_FIELD]) && is_string($body[self::POST_FIELD])) {

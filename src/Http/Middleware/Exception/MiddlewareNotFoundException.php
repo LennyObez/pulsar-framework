@@ -14,10 +14,10 @@ use function sprintf;
  * Raised by `MiddlewareRegistry::resolve()` when a middleware reference
  * is neither a registered alias / group, nor an existing class.
  *
- * F7.11: previously the registry quietly returned the unknown name as
- * a faux `class-string` and let the pipeline crash much later when it
- * tried to instantiate `'typo'`. The registry now fails fast with a
- * precise diagnostic that names the offending reference.
+ * The registry fails fast rather than passing an unknown name through
+ * as a faux `class-string`: a typo would otherwise surface much later,
+ * as an instantiation crash deep inside the pipeline with no mention of
+ * the offending reference.
  * @api
  */
 #[Api(since: '1.0.0')]

@@ -40,7 +40,7 @@ final class RouteUrlGenerator
             $replace = [];
 
             foreach ($parameters as $key => $value) {
-                // RFC 3986 §2 path-segment encoding (F2.7): a raw value
+                // RFC 3986 §2 path-segment encoding: a raw value
                 // containing `/`, `?`, `#`, ` `, or any reserved byte would
                 // otherwise punch out of its segment and either change the route
                 // taken or become a path-traversal vector against routes

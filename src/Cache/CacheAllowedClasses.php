@@ -95,8 +95,8 @@ final class CacheAllowedClasses
      * @return list<class-string>
      *
      * @throws CacheException When an `ALWAYS_ALLOWED` class fails the
-     *                       magic-method or Serializable safety check
-     *                       (F26.2). Failing closed protects the cache
+     *                       magic-method or Serializable safety check.
+     *                       Failing closed protects the cache
      *                       deserialization sink from gaining a gadget
      *                       chain via a future maintainer adding a
      *                       dangerous magic method to a whitelisted
@@ -108,12 +108,12 @@ final class CacheAllowedClasses
     {
         $candidates = self::discoverCandidates($vendorPath, $srcPaths);
 
-        // F26.2: ALWAYS_ALLOWED bypassed the eligibility check entirely,
-        // so a future PR adding `__wakeup`, `__destruct`, `__serialize`,
-        // or `__unserialize` to one of these classes (e.g.
-        // ConfigRepository) would silently turn it into a deserialization
-        // gadget. Re-apply the magic-method and Serializable checks
-        // here — only the readonly-class restriction is waived.
+        // ALWAYS_ALLOWED entries skip candidate discovery, so adding
+        // `__wakeup`, `__destruct`, `__serialize`, or `__unserialize` to
+        // one of these classes (e.g. ConfigRepository) would silently turn
+        // it into a deserialization gadget. Re-apply the magic-method and
+        // Serializable checks here — only the readonly-class restriction
+        // is waived.
         foreach (self::ALWAYS_ALLOWED as $alwaysAllowedClass) {
             self::assertAlwaysAllowedSafe($alwaysAllowedClass);
         }
@@ -361,15 +361,16 @@ final class CacheAllowedClasses
         // resolved from this file rather than from the caller's layout. In an
         // installed application `basePath/src` is the APPLICATION's source dir —
         // or absent entirely when its PSR-4 root is e.g. `app/` — and contains no
-        // Pulsar\* classes, which silently emptied the allowlist.
+        // Pulsar\* classes, so deriving the root from the caller would silently
+        // empty the allowlist.
         //
         // Scanning the directory (rather than trusting autoload_classmap.php) also
         // keeps this independent of Composer's autoloader optimization: a
         // NON-optimized classmap (a plain `composer install` / `dump-autoload`, as
         // CI and dev use) lists almost no PSR-4 classes, so framework cache DTOs
-        // such as Pulsar\Cache\CachedRoute were dropped and every warm-cache boot
-        // then failed with __PHP_Incomplete_Class. The classmap is unioned in only
-        // as a defensive supplement for any eligible class shipped outside src/.
+        // such as Pulsar\Cache\CachedRoute would be dropped and every warm-cache
+        // boot would fail with __PHP_Incomplete_Class. The classmap is unioned in
+        // only as a defensive supplement for any eligible class shipped outside src/.
         $frameworkSrc = dirname(__DIR__);
         $candidates = self::scanDirectory($frameworkSrc);
 
@@ -484,8 +485,8 @@ final class CacheAllowedClasses
     private static function scanDirectory(string $dir): array
     {
         // A declared-but-absent root must be skipped, not fatal: a project whose
-        // PSR-4 root is not literally `src/` otherwise crashed `pulsar optimize`
-        // with RecursiveDirectoryIterator "Failed to open directory".
+        // PSR-4 root is not literally `src/` would otherwise abort `pulsar
+        // optimize` with RecursiveDirectoryIterator "Failed to open directory".
         if (!is_dir($dir)) {
             return [];
         }

@@ -73,16 +73,13 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
      * attribute). This prevents a single user from exhausting the
      * IP-based quota on shared networks (e.g., corporate NAT).
      *
-     * F7.2: when neither a TrustedProxy chain nor REMOTE_ADDR can
-     * yield an IP, the resolver previously fell back to the literal
-     * string `unknown` — every client without an identifiable IP
-     * shared one bucket and the rate limiter degraded to no limit
-     * at all (fail-open). The fallback now hashes the User-Agent
-     * (truncated SHA-256) so distinct clients still get distinct
-     * buckets, and ultimately falls back to a hash of the request
-     * URI + method as a last-resort distinct key. Both paths keep
-     * the limiter working under partial-info conditions instead of
-     * silently disabling itself.
+     * When neither a TrustedProxy chain nor REMOTE_ADDR can yield an
+     * IP, the fallback must still produce a key that varies per client.
+     * A constant fallback would put every client without an identifiable
+     * IP in one bucket, which is a fail-open: the limiter stops limiting.
+     * So the first fallback hashes the User-Agent (truncated SHA-256),
+     * and the last resort hashes the request URI + method. Both keep the
+     * limiter working under partial-info conditions.
      */
     private function resolveKey(ServerRequestInterface $request): string
     {
@@ -141,7 +138,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
             return $raw;
         }
 
-        // F7.2 fallback 1: hash of User-Agent. Distinct clients usually
+        // Fallback 1: hash of User-Agent. Distinct clients usually
         // ship distinct UAs, so this gives the limiter a per-client
         // bucket even without an IP. 16 hex chars = 64 bits of
         // collision resistance — adequate for a per-client bucket key.
@@ -151,7 +148,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
             return 'ua-' . substr(hash('sha256', $userAgent), 0, 16);
         }
 
-        // F7.2 fallback 2: hash of method + URI. Same client, different
+        // Fallback 2: hash of method + URI. Same client, different
         // endpoints, no UA → at least the buckets differ per endpoint.
         // This is the floor: a request truly without REMOTE_ADDR /
         // X-Forwarded-For / User-Agent is exotic enough that giving

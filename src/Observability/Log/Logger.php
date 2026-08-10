@@ -29,19 +29,17 @@ use function sprintf;
  * Dispatches log entries to one or more sinks. Level filtering is applied
  * via the configured threshold.
  *
- * F4.2: sink-write failures used to be swallowed silently — a misconfigured
- * file path or unwritable disk simply dropped every entry. For a regulated
- * deployment (PSD2 / GDPR / PCI), silent log loss is itself a compliance
- * incident: the audit trail looks intact when it isn't. The logger now
- * uses `error_log()` (PHP's bottom-of-stack diagnostic channel, configured
- * via `error_log` ini) as a last-resort fallback when no sink can accept
- * the entry, and emits a separate `error_log` line announcing which sink
- * failed so operators see the incident even when the primary log file is
- * unreachable. Logging still never crashes a request.
+ * Sink-write failures are never swallowed. In a regulated deployment
+ * (PSD2 / GDPR / PCI) silent log loss is itself a compliance incident: the
+ * audit trail looks intact when it isn't. When no sink accepts an entry the
+ * logger falls back to `error_log()` — PHP's bottom-of-stack diagnostic
+ * channel, configured via the `error_log` ini setting — and emits a separate
+ * `error_log` line naming the sink that failed, so operators see the incident
+ * even when the primary log file is unreachable. Logging still never crashes
+ * a request.
  *
- * F4.3: sink construction failures are routed through the same channel —
- * `createSink()` no longer returns null when the constructor throws; the
- * failure is announced via `error_log` and the channel is dropped.
+ * Sink construction failures travel the same channel: `createSink()` announces
+ * the failure via `error_log` and drops the channel.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -175,11 +173,11 @@ final readonly class Logger implements LoggerInterface
             }
         }
 
-        // F4.2: when every sink dropped the entry (or none were
-        // configured), persist it through the fallback emitter so
-        // the record is not lost. This is the last-resort durability
-        // path — operators should still investigate the sink
-        // failures, but a banking-grade audit trail must not vanish.
+        // When every sink dropped the entry (or none were configured),
+        // persist it through the fallback emitter so the record is not
+        // lost. This is the last-resort durability path — operators
+        // should still investigate the sink failures, but a
+        // banking-grade audit trail must not vanish.
         if (!$atLeastOneSucceeded) {
             $line = new LogFormatter()->format($entry);
             $this->emitFallback('[Pulsar Logger fallback] ' . rtrim($line, "\n"));
@@ -192,10 +190,10 @@ final readonly class Logger implements LoggerInterface
             @fwrite($this->stderr, sprintf("[Pulsar Logger] Sink failure: %s\n", $e->getMessage()));
         }
 
-        // F4.2: surface the failure on PHP's bottom-of-stack diagnostic
-        // channel even outside debug mode. Production operators rely
-        // on `error_log` for fatal-tier signals; silent sink failures
-        // were previously invisible.
+        // Surface the failure on PHP's bottom-of-stack diagnostic
+        // channel even outside debug mode: production operators rely
+        // on `error_log` for fatal-tier signals, and a dropped sink is
+        // invisible everywhere else.
         $this->emitFallback(sprintf('[Pulsar Logger] sink %s failure: %s', $sink::class, $e->getMessage()));
     }
 
@@ -228,9 +226,9 @@ final readonly class Logger implements LoggerInterface
             // silently degrade to no logging.
             throw $unsafe;
         } catch (Throwable $e) {
-            // F4.3: a sink that fails to construct is dropped from
-            // the channel list, but operators must know — otherwise
-            // a typo in `path` or a missing `stream` resource
+            // A sink that fails to construct is dropped from the
+            // channel list, but operators must know — otherwise a
+            // typo in `path` or a missing `stream` resource
             // silently kills the whole channel and the rest of the
             // app keeps logging into the void.
             @error_log(sprintf(

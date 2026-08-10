@@ -36,7 +36,7 @@ final readonly class AccessToken
     /**
      * Token-intrinsic activeness check: not revoked and not expired.
      *
-     * F385.15: this method intentionally does NOT inspect the issuing
+     * This method intentionally does NOT inspect the issuing
      * client's active flag, the granted-scope set, or the subject's
      * account status. Those are external attributes the token cannot
      * reach without a circular dependency on the client / scope /

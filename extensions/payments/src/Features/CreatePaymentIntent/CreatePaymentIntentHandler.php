@@ -47,7 +47,7 @@ final readonly class CreatePaymentIntentHandler
         private LoggerInterface $logger,
         private ClockInterface $clock,
         private PaymentsConfig $config,
-        // F21.3: signs/verifies idempotency-cache payloads. Required so
+        // Signs/verifies idempotency-cache payloads. Required so
         // a forged store row cannot replay as a synthesised intent.
         private SignedIdempotencyEnvelope $envelope,
     ) {}
@@ -128,7 +128,7 @@ final readonly class CreatePaymentIntentHandler
 
     private function commitResult(string $key, PaymentIntent $intent): void
     {
-        // F22.6: encode + seal can throw JsonException / SodiumException
+        // Encode + seal can throw JsonException / SodiumException
         // — wrap into the domain exception so the handler's contract
         // matches PaymentGatewayInterface's reduced @throws set.
         try {
@@ -147,7 +147,7 @@ final readonly class CreatePaymentIntentHandler
                 ],
             ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
-            // F21.3: bind the payload to the idempotency key with a HMAC
+            // Bind the payload to the idempotency key with a HMAC
             // envelope so a tampered store row cannot replay a forged intent.
             $sealed = $this->envelope->seal($key, $payload);
         } catch (JsonException | SodiumException $e) {

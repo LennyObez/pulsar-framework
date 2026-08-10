@@ -32,9 +32,10 @@ final readonly class Route
     public ?string $compiledPattern;
 
     /**
-     * F2.13 (host parity): pre-compiled regex pattern for parameterised
-     * hosts. Null for static / unset hosts. Computed eagerly so
-     * `matchesHost()` never recomputes it on the dispatch hot path.
+     * Pre-compiled regex pattern for parameterised hosts, the host-side
+     * parallel of `compiledPattern`. Null for static / unset hosts.
+     * Computed eagerly so `matchesHost()` never recomputes it on the
+     * dispatch hot path.
      */
     public ?string $compiledHostPattern;
 

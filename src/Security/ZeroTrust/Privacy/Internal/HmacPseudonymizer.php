@@ -20,7 +20,7 @@ use function substr;
  * The same value + context always yields the same pseudonym within a rotation period.
  * Rotation salt changes periodically (configurable) to limit correlation windows.
  *
- * All key material sourced from KeyRingInterface (Finding B).
+ * All key material is sourced from KeyRingInterface.
  */
 #[Internal]
 final readonly class HmacPseudonymizer implements PseudonymizerInterface

@@ -77,13 +77,14 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
     }
 
     /**
-     * F11.13: current schema version of the migration-tracking table
-     * itself. Bumped when a future Pulsar release adds a new column
-     * (e.g. `applied_by`, `duration_ms`). The {@see ensureMigrationTable()}
-     * method reads the existing schema_version from the meta row and
-     * compares against this constant, so deployments that pre-date a
-     * column addition can be evolved in place rather than requiring a
-     * manual `ALTER TABLE` per operator.
+     * Schema version of the migration-tracking table itself, recorded as
+     * the default of its `schema_version` column at creation time.
+     *
+     * Bump it when a future Pulsar release changes the shape of that
+     * table (adding e.g. `applied_by` or `duration_ms`). The recorded
+     * version is what lets such a release recognise a table created by
+     * an older runner and evolve it in place, instead of requiring a
+     * manual `ALTER TABLE` from every operator.
      */
     private const int META_TABLE_SCHEMA_VERSION = 1;
 
@@ -209,7 +210,7 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
      *
      * Acquires a database-level advisory lock to prevent concurrent runs.
      *
-     * F11.14: this method is **not atomic**. Each migration's `down()`
+     * This method is **not atomic**. Each migration's `down()`
      * runs in its own statement (or its own transaction if it opens
      * one); a failure mid-loop leaves the database in a partial state
      * with the earlier migrations already rolled back. Wrapping the
@@ -437,11 +438,10 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         $driver = $this->connection->driver();
         $table = $this->tableName;
 
-        // F11.13: every fresh-install schema carries a `schema_version`
-        // column initialised to META_TABLE_SCHEMA_VERSION. Future
-        // Pulsar releases that need to add columns to this table read
-        // the current schema_version row, then issue ALTER TABLE
-        // upgrades in `ensureMigrationTable()` before continuing.
+        // Every fresh install stamps `schema_version` with
+        // META_TABLE_SCHEMA_VERSION, so a release that later changes the
+        // shape of this table can tell which version it is looking at
+        // and upgrade it in place.
         return match ($driver) {
             Driver::SQLite => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('

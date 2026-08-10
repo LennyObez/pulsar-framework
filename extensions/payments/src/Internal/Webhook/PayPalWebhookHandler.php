@@ -139,11 +139,11 @@ final readonly class PayPalWebhookHandler
      * PAYPAL-CERT-URL, over the message
      * transmissionId|transmissionTime|webhookId|crc32(rawBody).
      *
-     * The previous implementation computed an HMAC keyed by the webhookId and
-     * compared it to the signature. The webhookId is a PUBLIC identifier (shown
-     * in the dashboard / returned by the API), so any party that knew it could
-     * forge a passing signature and inject arbitrary subscription/payment
-     * events (super-audit C14).
+     * The webhookId must never be used as an HMAC key. It is a PUBLIC
+     * identifier — shown in the dashboard and returned by the API — so any
+     * party that knows it could forge a passing signature and inject
+     * arbitrary subscription/payment events. Verification is asymmetric by
+     * design: only PayPal holds the private half.
      *
      * @param string $rawBody Raw JSON body
      * @param array<string, string> $headers PayPal transmission headers

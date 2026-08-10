@@ -28,7 +28,7 @@ use const JSON_THROW_ON_ERROR;
 final readonly class WebhookProcessor
 {
     /**
-     * F25.6: webhook endpoints are forward-facing and a natural DoS
+     * Webhook endpoints are forward-facing and a natural DoS
      * target — a 10 GB POST against `process()` would happily flow
      * into `json_decode()` on the worker thread and OOM. Cap the
      * raw body size before any further processing.
@@ -42,7 +42,7 @@ final readonly class WebhookProcessor
     public const int DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MiB
 
     /**
-     * F25.6: webhook events are flat objects with one or two levels
+     * Webhook events are flat objects with one or two levels
      * of nesting in vendor specs. PHP's `json_decode` default depth
      * of 512 lets an attacker submit a deeply-nested JSON bomb that
      * stays under the 1 MiB body cap but still consumes excessive
@@ -98,7 +98,7 @@ final readonly class WebhookProcessor
     ): WebhookProcessingResult {
         $now ??= new DateTimeImmutable();
 
-        // F25.6: enforce the body cap BEFORE signature verification.
+        // Enforce the body cap BEFORE signature verification.
         // A 10 GB body that happens to ship a valid HMAC would still
         // OOM the worker; the cap also short-circuits cheap DoS that
         // doesn't bother forging a signature.
@@ -124,7 +124,7 @@ final readonly class WebhookProcessor
             );
         }
 
-        // Step 2: Decode payload (capped depth — F25.6).
+        // Step 2: Decode payload (capped depth).
         try {
             /** @var array<string, mixed> $payload */
             $payload = json_decode($rawBody, true, self::JSON_DECODE_MAX_DEPTH, JSON_THROW_ON_ERROR);

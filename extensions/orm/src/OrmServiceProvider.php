@@ -71,9 +71,9 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
         // Encryption (optional). Bound ONLY when encryption is enabled AND the crypto
         // stack is present, so Container::has(ColumnEncryptorInterface) answers honestly
         // and the has()-guards in the hydrator/dehydrator can legitimately fall back to
-        // null. Binding an always-on factory that returns null makes the container reject
-        // resolution ("Factory must return an object"), which used to make EntityManager
-        // unresolvable in the default (encryption-disabled) configuration.
+        // null. An always-on factory returning null is not an option: the container
+        // rejects that resolution ("Factory must return an object"), which would make
+        // EntityManager unresolvable in the default encryption-disabled configuration.
         // Read the parsed ORM config from its raw input — the same source and code
         // path the OrmConfig factory uses (loadOrmConfig) — instead of resolving
         // OrmConfig from the container here. Resolving a service mid-registration,
@@ -149,7 +149,7 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             });
 
             // Read-side tenant filter, wired into GenericRepository so find()/
-            // findBy()/count() cannot return another tenant's rows (RC-2/C12).
+            // findBy()/count() cannot return another tenant's rows.
             $container->bind(TenantScopeApplier::class, static function () use ($container): TenantScopeApplier {
                 /** @var Contracts\TenantScopeInterface $tenantScope */
                 $tenantScope = $container->get(Contracts\TenantScopeInterface::class);

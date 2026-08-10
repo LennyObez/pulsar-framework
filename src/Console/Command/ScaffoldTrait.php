@@ -200,7 +200,7 @@ trait ScaffoldTrait
     /**
      * Resolve a base path from an option, falling back to a default relative to cwd.
      *
-     * F3.3: rejects path-traversal (`..`), absolute paths, and NUL
+     * Rejects path-traversal (`..`), absolute paths, and NUL
      * truncation by routing through {@see SafePath::resolveUnderCwd()}.
      * The returned string is guaranteed to live under the project's
      * current working directory.
@@ -262,12 +262,11 @@ trait ScaffoldTrait
     /**
      * Recursively remove a directory and all its contents.
      *
-     * F3.3: delegates to {@see SafeFilesystem::removeDirectoryRecursive()}
-     * via a {@see SafePath} chokepoint. The destructive primitives
-     * (file remove, directory remove) live behind Symfony's
-     * Filesystem component (a secure-by-default library) and the
-     * SafePath value object guarantees no path can escape the cwd
-     * trust boundary via `..`, absolute prefix, or mid-tree symlink.
+     * Delegates to {@see SafeFilesystem::removeDirectoryRecursive()}
+     * through a {@see SafePath} chokepoint. Every destructive
+     * primitive (file remove, directory remove) takes a SafePath
+     * rather than a string, so no path can escape the cwd trust
+     * boundary via `..`, an absolute prefix, or a mid-tree symlink.
      */
     private function removeDirectoryRecursive(string $dir): void
     {
@@ -281,8 +280,6 @@ trait ScaffoldTrait
 
     /**
      * Remove a single file and report it.
-     *
-     * F3.3: delegates to {@see SafeFilesystem::removeFile()}.
      */
     private function removeFileWithOutput(string $path, OutputInterface $output): void
     {
@@ -321,11 +318,11 @@ trait ScaffoldTrait
     }
 
     /**
-     * F3.3: convert an absolute path back to a cwd-relative form so
+     * Convert an absolute path back to a cwd-relative form so
      * {@see SafePath::resolveUnderCwd()} can re-validate it. Callers
      * already pass paths derived from `resolveBasePath()` (which
      * itself goes through SafePath), so this strip-and-revalidate
-     * is defence-in-depth — any caller bypassing the canonical
+     * is defence-in-depth — a caller that bypasses the canonical
      * factory still hits the validation chokepoint.
      */
     private static function relativeFromCwd(string $absolutePath): string

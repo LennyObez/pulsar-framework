@@ -20,13 +20,12 @@ use function hrtime;
  * explicit reset) and timed stickiness (auto-expires).
  *
  * Persistent-runtime workers (RoadRunner, FrankenPHP, Swoole) interleave
- * Fiber-suspended HTTP requests on the same worker process. A naive shared
- * field would cause request A's write to pin request B's reads to the
- * primary (or, worse, request B's expiry to release request A's pin
+ * Fiber-suspended HTTP requests on the same worker process. A shared
+ * field would let request A's write pin request B's reads to the
+ * primary (or, worse, let request B's expiry release request A's pin
  * prematurely), producing non-deterministic read-your-write semantics
- * across tenants. State is now keyed by `Fiber::getCurrent()` via a
- * `WeakMap`, with a stable `$rootKey` for non-Fiber callers (F29.2
- * follow-up of F13.1 / F25.2 / F24.2).
+ * across tenants. State is therefore keyed by `Fiber::getCurrent()` via
+ * a `WeakMap`, with a stable `$rootKey` for non-Fiber callers.
  * @api
  */
 #[Api(since: '1.0.0')]

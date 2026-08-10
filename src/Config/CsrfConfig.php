@@ -37,7 +37,7 @@ readonly class CsrfConfig implements ReportsUnknownKeys
      *     fully-absent signal (non-browser client) falls through to the token
      *     check. 'required' also rejects the fully-absent case. 'off' disables
      *     Layer 1 entirely — not recommended; the synchronizer token then stands
-     *     alone. Note an empty $trustedOrigins no longer disables the layer.
+     *     alone. Note an empty $trustedOrigins does not disable the layer.
      * @param list<string> $unknownKeys Keys present in the raw `csrf` array that this
      *     DTO does not read — reported at boot rather than silently ignored, since a
      *     misspelled key here leaves a CSRF control at its default instead of the

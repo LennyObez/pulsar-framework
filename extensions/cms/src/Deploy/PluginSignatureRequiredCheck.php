@@ -17,13 +17,12 @@ use function class_exists;
  * Validates that CMS plugin signature enforcement is enabled in staging /
  * production environments.
  *
- * SEC-EXT-02 (external audit): `CmsSecurityConfig::requireSignedPlugins`
- * defaults to false so dev / test environments can iterate on unsigned
- * plugin packages. Production deployments MUST flip this to true so the
- * `CmsPluginManager` refuses to load plugins whose Ed25519 signature was
- * not verified against the trusted_public_keys allowlist. Without this
- * gate, a tampered plugin archive — or a plugin installed without a
- * signature — boots unchanged.
+ * `CmsSecurityConfig::requireSignedPlugins` defaults to false so dev /
+ * test environments can iterate on unsigned plugin packages. Production
+ * deployments MUST flip this to true so the `CmsPluginManager` refuses
+ * to load plugins whose Ed25519 signature was not verified against the
+ * trusted_public_keys allowlist. Without this gate, a tampered plugin
+ * archive — or a plugin installed without a signature — boots unchanged.
  *
  * Permissive when the CMS extension is not installed.
  */

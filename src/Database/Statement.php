@@ -65,7 +65,7 @@ final class Statement
     /**
      * Execute the statement and stream rows lazily via a generator.
      *
-     * F11.16: `execute()` materialises the full result set with
+     * `execute()` materialises the full result set with
      * `fetchAll()`, which OOMs on large queries (an export, a
      * tenant-wide audit dump, a backfill scan). This streaming
      * variant uses PDO's row-at-a-time `fetch()` so memory stays

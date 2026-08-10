@@ -19,17 +19,17 @@ use function is_numeric;
 use function is_string;
 
 /**
- * F9.17: in-memory SessionInterface implementation for tests
- * and short-lived workers that don't need PHP's `$_SESSION`
- * globals.
+ * In-memory SessionInterface implementation for tests and
+ * short-lived workers that don't need PHP's `$_SESSION` globals.
  *
  * The production `Session` class wraps `session_start()` +
- * `$_SESSION` directly, which makes unit tests require
+ * `$_SESSION` directly, so tests touching it need
  * `@runInSeparateProcess` to isolate session state between
- * cases. That overhead blocks parallel test runners (paratest),
- * stalls Windows builds (~50 tests/min instead of ~1000), and
- * prevents long-running SAPIs (RoadRunner, FrankenPHP, Swoole)
- * from cleanly sharing session state across workers.
+ * cases. That per-test process fork rules out parallel test
+ * runners and is prohibitively slow wherever process creation is
+ * expensive; it also prevents long-running SAPIs (RoadRunner,
+ * FrankenPHP, Swoole) from cleanly sharing session state across
+ * workers.
  *
  * `InMemorySession` stores everything in process memory keyed
  * by the configured cookie name → an ordinary array. Test

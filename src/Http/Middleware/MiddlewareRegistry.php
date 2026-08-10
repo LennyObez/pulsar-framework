@@ -113,10 +113,10 @@ final class MiddlewareRegistry
                 return $result;
             }
 
-            // F7.11: previously the registry blindly returned `[$name]`
-            // tagged as a class-string, which let typos slip through to
-            // crash later inside the pipeline. Reject any name that is
-            // neither a registered alias / group nor an existing class.
+            // Reject any name that is neither a registered alias / group
+            // nor an existing class. Returning `[$name]` tagged as a
+            // class-string would let a typo slip through and crash much
+            // later inside the pipeline.
             if (!class_exists($name)) {
                 throw MiddlewareNotFoundException::unknownReference($name);
             }

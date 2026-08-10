@@ -114,7 +114,7 @@ final class SecurityException extends RuntimeException
     }
 
     /**
-     * Audit chain state on disk is unverifiable (F24.3).
+     * Audit chain state on disk is unverifiable.
      *
      * Raised when an audit sink reports {@see \Pulsar\Security\Audit\AuditChainState::Corrupted}
      * — the file holds at least one entry but the last record cannot
@@ -208,11 +208,11 @@ final class SecurityException extends RuntimeException
     /**
      * Session payload could not be JSON-encoded for storage.
      *
-     * Pulsar 1.0.0-rc.12 stores sessions as JSON to eliminate the
-     * unserialize() attack surface (HIGH-4 / CWE-502). Application
-     * code that puts non-encodable values (resources, raw object
-     * instances, closures) into the session triggers this exception
-     * at save() time.
+     * Sessions are stored as JSON to eliminate the unserialize()
+     * attack surface (CWE-502). Application code that puts
+     * non-encodable values (resources, raw object instances,
+     * closures) into the session triggers this exception at save()
+     * time.
      */
     #[NoDiscard]
     public static function sessionEncodingFailed(string $reason): self

@@ -15,7 +15,7 @@ use Pulsar\Event\EnvelopeRequiredEvent;
  * Provides common fields (eventId, occurredAt, correlationId, nonce) and enforces
  * regulation identification and event typing on all concrete implementations.
  *
- * Every event carries a nonce and timestamp for replay safety (Finding D).
+ * Every event carries a nonce and timestamp for replay safety.
  * @api
  */
 #[Api(since: '1.0.0')]

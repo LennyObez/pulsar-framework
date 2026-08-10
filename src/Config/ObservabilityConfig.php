@@ -124,10 +124,10 @@ final readonly class ObservabilityConfig implements ReportsUnknownKeys
 
         // No explicit `channels` map: synthesise a single default channel from
         // the flat `driver`/`path`/`stream` shape (or a file default). Without
-        // this an empty channels list left the logger with NO sinks, so every
-        // entry — including unhandled-exception records the error handler emits
-        // before rendering the 500 page — was silently dropped and the log file
-        // was never created.
+        // this, an empty channels list leaves the logger with NO sinks, so every
+        // entry — including the unhandled-exception records the error handler
+        // emits before rendering the 500 page — is silently dropped and the log
+        // file is never created.
         if ($channelConfigs === []) {
             $flatDriver = $logging['driver'] ?? null;
             $flatPath = $logging['path'] ?? null;

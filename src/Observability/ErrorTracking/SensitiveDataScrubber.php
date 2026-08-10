@@ -95,7 +95,7 @@ final readonly class SensitiveDataScrubber
     }
 
     /**
-     * F8.5: scrub a free-form string for credit-card numbers, JWTs,
+     * Scrub a free-form string for credit-card numbers, JWTs and
      * long hex/base64 tokens. Used by stack-trace formatters and
      * other places where structured-key scrubbing cannot apply
      * (PHP trace `args` may contain user-supplied secrets surfaced
@@ -159,17 +159,19 @@ final readonly class SensitiveDataScrubber
     }
 
     /**
-     * F8.6: previously this was `str_contains($lower, $field)`, which
-     * over-matched on substrings: `tokenizer`, `tokens_per_second`,
-     * `tokenization_settings`, `payment_token_count` all redacted on
-     * `token`. The fix is word-boundary aware — split the key into
-     * segments by common separators (`_`, `-`, `.`, ` `) and on
-     * camelCase boundaries, then require an exact segment match. So
-     * `auth_token` / `accessToken` still match `token`, while
-     * `tokenizer` (a single segment) does not. Multi-word sensitive
-     * entries (`credit_card`, `private_key`) are handled by also
-     * checking adjacent-segment runs against the segmented field
-     * patterns.
+     * Word-boundary-aware match of a context key against the sensitive
+     * field list.
+     *
+     * A plain `str_contains($lower, $field)` over-matches on substrings:
+     * `tokenizer`, `tokens_per_second`, `tokenization_settings` and
+     * `payment_token_count` would all redact on `token`, destroying
+     * legitimate diagnostic value. Instead the key is split into segments
+     * by common separators (`_`, `-`, `.`, ` `) and on camelCase
+     * boundaries, then an exact segment match is required — so
+     * `auth_token` / `accessToken` still match `token`, while `tokenizer`
+     * (a single segment) does not. Multi-word sensitive entries
+     * (`credit_card`, `private_key`) are matched by also checking
+     * adjacent-segment runs against the segmented field patterns.
      */
     private function isSensitiveKey(string $key): bool
     {

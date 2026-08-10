@@ -49,9 +49,9 @@ final readonly class WebAuthnServer implements WebAuthnServerInterface
     }
 
     /**
-     * F385.16: `$expectedUserId` has no default — see the interface
-     * docblock for the rationale (preventing silent "any user"
-     * authentication via the discoverable-credentials default).
+     * `$expectedUserId` has no default — see the interface docblock for
+     * the rationale (a default would allow silent "any user"
+     * authentication through the discoverable-credentials path).
      */
     public function verifyAuthentication(
         string $credentialJson,

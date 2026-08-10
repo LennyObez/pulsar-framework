@@ -63,14 +63,12 @@ final class Gate implements GateInterface
 
         $context ??= new PolicyContext(permission: $permission);
 
-        // F12.6: previously the policy list was walked twice — once
-        // for explicit-deny (phase 2) and once for explicit-allow
-        // (phase 4). For N policies that's 2N evaluations even when
-        // most of the time the same evaluator could decide both
-        // outcomes. Walk once and capture every policy's verdict;
-        // an explicit deny still short-circuits, but an explicit
-        // allow is remembered until after the RBAC check runs (so
-        // RBAC remains the primary grant path).
+        // Walk the policy list exactly once and capture every verdict:
+        // evaluating N policies separately for explicit-deny and for
+        // explicit-allow would cost 2N evaluations. An explicit deny
+        // short-circuits immediately, but an explicit allow is only
+        // remembered until after the RBAC check runs, so RBAC stays
+        // the primary grant path.
         $explicitAllow = false;
         foreach ($this->policies as $policy) {
             $result = $policy->evaluate($identity, $context);

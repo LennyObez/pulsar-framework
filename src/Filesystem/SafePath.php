@@ -26,7 +26,7 @@ use function substr;
 /**
  * Path-traversal-safe filesystem path.
  *
- * F3.3: scaffold and removal commands accept user-supplied path
+ * Scaffold and removal commands accept user-supplied path
  * fragments (e.g. `--path` option). Concatenating these fragments
  * with `getcwd()` gives a path that may escape the project root via
  * `..`, an absolute prefix (`/etc/passwd`), a NUL truncation, or a
@@ -45,9 +45,8 @@ use function substr;
  * ## Two doors, two policies on `..` — deliberately
  *
  * This class answers two different questions and treats traversal differently for
- * each. The divergence is intentional, and saying so here is the point: it was
- * undocumented, and the seam between the two is where a fail-open lived for a
- * release cycle.
+ * each. The divergence is intentional, and the seam between the two is exactly
+ * where a fail-open would hide, so both policies are stated here explicitly.
  *
  * - {@see resolveUnder()} and {@see resolveUnderCwd()} take **untrusted input** — a
  *   CLI `--path` fragment. They reject any `..` outright, before resolution. There is
@@ -60,8 +59,9 @@ use function substr;
  *   folds `..` and judges the destination instead.
  *
  * Both are right for their caller. What is not acceptable is a third behaviour
- * emerging from the gap — which is exactly what happened when folding depended on
- * realpath() and POSIX returned false for a path whose parent did not exist yet.
+ * emerging from the gap, so folding must never depend on realpath(): on POSIX it
+ * returns false for a path whose parent does not exist yet, which would leave the
+ * `..` unfolded and the destination unjudged.
  *
  * @api
  */
@@ -260,11 +260,12 @@ final readonly class SafePath
         // Collapse `..` before touching the filesystem. realpath() resolves `..` by
         // walking the tree, so on POSIX it returns false when any component along the
         // way is missing — `<base>/var/../public` fails outright while `var/` does not
-        // exist yet. The ancestor walk below then climbs past `public` entirely, lands
-        // on `<base>`, finds it outside the boundary and reports "not contained": the
-        // containment check failed OPEN, on exactly the fresh-deployment state it
-        // exists to police. Windows hid this for a year because its realpath() folds
-        // `..` lexically and never needed the directory to exist.
+        // exist yet. The ancestor walk below would then climb past `public` entirely,
+        // land on `<base>`, find it outside the boundary and report "not contained",
+        // which is the wrong answer on exactly the fresh-deployment state this check
+        // exists to police. The divergence is platform-specific: the Windows
+        // implementation folds `..` lexically and never needs the directory to exist,
+        // so the two would not agree without this step.
         //
         // Folding first removes that dependency. The realpath() call still runs on the
         // result, so a symlink pointing out of the boundary is still caught on the part

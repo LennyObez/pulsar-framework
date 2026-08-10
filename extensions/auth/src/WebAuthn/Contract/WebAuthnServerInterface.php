@@ -69,15 +69,15 @@ interface WebAuthnServerInterface
      * Validates the assertion, verifies the challenge, checks the signature
      * counter for clone detection, and returns the authenticated credential.
      *
-     * F385.16: `$expectedUserId` is REQUIRED — the parameter has no default
-     * value so the caller must explicitly pass either a user identifier
-     * (the typical username+password+passkey flow) or `null` (the
-     * discoverable-credentials / resident-keys flow where the
+     * `$expectedUserId` is REQUIRED — the parameter deliberately has no
+     * default, so the caller must state which mode it is in: a user
+     * identifier (the typical username+password+passkey flow) or `null`
+     * (the discoverable-credentials / resident-keys flow, where the
      * authenticator selects the credential and identity is derived from
-     * the assertion). The previous signature defaulted to `null` and
-     * silently authenticated "any user" — a subtle account-confusion
-     * vector if downstream code did not also check the resolved user
-     * matched the calling session.
+     * the assertion). Defaulting to `null` would let a caller accept an
+     * assertion from *any* user without noticing — an account-confusion
+     * vector unless downstream code independently checks that the
+     * resolved user matches the calling session.
      *
      * @param string $credentialJson The JSON-encoded AuthenticatorAssertionResponse from the client
      * @param string $expectedChallenge The challenge that was sent to the client

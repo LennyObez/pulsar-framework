@@ -75,9 +75,9 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             return match ($config->provider) {
                 'null' => new NullProvider($clock),
                 'simulator' => new SimulatorProvider($clock),
-                // F3.1 / F17.1 / F22.3: refuse arbitrary class instantiation —
-                // verify the configured FQCN actually implements the expected
-                // interface before letting the container resolve it.
+                // Refuse arbitrary class instantiation — verify the configured
+                // FQCN actually implements the expected interface before
+                // letting the container resolve it.
                 default => TypedServiceResolver::resolve(
                     $container,
                     $config->provider,
@@ -103,7 +103,7 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
                 ),
             };
 
-            // F21.16: when a `TenantContext` is wired (multi-tenant
+            // When a `TenantContext` is wired (multi-tenant
             // deployment), wrap the store in a per-tenant namespacing
             // decorator so two tenants who pick the same logical
             // idempotency key cannot collide on a single store row.
@@ -136,8 +136,8 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             };
         });
 
-        // F21.3: signs idempotency-cache payloads with a master-key-derived
-        // HMAC so a tampered store row cannot replay as a forged response.
+        // Signs idempotency-cache payloads with a master-key-derived HMAC so a
+        // tampered store row cannot replay as a forged response.
         $container->bind(SignedIdempotencyEnvelope::class, static function () use ($container): SignedIdempotencyEnvelope {
             /** @var KeyProviderInterface $keyProvider */
             $keyProvider = $container->get(KeyProviderInterface::class);
@@ -151,12 +151,14 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
         // Webhook verifier
         $container->bind(WebhookVerifierInterface::class, HmacWebhookVerifier::class);
 
-        // PayPal webhook signing certificate provider (C14): supplies the RSA
-        // public key that PayPalWebhookHandler verifies transmission signatures
-        // against, replacing the forgeable HMAC scheme.
+        // PayPal webhook signing certificate provider: supplies the RSA public
+        // key that PayPalWebhookHandler verifies transmission signatures
+        // against. PayPal signs webhooks with its own certificate, so
+        // verification is asymmetric — there is no shared secret to configure,
+        // and none may be substituted for the certificate.
         $container->bind(PayPalCertificateProviderInterface::class, PayPalCertificateProvider::class);
 
-        // Feature handlers (F22.1: each mutating operation has its own slice)
+        // Feature handlers — each mutating operation has its own slice
         $container->bind(CreatePaymentIntentHandler::class, CreatePaymentIntentHandler::class);
         $container->bind(CapturePaymentIntentHandler::class, CapturePaymentIntentHandler::class);
         $container->bind(CancelPaymentIntentHandler::class, CancelPaymentIntentHandler::class);

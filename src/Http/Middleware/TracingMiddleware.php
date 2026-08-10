@@ -29,7 +29,7 @@ use function sprintf;
  * Attaches trace context and root span to request attributes. Sets span
  * status from response status code and adds `traceparent` to response.
  *
- * F8.7: incoming `traceparent` from anywhere is dangerous — a hostile
+ * Accepting an incoming `traceparent` from anywhere is dangerous — a hostile
  * client can spoof trace ids into the topology, force `sampled=01` to
  * bypass our sampling rate (collector memory exhaustion), or attempt
  * to correlate with internal trace ids leaked elsewhere. The middleware
@@ -60,7 +60,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // F8.7: only honour `traceparent` from a trusted upstream.
+        // Only honour `traceparent` from a trusted upstream.
         // Untrusted clients get a fresh root span — their inbound
         // header is silently discarded so trace topology and
         // sampling decisions stay under our control.
@@ -87,7 +87,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
-        // F24.6: never seed the span name with the raw path — that
+        // Never seed the span name with the raw path — that
         // makes the cardinality unbounded for any request that throws
         // before route matching (parse errors, middleware exceptions
         // pre-router) since the `finally` block only updates the name
@@ -121,7 +121,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
                 $this->traceContextParser->serialize($context),
             );
         } finally {
-            // F24.6: always replace the placeholder name with either a
+            // Always replace the placeholder name with either a
             // bounded route label or the literal `unmatched` so the
             // span cardinality stays under control even when the
             // request threw before route matching.
@@ -142,7 +142,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
     }
 
     /**
-     * F8.7: traceparent is honoured only when the request comes from a
+     * Traceparent is honoured only when the request comes from a
      * trusted proxy. With no TrustedProxy wired, NOTHING is trusted
      * (deny-by-default): otherwise any unauthenticated client could force
      * sampling (`sampled=01` on every request exhausts the collector) or
@@ -185,14 +185,13 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             return false;
         }
 
-        // F8.8: scale to 1_000_000 so the smallest representable
-        // sampling rate is 1 in a million (1e-6). The previous
-        // `getInt(0, 999)` clamped any rate < 1e-3 to threshold 0,
-        // silently disabling sampling for legitimate operator
-        // values like `samplingRate = 1e-4` (one in 10K). The
-        // wider range covers production traffic from low-volume
-        // services up to multi-million-rps fleets without
-        // introducing a 64-bit codepath.
+        // Scale to 1_000_000 so the smallest representable sampling
+        // rate is 1 in a million (1e-6). A narrower range such as
+        // `getInt(0, 999)` would clamp any rate below 1e-3 to a
+        // threshold of 0, silently disabling sampling for legitimate
+        // operator values like `samplingRate = 1e-4` (one in 10K).
+        // This range covers low-volume services up to multi-million-rps
+        // fleets without introducing a 64-bit codepath.
         $random = $this->randomizer->getInt(0, 999_999);
         $threshold = (int) ($this->samplingRate * 1_000_000.0);
 

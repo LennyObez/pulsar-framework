@@ -8,7 +8,7 @@ use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 
 /**
- * F3.14: optional lifecycle hook called when the kernel is asked
+ * Optional lifecycle hook called when the kernel is asked
  * to release resources.
  *
  * Long-running SAPIs (RoadRunner, FrankenPHP, Swoole, queue

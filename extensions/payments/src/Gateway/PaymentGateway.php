@@ -27,13 +27,13 @@ use Pulsar\Tenancy\TenantContext;
 /**
  * Payment gateway orchestrator.
  *
- * F22.1: a thin facade that delegates each mutating operation to its
- * own vertical slice handler ({@see CreatePaymentIntentHandler},
+ * A thin facade that delegates each mutating operation to its own
+ * vertical slice handler ({@see CreatePaymentIntentHandler},
  * {@see CapturePaymentIntentHandler}, {@see CancelPaymentIntentHandler},
  * {@see RefundChargeHandler}). The slices own their idempotency claim,
  * provider call, audit, and metrics — the gateway only enforces the
  * read-through delegations and the tenant-scope precondition that
- * applies to the whole `PaymentGatewayInterface` contract (F13.10).
+ * applies to the whole `PaymentGatewayInterface` contract.
  *
  * Read-only `getIntent` / `getCharge` / `getRefund` go straight to the
  * provider — they do not need idempotency or audit, and they are safe
@@ -51,7 +51,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         // provider directly — they need neither idempotency nor audit.
         private PaymentProviderInterface $provider,
         private PaymentsConfig $config,
-        // F13.10: when `requireTenantContext` is true, every mutating
+        // When `requireTenantContext` is true, every mutating
         // operation must run inside a resolved tenant scope. Read-only
         // getters do not enforce this.
         private ?TenantContext $tenantContext = null,
@@ -150,8 +150,8 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
     }
 
     /**
-     * F13.10: refuse mutating payment operations that run outside a
-     * tenant scope when the deployment is configured to require one.
+     * Refuse mutating payment operations that run outside a tenant
+     * scope when the deployment is configured to require one.
      *
      * @throws PaymentException When `requireTenantContext` is true and
      *                          no tenant is currently resolved.

@@ -59,7 +59,7 @@ final readonly class MetricsWiring implements ServiceWiringInterface
         if ($observabilityConfig->metrics->exporterEnabled) {
             $endpoint = $observabilityConfig->metrics->exporterEndpoint;
 
-            // F8.2: gate the OpenMetrics exporter behind a Bearer-token guard.
+            // Gate the OpenMetrics exporter behind a Bearer-token guard.
             // The default Prometheus / OpenTelemetry scrape pattern hits this
             // endpoint on a private network, but a misconfigured load balancer
             // or a sidecar with no allowlist would expose the entire metrics

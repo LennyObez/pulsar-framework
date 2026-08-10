@@ -81,12 +81,6 @@ final class MigrationRepository
                     continue;
                 }
 
-                // F11.17: parse name + version + sequentiality in
-                // a single pass instead of three separate regex
-                // sweeps. Each filename hits at most one match
-                // attempt per format on the way in, vs the
-                // previous up-to-7 sweeps via extractVersion +
-                // extractName + isSequentialVersion.
                 $parsed = $this->parseFilename($file);
                 if ($parsed === null) {
                     continue;
@@ -132,11 +126,9 @@ final class MigrationRepository
     }
 
     /**
-     * F11.17: parse a filename into (version, name, isSequential)
-     * in a single regex pass per format. Replaces the
-     * `extractVersion` + `extractName` + `isSequentialVersion`
-     * triple-sweep that was up to 7 regex calls per file during
-     * `discover()`.
+     * Parse a filename into (version, name, isSequential), extracting
+     * all three in a single regex pass per supported format so
+     * `discover()` costs at most one match attempt per format per file.
      *
      * @return array{0: string, 1: string, 2: bool}|null
      *          [version, name, isSequential] or null when the

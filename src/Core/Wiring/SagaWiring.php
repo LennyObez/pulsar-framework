@@ -19,8 +19,8 @@ use Pulsar\Workflow\Internal\Storage\DatabaseSagaStepResultStorage;
 
 /**
  * Registers a default saga-state storage so the saga engine is runnable out of
- * the box (the SagaStateStorageInterface port previously had no concrete
- * implementation, leaving the engine unusable).
+ * the box. SagaStateStorageInterface is a port with no implementation of its
+ * own; the engine cannot run until something binds one.
  *
  * A durable database-backed store is used when a database connection is
  * available — required to resume sagas across process restarts; otherwise a

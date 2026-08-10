@@ -26,7 +26,7 @@ use function substr;
 #[Internal]
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {
-    /** F25.8: HMAC-SHA256 produces 32 bytes = 64 hex chars. */
+    /** HMAC-SHA256 produces 32 bytes = 64 hex chars. */
     private const int HMAC_HEX_LENGTH = 64;
 
     public function __construct(
@@ -114,7 +114,7 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
             throw WebhookException::malformedHeader('no v1 signatures');
         }
 
-        // F25.8: validate each v1 is 64 lowercase hex AFTER the
+        // Validate each v1 is 64 lowercase hex AFTER the
         // timestamp / signatures-present checks so error priority
         // is consistent with the parser's lexical order.
         $validated = [];

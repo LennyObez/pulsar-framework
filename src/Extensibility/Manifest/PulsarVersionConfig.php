@@ -29,20 +29,17 @@ final readonly class PulsarVersionConfig
     /**
      * Create from manifest array data.
      *
-     * F3.12: `min_version` SHOULD be declared. The previous
-     * default of `'0.0.0'` (= "any version") allowed a manifest
-     * authored against rc.7 to silently keep loading on rc.10
-     * after a breaking API change. For a banking framework
-     * where extension compatibility is a stability contract,
-     * the missing-key case is now flagged via
-     * `E_USER_DEPRECATED` so the operator's deprecation
-     * collector or PHP error log surfaces every manifest that
-     * still relies on the implicit default. The next major
-     * release will turn this into a hard
-     * `InvalidArgumentException`. All shipped extension
-     * manifests now declare an explicit `pulsar.min_version`,
-     * so only third-party manifests should ever trip the
-     * notice.
+     * `min_version` SHOULD be declared. Omitting it falls back to
+     * `'0.0.0'` — "any version" — which lets a manifest authored
+     * against an older release keep loading across a breaking API
+     * change without a word. Where extension compatibility is a
+     * stability contract, that silence is the failure mode, so the
+     * missing key raises `E_USER_DEPRECATED` and the operator's
+     * deprecation collector or PHP error log surfaces every manifest
+     * still relying on the implicit default. A future major release
+     * will turn this into a hard `InvalidArgumentException`. Every
+     * manifest shipped with the framework declares an explicit
+     * `pulsar.min_version`, so only third-party manifests trip it.
      *
      * @param array<string, mixed> $data
      */

@@ -62,7 +62,7 @@ final class Container implements AdvancedContainerInterface
     private array $resolving = [];
 
     /**
-     * F2.20: maximum autowiring depth. A pathological dependency
+     * Maximum autowiring depth. A pathological dependency
      * graph (or a malformed annotation) could otherwise drive
      * the recursion past PHP's stack limit and crash the SAPI
      * worker before any circular-dependency detection fires.
@@ -175,17 +175,16 @@ final class Container implements AdvancedContainerInterface
     #[Override]
     public function get(string $id): mixed
     {
-        // Return cached instance if available
         if (isset($this->instances[$id])) {
             return $this->instances[$id];
         }
 
-        // Check for binding
         if (isset($this->definitions[$id])) {
             return $this->resolve($id);
         }
 
-        // Check deferred providers before giving up
+        // Deferred providers are consulted before the autowiring fallback below, and
+        // therefore before anything can conclude the id is unresolvable.
         if ($this->deferredProviders !== null && $this->deferredProviders->has($id)) {
             $this->deferredProviders->resolve($id, $this);
 
@@ -340,7 +339,6 @@ final class Container implements AdvancedContainerInterface
             $concrete = $definition->concrete;
             $lifetime = $definition->lifetime;
 
-            // Check scoped instance cache
             if (($lifetime === Lifetime::RequestScope || $lifetime === Lifetime::TenantScope) && $this->scopeManager !== null) {
                 $scopedInstance = $this->scopeManager->getScopedInstance($id, $lifetime);
                 if ($scopedInstance !== null) {
@@ -403,7 +401,7 @@ final class Container implements AdvancedContainerInterface
             );
         }
 
-        // F2.20: bound the autowiring stack so a malformed graph
+        // Bound the autowiring stack so a malformed graph
         // cannot crash the SAPI worker. The resolving-set already
         // catches direct cycles; this guards against deep but
         // acyclic chains that would otherwise blow the PHP stack.

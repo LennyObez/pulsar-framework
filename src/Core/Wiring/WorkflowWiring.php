@@ -31,8 +31,8 @@ use Pulsar\Workflow\Timeout\TimeoutHandlerInterface;
  *
  * The workflow subsystem (state machines with guarded transitions, durable
  * storage, transition audit log, timeout handling -- see docs/workflow-saga.md
- * and ADR-0027) is #[Api] and fully documented but previously had no
- * composition root, so WorkflowEngineInterface could never be resolved.
+ * and ADR-0027) is #[Api]. This class is its composition root: without this
+ * wiring nothing binds WorkflowEngineInterface and it cannot be resolved.
  *
  * Storage is database-backed only (workflow state is durable by design), so
  * the whole subsystem stays dormant without a connection. An application that

@@ -11,11 +11,11 @@ use Pulsar\Api\Api;
  * their backing store is empty, healthy, or corrupted.
  *
  * Audit sinks that implement this interface let `AuditLogger` fail
- * closed on corruption instead of silently re-seeding the chain
- * (F24.3). Sinks that don't implement it retain the historical
- * "seed on null" behaviour for backwards compatibility — but their
- * tamper-evidence guarantee is weaker, so production deployments
- * should prefer state-aware sinks (e.g. {@see AuditFileSink}).
+ * closed on corruption instead of re-seeding the chain over it. Sinks
+ * that don't implement it fall back to "seed on null" for backwards
+ * compatibility — but their tamper-evidence guarantee is weaker, so
+ * production deployments should prefer state-aware sinks
+ * (e.g. {@see AuditFileSink}).
  *
  * This is a separate interface from `ChainableAuditSinkInterface`
  * because adding `chainState()` to the existing interface would be a

@@ -51,7 +51,7 @@ final class Router implements RouterInterface
     private array $staticRoutes = [];
 
     /**
-     * F2.21: first-segment bucket index for dynamic routes.
+     * First-segment bucket index for dynamic routes.
      *
      * Maps `method => firstStaticSegment => registrationSequence => Route` so the
      * dynamic-route scan for `/users/{id}` requests only walks routes whose
@@ -151,7 +151,7 @@ final class Router implements RouterInterface
 
         // A static route has no dynamic segments and no host constraint, so it can
         // live in the O(1) static table; everything else is bucketed by its first
-        // static segment. F2.21: `/users/{id}` buckets under `users`, `/{lang}/x`
+        // static segment: `/users/{id}` buckets under `users`, `/{lang}/x`
         // under `''` (catch-all), keyed by registration sequence.
         $isStatic = $route->compiledPattern === null && $route->host === null;
         $normalizedPath = '/' . trim($route->path, '/');
@@ -196,7 +196,7 @@ final class Router implements RouterInterface
     }
 
     /**
-     * F2.21: extract the first static (non-`{...}`) path segment of a route
+     * Extract the first static (non-`{...}`) path segment of a route
      * pattern. `/users/{id}` → `users`, `/api/v1/users/{id}` → `api`,
      * `/{lang}/posts` → `''`, `/` → `''`.
      */
@@ -360,7 +360,7 @@ final class Router implements RouterInterface
             return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
         }
 
-        // F2.21: narrow the dynamic-route scan to the first-segment bucket of the
+        // Narrow the dynamic-route scan to the first-segment bucket of the
         // request path + the catch-all bucket (patterns starting with `{...}`),
         // merged back into registration order via their sequence keys so an
         // earlier catch-all wins over a later static-first-segment overlap.
@@ -376,7 +376,7 @@ final class Router implements RouterInterface
         /** @var list<Route> $candidates */
         $candidates = array_values($candidates);
 
-        // F2.21: when the request carries a host header, the static-route fast
+        // When the request carries a host header, the static-route fast
         // path may have been skipped above — but a host-less static route can
         // still be a legitimate fallback. Append it (lowest precedence) so the
         // host-aware scan finds it after any host-constrained candidate.

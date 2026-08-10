@@ -50,7 +50,7 @@ use const JSON_THROW_ON_ERROR;
 final readonly class SchemaFileParser
 {
     /**
-     * F387.8 / ADR-0028: codegen takes external schema files as
+     * ADR-0028: codegen takes external schema files as
      * input. A schema source compromised by a malicious or
      * accidental write becomes a supply-chain risk: the generator
      * runs the parser at build time, the parser influences what

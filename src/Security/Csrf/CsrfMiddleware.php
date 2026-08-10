@@ -117,7 +117,7 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     }
 
     /**
-     * F9.7: maximum JSON body bytes the middleware will rewind + parse to
+     * Maximum JSON body bytes the middleware will rewind + parse to
      * extract a CSRF token. Headers are still the recommended carrier;
      * scanning the body is a fallback for JSON SPAs that ship the token
      * in `{"_csrf_token": "..."}`. 256 KiB is more than enough for any
@@ -128,12 +128,14 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     /**
      * Extract the CSRF token from the request (header, POST field, or JSON body).
      *
-     * F9.7: for JSON-bodied requests no upstream middleware necessarily
-     * parsed the body into `getParsedBody()`, so a SPA POSTing
-     * `Content-Type: application/json` with `{"_csrf_token": "..."}` was
-     * never matched by the form-field path and got rejected outright.
-     * The middleware now reads + rewinds the body when the content type
-     * is JSON and looks up the field in the decoded structure.
+     * For JSON-bodied requests nothing upstream necessarily parses the
+     * body into `getParsedBody()`, so a SPA POSTing
+     * `Content-Type: application/json` with `{"_csrf_token": "..."}`
+     * would never match the form-field path — and a request carrying a
+     * perfectly valid token would be rejected outright, which is the harm
+     * this fallback exists to prevent. The middleware therefore reads and
+     * rewinds the body when the content type is JSON, and looks the field
+     * up in the decoded structure.
      */
     private function extractToken(ServerRequestInterface $request): ?string
     {

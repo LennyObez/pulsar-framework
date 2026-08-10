@@ -103,14 +103,14 @@ final class SubprocessRunner
             2 => ['pipe', 'w'],
         ];
 
-        // SEC-IPC-01: build the child environment from an explicit allowlist
-        // instead of inheriting the parent's full env. The MCP server is invoked
-        // by potentially untrusted clients and the previous `array_merge(getenv(),
-        // ['CI' => 1], $env)` leaked every secret in the runner's environment
-        // (COMPOSER_AUTH, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, …) into every
-        // tool subprocess. The allowlist below is the minimum set of variables a
-        // sane PHP/composer/git tool needs to run; everything else must be
-        // declared explicitly in `$env` by the caller.
+        // Build the child environment from an explicit allowlist rather than
+        // inheriting the parent's full env. The MCP server is invoked by
+        // potentially untrusted clients, so inheriting `getenv()` wholesale
+        // would hand every secret in the runner's environment (COMPOSER_AUTH,
+        // GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, …) to every tool subprocess.
+        // The allowlist is the minimum set a PHP/composer/git tool needs to
+        // run; everything else must be declared explicitly in `$env` by the
+        // caller.
         $mergedEnv = $this->buildChildEnvironment($env);
 
         // Array form ($command is `list<string>`) bypasses shell
@@ -179,14 +179,14 @@ final class SubprocessRunner
             usleep(10_000);
         }
 
-        // F32.5: close the pipes BEFORE proc_close so a child still
+        // Close the pipes BEFORE proc_close so a child still
         // blocked on `write()` to a full pipe gets SIGPIPE and exits
         // promptly. Otherwise proc_close waits for the child, the
         // child waits for a pipe drain, and the runner deadlocks.
         fclose($pipes[1]);
         fclose($pipes[2]);
 
-        // F32.6: SIGTERM (proc_terminate's default) is just a
+        // SIGTERM (proc_terminate's default) is just a
         // request — a misbehaving / hung child can install a
         // handler that ignores it. Wait briefly for the
         // already-issued terminate to land, then escalate to
@@ -237,14 +237,14 @@ final class SubprocessRunner
     }
 
     /**
-     * F32.6: wait for an already-terminating subprocess and
+     * Wait for an already-terminating subprocess and
      * escalate to SIGKILL if it does not exit within the grace
      * window. proc_terminate's default signal is SIGTERM, which
      * a misbehaving child can install a handler for and ignore;
      * SIGKILL bypasses any handler and is the cooperative-process
      * contract end-state.
      *
-     * F32.17: on Windows, `proc_open` wraps every command through
+     * On Windows, `proc_open` wraps every command through
      * `cmd.exe /c`. `proc_terminate` then kills the cmd.exe
      * wrapper but the actual child PHP process can keep running
      * to completion — a `sleep(10)` survives a 1s timeout. Walk
@@ -283,7 +283,7 @@ final class SubprocessRunner
     }
 
     /**
-     * F32.17: terminate the subprocess unconditionally,
+     * Terminate the subprocess unconditionally,
      * walking the tree on Windows so the cmd.exe wrapper
      * AND the actual child both die. On UNIX, proc_terminate
      * already targets the right pgid.
@@ -310,7 +310,7 @@ final class SubprocessRunner
     }
 
     /**
-     * SEC-IPC-01: assemble the child process environment from an explicit
+     * Assemble the child process environment from an explicit
      * allowlist of inherited variables plus the caller-supplied overrides.
      *
      * The allowlist names variables that must flow into composer / git / PHP
@@ -359,7 +359,7 @@ final class SubprocessRunner
     }
 
     /**
-     * F32.17: force-kill the cmd.exe wrapper PHP gave us AND
+     * Force-kill the cmd.exe wrapper PHP gave us AND
      * its descendants on Windows. Uses proc_open array form so
      * the PID flows as a separate argv entry — taskkill receives
      * it positionally, never via shell expansion. Output is

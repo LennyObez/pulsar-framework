@@ -44,13 +44,11 @@ final class ConsoleOutput implements OutputInterface
     /**
      * Check if the terminal supports colors.
      *
-     * F3.7: the previous Windows Terminal probe used
-     * `str_starts_with((string) getenv('WT_SESSION'), '')`, which is always
-     * true (every string starts with the empty string). The branch made
-     * the entire Windows colour-detection always succeed regardless of
-     * whether Windows Terminal was actually present. The fix is to test
-     * `WT_SESSION !== false && WT_SESSION !== ''` — Windows Terminal
-     * sets that env to a GUID, so a non-empty value is the right signal.
+     * Windows Terminal is detected by `WT_SESSION` being both set and
+     * non-empty: it publishes a GUID there, so a non-empty value is the
+     * signal. Test it that way and not with `str_starts_with(..., '')`,
+     * which is true of every string and would make the whole Windows
+     * branch report colour support unconditionally.
      */
     private function hasColorSupport(): bool
     {

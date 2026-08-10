@@ -35,7 +35,7 @@ final readonly class EncryptionConfig
     {
         return new self(
             enabled: $data['enabled'] ?? false,
-            // F33.6: prefer the framework's central SubKeyId enum to make the
+            // Prefer the framework's central SubKeyId enum to make the
             // subsystem assignment visible at review time. The integer fallback
             // is kept for back-compat with configs already shipped.
             subKeyId: $data['sub_key_id'] ?? SubKeyId::Orm->value,

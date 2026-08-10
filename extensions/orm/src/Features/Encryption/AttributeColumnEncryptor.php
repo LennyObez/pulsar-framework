@@ -58,10 +58,10 @@ final readonly class AttributeColumnEncryptor implements ColumnEncryptorInterfac
     public function blindIndex(string $plaintext, int $hashLength = 32): string
     {
         // Key the BLAKE2b hash with a SECRET key derived from the master key,
-        // not the public blindIndexContext label (super-audit C10). Previously
-        // the label itself was passed as the BLAKE2b key, so anyone with a DB
-        // dump of an encrypted-plus-blind-indexed PII column could brute-force
-        // or confirm the plaintext offline with a public, well-known key.
+        // never with the public blindIndexContext label. Keying on the label
+        // would let anyone holding a dump of an encrypted-plus-blind-indexed
+        // PII column brute-force or confirm the plaintext offline, because the
+        // key would be public and well known.
         //
         // SubKeyId::OrmBlindIndex separates this key from the encryption key
         // (Orm=5); the label is folded into the 8-byte KDF context (hashed down

@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Marker for rules that establish a value's basic type.
  *
- * F7.7: when a `TypeRuleInterface` rule fails (e.g. `IntegerType`,
+ * When a `TypeRuleInterface` rule fails (e.g. `IntegerType`,
  * `StringType`, `ArrayType`, `BooleanType`), the validator short-circuits
  * the remaining rules for that field. Otherwise downstream rules would
  * run against a value of the wrong type — for instance `Min` on a value

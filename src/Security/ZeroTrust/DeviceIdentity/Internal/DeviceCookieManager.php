@@ -20,7 +20,7 @@ use function time;
  *
  * Cookie format: base64(deviceId|expiry|hmac)
  * The HMAC covers both deviceId and expiry to prevent tampering with either field.
- * All signing operations go through KeyRingInterface (Finding B).
+ * All signing operations go through KeyRingInterface.
  */
 #[Internal]
 final readonly class DeviceCookieManager

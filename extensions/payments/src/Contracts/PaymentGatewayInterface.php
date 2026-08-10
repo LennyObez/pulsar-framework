@@ -19,7 +19,7 @@ use Pulsar\Idempotency\Exception\IdempotencyException;
  * (de)serialisation, SodiumException from envelope signing) are wrapped
  * by the implementation into `IdempotencyException::serializationFailed()`
  * so consumers only need to catch the two domain exceptions declared
- * below (F22.6).
+ * below.
  * @api
  */
 #[Api(since: '1.0.0')]

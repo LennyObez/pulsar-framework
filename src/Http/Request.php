@@ -180,22 +180,19 @@ final readonly class Request
     }
 
     /**
-     * Perform the actual JSON body decoding (no caching).
+     * Hard cap on the body size that `json()` will pass to `json_decode`.
      *
-     * @return array<string, mixed>
-     */
-    /**
-     * F7.17: hard cap on the body size that `json()` will pass to
-     * `json_decode`. The outer `Request::fromGlobals()` already
-     * applies a body-size cap (default 8 MiB) at read time, but a
-     * caller constructing a `Request` instance directly with a hand-
-     * crafted body (tests, internal dispatch) bypasses that cap. This
-     * second-line guard ensures the JSON parser never sees more than
-     * a documented bound regardless of how the body got here.
+     * `Request::fromGlobals()` already applies a body-size cap (default
+     * 8 MiB) at read time, but a caller constructing a `Request` instance
+     * directly with a hand-crafted body (tests, internal dispatch) bypasses
+     * that cap. This second-line guard ensures the JSON parser never sees
+     * more than a documented bound regardless of how the body got here.
      */
     private const int JSON_BODY_DECODE_LIMIT = 8_388_608; // 8 MiB
 
     /**
+     * Perform the actual JSON body decoding (no caching).
+     *
      * @return array<string, mixed>
      */
     private function decodeJsonBody(): array
@@ -205,7 +202,7 @@ final readonly class Request
             return [];
         }
 
-        // F7.17: refuse to decode oversize bodies. Returning an empty
+        // Refuse to decode oversize bodies. Returning an empty
         // array keeps the `json()` contract intact (callers already
         // handle the empty-array case for invalid JSON / wrong content
         // type) without raising mid-request.
@@ -366,7 +363,7 @@ final readonly class Request
      * and exhaust worker memory before the application even begins to
      * parse the request — a cheap DoS vector. The default matches the
      * common `post_max_size` ini value of 8 MiB and can be raised or
-     * lowered explicitly per call (F2.8).
+     * lowered explicitly per call.
      */
     public const int DEFAULT_MAX_BODY_BYTES = 8_388_608;
 

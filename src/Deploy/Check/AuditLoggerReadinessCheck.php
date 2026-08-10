@@ -15,7 +15,7 @@ use Pulsar\Deploy\DeployCheckInterface;
 /**
  * Validates that a real (non-null) audit logger is wired in staging/production.
  *
- * SEC-AUDIT-01: NullAuditLogger silently discards every audit event. It is a
+ * NullAuditLogger silently discards every audit event. It is a
  * legitimate dev/test fallback so that security primitives such as
  * SafeHtmlPolicy can function without a full audit chain, but a production
  * deployment configured to resolve AuditLoggerInterface to NullAuditLogger

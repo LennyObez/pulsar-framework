@@ -30,7 +30,7 @@ use const PHP_INT_MAX;
 /**
  * Database-backed transactional-outbox adapter for {@see OutboxPort}.
  *
- * F387.7 / ADR-0027: the saga and workflow modules depend on a
+ * ADR-0027: the saga and workflow modules depend on a
  * transactional outbox so domain writes and integration-event
  * publication share the same DB transaction. Without an
  * implementation of {@see OutboxPort} the dual-write problem

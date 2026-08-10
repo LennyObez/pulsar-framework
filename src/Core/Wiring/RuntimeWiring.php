@@ -74,7 +74,7 @@ final readonly class RuntimeWiring implements ServiceWiringInterface
 
         // The session manager is a singleton, so on a persistent worker its
         // loaded id/data/metadata would otherwise survive into the next
-        // request and hand one user another's session (RC-1: account takeover).
+        // request and hand one user another's session — account takeover.
         // SecurityWiring runs before this, so the binding already exists.
         if ($container->has(SessionManager::class)) {
             $registry->registerResettable(SessionManager::class);
