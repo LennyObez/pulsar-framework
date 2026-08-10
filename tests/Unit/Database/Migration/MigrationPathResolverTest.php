@@ -9,61 +9,80 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Database\Migration\MigrationPathResolver;
+use Pulsar\Extensibility\ExtensionLifecycle;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
+
+use function array_search;
+use function array_slice;
+use function array_values;
+use function is_int;
+use function str_replace;
 
 use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(MigrationPathResolver::class)]
 final class MigrationPathResolverTest extends TestCase
 {
+    /**
+     * The framework's own `src/<Module>/Database/Migration` directories lead the list.
+     *
+     * They are found by glob so that a core module gaining migrations is picked up
+     * without anyone editing the resolver — which is also why no test below may assume
+     * how many there are.
+     */
+    #[Test]
+    public function frameworkMigrationsPrecedeTheProjectPath(): void
+    {
+        $resolver = new MigrationPathResolver($this->createDatabaseConfig('database/migrations'));
+
+        $paths = $resolver->resolve();
+        $index = array_search('database/migrations', $paths, true);
+
+        self::assertGreaterThan(0, $index, 'the framework ships migrations and none were discovered');
+
+        foreach (array_slice($paths, 0, is_int($index) ? $index : 0) as $framework) {
+            self::assertStringEndsWith('/Database/Migration', str_replace('\\', '/', $framework));
+        }
+    }
+
     #[Test]
     public function resolveReturnsProjectPathWhenNoExtensions(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $resolver = new MigrationPathResolver($config);
 
-        // Act
         $paths = $resolver->resolve();
 
-        // Assert
-        self::assertSame(['database/migrations'], $paths);
+        self::assertSame(['database/migrations'], $this->fromProjectPath($paths, 'database/migrations'));
     }
 
     #[Test]
     public function resolveReturnsProjectPathWhenRegistryIsNull(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $resolver = new MigrationPathResolver($config, null);
 
-        // Act
         $paths = $resolver->resolve();
 
-        // Assert
-        self::assertSame(['database/migrations'], $paths);
+        self::assertSame(['database/migrations'], $this->fromProjectPath($paths, 'database/migrations'));
     }
 
     #[Test]
     public function resolveReturnsProjectPathWhenNoExtensionsHaveMigrations(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $registry = new ExtensionRegistry();
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
         $paths = $resolver->resolve();
 
-        // Assert
-        self::assertSame(['database/migrations'], $paths);
+        self::assertSame(['database/migrations'], $this->fromProjectPath($paths, 'database/migrations'));
     }
 
     #[Test]
     public function resolveIncludesExtensionMigrationPaths(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $registry = $this->createRegistryWithExtension(
             'pulsar/cms',
@@ -72,19 +91,20 @@ final class MigrationPathResolverTest extends TestCase
         );
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
-        $paths = $resolver->resolve();
+        $tail = $this->fromProjectPath($resolver->resolve(), 'database/migrations');
 
-        // Assert
-        self::assertCount(2, $paths);
-        self::assertSame('database/migrations', $paths[0]);
-        self::assertSame('/framework/extensions/cms' . DIRECTORY_SEPARATOR . 'src/Migration', $paths[1]);
+        self::assertCount(2, $tail);
+        self::assertSame('database/migrations', $tail[0]);
+        self::assertSame('/framework/extensions/cms' . DIRECTORY_SEPARATOR . 'src/Migration', $tail[1]);
     }
 
+    /**
+     * Extension migrations run after the project's, so a project schema is never built
+     * on top of a table an extension has yet to create.
+     */
     #[Test]
-    public function resolveProjectPathIsAlwaysFirst(): void
+    public function projectPathPrecedesEveryExtensionPath(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('project/migrations');
         $registry = $this->createRegistryWithExtension(
             'pulsar/cms',
@@ -93,17 +113,15 @@ final class MigrationPathResolverTest extends TestCase
         );
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
-        $paths = $resolver->resolve();
+        $tail = $this->fromProjectPath($resolver->resolve(), 'project/migrations');
 
-        // Assert
-        self::assertSame('project/migrations', $paths[0]);
+        self::assertSame('project/migrations', $tail[0]);
+        self::assertStringContainsString('cms', $tail[1]);
     }
 
     #[Test]
     public function resolveHandlesMultipleExtensions(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $registry = new ExtensionRegistry();
 
@@ -113,21 +131,18 @@ final class MigrationPathResolverTest extends TestCase
 
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
-        $paths = $resolver->resolve();
+        $tail = $this->fromProjectPath($resolver->resolve(), 'database/migrations');
 
-        // Assert — project + 3 extensions
-        self::assertCount(4, $paths);
-        self::assertSame('database/migrations', $paths[0]);
-        self::assertStringContainsString('cms', $paths[1]);
-        self::assertStringContainsString('forum', $paths[2]);
-        self::assertStringContainsString('analytics', $paths[3]);
+        self::assertCount(4, $tail);
+        self::assertSame('database/migrations', $tail[0]);
+        self::assertStringContainsString('cms', $tail[1]);
+        self::assertStringContainsString('forum', $tail[2]);
+        self::assertStringContainsString('analytics', $tail[3]);
     }
 
     #[Test]
     public function resolveHandlesExtensionWithMultipleMigrationPaths(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $registry = $this->createRegistryWithExtension(
             'pulsar/cms',
@@ -136,57 +151,66 @@ final class MigrationPathResolverTest extends TestCase
         );
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
-        $paths = $resolver->resolve();
+        $tail = $this->fromProjectPath($resolver->resolve(), 'database/migrations');
 
-        // Assert — project + 2 extension paths
-        self::assertCount(3, $paths);
-        self::assertSame('database/migrations', $paths[0]);
-        self::assertSame('/ext/cms' . DIRECTORY_SEPARATOR . 'src/Migration', $paths[1]);
-        self::assertSame('/ext/cms' . DIRECTORY_SEPARATOR . 'database/migrations', $paths[2]);
+        self::assertCount(3, $tail);
+        self::assertSame('database/migrations', $tail[0]);
+        self::assertSame('/ext/cms' . DIRECTORY_SEPARATOR . 'src/Migration', $tail[1]);
+        self::assertSame('/ext/cms' . DIRECTORY_SEPARATOR . 'database/migrations', $tail[2]);
     }
 
     #[Test]
     public function resolveSkipsExtensionsWithoutMigrations(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $registry = new ExtensionRegistry();
 
         $this->addExtensionToRegistry($registry, 'pulsar/cms', '/ext/cms', ['src/Migration']);
-        $this->addExtensionToRegistry($registry, 'pulsar/example', '/ext/example', []); // no migrations
+        $this->addExtensionToRegistry($registry, 'pulsar/example', '/ext/example', []);
 
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
-        $paths = $resolver->resolve();
-
-        // Assert: project + 1 extension (example skipped, no migrations declared)
-        self::assertCount(2, $paths);
+        self::assertCount(2, $this->fromProjectPath($resolver->resolve(), 'database/migrations'));
     }
 
     #[Test]
     public function resolveExcludesFailedExtensions(): void
     {
-        // Arrange
         $config = $this->createDatabaseConfig('database/migrations');
         $registry = new ExtensionRegistry();
 
         $this->addExtensionToRegistry($registry, 'pulsar/cms', '/ext/cms', ['src/Migration']);
         $this->addExtensionToRegistry($registry, 'pulsar/feedback', '/ext/feedback', ['src/Migration']);
 
-        // Mark feedback as failed (simulates boot failure)
-        $registry->setState('pulsar/feedback', \Pulsar\Extensibility\ExtensionLifecycle::Failed);
+        $registry->setState('pulsar/feedback', ExtensionLifecycle::Failed);
 
         $resolver = new MigrationPathResolver($config, $registry);
 
-        // Act
-        $paths = $resolver->resolve();
+        $tail = $this->fromProjectPath($resolver->resolve(), 'database/migrations');
 
-        // Assert: project + CMS only (feedback excluded because it failed)
-        self::assertCount(2, $paths);
-        self::assertSame('database/migrations', $paths[0]);
-        self::assertStringContainsString('cms', $paths[1]);
+        self::assertCount(2, $tail);
+        self::assertSame('database/migrations', $tail[0]);
+        self::assertStringContainsString('cms', $tail[1]);
+    }
+
+    /**
+     * The resolved list from the project path onwards, so an assertion about what the
+     * project and its extensions contribute does not depend on how many migration
+     * directories the framework itself happens to ship.
+     *
+     * @param list<string> $paths
+     *
+     * @return list<string>
+     */
+    private function fromProjectPath(array $paths, string $projectPath): array
+    {
+        $index = array_search($projectPath, $paths, true);
+
+        if (!is_int($index)) {
+            self::fail("the resolved list does not contain the project path '{$projectPath}'");
+        }
+
+        return array_values(array_slice($paths, $index));
     }
 
     private function createDatabaseConfig(string $migrationsPath): DatabaseConfig

@@ -18,11 +18,11 @@ use const GLOB_ONLYDIR;
 /**
  * Resolves migration paths from project config and registered extensions.
  *
- * The project path (from DatabaseConfig) is always first, ensuring project
- * migrations run before extension migrations. Extension paths are appended
- * only for extensions that successfully registered or booted (not failed ones).
- * This prevents disabled or broken extensions from contributing migrations
- * that could conflict with project schemas.
+ * The framework's own migration directories come first, then the project path from
+ * DatabaseConfig, then the extensions — so project migrations still run before
+ * extension ones. Extension paths are appended only for extensions that successfully
+ * registered or booted, which keeps a disabled or broken extension from contributing
+ * migrations that could conflict with project schemas.
  */
 #[Internal(reason: 'Wired in composition root; use MigrationPathResolverInterface')]
 final readonly class MigrationPathResolver implements MigrationPathResolverInterface
