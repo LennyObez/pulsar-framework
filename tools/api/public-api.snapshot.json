@@ -4542,7 +4542,6 @@
                 "markUsed": {
                     "params": [
                         "string $identityId",
-                        "Pulsar\\Auth\\TwoFactor\\TwoFactorPurpose $purpose",
                         "int $timeStep",
                         "int $timestamp"
                     ],
@@ -4599,8 +4598,7 @@
                         "string $code",
                         "?int $timestamp",
                         "?Pulsar\\Auth\\TwoFactor\\TotpReplayGuardInterface $replayGuard",
-                        "?string $identityId",
-                        "Pulsar\\Auth\\TwoFactor\\TwoFactorPurpose $purpose"
+                        "?string $identityId"
                     ],
                     "return": "?int",
                     "static": false
@@ -15289,6 +15287,11 @@
                     "return": "Pulsar\\Database\\Transaction",
                     "static": false
                 },
+                "dialect": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Dialect\\DialectInterface",
+                    "static": false
+                },
                 "disconnect": {
                     "params": [],
                     "return": "void",
@@ -15343,6 +15346,11 @@
                     ],
                     "return": "mixed",
                     "static": false
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
+                    "static": false
                 }
             },
             "constants": []
@@ -15369,6 +15377,570 @@
                     "params": [],
                     "return": "string",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Dialect\\DialectInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "compileBooleanLiteral": {
+                    "params": [
+                        "bool $value"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileCreateIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table",
+                        "array $columns",
+                        "bool $unique",
+                        "bool $ifNotExists"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileDropIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileIndexExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileLimitOffset": {
+                    "params": [
+                        "?int $limit",
+                        "?int $offset"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileLock": {
+                    "params": [
+                        "Pulsar\\Database\\LockMode $mode"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileUpsert": {
+                    "params": [
+                        "string $insertSql",
+                        "array $conflictColumns",
+                        "array $updateColumns"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "currentTimestamp": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "driver": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Driver",
+                    "static": false
+                },
+                "name": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "quoteIdentifier": {
+                    "params": [
+                        "string $identifier"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsReturning": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsRowLocking": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Dialect\\Dialects": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "for": {
+                    "params": [
+                        "Pulsar\\Database\\Driver $driver",
+                        "Pulsar\\Database\\DriverVariant $variant"
+                    ],
+                    "return": "Pulsar\\Database\\Dialect\\DialectInterface",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Dialect\\MariaDbDialect": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "compileBooleanLiteral": {
+                    "params": [
+                        "bool $value"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "compileCreateIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table",
+                        "array $columns",
+                        "bool $unique",
+                        "bool $ifNotExists"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "compileDropIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "compileIndexExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "compileLimitOffset": {
+                    "params": [
+                        "?int $limit",
+                        "?int $offset"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileLock": {
+                    "params": [
+                        "Pulsar\\Database\\LockMode $mode"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileUpsert": {
+                    "params": [
+                        "string $insertSql",
+                        "array $conflictColumns",
+                        "array $updateColumns"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "currentTimestamp": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "driver": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Driver",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "name": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "quoteIdentifier": {
+                    "params": [
+                        "string $identifier"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsReturning": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsRowLocking": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Dialect\\MySqlDialect": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "compileBooleanLiteral": {
+                    "params": [
+                        "bool $value"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileCreateIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table",
+                        "array $columns",
+                        "bool $unique",
+                        "bool $ifNotExists"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileDropIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileIndexExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileLimitOffset": {
+                    "params": [
+                        "?int $limit",
+                        "?int $offset"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileLock": {
+                    "params": [
+                        "Pulsar\\Database\\LockMode $mode"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileUpsert": {
+                    "params": [
+                        "string $insertSql",
+                        "array $conflictColumns",
+                        "array $updateColumns"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "currentTimestamp": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "driver": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Driver",
+                    "static": false
+                },
+                "name": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "quoteIdentifier": {
+                    "params": [
+                        "string $identifier"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsReturning": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsRowLocking": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Dialect\\PostgreSqlDialect": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "compileBooleanLiteral": {
+                    "params": [
+                        "bool $value"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileCreateIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table",
+                        "array $columns",
+                        "bool $unique",
+                        "bool $ifNotExists"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileDropIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileIndexExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileLimitOffset": {
+                    "params": [
+                        "?int $limit",
+                        "?int $offset"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileLock": {
+                    "params": [
+                        "Pulsar\\Database\\LockMode $mode"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileUpsert": {
+                    "params": [
+                        "string $insertSql",
+                        "array $conflictColumns",
+                        "array $updateColumns"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "currentTimestamp": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "driver": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Driver",
+                    "static": false
+                },
+                "name": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "quoteIdentifier": {
+                    "params": [
+                        "string $identifier"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsReturning": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsRowLocking": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Dialect\\SqliteDialect": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "compileBooleanLiteral": {
+                    "params": [
+                        "bool $value"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileCreateIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table",
+                        "array $columns",
+                        "bool $unique",
+                        "bool $ifNotExists"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileDropIndex": {
+                    "params": [
+                        "string $name",
+                        "string $table"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileIndexExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileLimitOffset": {
+                    "params": [
+                        "?int $limit",
+                        "?int $offset"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileLock": {
+                    "params": [
+                        "Pulsar\\Database\\LockMode $mode"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compileUpsert": {
+                    "params": [
+                        "string $insertSql",
+                        "array $conflictColumns",
+                        "array $updateColumns"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "currentTimestamp": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "driver": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Driver",
+                    "static": false
+                },
+                "name": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "quoteIdentifier": {
+                    "params": [
+                        "string $identifier"
+                    ],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsReturning": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsRowLocking": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
                 }
             },
             "constants": []
@@ -15574,6 +16146,19 @@
                         "string $sql",
                         "?Throwable $previous"
                     ],
+                    "return": "Pulsar\\Database\\Exception\\DatabaseException",
+                    "static": true
+                },
+                "rollbackFailed": {
+                    "params": [
+                        "string $reason",
+                        "Throwable $cause"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\DatabaseException",
+                    "static": true
+                },
+                "rollbackImpossibleAfterImplicitCommit": {
+                    "params": [],
                     "return": "Pulsar\\Database\\Exception\\DatabaseException",
                     "static": true
                 },
@@ -16130,6 +16715,32 @@
             },
             "constants": []
         },
+        "Pulsar\\Database\\LockMode": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Database\\Migration\\DiffResult": {
             "since": "1.0.0",
             "methods": [],
@@ -16517,6 +17128,11 @@
                     "return": "Pulsar\\Database\\Transaction",
                     "static": false
                 },
+                "dialect": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Dialect\\DialectInterface",
+                    "static": false
+                },
                 "disconnect": {
                     "params": [],
                     "return": "void",
@@ -16570,6 +17186,11 @@
                         "callable $callback"
                     ],
                     "return": "mixed",
+                    "static": false
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
                     "static": false
                 }
             },
@@ -16920,6 +17541,11 @@
                     "return": "int",
                     "static": false
                 },
+                "dialect": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Dialect\\DialectInterface",
+                    "static": false
+                },
                 "disconnect": {
                     "params": [],
                     "return": "void",
@@ -16978,6 +17604,11 @@
                 "unwrap": {
                     "params": [],
                     "return": "Pulsar\\Database\\ConnectionInterface",
+                    "static": false
+                },
+                "variant": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\DriverVariant",
                     "static": false
                 }
             },
@@ -17915,6 +18546,46 @@
             },
             "constants": []
         },
+        "Pulsar\\Database\\Schema\\IndexOperations": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Database\\ConnectionInterface $connection"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "dropIfPresent": {
+                    "params": [
+                        "string $table",
+                        "string $name"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "ensure": {
+                    "params": [
+                        "string $table",
+                        "string $name",
+                        "array $columns",
+                        "bool $unique"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "exists": {
+                    "params": [
+                        "string $table",
+                        "string $name"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Database\\Schema\\SchemaBuilder": {
             "since": "1.0.0",
             "methods": [],
@@ -18365,7 +19036,7 @@
                         "string $table",
                         "string $indexName"
                     ],
-                    "return": "void",
+                    "return": "bool",
                     "static": false
                 },
                 "dropTable": {
@@ -18593,9 +19264,17 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "delimiter": {
+                    "params": [
+                        "Pulsar\\Database\\Driver $driver"
+                    ],
+                    "return": "string",
+                    "static": true
+                },
                 "quote": {
                     "params": [
-                        "string $identifier"
+                        "string $identifier",
+                        "Pulsar\\Database\\Driver $driver"
                     ],
                     "return": "string",
                     "static": true
@@ -19528,6 +20207,29 @@
                 "getStatusCode": {
                     "params": [],
                     "return": "Pulsar\\Http\\ResponseStatus",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\ErrorHandling\\ProductionRenderer": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "render": {
+                    "params": [
+                        "Throwable $exception",
+                        "Psr\\Http\\Message\\ServerRequestInterface $request",
+                        "Pulsar\\Http\\ResponseStatus $status"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "response": {
+                    "params": [
+                        "Pulsar\\Http\\ResponseStatus $status"
+                    ],
+                    "return": "Psr\\Http\\Message\\ResponseInterface",
                     "static": false
                 }
             },
@@ -30331,6 +31033,11 @@
                     "return": "Pulsar\\Integrity\\Exception\\IntegrityException",
                     "static": true
                 },
+                "scopeMissing": {
+                    "params": [],
+                    "return": "Pulsar\\Integrity\\Exception\\IntegrityException",
+                    "static": true
+                },
                 "signatureInvalid": {
                     "params": [],
                     "return": "Pulsar\\Integrity\\Exception\\IntegrityException",
@@ -30402,7 +31109,8 @@
                         "string $frameworkVersion",
                         "int $entryCount",
                         "array $entries",
-                        "?string $signature"
+                        "?string $signature",
+                        "?Pulsar\\Integrity\\ManifestScope $scope"
                     ],
                     "return": null,
                     "static": false
@@ -30480,6 +31188,35 @@
                     ],
                     "return": "string",
                     "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Integrity\\ManifestScope": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $include",
+                        "array $exclude"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "covers": {
+                    "params": [
+                        "string $relativePath"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "discover": {
+                    "params": [
+                        "string $basePath"
+                    ],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -64546,6 +65283,7 @@
         "Pulsar\\DataProtection\\AuditLogPurge",
         "Pulsar\\DataProtection\\DefaultRetentionPolicy",
         "Pulsar\\DataProtection\\SessionPurge",
+        "Pulsar\\Database\\Dialect\\AbstractDialect",
         "Pulsar\\Database\\Failover\\CacheBackedFailoverStateStore",
         "Pulsar\\Database\\Failover\\FailoverConnectionManager",
         "Pulsar\\Database\\Migration\\MigrationFlockHolder",
