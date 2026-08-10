@@ -88,7 +88,7 @@ vendor/bin/phpbench run benchmarks/Memory/ --config=tools/php/phpbench.json --re
 ### Comparative benchmarks (quick, non-PHPBench)
 
 ```bash
-php benchmarks/comparative/PulsarBench.php --iterations=10000 --json
+php benchmarks/Comparative/PulsarBench.php --iterations=10000 --json
 ```
 
 ## Methodology

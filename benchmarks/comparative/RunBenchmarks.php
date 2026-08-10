@@ -15,7 +15,7 @@ declare(strict_types=1);
  * baseline is the only useful behaviour.
  *
  * Usage:
- *   php benchmarks/comparative/RunBenchmarks.php [--baseline=tools/php/benchmark-baseline.json] [--update-baseline] [--threshold=5]
+ *   php benchmarks/Comparative/RunBenchmarks.php [--baseline=tools/php/benchmark-baseline.json] [--update-baseline] [--threshold=5]
  */
 
 require_once __DIR__ . '/../../vendor/autoload.php';
