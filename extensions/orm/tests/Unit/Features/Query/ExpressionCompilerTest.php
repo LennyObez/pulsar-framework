@@ -81,8 +81,8 @@ final class ExpressionCompilerTest extends TestCase
     #[Test]
     public function inRejectsEmptyValues(): void
     {
-        // FR-30: an empty IN list previously compiled to "col IN ()", which is
-        // invalid SQL on every supported driver. It must be rejected up front.
+        // An empty IN list would compile to "col IN ()", which is invalid SQL on
+        // every supported driver. It must be rejected up front.
         $this->expectException(QueryBuilderException::class);
 
         $this->compiler->in('status', []);
@@ -91,7 +91,7 @@ final class ExpressionCompilerTest extends TestCase
     #[Test]
     public function notInRejectsEmptyValues(): void
     {
-        // FR-30: the NOT IN form has the same empty-list hazard.
+        // The NOT IN form has the same empty-list hazard.
         $this->expectException(QueryBuilderException::class);
 
         $this->compiler->in('status', [], not: true);

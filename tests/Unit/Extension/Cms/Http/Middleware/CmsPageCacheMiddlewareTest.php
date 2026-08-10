@@ -167,8 +167,9 @@ final class CmsPageCacheMiddlewareTest extends TestCase
         $middleware = $this->middleware();
         $handler = $this->htmlHandler();
 
-        // _nocache used to be a free public cache-busting lever for anonymous
-        // traffic; it now goes through the cache and stays key-neutral.
+        // _nocache must not be a cache-busting lever for anonymous traffic: it
+        // goes through the cache and stays key-neutral, so an unauthenticated
+        // caller cannot force origin work by appending it.
         $request = $this->request('/page')->withQueryParams(['_nocache' => '1']);
 
         self::assertSame('MISS', $middleware->process($request, $handler)->getHeaderLine('X-CMS-Cache'));

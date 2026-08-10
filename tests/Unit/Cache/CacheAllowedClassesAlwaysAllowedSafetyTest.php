@@ -16,13 +16,12 @@ use function dirname;
 use function sprintf;
 
 /**
- * F26.2 regression suite: every class in
+ * Regression suite: every class in
  * `CacheAllowedClasses::ALWAYS_ALLOWED` must remain free of the
  * dangerous magic methods that turn a deserialization target into a
- * gadget chain. The historical bypass let `ConfigRepository` join the
- * allowlist without going through `isEligible()` — this test plus the
- * scan-time check in `CacheAllowedClasses::assertAlwaysAllowedSafe()`
- * close that loop.
+ * gadget chain. Entries on that list never pass through `isEligible()`,
+ * so their safety rests entirely on this suite and the scan-time
+ * `CacheAllowedClasses::assertAlwaysAllowedSafe()` check.
  */
 #[CoversClass(CacheAllowedClasses::class)]
 final class CacheAllowedClassesAlwaysAllowedSafetyTest extends TestCase

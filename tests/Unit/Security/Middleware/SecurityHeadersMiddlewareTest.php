@@ -405,8 +405,8 @@ final class SecurityHeadersMiddlewareTest extends TestCase
     #[Test]
     public function coepBaselinePresentByDefault(): void
     {
-        // F30.4: Cross-Origin-Embedder-Policy is now part of the MINIMUM_HEADERS
-        // baseline so it cannot be silently dropped by an empty CrossOriginConfig.
+        // Cross-Origin-Embedder-Policy is part of the MINIMUM_HEADERS baseline
+        // so it cannot be silently dropped by an empty CrossOriginConfig.
         $config = new SecurityHeadersConfig(headers: []);
 
         $middleware = new SecurityHeadersMiddleware($config);

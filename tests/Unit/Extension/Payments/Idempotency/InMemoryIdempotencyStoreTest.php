@@ -69,7 +69,7 @@ final class InMemoryIdempotencyStoreTest extends TestCase
             $store->claim('key-1', 'hash-1', 'createIntent', $now, 3600);
             self::fail('Expected IdempotencyException for concurrent claim');
         } catch (IdempotencyException $e) {
-            // F22.19: assert kind tag is ConcurrentClaim so HTTP layers
+            // The kind tag must be ConcurrentClaim so HTTP layers
             // can map this to 409 Conflict rather than 500.
             self::assertSame(IdempotencyErrorKind::ConcurrentClaim, $e->kind);
             self::assertStringContainsString('currently being processed', $e->getMessage());

@@ -189,8 +189,8 @@ final class SchemaFileParserTest extends TestCase
     }
 
     /**
-     * F387.8: schema files outside the `.pulsar.json` extension
-     * are rejected before any disk read happens.
+     * Schema files outside the `.pulsar.json` extension are rejected
+     * before any disk read happens.
      */
     #[Test]
     public function rejectsNonPulsarJsonExtension(): void
@@ -204,8 +204,8 @@ final class SchemaFileParserTest extends TestCase
     }
 
     /**
-     * F387.8: when an `allowedRoot` is configured, schema paths
-     * that resolve outside that root are rejected.
+     * When an `allowedRoot` is configured, schema paths that resolve
+     * outside that root are rejected.
      */
     #[Test]
     public function rejectsPathOutsideAllowedRoot(): void
@@ -231,8 +231,8 @@ final class SchemaFileParserTest extends TestCase
     }
 
     /**
-     * F387.8: paths with `.pulsar.json` suffix and inside the
-     * allowed root parse normally.
+     * Paths with a `.pulsar.json` suffix and inside the allowed root
+     * parse normally.
      */
     #[Test]
     public function acceptsPulsarJsonInsideAllowedRoot(): void

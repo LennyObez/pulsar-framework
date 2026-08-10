@@ -43,7 +43,7 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function invalidSignatureThrows(): void
     {
-        // F25.8: 64 hex chars (well-formed) but does not match the
+        // 64 hex chars (well-formed) but does not match the
         // computed HMAC — exercises the hash_equals mismatch path.
         $payload = '{"id":"evt_1"}';
         $timestamp = 1700000000;
@@ -58,7 +58,7 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function nonHexV1SignatureRejected(): void
     {
-        // F25.8: payments-extension verifier mirrors the framework
+        // The payments-extension verifier mirrors the framework
         // verifier — reject anything not 64 lowercase hex chars
         // before hash_equals.
         $timestamp = 1700000000;
@@ -114,10 +114,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function multipleV1OneValidAccepts(): void
     {
-        // F25.8: previous fixture used 'old_invalid_sig' which is
-        // now rejected at parse-time. Use a well-formed but-
-        // non-matching hex sig to keep the secret-rotation
-        // scenario exercised.
+        // The decoy signature must itself be well-formed 64-hex:
+        // anything else is rejected at parse time and would never
+        // reach the secret-rotation path this test covers.
         $this->expectNotToPerformAssertions();
 
         $payload = '{"id":"evt_multi"}';
@@ -132,9 +131,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function allV1InvalidRejects(): void
     {
-        // F25.8: keep the test exercising the hash_equals mismatch
-        // path — both signatures are well-formed but neither
-        // matches the computed HMAC.
+        // Both signatures are well-formed, so parse-time validation
+        // passes them through; neither matches the computed HMAC, so
+        // this exercises the hash_equals mismatch path.
         $payload = '{"id":"evt_invalid"}';
         $timestamp = 1700000000;
         $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, str_repeat('0', 64), str_repeat('1', 64));

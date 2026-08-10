@@ -145,7 +145,7 @@ final class ScaffoldTraitTest extends TestCase
     #[Test]
     public function remove_directory_recursive_removes_nested_structure(): void
     {
-        // F3.3: SafePath rejects paths outside cwd. Tests must use a
+        // SafePath rejects paths outside cwd. Tests must use a
         // cwd-rooted temp directory rather than `sys_get_temp_dir()`.
         $cwd = getcwd();
         self::assertNotFalse($cwd);

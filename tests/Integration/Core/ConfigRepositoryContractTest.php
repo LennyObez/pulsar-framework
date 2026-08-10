@@ -59,14 +59,14 @@ use function sort;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * M0 wiring-contract gate — config-loading contract (F1).
+ * Wiring-contract gate for config loading.
  *
  * The single source of truth for "which config is loaded" must be the
  * {@see \Pulsar\Config\ConfigRepository}: a real boot builds every shipped
  * config's DTO into it, and consumers read it back typed. A config file that
  * ships, is documented, but whose DTO no production path ever builds is INERT —
- * the operator writes settings that silently do nothing. Half the wiring-audit's
- * inert-config criticals are exactly this.
+ * the operator writes settings that silently do nothing, which is the failure
+ * mode this gate exists to make impossible.
  *
  * This gate asserts, against the framework's OWN shipped `config/`:
  *  1. every shipped config is explicitly classified — either it is consumed via
@@ -77,19 +77,17 @@ use const DIRECTORY_SEPARATOR;
  *     repository, its DTO surfaces here and forces its promotion out of the
  *     ledger (a repatriated config cannot silently stay listed as a gap).
  *
- * Scope, stated honestly:
+ * Scope — read this before treating a pass here as full coverage:
  *  - This is the PRODUCER half of the contract: it proves each consumed config's
  *    DTO is BUILT into the repository by a real boot. It does NOT prove a
  *    consumer reads it back via `repository()->get()`; a DTO that is built but
  *    never read would still pass here. Consumer-side wiring (routes dispatch,
- *    middleware piped, the DTO actually acted upon) is the separate route/
- *    middleware contract, M0-F2/F4.
- *  - The known-gaps ledger DOCUMENTS the remaining debt; it does not by itself
- *    force an INERT entry to be remediated. "Ledger empty before a GA tag" is
- *    release policy enforced by review, tracked in
- *    docs/audit/wiring-audit-2026-07/REMEDIATION-TASKS.md (F1) — not by a
- *    self-failing assertion here (that would just red the suite for known,
- *    scheduled work).
+ *    middleware piped, the DTO actually acted upon) is covered by the separate
+ *    route and middleware contracts.
+ *  - The known-gaps ledger records which configs are not yet repository-backed;
+ *    it does not by itself force an entry to be remediated. Emptying the ledger
+ *    before a GA tag is release policy enforced by review, so that scheduled
+ *    work does not red the suite in the meantime.
  */
 #[CoversClass(ConfigManager::class)]
 final class ConfigRepositoryContractTest extends TestCase
@@ -125,8 +123,8 @@ final class ConfigRepositoryContractTest extends TestCase
         'api' => ApiConfig::class,
         'view' => ViewConfig::class,
         'business' => BusinessProfileConfig::class,
-        // Repatriated from the ad-hoc direct-read path into the repository via a
-        // ProvidesConfigLoaders loader (M0-F1 convergence).
+        // Reach the repository through a ProvidesConfigLoaders loader rather than
+        // an ad-hoc direct read of the file.
         'edge' => EdgeConfig::class,
         'documentation' => DocumentationConfig::class,
         'profiler' => ProfilerConfig::class,
@@ -148,8 +146,8 @@ final class ConfigRepositoryContractTest extends TestCase
 
     /**
      * Known gaps: shipped configs NOT (yet) consumed via the repository, each
-     * with the reason. This is the explicit M0-F1 worklist; it must shrink to
-     * only the deliberate separate-path entries. Reconfirmed vs HEAD 2026-07-23.
+     * with the reason. This is the explicit worklist; it must shrink to only the
+     * deliberate separate-path entries.
      *
      * @var array<string, string>
      */

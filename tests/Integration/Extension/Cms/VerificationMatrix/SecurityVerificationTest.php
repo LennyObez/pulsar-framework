@@ -62,7 +62,10 @@ use function unlink;
 /**
  * Security verification matrix: S1-S17.
  *
- * Validates each security control defined in the CMS security plan.
+ * One test per security control the CMS commits to, numbered to match the
+ * method names. Each control is asserted end to end rather than at the class
+ * that implements it, because a control can be present and still unreachable
+ * if it is not wired into the request path.
  */
 #[CoversClass(CsrfMiddleware::class)]
 #[Group('verification-matrix')]

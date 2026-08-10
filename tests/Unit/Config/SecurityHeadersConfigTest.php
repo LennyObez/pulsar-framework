@@ -34,7 +34,7 @@ final class SecurityHeadersConfigTest extends TestCase
     #[Test]
     public function effectiveHeadersAlwaysIncludesBaselineCspAndCrossOrigin(): void
     {
-        // Defense-in-depth (F30.4 / F1.3): even with default config, CSP and
+        // Defense-in-depth: even with default config, CSP and
         // Cross-Origin isolation headers must be present so a misconfigured
         // CspConfig / CrossOriginConfig cannot silently strip these protections.
         $config = new SecurityHeadersConfig(headers: []);
@@ -83,7 +83,7 @@ final class SecurityHeadersConfigTest extends TestCase
     #[Test]
     public function effectiveHeadersKeepsBaselineCspWhenCspConfigDisabled(): void
     {
-        // F30.4: disabling CspConfig must not silently drop the CSP header.
+        // Disabling CspConfig must not silently drop the CSP header.
         // The MINIMUM_HEADERS baseline keeps a restrictive default in place.
         $config = new SecurityHeadersConfig(
             headers: [],
@@ -133,7 +133,7 @@ final class SecurityHeadersConfigTest extends TestCase
     #[Test]
     public function effectiveHeadersKeepsBaselineCrossOriginWhenConfigEmpty(): void
     {
-        // F30.4: empty CrossOriginConfig values must not silently drop the
+        // Empty CrossOriginConfig values must not silently drop the
         // Cross-Origin isolation headers; baseline values from MINIMUM_HEADERS
         // remain in place.
         $config = new SecurityHeadersConfig(

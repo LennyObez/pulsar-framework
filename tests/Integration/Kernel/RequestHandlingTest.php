@@ -128,7 +128,7 @@ final class RequestHandlingTest extends TestCase
         $kernel = new Kernel();
         $kernel->router()->get('/', fn() => Response::text('home'));
 
-        // F4.11: with no exception handler wired the kernel renders a generic
+        // With no exception handler wired the kernel renders a generic
         // status-correct page rather than leaking the RoutingException.
         $response = $kernel->handle($this->createRequest(path: '/unknown'));
 

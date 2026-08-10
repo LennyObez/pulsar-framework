@@ -26,10 +26,12 @@ use function unlink;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Full-chain regression lock for RFC 9110 §9.3.2: HEAD must be served wherever
- * GET is, through the whole kernel dispatch -- for BOTH route registration
- * styles. This is the test that would have caught the production sites
- * answering 405 to HEAD on routes registered via the explicit constructor.
+ * Full-chain lock on RFC 9110 §9.3.2: HEAD must be served wherever GET is,
+ * through the whole kernel dispatch -- for BOTH route registration styles.
+ *
+ * Exercised end to end rather than at the Route level on purpose. HEAD support
+ * added by one registration path and not the other still passes every unit
+ * test, and surfaces as a 405 only once a monitor or crawler asks for it.
  */
 #[CoversClass(Kernel::class)]
 #[CoversClass(Route::class)]

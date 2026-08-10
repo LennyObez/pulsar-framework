@@ -31,7 +31,8 @@ use function uniqid;
  * resolve without the developer binding every concrete by hand — and when a
  * dependency genuinely cannot be resolved (an unbound interface), the error
  * must name the controller and the offending parameter, not just "no binding
- * found for X". Both halves of the reported DX bug.
+ * found for X". Both halves matter: autowiring that resolves silently is only
+ * usable if the case it cannot resolve reports where to look.
  */
 #[CoversClass(Kernel::class)]
 #[CoversClass(ReflectionControllerResolver::class)]

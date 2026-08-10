@@ -13,12 +13,11 @@ use Pulsar\Extension\Payments\PaymentsServiceProvider;
 use function sprintf;
 
 /**
- * F22.22: every entry returned by `provides()` MUST be bindable
- * after `register()` runs. Drift between the two lists has no
- * runtime symptom — the consumer who tries to resolve a service
- * that's listed-but-not-bound just sees an unhelpful "not found"
- * exception. This regression test fails CI before merge so the
- * audit can rely on `provides()` as a complete catalogue.
+ * Every entry returned by `provides()` MUST be bindable after
+ * `register()` runs. Drift between the two lists has no runtime
+ * symptom — a consumer resolving a service that is listed but not
+ * bound only sees an unhelpful "not found" exception. This test
+ * fails CI so `provides()` can be relied on as a complete catalogue.
  */
 #[CoversClass(PaymentsServiceProvider::class)]
 final class PaymentsServiceProviderProvidesContractTest extends TestCase

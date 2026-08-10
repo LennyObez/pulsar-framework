@@ -83,7 +83,7 @@ final class QueryCacheTest extends TestCase
     #[Test]
     public function invalidateSurvivesConcurrentTaggedWrites(): void
     {
-        // FR-13: two requests caching under the same tag concurrently each read
+        // Two requests caching under the same tag concurrently each read
         // the tag bookkeeping before the other commits. A per-tag key-list index
         // loses one entry to that read-modify-write, and the lost entry then
         // survives invalidation as stale data. Stamping each entry with the tag

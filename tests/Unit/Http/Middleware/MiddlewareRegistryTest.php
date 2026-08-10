@@ -48,10 +48,10 @@ final class MiddlewareRegistryTest extends TestCase
     }
 
     /**
-     * F7.11: an unknown reference (typo, missing alias) used to slip
-     * through and crash later inside the pipeline. The registry now
-     * fails fast with `MiddlewareNotFoundException` naming the bad
-     * reference.
+     * An unknown reference (typo, missing alias) fails fast with
+     * `MiddlewareNotFoundException` naming the bad reference.
+     * Deferring the error would surface it deep inside the pipeline
+     * at request time, far from the configuration that caused it.
      */
     #[Test]
     public function unknownReferenceThrowsMiddlewareNotFound(): void

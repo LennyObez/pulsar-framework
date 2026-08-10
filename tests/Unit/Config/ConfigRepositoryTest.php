@@ -153,19 +153,17 @@ final class ConfigRepositoryTest extends TestCase
     }
 
     /**
-     * F26.2 / F26.18: ConfigRepository must never grow magic
-     * methods that participate in serialization or destruction.
-     * `__wakeup` / `__unserialize` would re-enable the
-     * deserialization-as-instantiation gadget closed in F26.2;
-     * `__destruct` would let an attacker trigger arbitrary code
-     * by deserializing a finalized payload. The list is
+     * ConfigRepository must never grow magic methods that
+     * participate in serialization or destruction. `__wakeup` /
+     * `__unserialize` turn deserialization into instantiation;
+     * `__destruct` lets an attacker trigger code simply by
+     * deserializing a finalized payload. The list is
      * intentionally narrow — `__construct`, `__toString` etc.
      * remain allowed because they cannot be reached from a
      * crafted serialized payload alone.
      *
-     * This is a regression test, not a feature: it pins the
-     * absence so a future PR adding any of these methods fails
-     * CI before reopening the F26.2 vulnerability.
+     * The test pins the absence, so a PR that adds one of these
+     * methods fails CI instead of quietly opening the gadget.
      */
     #[Test]
     public function repositoryHasNoSerializationMagicMethods(): void

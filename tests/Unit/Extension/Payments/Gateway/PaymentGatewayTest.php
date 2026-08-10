@@ -447,7 +447,7 @@ final class PaymentGatewayTest extends TestCase
     #[Test]
     public function refusesMutatingOpWhenRequireTenantContextIsTrueAndNoTenant(): void
     {
-        // F13.10: with require_tenant_context = true, every mutating
+        // With require_tenant_context = true, every mutating
         // payment operation must run inside a tenant scope. Calling
         // captureIntent() without a TenantContext (or with one that
         // resolves to no tenant) must surface as PaymentException.
@@ -539,7 +539,7 @@ final class PaymentGatewayTest extends TestCase
             envelope: $this->envelope,
         );
 
-        // F22.1: each mutating operation now has its own slice handler.
+        // Each mutating operation has its own slice handler.
         $captureHandler = new \Pulsar\Extension\Payments\Features\CapturePaymentIntent\CapturePaymentIntentHandler(
             provider: $provider,
             idempotencyStore: $this->idempotencyStore,

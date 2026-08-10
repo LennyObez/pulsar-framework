@@ -527,10 +527,9 @@ final class RegistrationCeremonyTest extends TestCase
             ->with(
                 AuditEvent::Authentication,
                 AuditOutcome::Failure,
-                // F25.10 carry-over: production code passes
-                // AuditActor::anonymous() (the explicit-actor pattern
-                // mandated since rc.10) instead of null. Match the
-                // typed actor object the framework actually emits.
+                // Audit logging uses the explicit-actor pattern: an
+                // unauthenticated ceremony emits AuditActor::anonymous(),
+                // never null. Match the typed actor object, not a null.
                 self::callback(fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'anonymous'),
                 'webauthn.registration.failed',
                 'webauthn:registration',

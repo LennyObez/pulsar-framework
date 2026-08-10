@@ -161,8 +161,9 @@ final class UnknownKeyAuditTest extends TestCase
     #[Test]
     public function anUnrecognizedMetricsExporterNameIsReported(): void
     {
-        // `promethius` matches neither exporter branch, so the exporter is simply
-        // never configured — previously with no signal whatsoever.
+        // `promethius` matches neither exporter branch, so the exporter is never
+        // configured. Reporting it as an unknown key is the only signal an
+        // operator gets that a typo silently disabled metrics export.
         $config = ObservabilityConfig::fromArray(
             ['metrics' => ['exporters' => ['promethius' => ['enabled' => true]]]],
             Environment::load(null),

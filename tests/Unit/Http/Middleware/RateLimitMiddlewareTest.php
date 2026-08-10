@@ -92,11 +92,11 @@ final class RateLimitMiddlewareTest extends TestCase
     }
 
     /**
-     * F7.2: previously every request without REMOTE_ADDR landed in a
-     * shared `'unknown'` bucket, effectively disabling the rate limit
-     * (fail-open) under partial-info conditions. The fallback now
-     * uses a User-Agent hash so distinct clients still get distinct
-     * buckets — the limiter keeps working under partial info.
+     * A request without REMOTE_ADDR must not land in one shared
+     * bucket. A single `'unknown'` bucket is fail-open: it disables
+     * the rate limit precisely when the identifying information is
+     * scarce. The fallback hashes the User-Agent instead, so
+     * distinct clients keep distinct buckets under partial info.
      */
     #[Test]
     public function distinctUserAgentsGetDistinctBucketsWithoutRemoteAddr(): void

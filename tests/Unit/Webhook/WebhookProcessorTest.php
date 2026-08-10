@@ -168,9 +168,10 @@ final class WebhookProcessorTest extends TestCase
     #[Test]
     public function processRejectsBodyExceedingSizeLimit(): void
     {
-        // F25.6: a body larger than the configured cap must be
-        // rejected before signature verification (prevents both DoS
-        // and the secondary OOM via json_decode on a 10 GB blob).
+        // A body larger than the configured cap must be rejected before
+        // signature verification — otherwise an unauthenticated caller
+        // pays for an HMAC over an arbitrarily large blob, and a later
+        // json_decode over the same blob exhausts memory.
         $handler = $this->createStub(WebhookHandlerInterface::class);
         $processor = new WebhookProcessor(
             verifier: new HmacWebhookVerifier($this->now),
@@ -192,9 +193,9 @@ final class WebhookProcessorTest extends TestCase
     #[Test]
     public function processRejectsDeeplyNestedJson(): void
     {
-        // F25.6: cap json_decode depth at 32 — defends against
-        // small-but-deeply-nested JSON-bomb payloads that fit under
-        // the byte cap but consume excessive parser resources.
+        // json_decode depth is capped at 32: a small-but-deeply-nested
+        // JSON bomb fits comfortably under the byte cap while consuming
+        // parser resources out of proportion to its size.
         // Build a JSON object nested 50 levels deep.
         $payload = str_repeat('{"x":', 50) . '1' . str_repeat('}', 50);
 

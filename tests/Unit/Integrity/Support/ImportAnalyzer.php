@@ -52,14 +52,13 @@ final class ImportAnalyzer
         $references = [];
         $nestingLevel = 0;
 
-        // F23.16: collect use → FQCN mappings on the way through
-        // so we can resolve `T_NAME_QUALIFIED` tokens (relative
-        // qualified names like `Cache\FrameworkCache` after
-        // `use Pulsar\Cache;`) against the file's use list. Without
-        // this, the analyzer counted only fully-qualified inline
-        // names and missed the common shape where an extension
-        // imports the parent namespace and uses a child class
-        // through it.
+        // Collect use → FQCN mappings on the way through so that
+        // `T_NAME_QUALIFIED` tokens (relative qualified names like
+        // `Cache\FrameworkCache` after `use Pulsar\Cache;`) resolve
+        // against the file's use list. Without the map, only
+        // fully-qualified inline names are counted, missing the common
+        // shape where a file imports a parent namespace and reaches a
+        // child class through it.
         /** @var array<string, string> $useMap localPrefix => fqcn */
         $useMap = [];
 
@@ -93,11 +92,11 @@ final class ImportAnalyzer
             if (is_array($token) && $token[0] === T_USE && $nestingLevel <= 1) {
                 $parsed = self::parseUseStatement($tokens, $i, $count);
                 foreach ($parsed as $fqcn) {
-                    // F23.16: index every parsed use FQCN by its
-                    // last segment so a later T_NAME_QUALIFIED
-                    // token like `Cache\FrameworkCache` (where
-                    // `Cache` is the local prefix) can be
-                    // expanded back to `Pulsar\Cache\FrameworkCache`.
+                    // Index every parsed use FQCN by its last segment so
+                    // a later T_NAME_QUALIFIED token like
+                    // `Cache\FrameworkCache` (where `Cache` is the local
+                    // prefix) expands back to
+                    // `Pulsar\Cache\FrameworkCache`.
                     $localName = self::lastSegment($fqcn);
                     if ($localName !== '') {
                         $useMap[$localName] = $fqcn;
@@ -110,8 +109,8 @@ final class ImportAnalyzer
                 continue;
             }
 
-            // F23.16: relative qualified name (`Cache\FrameworkCache`)
-            // resolved through the collected use map.
+            // Relative qualified name (`Cache\FrameworkCache`) resolved
+            // through the collected use map.
             if (is_array($token) && $token[0] === T_NAME_QUALIFIED) {
                 $segments = explode('\\', $token[1]);
                 $first = $segments[0] ?? '';
@@ -129,8 +128,8 @@ final class ImportAnalyzer
     }
 
     /**
-     * F23.16 helper: return the last segment of a backslash-separated
-     * FQCN. `Pulsar\Cache\FrameworkCache` → `FrameworkCache`,
+     * Return the last segment of a backslash-separated FQCN.
+     * `Pulsar\Cache\FrameworkCache` → `FrameworkCache`,
      * `Pulsar\Cache` → `Cache`, `''` → `''`.
      */
     private static function lastSegment(string $fqcn): string
@@ -142,14 +141,13 @@ final class ImportAnalyzer
     /**
      * Extract Pulsar FQCNs that appear as quoted strings in the file.
      *
-     * F23.4: the static-import scan in {@see extractReferences()} sees
-     * `T_USE` and `T_NAME_FULLY_QUALIFIED` tokens, but PHP code that
-     * routes through `$container->get('Pulsar\Foo\Bar')` or
+     * The static-import scan in {@see extractReferences()} sees `T_USE`
+     * and `T_NAME_FULLY_QUALIFIED` tokens, but code that routes through
+     * `$container->get('Pulsar\Foo\Bar')` or
      * `class_exists('Pulsar\Foo\Bar')` keeps the FQCN inside a
-     * `T_CONSTANT_ENCAPSED_STRING` — invisible to import analysis,
-     * which is precisely the arbitrary-class-instantiation pattern
-     * this audit infrastructure exists to surface (carry-over
-     * F21.2 / F17.1 / F22.3 / F22.14).
+     * `T_CONSTANT_ENCAPSED_STRING`, invisible to import analysis. That
+     * is exactly the arbitrary-class-instantiation shape a boundary
+     * check has to see, so it gets its own scan.
      *
      * Scans `T_CONSTANT_ENCAPSED_STRING` for substrings matching
      * `Pulsar\<UpperCaseSegment>...` and returns the deduplicated

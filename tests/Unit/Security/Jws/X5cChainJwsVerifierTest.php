@@ -92,7 +92,8 @@ final class X5cChainJwsVerifierTest extends TestCase
     #[Test]
     public function rejectsASelfSignedForgeryAgainstThePinnedRoot(): void
     {
-        // The C13/C16 attack: attacker self-signs a leaf and puts it in x5c. With
+        // The self-signed-x5c attack: an attacker signs their own leaf and puts it
+        // in the x5c header, hoping the verifier trusts the embedded chain. With
         // a different pinned root the chain cannot anchor, so it is rejected even
         // though the signature over the payload is internally consistent.
         $attackerKey = $this->ecKey();

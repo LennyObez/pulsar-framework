@@ -29,9 +29,9 @@ final class AdminCsrfMiddlewareTest extends TestCase
     }
 
     /**
-     * F33.4: the canonical happy path — header-based token from
-     * a SPA / fetch / XHR client, verified against the
-     * session-attached token.
+     * The canonical happy path — header-based token from a SPA /
+     * fetch / XHR client, verified against the session-attached
+     * token.
      */
     #[Test]
     public function acceptsTokenFromHeader(): void
@@ -51,7 +51,7 @@ final class AdminCsrfMiddlewareTest extends TestCase
     }
 
     /**
-     * F33.4: HTML-form fallback — `<form>` POSTs cannot set a
+     * HTML-form fallback — `<form>` POSTs cannot set a
      * header, so the token must also be accepted from the
      * `_csrf_token` body field. Enables a noscript admin path.
      */
@@ -74,8 +74,8 @@ final class AdminCsrfMiddlewareTest extends TestCase
     }
 
     /**
-     * F33.4: a request without either form of the token gets
-     * 403 — never a silent pass.
+     * A request without either form of the token gets 403 —
+     * never a silent pass.
      */
     #[Test]
     public function rejectsMutationWithNoToken(): void
@@ -92,10 +92,10 @@ final class AdminCsrfMiddlewareTest extends TestCase
     }
 
     /**
-     * F33.4: when both the header and the POST field are
-     * present, the header value wins. This pins the precedence
-     * so a client that sends both for resilience does not get
-     * surprised when one is mismatched.
+     * When both the header and the POST field are present, the
+     * header value wins. This pins the precedence so a client
+     * that sends both for resilience does not get surprised when
+     * one is mismatched.
      */
     #[Test]
     public function headerWinsOverPostFieldWhenBothPresent(): void

@@ -36,7 +36,7 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function verifyRejectsInvalidSignature(): void
     {
-        // F25.8: 64 hex chars (well-formed) but does not match the
+        // 64 hex chars (well-formed) but does not match the
         // computed HMAC — exercises the hash_equals mismatch path
         // rather than the format-rejection path.
         $now = new DateTimeImmutable('@1700000000');
@@ -93,10 +93,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function verifyAcceptsMultipleV1SignaturesWithOneValid(): void
     {
-        // F25.8: previous fixture used 'invalid_old_sig' which now
-        // gets rejected at parse-time. Use a well-formed but-
-        // non-matching hex sig to keep the secret-rotation
-        // scenario exercised.
+        // The stale signature must be well-formed hex, or it is rejected
+        // at parse-time and never reaches the comparison. Only a valid-
+        // shaped but non-matching sig exercises the secret-rotation path.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($this->buildClock($now));
 

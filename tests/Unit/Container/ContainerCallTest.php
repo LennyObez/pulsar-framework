@@ -172,7 +172,7 @@ final class ContainerCallTest extends TestCase
     #[Test]
     public function callAutowiresUnboundConcreteParameter(): void
     {
-        // FR-35: a callable parameter typed to an unbound but instantiable
+        // A callable parameter typed to an unbound but instantiable
         // concrete must be autowired — matching constructor injection via
         // buildFromReflection — instead of falling through to the "cannot
         // resolve" error because has() reports false for an unbound concrete.

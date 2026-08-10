@@ -339,7 +339,8 @@ final class ForumServiceTest extends TestCase
 
         $service = $this->makeService(threads: $threads, posts: $posts, profiles: $profiles, events: $events);
 
-        // Author deletes own post; not a moderator action (MED-4 signature).
+        // Author deletes own post — this must not be recorded as a
+        // moderator action.
         $service->deletePost('post-1', 'author-1');
     }
 
@@ -381,7 +382,8 @@ final class ForumServiceTest extends TestCase
 
         $service = $this->makeService(threads: $threads, profiles: $profiles, events: $events);
 
-        // Author deletes own thread; not a moderator action (MED-4 signature).
+        // Author deletes own thread — this must not be recorded as a
+        // moderator action.
         $service->deleteThread('thread-1', 'author-1');
     }
 

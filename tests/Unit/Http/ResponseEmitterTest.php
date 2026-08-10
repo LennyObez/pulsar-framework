@@ -70,7 +70,7 @@ final class ResponseEmitterTest extends TestCase
     #[Test]
     public function chunkFrameUsesHexLengthAndCrlfFraming(): void
     {
-        // FR-3: a StreamedResponse must be emitted with HTTP/1.1 chunked framing —
+        // A StreamedResponse must be emitted with HTTP/1.1 chunked framing —
         // each chunk is its byte length in hex, CRLF, the data, CRLF — rather than
         // materialized and echoed as one buffer.
         $emitter = new ResponseEmitter();
@@ -84,7 +84,7 @@ final class ResponseEmitterTest extends TestCase
     #[Test]
     public function shouldEmitBodyIsFalseForHeadRequests(): void
     {
-        // FR-36: a HEAD response carries the same headers as the equivalent GET
+        // A HEAD response carries the same headers as the equivalent GET
         // but no body. The emitter must know the request method to suppress it.
         $emitter = new ResponseEmitter();
         $method = new ReflectionMethod($emitter, 'shouldEmitBody');

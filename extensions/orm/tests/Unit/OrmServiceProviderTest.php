@@ -19,13 +19,13 @@ use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 
 /**
- * Regression coverage for the OrmServiceProvider optional-binding contract.
+ * Locks in the OrmServiceProvider optional-binding contract.
  *
- * The provider used to register ColumnEncryptorInterface and TenantInsertEnricher
- * as always-on factory closures that returned null in the default configuration
- * (encryption disabled, single-tenant). The container rejects a factory that does
- * not return an object, so resolving EntityManager threw "Factory must return an
- * object" out of the box. These tests lock in the conditional-binding fix.
+ * ColumnEncryptorInterface and TenantInsertEnricher must be registered
+ * conditionally, not as always-on factory closures. The container rejects a
+ * factory that does not return an object, so a closure yielding null in the
+ * default configuration (encryption disabled, single-tenant) would make
+ * EntityManager unresolvable out of the box with "Factory must return an object".
  */
 final class OrmServiceProviderTest extends TestCase
 {
@@ -41,7 +41,7 @@ final class OrmServiceProviderTest extends TestCase
     public function entityManagerResolvesUnderDefaultConfig(): void
     {
         // Default: no config.orm (encryption disabled), no crypto stack, no tenancy.
-        // This is the regression: EntityManager used to be unresolvable here.
+        // EntityManager must still resolve in this bare configuration.
         $container = $this->containerWithConnection();
         new OrmServiceProvider()->register($container);
 

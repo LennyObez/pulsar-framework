@@ -72,7 +72,7 @@ final class PulsarVersionConfigEdgeTest extends TestCase
     }
 
     /**
-     * F3.12: empty manifest input falls back to '0.0.0' but
+     * Empty manifest input falls back to '0.0.0' but
      * emits an E_USER_DEPRECATED notice. The
      * `PulsarVersionConfigTest::fromArrayWithMissingMinVersionEmitsDeprecation`
      * test owns the deprecation assertion shape; this edge

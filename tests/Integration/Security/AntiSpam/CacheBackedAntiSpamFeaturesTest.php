@@ -30,10 +30,10 @@ use function sys_get_temp_dir;
 use function var_export;
 
 /**
- * End-to-end regression for the silent-unbound-optional bug: CacheWiring must
- * bind TaggedCacheInterface so that AntiSpamWiring, which runs immediately
- * after it, can actually enable its tag-aware features. Before the fix these
- * were inert in every application despite being configured.
+ * Wiring order is load-bearing here: CacheWiring must bind TaggedCacheInterface
+ * before AntiSpamWiring runs, or the tag-aware features degrade to no-ops. They
+ * degrade silently — configuration still reads as enabled — so only a full boot
+ * can tell an active feature from an inert one.
  */
 final class CacheBackedAntiSpamFeaturesTest extends TestCase
 {
@@ -116,9 +116,10 @@ final class CacheBackedAntiSpamFeaturesTest extends TestCase
         self::assertTrue($container->has(TaggedCacheInterface::class));
         self::assertTrue($container->has(ManagedChallengeService::class));
 
-        // The managed challenge's single-use replay protection is active only
-        // when the service was constructed with a cache. Before the fix the
-        // cache was null and a solved token could be replayed within its TTL.
+        // Single-use replay protection needs somewhere to record that a token
+        // was spent. With a null cache the service still answers, but a solved
+        // token can be replayed for the whole of its TTL — so the presence of
+        // the cache is the assertion, not the service being resolvable.
         $service = $container->get(ManagedChallengeService::class);
         $cache = new ReflectionProperty(ManagedChallengeService::class, 'cache')->getValue($service);
         self::assertNotNull($cache);

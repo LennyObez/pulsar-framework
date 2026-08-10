@@ -416,11 +416,10 @@ final class AuthorizationMiddlewareTest extends TestCase
     }
 
     /**
-     * F12.7: previously an empty permissions list fell through to
-     * default-allow — every authenticated user passed without any
-     * authorization check. The middleware now default-denies on an
-     * empty list and demands an explicit `_authenticated` sentinel
-     * for the "any authenticated user" case.
+     * An empty permissions list means default-deny, not default-allow:
+     * a route that forgot to declare its permissions must not admit every
+     * authenticated user. The "any authenticated user" case is expressed
+     * by the explicit `_authenticated` sentinel instead.
      */
     #[Test]
     public function rejectsEmptyPermissionsListAsDefaultDeny(): void

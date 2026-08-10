@@ -75,14 +75,12 @@ final class VersionTest extends TestCase
     }
 
     /**
-     * F387.1 / F387.M3 / F23.1: the `Version::PRERELEASE_SUFFIX`
-     * constant has drifted from `composer.json::version` 12 times
-     * across the rc.x cycle — every release reproduced the
-     * mismatch because nothing tied the two together. This test is
-     * the pre-merge guard: any PR that bumps one without the other
-     * fails CI before it can land. Reading composer.json from disk
-     * is fine here — it is checked in, frozen at test time, and
-     * the hot path is unaffected.
+     * `Version::PRERELEASE_SUFFIX` and `composer.json::version` are
+     * two hand-maintained copies of one string, and nothing in the
+     * build ties them together. This test is the guard: a PR that
+     * bumps one without the other fails CI before it can land.
+     * Reading composer.json from disk is fine here — it is checked
+     * in, frozen at test time, and off the hot path.
      */
     #[Test]
     public function fullVersionMatchesComposerJson(): void

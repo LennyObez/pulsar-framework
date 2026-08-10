@@ -69,8 +69,8 @@ final class PayPalWebhookHandlerTest extends TestCase
     #[Test]
     public function rejectsTheOldForgeableHmacSignature(): void
     {
-        // The previous scheme accepted hash_hmac(msg, webhookId). The webhookId is
-        // public, so this was forgeable by anyone; it must now be rejected (C14).
+        // An HMAC keyed by the webhookId must never verify: the webhookId is a
+        // public identifier, so anyone holding it could forge this signature.
         $webhookId = 'WH-test-webhook-id';
         $rawBody = '{"event_type":"BILLING.SUBSCRIPTION.ACTIVATED","resource":{"id":"sub-1"}}';
         $handler = $this->buildHandler($webhookId, $this->publicKeyPem);

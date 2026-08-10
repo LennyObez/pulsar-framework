@@ -37,9 +37,9 @@ final class TranslatorTest extends TestCase
     #[Test]
     public function translateSubstitutesPrefixCollidingPlaceholders(): void
     {
-        // FR-26: a shorter :id placeholder must not clobber a longer :identifier
-        // that shares its prefix, whatever the parameter ordering. The old
-        // ordered str_replace turned ":identifier" into "7entifier".
+        // A shorter :id placeholder must not clobber a longer :identifier that
+        // shares its prefix, whatever the parameter ordering. A plain ordered
+        // str_replace would turn ":identifier" into "7entifier".
         $catalog = $this->createStub(CatalogInterface::class);
         $catalog->method('get')->willReturn(new TranslationEntry(key: 'audit', message: 'User :id is :identifier'));
 
@@ -51,7 +51,7 @@ final class TranslatorTest extends TestCase
     #[Test]
     public function translateResolvesLiteralDottedKeyOverSiblingDomain(): void
     {
-        // FR-27: a literal dotted key ("error.404") must resolve to its own entry
+        // A literal dotted key ("error.404") must resolve to its own entry
         // in the requested domain first, never be split into a sibling 'error'
         // domain that merely shares the prefix.
         $catalog = $this->createStub(CatalogInterface::class);

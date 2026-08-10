@@ -126,10 +126,10 @@ final class CacheManagerTest extends TestCase
     #[Test]
     public function phpSerializerReceivesConfiguredAllowedClasses(): void
     {
-        // FR-18: a pool configured serializer='php' with an allowedClasses list
-        // must yield a PhpCacheSerializer that can actually round-trip those
-        // classes. Before the fix the list was dropped, so every object decoded
-        // to __PHP_Incomplete_Class and deserialize() threw a CacheException.
+        // A pool configured serializer='php' with an allowedClasses list must
+        // yield a PhpCacheSerializer that carries the list through. If the list
+        // is dropped, every object decodes to __PHP_Incomplete_Class and
+        // deserialize() throws a CacheException.
         $poolConfig = new CachePoolConfig(
             name: 'objects',
             serializer: 'php',

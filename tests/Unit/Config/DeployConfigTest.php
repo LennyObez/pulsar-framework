@@ -200,8 +200,8 @@ final class DeployConfigTest extends TestCase
     }
 
     /**
-     * F26.3 / F26.22: an env-supplied `severity=off` is ignored
-     * in production. The file-configured (or default) severity
+     * An env-supplied `severity=off` is ignored in production.
+     * The file-configured (or default) severity
      * stays in force, so an attacker who controls the
      * orchestration env cannot silently neutralise a deploy gate.
      */
@@ -224,7 +224,7 @@ final class DeployConfigTest extends TestCase
     }
 
     /**
-     * F26.3: the production guard does NOT affect non-`off`
+     * The production guard does NOT affect non-`off`
      * overrides — `fail` and `warn` can still be set via env so
      * operators can tighten or maintain a check's severity.
      */
@@ -245,7 +245,7 @@ final class DeployConfigTest extends TestCase
     }
 
     /**
-     * F26.3: outside production (local/staging), `severity=off`
+     * Outside production (local/staging), `severity=off`
      * remains a valid env override so developers can silence
      * checks while iterating.
      */
@@ -268,8 +268,8 @@ final class DeployConfigTest extends TestCase
     }
 
     /**
-     * F26.5 / F26.24: extensions and custom org gates can register
-     * a deploy check under any name they choose; their config
+     * Extensions and custom org gates can register a deploy
+     * check under any name they choose; their config
      * entry must survive `parseChecks()` instead of being silently
      * dropped because it isn't in `DEFAULT_CHECKS`.
      */

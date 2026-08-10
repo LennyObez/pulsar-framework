@@ -94,7 +94,7 @@ final class ConnectionPoolTest extends TestCase
     #[Test]
     public function checkinDiscardsConnectionWithOpenTransaction(): void
     {
-        // FR-11: a connection returned mid-transaction must not be re-idled —
+        // A connection returned mid-transaction must not be re-idled —
         // recycling it would leak the uncommitted transaction into the next
         // checkout. It is destroyed instead.
         $pool = new ConnectionPool(

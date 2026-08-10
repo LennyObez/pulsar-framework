@@ -187,10 +187,10 @@ final class ObservabilityPipelineTest extends TestCase
         $spans = $collector->spans();
         $span = $spans[0];
 
-        // F24.6: span name is `HTTP <method> unmatched` when no
-        // RouteContext is wired (this E2E pipeline does not exercise
-        // the router); raw path is no longer used as the cardinality
-        // would be unbounded for any request that throws pre-routing.
+        // Span name is `HTTP <method> unmatched` when no RouteContext is wired
+        // (this E2E pipeline does not exercise the router). The raw path is never
+        // used as the name: cardinality would be unbounded for any request that
+        // throws pre-routing.
         self::assertSame('HTTP GET unmatched', $span->name);
         self::assertSame('/api/items', $span->attributes()['http.path'] ?? null);
         self::assertTrue($span->hasEnded());
@@ -416,8 +416,8 @@ final class ObservabilityPipelineTest extends TestCase
         // Each collector must hold exactly its own span, not the other's
         self::assertSame(1, $collector1->count());
         self::assertSame(1, $collector2->count());
-        // F24.6: span name is `HTTP <method> unmatched` when no
-        // RouteContext is wired. The raw path lives in `http.path` attr.
+        // Span name is `HTTP <method> unmatched` when no RouteContext is wired.
+        // The raw path lives in the `http.path` attribute instead.
         self::assertSame('HTTP GET unmatched', $collector1->spans()[0]->name);
         self::assertSame('HTTP GET unmatched', $collector2->spans()[0]->name);
         self::assertSame('/req-one', $collector1->spans()[0]->attributes()['http.path'] ?? null);
@@ -489,17 +489,15 @@ final class ObservabilityPipelineTest extends TestCase
 
         self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
-        // Verify metrics were recorded — F8.3: when no RouteContext
-        // is wired, the label binds to the bounded sentinel
-        // `unmatched` to prevent unbounded label cardinality from
+        // With no RouteContext wired the label binds to the bounded sentinel
+        // `unmatched`, which prevents unbounded label cardinality from
         // dynamic-id paths.
         $counter = $registry->counter('pulsar_http_requests_total');
         $labels = new LabelSet(['method' => 'POST', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(1.0, $counter->value($labels));
 
-        // Verify tracing captured the span (F24.6: name uses route
-        // label when RouteContext is wired, falls back to `unmatched`
-        // when not — this E2E pipeline has no router.
+        // The span name uses the route label when RouteContext is wired and falls
+        // back to `unmatched` when not — this E2E pipeline has no router.
         self::assertSame(1, $collector->count());
         $span = $collector->spans()[0];
         self::assertSame('HTTP POST unmatched', $span->name);

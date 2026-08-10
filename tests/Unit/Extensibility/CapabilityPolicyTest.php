@@ -97,10 +97,10 @@ final class CapabilityPolicyTest extends TestCase
     #[Test]
     public function communityCannotWriteContainer(): void
     {
-        // Regression guard for MED-2 (2026-04-08): ContainerWrite was
-        // dropped from the Community tier because it allowed arbitrary
-        // service replacement. Do not re-add without revisiting the
-        // threat model documented in docs/audit/consolidated-findings-register.md.
+        // ContainerWrite is deliberately absent from the Community tier: it
+        // allows arbitrary service replacement, so a community extension
+        // holding it could swap out any binding in the container. Do not
+        // re-add it without revisiting the extension trust model.
         self::assertFalse(
             $this->policy->allows(TrustTier::Community, ExtensionCapability::ContainerWrite),
         );

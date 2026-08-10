@@ -30,8 +30,8 @@ final class MetricsMiddlewareTest extends TestCase
 
         $middleware->process($request, $handler);
 
-        // F8.3: no RouteContext wired → label binds to bounded
-        // sentinel `unmatched` (no unbounded series from raw paths).
+        // No RouteContext wired → the label binds to the bounded sentinel
+        // `unmatched`; raw paths would create an unbounded number of series.
         $counter = $registry->counter('pulsar_http_requests_total');
         $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']);
 

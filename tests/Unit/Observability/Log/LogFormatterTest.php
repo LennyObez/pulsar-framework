@@ -251,7 +251,7 @@ final class LogFormatterTest extends TestCase
     }
 
     /**
-     * F4.6: trace frame `file` entries must be project-relative —
+     * Trace frame `file` entries must be project-relative —
      * absolute paths (`/var/www/staging/...`, `D:\dev\...`) advertise
      * the deployment topology to log aggregators. Verifies the
      * exception's own `file` and every trace frame's `file` start

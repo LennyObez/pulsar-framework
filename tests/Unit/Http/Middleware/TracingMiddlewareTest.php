@@ -66,11 +66,11 @@ final class TracingMiddlewareTest extends TestCase
     }
 
     /**
-     * F24.6: span name uses `unmatched` rather than the raw path
-     * when no RouteContext is wired. Keeping the raw path made
-     * span cardinality unbounded for any request that threw before
-     * route matching (parse errors, pre-router middleware throws).
-     * The raw path is still available on `http.path` attribute.
+     * Span name uses `unmatched` rather than the raw path when no
+     * RouteContext is wired. The raw path makes span cardinality
+     * unbounded for any request that throws before route matching
+     * (parse errors, pre-router middleware throws). The raw path
+     * remains available on the `http.path` attribute.
      */
     #[Test]
     public function spanNameUsesUnmatchedWhenRouteContextIsNull(): void

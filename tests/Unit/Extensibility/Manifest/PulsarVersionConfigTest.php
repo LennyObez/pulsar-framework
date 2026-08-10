@@ -26,11 +26,10 @@ final class PulsarVersionConfigTest extends TestCase
     }
 
     /**
-     * F3.12: a manifest without `pulsar.min_version` triggers
-     * an E_USER_DEPRECATED notice (will become a hard
-     * exception in the next major). For now the default
-     * remains '0.0.0' so the 74 in-tree fixture call sites
-     * keep working.
+     * A manifest without `pulsar.min_version` triggers an
+     * E_USER_DEPRECATED notice (will become a hard exception
+     * in the next major). Until then the default remains
+     * '0.0.0' so existing manifests keep loading.
      */
     #[Test]
     public function fromArrayWithMissingMinVersionEmitsDeprecation(): void
@@ -53,7 +52,7 @@ final class PulsarVersionConfigTest extends TestCase
     }
 
     /**
-     * F3.12: when `min_version` is supplied, no deprecation
+     * When `min_version` is supplied, no deprecation
      * fires and the value round-trips unchanged.
      */
     #[Test]

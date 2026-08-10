@@ -25,23 +25,18 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 /**
- * F385.17 regression suite — verifies that an OAuth2 access token does
- * not bypass step-up / level-of-assurance enforcement.
+ * Regression suite — verifies that an OAuth2 access token neither
+ * bypasses nor is wrongly blocked by step-up / level-of-assurance
+ * enforcement.
  *
- * Before F385.7, OAuth2TokenResolver hardcoded TwoFactorStatus::Disabled
- * on every resolved Identity. A user who completed MFA at the IdP and
- * received a token with `amr: ["mfa"]` would still see Disabled at the
- * relying party — and a relying-party route requiring Substantial /
- * High level of assurance via LevelOfAssuranceMiddleware would either
- * reject the token regardless (denying legitimate MFA-asserted access)
- * or, worse, silently grant access on a route that did not enforce LoA
- * (treating the MFA assertion as if it were never made). Either way the
- * RP could not honour the IdP's MFA assertion.
+ * The relying party can only honour the IdP's MFA assertion if
+ * OAuth2TokenResolver derives TwoFactorStatus from the standard OIDC
+ * `amr` / `acr` claims. A resolver that reported a fixed status would
+ * either deny legitimate MFA-asserted access, or treat an MFA assertion
+ * as if it had never been made on routes that do not enforce LoA.
  *
- * After F385.7, OAuth2TokenResolver derives TwoFactorStatus from the
- * standard OIDC `amr` / `acr` claims. This test exercises the end-to-end
- * path: token introspection -> claims provider -> resolver ->
- * LevelOfAssuranceMiddleware decision.
+ * This test exercises the end-to-end path: token introspection ->
+ * claims provider -> resolver -> LevelOfAssuranceMiddleware decision.
  */
 #[CoversClass(OAuth2TokenResolver::class)]
 #[CoversClass(LevelOfAssuranceMiddleware::class)]

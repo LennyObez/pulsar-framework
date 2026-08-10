@@ -293,10 +293,10 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        // F25.8: legacy fixture used 'invalid_sig_0' / 'invalid_sig_1'
-        // which now get rejected at parse time as non-hex. Use
-        // well-formed-but-non-matching 64-hex strings so the
-        // multi-signature acceptance path is still exercised.
+        // The decoy signatures must be well-formed-but-non-matching
+        // 64-hex strings: a non-hex placeholder is rejected at parse
+        // time and would never reach the multi-signature acceptance
+        // path this test covers.
         $payload = '{"event":"multi"}';
         $timestamp = self::NOW;
         $validSig = $this->computeSignature($payload, $timestamp, self::SECRET);

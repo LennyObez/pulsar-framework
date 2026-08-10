@@ -529,13 +529,14 @@ final class AuditEntryTest extends TestCase
     }
 
     /**
-     * F9.13: when metadata cannot be JSON-encoded (resources, closures,
+     * When metadata cannot be JSON-encoded (resources, closures,
      * recursive structures), `create()` must not propagate the
-     * underlying `JsonException`. The previous behaviour broke the
-     * audit chain — caller's mutex released without advance, audit
-     * record lost, downstream logic continued unaware. The fix
-     * substitutes a sentinel metadata bag so the chain stays
-     * consistent and the incident is itself auditable.
+     * underlying `JsonException`. Throwing here breaks the audit
+     * chain — the caller's mutex is released without the chain
+     * advancing, the record is lost, and downstream logic continues
+     * unaware. `create()` substitutes a sentinel metadata bag instead,
+     * so the chain stays consistent and the incident is itself
+     * auditable.
      *
      * Resource handles are the cleanest trigger because PHP's
      * `json_encode` rejects them unconditionally regardless of

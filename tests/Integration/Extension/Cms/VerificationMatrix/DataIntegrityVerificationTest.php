@@ -142,14 +142,13 @@ final class DataIntegrityVerificationTest extends TestCase
         $published = $content->publish();
         $repo->save($published);
 
-        // Verify visible before delete
         $result = $repo->findPublished('en');
         self::assertCount(1, $result->items);
 
-        // Soft delete
         $repo->delete($published);
 
-        // No longer found
+        // A soft-deleted row still exists; the contract is that no read path
+        // returns it, so assert both the direct lookup and the listing.
         self::assertNull($repo->findById('sd-001'));
         $afterDelete = $repo->findPublished('en');
         self::assertCount(0, $afterDelete->items);

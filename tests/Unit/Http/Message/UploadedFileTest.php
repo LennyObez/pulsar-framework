@@ -91,7 +91,7 @@ final class UploadedFileTest extends TestCase
     #[Test]
     public function getStreamRejectsSapiUploadWithNonGenuinePath(): void
     {
-        // FR-43: an upload received from the SAPI ($_FILES) whose backing path is
+        // An upload received from the SAPI ($_FILES) whose backing path is
         // not a genuine PHP upload — a forged tmp_name attempting path traversal
         // or arbitrary-file read — must be refused. is_uploaded_file() is false
         // for any path outside a real HTTP upload (including this temp file in a
@@ -116,7 +116,7 @@ final class UploadedFileTest extends TestCase
     #[Test]
     public function moveToRejectsSapiUploadWithNonGenuinePath(): void
     {
-        // FR-43: the same guard protects moveTo(), which for a genuine upload
+        // The same guard protects moveTo(), which for a genuine upload
         // uses move_uploaded_file(); a forged SAPI path is refused outright.
         $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_upload_');
         self::assertNotFalse($tmpFile);

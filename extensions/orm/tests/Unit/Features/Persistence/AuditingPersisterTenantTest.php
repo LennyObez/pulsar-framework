@@ -234,7 +234,7 @@ final class AuditingPersisterTenantTest extends TestCase
         self::assertArrayNotHasKey('tenant_id', $result);
     }
 
-    // --- Write-side tenant isolation (RC-2 / C11) -----------------------------
+    // --- Write-side tenant isolation -----------------------------------------
     //
     // A cross-tenant UPDATE/DELETE must never silently succeed. Every tenant-
     // scoped write path (versioned UPDATE, plain UPDATE, soft-delete UPDATE,

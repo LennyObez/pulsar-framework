@@ -15,7 +15,7 @@ use function sprintf;
 final class SubKeyIdTest extends TestCase
 {
     /**
-     * F33.6: each subsystem must have a unique subKeyId. The
+     * Each subsystem must have a unique subKeyId. The
      * KDF's domain separation depends on this — two cases sharing
      * an int would silently produce identical derived keys, the
      * exact failure mode the enum exists to prevent.
@@ -35,7 +35,7 @@ final class SubKeyIdTest extends TestCase
     }
 
     /**
-     * F33.6: the historical assignments below are baked into
+     * The historical assignments below are baked into
      * shipped commits — flipping any of them silently re-keys an
      * existing subsystem. This regression test pins the values
      * so a refactor that reorders the enum cannot drift them.

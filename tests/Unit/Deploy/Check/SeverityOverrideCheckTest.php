@@ -72,10 +72,10 @@ final class SeverityOverrideCheckTest extends TestCase
     }
 
     /**
-     * F26.4: every result that comes out of the override decorator
-     * carries the `overridden` flag and the `originalSeverity` so
-     * the operator's report shows "PASS (overridden, originally
-     * ERROR)" instead of a bare "PASS".
+     * Every result that comes out of the override decorator carries the
+     * `overridden` flag and the `originalSeverity`, so the operator's
+     * report shows "PASS (overridden, originally ERROR)" instead of a
+     * bare "PASS" that hides the downgrade.
      */
     #[Test]
     public function overriddenResultStampsOriginalSeverity(): void
@@ -91,10 +91,10 @@ final class SeverityOverrideCheckTest extends TestCase
     }
 
     /**
-     * F26.4: when the override would not change the severity (or
-     * the result already passed), the override flag is NOT set.
-     * The flag is reserved for genuine downgrades / upgrades so
-     * the report never raises false alarms.
+     * When the override would not change the severity (or the result
+     * already passed), the override flag is NOT set. The flag is reserved
+     * for genuine downgrades / upgrades so the report never raises false
+     * alarms.
      */
     #[Test]
     public function unchangedResultLeavesOverriddenFalse(): void

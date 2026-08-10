@@ -169,9 +169,9 @@ final class StatementTest extends TestCase
     }
 
     /**
-     * F11.16: streaming variant yields rows lazily so a query
-     * over a million-row table doesn't materialise the whole
-     * result set in PHP memory.
+     * The streaming variant yields rows lazily so a query over a
+     * million-row table doesn't materialise the whole result set in
+     * PHP memory.
      */
     #[Test]
     public function executeStreamingYieldsRowsLazily(): void
@@ -188,8 +188,8 @@ final class StatementTest extends TestCase
     }
 
     /**
-     * F11.16: closing the cursor partway through must not
-     * corrupt subsequent statements on the same connection.
+     * Closing the cursor partway through must not corrupt subsequent
+     * statements on the same connection.
      */
     #[Test]
     public function executeStreamingPartialDrainDoesNotPinResources(): void

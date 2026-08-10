@@ -53,7 +53,7 @@ final class ErrorFingerprintTest extends TestCase
     }
 
     /**
-     * F8.20: messages embedding user-controlled values (record ids,
+     * Messages embedding user-controlled values (record ids,
      * UUIDs, quoted strings) must collapse to the same fingerprint so
      * the aggregator groups them. Hardcoding the message would mint a
      * new fingerprint per input and break grouping.

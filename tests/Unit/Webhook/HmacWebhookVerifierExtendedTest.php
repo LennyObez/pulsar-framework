@@ -58,11 +58,10 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
     #[Test]
     public function verifyRejectsWrongSignature(): void
     {
-        // F25.8: use a well-formed hex (64 chars) that just doesn't
-        // match the computed HMAC. The previous fixture
-        // ('deadbeef1234567890', 18 chars) would now be rejected by
-        // the format check before hash_equals — we want the mismatch
-        // path here.
+        // A well-formed hex (64 chars) that simply does not match the
+        // computed HMAC. A shorter or non-hex fixture is rejected by the
+        // format check before hash_equals, which is not the path under
+        // test here.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($now);
 
@@ -111,10 +110,9 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
     #[Test]
     public function verifyAcceptsMultipleV1SignaturesWithRotation(): void
     {
-        // F25.8: previous fixture used 'wrong_signature_here' which
-        // would now be rejected at parse time. Use a well-formed but-
-        // non-matching hex sig so the multi-signature acceptance path
-        // is still exercised.
+        // The rotated-out candidate must be well-formed hex: a malformed
+        // one is rejected at parse time, which would short-circuit the
+        // multi-signature acceptance path this test covers.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($now);
 

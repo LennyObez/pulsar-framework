@@ -124,8 +124,8 @@ final class CronFieldsTest extends TestCase
     public function matchesWithCommaSeparatedRange(): void
     {
         // Minute field "1,2-5": the single value 1 plus the range 2..5.
-        // Before the fix, intval('2-5') truncated to 2, so minutes 3, 4 and 5
-        // were silently never matched.
+        // Reading the token with intval() would truncate '2-5' to 2 and
+        // silently drop minutes 3, 4 and 5.
         $fields = CronFields::parse('1,2-5 * * * *');
 
         self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:01:00')));
@@ -141,8 +141,8 @@ final class CronFieldsTest extends TestCase
     public function matchesWithCommaSeparatedStep(): void
     {
         // Minute field "0,20-40/5": minute 0 plus the stepped range 20..40/5
-        // (20, 25, 30, 35, 40). Before the fix, intval('20-40/5') collapsed
-        // the stepped-range token to 20.
+        // (20, 25, 30, 35, 40). intval('20-40/5') would collapse the whole
+        // stepped-range token to 20.
         $fields = CronFields::parse('0,20-40/5 * * * *');
 
         self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:00:00')));

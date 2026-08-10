@@ -34,7 +34,7 @@ use function unlink;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * FR-15: a signed build manifest must actually be verified at boot.
+ * A signed build manifest must actually be verified at boot.
  *
  * Kernel::boot() runs SecurityWiring (which binds HmacInterface +
  * KeyProviderInterface) before BuildArtifactVerifier::verify(), so the
@@ -140,9 +140,10 @@ final class BuildArtifactVerifierBootTest extends TestCase
     public function signedManifestFailsClosedWhenCryptoUnavailable(): void
     {
         // A correctly signed manifest with a matching artifact hash, but neither
-        // a container binding nor a master key in the environment. Before the fix
-        // this passed on the hash check because signature verification was
-        // silently skipped when no crypto was bound; now it must fail closed.
+        // a container binding nor a master key in the environment. A matching
+        // hash is not evidence of authenticity — an attacker who rewrites the
+        // artifact rewrites the hash too — so unavailable crypto must fail
+        // closed rather than fall back to the hash check alone.
         $content = '<?php return ["compiled" => "genuine"];';
         file_put_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'config.compiled.php', $content);
         $this->writeManifest(hash('sha256', $content), strlen($content), $this->sign(hash('sha256', $content), strlen($content)));

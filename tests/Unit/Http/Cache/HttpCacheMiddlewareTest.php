@@ -252,8 +252,9 @@ final class HttpCacheMiddlewareTest extends TestCase
     #[Test]
     public function respectsNoStoreInMiddleOfCacheControlHeader(): void
     {
-        // Regression test: str_starts_with('private, no-store', 'no-store') was false.
-        // The fix uses str_contains() to find no-store anywhere in the header.
+        // `no-store` is not required to be the first directive — `private,
+        // no-store, max-age=0` is ordinary. A prefix match misses it and the
+        // response gets cached, so the check must scan the whole header value.
         $response = new Response(
             statusCode: 200,
             headers: ['Cache-Control' => 'private, no-store, max-age=0'],

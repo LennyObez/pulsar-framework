@@ -21,11 +21,10 @@ final class AuditingPersisterVersionedSchemaTest extends TestCase
     #[Test]
     public function versionedUpdateTargetsSchemaQualifiedTable(): void
     {
-        // FR-29: the optimistic-locking UPDATE was built with the bare table
-        // name while every other write used the schema-qualified name. On a
-        // schema-scoped connection the bare name resolves via search_path to the
-        // wrong table, the UPDATE affects 0 rows, and the change is misreported
-        // as a stale-entity conflict. The emitted SQL must carry the schema.
+        // The optimistic-locking UPDATE must use the schema-qualified table name,
+        // like every other write path. On a schema-scoped connection a bare name
+        // resolves via search_path to the wrong table: the UPDATE affects 0 rows
+        // and the result is misreported as a stale-entity conflict.
         $metadata = $this->versionedMetadata();
 
         $registry = $this->createStub(MetadataRegistryInterface::class);

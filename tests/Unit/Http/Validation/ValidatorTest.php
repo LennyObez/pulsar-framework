@@ -127,7 +127,7 @@ final class ValidatorTest extends TestCase
     }
 
     /**
-     * F7.7: a type-rule failure must short-circuit downstream rules.
+     * A type-rule failure must short-circuit downstream rules.
      * Otherwise running e.g. `Min(10)` against the string 'abc' (which
      * already failed `IntegerType`) emits a confusing cascade where the
      * primary error is masked.

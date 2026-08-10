@@ -52,7 +52,7 @@ final class DatabaseDriverTest extends TestCase
     #[Test]
     public function createTableUsesByteaOnPostgresAndBlobElsewhere(): void
     {
-        // FR-16: the value column holds binary payloads. PostgreSQL has no BLOB
+        // The value column holds binary payloads. PostgreSQL has no BLOB
         // type, so the DDL must emit BYTEA there or CREATE TABLE fails outright.
         $build = new ReflectionMethod(DatabaseDriver::class, 'buildCreateTableSql');
 
@@ -71,7 +71,7 @@ final class DatabaseDriverTest extends TestCase
     #[Test]
     public function incrementCastIsDialectAware(): void
     {
-        // FR-16: a bare CAST(value AS INTEGER) is invalid on a PostgreSQL BYTEA
+        // A bare CAST(value AS INTEGER) is invalid on a PostgreSQL BYTEA
         // column and on MySQL (which needs SIGNED). Each driver gets a correct cast.
         $build = new ReflectionMethod(DatabaseDriver::class, 'buildIncrementSql');
 

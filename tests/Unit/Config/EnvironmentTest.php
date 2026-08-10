@@ -211,7 +211,7 @@ final class EnvironmentTest extends TestCase
     }
 
     /**
-     * F4.9: `loadFiltered()` uses a default prefix allowlist so that
+     * `loadFiltered()` uses a default prefix allowlist so that
      * adjacent-process secrets / Apache `SetEnv` / php-fpm `env[]`
      * cannot leak into Pulsar's view of the world. A non-allowlisted
      * variable disappears, while `PULSAR_*` and the literal allowlist
@@ -268,9 +268,9 @@ final class EnvironmentTest extends TestCase
     #[Test]
     public function lookupHonoursPlatformEnvNameCasing(): void
     {
-        // Regression: Windows reports env names in the OS's own casing (e.g.
-        // "Path"), so loadFiltered() must match its POSIX-cased allowlist and
-        // resolve get() case-insensitively there; on POSIX names stay distinct.
+        // Windows reports env names in the OS's own casing (e.g. "Path"), so
+        // loadFiltered() must match its POSIX-cased allowlist and resolve get()
+        // case-insensitively there; on POSIX names stay distinct.
         putenv('PULSAR_CASE_PROBE=on');
 
         try {
@@ -297,10 +297,10 @@ final class EnvironmentTest extends TestCase
      * A numerically named environment variable must not stop the kernel booting.
      *
      * PHP array keys are int|string, so `1=x` in the environment reaches key
-     * normalisation as an int and used to raise a TypeError inside
-     * Environment::load() — during ConfigManager boot, so nothing started at all.
-     * Fifty-seven tests failed at once the first time one appeared in a worker, and
-     * every analyser had been told the keys were strings by an annotation on getenv().
+     * normalisation as an int, not a string. Static analysis cannot warn about
+     * it: `getenv()` is annotated as returning string keys. And the trap is
+     * total rather than local — Environment::load() runs during ConfigManager
+     * boot, so a TypeError here stops the application before anything starts.
      */
     #[Test]
     public function aNumericallyNamedVariableDoesNotBreakLoading(): void

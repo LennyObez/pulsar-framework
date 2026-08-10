@@ -42,7 +42,7 @@ final class TemplateInheritanceTest extends TestCase
     #[Test]
     public function renderOnceReturnsTrueOnlyOnFirstCallPerId(): void
     {
-        // FR-24: the once-registry lives on $__env and dedupes by id across the
+        // The once-registry lives on $__env and dedupes by id across the
         // request, so a @once block in a partial @included N times renders once.
         self::assertTrue($this->env->renderOnce('app.js'));
         self::assertFalse($this->env->renderOnce('app.js'));
@@ -61,7 +61,7 @@ final class TemplateInheritanceTest extends TestCase
     #[Test]
     public function nestedSameNameComponentPreservesOuterSlots(): void
     {
-        // FR-8: slots are keyed by component stack depth, so nesting two
+        // Slots are keyed by component stack depth, so nesting two
         // components of the same name does not let the inner instance wipe the
         // outer instance's already-captured slots.
         /** @var list<array<string, mixed>> $seen */

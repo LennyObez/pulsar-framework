@@ -207,7 +207,7 @@ final class SecurityWiringTest extends TestCase
     #[Test]
     public function wirePipesSecurityHeadersMiddlewareGlobally(): void
     {
-        // F9.1: SecurityHeadersMiddleware must be in the global pipeline so
+        // SecurityHeadersMiddleware must be in the global pipeline so
         // every response — including routes that do not opt into the
         // `web` / `api` middleware groups (diagnostics endpoints, ad-hoc
         // JSON APIs, error pages) — carries the baseline security headers.

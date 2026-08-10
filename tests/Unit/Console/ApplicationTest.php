@@ -288,7 +288,7 @@ final class ApplicationTest extends TestCase
     }
 
     /**
-     * F3.16: a command registered via `addLazy()` MUST not run
+     * A command registered via `addLazy()` MUST not run
      * its factory at registration time. The first `get($name)`
      * triggers the factory and memoises the result; a second
      * `get()` returns the same instance without re-running it.
@@ -322,7 +322,7 @@ final class ApplicationTest extends TestCase
     }
 
     /**
-     * F3.16: lazy commands appear in `allDescriptions()` for help
+     * Lazy commands appear in `allDescriptions()` for help
      * rendering without paying the materialisation cost — `all()`
      * stays restricted to materialised CommandInterface entries
      * so existing iterators (CoreRuntimeProbe) keep their typing

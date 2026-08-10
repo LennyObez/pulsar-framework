@@ -74,7 +74,7 @@ final class ExceptionHandlerTest extends TestCase
     #[Test]
     public function routingException501ReturnsNotImplemented(): void
     {
-        // FR-22: an unrecognized HTTP verb is mapped to 501, not a generic 500.
+        // An unrecognized HTTP verb is mapped to 501, not a generic 500.
         $handler = new ExceptionHandler(new DevelopmentRenderer());
 
         $response = $handler->handle(

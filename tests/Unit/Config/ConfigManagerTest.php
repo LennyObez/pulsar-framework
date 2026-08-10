@@ -260,10 +260,11 @@ final class ConfigManagerTest extends TestCase
     }
 
     /**
-     * F4.10: extension-registered loaders run during `load()`
-     * AFTER the framework's hardcoded sections. The DTO they
-     * produce lands in the repository keyed by its class-string
-     * — extensions resolve it via `repository()->get(...)`.
+     * Extension-registered loaders run during `load()` AFTER the
+     * framework's hardcoded sections, so they can read framework
+     * config. The DTO they produce lands in the repository keyed
+     * by its class-string — extensions resolve it via
+     * `repository()->get(...)`.
      */
     #[Test]
     public function extensionLoaderProducesConfigInRepository(): void
@@ -300,10 +301,9 @@ final class ConfigManagerTest extends TestCase
     }
 
     /**
-     * F4.10: an optional loader whose config file is absent
-     * simply skips — no exception, no entry in the repository.
-     * A required loader (`optional: false`) throws when the
-     * file is missing.
+     * An optional loader whose config file is absent simply skips
+     * — no exception, no entry in the repository. A required
+     * loader (`optional: false`) throws when the file is missing.
      */
     #[Test]
     public function optionalExtensionLoaderSkipsWhenFileMissing(): void
@@ -355,7 +355,7 @@ final class ConfigManagerTest extends TestCase
 }
 
 /**
- * @internal stub DTO used by F4.10 extension-loader regression tests.
+ * @internal stub DTO used by the extension-loader tests above.
  */
 final readonly class ExtensionConfigStub
 {

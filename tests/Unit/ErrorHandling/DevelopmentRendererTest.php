@@ -160,11 +160,11 @@ final class DevelopmentRendererTest extends TestCase
     }
 
     /**
-     * F4.7: query parameters with sensitive names (`token`, `password`,
-     * `api_key`) used to render verbatim in the development page,
-     * leaking the values whenever APP_DEBUG=true was accidentally
-     * enabled in production. The renderer now passes query params
-     * through the same scrubber as headers.
+     * Query parameters with sensitive names (`token`, `password`,
+     * `api_key`) go through the same scrubber as headers. The
+     * development page is the one renderer that echoes request
+     * state verbatim, so an accidental APP_DEBUG=true in production
+     * would otherwise put those values straight on the wire.
      */
     #[Test]
     public function scrubsSensitiveQueryParameters(): void

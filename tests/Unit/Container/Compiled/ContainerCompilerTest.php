@@ -176,10 +176,10 @@ final class ContainerCompilerTest extends TestCase
     #[Test]
     public function resolveDependencyIdsIncludesUnboundConcretesInOrder(): void
     {
-        // FR-14: every class-typed constructor parameter must be recorded in
-        // order — a bound service by its id, an unbound but instantiable concrete
-        // by its class name (the compiled factory autowires it via get()).
-        // Dropping the unbound middle parameter shifted later arguments, raising
+        // Every class-typed constructor parameter must be recorded in order — a
+        // bound service by its id, an unbound but instantiable concrete by its
+        // class name (the compiled factory autowires it via get()). Dropping an
+        // unbound middle parameter shifts every later argument, raising
         // ArgumentCountError or binding a value to the wrong parameter.
         $resolve = new ReflectionMethod(ContainerCompiler::class, 'resolveDependencyIds');
 
