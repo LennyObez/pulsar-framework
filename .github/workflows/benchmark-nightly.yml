@@ -9,6 +9,9 @@ concurrency:
   group: benchmark-nightly
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   tier-b-benchmarks:
     name: 'Tier B: Nightly Benchmarks (Real Backends)'
@@ -40,6 +43,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -61,7 +66,7 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      # F28.4: generate a per-run master key instead of baking a
+      # Generate a per-run master key instead of baking a
       # public hex value into the workflow file. Otherwise any
       # cache / preload / migration artefact encrypted under the
       # baked key is decryptable by anyone reading the repo, and
@@ -95,8 +100,10 @@ jobs:
       - name: Add results to job summary
         if: always()
         run: |
-          echo '## Tier B: Nightly Benchmark Results' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-tier-b.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## Tier B: Nightly Benchmark Results'
+            echo ''
+            echo '```'
+            cat benchmark-tier-b.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

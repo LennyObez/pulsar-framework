@@ -12,6 +12,9 @@ concurrency:
   group: benchmark-rc-gate
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   tier-c-benchmarks:
     name: 'Tier C: RC Gate (${{ inputs.rc_version }})'
@@ -43,6 +46,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -64,7 +69,7 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      # F28.4: generate a per-run master key instead of baking a
+      # Generate a per-run master key instead of baking a
       # public hex value into the workflow file. Otherwise any
       # cache / preload / migration artefact encrypted under the
       # baked key is decryptable by anyone reading the repo, and
@@ -98,8 +103,10 @@ jobs:
         env:
           RC_VERSION: ${{ inputs.rc_version }}
         run: |
-          echo "## Tier C: RC Gate Results ($RC_VERSION)" >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-tier-c.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Tier C: RC Gate Results ($RC_VERSION)"
+            echo ''
+            echo '```'
+            cat benchmark-tier-c.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
