@@ -68,9 +68,10 @@ final class WebAuthnAttestationVerifierTest extends TestCase
     #[Test]
     public function rejectsAForgedPackedSignature(): void
     {
-        // C20 regression: a valid challenge/origin and a real certificate, but a
-        // signature that does not verify. Previously this returned verified(0.9)
-        // without ever checking the signature.
+        // A valid challenge/origin and a real certificate, but a signature that
+        // does not verify. A well-formed attestation statement is not evidence
+        // on its own — the signature itself must be checked before the result
+        // may report verified.
         $certDer = $this->selfSignedCertDer($this->ecKey());
 
         $result = $this->verifier->verify([

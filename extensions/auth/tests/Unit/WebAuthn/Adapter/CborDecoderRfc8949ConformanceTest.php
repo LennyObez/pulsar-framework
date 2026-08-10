@@ -13,7 +13,7 @@ use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
 use function sprintf;
 
 /**
- * F385.18: RFC 8949 §A — Examples of Encoded CBOR Data Items.
+ * RFC 8949 §A — Examples of Encoded CBOR Data Items.
  *
  * The WebAuthn attestation pipeline depends on a correct CBOR
  * decode at its foundation layer; without conformance against

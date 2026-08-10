@@ -32,10 +32,12 @@ use function trim;
 use function uniqid;
 
 /**
- * A request that throws must leave a record in the configured log sink. The
- * flat `logging.driver`/`path` config shape previously produced no sink at all,
- * so every unhandled-exception entry was silently dropped and the log file was
- * never created — operators had no trace of production 500s.
+ * A request that throws must leave a record in the configured log sink.
+ *
+ * Covers the flat `logging.driver`/`path` config shape as well as the `channels`
+ * map: both must resolve to a real sink. If the flat shape resolves to none, every
+ * unhandled-exception entry is dropped and the log file is never created, leaving
+ * operators with no trace of production 500s.
  */
 #[CoversClass(Kernel::class)]
 #[CoversClass(ObservabilityConfig::class)]
@@ -54,8 +56,7 @@ final class ExceptionLoggingTest extends TestCase
 
         file_put_contents($this->tempDir . '/config/app.php', "<?php return ['name' => 'TestApp', 'env' => 'production', 'debug' => false, 'timezone' => 'UTC', 'locale' => 'en'];");
         file_put_contents($this->tempDir . '/config/security.php', '<?php return ["session" => [], "csrf" => ["enabled" => false], "headers" => [], "rate_limiting" => ["enabled" => false]];');
-        // Flat shape (driver/path, no `channels` map) — exactly the config that
-        // previously yielded no sink.
+        // Flat shape: `driver`/`path` with no `channels` map.
         file_put_contents(
             $this->tempDir . '/config/observability.php',
             '<?php return ["logging" => ["driver" => "file", "path" => ' . var_export($this->logPath, true) . ', "level" => "debug"]];',

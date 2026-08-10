@@ -89,7 +89,7 @@ final class ForeachDirectiveTest extends TestCase
     #[Test]
     public function keyedGeneratorPreservesRealKeysAndCount(): void
     {
-        // FR-7: a non-Countable Traversable iterated with `as $k => $v` must yield
+        // A non-Countable Traversable iterated with `as $k => $v` must yield
         // the real keys (not the 0,1,2,... produced by re-indexing) and a correct
         // $loop->count.
         $gen = (static function (): Generator {
@@ -120,7 +120,7 @@ final class ForeachDirectiveTest extends TestCase
     #[Test]
     public function keyedGeneratorWithDuplicateKeysFollowsArraySemantics(): void
     {
-        // FR-7 edge: materialising a keyed Traversable to size $loop uses array
+        // Materialising a keyed Traversable to size $loop uses array
         // semantics, so a duplicate key keeps the last value (documented behaviour).
         $gen = (static function (): Generator {
             yield 'dup' => 1;

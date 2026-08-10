@@ -13,7 +13,7 @@ use Pulsar\Extension\Auth\OAuth2\Exception\OAuth2Exception;
 use ReflectionMethod;
 
 /**
- * F385.14 + F385.19 regression suite for redirect_uri validation.
+ * Regression suite for redirect_uri validation.
  *
  * Exercises `OAuth2AuthorizationServer::assertSafeRedirectUri()` —
  * the defense-in-depth check that runs before the registered-URI

@@ -18,7 +18,7 @@ use Pulsar\Routing\RoutingException;
 use function ksort;
 
 /**
- * FR-37: the live {@see Router} and the build-time {@see CompiledRouteTree} must
+ * The live {@see Router} and the build-time {@see CompiledRouteTree} must
  * resolve the same route table identically — same matched route and same
  * extracted parameters — since their docblocks advertise equivalence.
  */

@@ -27,7 +27,7 @@ use Pulsar\Extension\Orm\Features\Tenancy\TenantScopeApplier;
  * End-to-end proof (real in-memory SQLite) that reads through a repository
  * wired with a TenantScopeApplier cannot return another tenant's rows —
  * find(), findOneBy()/findBy(), count(), and exists() are all constrained to
- * the active tenant. Covers RC-2 / super-audit C12 (cross-tenant IDOR on read).
+ * the active tenant. Guards against cross-tenant IDOR on the read path.
  */
 final class TenantReadIsolationTest extends TestCase
 {

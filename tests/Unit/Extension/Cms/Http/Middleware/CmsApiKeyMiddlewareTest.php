@@ -40,7 +40,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
 
         // BLAKE2b keyed-hash via the real production service. 32 bytes of
         // deterministic key material is enough to cover the (Hmac, key)
-        // pair the middleware expects (MED-5 fix in 31ceba3b).
+        // pair the middleware expects.
         $this->hmac = new HmacService();
         $this->hmacKey = str_repeat("\x42", 32);
     }

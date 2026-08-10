@@ -39,8 +39,8 @@ final class AuditFileSinkTest extends TestCase
      *
      * `AuditFileSink` defaults to a `NullLogger` when no PSR-3
      * implementation is injected, so its corruption-path diagnostics
-     * (F24.3) silently no-op during tests. Production wiring passes
-     * the application logger (see `SecurityWiring`).
+     * silently no-op during tests. Production wiring passes the
+     * application logger (see `SecurityWiring`).
      */
     protected function setUp(): void
     {
@@ -343,7 +343,7 @@ final class AuditFileSinkTest extends TestCase
     #[Test]
     public function chainStateCorruptedForMalformedJson(): void
     {
-        // F24.3: a tampered or truncated last line must surface as
+        // A tampered or truncated last line must surface as
         // Corrupted so the logger fails closed instead of re-seeding
         // over the tamper.
         $logPath = $this->tempDir . '/corrupt.jsonl';
@@ -390,7 +390,7 @@ final class AuditFileSinkTest extends TestCase
     #[Test]
     public function corruptionRoutesDiagnosticThroughInjectedLogger(): void
     {
-        // F24.3: with a PSR-3 logger wired (production wiring via
+        // With a PSR-3 logger wired (production wiring via
         // SecurityWiring), the corruption-path diagnostic must reach
         // the application's structured log pipeline rather than be
         // dropped to STDERR.

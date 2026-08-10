@@ -84,10 +84,10 @@ final class KernelHandlerTest extends TestCase
     }
 
     /**
-     * F4.11: with no `ExceptionHandler` registered the kernel used to
-     * re-throw and let the SAPI emit a default error page (file paths
-     * and stack trace leak). The fallback now renders a generic 404
-     * via `ProductionRenderer` so the response is leak-free.
+     * With no `ExceptionHandler` registered the kernel must not
+     * re-throw: the SAPI's own error page leaks file paths and a
+     * stack trace. The fallback renders a generic 404 through
+     * `ProductionRenderer` instead.
      */
     #[Test]
     public function handleReturns404OnNoRouteMatchWithoutExceptionHandler(): void
@@ -291,7 +291,7 @@ final class KernelHandlerTest extends TestCase
     }
 
     /**
-     * F2.18: once boot() runs the middleware pipeline is cached;
+     * Once boot() runs the middleware pipeline is cached;
      * a post-boot addMiddleware() call would mutate the cached
      * pipeline silently and only the next request would observe
      * the new middleware. Refuse the mutation explicitly so the
@@ -327,9 +327,9 @@ final class KernelHandlerTest extends TestCase
     }
 
     /**
-     * F4.11: non-callable handler used to bubble RoutingException
-     * out of handle(); now the fallback ProductionRenderer renders
-     * a 500 response instead.
+     * A non-callable handler must not bubble RoutingException out of
+     * handle(): the fallback ProductionRenderer turns it into a 500
+     * response.
      */
     #[Test]
     public function handleNonCallableHandlerReturns500WithoutExceptionHandler(): void
@@ -377,9 +377,9 @@ final class KernelHandlerTest extends TestCase
     }
 
     /**
-     * F3.3: route cleanup through SafeFilesystem so the test fixture
-     * does not depend on bare `unlink()` (static-analysis flag) and
-     * benefits from the same path-traversal guards as production.
+     * Route cleanup through SafeFilesystem so the test fixture does
+     * not depend on bare `unlink()` (which static analysis flags) and
+     * gets the same path-traversal guards as production.
      */
     private function removeDirectory(string $dir): void
     {

@@ -48,13 +48,11 @@ final class WebhookEventTest extends TestCase
     #[Test]
     public function fromArrayCoercesNonNumericCreatedAtToEpoch(): void
     {
-        // F22.7: a non-numeric `created_at` (attacker-controlled
-        // webhook payload, malformed timestamp) used to flow through
-        // the `?? 0` short-circuit unchanged and reach
-        // `new DateTimeImmutable('@<string>')`, which raises
-        // DateMalformedStringException on PHP 8.3+. The (int) cast
-        // now normalises any non-numeric value to 0 so the
-        // constructor receives the safe int shape it expects.
+        // `created_at` is attacker-controlled: a `?? 0` alone lets a
+        // non-numeric value through to `new DateTimeImmutable('@<string>')`,
+        // which raises DateMalformedStringException on PHP 8.3+. The
+        // (int) cast normalises any non-numeric value to 0 so the
+        // constructor receives the int shape it expects.
         $payload = [
             'id' => 'evt_garbage',
             'type' => 'charge.failed',

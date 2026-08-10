@@ -145,8 +145,8 @@ final class DatabaseOutboxPortTest extends TestCase
         // Dead-letter the poison (cap = 1 -> one failure exhausts it).
         $this->outbox->recordFailure($poison->eventId, 'permanent', 1);
 
-        // Even with a batch size of 1 the relay now reaches the healthy event;
-        // before the fix the poison stayed at the FIFO head forever.
+        // A dead-lettered event must not hold the FIFO head: even with a batch
+        // size of 1 the relay still reaches the healthy event behind it.
         $batch = $this->outbox->pendingForRelay(1, 1);
 
         self::assertCount(1, $batch);

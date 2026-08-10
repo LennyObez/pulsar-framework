@@ -384,7 +384,7 @@ final class AuditLoggerTest extends TestCase
     #[Test]
     public function throwsWhenStateAwareSinkReportsCorrupted(): void
     {
-        // F24.3: a sink that detects an unreadable last entry must not
+        // A sink that detects an unreadable last entry must not
         // be silently re-seeded — refuse to construct the logger so
         // operators investigate before more entries pile up.
         $sink = $this->createStub(AuditChainStateAware::class);

@@ -41,10 +41,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function invalidSignatureThrows(): void
     {
-        // F25.8: use a well-formed but non-matching signature
-        // (64 hex chars, all zeros) so we exercise the
-        // hash_equals mismatch path rather than the format-rejection
-        // path.
+        // A well-formed but non-matching signature (64 hex chars, all
+        // zeros) so this exercises the hash_equals mismatch path rather
+        // than the format-rejection path.
         $payload = '{"id":"evt_1"}';
         $timestamp = 1700000000;
         $header = sprintf('t=%d,v1=%s', $timestamp, str_repeat('0', 64));
@@ -58,10 +57,10 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function nonHexV1SignatureRejected(): void
     {
-        // F25.8: anything that isn't 64 lowercase hex chars in v1=
-        // must surface as malformedHeader BEFORE hash_equals so the
-        // verification path never compares against attacker-supplied
-        // bytes of arbitrary length / charset.
+        // Anything that isn't 64 lowercase hex chars in v1= must surface
+        // as malformedHeader BEFORE hash_equals, so the verification path
+        // never compares against attacker-supplied bytes of arbitrary
+        // length or charset.
         $timestamp = 1700000000;
         $header = sprintf('t=%d,v1=%s', $timestamp, 'invalid_hex_signature');
 
@@ -127,10 +126,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function multipleV1OneValidAccepts(): void
     {
-        // F25.8: 'old_invalid_sig' (15 chars, has '_') would now be
-        // rejected at parse time before hash_equals ever sees it.
-        // Use an old-but-well-formed hex signature so we still
-        // exercise the multi-signature acceptance branch.
+        // The non-matching candidate must still be well-formed hex: a
+        // malformed one is rejected at parse time, which would short-circuit
+        // the multi-signature acceptance branch this test is here to cover.
         $payload = '{"id":"evt_multi"}';
         $timestamp = 1700000000;
         $validSig = $this->computeSignature($payload, $timestamp, self::SECRET);
@@ -159,9 +157,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function overlongNumericTimestampRejected(): void
     {
-        // F25.8: a 13+ digit numeric timestamp passes ctype_digit but
-        // saturates the (int) cast on 64-bit, producing a nonsensical age.
-        // It must be rejected as a malformed timestamp, not silently coerced.
+        // A 13+ digit numeric timestamp passes ctype_digit but saturates
+        // the (int) cast on 64-bit, producing a nonsensical age. It must be
+        // rejected as a malformed timestamp, not silently coerced.
         $header = sprintf('t=%s,v1=%s', str_repeat('9', 20), str_repeat('a', 64));
 
         $this->expectException(WebhookException::class);
@@ -173,9 +171,9 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function tooManyV1SignaturesRejected(): void
     {
-        // F25.8: each v1= entry forces one HMAC computation. An unbounded
-        // header is a CPU-amplification vector, so the parser caps the
-        // candidate count and rejects before any HMAC work.
+        // Each v1= entry forces one HMAC computation. An unbounded header
+        // is a CPU-amplification vector, so the parser caps the candidate
+        // count and rejects before any HMAC work.
         $timestamp = 1700000000;
         $header = sprintf('t=%d', $timestamp);
         for ($i = 0; $i < 6; $i++) {

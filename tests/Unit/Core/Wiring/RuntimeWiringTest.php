@@ -56,7 +56,7 @@ final class RuntimeWiringTest extends TestCase
     #[Test]
     public function wireRegistersTheSessionManagerAsResettable(): void
     {
-        // RC-1 reachability: a SessionManager bound by SecurityWiring (which runs
+        // A SessionManager bound by SecurityWiring (which runs
         // earlier) must be registered for per-request reset, or its singleton
         // bleeds sessions across users on persistent workers.
         $container = new Container();

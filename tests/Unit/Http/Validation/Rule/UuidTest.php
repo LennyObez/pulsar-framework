@@ -55,7 +55,7 @@ final class UuidTest extends TestCase
     #[Test]
     public function uuidWithTrailingNewlineFails(): void
     {
-        // FR-45: \z (not $) so a trailing newline cannot slip an otherwise-valid
+        // \z (not $) so a trailing newline cannot slip an otherwise-valid
         // UUID through, which would risk log/line injection downstream.
         $violation = $this->rule->validate('field', "550e8400-e29b-41d4-a716-446655440000\n", []);
         self::assertNotNull($violation);

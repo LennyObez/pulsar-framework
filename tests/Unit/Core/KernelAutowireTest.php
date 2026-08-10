@@ -106,9 +106,9 @@ final class KernelAutowireTest extends TestCase
         $request = new ServerRequest(method: 'GET', uri: '/unresolvable');
 
         // No exception handler is wired, so the kernel renders a generic 500
-        // (F4.11) instead of leaking the resolver's RoutingException to the
-        // SAPI. The RoutingException itself is asserted directly against the
-        // resolver in ReflectionControllerResolverTest.
+        // instead of leaking the resolver's RoutingException to the SAPI. The
+        // RoutingException itself is asserted directly against the resolver in
+        // ReflectionControllerResolverTest.
         $response = $kernel->handle($request);
 
         self::assertSame(500, $response->getStatusCode());

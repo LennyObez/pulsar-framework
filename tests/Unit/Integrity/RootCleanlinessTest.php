@@ -21,14 +21,12 @@ use function trim;
  * The repository root has a finite, knowable content.
  *
  * Manifests, licence, tool configuration, entry documentation. Everything else is an
- * anomaly — and two anomalies sat there committed because nothing objected:
- * gen-i18n.php, 90 KB and untouched for four months, and parse-psalm.php, which
- * hard-coded an absolute path into a personal temp directory and carried it in the
- * repository's history.
+ * anomaly: a one-off script, a scratch file, a generated artefact that was committed
+ * once and then belonged to nobody.
  *
- * Neither was referenced by any manifest, workflow or document. They entered because
- * `git add` had no opinion, and the boundary held only as long as whoever committed was
- * paying attention. Attention drifts; this does not.
+ * Such a file enters because `git add` has no opinion about it, and the boundary then
+ * holds only as long as whoever commits is paying attention. Attention drifts; this
+ * does not.
  *
  * Only *tracked* files are considered. Generated artefacts (preload dumps, caches) appear
  * at the root legitimately during development and are gitignored — failing on those would

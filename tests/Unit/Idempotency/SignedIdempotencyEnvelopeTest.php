@@ -77,9 +77,9 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
     #[Test]
     public function openRejectsEnvelopeStolenFromAnotherKey(): void
     {
-        // F21.3 cross-key replay: a sealed result for key A must not
-        // verify when presented as the sealed result for key B, even if
-        // the underlying store holds both rows.
+        // Cross-key replay: a sealed result for key A must not verify when
+        // presented as the sealed result for key B, even if the underlying
+        // store holds both rows.
         $sealedForA = $this->envelope->seal('idem-key-A', '{"intent":"a"}');
 
         $this->expectException(IdempotencyException::class);

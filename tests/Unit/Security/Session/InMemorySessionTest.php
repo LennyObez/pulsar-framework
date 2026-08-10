@@ -45,7 +45,7 @@ final class InMemorySessionTest extends TestCase
     }
 
     /**
-     * F9.17: regenerate(deleteOldSession=true) — the default —
+     * regenerate(deleteOldSession=true) — the default —
      * MUST replace the session ID AND drop existing data. This
      * is the post-login-rotation contract: anti-fixation prevents
      * an attacker from anchoring on a known pre-login id.
@@ -65,7 +65,7 @@ final class InMemorySessionTest extends TestCase
     }
 
     /**
-     * F9.17: regenerate(deleteOldSession=false) — used for
+     * regenerate(deleteOldSession=false) — used for
      * privilege-escalation rotations where we keep the existing
      * session payload but anchor on a new id (CSRF, identity
      * row updates, etc.).
@@ -99,10 +99,10 @@ final class InMemorySessionTest extends TestCase
     }
 
     /**
-     * F9.17: the test isolation property — two separate
+     * The test isolation property — two separate
      * `InMemorySession` instances MUST not share state. The
-     * production `Session` class fails this property (both
-     * share `$_SESSION` via the PHP globals); the in-memory
+     * production `Session` class cannot offer it (every instance
+     * shares `$_SESSION` via the PHP globals); the in-memory
      * variant uses per-instance arrays so parallel tests
      * never collide.
      */

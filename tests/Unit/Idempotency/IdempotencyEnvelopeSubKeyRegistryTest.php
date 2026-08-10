@@ -19,9 +19,9 @@ use function sodium_bin2hex;
 /**
  * ADR-0006 registry guard: the subkey id the {@see SignedIdempotencyEnvelope}
  * actually signs under must equal the value pinned in the framework-wide
- * {@see SubKeyId} registry. Before the fix the envelope shipped id 12 while
- * the registry declared 11, so a caller deriving the registry value produced
- * a key that could not verify any envelope the framework had ever sealed.
+ * {@see SubKeyId} registry. If the two ever disagree, a caller deriving the
+ * key from the registry gets a key that cannot verify any envelope the
+ * framework has sealed — and the mismatch is invisible until verification.
  */
 #[CoversClass(SignedIdempotencyEnvelope::class)]
 #[CoversClass(SubKeyId::class)]

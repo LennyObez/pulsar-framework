@@ -69,8 +69,8 @@ final class ObservabilityConfigTest extends TestCase
     #[Test]
     public function flatDriverAndPathShapeSynthesisesADefaultChannel(): void
     {
-        // The flat shape (driver/path with no `channels` map) must produce a
-        // working sink — previously it yielded none, dropping every entry.
+        // The flat shape (driver/path with no `channels` map) must synthesise a
+        // working sink; with no channel, every log entry is dropped silently.
         $config = ObservabilityConfig::fromArray([
             'logging' => ['default_channel' => 'app', 'driver' => 'file', 'path' => '/var/log/app.log'],
         ], $this->env);

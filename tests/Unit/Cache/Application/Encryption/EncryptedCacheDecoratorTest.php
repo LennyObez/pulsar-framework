@@ -213,10 +213,10 @@ final class EncryptedCacheDecoratorTest extends TestCase
     #[Test]
     public function setStampsPayloadWithAbsoluteExpiry(): void
     {
-        // FR-33: set() now stamps the payload with an absolute expiry ('exp') so
-        // a re-encrypt on key rotation preserves it. Previously it stored only
-        // the raw TTL duration ('ttl'), which the rotation re-encrypt restarted
-        // from the read moment, extending the entry's lifetime indefinitely.
+        // set() stamps the payload with an absolute expiry ('exp') so that a
+        // re-encrypt on key rotation preserves it. Storing the raw TTL duration
+        // instead would let each rotation restart the countdown from the read
+        // moment, extending the entry's lifetime indefinitely.
         $before = time();
         $this->decorator->set('expiring', 'value', 100);
 
@@ -235,11 +235,11 @@ final class EncryptedCacheDecoratorTest extends TestCase
     #[Test]
     public function rotationReEncryptsPreviousKeyEntryAndPreservesExpiry(): void
     {
-        // FR-33: an entry written under the previous master key must be readable
-        // after rotation (re-encrypted under the current key), and the re-encrypt
-        // must keep the original absolute expiry rather than restart the TTL.
-        // The AAD MAC also rotates, so without a previous-key fallback the
-        // integrity check rejected the entry before re-encryption could run.
+        // An entry written under the previous master key must be readable after
+        // rotation (re-encrypted under the current key), and the re-encrypt must
+        // keep the original absolute expiry rather than restart the TTL.
+        // The AAD MAC rotates with the key, so without a previous-key fallback
+        // the integrity check rejects the entry before re-encryption can run.
         $inner = new ArrayDriver();
         $keyA = str_repeat('ab', 32);
         $keyB = str_repeat('cd', 32);

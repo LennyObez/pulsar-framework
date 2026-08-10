@@ -16,7 +16,7 @@ final class InsertBuilderReturningTest extends TestCase
     #[Test]
     public function executeReadsReturnedIdOnReturningDialects(): void
     {
-        // FR-31: on a dialect that supports RETURNING, the inserted primary key
+        // On a dialect that supports RETURNING, the inserted primary key
         // is read from the statement's result set — authoritative even when an
         // insert trigger advances another sequence, which is exactly the case
         // where lastInsertId() returns the wrong value on PostgreSQL.

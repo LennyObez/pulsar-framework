@@ -27,10 +27,9 @@ final class SiteDefinitionControllerTest extends TestCase
     /**
      * Build a permissive authorization gate for the controller under test.
      *
-     * After the MED-3 fix, `AbstractAdminController::authorize()` is
-     * deny-by-default when no gate is wired — unit tests that exercise
-     * an authenticated admin path must therefore inject a gate explicitly
-     * rather than relying on the previous silent-allow behavior.
+     * `AbstractAdminController::authorize()` is deny-by-default when no
+     * gate is wired, so a unit test that exercises an authenticated admin
+     * path has to inject a gate explicitly.
      */
     private function createPermissiveGate(): GateInterface
     {

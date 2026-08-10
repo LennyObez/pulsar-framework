@@ -202,10 +202,10 @@ final class CompressionMiddlewareTest extends TestCase
     #[Test]
     public function deflateEncodingIsZlibWrapped(): void
     {
-        // FR-38: Content-Encoding: deflate must be zlib-wrapped (RFC 1950),
-        // decodable by gzuncompress(). The previous gzdeflate() output was raw
-        // DEFLATE (RFC 1951), which gzuncompress() cannot read — so this both
-        // proves the fix and fails on the old code.
+        // Content-Encoding: deflate means zlib-wrapped (RFC 1950), which is
+        // what gzuncompress() reads. gzdeflate() emits raw DEFLATE (RFC 1951)
+        // instead: the two are one function name apart and only the wrapped
+        // form is decodable by a conforming client.
         $middleware = new CompressionMiddleware(minimumBytes: 10);
         $body = str_repeat('Compressible deflate data. ', 50);
 
@@ -223,8 +223,9 @@ final class CompressionMiddlewareTest extends TestCase
     #[Test]
     public function refusesEncodingWithZeroQValue(): void
     {
-        // FR-21: gzip;q=0 is an explicit refusal (RFC 9110); the body must be
-        // sent uncompressed, not gzip'd as the old token-only parse did.
+        // gzip;q=0 is an explicit refusal (RFC 9110); the body must be sent
+        // uncompressed. Parsing Accept-Encoding by token alone misses the
+        // q-value and compresses against the client's stated wishes.
         $middleware = new CompressionMiddleware(minimumBytes: 10);
         $body = str_repeat('compressible content here ', 50);
 

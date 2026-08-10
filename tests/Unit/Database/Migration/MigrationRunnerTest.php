@@ -104,10 +104,10 @@ final class MigrationRunnerTest extends TestCase
     #[Test]
     public function getCurrentBatchCoercesStringAggregate(): void
     {
-        // FR-12: MySQL/PostgreSQL return MAX(batch) as a numeric STRING; a strict
-        // is_int() check yielded 0, colliding batch numbers and silently no-op'ing
-        // rollback. SQLite (used elsewhere here) returns an int, so a stubbed
-        // connection is needed to exercise the string aggregate.
+        // MySQL/PostgreSQL return MAX(batch) as a numeric STRING; a strict
+        // is_int() check yields 0 there, colliding batch numbers and silently
+        // no-op'ing rollback. SQLite (used elsewhere here) returns an int, so a
+        // stubbed connection is needed to exercise the string aggregate.
         $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')->willReturn(new Result([new Row(['max_batch' => '5'])]));
 

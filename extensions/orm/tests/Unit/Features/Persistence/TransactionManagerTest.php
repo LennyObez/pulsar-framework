@@ -73,7 +73,7 @@ final class TransactionManagerTest extends TestCase
     #[Test]
     public function nestedBeginRetainsOuterTransactionHandle(): void
     {
-        // FR-32: a nested begin() must not overwrite (and lose) the outer
+        // A nested begin() must not overwrite (and lose) the outer
         // transaction handle. With a single reference, the second commit() is a
         // no-op and the outer real transaction stays open; a stack commits both
         // levels, so the connection ends with no open transaction.

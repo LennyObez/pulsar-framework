@@ -66,7 +66,7 @@ final class FullRequestLifecycleTest extends TestCase
         $kernel = new Kernel();
         $kernel->router()->get('/', fn() => Response::text('home'));
 
-        // F4.11: no exception handler wired → generic status-correct response.
+        // No exception handler wired → generic status-correct response.
         $response = $kernel->handle($this->createRequest(path: '/nonexistent'));
 
         self::assertSame(404, $response->getStatusCode());

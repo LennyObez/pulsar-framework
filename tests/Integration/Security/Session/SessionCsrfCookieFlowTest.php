@@ -144,7 +144,10 @@ final class SessionCsrfCookieFlowTest extends TestCase
 
     /**
      * GET renders a token; POST with the returned cookie + token passes CSRF.
-     * Also asserts the GET actually emits the session cookie (the bug).
+     *
+     * The GET must emit the session cookie as well as the token: the token is
+     * only meaningful when bound to the session the browser carries back, so a
+     * token rendered without a Set-Cookie can never validate.
      */
     #[Test]
     public function token_rendered_on_get_validates_on_subsequent_post(): void

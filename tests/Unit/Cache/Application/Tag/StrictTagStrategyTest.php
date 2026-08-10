@@ -74,7 +74,7 @@ final class StrictTagStrategyTest extends TestCase
     #[Test]
     public function evictedTagVersionDoesNotCollideAfterReinitialization(): void
     {
-        // FR-17: when a version key is evicted (LRU) and later reinitialized, the
+        // When a version key is evicted (LRU) and later reinitialized, the
         // new version must not equal the one a prior snapshot was taken against —
         // a constant reset value collides and surfaces stale data as a cache hit
         // despite an intervening invalidateTag().

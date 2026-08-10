@@ -87,7 +87,7 @@ final class FileSinkTest extends TestCase
     }
 
     /**
-     * F4.5: log files routinely capture accidental PII / PHI /
+     * Log files routinely capture accidental PII / PHI /
      * credentials and must not be world-readable. The sink applies
      * `0o640` (owner rw, group r, world none) on first write.
      *

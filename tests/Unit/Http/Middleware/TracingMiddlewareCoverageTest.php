@@ -350,7 +350,7 @@ final class TracingMiddlewareCoverageTest extends TestCase
     }
 
     /**
-     * F8.7: when a TrustedProxy is wired AND the immediate hop
+     * When a TrustedProxy is wired AND the immediate hop
      * (REMOTE_ADDR) is NOT in the proxy CIDR, the inbound
      * traceparent header MUST be ignored — otherwise an
      * untrusted client could inject itself into the trace
@@ -388,8 +388,8 @@ final class TracingMiddlewareCoverageTest extends TestCase
     }
 
     /**
-     * F8.7: when a TrustedProxy is wired AND the immediate hop
-     * IS in the proxy CIDR, the inbound traceparent is honoured.
+     * When a TrustedProxy is wired AND the immediate hop IS in
+     * the proxy CIDR, the inbound traceparent is honoured.
      */
     #[Test]
     public function inboundTraceparentHonoredFromTrustedProxy(): void

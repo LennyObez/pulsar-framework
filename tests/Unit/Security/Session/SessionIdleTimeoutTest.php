@@ -283,7 +283,7 @@ final class SessionIdleTimeoutTest extends TestCase
         self::assertTrue($opened, 'Session handler should open successfully');
 
         // Pulsar 1.0.0-rc.12 stores sessions as JSON, not PHP serialize(),
-        // to eliminate the unserialize() attack surface (HIGH-4 / CWE-502).
+        // to eliminate the unserialize() attack surface (CWE-502).
         $this->handler->write($sessionId, json_encode(
             $stored,
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,

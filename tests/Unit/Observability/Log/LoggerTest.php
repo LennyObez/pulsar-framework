@@ -28,8 +28,8 @@ final class LoggerTest extends TestCase
     private Closure $fallbackEmitter;
 
     /**
-     * F4.2: the logger now invokes a last-resort fallback emitter on
-     * sink failures (PHP `error_log` by default). PHPUnit treats any
+     * The logger invokes a last-resort fallback emitter on sink
+     * failures (PHP `error_log` by default). PHPUnit treats any
      * unexpected output as a Risky-test signal, so the test suite
      * substitutes the fallback with an in-memory buffer for every
      * test — individual tests that need to assert on the content
@@ -353,7 +353,7 @@ final class LoggerTest extends TestCase
     }
 
     /**
-     * F4.2: when every sink fails, the entry must still reach the
+     * When every sink fails, the entry must still reach the
      * fallback emitter so it is not dropped silently.
      */
     #[Test]
@@ -376,7 +376,7 @@ final class LoggerTest extends TestCase
     }
 
     /**
-     * F4.2: when at least one sink succeeds, the fallback path is NOT
+     * When at least one sink succeeds, the fallback path is NOT
      * triggered — the emitter is for the all-failed scenario, not a
      * nice-to-have duplicate write.
      */

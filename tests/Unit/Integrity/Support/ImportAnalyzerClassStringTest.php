@@ -12,11 +12,11 @@ use function file_put_contents;
 use function sys_get_temp_dir;
 
 /**
- * F23.4 regression suite: `ImportAnalyzer::extractClassStringReferences()`
- * surfaces Pulsar FQCNs that live in `T_CONSTANT_ENCAPSED_STRING`
- * tokens — the class-string lookup pattern used by `$container->get()`,
- * `class_exists()`, and `is_a()` calls that the original
- * `extractReferences()` cannot detect.
+ * `ImportAnalyzer::extractClassStringReferences()` surfaces Pulsar FQCNs
+ * that live in `T_CONSTANT_ENCAPSED_STRING` tokens — the class-string
+ * lookup pattern used by `$container->get()`, `class_exists()`, and
+ * `is_a()` calls, which `extractReferences()` cannot see because no
+ * `use` statement or FQCN token is involved.
  */
 #[CoversClass(ImportAnalyzer::class)]
 final class ImportAnalyzerClassStringTest extends TestCase

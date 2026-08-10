@@ -524,10 +524,11 @@ final class CsrfMiddlewareTest extends TestCase
     }
 
     /**
-     * F9.7: a SPA POSTing `Content-Type: application/json` with the CSRF
-     * token in the JSON body must be accepted. Previously the middleware
-     * only inspected `getParsedBody()` (form-encoded), so JSON callers
-     * were rejected with `CSRF token is missing`.
+     * A SPA POSTing `Content-Type: application/json` with the CSRF
+     * token in the JSON body must be accepted. `getParsedBody()` only
+     * covers form-encoded payloads, so the middleware also decodes a
+     * JSON body; without that, JSON callers are rejected with
+     * `CSRF token is missing`.
      */
     #[Test]
     public function postWithValidJsonBodyTokenPasses(): void

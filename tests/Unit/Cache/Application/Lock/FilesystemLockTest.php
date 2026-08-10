@@ -68,7 +68,7 @@ final class FilesystemLockTest extends TestCase
     #[Test]
     public function releaseKeepsLockFilePersistent(): void
     {
-        // FR-34: release() must not unlink the lock file. Deleting it races with
+        // release() must not unlink the lock file. Deleting it races with
         // a concurrent acquire on the same inode and lets a later acquire open a
         // fresh inode at the vacated path — two holders, broken mutual exclusion.
         // Keeping the file pins the inode across acquire/release cycles.

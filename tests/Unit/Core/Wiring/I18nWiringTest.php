@@ -139,7 +139,7 @@ final class I18nWiringTest extends TestCase
     #[Test]
     public function deriveDefaultCountryUsesLocaleRegionInsteadOfHardcodedUs(): void
     {
-        // FR-41: the region/currency default country is derived from the
+        // The region/currency default country is derived from the
         // configured default locale — explicit region subtag first (fr-FR / fr_CA),
         // then the bare language code when it is itself a known ISO country (fr →
         // FR) — instead of always assuming the US.

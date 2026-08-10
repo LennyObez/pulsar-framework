@@ -315,7 +315,7 @@ final class RouterTest extends TestCase
     #[Test]
     public function urlPercentEncodesPathSeparators(): void
     {
-        // F2.7: a raw `/` in a parameter value would punch out of the
+        // A raw `/` in a parameter value would punch out of the
         // segment and change which route the URL points at.
         $router = new Router();
         $router->get('/users/{id}', fn() => null, 'users.show');
@@ -328,7 +328,7 @@ final class RouterTest extends TestCase
     #[Test]
     public function urlPercentEncodesTraversalSequence(): void
     {
-        // F2.7: `..` in a parameter value would let the URL refer to
+        // `..` in a parameter value would let the URL refer to
         // a parent path. Encoding renders it inert.
         $router = new Router();
         $router->get('/users/{id}', fn() => null, 'users.show');
@@ -487,7 +487,7 @@ final class RouterTest extends TestCase
     #[Test]
     public function matchWithPortedHostMatchesHostConstrainedRoute(): void
     {
-        // FR-1: a Host header on a non-default port must still match a route
+        // A Host header on a non-default port must still match a route
         // declared against the port-less host.
         $router = new Router();
         $router->add(new Route(
@@ -507,7 +507,7 @@ final class RouterTest extends TestCase
     #[Test]
     public function matchWithPortedHostCapturesHostParameter(): void
     {
-        // FR-1: subdomain capture must work when the Host header carries a port.
+        // Subdomain capture must work when the Host header carries a port.
         $router = new Router();
         $router->add(new Route(
             methods: [Method::GET],
@@ -524,7 +524,7 @@ final class RouterTest extends TestCase
     #[Test]
     public function matchWithPortedIpv6HostMatchesHostConstrainedRoute(): void
     {
-        // FR-1: a bracketed IPv6 authority strips only the trailing port.
+        // A bracketed IPv6 authority strips only the trailing port.
         $router = new Router();
         $router->add(new Route(
             methods: [Method::GET],
@@ -543,11 +543,11 @@ final class RouterTest extends TestCase
     #[Test]
     public function matchHonorsRegistrationOrderBetweenCatchAllAndStaticFirstSegment(): void
     {
-        // FR-2: an earlier-registered catch-all (/{lang}/{slug}) must win over a
+        // An earlier-registered catch-all (/{lang}/{slug}) must win over a
         // later-registered static-first-segment route (/blog/{slug}) for
-        // /blog/hello — first-registered-wins across the bucket split. Before the
-        // fix the first-segment bucket was always scanned ahead of the catch-all
-        // bucket, so /blog/{slug} wrongly won.
+        // /blog/hello: first-registered-wins holds across the bucket split.
+        // Scanning the first-segment bucket ahead of the catch-all bucket would
+        // silently reorder route precedence.
         $router = new Router();
         $router->add(new Route(
             methods: [Method::GET],
@@ -572,10 +572,10 @@ final class RouterTest extends TestCase
     #[Test]
     public function matchPrefersStaticRouteOverDynamicCatchAllWithHostHeaderPresent(): void
     {
-        // FR-39: a host-less static route keeps its O(1) precedence over a dynamic
-        // catch-all even when the request carries a Host header. Before the fix the
-        // static fast path was skipped whenever a Host was present, so the
-        // earlier-registered catch-all wrongly captured the static path.
+        // A host-less static route keeps its O(1) precedence over a dynamic
+        // catch-all even when the request carries a Host header. Skipping the
+        // static fast path whenever a Host is present would let an
+        // earlier-registered catch-all capture the static path.
         $router = new Router();
         $router->add(new Route(
             methods: [Method::GET],

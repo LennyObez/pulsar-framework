@@ -75,9 +75,9 @@ final class PinnedUrlTest extends TestCase
     #[Test]
     public function theUserinfoAttackNoLongerLeavesTheConnectHostUnpinned(): void
     {
-        // Regression for the DNS-rebinding TOCTOU: with a naive first-occurrence
-        // string replace, http://h@h/ pinned the userinfo and left the connect
-        // host resolvable. The connect host (parse_url host) must now be the IP.
+        // DNS-rebinding TOCTOU: on `http://h@h/` a naive first-occurrence string
+        // replace pins the userinfo and leaves the connect host resolvable — the
+        // rebind window stays open. The connect host (parse_url host) must be the IP.
         $pinned = PinnedUrl::withHost('http://rebind.test@rebind.test/', '203.0.113.9');
 
         self::assertSame('203.0.113.9', parse_url($pinned, PHP_URL_HOST));

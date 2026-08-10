@@ -105,10 +105,11 @@ final class CanonicalPathOrderingTest extends TestCase
     #[Test]
     public function theReversedOrderIsWhatDropsThePrefix(): void
     {
-        // Documents precisely the bug the invariant prevents: if canonicalization
-        // ran AFTER the locale strip, the same request loses its prefix. Built
-        // by hand (both piped, locale outermost) to prove the failure mode is
-        // real, not hypothetical — this is why prepend() matters.
+        // Documents precisely the failure mode the invariant prevents: if
+        // canonicalization ran AFTER the locale strip, the same request loses
+        // its prefix. Built by hand (both piped, locale outermost) so the
+        // consequence is demonstrated rather than asserted — this is why the
+        // wiring uses prepend() and not pipe().
         $pipeline = new MiddlewarePipeline();
         $pipeline->pipe($this->localePrefixMiddleware());
         $pipeline->pipe(new CanonicalPathMiddleware());

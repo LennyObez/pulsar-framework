@@ -62,9 +62,9 @@ final class IdempotencyExceptionTest extends TestCase
     }
 
     /**
-     * F22.9: every factory must tag the exception with the matching kind
-     * so HTTP layers can map concurrent → 409 vs other → 4xx/500 without
-     * parsing exception messages.
+     * Every factory must tag the exception with the matching kind so HTTP
+     * layers can map concurrent → 409 vs other → 4xx/500 without parsing
+     * exception messages.
      */
     #[Test]
     public function parameterMismatchTagsKind(): void

@@ -93,7 +93,7 @@ final class StreamingTemplateEngineTest extends TestCase
     #[Test]
     public function streamRendersExtendedLayout(): void
     {
-        // FR-6: streaming a template that @extends a layout must yield the full
+        // Streaming a template that @extends a layout must yield the full
         // composed layout. The child buffers its @section content into $env and
         // produces no direct output, so without resolving inheritance the stream
         // would be blank.

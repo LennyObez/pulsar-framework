@@ -105,9 +105,9 @@ final class TemplateCompilerEdgeCaseTest extends TestCase
     #[Test]
     public function directiveNameWithUnderscoreCompilesAsWholeName(): void
     {
-        // FR-4: the directive-name scanner must include underscores (and digits)
-        // so built-ins like @escape_js / @csp_nonce resolve as whole names instead
-        // of stopping at the underscore (which shipped raw JS and an empty nonce).
+        // The directive-name scanner must include underscores (and digits) so
+        // built-ins like @escape_js / @csp_nonce resolve as whole names. Stopping
+        // at the underscore would emit raw JS and an empty nonce.
         $compiler = $this->createCompiler();
         $compiler->registerDirective('escape_js', static fn(string $expr): string => "<?php echo jsEscape({$expr}); ?>");
 
@@ -120,7 +120,7 @@ final class TemplateCompilerEdgeCaseTest extends TestCase
     #[Test]
     public function directiveExpressionPreservesParensInsideStringLiterals(): void
     {
-        // FR-5: the balanced-paren scanner must ignore parentheses (and escaped
+        // The balanced-paren scanner must ignore parentheses (and escaped
         // quotes) inside string literals, otherwise common expressions miscompile
         // to invalid PHP.
         $compiler = $this->createCompiler();
@@ -149,8 +149,8 @@ final class TemplateCompilerEdgeCaseTest extends TestCase
     #[Test]
     public function escapedEchoEmitsRawOutputWhenAutoEscapeDisabled(): void
     {
-        // FR-40: ViewConfig::autoEscape=false must actually disable {{ }} escaping
-        // instead of being a silent no-op.
+        // ViewConfig::autoEscape=false must actually disable {{ }} escaping — a
+        // silent no-op here would double-escape every raw-output template.
         $config = new ViewConfig(
             templatePaths: [$this->templateDir],
             cachePath: $this->cacheDir,

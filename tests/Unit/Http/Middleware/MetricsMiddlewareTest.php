@@ -67,8 +67,8 @@ final class MetricsMiddlewareTest extends TestCase
     }
 
     /**
-     * F8.3: when no `RouteContext` is wired the middleware MUST
-     * NOT use the raw URI as the metric label — that produces
+     * When no `RouteContext` is wired the middleware MUST NOT
+     * use the raw URI as the metric label — that produces
      * unbounded series (one per dynamic id / uuid path), the
      * Prometheus failure mode #1. The label binds to the bounded
      * sentinel `unmatched` instead.
@@ -198,8 +198,8 @@ final class MetricsMiddlewareTest extends TestCase
 
         $middleware->process($request, $handler);
 
-        // Verify histogram was recorded — F8.3: when no RouteContext
-        // is wired, the label binds to `unmatched`.
+        // With no RouteContext wired, the histogram label binds to
+        // the bounded `unmatched` sentinel, never the raw path.
         $histogram = $registry->histogram('pulsar_http_request_duration_seconds', '');
         $count = $histogram->count(new LabelSet(['method' => 'GET', 'route' => 'unmatched']));
         self::assertSame(1, $count);
@@ -267,7 +267,7 @@ final class MetricsMiddlewareTest extends TestCase
     }
 
     /**
-     * F8.18: the metrics scrape endpoint must not auto-monitor itself.
+     * The metrics scrape endpoint must not auto-monitor itself.
      * If a Prometheus server scrapes `/metrics` every 15s, every scrape
      * would otherwise emit a `pulsar_http_requests_total{route="/metrics"}`
      * sample, dwarfing the real request signal and rebuilding the

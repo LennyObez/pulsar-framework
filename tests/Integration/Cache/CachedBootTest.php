@@ -77,7 +77,8 @@ final class CachedBootTest extends TestCase
     #[Test]
     public function it_uses_cached_config_when_framework_cache_is_available(): void
     {
-        // Build a cached ConfigRepository
+        // 'CachedApp' appears nowhere on disk, so reading it back proves the
+        // repository came from the cache rather than from the config files.
         $cachedRepo = new ConfigRepository();
         $cachedRepo->set(new AppConfig(
             name: 'CachedApp',
@@ -87,12 +88,10 @@ final class CachedBootTest extends TestCase
             locale: 'en',
         ));
 
-        // Create a ConfigManager with a configPath
         $configManager = new ConfigManager(
             configPath: $this->basePath . DIRECTORY_SEPARATOR . 'config',
         );
 
-        // Verify loadFromCache succeeds
         $result = $configManager->loadFromCache($cachedRepo);
 
         self::assertTrue($result);
@@ -103,10 +102,10 @@ final class CachedBootTest extends TestCase
     #[Test]
     public function bootAnchorsBasePathToTheConfigParentWhenUnset(): void
     {
-        // The storage-path security fix: with PULSAR_BASE_PATH unset, boot() must
-        // export it from the config directory's parent (the project root) so path
-        // helpers do not fall back to getcwd() — which under PHP-FPM is public/,
-        // putting var/cache and var/logs inside the webroot.
+        // With PULSAR_BASE_PATH unset, boot() must export it from the config
+        // directory's parent (the project root) so path helpers never fall back
+        // to getcwd() — which under PHP-FPM is public/, and would put var/cache
+        // and var/logs inside the webroot where anyone can fetch them.
         $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
         $this->writeMinimalConfigs($configPath);
 
@@ -127,12 +126,12 @@ final class CachedBootTest extends TestCase
 
         // An operator override (FPM pool env / systemd) must win.
         //
-        // A real, writable directory rather than an invented absolute path. What this
-        // asserts is that the override survives boot, and any path proves that — but
-        // `/explicit/operator/root` cannot be created under a POSIX filesystem root, so
-        // the logger spent the test failing to make var/logs beneath it. Windows read
-        // the same string as drive-relative and quietly obliged, which is why it only
-        // showed up the first time the suite ran on Linux.
+        // Use a real, writable directory rather than an invented absolute path. Any
+        // path proves the assertion, but boot builds var/logs beneath the base path:
+        // an unwritable root leaves the logger erroring throughout the test. Pick one
+        // that exists on every platform — POSIX refuses to create a new top-level
+        // directory, while Windows treats a leading slash as drive-relative and
+        // silently accepts it, so an invented path fails on one OS only.
         $override = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_operator_root';
         $this->withEnv('PULSAR_BASE_PATH', $override);
         $this->withEnv('APP_ENV', 'local');
@@ -200,11 +199,11 @@ final class CachedBootTest extends TestCase
     #[Test]
     public function productionBootHitsTheCacheAfterWarm(): void
     {
-        // The regression guard for the bug where FrameworkCache was bound (by
-        // SecurityWiring) only AFTER the cache-load gate, so a cold boot never
-        // hit the cache no matter what `optimize` wrote. A unit test of
-        // FrameworkCache::load() in isolation kept passing while this was live;
-        // only a real boot exposes it.
+        // FrameworkCache is bound by SecurityWiring, and the cache-load gate
+        // reads it: bind it after the gate and every boot is a cold boot, no
+        // matter what `optimize` wrote. FrameworkCache::load() tested in
+        // isolation cannot see that ordering, so this asserts against a real
+        // boot instead.
         $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
         $this->writeMinimalConfigs($configPath);
 

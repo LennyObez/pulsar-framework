@@ -111,12 +111,11 @@ final class SensitiveDataScrubberTest extends TestCase
     }
 
     /**
-     * F8.6: previously every field whose name *contained* `token` was
-     * redacted, including legitimate metric / config fields that happen
-     * to share the substring. The fix matches on word-boundary segments
-     * so identifiers like `tokenizer` (single segment) and
-     * `tokenization_settings` (segments `tokenization`, `settings`) are
-     * no longer redacted. Plural forms still match (`auth_tokens` →
+     * Field names match on word-boundary segments, not raw substrings.
+     * A substring match redacts legitimate metric and config fields
+     * that merely share the letters, so `tokenizer` (a single segment)
+     * and `tokenization_settings` (segments `tokenization`, `settings`)
+     * must survive. Plural forms still match (`auth_tokens` →
      * singularised to `auth_token`) so plural-style sensitive arrays
      * stay scrubbed.
      *
@@ -178,7 +177,7 @@ final class SensitiveDataScrubberTest extends TestCase
     }
 
     /**
-     * F8.5: stack-trace strings may contain credit-card numbers, JWTs,
+     * Stack-trace strings may contain credit-card numbers, JWTs,
      * or long hex / base64 secrets surfaced as method args. The
      * scrubString() helper redacts those patterns so a Throwable
      * formatter can sanitise free-form text.

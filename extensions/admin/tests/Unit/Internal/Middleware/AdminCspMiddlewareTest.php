@@ -128,9 +128,8 @@ final class AdminCspMiddlewareTest extends TestCase
     }
 
     /**
-     * F33.5: when csp_nonce is enabled the style-src binds to the
-     * generated nonce, not `'unsafe-inline'`. The previous
-     * assertion was the pre-F33.5 less-strict shape.
+     * When csp_nonce is enabled the style-src binds to the
+     * generated nonce, never `'unsafe-inline'`.
      */
     #[Test]
     public function cspBindsStyleSrcToNonceWhenEnabled(): void

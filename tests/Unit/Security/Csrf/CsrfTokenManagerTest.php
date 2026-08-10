@@ -74,12 +74,11 @@ final class CsrfTokenManagerTest extends TestCase
     }
 
     /**
-     * The BREACH regression, stated as the reporter observed it: the token was
-     * byte-identical across three responses of one session. With the page
-     * served Content-Encoding: br, a stable secret in every response is exactly
-     * the oracle target — an attacker who can influence any reflected byte
-     * recovers it by watching compressed response sizes. Each render must now
-     * emit different bytes for the same underlying token.
+     * BREACH: a secret repeated byte-identically across the responses of one
+     * session is exactly the oracle target. With the page served
+     * Content-Encoding: br, an attacker who can influence any reflected byte
+     * recovers that secret by watching compressed response sizes. Each render
+     * must therefore emit different bytes for the same underlying token.
      */
     #[Test]
     public function getTokenEmitsDifferentBytesOnEveryRenderOfOneSession(): void
@@ -211,7 +210,7 @@ final class CsrfTokenManagerTest extends TestCase
     }
 
     /**
-     * F9.6: rotate() must regenerate the underlying session id (with the
+     * rotate() must regenerate the underlying session id (with the
      * old session destroyed) so any session-fixation attempt is swept
      * along with the old token. A mock-style assertion on the regenerate
      * call confirms the contract.

@@ -120,10 +120,10 @@ final class ValidatorBuilderTest extends TestCase
     #[Test]
     public function previouslyUnmappedRulesAreParsedAndEnforced(): void
     {
-        // FR-20: only 8 rule names were mapped; every other shipped rule fell
-        // through to CustomStringRule and always failed with "Unknown validation
-        // rule". They are now parsed to their real implementations, with their
-        // DSL arguments.
+        // Every shipped rule name resolves to its real implementation, with its
+        // DSL arguments parsed. A name missing from the mapping table falls
+        // through to CustomStringRule and always fails with "Unknown validation
+        // rule" — so a gap in the table reads as a rejection of valid input.
         $valid = ValidatorBuilder::make([
             'id' => '550e8400-e29b-41d4-a716-446655440000',
             'flag' => true,
@@ -142,9 +142,9 @@ final class ValidatorBuilderTest extends TestCase
     #[Test]
     public function mappedRuleRejectsInvalidValueWithItsOwnMessage(): void
     {
-        // FR-20: an unmapped rule used to "fail" only with the generic unknown-rule
-        // message. A mapped rule now actually enforces its constraint and reports
-        // its own violation.
+        // The counterpart assertion: a mapped rule enforces its constraint and
+        // reports its own message. Asserting only that validation failed would
+        // pass just as well on the generic unknown-rule message.
         $result = ValidatorBuilder::make(['color' => 'purple'])
             ->rule('color', 'in:red,green,blue')
             ->validate();

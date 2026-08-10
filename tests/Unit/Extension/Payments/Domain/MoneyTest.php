@@ -302,7 +302,7 @@ final class MoneyTest extends TestCase
     #[Test]
     public function addThrowsOnOverflow(): void
     {
-        // F21.8: PHP_INT_MAX + 1 silently wraps to PHP_INT_MIN on
+        // PHP_INT_MAX + 1 silently wraps to PHP_INT_MIN on
         // 64-bit ints. Money MUST refuse rather than report a
         // negative balance.
         $a = Money::of(PHP_INT_MAX, Currency::USD);

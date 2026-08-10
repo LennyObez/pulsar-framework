@@ -30,10 +30,10 @@ final class WebhookEventTest extends TestCase
     }
 
     /**
-     * F22.13: payloads missing the `id` field used to flow
-     * through with `''`, then a downstream replay-store would
-     * happily key on the empty string. The boundary now rejects
-     * the partial deserialization fast.
+     * A payload missing `id` must be rejected at the boundary.
+     * Letting it through as `''` would leave a downstream replay
+     * store keying on the empty string, collapsing every such
+     * event into a single dedup slot.
      */
     #[Test]
     public function fromArrayThrowsOnMissingId(): void
@@ -45,10 +45,10 @@ final class WebhookEventTest extends TestCase
     }
 
     /**
-     * F22.13: `data` is typed as `array<string, mixed>` in the
-     * constructor; a non-array supplied through fromArray now
-     * fails at the boundary instead of constructing a domain
-     * object with an invalid `data` field.
+     * `data` is typed as `array<string, mixed>` in the
+     * constructor; a non-array supplied through fromArray must
+     * fail at the boundary rather than construct a domain object
+     * with an invalid `data` field.
      */
     #[Test]
     public function fromArrayThrowsOnNonArrayData(): void
@@ -74,7 +74,7 @@ final class WebhookEventTest extends TestCase
     }
 
     /**
-     * F22.20 / F22.7: a non-numeric `created_at` (`"abc"`,
+     * A non-numeric `created_at` (`"abc"`,
      * `"1700-01-01"`, attacker-controlled garbage) MUST NOT
      * raise `DateMalformedStringException` from the inner
      * `new DateTimeImmutable('@<value>')`. The (int) cast in
@@ -97,7 +97,7 @@ final class WebhookEventTest extends TestCase
     }
 
     /**
-     * F22.20: same coercion for an outright wrong type
+     * Same coercion for an outright wrong type
      * (`true`, `array`, `null` after early-key-missing). PHP
      * casts these to 0 / 1 — neither produces a
      * DateMalformedStringException, but the boundary contract

@@ -555,10 +555,10 @@ final class ArchitectureRulesTest extends TestCase
                 continue;
             }
 
-            // F23.4: combine static `use` / FQCN references with the
+            // Combine static `use` / FQCN references with the
             // class-string scan so `$container->get('Pulsar\Foo\Bar')`
             // and `class_exists('Pulsar\Foo\Bar')` are not invisible
-            // to boundary-enforcement. Without the merge the
+            // to boundary enforcement. Without the merge the
             // arbitrary-class-instantiation pattern bypasses the
             // architecture rules — exactly the case those rules
             // exist to surface.

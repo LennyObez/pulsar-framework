@@ -70,10 +70,10 @@ final class AuthFlowTest extends TestCase
      * Run a request through the auth middleware pipeline.
      *
      * The router is what puts `_route` on the request in production, so the harness
-     * has to supply it too: since F12.7 the AuthorizationMiddleware fails closed
-     * without it, and a pipeline test that omits it would be measuring the absence
-     * of routing rather than the authorization decision. Pass `null` to exercise
-     * that fail-closed path deliberately.
+     * has to supply it too: AuthorizationMiddleware fails closed without it, and a
+     * pipeline test that omits it would be measuring the absence of routing rather
+     * than the authorization decision. Pass `null` to exercise that fail-closed
+     * path deliberately.
      *
      * @param list<string>|null $permissions Route-declared permissions, or null for no route context
      */
@@ -347,7 +347,7 @@ final class AuthFlowTest extends TestCase
 
     /**
      * Without route context the required permissions are unknown, so an
-     * authenticated request must not pass unchecked (F12.7).
+     * authenticated request must not pass unchecked.
      */
     #[Test]
     public function authenticatedRequestWithoutRouteContextIsForbidden(): void
@@ -372,9 +372,9 @@ final class AuthFlowTest extends TestCase
     }
 
     /**
-     * A route behind the auth middleware that declares no permission used to
-     * default-allow every authenticated user. It now default-denies; naming
-     * `_authenticated` is the operator's explicit opt-in (F12.7).
+     * A route behind the auth middleware that declares no permission default-denies
+     * rather than admitting every authenticated user. Naming `_authenticated` is the
+     * operator's explicit opt-in to "any logged-in identity may pass".
      */
     #[Test]
     public function routeDeclaringNoPermissionIsForbiddenEvenWhenAuthenticated(): void

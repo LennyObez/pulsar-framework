@@ -207,9 +207,9 @@ final class OpenMetricsExporterTest extends TestCase
     #[Test]
     public function exportsCounterLabelValueContainingCommaWithoutCorruption(): void
     {
-        // A user-supplied label value with a literal comma (e.g. a RUM `url`)
-        // previously corrupted the round-trip: the key was split on the comma,
-        // producing a truncated value and an orphaned label pair.
+        // A user-supplied label value may contain a literal comma (e.g. a RUM
+        // `url`). Splitting a serialised label set on commas would truncate the
+        // value and emit an orphaned label pair, so the exporter must not.
         $registry = new MetricRegistry();
         $counter = $registry->counter('rum_navigations');
         $counter->increment(new LabelSet(['url' => 'https://example.com/a,b', 'method' => 'GET']));
