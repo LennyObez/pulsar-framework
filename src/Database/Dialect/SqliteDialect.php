@@ -128,7 +128,7 @@ final readonly class SqliteDialect extends AbstractDialect
         string $table,
         array $keyColumns,
         ?string $discriminator = null,
-    ): ?string {
+    ): string {
         $quoted = $this->quoteIdentifier($table);
 
         $key = [];
