@@ -9,13 +9,16 @@ use PHPUnit\Framework\TestCase;
 
 use function array_diff;
 use function array_filter;
+use function array_map;
 use function array_values;
 use function dirname;
-use function explode;
-use function shell_exec;
+use function escapeshellarg;
+use function exec;
 use function sort;
 use function str_contains;
 use function trim;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * The repository root has a finite, knowable content.
@@ -35,6 +38,9 @@ use function trim;
  */
 final class RootCleanlinessTest extends TestCase
 {
+    /** Where a shell sends output it should not keep. */
+    private const string NULL_DEVICE = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
+
     /**
      * Everything permitted at the repository root, with why it is there.
      *
@@ -134,10 +140,22 @@ final class RootCleanlinessTest extends TestCase
         // git is the authority on what is *committed*, which is the thing being guarded.
         // Reading the directory would also see generated artefacts and local scratch
         // files, and failing on those would make the guard fire during ordinary work.
-        $output = shell_exec('git -C ' . escapeshellarg($root) . ' ls-files --full-name 2>&1');
+        //
+        // Stderr goes to the null device, not into the list. Merged with `2>&1` it arrived
+        // as data — `fatal: not a git repository` counted as a root file, and the guard
+        // reported it as one, in every checkout without a repository.
+        exec(
+            'git -C ' . escapeshellarg($root) . ' ls-files --full-name 2>' . self::NULL_DEVICE,
+            $output,
+            $status,
+        );
+
+        if ($status !== 0) {
+            self::markTestSkipped('git cannot read this checkout, so tracked files cannot be listed');
+        }
 
         $files = array_values(array_filter(
-            explode("\n", (string) $output),
+            $output,
             static fn(string $line): bool => $line !== '' && !str_contains($line, '/'),
         ));
 

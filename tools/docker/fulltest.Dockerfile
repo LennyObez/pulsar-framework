@@ -46,6 +46,15 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN useradd --create-home --uid 1000 pulsar && mkdir -p /app && chown pulsar:pulsar /app
 WORKDIR /app
 COPY --chown=pulsar:pulsar . /app
+
+# `--chown` settles ownership, not mode: COPY carries the build context's permissions
+# through, and a context exported from a filesystem without POSIX modes — a Windows
+# checkout, more so one inside OneDrive — hands `var/` over as 0555. The directory is
+# then read-only to its own owner, every boot test writing a fixture under it fails with
+# `mkdir(): Permission denied`, and the kernel answers 500 to everything because its
+# configuration was never written. An image must not inherit that from whoever built it.
+RUN mkdir -p /app/var && chmod -R u+rwX /app/var
+
 USER pulsar
 
 RUN composer install --no-interaction --no-progress --prefer-dist
