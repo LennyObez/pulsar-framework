@@ -15392,6 +15392,20 @@
                     "return": "string",
                     "static": false
                 },
+                "compileCollapseDuplicates": {
+                    "params": [
+                        "string $table",
+                        "array $keyColumns",
+                        "?string $discriminator"
+                    ],
+                    "return": "?string",
+                    "static": false
+                },
+                "compileColumnExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
                 "compileCreateIndex": {
                     "params": [
                         "string $name",
@@ -15428,6 +15442,16 @@
                     "params": [
                         "Pulsar\\Database\\LockMode $mode"
                     ],
+                    "return": "string",
+                    "static": false
+                },
+                "compilePrimaryKeyExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileTableExists": {
+                    "params": [],
                     "return": "string",
                     "static": false
                 },
@@ -15512,6 +15536,22 @@
                     "static": false,
                     "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
                 },
+                "compileCollapseDuplicates": {
+                    "params": [
+                        "string $table",
+                        "array $keyColumns",
+                        "?string $discriminator"
+                    ],
+                    "return": "?string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "compileColumnExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
                 "compileCreateIndex": {
                     "params": [
                         "string $name",
@@ -15555,6 +15595,18 @@
                     "return": "string",
                     "static": false,
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compilePrimaryKeyExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
+                "compileTableExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
                 },
                 "compileUpsert": {
                     "params": [
@@ -15626,6 +15678,20 @@
                     "return": "string",
                     "static": false
                 },
+                "compileCollapseDuplicates": {
+                    "params": [
+                        "string $table",
+                        "array $keyColumns",
+                        "?string $discriminator"
+                    ],
+                    "return": "?string",
+                    "static": false
+                },
+                "compileColumnExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
                 "compileCreateIndex": {
                     "params": [
                         "string $name",
@@ -15666,6 +15732,16 @@
                     "return": "string",
                     "static": false,
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compilePrimaryKeyExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileTableExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
                 },
                 "compileUpsert": {
                     "params": [
@@ -15735,6 +15811,20 @@
                     "return": "string",
                     "static": false
                 },
+                "compileCollapseDuplicates": {
+                    "params": [
+                        "string $table",
+                        "array $keyColumns",
+                        "?string $discriminator"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileColumnExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
                 "compileCreateIndex": {
                     "params": [
                         "string $name",
@@ -15777,6 +15867,16 @@
                     "return": "string",
                     "static": false,
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compilePrimaryKeyExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileTableExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
                 },
                 "compileUpsert": {
                     "params": [
@@ -15846,6 +15946,20 @@
                     "return": "string",
                     "static": false
                 },
+                "compileCollapseDuplicates": {
+                    "params": [
+                        "string $table",
+                        "array $keyColumns",
+                        "?string $discriminator"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileColumnExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
                 "compileCreateIndex": {
                     "params": [
                         "string $name",
@@ -15888,6 +16002,16 @@
                     "return": "string",
                     "static": false,
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                },
+                "compilePrimaryKeyExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "compileTableExists": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
                 },
                 "compileUpsert": {
                     "params": [
@@ -18575,6 +18699,14 @@
                     "return": "void",
                     "static": false
                 },
+                "ensureAbsent": {
+                    "params": [
+                        "string $table",
+                        "string $name"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
                 "exists": {
                     "params": [
                         "string $table",
@@ -18715,6 +18847,11 @@
                     "return": "bool",
                     "static": false
                 },
+                "supportsAddPrimaryKey": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
                 "supportsAlterColumnType": {
                     "params": [],
                     "return": "bool",
@@ -18736,6 +18873,11 @@
                     "static": false
                 },
                 "supportsDropForeignKey": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsDroppingKeyColumn": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -19163,6 +19305,42 @@
                         "array $foreignKeys"
                     ],
                     "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Schema\\TableIntrospector": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Database\\ConnectionInterface $connection"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "columnExists": {
+                    "params": [
+                        "string $table",
+                        "string $column"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "hasPrimaryKey": {
+                    "params": [
+                        "string $table"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "tableExists": {
+                    "params": [
+                        "string $table"
+                    ],
+                    "return": "bool",
                     "static": false
                 }
             },
