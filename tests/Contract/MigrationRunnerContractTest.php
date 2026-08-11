@@ -11,11 +11,9 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationRepository;
 use Pulsar\Database\Migration\MigrationRunner;
-use RuntimeException;
 use Throwable;
 
 use function bin2hex;
-use function count;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;

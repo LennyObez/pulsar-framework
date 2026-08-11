@@ -82,7 +82,7 @@ final class SkipLedgerExtension implements Extension
         $path = rtrim($directory, '/\\')
             . '/skips-' . (getmypid() ?: 0) . '-' . bin2hex(random_bytes(4)) . '.jsonl';
 
-        $facade->registerSubscriber(new class($path) implements SkippedSubscriber {
+        $facade->registerSubscriber(new class ($path) implements SkippedSubscriber {
             public function __construct(private readonly string $path) {}
 
             #[Override]

@@ -6,8 +6,8 @@ namespace Pulsar\Extension\Admin\Features\Schema;
 
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaColumn;
-use Pulsar\Database\Schema\SchemaIndex;
 use Pulsar\Database\Schema\SchemaIdentifier;
+use Pulsar\Database\Schema\SchemaIndex;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Database\Schema\TableDefinition;
 

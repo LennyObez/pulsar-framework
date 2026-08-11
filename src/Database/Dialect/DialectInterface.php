@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Dialect;
 
+use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 use Pulsar\Database\DriverVariant;
@@ -69,7 +70,7 @@ interface DialectInterface
      * conservative answer is the correct one — and the name arriving here has often come
      * from a request, as a sort field or a decoded pagination cursor.
      *
-     * @throws \InvalidArgumentException If the identifier is not valid on every supported
+     * @throws InvalidArgumentException If the identifier is not valid on every supported
      *                                   engine.
      */
     public function quoteIdentifier(string $identifier): string;

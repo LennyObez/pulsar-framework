@@ -250,7 +250,7 @@ final class SchemaContractTest extends TestCase
         // 63 characters there — see the note on the table name below.
         $blueprint->unique('sku', 'uq_sku');
 
-        return (new DdlCompiler($driver, new SchemaCapabilities($driver)))
+        return new DdlCompiler($driver, new SchemaCapabilities($driver))
             ->compileCreate($blueprint->toDefinition());
     }
 }

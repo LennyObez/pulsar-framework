@@ -21,14 +21,14 @@ use Pulsar\Core\Kernel;
 use function bin2hex;
 use function file_put_contents;
 use function is_dir;
+use function mkdir;
 use function putenv;
 use function random_bytes;
-use function mkdir;
 use function rmdir;
 use function scandir;
 use function sys_get_temp_dir;
-use function unlink;
 use function uniqid;
+use function unlink;
 
 /**
  * Where two-factor authentication keeps its state after a real boot.

@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Benchmark\Comparative;
 
-use Pulsar\Database\Result;
-use Pulsar\Database\Row;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Method;
-use Pulsar\Routing\CompiledRouteTree;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouteCompiler;
 use Pulsar\Routing\Router;
-use Pulsar\View\Engine\TemplateEngine;
 
 use function hrtime;
 use function json_encode;
@@ -220,10 +216,10 @@ final class PulsarBench
     private function printResults(): void
     {
         echo PHP_EOL;
-        echo "Pulsar Framework Benchmarks" . PHP_EOL;
+        echo 'Pulsar Framework Benchmarks' . PHP_EOL;
         echo str_repeat('=', 80) . PHP_EOL;
         echo sprintf(
-            "%-30s %12s %10s %10s %10s %8s" . PHP_EOL,
+            '%-30s %12s %10s %10s %10s %8s' . PHP_EOL,
             'Benchmark',
             'ops/sec',
             'avg (ns)',
@@ -235,7 +231,7 @@ final class PulsarBench
 
         foreach ($this->results as $name => $result) {
             echo sprintf(
-                "%-30s %12s %10s %10s %10s %8s" . PHP_EOL,
+                '%-30s %12s %10s %10s %10s %8s' . PHP_EOL,
                 $name,
                 number_format($result['ops_per_sec']),
                 number_format($result['avg_ns']),
@@ -246,7 +242,7 @@ final class PulsarBench
         }
 
         echo str_repeat('=', 80) . PHP_EOL;
-        echo sprintf("Iterations: %s, Warmup: %s" . PHP_EOL, number_format($this->iterations), number_format($this->warmup));
+        echo sprintf('Iterations: %s, Warmup: %s' . PHP_EOL, number_format($this->iterations), number_format($this->warmup));
         echo PHP_EOL;
     }
 
