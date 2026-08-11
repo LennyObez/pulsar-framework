@@ -180,6 +180,83 @@ interface DialectInterface
     public function compileIndexExists(): string;
 
     /**
+     * Compile the query that answers whether a table exists.
+     *
+     * The result is a single row with one column, `c`, holding a count. Bind one named
+     * parameter: `table`.
+     *
+     * A migration that alters a table it does not own has to establish that the table is
+     * there first, and the answer decides between proceeding and refusing — so reporting
+     * absence wrongly is not a missed optimisation, it is a migration recorded as applied
+     * over a schema it never touched. Each engine keeps the answer in its own catalogue,
+     * which is why this cannot be written once by the caller.
+     *
+     * Left unimplemented by {@see AbstractDialect}, on the same reasoning as
+     * {@see compileIndexExists()}.
+     */
+    public function compileTableExists(): string;
+
+    /**
+     * Compile the query that answers whether a column exists on a table.
+     *
+     * The result is a single row with one column, `c`, holding a count. Bind exactly two
+     * named parameters: `table` and `column`.
+     *
+     * This is what makes a schema change re-runnable. A migration is recorded only once
+     * `up()` has returned, so one that dies partway runs again from the top and must be
+     * able to see which of its steps already happened.
+     *
+     * Left unimplemented by {@see AbstractDialect}, on the same reasoning as
+     * {@see compileIndexExists()}.
+     */
+    public function compileColumnExists(): string;
+
+    /**
+     * Compile the query that answers whether a table carries a primary key.
+     *
+     * The result is a single row with one column, `c`, holding a count. Bind one named
+     * parameter: `table`. Any positive count means a key exists; the number is not the
+     * number of keys, which is always zero or one, but of columns participating in it.
+     *
+     * Asked as its own postcondition rather than inferred from a step that was supposed
+     * to add one: a run interrupted between dropping a column and adding the key leaves a
+     * table whose uniqueness nothing enforces, and a guard that reads it back is the only
+     * thing that notices.
+     *
+     * Left unimplemented by {@see AbstractDialect}, on the same reasoning as
+     * {@see compileIndexExists()}.
+     */
+    public function compilePrimaryKeyExists(): string;
+
+    /**
+     * Compile a statement leaving at most one row per distinct key, or null when the
+     * engine cannot express it.
+     *
+     * Required before narrowing a primary key: a table holding two rows that agree on the
+     * new key columns refuses the key, and on a resumed migration it refuses it every time
+     * thereafter.
+     *
+     * Deciding which copy survives needs something that separates rows the key does not.
+     * Give `$discriminator` a column whose values order the duplicates and every engine
+     * can express it — that column supplies the total order. Without one, the engine's own
+     * per-row identity has to serve, and only two of the three expose one: SQLite's
+     * `rowid` and PostgreSQL's `ctid`. MySQL has neither, answers null, and leaves the
+     * caller to rebuild the table from a grouped read.
+     *
+     * Null is therefore a statement about what the engine can express, not about which
+     * engine it is — the only form in which that difference need be visible outside this
+     * layer.
+     *
+     * @param list<string> $keyColumns    Columns whose combination must become unique.
+     * @param ?string      $discriminator Column ordering the duplicates, when one exists.
+     */
+    public function compileCollapseDuplicates(
+        string $table,
+        array $keyColumns,
+        ?string $discriminator = null,
+    ): ?string;
+
+    /**
      * Turn an `INSERT` into an upsert.
      *
      * @param list<string> $conflictColumns Columns forming the conflict target.

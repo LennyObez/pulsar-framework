@@ -86,6 +86,77 @@ final readonly class PostgreSqlDialect extends AbstractDialect
             . 'WHERE x.indrelid = to_regclass(quote_ident(:table)) AND i.relname = :index';
     }
 
+    /**
+     * `to_regclass(quote_ident(...))` throughout, for the reason given above: it resolves
+     * a bare name exactly as the DDL does, so the guard and the statement it guards can
+     * never land on different schemas. It yields NULL when there is no such relation, and
+     * a comparison against NULL matches no rows, so absence needs no special case.
+     */
+    #[Override]
+    public function compileTableExists(): string
+    {
+        return 'SELECT COUNT(*) AS c FROM pg_class WHERE oid = to_regclass(quote_ident(:table))';
+    }
+
+    /**
+     * `attisdropped` and `attnum > 0` exclude the two kinds of entry that are not columns
+     * a caller can name: one dropped but still occupying its slot, and the system columns
+     * every relation carries at negative positions.
+     */
+    #[Override]
+    public function compileColumnExists(): string
+    {
+        return 'SELECT COUNT(*) AS c FROM pg_attribute '
+            . 'WHERE attrelid = to_regclass(quote_ident(:table)) AND attname = :column '
+            . 'AND NOT attisdropped AND attnum > 0';
+    }
+
+    #[Override]
+    public function compilePrimaryKeyExists(): string
+    {
+        return 'SELECT COUNT(*) AS c FROM pg_constraint '
+            . "WHERE conrelid = to_regclass(quote_ident(:table)) AND contype = 'p'";
+    }
+
+    /**
+     * `ctid` is the identity, and the comparison keeps the lowest — the physical position
+     * of the earliest surviving copy. It is not stable across a `VACUUM FULL`, which is
+     * why it is read and acted on inside one statement rather than collected first.
+     */
+    #[Override]
+    public function compileCollapseDuplicates(
+        string $table,
+        array $keyColumns,
+        ?string $discriminator = null,
+    ): ?string {
+        $quoted = $this->quoteIdentifier($table);
+
+        $predicates = [];
+
+        foreach ($keyColumns as $column) {
+            $identifier = $this->quoteIdentifier($column);
+            $predicates[] = sprintf('keep.%s = dupe.%s', $identifier, $identifier);
+        }
+
+        // A discriminator orders the duplicates on its own, so it is preferred over ctid,
+        // which is a physical position and not stable across a VACUUM FULL.
+        $ordering = $discriminator === null
+            ? 'keep.ctid < dupe.ctid'
+            : sprintf(
+                'keep.%s < dupe.%s',
+                $this->quoteIdentifier($discriminator),
+                $this->quoteIdentifier($discriminator),
+            );
+
+        return sprintf(
+            'DELETE FROM %s dupe USING %s keep WHERE %s AND %s',
+            $quoted,
+            $quoted,
+            implode(' AND ', $predicates),
+            $ordering,
+        );
+    }
+
     #[Override]
     public function compileUpsert(string $insertSql, array $conflictColumns, array $updateColumns): string
     {

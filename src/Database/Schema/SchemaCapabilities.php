@@ -55,6 +55,37 @@ final class SchemaCapabilities
     }
 
     /**
+     * Whether a column the primary key names can be dropped in place.
+     *
+     * Not implied by {@see supportsDropColumn()}, which is why it is asked separately:
+     * SQLite has supported `DROP COLUMN` since 3.35.0 and still refuses it for a column
+     * participating in the primary key, at every version. Narrowing a key there means
+     * rebuilding the table.
+     */
+    public function supportsDroppingKeyColumn(): bool
+    {
+        return match ($this->driver) {
+            Driver::MySQL, Driver::PostgreSQL => true,
+            Driver::SQLite => false,
+        };
+    }
+
+    /**
+     * Whether a primary key can be added to a table that already exists.
+     *
+     * SQLite has no `ALTER TABLE ... ADD PRIMARY KEY`. It is a syntax error rather than a
+     * limitation that degrades, so a caller that tries it anyway fails outright instead of
+     * falling back; giving an existing SQLite table a key means rebuilding it.
+     */
+    public function supportsAddPrimaryKey(): bool
+    {
+        return match ($this->driver) {
+            Driver::MySQL, Driver::PostgreSQL => true,
+            Driver::SQLite => false,
+        };
+    }
+
+    /**
      * Whether the driver supports ALTER TABLE ... ALTER COLUMN TYPE.
      */
     public function supportsAlterColumnType(): bool
