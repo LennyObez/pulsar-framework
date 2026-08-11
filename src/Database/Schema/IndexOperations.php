@@ -75,6 +75,23 @@ final readonly class IndexOperations
     }
 
     /**
+     * Ensure the index is gone, whether or not it was there.
+     *
+     * The counterpart to {@see ensure()}, and the one to reach for when the outcome
+     * carries no information: a migration putting a schema back the way it found it wants
+     * absence, not a report. {@see dropIfPresent()} answers the other question — whether
+     * anything was actually dropped — and marks that answer `#[NoDiscard]` because a
+     * caller that asks it and ignores it is the shape of an admin action reporting
+     * success over a change that never happened.
+     */
+    public function ensureAbsent(string $table, string $name): void
+    {
+        if ($this->exists($table, $name)) {
+            $this->drop($table, $name);
+        }
+    }
+
+    /**
      * Drop the index if it is there, and do nothing if it is not.
      *
      * Returns whether anything was dropped. A `void` return made "dropped" and "was never
@@ -89,10 +106,15 @@ final readonly class IndexOperations
             return false;
         }
 
+        $this->drop($table, $name);
+
+        return true;
+    }
+
+    private function drop(string $table, string $name): void
+    {
         $this->connection->execute(
             $this->connection->dialect()->compileDropIndex($name, $table),
         );
-
-        return true;
     }
 }
