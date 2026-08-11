@@ -182,7 +182,7 @@ final class TotpReplayGuardMigrationContractTest extends TestCase
         // Exactly what a run that died inside replacePruningIndex() leaves behind: the
         // column gone, the old index gone, the new one never created.
         $this->migration()->up($connection);
-        new IndexOperations($connection)->dropIfPresent(self::TABLE, self::NEW_INDEX);
+        (void) new IndexOperations($connection)->dropIfPresent(self::TABLE, self::NEW_INDEX);
 
         self::assertFalse($this->hasPurposeColumn($connection, $driver), 'fixture precondition');
 
