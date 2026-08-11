@@ -145,7 +145,7 @@ return new class implements MigrationInterface {
 
         // The index pair goes back the way it came, so a rollback followed by a fresh
         // `up()` starts from the shape 20260327000001 leaves behind rather than a hybrid.
-        (void) $indexes->dropIfPresent(self::TABLE, self::NEW_INDEX);
+        $indexes->ensureAbsent(self::TABLE, self::NEW_INDEX);
         $indexes->ensure(self::TABLE, self::OLD_INDEX, ['used_at']);
     }
 
@@ -336,7 +336,7 @@ return new class implements MigrationInterface {
     {
         $indexes = new IndexOperations($connection);
 
-        (void) $indexes->dropIfPresent(self::TABLE, self::OLD_INDEX);
+        $indexes->ensureAbsent(self::TABLE, self::OLD_INDEX);
         $indexes->ensure(self::TABLE, self::NEW_INDEX, ['user_id', 'used_at']);
     }
 };
