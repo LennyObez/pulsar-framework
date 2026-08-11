@@ -10,15 +10,18 @@ use Pulsar\Tooling\Support\JsonDocument;
 
 use function array_diff;
 use function array_filter;
+use function array_map;
 use function array_values;
 use function dirname;
 use function escapeshellarg;
-use function explode;
+use function exec;
 use function implode;
-use function shell_exec;
 use function sort;
+use function str_contains;
 use function str_starts_with;
 use function trim;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Code that decides behaviour by naming a database engine may only shrink.
@@ -50,6 +53,9 @@ use function trim;
 final class DriverDispatchRatchetTest extends TestCase
 {
     private const string BASELINE = __DIR__ . '/driver-dispatch-baseline.json';
+
+    /** Where a shell sends output it should not keep. */
+    private const string NULL_DEVICE = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
 
     /**
      * The layer whose job is to know the engines. Dispatch here is the design.
@@ -119,13 +125,29 @@ final class DriverDispatchRatchetTest extends TestCase
     {
         $root = dirname(__DIR__, 3);
 
-        $output = (string) shell_exec(
+        exec(
             'git -C ' . escapeshellarg($root)
-            . ' grep -lE "\\bDriver::(MySQL|PostgreSQL|SQLite)\\b" -- "src/*.php" "extensions/*.php" 2>&1',
+            . ' grep -lE "\\bDriver::(MySQL|PostgreSQL|SQLite)\\b" -- "src/*.php" "extensions/*.php"'
+            . ' 2>' . self::NULL_DEVICE,
+            $output,
+            $status,
         );
 
+        // `git grep -l` exits 0 when it matched and 1 when it did not. Anything above that
+        // means git could not answer at all — no repository in this checkout, or no git
+        // installed — which is not the same as a clean tree and must not read as one.
+        //
+        // Stderr goes to the null device rather than into this list. Merged with `2>&1` it
+        // arrived as data: `fatal: not a git repository` became a filename, the guard below
+        // saw a non-empty list and passed, and the ratchet reported that file as new debt.
+        if ($status > 1) {
+            self::markTestSkipped(
+                'git cannot read this checkout, so the dispatch sites cannot be enumerated',
+            );
+        }
+
         $files = array_values(array_filter(
-            explode("\n", $output),
+            $output,
             static fn(string $line): bool => $line !== ''
                 && !str_starts_with($line, self::DISPATCH_LAYER)
                 && !str_contains($line, '/tests/'),
