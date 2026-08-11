@@ -81,13 +81,30 @@ final class AuthWiringTest extends TestCase
         self::assertTrue($container->has(TwoFactorManager::class));
         self::assertTrue($container->has(TwoFactorManagerInterface::class));
 
-        // In-memory fallbacks
-        self::assertTrue($container->has(InMemoryTotpReplayGuard::class));
+        // The three stores are bound behind their interfaces only. Which
+        // implementation answers is decided when the interface is first resolved, not
+        // while this wiring runs — the eager test that used to make that choice asked
+        // for a connection before DatabaseWiring had bound one, so every installation
+        // silently got the in-memory fallback. Resolve, then assert what came back;
+        // asserting the concrete class is merely bound would pass on an unresolved
+        // container and prove nothing about the choice.
         self::assertTrue($container->has(TotpReplayGuardInterface::class));
-        self::assertTrue($container->has(InMemoryTotpSecretStore::class));
         self::assertTrue($container->has(TotpSecretStoreInterface::class));
-        self::assertTrue($container->has(InMemoryRecoveryCodeStore::class));
         self::assertTrue($container->has(RecoveryCodeStoreInterface::class));
+
+        // No connection is configured here, so memory is the correct answer.
+        self::assertInstanceOf(
+            InMemoryTotpReplayGuard::class,
+            $container->get(TotpReplayGuardInterface::class),
+        );
+        self::assertInstanceOf(
+            InMemoryTotpSecretStore::class,
+            $container->get(TotpSecretStoreInterface::class),
+        );
+        self::assertInstanceOf(
+            InMemoryRecoveryCodeStore::class,
+            $container->get(RecoveryCodeStoreInterface::class),
+        );
     }
 
     /**

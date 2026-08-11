@@ -17,6 +17,7 @@ use Pulsar\Core\Wiring\SecurityWiring;
 use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\Middleware\RateLimitMiddleware;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\CipherSuiteInterface;
 use Pulsar\Security\Crypto\EncryptorInterface;
@@ -37,6 +38,7 @@ use Stringable;
 use function bin2hex;
 use function file_put_contents;
 use function implode;
+use function is_object;
 use function mkdir;
 use function random_bytes;
 use function sodium_bin2hex;
@@ -195,13 +197,46 @@ final class SecurityWiringTest extends TestCase
         self::assertTrue($middlewareRegistry->hasAlias('csrf'), 'csrf middleware alias should be registered');
         self::assertTrue($middlewareRegistry->hasAlias('headers'), 'headers middleware alias should be registered');
 
-        // Verify 'web' group resolves to 3 middleware (headers, session, csrf)
-        $webMiddleware = $middlewareRegistry->resolve('web');
-        self::assertCount(3, $webMiddleware);
+        // Composition, not a count. A count of three passed whether or not the group
+        // carried anti-automation, which is how `web` shipped with none: the entry that
+        // was missing is precisely the one no assertion named.
+        //
+        // The limiter sits after the session, so a composite key strategy can read the
+        // authenticated user, and before CSRF, so a flood is refused without spending a
+        // token comparison on it.
+        self::assertSame(
+            [
+                SecurityHeadersMiddleware::class,
+                SessionMiddleware::class,
+                RateLimitMiddleware::class,
+                CsrfMiddleware::class,
+            ],
+            $this->resolvedClassNames($middlewareRegistry, 'web'),
+        );
 
-        // Verify 'api' group resolves to 1 middleware (headers)
-        $apiMiddleware = $middlewareRegistry->resolve('api');
-        self::assertCount(1, $apiMiddleware);
+        self::assertSame(
+            [
+                SecurityHeadersMiddleware::class,
+                RateLimitMiddleware::class,
+            ],
+            $this->resolvedClassNames($middlewareRegistry, 'api'),
+        );
+    }
+
+    /**
+     * A group resolves to a mix of instances and class-string entries, so compare names.
+     *
+     * @return list<string>
+     */
+    private function resolvedClassNames(MiddlewareRegistry $registry, string $group): array
+    {
+        $names = [];
+
+        foreach ($registry->resolve($group) as $entry) {
+            $names[] = is_object($entry) ? $entry::class : (string) $entry;
+        }
+
+        return $names;
     }
 
     #[Test]
@@ -451,7 +486,7 @@ final class SecurityWiringTest extends TestCase
 
         file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []], "audit" => ["enabled" => false]];');
-        file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => false, "validators" => []], "csrf" => [], "headers" => [' . $headersBody . '], "rate_limit" => [], "cors" => ["enabled" => false]];');
+        file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => false, "validators" => []], "csrf" => [], "headers" => [' . $headersBody . '], "rate_limiting" => [], "cors" => ["enabled" => false]];');
 
         // Optionally write a .env file and wire it into the ConfigManager so the
         // Environment repository loads it (mirrors a real deployment whose secrets
