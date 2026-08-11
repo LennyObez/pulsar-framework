@@ -561,8 +561,7 @@ export class CommentsComponent extends HTMLElement {
   private handleCommentSubmitted(event: Event): void {
     const customEvent = event as CustomEvent;
     const detail = customEvent.detail as
-      | { comment?: CommentData; parent_id?: string | null }
-      | undefined;
+      { comment?: CommentData; parent_id?: string | null } | undefined;
 
     if (detail?.parent_id) {
       // Remove the inline reply form

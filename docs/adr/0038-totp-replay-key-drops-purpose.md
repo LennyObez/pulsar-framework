@@ -16,7 +16,7 @@ cross-purpose replay".
 
 That reading is backwards, and the direction matters because it is what the fix reverses.
 A key of `(identityId, code)` records the code itself, so a code redeemed for `Login`
-collides with the same code presented for `Setup` — the old key *prevented* cross-purpose
+collides with the same code presented for `Setup` — the old key _prevented_ cross-purpose
 reuse. Adding `purpose` to the key is what created it: each purpose gets its own row, so
 the same code is accepted once per purpose.
 
@@ -52,7 +52,7 @@ removed by somebody else's activity is not a guard.
 **The replay guard keys on `(user_id, time_step)`.** `purpose` is dropped from the key and
 from the table.
 
-`purpose` remains meaningful for audit — knowing *what* a code was redeemed for is worth
+`purpose` remains meaningful for audit — knowing _what_ a code was redeemed for is worth
 recording — but it belongs in the audit trail, not in the uniqueness constraint. A column
 that widens the key is a column that authorises a replay.
 
@@ -67,7 +67,7 @@ key a single pair can hold one row per purpose, and all but one violate the new 
 
 ### Keep `purpose` in the key and rate-limit per purpose instead
 
-Rejected. Rate limiting bounds how *often* a code may be presented; it does not make a
+Rejected. Rate limiting bounds how _often_ a code may be presented; it does not make a
 redeemed code unusable. ASVS 2.8.4 is a single-use requirement, and a control that slows
 reuse is not a control that prevents it. It also leaves the guarantee dependent on a
 limiter being configured, which ADR-0015 explicitly made optional.

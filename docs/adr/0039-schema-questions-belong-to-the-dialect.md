@@ -31,7 +31,7 @@ abstraction could answer:
    MySQL has neither.
 
 The fourth is the interesting one. It is not that MySQL spells the operation differently —
-it is that MySQL *cannot express it at all* when the duplicate rows agree on every column,
+it is that MySQL _cannot express it at all_ when the duplicate rows agree on every column,
 because nothing separates them. Two rows that are byte-for-byte identical cannot be told
 apart by any predicate, so no `DELETE` can keep exactly one.
 
@@ -39,12 +39,12 @@ apart by any predicate, so no `DELETE` can keep exactly one.
 
 **Four methods join `DialectInterface`**, alongside the existing `compileIndexExists()`:
 
-| Method | Binds | Answers |
-| --- | --- | --- |
-| `compileTableExists()` | `table` | whether the table exists |
-| `compileColumnExists()` | `table`, `column` | whether the column exists |
-| `compilePrimaryKeyExists()` | `table` | whether a primary key exists |
-| `compileCollapseDuplicates()` | — | a statement leaving one row per key, **or null** |
+| Method                        | Binds             | Answers                                          |
+| ----------------------------- | ----------------- | ------------------------------------------------ |
+| `compileTableExists()`        | `table`           | whether the table exists                         |
+| `compileColumnExists()`       | `table`, `column` | whether the column exists                        |
+| `compilePrimaryKeyExists()`   | `table`           | whether a primary key exists                     |
+| `compileCollapseDuplicates()` | —                 | a statement leaving one row per key, **or null** |
 
 Each returns a query yielding a single row with one column, `c`, holding a count. None is
 given a default in `AbstractDialect`: there is no reasonable one, and an engine added
@@ -57,9 +57,14 @@ duplicates. Given one, every engine can express the operation, because that colu
 the total order. Without one, the engine's own per-row identity has to serve, and only two
 of the three expose one. MySQL answers null.
 
-Null is a statement about what the engine *can express*, not about which engine it is. That
+Null is a statement about what the engine _can express_, not about which engine it is. That
 distinction is the whole point: a caller that branches on null is portable to a fourth
 engine without modification, and a caller that branches on `Driver::MySQL` is not.
+
+The nullability belongs to the interface, not to every implementation. `SqliteDialect` and
+`PostgreSqlDialect` declare `string`, because they always have an answer; MySQL and the
+interface keep `?string`. Covariance allows the narrowing, and it stops a caller holding a
+concrete dialect from testing for a null those two can never return.
 
 **Two capabilities join `SchemaCapabilities`**: `supportsDroppingKeyColumn()` and
 `supportsAddPrimaryKey()`. Both are false only for SQLite today, and neither is implied by

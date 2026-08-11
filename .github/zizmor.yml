@@ -5,7 +5,7 @@ rules:
   unpinned-uses:
     config:
       policies:
-        "*": hash-pin
+        '*': hash-pin
 
         # slsa-verifier reads this ref to prove the builder is unmodified, so a
         # digest pin breaks the attestation. Keyed by full workflow path — the

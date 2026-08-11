@@ -12,11 +12,11 @@ Pulsar CMS includes a comprehensive SEO system that generates meta tags, structu
 
 Each content item and translation supports SEO meta fields:
 
-| Field            | Description               | HTML Output                               |
+| Field | Description | HTML Output |
 | ---------------- | ------------------------- | ----------------------------------------- | ------------------ |
-| Meta Title       | Custom `<title>` tag      | `<title>Meta Title                        | Site Name</title>` |
-| Meta Description | Search result snippet     | `<meta name="description" content="...">` |
-| Robots           | Per-page robots directive | `<meta name="robots" content="...">`      |
+| Meta Title | Custom `<title>` tag | `<title>Meta Title                        | Site Name</title>` |
+| Meta Description | Search result snippet | `<meta name="description" content="...">` |
+| Robots | Per-page robots directive | `<meta name="robots" content="...">` |
 
 Set these fields when editing content at **Admin > CMS > Content > {id}**.
 

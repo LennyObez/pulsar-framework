@@ -48,7 +48,7 @@ catalogue views for introspection.
 ### MariaDB stays a `DriverVariant`, and gets wired up
 
 MariaDB speaks the MySQL wire protocol and connects through `pdo_mysql` with a `mysql:`
-DSN. At the layer `Driver` models — which PDO driver opens the connection — MariaDB *is*
+DSN. At the layer `Driver` models — which PDO driver opens the connection — MariaDB _is_
 MySQL, so a separate enum case would misdescribe it.
 
 `DriverVariant` already exists for exactly this, with a `detect()` that reads the server's
