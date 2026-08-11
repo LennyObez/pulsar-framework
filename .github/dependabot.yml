@@ -23,7 +23,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "06:00"
+      time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 10
     versioning-strategy: increase
@@ -33,16 +33,16 @@ updates:
       include: scope
     groups:
       php-patch-and-minor:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
     ignore:
       # Three ceilings are real and documented in composer.json; a PR raising them
       # would fail to install and waste a review each week. They are lifted by
       # hand when upstream unblocks, not by a bot that cannot read the reason.
       - dependency-name: jetbrains/phpstorm-stubs
-        versions: ["> 2026.1"]
+        versions: ['> 2026.1']
       - dependency-name: psalm/plugin-phpunit
-        versions: [">= 0.20"]
+        versions: ['>= 0.20']
 
   # ---------------------------------------------------------------------------
   # PHP — the isolated analyser tree (bamarni/composer-bin-plugin)
@@ -56,7 +56,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "06:00"
+      time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 5
     commit-message:
@@ -64,7 +64,7 @@ updates:
       include: scope
     groups:
       analyser-toolchain:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
 
   # ---------------------------------------------------------------------------
@@ -88,7 +88,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "06:00"
+      time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 5
     versioning-strategy: increase
@@ -98,7 +98,7 @@ updates:
       include: scope
     groups:
       auth-extension-patch-and-minor:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
 
   # ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "06:00"
+      time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 10
     versioning-strategy: increase
@@ -118,7 +118,7 @@ updates:
       include: scope
     groups:
       js-patch-and-minor:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
 
   # ---------------------------------------------------------------------------
@@ -134,7 +134,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "06:00"
+      time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 10
     commit-message:
@@ -142,5 +142,5 @@ updates:
       include: scope
     groups:
       actions:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]

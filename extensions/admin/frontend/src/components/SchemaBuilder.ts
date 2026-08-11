@@ -128,45 +128,39 @@ export function initializeSchemaBuilder(): void {
       name: tableName,
       columns: columns
         .filter((c) => c.name.trim() !== '')
-        .map(
-          (c): SchemaColumnDef => ({
-            name: c.name,
-            type: c.type,
-            nullable: c.nullable,
-            primaryKey: c.primaryKey,
-            autoIncrement: c.autoIncrement,
-            unsigned: c.unsigned,
-            unique: c.unique,
-            hasDefault: c.hasDefault,
-            defaultValue: c.hasDefault && c.defaultExpression === '' ? c.defaultValue : null,
-            defaultExpression: c.defaultExpression || null,
-            length: c.length ? parseInt(c.length, 10) : null,
-            precision: c.precision ? parseInt(c.precision, 10) : null,
-            scale: c.scale ? parseInt(c.scale, 10) : null,
-            enumValues: c.type === 'enum' ? c.enumValues.split(',').map((v) => v.trim()) : [],
-          }),
-        ),
+        .map((c): SchemaColumnDef => ({
+          name: c.name,
+          type: c.type,
+          nullable: c.nullable,
+          primaryKey: c.primaryKey,
+          autoIncrement: c.autoIncrement,
+          unsigned: c.unsigned,
+          unique: c.unique,
+          hasDefault: c.hasDefault,
+          defaultValue: c.hasDefault && c.defaultExpression === '' ? c.defaultValue : null,
+          defaultExpression: c.defaultExpression || null,
+          length: c.length ? parseInt(c.length, 10) : null,
+          precision: c.precision ? parseInt(c.precision, 10) : null,
+          scale: c.scale ? parseInt(c.scale, 10) : null,
+          enumValues: c.type === 'enum' ? c.enumValues.split(',').map((v) => v.trim()) : [],
+        })),
       indexes: indexes
         .filter((i) => i.name.trim() !== '' && i.columns.trim() !== '')
-        .map(
-          (i): SchemaIndexDef => ({
-            name: i.name,
-            columns: i.columns.split(',').map((c) => c.trim()),
-            unique: i.unique,
-          }),
-        ),
+        .map((i): SchemaIndexDef => ({
+          name: i.name,
+          columns: i.columns.split(',').map((c) => c.trim()),
+          unique: i.unique,
+        })),
       foreignKeys: foreignKeys
         .filter((fk) => fk.name.trim() !== '' && fk.columns.trim() !== '')
-        .map(
-          (fk): SchemaForeignKeyDef => ({
-            name: fk.name,
-            columns: fk.columns.split(',').map((c) => c.trim()),
-            referencedTable: fk.referencedTable,
-            referencedColumns: fk.referencedColumns.split(',').map((c) => c.trim()),
-            onDelete: fk.onDelete,
-            onUpdate: fk.onUpdate,
-          }),
-        ),
+        .map((fk): SchemaForeignKeyDef => ({
+          name: fk.name,
+          columns: fk.columns.split(',').map((c) => c.trim()),
+          referencedTable: fk.referencedTable,
+          referencedColumns: fk.referencedColumns.split(',').map((c) => c.trim()),
+          onDelete: fk.onDelete,
+          onUpdate: fk.onUpdate,
+        })),
     };
   }
 
