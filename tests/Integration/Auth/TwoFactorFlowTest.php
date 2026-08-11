@@ -80,10 +80,20 @@ final class TwoFactorFlowTest extends TestCase
         $confirmResult = $this->manager->confirmSetup('user-1', $setup['secret'], $code);
         self::assertTrue($confirmResult->confirmed);
 
-        // Step 3: Verify code during login (using deprecated verifyCodeWithSecret)
-        $loginCode = $this->generator->computeCode($setup['secret'], $timestamp);
+        // Step 3: verify during login, with a code from the next time step. A code is
+        // redeemable once and not once per purpose, so the one that confirmed the
+        // enrolment is spent (ASVS 2.8.4). Steps N and N+1 both sit inside the
+        // verifier's ±1 window whichever side of a step boundary the run lands on.
+        $loginCode = $this->generator->computeCode(
+            $setup['secret'],
+            $timestamp + $this->generator->period(),
+        );
         $verifyResult = $this->manager->verifyCodeWithSecret('user-1', $setup['secret'], $loginCode);
         self::assertTrue($verifyResult->verified);
+
+        // The code spent on the enrolment buys nothing afterwards.
+        $replayed = $this->manager->verifyCodeWithSecret('user-1', $setup['secret'], $code);
+        self::assertFalse($replayed->verified, 'a redeemed code must not be redeemable for another purpose');
 
         // Step 4: Use recovery code as fallback
         $recoveryIndex = $this->manager->verifyRecoveryCode(
