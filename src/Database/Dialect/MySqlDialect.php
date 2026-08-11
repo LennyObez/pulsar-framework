@@ -114,6 +114,73 @@ readonly class MySqlDialect extends AbstractDialect
             . 'WHERE table_schema = DATABASE() AND table_name = :table AND index_name = :index';
     }
 
+    /**
+     * `DATABASE()` scopes every one of these to the connected schema. Unscoped, they
+     * answer for whichever database on the server happens to hold a same-named table —
+     * and on a shared server that is somebody else's.
+     */
+    #[Override]
+    public function compileTableExists(): string
+    {
+        return 'SELECT COUNT(*) AS c FROM information_schema.tables '
+            . 'WHERE table_schema = DATABASE() AND table_name = :table';
+    }
+
+    #[Override]
+    public function compileColumnExists(): string
+    {
+        return 'SELECT COUNT(*) AS c FROM information_schema.columns '
+            . 'WHERE table_schema = DATABASE() AND table_name = :table AND column_name = :column';
+    }
+
+    #[Override]
+    public function compilePrimaryKeyExists(): string
+    {
+        return 'SELECT COUNT(*) AS c FROM information_schema.table_constraints '
+            . 'WHERE table_schema = DATABASE() AND table_name = :table '
+            . "AND constraint_type = 'PRIMARY KEY'";
+    }
+
+    /**
+     * With a discriminator, a self-join: MySQL refuses to read the target table in a
+     * subquery of its own `DELETE`, so the survivor is chosen by joining the table to
+     * itself and deleting every row another row beats.
+     *
+     * Without one, null. MySQL exposes no stable per-row identity, so two rows that agree
+     * on every column cannot be told apart by any predicate and no `DELETE` can keep
+     * exactly one of them. The caller rebuilds from a grouped read instead. That is the
+     * honest answer: not "this engine is MySQL", but "this engine cannot express it".
+     */
+    #[Override]
+    public function compileCollapseDuplicates(
+        string $table,
+        array $keyColumns,
+        ?string $discriminator = null,
+    ): ?string {
+        if ($discriminator === null) {
+            return null;
+        }
+
+        $quoted = $this->quoteIdentifier($table);
+
+        $predicates = [];
+
+        foreach ($keyColumns as $column) {
+            $identifier = $this->quoteIdentifier($column);
+            $predicates[] = sprintf('keep.%s = dupe.%s', $identifier, $identifier);
+        }
+
+        $ordering = $this->quoteIdentifier($discriminator);
+        $predicates[] = sprintf('keep.%s < dupe.%s', $ordering, $ordering);
+
+        return sprintf(
+            'DELETE dupe FROM %s dupe JOIN %s keep ON %s',
+            $quoted,
+            $quoted,
+            implode(' AND ', $predicates),
+        );
+    }
+
     #[Override]
     public function compileUpsert(string $insertSql, array $conflictColumns, array $updateColumns): string
     {
