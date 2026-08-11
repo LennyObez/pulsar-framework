@@ -888,7 +888,7 @@ final class FileVisitor extends NodeVisitorAbstract
     private function recordReturnTypeSite(?Node $type, string $method, int $line): void
     {
         $class = $this->currentClass();
-        $owner = $class->fqcn ??sprintf('(function %s)', $method);
+        $owner = $class->fqcn ?? sprintf('(function %s)', $method);
 
         foreach ($this->typeAtoms($type) as $atom) {
             $this->collector->sites[] = new DependencySite(
@@ -1000,7 +1000,7 @@ final class FileVisitor extends NodeVisitorAbstract
             $this->collector->dynamic[] = [
                 'file' => $this->file,
                 'line' => $node->getStartLine(),
-                'class' => $class->fqcn ??'(function scope)',
+                'class' => $class->fqcn ?? '(function scope)',
                 'detail' => 'clone-with whose property map is not a literal array',
             ];
 
@@ -1017,7 +1017,7 @@ final class FileVisitor extends NodeVisitorAbstract
                 $this->collector->dynamic[] = [
                     'file' => $this->file,
                     'line' => $item->getStartLine(),
-                    'class' => $class->fqcn ??'(function scope)',
+                    'class' => $class->fqcn ?? '(function scope)',
                     'detail' => 'clone-with key is not a literal string',
                 ];
 
@@ -1072,7 +1072,7 @@ final class FileVisitor extends NodeVisitorAbstract
                 $this->collector->dynamic[] = [
                     'file' => $this->file,
                     'line' => $line,
-                    'class' => $class->fqcn ??'(function scope)',
+                    'class' => $class->fqcn ?? '(function scope)',
                     'detail' => 'write through a computed property name ($obj->{$name} = ...)',
                 ];
 
@@ -1099,7 +1099,7 @@ final class FileVisitor extends NodeVisitorAbstract
                 $this->collector->dynamic[] = [
                     'file' => $this->file,
                     'line' => $line,
-                    'class' => $class->fqcn ??'(function scope)',
+                    'class' => $class->fqcn ?? '(function scope)',
                     'detail' => 'write through a computed static property name',
                 ];
 

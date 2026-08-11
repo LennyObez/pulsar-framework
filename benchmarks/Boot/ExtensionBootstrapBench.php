@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Benchmark\Boot;
 
+use DirectoryIterator;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Subject;
 use PhpBench\Attributes\Warmup;
+
+use function dirname;
 
 /**
  * PERF-BENCH-02 (external audit): boot-time cost of the ExtensionLoader's
@@ -52,7 +55,7 @@ final class ExtensionBootstrapBench
         // This subject targets the pure scan cost — what would disappear
         // entirely under PERF-HOT-04 (compiled cache).
         $manifests = [];
-        $iterator = new \DirectoryIterator($this->extensionsPath);
+        $iterator = new DirectoryIterator($this->extensionsPath);
 
         foreach ($iterator as $item) {
             if ($item->isDot() || !$item->isDir()) {
@@ -68,7 +71,7 @@ final class ExtensionBootstrapBench
             }
 
             // Recurse one level (e.g., extensions/compliance/*).
-            $inner = new \DirectoryIterator($item->getPathname());
+            $inner = new DirectoryIterator($item->getPathname());
 
             foreach ($inner as $sub) {
                 if ($sub->isDot() || !$sub->isDir()) {

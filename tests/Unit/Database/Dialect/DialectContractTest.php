@@ -125,10 +125,10 @@ final class DialectContractTest extends TestCase
     #[Test]
     public function onlyMySqlLacksIfNotExistsOnCreateIndex(): void
     {
-        self::assertFalse((new MySqlDialect())->supportsIndexIfNotExists());
-        self::assertTrue((new MariaDbDialect())->supportsIndexIfNotExists());
-        self::assertTrue((new PostgreSqlDialect())->supportsIndexIfNotExists());
-        self::assertTrue((new SqliteDialect())->supportsIndexIfNotExists());
+        self::assertFalse(new MySqlDialect()->supportsIndexIfNotExists());
+        self::assertTrue(new MariaDbDialect()->supportsIndexIfNotExists());
+        self::assertTrue(new PostgreSqlDialect()->supportsIndexIfNotExists());
+        self::assertTrue(new SqliteDialect()->supportsIndexIfNotExists());
     }
 
     /**
@@ -214,12 +214,12 @@ final class DialectContractTest extends TestCase
     #[Test]
     public function booleanLiteralsFollowTheEnginesTypeSystem(): void
     {
-        self::assertSame('1', (new MySqlDialect())->compileBooleanLiteral(true));
-        self::assertSame('0', (new SqliteDialect())->compileBooleanLiteral(false));
+        self::assertSame('1', new MySqlDialect()->compileBooleanLiteral(true));
+        self::assertSame('0', new SqliteDialect()->compileBooleanLiteral(false));
 
         // PostgreSQL has a real boolean type and rejects 1 where one is expected.
-        self::assertSame('TRUE', (new PostgreSqlDialect())->compileBooleanLiteral(true));
-        self::assertSame('FALSE', (new PostgreSqlDialect())->compileBooleanLiteral(false));
+        self::assertSame('TRUE', new PostgreSqlDialect()->compileBooleanLiteral(true));
+        self::assertSame('FALSE', new PostgreSqlDialect()->compileBooleanLiteral(false));
     }
 
     #[Test]
@@ -229,15 +229,15 @@ final class DialectContractTest extends TestCase
 
         self::assertStringContainsString(
             'ON DUPLICATE KEY UPDATE',
-            (new MySqlDialect())->compileUpsert($insert, ['sku'], ['label']),
+            new MySqlDialect()->compileUpsert($insert, ['sku'], ['label']),
         );
 
-        $postgres = (new PostgreSqlDialect())->compileUpsert($insert, ['sku'], ['label']);
+        $postgres = new PostgreSqlDialect()->compileUpsert($insert, ['sku'], ['label']);
         self::assertStringContainsString('ON CONFLICT ("sku") DO UPDATE SET', $postgres);
         self::assertStringContainsString('EXCLUDED.', $postgres);
 
         // SQLite spells the pseudo-table in lower case.
-        $sqlite = (new SqliteDialect())->compileUpsert($insert, ['sku'], ['label']);
+        $sqlite = new SqliteDialect()->compileUpsert($insert, ['sku'], ['label']);
         self::assertStringContainsString('ON CONFLICT ("sku") DO UPDATE SET', $sqlite);
         self::assertStringContainsString('excluded.', $sqlite);
     }

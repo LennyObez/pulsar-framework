@@ -60,7 +60,7 @@ foreach ($arguments as $argument) {
 }
 
 if ($path === null || $minTests === null || $maxSkippedPercent === null) {
-    fwrite(STDERR, "usage: php tools/ci/assert-test-yield.php <junit.xml>"
+    fwrite(STDERR, 'usage: php tools/ci/assert-test-yield.php <junit.xml>'
         . " --min-tests=<n> --max-skipped-percent=<p>\n");
 
     exit(2);

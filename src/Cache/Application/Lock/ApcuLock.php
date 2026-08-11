@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application\Lock;
 
 use Pulsar\Api\Internal;
-use Pulsar\Support\ApcuReply;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Pulsar\Support\ApcuReply;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
