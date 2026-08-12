@@ -49,11 +49,19 @@ COPY --chown=pulsar:pulsar . /app
 
 # `--chown` settles ownership, not mode: COPY carries the build context's permissions
 # through, and a context exported from a filesystem without POSIX modes — a Windows
-# checkout, more so one inside OneDrive — hands `var/` over as 0555. The directory is
-# then read-only to its own owner, every boot test writing a fixture under it fails with
-# `mkdir(): Permission denied`, and the kernel answers 500 to everything because its
-# configuration was never written. An image must not inherit that from whoever built it.
-RUN mkdir -p /app/var && chmod -R u+rwX /app/var
+# checkout, more so one inside OneDrive — hands every directory over as 0555, read-only
+# to its own owner. Measured on such a build: 1474 directories at 0555 against 415 at
+# 0755, and 2810 in all that the owner could not write. Files were untouched, which is
+# why only directories are corrected here.
+#
+# The cost of getting it wrong is not a clear error. A test writing a fixture fails at
+# `mkdir()`, its configuration is never written, and the kernel then answers 500 to
+# everything — so the suite reports "expected 404, got 500" and reads as a regression in
+# request handling. Twenty-four failures came from that one bit.
+#
+# Directories only, and before `composer install`, so this rewrites metadata for a few
+# thousand cheap inodes rather than copying up every file in the tree.
+RUN find /app -type d -exec chmod u+w {} + && mkdir -p /app/var
 
 USER pulsar
 
