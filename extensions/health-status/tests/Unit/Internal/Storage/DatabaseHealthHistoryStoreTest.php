@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
 use Pulsar\Database\PdoConnection;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\HealthStatus\Domain\HealthSnapshot;
 use Pulsar\Extension\HealthStatus\Domain\Incident;
 use Pulsar\Extension\HealthStatus\Domain\IncidentSeverity;
@@ -291,6 +292,8 @@ final class DatabaseHealthHistoryStoreTest extends TestCase
 
     private function createTables(): void
     {
+        $indexes = new IndexOperations($this->connection);
+
         $this->connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS health_check_history (
                 id VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -301,9 +304,7 @@ final class DatabaseHealthHistoryStoreTest extends TestCase
             )
             SQL);
 
-        $this->connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_health_history_captured_at ON health_check_history (captured_at)
-            SQL);
+        $indexes->ensure('health_check_history', 'idx_health_history_captured_at', ['captured_at']);
 
         $this->connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS health_incidents (
@@ -318,12 +319,7 @@ final class DatabaseHealthHistoryStoreTest extends TestCase
             )
             SQL);
 
-        $this->connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_health_incidents_status ON health_incidents (status)
-            SQL);
-
-        $this->connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_health_incidents_started_at ON health_incidents (started_at)
-            SQL);
+        $indexes->ensure('health_incidents', 'idx_health_incidents_status', ['status']);
+        $indexes->ensure('health_incidents', 'idx_health_incidents_started_at', ['started_at']);
     }
 }

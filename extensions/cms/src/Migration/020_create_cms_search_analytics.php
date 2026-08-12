@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_search_analytics (
@@ -27,24 +28,22 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_search_analytics_tenant_hash_date
-                ON cms_search_analytics (tenant_id, query_hash, searched_at)
-            SQL);
+        $indexes->ensure(
+            'cms_search_analytics',
+            'idx_search_analytics_tenant_hash_date',
+            ['tenant_id', 'query_hash', 'searched_at'],
+        );
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_search_analytics_zero_results
-                    ON cms_search_analytics (tenant_id, searched_at, result_count)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_search_analytics_zero_results
-                    ON cms_search_analytics (tenant_id, searched_at)
-                    WHERE result_count = 0
-                SQL);
-        }
+        // An engine without partial indexes cannot filter on `result_count`, so it has to
+        // carry it in the key instead.
+        $indexes->ensure(
+            'cms_search_analytics',
+            'idx_search_analytics_zero_results',
+            $connection->dialect()->supportsPartialIndexes()
+                ? ['tenant_id', 'searched_at']
+                : ['tenant_id', 'searched_at', 'result_count'],
+            where: 'result_count = 0',
+        );
     }
 
     public function down(ConnectionInterface $connection): void

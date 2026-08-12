@@ -5,7 +5,23 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
+/**
+ * ## Why these two indexes are still written per engine
+ *
+ * They are not one index spelled three ways. PostgreSQL indexes a `TSVECTOR` column that
+ * only it has, with GIN; MySQL indexes the text columns themselves, with FULLTEXT; SQLite
+ * has neither and searches with `LIKE`. Different access methods over different columns,
+ * and {@see IndexOperations::ensure()} compiles neither — it builds the ordinary index,
+ * which over a `TSVECTOR` would answer no `@@` query at all.
+ *
+ * So the `CREATE` statements stay as they are, and only their guard moves: absence is
+ * established by {@see IndexOperations::exists()} rather than by `IF NOT EXISTS`, which
+ * MySQL rejects outright on `CREATE INDEX`. Both engines now take the same path to the
+ * same question, which is the point — a path only one engine takes is a path only it can
+ * break, and this one had been broken on MySQL since it was written.
+ */
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
@@ -39,15 +55,21 @@ return new class implements MigrationInterface {
             SQL);
 
         // GIN indexes on the tsvector columns
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_threads_search
-                ON forum_threads USING GIN (search_vector)
-            SQL);
+        $indexes = new IndexOperations($connection);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_posts_search
-                ON forum_posts USING GIN (search_vector)
-            SQL);
+        if (!$indexes->exists('forum_threads', 'idx_threads_search')) {
+            $connection->execute(<<<'SQL'
+                CREATE INDEX idx_threads_search
+                    ON forum_threads USING GIN (search_vector)
+                SQL);
+        }
+
+        if (!$indexes->exists('forum_posts', 'idx_posts_search')) {
+            $connection->execute(<<<'SQL'
+                CREATE INDEX idx_posts_search
+                    ON forum_posts USING GIN (search_vector)
+                SQL);
+        }
 
         // Trigger function: update search_vector on forum_threads
         $connection->execute(<<<'SQL'
@@ -110,15 +132,21 @@ return new class implements MigrationInterface {
     private function upMysql(ConnectionInterface $connection): void
     {
         // MySQL FULLTEXT indexes on the text columns directly
-        $connection->execute(<<<'SQL'
-            CREATE FULLTEXT INDEX IF NOT EXISTS idx_threads_search
-                ON forum_threads (title)
-            SQL);
+        $indexes = new IndexOperations($connection);
 
-        $connection->execute(<<<'SQL'
-            CREATE FULLTEXT INDEX IF NOT EXISTS idx_posts_search
-                ON forum_posts (body)
-            SQL);
+        if (!$indexes->exists('forum_threads', 'idx_threads_search')) {
+            $connection->execute(<<<'SQL'
+                CREATE FULLTEXT INDEX idx_threads_search
+                    ON forum_threads (title)
+                SQL);
+        }
+
+        if (!$indexes->exists('forum_posts', 'idx_posts_search')) {
+            $connection->execute(<<<'SQL'
+                CREATE FULLTEXT INDEX idx_posts_search
+                    ON forum_posts (body)
+                SQL);
+        }
     }
 
     /**
@@ -132,20 +160,29 @@ return new class implements MigrationInterface {
 
     private function downPostgresql(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $connection->execute('DROP TRIGGER IF EXISTS trg_posts_search ON forum_posts');
         $connection->execute('DROP FUNCTION IF EXISTS forum_posts_search_trigger()');
         $connection->execute('DROP TRIGGER IF EXISTS trg_threads_search ON forum_threads');
         $connection->execute('DROP FUNCTION IF EXISTS forum_threads_search_trigger()');
-        $connection->execute('DROP INDEX IF EXISTS idx_posts_search');
-        $connection->execute('DROP INDEX IF EXISTS idx_threads_search');
+        $indexes->ensureAbsent('forum_posts', 'idx_posts_search');
+        $indexes->ensureAbsent('forum_threads', 'idx_threads_search');
         $connection->execute('ALTER TABLE forum_posts DROP COLUMN IF EXISTS search_vector');
         $connection->execute('ALTER TABLE forum_threads DROP COLUMN IF EXISTS search_vector');
     }
 
+    /**
+     * The branch written for MySQL was the one MySQL could not run: it drops an index
+     * through the table that owns it and accepts no `IF EXISTS`, so both statements here
+     * were syntax errors and the rollback failed on its first line.
+     */
     private function downMysql(ConnectionInterface $connection): void
     {
-        $connection->execute('DROP INDEX IF EXISTS idx_posts_search ON forum_posts');
-        $connection->execute('DROP INDEX IF EXISTS idx_threads_search ON forum_threads');
+        $indexes = new IndexOperations($connection);
+
+        $indexes->ensureAbsent('forum_posts', 'idx_posts_search');
+        $indexes->ensureAbsent('forum_threads', 'idx_threads_search');
     }
 
     /**

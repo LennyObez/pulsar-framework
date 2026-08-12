@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
@@ -16,6 +17,8 @@ return new class implements MigrationInterface {
             Driver::MySQL => $this->upMysql($connection),
             Driver::PostgreSQL => $this->upPostgresql($connection),
         };
+
+        $this->ensureIndexes($connection);
     }
 
     public function down(ConnectionInterface $connection): void
@@ -45,21 +48,6 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_subscribers_email_tenant
-                ON cms_newsletter_subscribers (email, tenant_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_status
-                ON cms_newsletter_subscribers (status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_tenant
-                ON cms_newsletter_subscribers (tenant_id)
-            SQL);
-
         // Campaigns table
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_newsletter_campaigns (
@@ -82,16 +70,6 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_tenant_status
-                ON cms_newsletter_campaigns (tenant_id, status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_status
-                ON cms_newsletter_campaigns (status)
-            SQL);
-
         // Sends table
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_newsletter_sends (
@@ -104,21 +82,6 @@ return new class implements MigrationInterface {
                 clicked_at TEXT,
                 bounce_reason TEXT
             )
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_sends_campaign_subscriber
-                ON cms_newsletter_sends (campaign_id, subscriber_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_sends_campaign_status
-                ON cms_newsletter_sends (campaign_id, status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_sends_subscriber
-                ON cms_newsletter_sends (subscriber_id)
             SQL);
     }
 
@@ -139,9 +102,6 @@ return new class implements MigrationInterface {
                 source VARCHAR(50) NOT NULL DEFAULT 'form',
                 tenant_id VARCHAR(36),
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE INDEX idx_newsletter_subscribers_email_tenant (email, tenant_id),
-                INDEX idx_newsletter_subscribers_status (status),
-                INDEX idx_newsletter_subscribers_tenant (tenant_id),
                 CONSTRAINT fk_newsletter_subscribers_user
                     FOREIGN KEY (user_id) REFERENCES auth_users(id) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -166,8 +126,6 @@ return new class implements MigrationInterface {
                 created_by VARCHAR(36),
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_newsletter_campaigns_tenant_status (tenant_id, status),
-                INDEX idx_newsletter_campaigns_status (status),
                 CONSTRAINT fk_newsletter_campaigns_creator
                     FOREIGN KEY (created_by) REFERENCES auth_users(id) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -184,9 +142,6 @@ return new class implements MigrationInterface {
                 opened_at TIMESTAMP NULL,
                 clicked_at TIMESTAMP NULL,
                 bounce_reason TEXT,
-                UNIQUE INDEX idx_newsletter_sends_campaign_subscriber (campaign_id, subscriber_id),
-                INDEX idx_newsletter_sends_campaign_status (campaign_id, status),
-                INDEX idx_newsletter_sends_subscriber (subscriber_id),
                 CONSTRAINT fk_newsletter_sends_campaign
                     FOREIGN KEY (campaign_id) REFERENCES cms_newsletter_campaigns(id) ON DELETE CASCADE,
                 CONSTRAINT fk_newsletter_sends_subscriber
@@ -215,21 +170,6 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_subscribers_email_tenant
-                ON cms_newsletter_subscribers (email, tenant_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_status
-                ON cms_newsletter_subscribers (status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_tenant
-                ON cms_newsletter_subscribers (tenant_id)
-            SQL);
-
         // Campaigns table
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_newsletter_campaigns (
@@ -252,16 +192,6 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_tenant_status
-                ON cms_newsletter_campaigns (tenant_id, status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_status
-                ON cms_newsletter_campaigns (status)
-            SQL);
-
         // Sends table
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_newsletter_sends (
@@ -275,20 +205,38 @@ return new class implements MigrationInterface {
                 bounce_reason TEXT
             )
             SQL);
+    }
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_sends_campaign_subscriber
-                ON cms_newsletter_sends (campaign_id, subscriber_id)
-            SQL);
+    /**
+     * The eight indexes of the three tables, stated once rather than once per engine.
+     *
+     * They used to be written three times: twice as `CREATE INDEX IF NOT EXISTS`, which MySQL
+     * rejects as a syntax error rather than ignoring, and a third time inline in the MySQL
+     * `CREATE TABLE` to get around that. Nothing compared the copies.
+     */
+    private function ensureIndexes(ConnectionInterface $connection): void
+    {
+        $indexes = new IndexOperations($connection);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_sends_campaign_status
-                ON cms_newsletter_sends (campaign_id, status)
-            SQL);
+        $indexes->ensure(
+            'cms_newsletter_subscribers',
+            'idx_newsletter_subscribers_email_tenant',
+            ['email', 'tenant_id'],
+            unique: true,
+        );
+        $indexes->ensure('cms_newsletter_subscribers', 'idx_newsletter_subscribers_status', ['status']);
+        $indexes->ensure('cms_newsletter_subscribers', 'idx_newsletter_subscribers_tenant', ['tenant_id']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_newsletter_sends_subscriber
-                ON cms_newsletter_sends (subscriber_id)
-            SQL);
+        $indexes->ensure('cms_newsletter_campaigns', 'idx_newsletter_campaigns_tenant_status', ['tenant_id', 'status']);
+        $indexes->ensure('cms_newsletter_campaigns', 'idx_newsletter_campaigns_status', ['status']);
+
+        $indexes->ensure(
+            'cms_newsletter_sends',
+            'idx_newsletter_sends_campaign_subscriber',
+            ['campaign_id', 'subscriber_id'],
+            unique: true,
+        );
+        $indexes->ensure('cms_newsletter_sends', 'idx_newsletter_sends_campaign_status', ['campaign_id', 'status']);
+        $indexes->ensure('cms_newsletter_sends', 'idx_newsletter_sends_subscriber', ['subscriber_id']);
     }
 };

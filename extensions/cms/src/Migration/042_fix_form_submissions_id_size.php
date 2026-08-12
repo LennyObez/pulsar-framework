@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 
 /**
  * Fix cms_form_submissions.id column size.
@@ -79,20 +81,7 @@ return new class implements MigrationInterface {
         $connection->execute('ALTER TABLE cms_form_submissions_new RENAME TO cms_form_submissions');
 
         // Recreate indexes lost during table rebuild
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_content
-                ON cms_form_submissions (tenant_id, content_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_spam
-                ON cms_form_submissions (tenant_id, is_spam)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at
-                ON cms_form_submissions (submitted_at DESC)
-            SQL);
+        $this->recreateIndexes($connection);
 
         // Commit managed by MigrationRunner
     }
@@ -130,21 +119,23 @@ return new class implements MigrationInterface {
         $connection->execute('DROP TABLE cms_form_submissions');
         $connection->execute('ALTER TABLE cms_form_submissions_old RENAME TO cms_form_submissions');
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_content
-                ON cms_form_submissions (tenant_id, content_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_spam
-                ON cms_form_submissions (tenant_id, is_spam)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at
-                ON cms_form_submissions (submitted_at DESC)
-            SQL);
+        $this->recreateIndexes($connection);
 
         // Commit managed by MigrationRunner
+    }
+
+    /**
+     * The indexes migration 036 puts on the table, restated because dropping the table
+     * takes them with it. Both directions rebuild, so both need them; they were written
+     * out twice here and have to stay identical to 036's list to survive the round trip.
+     */
+    private function recreateIndexes(ConnectionInterface $connection): void
+    {
+        $indexes = new IndexOperations($connection);
+        $table = 'cms_form_submissions';
+
+        $indexes->ensure($table, 'idx_form_submissions_tenant_content', ['tenant_id', 'content_id']);
+        $indexes->ensure($table, 'idx_form_submissions_tenant_spam', ['tenant_id', 'is_spam']);
+        $indexes->ensure($table, 'idx_form_submissions_submitted_at', [IndexColumn::desc('submitted_at')]);
     }
 };

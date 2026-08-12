@@ -3,14 +3,16 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         //: Notification inbox ------------------------------------------------
         $connection->execute(ForumDdl::adapt(<<<'SQL'
@@ -28,22 +30,21 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_notifications_user
-                ON forum_notifications (user_id, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_notifications',
+            'idx_notifications_user',
+            ['user_id', IndexColumn::desc('created_at')],
+        );
 
-        match ($driver) {
-            Driver::PostgreSQL, Driver::SQLite => $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_notifications_unread
-                    ON forum_notifications (user_id, is_read)
-                    WHERE is_read = FALSE
-                SQL),
-            Driver::MySQL => $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_notifications_unread
-                    ON forum_notifications (user_id, is_read)
-                SQL),
-        };
+        // `is_read` stays in the key either way, so the predicate only narrows the index
+        // where the engine has partial indexes and is dropped where it does not — which
+        // is exactly the unfiltered index the MySQL branch used to spell out by hand.
+        $indexes->ensure(
+            'forum_notifications',
+            'idx_notifications_unread',
+            ['user_id', 'is_read'],
+            where: 'is_read = FALSE',
+        );
 
         //: Notification preferences ------------------------------------------
         $connection->execute(ForumDdl::adapt(<<<'SQL'

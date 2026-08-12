@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_digital_assets (
@@ -27,9 +29,7 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_digital_asset_product ON cms_digital_assets (product_id)
-            SQL);
+        $indexes->ensure('cms_digital_assets', 'idx_digital_asset_product', ['product_id']);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_digital_downloads (
@@ -46,14 +46,14 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_download_token
-                ON cms_digital_downloads (download_token)
-            SQL);
+        $indexes->ensure(
+            'cms_digital_downloads',
+            'uq_download_token',
+            ['download_token'],
+            unique: true,
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_download_order_item ON cms_digital_downloads (order_item_id)
-            SQL);
+        $indexes->ensure('cms_digital_downloads', 'idx_download_order_item', ['order_item_id']);
     }
 
     public function down(ConnectionInterface $connection): void

@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
@@ -16,6 +18,8 @@ return new class implements MigrationInterface {
             Driver::MySQL => $this->upMysql($connection),
             Driver::PostgreSQL => $this->upPostgresql($connection),
         };
+
+        $this->createIndexes($connection);
     }
 
     public function down(ConnectionInterface $connection): void
@@ -42,21 +46,6 @@ return new class implements MigrationInterface {
                 spam_reason TEXT
             )
             SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_content
-                ON cms_form_submissions (tenant_id, content_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_spam
-                ON cms_form_submissions (tenant_id, is_spam)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at
-                ON cms_form_submissions (submitted_at DESC)
-            SQL);
     }
 
     private function upMysql(ConnectionInterface $connection): void
@@ -75,10 +64,7 @@ return new class implements MigrationInterface {
                 is_read TINYINT(1) NOT NULL DEFAULT 0,
                 is_spam TINYINT(1) NOT NULL DEFAULT 0,
                 spam_score DOUBLE NOT NULL DEFAULT 0.0,
-                spam_reason TEXT,
-                INDEX idx_form_submissions_tenant_content (tenant_id, content_id),
-                INDEX idx_form_submissions_tenant_spam (tenant_id, is_spam),
-                INDEX idx_form_submissions_submitted_at (submitted_at DESC)
+                spam_reason TEXT
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             SQL);
     }
@@ -102,20 +88,22 @@ return new class implements MigrationInterface {
                 spam_reason TEXT
             )
             SQL);
+    }
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_content
-                ON cms_form_submissions (tenant_id, content_id)
-            SQL);
+    /**
+     * The same three indexes were written once per engine, inline on MySQL and as
+     * `CREATE INDEX IF NOT EXISTS` on the other two — a clause MySQL rejects outright,
+     * which is why the copies could never have been one statement. Stated once here,
+     * the dialect spells each engine's version.
+     */
+    private function createIndexes(ConnectionInterface $connection): void
+    {
+        $indexes = new IndexOperations($connection);
+        $table = 'cms_form_submissions';
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_tenant_spam
-                ON cms_form_submissions (tenant_id, is_spam)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at
-                ON cms_form_submissions (submitted_at DESC)
-            SQL);
+        $indexes->ensure($table, 'idx_form_submissions_tenant_content', ['tenant_id', 'content_id']);
+        $indexes->ensure($table, 'idx_form_submissions_tenant_spam', ['tenant_id', 'is_spam']);
+        // Submissions are read newest first, which a descending index scans forwards.
+        $indexes->ensure($table, 'idx_form_submissions_submitted_at', [IndexColumn::desc('submitted_at')]);
     }
 };

@@ -3,14 +3,16 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_user_bans (
@@ -26,22 +28,22 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_bans_user
-                ON forum_user_bans (user_id, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_user_bans',
+            'idx_bans_user',
+            ['user_id', IndexColumn::desc('created_at')],
+        );
 
-        match ($driver) {
-            Driver::PostgreSQL, Driver::SQLite => $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_bans_active
-                    ON forum_user_bans (user_id)
-                    WHERE revoked_at IS NULL
-                SQL),
-            Driver::MySQL => $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_bans_active
-                    ON forum_user_bans (user_id, revoked_at)
-                SQL),
-        };
+        // An engine without partial indexes cannot filter on `revoked_at`, so it has to
+        // carry it in the key instead.
+        $indexes->ensure(
+            'forum_user_bans',
+            'idx_bans_active',
+            $connection->dialect()->supportsPartialIndexes()
+                ? ['user_id']
+                : ['user_id', 'revoked_at'],
+            where: 'revoked_at IS NULL',
+        );
     }
 
     public function down(ConnectionInterface $connection): void

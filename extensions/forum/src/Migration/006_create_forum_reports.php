@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_thread_reports (
@@ -29,10 +32,11 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_thread_report_status
-                ON forum_thread_reports (status, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_thread_reports',
+            'idx_thread_report_status',
+            ['status', IndexColumn::desc('created_at')],
+        );
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_post_reports (
@@ -52,10 +56,11 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_post_report_status
-                ON forum_post_reports (status, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_post_reports',
+            'idx_post_report_status',
+            ['status', IndexColumn::desc('created_at')],
+        );
 
         // Unified view used by ForumReportResource for admin panel listing
         $connection->execute(<<<'SQL'

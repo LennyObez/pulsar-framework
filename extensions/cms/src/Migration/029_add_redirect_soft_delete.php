@@ -16,23 +16,16 @@ return new class implements MigrationInterface {
             ALTER TABLE cms_redirects ADD COLUMN deleted_at TEXT DEFAULT NULL
             SQL);
 
-        $driver = $connection->driver();
-
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_cms_redirects_deleted_at ON cms_redirects (deleted_at)
-                SQL);
-        } else {
-            $indexes->ensure('cms_redirects', 'idx_cms_redirects_deleted_at', ['deleted_at']);
-        }
+        $indexes->ensure('cms_redirects', 'idx_cms_redirects_deleted_at', ['deleted_at']);
     }
 
     public function down(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
         $driver = $connection->driver();
 
         if ($driver !== Driver::SQLite) {
-            $connection->execute('DROP INDEX IF EXISTS idx_cms_redirects_deleted_at');
+            $indexes->ensureAbsent('cms_redirects', 'idx_cms_redirects_deleted_at');
             $connection->execute('ALTER TABLE cms_redirects DROP COLUMN deleted_at');
         }
     }
