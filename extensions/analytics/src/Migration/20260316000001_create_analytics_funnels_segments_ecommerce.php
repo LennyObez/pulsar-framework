@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
 /**
  * Creates tables for GA4-level analytics features:
@@ -12,6 +13,8 @@ use Pulsar\Database\Migration\MigrationInterface;
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         // Funnels
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS analytics_funnels (
@@ -52,11 +55,11 @@ return new class implements MigrationInterface {
             SQL);
 
         // Indexes (separate for SQLite compatibility)
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_funnels_site ON analytics_funnels (site_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_segments_site ON analytics_segments (site_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_ecom_site_date ON analytics_ecommerce_transactions (site_id, created_at)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_ecom_visitor ON analytics_ecommerce_transactions (visitor_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_ecom_order ON analytics_ecommerce_transactions (order_id)');
+        $indexes->ensure('analytics_funnels', 'idx_funnels_site', ['site_id']);
+        $indexes->ensure('analytics_segments', 'idx_segments_site', ['site_id']);
+        $indexes->ensure('analytics_ecommerce_transactions', 'idx_ecom_site_date', ['site_id', 'created_at']);
+        $indexes->ensure('analytics_ecommerce_transactions', 'idx_ecom_visitor', ['visitor_id']);
+        $indexes->ensure('analytics_ecommerce_transactions', 'idx_ecom_order', ['order_id']);
     }
 
     public function down(ConnectionInterface $connection): void
