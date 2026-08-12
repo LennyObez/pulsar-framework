@@ -76,6 +76,25 @@ its dialect, in the shape `IndexOperations` already established. Migrations rece
 connection and nothing else, so a collaborator they cannot obtain is a collaborator they
 cannot use.
 
+**`compileCreateIndex()` takes a `?string $where`**, and `supportsPartialIndexes()` reports
+whether it will be honoured. A partial index covers only the rows its predicate admits,
+which on a table whose interesting rows are a small minority — an outbox, where all but the
+unpublished have been dealt with — is the difference between an index that stays small and
+one that grows with the table forever.
+
+The predicate is a request on the same terms as `$ifNotExists`, and the two fail
+differently. `IF NOT EXISTS` where unsupported is a parse error. A predicate where
+unsupported yields an index over every row instead of the subset asked for: wider, chosen
+differently by the planner, never a wrong answer. That is why a caller who depends on the
+narrowing has to ask, and why nothing throws.
+
+Asking rather than assuming caught a defect while this was being written.
+`MySqlDialect::compileCreateIndex()` passed a hardcoded `false` for `$ifNotExists`, and
+`MariaDbDialect` extends it — so MariaDB, which does have the clause, answered `true` to
+`supportsIndexIfNotExists()` while compiling a statement without it. A caller that asked was
+told its statement was idempotent when it was not. The override now consults the capability
+it is overriding for.
+
 ## Consequences
 
 The migration that prompted this names no engine at all. It reads:

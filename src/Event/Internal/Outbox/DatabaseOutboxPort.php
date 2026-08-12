@@ -11,6 +11,8 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
+use Pulsar\Database\Schema\IndexOperations;
+use Pulsar\Database\Schema\TableIntrospector;
 use Pulsar\Event\Contract\OutboxPort;
 use Pulsar\Event\EventEnvelope;
 use SodiumException;
@@ -68,6 +70,41 @@ final readonly class DatabaseOutboxPort implements OutboxPort
             Driver::MySQL => $this->installMysqlSchema(),
             Driver::PostgreSQL => $this->installPostgresSchema(),
         };
+
+        $this->ensureIndexes();
+    }
+
+    /**
+     * Two indexes, one shape each — not one shape per engine.
+     *
+     * They used to be written five ways: two engines wrote `CREATE INDEX IF NOT EXISTS`,
+     * one declared them inline in its `CREATE TABLE` because that clause is a parse error
+     * there, and the same two indexes therefore had three definitions to keep in step.
+     *
+     * The pending index finds rows nobody has published yet. Where the engine has partial
+     * indexes that is a predicate over one sort column; where it does not, the filtered
+     * columns have to lead the key instead, and the index then carries every row of a
+     * table whose interesting rows are always a small minority. That difference is real
+     * and is the one thing still branched on — by capability, not by engine name.
+     */
+    private function ensureIndexes(): void
+    {
+        $indexes = new IndexOperations($this->connection);
+        $partial = $this->connection->dialect()->supportsPartialIndexes();
+
+        $indexes->ensure(
+            self::TABLE,
+            self::TABLE . '_pending_idx',
+            $partial ? ['created_at'] : ['published_at', 'dead_lettered_at', 'created_at'],
+            where: 'published_at IS NULL AND dead_lettered_at IS NULL',
+        );
+
+        $indexes->ensure(
+            self::TABLE,
+            self::TABLE . '_deadletter_idx',
+            ['dead_lettered_at'],
+            where: 'dead_lettered_at IS NOT NULL',
+        );
     }
 
     /**
@@ -330,16 +367,6 @@ final readonly class DatabaseOutboxPort implements OutboxPort
             )',
             self::TABLE,
         ));
-        $this->connection->execute(sprintf(
-            'CREATE INDEX IF NOT EXISTS %s_pending_idx ON %s (published_at, dead_lettered_at, created_at)',
-            self::TABLE,
-            self::TABLE,
-        ));
-        $this->connection->execute(sprintf(
-            'CREATE INDEX IF NOT EXISTS %s_deadletter_idx ON %s (dead_lettered_at)',
-            self::TABLE,
-            self::TABLE,
-        ));
     }
 
     private function installMysqlSchema(): void
@@ -358,12 +385,8 @@ final readonly class DatabaseOutboxPort implements OutboxPort
                 last_error TEXT NULL,
                 published_at DATETIME(6) NULL,
                 dead_lettered_at DATETIME(6) NULL,
-                created_at DATETIME(6) NOT NULL,
-                INDEX %s_pending_idx (published_at, dead_lettered_at, created_at),
-                INDEX %s_deadletter_idx (dead_lettered_at)
+                created_at DATETIME(6) NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
-            self::TABLE,
-            self::TABLE,
             self::TABLE,
         ));
     }
@@ -388,16 +411,6 @@ final readonly class DatabaseOutboxPort implements OutboxPort
             )',
             self::TABLE,
         ));
-        $this->connection->execute(sprintf(
-            'CREATE INDEX IF NOT EXISTS %s_pending_idx ON %s (created_at) WHERE published_at IS NULL AND dead_lettered_at IS NULL',
-            self::TABLE,
-            self::TABLE,
-        ));
-        $this->connection->execute(sprintf(
-            'CREATE INDEX IF NOT EXISTS %s_deadletter_idx ON %s (dead_lettered_at) WHERE dead_lettered_at IS NOT NULL',
-            self::TABLE,
-            self::TABLE,
-        ));
     }
 
     /**
@@ -419,63 +432,20 @@ final readonly class DatabaseOutboxPort implements OutboxPort
             $this->connection->execute(sprintf('ALTER TABLE %s ADD COLUMN dead_lettered_at %s', self::TABLE, $type));
         }
 
-        // MySQL has no CREATE INDEX IF NOT EXISTS; guard it by existence.
-        match ($driver) {
-            Driver::SQLite => $this->connection->execute(sprintf(
-                'CREATE INDEX IF NOT EXISTS %s_deadletter_idx ON %s (dead_lettered_at)',
-                self::TABLE,
-                self::TABLE,
-            )),
-            Driver::PostgreSQL => $this->connection->execute(sprintf(
-                'CREATE INDEX IF NOT EXISTS %s_deadletter_idx ON %s (dead_lettered_at) WHERE dead_lettered_at IS NOT NULL',
-                self::TABLE,
-                self::TABLE,
-            )),
-            Driver::MySQL => $this->ensureMysqlDeadLetterIndex(),
-        };
+        $this->ensureIndexes();
     }
 
     /**
      * Whether the `dead_lettered_at` column already exists on the outbox table.
+     *
+     * The hand-written version asked `information_schema.columns` with no schema
+     * predicate, so on a server holding a same-named table in another database it
+     * answered for that one instead — and reported the column present on a table this
+     * process had never touched, skipping the ALTER that every write afterwards needed.
      */
     private function deadLetteredColumnExists(): bool
     {
-        $driver = $this->connection->driver();
-
-        if ($driver === Driver::SQLite) {
-            foreach ($this->connection->query(sprintf('PRAGMA table_info(%s)', self::TABLE))->rows as $row) {
-                if (($row->data['name'] ?? null) === 'dead_lettered_at') {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        // MySQL + PostgreSQL expose columns via the SQL-standard information_schema.
-        return !$this->connection->query(
-            'SELECT 1 FROM information_schema.columns '
-            . 'WHERE table_name = :table AND column_name = :column LIMIT 1',
-            ['table' => self::TABLE, 'column' => 'dead_lettered_at'],
-        )->isEmpty();
-    }
-
-    /**
-     * Create the MySQL dead-letter index only if it is not already present
-     * (MySQL lacks CREATE INDEX IF NOT EXISTS).
-     */
-    private function ensureMysqlDeadLetterIndex(): void
-    {
-        $indexName = self::TABLE . '_deadletter_idx';
-
-        $exists = !$this->connection->query(
-            'SELECT 1 FROM information_schema.statistics '
-            . 'WHERE table_name = :table AND index_name = :index LIMIT 1',
-            ['table' => self::TABLE, 'index' => $indexName],
-        )->isEmpty();
-
-        if (!$exists) {
-            $this->connection->execute(sprintf('CREATE INDEX %s ON %s (dead_lettered_at)', $indexName, self::TABLE));
-        }
+        return new TableIntrospector($this->connection)
+            ->columnExists(self::TABLE, 'dead_lettered_at');
     }
 }

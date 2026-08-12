@@ -86,8 +86,35 @@ readonly class MySqlDialect extends AbstractDialect
         array $columns,
         bool $unique = false,
         bool $ifNotExists = false,
+        ?string $where = null,
     ): string {
-        return parent::compileCreateIndex($name, $table, $columns, $unique, false);
+        // Each request is honoured where the engine has it and dropped where it does not,
+        // and both are asked rather than assumed. Hardcoding `false` here was wrong for
+        // MariaDB, which extends this class and does have `IF NOT EXISTS`: it answered
+        // true to `supportsIndexIfNotExists()` while the statement it compiled carried no
+        // such clause, so a caller that asked was told the statement was idempotent when
+        // it was not.
+        //
+        // The two failures differ. `IF NOT EXISTS` where it is unsupported is a parse
+        // error; a predicate where it is unsupported yields an index over every row
+        // instead of the subset asked for — wider, differently chosen, never wrong.
+        return parent::compileCreateIndex(
+            $name,
+            $table,
+            $columns,
+            $unique,
+            $ifNotExists && $this->supportsIndexIfNotExists(),
+            $this->supportsPartialIndexes() ? $where : null,
+        );
+    }
+
+    /**
+     * MySQL has no partial indexes and nothing that approximates one.
+     */
+    #[Override]
+    public function supportsPartialIndexes(): bool
+    {
+        return false;
     }
 
     /**

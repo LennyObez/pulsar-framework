@@ -68,6 +68,7 @@ abstract readonly class AbstractDialect implements DialectInterface
         array $columns,
         bool $unique = false,
         bool $ifNotExists = false,
+        ?string $where = null,
     ): string {
         $quoted = [];
 
@@ -76,12 +77,13 @@ abstract readonly class AbstractDialect implements DialectInterface
         }
 
         return sprintf(
-            'CREATE %sINDEX %s%s ON %s (%s)',
+            'CREATE %sINDEX %s%s ON %s (%s)%s',
             $unique ? 'UNIQUE ' : '',
             $ifNotExists ? 'IF NOT EXISTS ' : '',
             $this->quoteIdentifier($name),
             $this->quoteIdentifier($table),
             implode(', ', $quoted),
+            $where === null ? '' : ' WHERE ' . $where,
         );
     }
 
