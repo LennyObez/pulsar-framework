@@ -7,6 +7,7 @@ namespace Pulsar\Database\Dialect;
 use Pulsar\Api\Internal;
 use Pulsar\Database\DriverVariant;
 use Pulsar\Database\LockMode;
+use Pulsar\Database\Schema\IndexColumn;
 use Pulsar\Database\SqlIdentifier;
 
 use function implode;
@@ -73,7 +74,9 @@ abstract readonly class AbstractDialect implements DialectInterface
         $quoted = [];
 
         foreach ($columns as $column) {
-            $quoted[] = $this->quoteIdentifier($column);
+            $quoted[] = $column instanceof IndexColumn
+                ? $this->compileIndexColumn($column)
+                : $this->quoteIdentifier($column);
         }
 
         return sprintf(
@@ -85,6 +88,30 @@ abstract readonly class AbstractDialect implements DialectInterface
             implode(', ', $quoted),
             $where === null ? '' : ' WHERE ' . $where,
         );
+    }
+
+    /**
+     * One index column, with whatever part of its ordering this engine can express.
+     *
+     * The name is quoted and the rest is not, because the rest is keyword and not
+     * identifier. `NULLS FIRST|LAST` is emitted only where the engine has it, and only
+     * when the caller asked: left unset it means "whatever this engine does by default",
+     * which is not the same as either answer — PostgreSQL puts NULLs first under `DESC`
+     * and last under `ASC`, SQLite first under both.
+     */
+    protected function compileIndexColumn(IndexColumn $column): string
+    {
+        $sql = $this->quoteIdentifier($column->name);
+
+        if ($column->descending) {
+            $sql .= ' DESC';
+        }
+
+        if ($column->nullsLast !== null && $this->supportsNullsOrdering()) {
+            $sql .= $column->nullsLast ? ' NULLS LAST' : ' NULLS FIRST';
+        }
+
+        return $sql;
     }
 
     /**

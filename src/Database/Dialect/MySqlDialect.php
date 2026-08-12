@@ -118,6 +118,15 @@ readonly class MySqlDialect extends AbstractDialect
     }
 
     /**
+     * No `NULLS FIRST|LAST` clause exists in MySQL, and no spelling stands in for it.
+     */
+    #[Override]
+    public function supportsNullsOrdering(): bool
+    {
+        return false;
+    }
+
+    /**
      * MySQL drops an index through the table that owns it, and accepts no `IF EXISTS`.
      */
     #[Override]

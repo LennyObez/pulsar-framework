@@ -69,6 +69,12 @@ final readonly class PostgreSqlDialect extends AbstractDialect
         return true;
     }
 
+    #[Override]
+    public function supportsNullsOrdering(): bool
+    {
+        return true;
+    }
+
     /**
      * Resolved through `to_regclass`, which answers for the one relation a bare name
      * reaches — exactly what the `CREATE INDEX` this guards will touch.

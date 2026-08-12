@@ -66,7 +66,11 @@ final readonly class IndexOperations
      * for, and never a wrong answer. Existence is decided by name either way, so changing
      * the predicate of an index that already exists does not rebuild it.
      *
-     * @param list<string> $columns
+     * A column may be a name, or an {@see IndexColumn} when the order the rows are stored
+     * in is the point — a listing that reads "newest first" scans a descending index
+     * forwards and stops early, where an ascending one is scanned backwards and cannot.
+     *
+     * @param list<string|IndexColumn> $columns
      */
     public function ensure(
         string $table,

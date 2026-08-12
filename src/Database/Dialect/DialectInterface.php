@@ -151,7 +151,12 @@ interface DialectInterface
      *
      * The predicate is emitted as given. It is not a place for user input.
      *
-     * @param list<string> $columns
+     * A column may be a name or an {@see \Pulsar\Database\Schema\IndexColumn}, which
+     * carries the order the rows are stored in. That matters where a listing reads
+     * "newest first": a descending index is scanned forwards and can stop early, an
+     * ascending one is scanned backwards and cannot.
+     *
+     * @param list<string|\Pulsar\Database\Schema\IndexColumn> $columns
      */
     public function compileCreateIndex(
         string $name,
@@ -171,6 +176,19 @@ interface DialectInterface
      * why a caller that depends on the narrowing has to ask rather than assume.
      */
     public function supportsPartialIndexes(): bool;
+
+    /**
+     * Whether an index column accepts `NULLS FIRST` or `NULLS LAST`.
+     *
+     * PostgreSQL and SQLite do; MySQL has no such clause and no way to say it otherwise,
+     * so an index that depends on where its NULLs sit cannot be expressed there. The cost
+     * of the difference is a scan direction, never a wrong row — but a caller ordering a
+     * nullable column deliberately is entitled to know which engines honoured it.
+     *
+     * Distinct from the direction itself: `DESC` is accepted everywhere the framework
+     * supports, MySQL having honoured it since 8.0 and merely parsed it before.
+     */
+    public function supportsNullsOrdering(): bool;
 
     /**
      * Compile a `DROP INDEX`.
