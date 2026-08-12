@@ -7,6 +7,7 @@ namespace Pulsar\Cache\Application\Lock;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Throwable;
@@ -160,9 +161,11 @@ final class DatabaseLock implements LockInterface
             . ')',
         );
 
-        $this->connection->execute(
-            'CREATE INDEX IF NOT EXISTS idx_cache_locks_expires_at ON cache_locks (expires_at)',
-        );
+        // Not `CREATE INDEX IF NOT EXISTS`: MySQL rejects the clause as a syntax error
+        // rather than ignoring it, and this runs on the first lock acquisition rather
+        // than in a migration — so the failure lands on whoever takes the lock.
+        new IndexOperations($this->connection)
+            ->ensure('cache_locks', 'idx_cache_locks_expires_at', ['expires_at']);
 
         $this->tableCreated = true;
     }

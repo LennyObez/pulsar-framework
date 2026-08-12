@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Param;
+use Pulsar\Database\Schema\IndexOperations;
 use Throwable;
 
 use function random_int;
@@ -234,9 +235,11 @@ final class DatabaseDriver extends AbstractCacheDriver
 
         $this->connection->execute($this->buildCreateTableSql($this->connection->driver()));
 
-        $this->connection->execute(
-            'CREATE INDEX IF NOT EXISTS idx_cache_entries_expires_at ON cache_entries (expires_at)',
-        );
+        // Not `CREATE INDEX IF NOT EXISTS`: MySQL rejects that clause as a syntax error
+        // rather than ignoring it, so this method — which runs on the first cache write,
+        // not in a migration — took the database cache driver out of service there.
+        new IndexOperations($this->connection)
+            ->ensure('cache_entries', 'idx_cache_entries_expires_at', ['expires_at']);
 
         $this->tableCreated = true;
     }

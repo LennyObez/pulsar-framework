@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Queue\FailedJob;
 use Pulsar\Queue\FailedJobRepositoryInterface;
 
@@ -45,6 +46,14 @@ final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryI
             Driver::MySQL => $this->installMysqlSchema(),
             Driver::PostgreSQL => $this->installPostgresSchema(),
         };
+
+        // One index, stated once. It used to be created three ways: two installers wrote
+        // `CREATE INDEX IF NOT EXISTS`, which MySQL rejects as a syntax error rather than
+        // ignoring, so the third declared it inline in the CREATE TABLE instead — where a
+        // reader of the other two would never find it. The column types still differ per
+        // engine, which they must; the index does not, and no longer pretends to.
+        new IndexOperations($this->connection)
+            ->ensure(self::TABLE, self::TABLE . '_failed_at_idx', ['failed_at']);
     }
 
     #[Override]
@@ -164,11 +173,6 @@ final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryI
             )',
             self::TABLE,
         ));
-        $this->connection->execute(sprintf(
-            'CREATE INDEX IF NOT EXISTS %s_failed_at_idx ON %s (failed_at)',
-            self::TABLE,
-            self::TABLE,
-        ));
     }
 
     private function installMysqlSchema(): void
@@ -181,10 +185,8 @@ final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryI
                 payload LONGTEXT NOT NULL,
                 exception LONGTEXT NOT NULL,
                 failed_at BIGINT NOT NULL,
-                attempts INT NOT NULL,
-                INDEX %s_failed_at_idx (failed_at)
+                attempts INT NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
-            self::TABLE,
             self::TABLE,
         ));
     }
@@ -201,11 +203,6 @@ final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryI
                 failed_at BIGINT NOT NULL,
                 attempts INTEGER NOT NULL
             )',
-            self::TABLE,
-        ));
-        $this->connection->execute(sprintf(
-            'CREATE INDEX IF NOT EXISTS %s_failed_at_idx ON %s (failed_at)',
-            self::TABLE,
             self::TABLE,
         ));
     }
