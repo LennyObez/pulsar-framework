@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $driver = $connection->driver();
 
         // Experiments table
@@ -28,13 +31,9 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_experiments_content_id ON cms_experiments (content_id)
-            SQL);
+        $indexes->ensure('cms_experiments', 'idx_experiments_content_id', ['content_id']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_experiments_status ON cms_experiments (status)
-            SQL);
+        $indexes->ensure('cms_experiments', 'idx_experiments_status', ['status']);
 
         // Experiment variants table
         $connection->execute(CmsDdl::adapt(<<<'SQL'
@@ -50,9 +49,7 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_experiment_variants_experiment_id ON cms_experiment_variants (experiment_id)
-            SQL);
+        $indexes->ensure('cms_experiment_variants', 'idx_experiment_variants_experiment_id', ['experiment_id']);
 
         // Conversion events table
         $connection->execute(CmsDdl::adapt(<<<'SQL'
@@ -68,17 +65,11 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_conversion_events_experiment_id ON cms_conversion_events (experiment_id)
-            SQL);
+        $indexes->ensure('cms_conversion_events', 'idx_conversion_events_experiment_id', ['experiment_id']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_conversion_events_visitor_experiment ON cms_conversion_events (visitor_id, experiment_id)
-            SQL);
+        $indexes->ensure('cms_conversion_events', 'idx_conversion_events_visitor_experiment', ['visitor_id', 'experiment_id']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_conversion_events_variant_type ON cms_conversion_events (variant_id, type)
-            SQL);
+        $indexes->ensure('cms_conversion_events', 'idx_conversion_events_variant_type', ['variant_id', 'type']);
     }
 
     public function down(ConnectionInterface $connection): void

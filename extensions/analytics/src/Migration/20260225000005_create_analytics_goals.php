@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Analytics\Migration\AnalyticsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $driver = $connection->driver();
 
         $connection->execute(AnalyticsDdl::adapt(<<<'SQL'
@@ -24,9 +27,7 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_goals_site ON analytics_goals (site_id)
-            SQL);
+        $indexes->ensure('analytics_goals', 'idx_goals_site', ['site_id']);
     }
 
     public function down(ConnectionInterface $connection): void

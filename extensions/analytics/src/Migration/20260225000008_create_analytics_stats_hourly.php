@@ -5,11 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Analytics\Migration\AnalyticsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $driver = $connection->driver();
 
         $connection->execute(AnalyticsDdl::adapt(<<<'SQL'
@@ -28,9 +31,7 @@ return new class implements MigrationInterface {
             SQL, $driver));
 
         if ($driver === Driver::SQLite) {
-            $connection->execute(<<<'SQL'
-                CREATE UNIQUE INDEX IF NOT EXISTS pk_stats_hourly ON analytics_stats_hourly (site_id, date, hour)
-                SQL);
+            $indexes->ensure('analytics_stats_hourly', 'pk_stats_hourly', ['site_id', 'date', 'hour'], unique: true);
         } else {
             $connection->execute(<<<'SQL'
                 ALTER TABLE analytics_stats_hourly ADD PRIMARY KEY (site_id, date, hour)
