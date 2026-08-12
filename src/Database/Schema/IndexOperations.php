@@ -61,16 +61,33 @@ final readonly class IndexOperations
      * one round trip on three engines out of four and leave the fourth taking a different
      * path — and a path that only MySQL takes is a path only MySQL can break.
      *
+     * `$where` narrows the index to the rows the predicate admits, where the engine has
+     * partial indexes. Where it does not, the index covers every row — wider than asked
+     * for, and never a wrong answer. Existence is decided by name either way, so changing
+     * the predicate of an index that already exists does not rebuild it.
+     *
      * @param list<string> $columns
      */
-    public function ensure(string $table, string $name, array $columns, bool $unique = false): void
-    {
+    public function ensure(
+        string $table,
+        string $name,
+        array $columns,
+        bool $unique = false,
+        ?string $where = null,
+    ): void {
         if ($this->exists($table, $name)) {
             return;
         }
 
         $this->connection->execute(
-            $this->connection->dialect()->compileCreateIndex($name, $table, $columns, $unique),
+            $this->connection->dialect()->compileCreateIndex(
+                $name,
+                $table,
+                $columns,
+                $unique,
+                false,
+                $where,
+            ),
         );
     }
 

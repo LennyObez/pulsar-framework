@@ -15412,7 +15412,8 @@
                         "string $table",
                         "array $columns",
                         "bool $unique",
-                        "bool $ifNotExists"
+                        "bool $ifNotExists",
+                        "?string $where"
                     ],
                     "return": "string",
                     "static": false
@@ -15487,6 +15488,11 @@
                     "static": false
                 },
                 "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -15558,7 +15564,8 @@
                         "string $table",
                         "array $columns",
                         "bool $unique",
-                        "bool $ifNotExists"
+                        "bool $ifNotExists",
+                        "?string $where"
                     ],
                     "return": "string",
                     "static": false,
@@ -15647,6 +15654,12 @@
                     "params": [],
                     "return": "bool",
                     "static": false
+                },
+                "supportsPartialIndexes": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
                 },
                 "supportsReturning": {
                     "params": [],
@@ -15698,7 +15711,8 @@
                         "string $table",
                         "array $columns",
                         "bool $unique",
-                        "bool $ifNotExists"
+                        "bool $ifNotExists",
+                        "?string $where"
                     ],
                     "return": "string",
                     "static": false
@@ -15776,6 +15790,11 @@
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
                 },
                 "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -15831,7 +15850,8 @@
                         "string $table",
                         "array $columns",
                         "bool $unique",
-                        "bool $ifNotExists"
+                        "bool $ifNotExists",
+                        "?string $where"
                     ],
                     "return": "string",
                     "static": false,
@@ -15911,6 +15931,11 @@
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
                 },
                 "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -15966,7 +15991,8 @@
                         "string $table",
                         "array $columns",
                         "bool $unique",
-                        "bool $ifNotExists"
+                        "bool $ifNotExists",
+                        "?string $where"
                     ],
                     "return": "string",
                     "static": false,
@@ -16046,6 +16072,11 @@
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
                 },
                 "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -18694,7 +18725,8 @@
                         "string $table",
                         "string $name",
                         "array $columns",
-                        "bool $unique"
+                        "bool $unique",
+                        "?string $where"
                     ],
                     "return": "void",
                     "static": false

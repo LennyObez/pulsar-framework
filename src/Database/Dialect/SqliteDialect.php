@@ -72,6 +72,16 @@ final readonly class SqliteDialect extends AbstractDialect
     }
 
     /**
+     * Since 3.8.0, which predates the 3.35.0 floor `supportsDropColumn()` already tests
+     * for, so no version probe is needed here.
+     */
+    #[Override]
+    public function supportsPartialIndexes(): bool
+    {
+        return true;
+    }
+
+    /**
      * `sqlite_master` rather than `pragma_index_list`, because it answers about the index
      * and its owning table in one predicate; the pragma lists a table's indexes and would
      * need the table established separately.

@@ -141,6 +141,16 @@ interface DialectInterface
      * on MySQL has to check `information_schema` itself; ask
      * {@see supportsIndexIfNotExists()} to find out whether that is necessary.
      *
+     * `$where` is a request on the same terms. A partial index covers only the rows the
+     * predicate admits, which on a table whose interesting rows are a small minority — an
+     * outbox, where all but the unpublished have been dealt with — is the difference
+     * between an index that stays small and one that grows with the table forever. An
+     * engine without partial indexes emits the plain statement and gets a full index:
+     * larger, and chosen differently by the planner, but never a wrong answer. Ask
+     * {@see supportsPartialIndexes()} when the distinction matters enough to branch on.
+     *
+     * The predicate is emitted as given. It is not a place for user input.
+     *
      * @param list<string> $columns
      */
     public function compileCreateIndex(
@@ -149,7 +159,18 @@ interface DialectInterface
         array $columns,
         bool $unique = false,
         bool $ifNotExists = false,
+        ?string $where = null,
     ): string;
+
+    /**
+     * Whether `CREATE INDEX … WHERE …` is available.
+     *
+     * SQLite has had partial indexes since 3.8.0 and PostgreSQL for far longer; MySQL has
+     * none, and no syntax that approximates one. Unlike `IF NOT EXISTS`, getting this
+     * wrong costs no error — the index is simply wider than asked for — which is exactly
+     * why a caller that depends on the narrowing has to ask rather than assume.
+     */
+    public function supportsPartialIndexes(): bool;
 
     /**
      * Compile a `DROP INDEX`.
