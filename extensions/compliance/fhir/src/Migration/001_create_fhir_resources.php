@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
 /**
  * Persistence schema for {@see \Pulsar\Extension\Fhir\Internal\DatabaseFhirRepository}.
@@ -17,6 +18,8 @@ use Pulsar\Database\Migration\MigrationInterface;
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS fhir_resources (
                 resource_type VARCHAR(64) NOT NULL,
@@ -29,10 +32,11 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_fhir_type_active_updated
-                ON fhir_resources (resource_type, is_deleted, last_updated)
-            SQL);
+        $indexes->ensure(
+            'fhir_resources',
+            'idx_fhir_type_active_updated',
+            ['resource_type', 'is_deleted', 'last_updated'],
+        );
     }
 
     public function down(ConnectionInterface $connection): void

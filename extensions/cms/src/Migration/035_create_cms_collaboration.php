@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
@@ -16,6 +17,12 @@ return new class implements MigrationInterface {
             Driver::MySQL => $this->upMysql($connection),
             Driver::PostgreSQL => $this->upPostgresql($connection),
         };
+
+        $indexes = new IndexOperations($connection);
+
+        $indexes->ensure('cms_collaboration_sessions', 'idx_collab_sessions_content', ['content_id']);
+
+        $indexes->ensure('cms_collaboration_sessions', 'idx_collab_sessions_last_seen', ['last_seen_at']);
     }
 
     public function down(ConnectionInterface $connection): void
@@ -47,16 +54,6 @@ return new class implements MigrationInterface {
                 last_seen_at TEXT NOT NULL
             )
             SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_collab_sessions_content
-                ON cms_collaboration_sessions (content_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_collab_sessions_last_seen
-                ON cms_collaboration_sessions (last_seen_at)
-            SQL);
     }
 
     private function upMysql(ConnectionInterface $connection): void
@@ -79,9 +76,7 @@ return new class implements MigrationInterface {
                 cursor_position TEXT,
                 selection_range TEXT,
                 connected_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_collab_sessions_content (content_id),
-                INDEX idx_collab_sessions_last_seen (last_seen_at)
+                last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             SQL);
     }
@@ -108,16 +103,6 @@ return new class implements MigrationInterface {
                 connected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_collab_sessions_content
-                ON cms_collaboration_sessions (content_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_collab_sessions_last_seen
-                ON cms_collaboration_sessions (last_seen_at)
             SQL);
     }
 };

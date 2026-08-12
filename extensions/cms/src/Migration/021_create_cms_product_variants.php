@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_product_variants (
@@ -28,15 +30,18 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_variant_product_sku_suffix
-                ON cms_product_variants (product_id, sku_suffix)
-            SQL);
+        $indexes->ensure(
+            'cms_product_variants',
+            'uq_variant_product_sku_suffix',
+            ['product_id', 'sku_suffix'],
+            unique: true,
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_variant_product_sort
-                ON cms_product_variants (product_id, sort_order)
-            SQL);
+        $indexes->ensure(
+            'cms_product_variants',
+            'idx_variant_product_sort',
+            ['product_id', 'sort_order'],
+        );
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_product_attributes (
@@ -50,10 +55,12 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_attribute_product_key
-                ON cms_product_attributes (product_id, attribute_key)
-            SQL);
+        $indexes->ensure(
+            'cms_product_attributes',
+            'uq_attribute_product_key',
+            ['product_id', 'attribute_key'],
+            unique: true,
+        );
     }
 
     public function down(ConnectionInterface $connection): void

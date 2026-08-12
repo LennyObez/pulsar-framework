@@ -5,11 +5,13 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $timestampType = match ($driver) {
             Driver::PostgreSQL => 'TIMESTAMPTZ',
@@ -34,13 +36,8 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_health_history_captured_at ON health_check_history (captured_at)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_health_history_status ON health_check_history (overall_status)
-            SQL);
+        $indexes->ensure('health_check_history', 'idx_health_history_captured_at', ['captured_at']);
+        $indexes->ensure('health_check_history', 'idx_health_history_status', ['overall_status']);
     }
 
     public function down(ConnectionInterface $connection): void

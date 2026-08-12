@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_promotions (
@@ -43,19 +45,14 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_promotion_tenant_active
-                    ON cms_promotions (tenant_id, is_active)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_promotion_tenant_active
-                    ON cms_promotions (tenant_id, is_active)
-                    WHERE is_active = true
-                SQL);
-        }
+        // `is_active` stays in the key rather than only in the predicate, so an engine
+        // without partial indexes still narrows to the live promotions on its own.
+        $indexes->ensure(
+            'cms_promotions',
+            'idx_promotion_tenant_active',
+            ['tenant_id', 'is_active'],
+            where: 'is_active = true',
+        );
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_coupons (
@@ -83,9 +80,7 @@ return new class implements MigrationInterface {
                 SQL);
         }
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_coupon_promotion ON cms_coupons (promotion_id)
-            SQL);
+        $indexes->ensure('cms_coupons', 'idx_coupon_promotion', ['promotion_id']);
     }
 
     public function down(ConnectionInterface $connection): void

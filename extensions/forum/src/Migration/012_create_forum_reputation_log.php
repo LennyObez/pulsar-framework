@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_reputation_log (
@@ -24,15 +27,17 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_reputation_log_user
-                ON forum_reputation_log (user_id, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_reputation_log',
+            'idx_reputation_log_user',
+            ['user_id', IndexColumn::desc('created_at')],
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_reputation_log_tenant
-                ON forum_reputation_log (tenant_id, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_reputation_log',
+            'idx_reputation_log_tenant',
+            ['tenant_id', IndexColumn::desc('created_at')],
+        );
     }
 
     public function down(ConnectionInterface $connection): void

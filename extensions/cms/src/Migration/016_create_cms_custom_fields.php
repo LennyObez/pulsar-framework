@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_content_type_fields (
@@ -34,10 +36,12 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_content_type_field_key
-                ON cms_content_type_fields (content_type, field_key)
-            SQL);
+        $indexes->ensure(
+            'cms_content_type_fields',
+            'uq_content_type_field_key',
+            ['content_type', 'field_key'],
+            unique: true,
+        );
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_content_field_values (
@@ -62,21 +66,13 @@ return new class implements MigrationInterface {
                 ON cms_content_field_values (content_id, field_id, COALESCE(locale, ''))
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_field_value_string ON cms_content_field_values (field_id, value_string)
-            SQL);
+        $indexes->ensure('cms_content_field_values', 'idx_field_value_string', ['field_id', 'value_string']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_field_value_int ON cms_content_field_values (field_id, value_int)
-            SQL);
+        $indexes->ensure('cms_content_field_values', 'idx_field_value_int', ['field_id', 'value_int']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_field_value_datetime ON cms_content_field_values (field_id, value_datetime)
-            SQL);
+        $indexes->ensure('cms_content_field_values', 'idx_field_value_datetime', ['field_id', 'value_datetime']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_field_value_bool ON cms_content_field_values (field_id, value_bool)
-            SQL);
+        $indexes->ensure('cms_content_field_values', 'idx_field_value_bool', ['field_id', 'value_bool']);
     }
 
     public function down(ConnectionInterface $connection): void

@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_customers (
@@ -30,21 +31,19 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_customer_tenant_email
-                ON cms_customers (tenant_key, email)
-            SQL);
+        $indexes->ensure(
+            'cms_customers',
+            'uq_customer_tenant_email',
+            ['tenant_key', 'email'],
+            unique: true,
+        );
 
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_customer_user ON cms_customers (user_id)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_customer_user ON cms_customers (user_id)
-                    WHERE user_id IS NOT NULL
-                SQL);
-        }
+        $indexes->ensure(
+            'cms_customers',
+            'idx_customer_user',
+            ['user_id'],
+            where: 'user_id IS NOT NULL',
+        );
     }
 
     public function down(ConnectionInterface $connection): void

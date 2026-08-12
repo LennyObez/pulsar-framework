@@ -5,7 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 
+/**
+ * The table is still written once per engine — the column types genuinely differ, and
+ * MySQL needs a named constraint where the other two inline the reference. The indexes
+ * did not differ, and were three copies of one list waiting to disagree: MySQL's lived
+ * inside its `CREATE TABLE`, so nothing would have compared it against the other two.
+ */
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
@@ -16,6 +23,13 @@ return new class implements MigrationInterface {
             Driver::MySQL => $this->upMysql($connection),
             Driver::PostgreSQL => $this->upPostgresql($connection),
         };
+
+        $indexes = new IndexOperations($connection);
+
+        $indexes->ensure('feedback', 'idx_feedback_user_id', ['user_id']);
+        $indexes->ensure('feedback', 'idx_feedback_category', ['category']);
+        $indexes->ensure('feedback', 'idx_feedback_status', ['status']);
+        $indexes->ensure('feedback', 'idx_feedback_user_created', ['user_id', 'created_at']);
     }
 
     public function down(ConnectionInterface $connection): void
@@ -39,26 +53,6 @@ return new class implements MigrationInterface {
                 updated_at TEXT NOT NULL
             )
             SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_user_id
-                ON feedback (user_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_category
-                ON feedback (category)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_status
-                ON feedback (status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_user_created
-                ON feedback (user_id, created_at)
-            SQL);
     }
 
     private function upMysql(ConnectionInterface $connection): void
@@ -75,10 +69,6 @@ return new class implements MigrationInterface {
                 github_issue_url VARCHAR(500),
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_feedback_user_id (user_id),
-                INDEX idx_feedback_category (category),
-                INDEX idx_feedback_status (status),
-                INDEX idx_feedback_user_created (user_id, created_at),
                 CONSTRAINT fk_feedback_user
                     FOREIGN KEY (user_id) REFERENCES auth_users(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -100,26 +90,6 @@ return new class implements MigrationInterface {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_user_id
-                ON feedback (user_id)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_category
-                ON feedback (category)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_status
-                ON feedback (status)
-            SQL);
-
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_feedback_user_created
-                ON feedback (user_id, created_at)
             SQL);
     }
 };

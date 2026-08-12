@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_category_translations (
@@ -23,10 +25,12 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_cat_translation_locale
-                ON forum_category_translations (category_id, locale)
-            SQL);
+        $indexes->ensure(
+            'forum_category_translations',
+            'uq_cat_translation_locale',
+            ['category_id', 'locale'],
+            unique: true,
+        );
     }
 
     public function down(ConnectionInterface $connection): void

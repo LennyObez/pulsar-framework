@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_link_health_checks (
@@ -29,24 +30,20 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_link_health_broken_tenant
-                    ON cms_link_health_checks (is_broken, tenant_id)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_link_health_broken_tenant
-                    ON cms_link_health_checks (is_broken, tenant_id)
-                    WHERE is_broken = true
-                SQL);
-        }
+        // `is_broken` stays in the key either way, so the predicate only ever narrows the
+        // index where the engine has partial indexes and is dropped where it does not.
+        $indexes->ensure(
+            'cms_link_health_checks',
+            'idx_link_health_broken_tenant',
+            ['is_broken', 'tenant_id'],
+            where: 'is_broken = true',
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_link_health_content_locale
-                ON cms_link_health_checks (source_content_id, source_locale)
-            SQL);
+        $indexes->ensure(
+            'cms_link_health_checks',
+            'idx_link_health_content_locale',
+            ['source_content_id', 'source_locale'],
+        );
     }
 
     public function down(ConnectionInterface $connection): void
