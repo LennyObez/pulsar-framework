@@ -213,11 +213,24 @@ final class PostgresSchemaCompilerTest extends TestCase
         self::assertSame('ALTER TABLE "users" DROP COLUMN "email"', $stmts[0]);
     }
 
+    /**
+     * The table is named, and it has to be.
+     *
+     * `DROP INDEX` accepts only the index name and resolves it through the search path,
+     * which is a second resolution the existence guard has already performed against the
+     * table. Where two schemas on the path carry the same index name, the guard confirms one
+     * object and the drop removes another. So the statement resolves the table's namespace
+     * first and qualifies the index with it.
+     */
     #[Test]
-    public function dropIndexOmitsTableName(): void
+    public function dropIndexResolvesTheIndexThroughItsTable(): void
     {
         $stmts = $this->compiler->compileDropIndex('users', 'idx_email');
-        self::assertSame('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
+
+        self::assertStringContainsString("to_regclass(quote_ident('users'))", $stmts[0]);
+        self::assertStringContainsString("'idx_email'", $stmts[0]);
+        self::assertStringContainsString('DROP INDEX IF EXISTS %I.%I', $stmts[0]);
+        self::assertStringNotContainsString('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
     }
 
     #[Test]
