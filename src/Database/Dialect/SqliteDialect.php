@@ -82,6 +82,16 @@ final readonly class SqliteDialect extends AbstractDialect
     }
 
     /**
+     * Since 3.30.0. SQLite otherwise sorts NULLs first in both directions, so a caller
+     * that wants them last has no other way to say so.
+     */
+    #[Override]
+    public function supportsNullsOrdering(): bool
+    {
+        return true;
+    }
+
+    /**
      * `sqlite_master` rather than `pragma_index_list`, because it answers about the index
      * and its owning table in one predicate; the pragma lists a table's indexes and would
      * need the table established separately.

@@ -88,6 +88,26 @@ unsupported yields an index over every row instead of the subset asked for: wide
 differently by the planner, never a wrong answer. That is why a caller who depends on the
 narrowing has to ask, and why nothing throws.
 
+**`IndexColumn` carries the order a column is stored in**, and `supportsNullsOrdering()`
+reports whether the `NULLS` half of it survives. Direction matters where a listing reads
+"newest first": a descending index is scanned forwards and can stop early, an ascending one
+is scanned backwards and cannot. `$nullsLast` is separate from the direction because the
+engines disagree on the default — PostgreSQL puts NULLs first under `DESC` and last under
+`ASC`, SQLite first under both — so a nullable ordered column has three distinguishable
+states and not two.
+
+Together with the predicate, this is what makes the abstraction complete rather than
+merely useful. Of 312 hand-written index statements in the tree, the one that resisted
+longest was
+
+    (category_id, is_pinned DESC, last_activity_at DESC NULLS LAST) WHERE deleted_at IS NULL
+
+which now compiles at full fidelity on PostgreSQL and SQLite, keeps `IF NOT EXISTS` and
+`DESC` on MariaDB, and drops to a plain descending index on MySQL. Nothing in the corpus
+still needs raw DDL, so converting the rest calls for no judgement — which is the point. An
+abstraction that covers the ordinary cases and leaves the awkward ones to hand-written SQL
+does not remove the hand-written SQL; it just moves where people write it.
+
 Asking rather than assuming caught a defect while this was being written.
 `MySqlDialect::compileCreateIndex()` passed a hardcoded `false` for `$ifNotExists`, and
 `MariaDbDialect` extends it — so MariaDB, which does have the clause, answered `true` to

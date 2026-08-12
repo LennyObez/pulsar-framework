@@ -15492,6 +15492,11 @@
                     "return": "bool",
                     "static": false
                 },
+                "supportsNullsOrdering": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
                 "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
@@ -15655,6 +15660,12 @@
                     "return": "bool",
                     "static": false
                 },
+                "supportsNullsOrdering": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\Dialect\\MySqlDialect"
+                },
                 "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
@@ -15790,6 +15801,11 @@
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
                 },
                 "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsNullsOrdering": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -15935,6 +15951,11 @@
                     "return": "bool",
                     "static": false
                 },
+                "supportsNullsOrdering": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
                 "supportsPartialIndexes": {
                     "params": [],
                     "return": "bool",
@@ -16072,6 +16093,11 @@
                     "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
                 },
                 "supportsIndexIfNotExists": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "supportsNullsOrdering": {
                     "params": [],
                     "return": "bool",
                     "static": false
@@ -18697,6 +18723,30 @@
                     ],
                     "return": "Pulsar\\Database\\Schema\\ForeignIdBuilder",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Schema\\IndexColumn": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $name",
+                        "bool $descending",
+                        "?bool $nullsLast"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "desc": {
+                    "params": [
+                        "string $name",
+                        "?bool $nullsLast"
+                    ],
+                    "return": "Pulsar\\Database\\Schema\\IndexColumn",
+                    "static": true
                 }
             },
             "constants": []
