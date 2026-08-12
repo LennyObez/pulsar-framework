@@ -236,12 +236,20 @@ final class DdlCompilerTest extends TestCase
         self::assertSame('DROP INDEX `idx_email` ON `users`', $stmts[0]);
     }
 
+    /**
+     * PostgreSQL qualifies the index with its table's schema rather than dropping by a bare
+     * name, which the search path would resolve independently of the table the existence
+     * guard checked.
+     */
     #[Test]
-    public function dropIndexPgsqlWithIfExists(): void
+    public function dropIndexPgsqlResolvesTheIndexThroughItsTable(): void
     {
         $compiler = $this->compiler(Driver::PostgreSQL);
         $stmts = $compiler->compileDropIndex('users', 'idx_email');
-        self::assertSame('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
+
+        self::assertStringContainsString("to_regclass(quote_ident('users'))", $stmts[0]);
+        self::assertStringContainsString("'idx_email'", $stmts[0]);
+        self::assertStringNotContainsString('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
     }
 
     #[Test]

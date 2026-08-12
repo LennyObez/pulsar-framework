@@ -8,6 +8,7 @@ use Override;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 use Pulsar\Database\LockMode;
+use Pulsar\Database\SqlIdentifier;
 
 use function implode;
 use function sprintf;
@@ -61,6 +62,49 @@ final readonly class PostgreSqlDialect extends AbstractDialect
     public function supportsIndexIfNotExists(): bool
     {
         return true;
+    }
+
+    /**
+     * An index lives in its table's schema, but `DROP INDEX` takes the index name alone and
+     * resolves it through the search path on its own. That is one resolution too many.
+     * {@see compileIndexExists()} settles the index through `to_regclass` on the *table*, so
+     * where two schemas on the path carry an index of the same name the guard can confirm
+     * the one on the intended table while the drop that follows removes the one an earlier
+     * schema offers: the wrong object destroyed, the target left standing.
+     *
+     * Qualifying the index with the namespace its table resolves to closes the gap. The
+     * namespace is not known when this string is compiled, so the lookup happens
+     * server-side and the statement is a DO block rather than plain DDL. A table that does
+     * not resolve yields no namespace and the block does nothing, which is the answer
+     * `IF EXISTS` would have given anyway.
+     *
+     * Both names are validated before being embedded. {@see SqlIdentifier::validate()}
+     * refuses anything carrying a quote, a comment introducer or a statement separator, so
+     * neither can close the literal it sits in.
+     */
+    #[Override]
+    public function compileDropIndex(string $name, string $table): string
+    {
+        return sprintf(
+            <<<'SQL'
+                DO $pulsar$
+                DECLARE
+                    target_schema text;
+                BEGIN
+                    SELECT n.nspname INTO target_schema
+                    FROM pg_class c
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE c.oid = to_regclass(quote_ident('%s'));
+
+                    IF target_schema IS NOT NULL THEN
+                        EXECUTE format('DROP INDEX IF EXISTS %%I.%%I', target_schema, '%s');
+                    END IF;
+                END
+                $pulsar$
+                SQL,
+            SqlIdentifier::validate($table),
+            SqlIdentifier::validate($name),
+        );
     }
 
     #[Override]
