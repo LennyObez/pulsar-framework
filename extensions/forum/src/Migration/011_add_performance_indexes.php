@@ -3,149 +3,112 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 
+/**
+ * Performance indexes for the forum tables.
+ *
+ * ## Why one list replaced three
+ *
+ * These fifteen indexes were written once per engine, and the copies had drifted far
+ * enough apart to be different indexes. PostgreSQL's were ordered with care —
+ * `(category_id, is_pinned DESC, last_activity_at DESC NULLS LAST)`, which is exactly the
+ * shape a "hot threads first" listing reads — while SQLite's dropped every direction and
+ * MySQL's dropped the soft-delete predicates as well. `idx_threads_author` indexed
+ * `(author_id, created_at DESC)` on one engine and `(author_id)` on the other two.
+ *
+ * None of that was a capability difference. SQLite has had `DESC` since forever and
+ * `NULLS LAST` since 3.30, so its copy was not degraded to fit the engine — it was simply
+ * the less considered one, and nothing compared them. Stating the intended shape once
+ * gives every engine the ordering that was only ever written down for one.
+ *
+ * What still differs is what the engines genuinely cannot do: MySQL has no partial index
+ * and no `NULLS` clause, so it gets the same keys over every row. Wider than asked for,
+ * chosen differently by the planner, never a wrong answer — and the dialect is what
+ * decides that, not this file.
+ */
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
-        match ($connection->driver()) {
-            Driver::SQLite => $this->upSqlite($connection),
-            Driver::MySQL => $this->upMysql($connection),
-            Driver::PostgreSQL => $this->upPostgresql($connection),
-        };
+        $indexes = new IndexOperations($connection);
+
+        foreach ($this->indexes() as [$table, $name, $columns, $where]) {
+            $indexes->ensure($table, $name, $columns, where: $where);
+        }
     }
 
     /**
-     * MySQL accepts no `IF EXISTS` on `DROP INDEX`, so the branch written for it here was
-     * invalid syntax rather than a portability nicety — on a path that runs rarely enough
-     * for nobody to notice. The dialect knows each engine's spelling, including that
-     * MySQL needs the owning table named.
+     * MySQL accepts no `IF EXISTS` on `DROP INDEX` and needs the owning table named, which
+     * is why this went through the dialect before the rest of the file did — the rollback
+     * path runs rarely enough that invalid syntax sat here unnoticed.
      */
     public function down(ConnectionInterface $connection): void
     {
-        $dialect = $connection->dialect();
+        $indexes = new IndexOperations($connection);
 
-        // Map each index to its correct table
-        $indexTableMap = [
-            'idx_threads_category_pinned' => 'forum_threads',
-            'idx_threads_author' => 'forum_threads',
-            'idx_threads_tenant_recent' => 'forum_threads',
-            'idx_threads_slug_tenant' => 'forum_threads',
-            'idx_posts_thread_created' => 'forum_posts',
-            'idx_posts_author' => 'forum_posts',
-            'idx_thread_votes_user_thread' => 'forum_thread_votes',
-            'idx_post_votes_user_post' => 'forum_post_votes',
-            'idx_profiles_user_tenant' => 'forum_profiles',
-            'idx_profiles_reputation' => 'forum_profiles',
-            'idx_post_reports_status' => 'forum_post_reports',
-            'idx_thread_reports_status' => 'forum_thread_reports',
-            'idx_subscriptions_thread' => 'forum_thread_subscriptions',
-            'idx_subscriptions_user_tenant' => 'forum_thread_subscriptions',
-            'idx_badges_user_tenant' => 'forum_user_badges',
+        foreach ($this->indexes() as [$table, $name]) {
+            $indexes->ensureAbsent($table, $name);
+        }
+    }
+
+    /**
+     * Table, index name, columns, and the predicate that narrows it where the engine can.
+     *
+     * A method rather than a constant because `IndexColumn` instances cannot appear in
+     * one, and the ordering is the part of these definitions worth keeping.
+     *
+     * @return list<array{string, string, list<string|IndexColumn>, ?string}>
+     */
+    private function indexes(): array
+    {
+        $live = 'deleted_at IS NULL';
+
+        return [
+            // Thread listings: newest activity first, and a thread with no activity yet
+            // sorts last rather than first.
+            ['forum_threads', 'idx_threads_category_pinned', [
+                'category_id',
+                IndexColumn::desc('is_pinned'),
+                IndexColumn::desc('last_activity_at', nullsLast: true),
+            ], $live],
+            ['forum_threads', 'idx_threads_author', [
+                'author_id',
+                IndexColumn::desc('created_at'),
+            ], $live],
+            ['forum_threads', 'idx_threads_tenant_recent', [
+                'tenant_id',
+                IndexColumn::desc('last_activity_at', nullsLast: true),
+            ], $live],
+            ['forum_threads', 'idx_threads_slug_tenant', ['slug', 'tenant_id'], $live],
+
+            // Posts read oldest-first within a thread, newest-first for an author.
+            ['forum_posts', 'idx_posts_thread_created', ['thread_id', 'created_at'], $live],
+            ['forum_posts', 'idx_posts_author', [
+                'author_id',
+                IndexColumn::desc('created_at'),
+            ], $live],
+
+            ['forum_thread_votes', 'idx_thread_votes_user_thread', ['user_id', 'thread_id', 'tenant_id'], null],
+            ['forum_post_votes', 'idx_post_votes_user_post', ['user_id', 'post_id', 'tenant_id'], null],
+
+            ['forum_profiles', 'idx_profiles_user_tenant', ['user_id', 'tenant_id'], null],
+            // Leaderboards read highest reputation first.
+            ['forum_profiles', 'idx_profiles_reputation', [
+                'tenant_id',
+                IndexColumn::desc('reputation_score'),
+            ], null],
+
+            // Moderation queues read oldest-first: the longest-waiting report is the one
+            // that matters.
+            ['forum_post_reports', 'idx_post_reports_status', ['status', 'tenant_id', 'created_at'], null],
+            ['forum_thread_reports', 'idx_thread_reports_status', ['status', 'tenant_id', 'created_at'], null],
+
+            ['forum_thread_subscriptions', 'idx_subscriptions_thread', ['thread_id'], null],
+            ['forum_thread_subscriptions', 'idx_subscriptions_user_tenant', ['user_id', 'tenant_id'], null],
+
+            ['forum_user_badges', 'idx_badges_user_tenant', ['user_id', 'tenant_id'], null],
         ];
-
-        foreach ($indexTableMap as $index => $table) {
-            $connection->execute($dialect->compileDropIndex($index, $table));
-        }
-    }
-
-    private function upSqlite(ConnectionInterface $connection): void
-    {
-        // Thread indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_category_pinned ON forum_threads (category_id, is_pinned, last_activity_at)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_author ON forum_threads (author_id) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_tenant_recent ON forum_threads (tenant_id, last_activity_at) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_slug_tenant ON forum_threads (slug, tenant_id) WHERE deleted_at IS NULL');
-
-        // Post indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_posts_thread_created ON forum_posts (thread_id, created_at) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_posts_author ON forum_posts (author_id) WHERE deleted_at IS NULL');
-
-        // Vote indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_thread_votes_user_thread ON forum_thread_votes (user_id, thread_id, tenant_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_post_votes_user_post ON forum_post_votes (user_id, post_id, tenant_id)');
-
-        // Profile indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_profiles_user_tenant ON forum_profiles (user_id, tenant_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_profiles_reputation ON forum_profiles (tenant_id, reputation_score)');
-
-        // Report indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_post_reports_status ON forum_post_reports (status, tenant_id, created_at)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_thread_reports_status ON forum_thread_reports (status, tenant_id, created_at)');
-
-        // Subscription indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_subscriptions_thread ON forum_thread_subscriptions (thread_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_subscriptions_user_tenant ON forum_thread_subscriptions (user_id, tenant_id)');
-
-        // Badge indexes
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_badges_user_tenant ON forum_user_badges (user_id, tenant_id)');
-    }
-
-    private function upMysql(ConnectionInterface $connection): void
-    {
-        $this->createIndexIfNotExists($connection, 'idx_threads_category_pinned', 'forum_threads', '(category_id, is_pinned, last_activity_at)');
-        $this->createIndexIfNotExists($connection, 'idx_threads_author', 'forum_threads', '(author_id)');
-        $this->createIndexIfNotExists($connection, 'idx_threads_tenant_recent', 'forum_threads', '(tenant_id, last_activity_at)');
-        $this->createIndexIfNotExists($connection, 'idx_threads_slug_tenant', 'forum_threads', '(slug, tenant_id)');
-
-        $this->createIndexIfNotExists($connection, 'idx_posts_thread_created', 'forum_posts', '(thread_id, created_at)');
-        $this->createIndexIfNotExists($connection, 'idx_posts_author', 'forum_posts', '(author_id)');
-
-        $this->createIndexIfNotExists($connection, 'idx_thread_votes_user_thread', 'forum_thread_votes', '(user_id, thread_id, tenant_id)');
-        $this->createIndexIfNotExists($connection, 'idx_post_votes_user_post', 'forum_post_votes', '(user_id, post_id, tenant_id)');
-
-        $this->createIndexIfNotExists($connection, 'idx_profiles_user_tenant', 'forum_profiles', '(user_id, tenant_id)');
-        $this->createIndexIfNotExists($connection, 'idx_profiles_reputation', 'forum_profiles', '(tenant_id, reputation_score)');
-
-        $this->createIndexIfNotExists($connection, 'idx_post_reports_status', 'forum_post_reports', '(status, tenant_id, created_at)');
-        $this->createIndexIfNotExists($connection, 'idx_thread_reports_status', 'forum_thread_reports', '(status, tenant_id, created_at)');
-
-        $this->createIndexIfNotExists($connection, 'idx_subscriptions_thread', 'forum_thread_subscriptions', '(thread_id)');
-        $this->createIndexIfNotExists($connection, 'idx_subscriptions_user_tenant', 'forum_thread_subscriptions', '(user_id, tenant_id)');
-
-        $this->createIndexIfNotExists($connection, 'idx_badges_user_tenant', 'forum_user_badges', '(user_id, tenant_id)');
-    }
-
-    private function upPostgresql(ConnectionInterface $connection): void
-    {
-        // Partial indexes for common queries
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_category_pinned ON forum_threads (category_id, is_pinned DESC, last_activity_at DESC NULLS LAST) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_author ON forum_threads (author_id, created_at DESC) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_tenant_recent ON forum_threads (tenant_id, last_activity_at DESC NULLS LAST) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_threads_slug_tenant ON forum_threads (slug, tenant_id) WHERE deleted_at IS NULL');
-
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_posts_thread_created ON forum_posts (thread_id, created_at ASC) WHERE deleted_at IS NULL');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_posts_author ON forum_posts (author_id, created_at DESC) WHERE deleted_at IS NULL');
-
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_thread_votes_user_thread ON forum_thread_votes (user_id, thread_id, tenant_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_post_votes_user_post ON forum_post_votes (user_id, post_id, tenant_id)');
-
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_profiles_user_tenant ON forum_profiles (user_id, tenant_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_profiles_reputation ON forum_profiles (tenant_id, reputation_score DESC)');
-
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_post_reports_status ON forum_post_reports (status, tenant_id, created_at ASC)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_thread_reports_status ON forum_thread_reports (status, tenant_id, created_at ASC)');
-
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_subscriptions_thread ON forum_thread_subscriptions (thread_id)');
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_subscriptions_user_tenant ON forum_thread_subscriptions (user_id, tenant_id)');
-
-        $connection->execute('CREATE INDEX IF NOT EXISTS idx_badges_user_tenant ON forum_user_badges (user_id, tenant_id)');
-    }
-
-    private function createIndexIfNotExists(
-        ConnectionInterface $connection,
-        string $indexName,
-        string $table,
-        string $columns,
-    ): void {
-        $result = $connection->query(
-            'SELECT COUNT(*) AS cnt FROM information_schema.statistics WHERE table_schema = DATABASE() AND index_name = :name',
-            ['name' => $indexName],
-        );
-
-        if (($result->first()?->getInt('cnt') ?? 0) === 0) {
-            $connection->execute("CREATE INDEX $indexName ON $table $columns");
-        }
     }
 };
