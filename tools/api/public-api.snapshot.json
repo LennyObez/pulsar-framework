@@ -15879,8 +15879,7 @@
                         "string $table"
                     ],
                     "return": "string",
-                    "static": false,
-                    "inherited_from": "Pulsar\\Database\\Dialect\\AbstractDialect"
+                    "static": false
                 },
                 "compileIndexExists": {
                     "params": [],
