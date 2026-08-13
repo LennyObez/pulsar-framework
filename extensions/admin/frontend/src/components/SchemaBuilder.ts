@@ -188,7 +188,7 @@ export function initializeSchemaBuilder(): void {
       const def = buildTableStructure();
       const result = await api.schemaCreate(def, reason);
       if (result.success) {
-        window.location.href = `/admin/schema/${def.name}`;
+        window.location.href = `/admin/schema/${encodeURIComponent(def.name)}`;
       } else {
         alert(result.message);
         submitting = false;
