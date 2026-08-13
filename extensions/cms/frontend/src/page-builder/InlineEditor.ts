@@ -129,10 +129,11 @@ export class InlineEditor {
     range.deleteContents();
 
     if (htmlData) {
-      // Sanitize the pasted HTML through the same sanitizer
-      const cleaned = this.sanitize(htmlData);
-      const fragment = document.createRange().createContextualFragment(cleaned);
-      range.insertNode(fragment);
+      // Insert the sanitized nodes, never a string. createContextualFragment
+      // unmarks the scripts it parses as already started, so they run once
+      // inserted, and reaching it meant serializing the sanitized tree and
+      // parsing it again — the round trip mutation XSS lives in.
+      range.insertNode(this.sanitizeToFragment(htmlData));
     } else if (textData) {
       const textNode = document.createTextNode(textData);
       range.insertNode(textNode);
@@ -380,11 +381,24 @@ export class InlineEditor {
     this.element.focus();
   }
 
+  // DOMParser gives an inert document — no script runs, no subresource loads —
+  // and unlike an innerHTML assignment it is a parser entry point, so the
+  // untrusted string never crosses a DOM write at all.
+  private sanitizeToFragment(html: string): DocumentFragment {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    this.sanitizeNode(parsed.body);
+
+    const fragment = document.createDocumentFragment();
+    fragment.append(...Array.from(parsed.body.childNodes));
+
+    return fragment;
+  }
+
   private sanitize(html: string): string {
-    const template = document.createElement('template');
-    template.innerHTML = html;
-    this.sanitizeNode(template.content);
-    return template.innerHTML;
+    const holder = document.createElement('div');
+    holder.append(this.sanitizeToFragment(html));
+
+    return holder.innerHTML;
   }
 
   private sanitizeNode(node: Node): void {
@@ -407,11 +421,12 @@ export class InlineEditor {
           if (el.tagName === 'A' && attr.name === 'href') {
             // Validate href
             const href = attr.value;
-            if (
-              !href.startsWith('http://') &&
-              !href.startsWith('https://') &&
-              !href.startsWith('/')
-            ) {
+            // A leading / alone does not mean same origin: //host and /\host are
+            // both protocol-relative and resolve off-site.
+            const isRootedPath =
+              href.startsWith('/') && !href.startsWith('//') && !href.startsWith('/\\');
+
+            if (!href.startsWith('http://') && !href.startsWith('https://') && !isRootedPath) {
               toRemove.push(child);
               break;
             }
