@@ -84,7 +84,10 @@ jobs:
             # newer one. A manifest monitored by one and not the other is the
             # blind spot this whole step exists to close, so the list in
             # dependabot.yml is checked rather than trusted.
-            if ! grep -qE "^[[:space:]]*(directory: |- )/$directory[[:space:]]*\$" .github/dependabot.yml; then
+            # Braces around the expansion: the `[` that opens the character class reads as
+            # an array subscript otherwise, which shellcheck refuses (SC1087) and which
+            # would silently change what this pattern matches.
+            if ! grep -qE "^[[:space:]]*(directory: |- )/${directory}[[:space:]]*\$" .github/dependabot.yml; then
               echo "::error::$manifest requires third-party code, but /$directory has no entry in .github/dependabot.yml — nothing will ever propose an update for it."
               exit 1
             fi
