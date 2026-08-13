@@ -17,10 +17,8 @@ jobs:
     name: PHP Quality (CS, PHPStan, Psalm, Boundaries)
     runs-on: ubuntu-latest
 
-    # The PR size gate (ADR-0031) reads labels and the CODEOWNER comment via `gh`.
     permissions:
       contents: read
-      pull-requests: read
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -77,24 +75,6 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: bash tools/ci/check-pr-title-scope.sh
 
-      # ADR-0031: enforce the 1500-line PR cap. A PR that bundles a
-      # whole release cycle into one squash-merge diff is review-
-      # resistant and destroys git-bisect granularity.
-      # Hard cap at 1500 lines of substantive diff (excluding
-      # lockfiles + generated code per .size-limit-ignore); above
-      # that, the PR needs the `oversize-pr-acknowledged` label
-      # AND a `/oversize-pr-approved` comment from a CODEOWNER
-      # other than the PR author.
-      - name: PR size limit (ADR-0031)
-        if: github.event_name == 'pull_request'
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          BASE_REF: ${{ github.base_ref }}
-          REPO_FULL: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bash tools/ci/check-pr-size.sh
-
       # PSR-4 conformance is a correctness gate, not style: composer's optimized
       # classmap hides a namespace/path mismatch (the class still resolves), and
       # `--strict-psr` only WARNS while still exiting 0. A mismatch that works on
@@ -137,6 +117,45 @@ jobs:
 
       - name: Audit dependencies for vulnerabilities
         run: composer audit --abandoned=report
+
+  # ADR-0031: enforce the 1500-line PR cap. A PR that bundles a whole release
+  # cycle into one squash-merge diff is review-resistant and destroys
+  # git-bisect granularity. Hard cap at 1500 lines of substantive diff
+  # (excluding lockfiles + generated code per .size-limit-ignore); above that,
+  # the PR needs the `oversize-pr-acknowledged` label AND a
+  # `/oversize-pr-approved` comment from a CODEOWNER other than the PR author.
+  #
+  # Its own job, and nothing depends on it. It used to be a step inside
+  # php-quality, which every test job needs — so an oversize PR failed the
+  # quality job and skipped the unit, integration, E2E, Windows, mutation,
+  # benchmark and cache-warmup suites with it. A policy verdict on how the work
+  # was packaged was suppressing every signal about whether the work runs. The
+  # gate is unchanged and still blocks the merge; it no longer takes the test
+  # suite hostage.
+  pr-size:
+    name: PR Size Limit (ADR-0031)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    # Reads labels and the CODEOWNER approval comment via `gh`.
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: PR size limit (ADR-0031)
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_REF: ${{ github.base_ref }}
+          REPO_FULL: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash tools/ci/check-pr-size.sh
 
   php-tests:
     name: PHP Tests (Unit, Integration, E2E)
