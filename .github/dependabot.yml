@@ -12,6 +12,14 @@
 #
 # Updates are grouped so a week's patches arrive as one reviewable PR rather than
 # forty. Majors stay ungrouped and separate, because a major is a decision.
+#
+# Every ecosystem waits seven days before a routine bump is proposed. A package
+# published minutes ago has had nobody looking at it, and the window in which a
+# hijacked release gets caught and yanked is measured in days. Seven matches the
+# High tier already published in docs/dependabot-sla.md, so the file states one
+# number rather than two. This delays nothing that matters in an incident:
+# cooldown is a version-update option and does not apply to security updates,
+# which keep arriving immediately and keep their 48-hour critical SLA.
 version: 2
 
 updates:
@@ -26,6 +34,8 @@ updates:
       time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
     versioning-strategy: increase
     commit-message:
       prefix: build
@@ -59,6 +69,8 @@ updates:
       time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: build
       include: scope
@@ -91,6 +103,8 @@ updates:
       time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     versioning-strategy: increase
     commit-message:
       prefix: build
@@ -112,6 +126,8 @@ updates:
       time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
     versioning-strategy: increase
     commit-message:
       prefix: build
@@ -137,6 +153,8 @@ updates:
       time: '06:00'
       timezone: Europe/Brussels
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: ci
       include: scope
