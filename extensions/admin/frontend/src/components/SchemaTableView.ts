@@ -147,7 +147,7 @@ export function initializeSchemaView(): void {
 
     void api.schemaRenameTable(table, newName, reason).then((result) => {
       if (result.success) {
-        window.location.href = `/admin/schema/${newName}`;
+        window.location.href = `/admin/schema/${encodeURIComponent(newName)}`;
       } else {
         alert(result.message);
       }
