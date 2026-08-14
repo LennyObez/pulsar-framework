@@ -68,6 +68,29 @@ final class TotpReplayGuardMigrationContractTest extends TestCase
     }
 
     /**
+     * The engines whose migration splits the change across two statements, and so can
+     * be interrupted between them.
+     *
+     * Filtered here rather than skipped inside the test. This suite runs with
+     * --fail-on-skipped so that a mis-set engine variable fails instead of quietly
+     * skipping, which is the only thing that makes "executed against every engine"
+     * mean what it says. A case generated and then skipped spends that guarantee on a
+     * scenario that was never possible: it makes "cannot happen here" and "did not run
+     * here" print the same word.
+     *
+     * Derived from the engine list rather than naming PostgreSQL outright, so removing
+     * it upstream empties this provider and PHPUnit says so.
+     */
+    public static function enginesThatSplitTheAlter(): iterable
+    {
+        foreach (DatabaseEngine::all() as $driver) {
+            if ($driver === Driver::PostgreSQL) {
+                yield $driver->value => [$driver];
+            }
+        }
+    }
+
+    /**
      * The headline for MySQL: the creating migration used to die on its second index and
      * never reach the third table, so the replay guard did not exist and the second
      * factor could not work at all.
@@ -254,16 +277,9 @@ final class TotpReplayGuardMigrationContractTest extends TestCase
      * a table with no primary key at all.
      */
     #[Test]
-    #[DataProvider('engines')]
+    #[DataProvider('enginesThatSplitTheAlter')]
     public function aRunThatDiedBeforeTheKeyWasAddedIsCompletedByTheNext(Driver $driver): void
     {
-        if ($driver !== Driver::PostgreSQL) {
-            // Only PostgreSQL splits the change across two statements. MySQL does it in
-            // one ALTER and SQLite rebuilds the table with the key already on it, so
-            // neither can occupy this state.
-            self::markTestSkipped('only the PostgreSQL path drops the column and adds the key separately');
-        }
-
         $connection = $this->engine($driver);
         $this->creatingMigration()->up($connection);
         $this->migration()->up($connection);

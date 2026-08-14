@@ -389,7 +389,10 @@ jobs:
           # purpose: the client extensions would load with no server behind them,
           # which is worse than absent — the driver tests would connect to nothing
           # and skip, while the job appeared to cover them.
-          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium
+          # exif, fileinfo and gd are required by composer.json and ship enabled in the
+          # Linux build, so no Linux job has to name them. Windows does: composer refused
+          # the lockfile outright, before a single test ran.
+          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium, exif, fileinfo, gd
           ini-values: apc.enable_cli=1
           coverage: none
 
@@ -663,7 +666,10 @@ jobs:
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version-file: .php-version
-          extensions: pdo_sqlite
+          # Same three as the Windows test job, for the same reason: this matrix runs on
+          # windows-latest too, and composer install refuses the lockfile there without
+          # them. Naming them costs nothing on ubuntu, where they are already enabled.
+          extensions: pdo_sqlite, exif, fileinfo, gd
           coverage: none
 
       - name: Cache Composer dependencies
