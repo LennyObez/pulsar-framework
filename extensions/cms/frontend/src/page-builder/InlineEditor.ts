@@ -20,6 +20,27 @@ const ALLOWED_TAGS = new Set([
   'CODE',
 ]);
 
+// Handed to Element.setHTML(), which sanitizes in the browser's own parser. It
+// enforces a floor of its own — script, iframe, object and every event handler
+// attribute go regardless of what is listed here — and this narrows the result
+// to what the editor is allowed to contain. href survives to be scheme-checked
+// by sanitizeNode, which a Sanitizer config cannot express.
+// lib.dom declares Sanitizer and SanitizerConfig but not the method that takes
+// them, so the safe half of the API is unreachable from TypeScript. Declared
+// here rather than reached through a cast: every call is guarded by the runtime
+// check in sanitizeToFragment, so this describes a method we only ever invoke
+// where it exists. Remove once lib.dom catches up.
+declare global {
+  interface Element {
+    setHTML(html: string, options?: { sanitizer?: Sanitizer | SanitizerConfig }): void;
+  }
+}
+
+const SANITIZER: SanitizerConfig = {
+  elements: [...ALLOWED_TAGS].map((tag) => tag.toLowerCase()),
+  attributes: ['href'],
+};
+
 export class InlineEditor {
   private readonly element: HTMLElement;
   private readonly onUpdate: (html: string) => void;
@@ -128,15 +149,15 @@ export class InlineEditor {
     const range = selection.getRangeAt(0);
     range.deleteContents();
 
-    if (htmlData) {
-      // Insert the sanitized nodes, never a string. createContextualFragment
-      // unmarks the scripts it parses as already started, so they run once
-      // inserted, and reaching it meant serializing the sanitized tree and
-      // parsing it again — the round trip mutation XSS lives in.
-      range.insertNode(this.sanitizeToFragment(htmlData));
+    // Rich paste only where the browser can sanitize it itself. Everywhere else
+    // the clipboard is taken as plain text: formatting is lost, nothing can be
+    // injected, and no untrusted string is ever parsed by this code.
+    const pasted = htmlData ? this.sanitizeToFragment(htmlData) : null;
+
+    if (pasted) {
+      range.insertNode(pasted);
     } else if (textData) {
-      const textNode = document.createTextNode(textData);
-      range.insertNode(textNode);
+      range.insertNode(document.createTextNode(textData));
     }
 
     // Move cursor to end of inserted content
@@ -173,8 +194,7 @@ export class InlineEditor {
   }
 
   private emitUpdate(): void {
-    const sanitized = this.sanitize(this.element.innerHTML);
-    this.onUpdate(sanitized);
+    this.onUpdate(this.sanitize());
   }
 
   private showToolbar(range: Range): void {
@@ -381,24 +401,34 @@ export class InlineEditor {
     this.element.focus();
   }
 
-  // DOMParser gives an inert document — no script runs, no subresource loads —
-  // and unlike an innerHTML assignment it is a parser entry point, so the
-  // untrusted string never crosses a DOM write at all.
-  private sanitizeToFragment(html: string): DocumentFragment {
-    const parsed = new DOMParser().parseFromString(html, 'text/html');
-    this.sanitizeNode(parsed.body);
+  // Element.setHTML() is the only way this file turns an untrusted string into
+  // nodes. The browser parses and sanitizes it in one step, so no partly-cleaned
+  // tree ever exists here and nothing is serialized and parsed again — the round
+  // trip mutation XSS lives in. Returns null where the API is missing, and the
+  // caller falls back to plain text rather than to a hand-rolled parser.
+  private sanitizeToFragment(html: string): DocumentFragment | null {
+    if (!('setHTML' in Element.prototype)) {
+      return null;
+    }
+
+    const holder = document.createElement('div');
+    holder.setHTML(html, { sanitizer: SANITIZER });
+    this.sanitizeNode(holder);
 
     const fragment = document.createDocumentFragment();
-    fragment.append(...Array.from(parsed.body.childNodes));
+    fragment.append(...Array.from(holder.childNodes));
 
     return fragment;
   }
 
-  private sanitize(html: string): string {
-    const holder = document.createElement('div');
-    holder.append(this.sanitizeToFragment(html));
+  // Reads the editor's own subtree, so there is nothing to parse: the nodes
+  // already exist. Sanitizing a clone keeps the caret and the live selection
+  // untouched while still refusing to emit anything outside the allowlist.
+  private sanitize(): string {
+    const clone = this.element.cloneNode(true) as HTMLElement;
+    this.sanitizeNode(clone);
 
-    return holder.innerHTML;
+    return clone.innerHTML;
   }
 
   private sanitizeNode(node: Node): void {
