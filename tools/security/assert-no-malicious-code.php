@@ -92,7 +92,11 @@ const SCAN_ROOTS = [
     'bin',
     'public',
     'config',
-    'bootstrap',
+    // No 'bootstrap': the tree held one file, bootstrap.php, and it now lives at
+    // tools/php/bootstrap.php. `tools` is scanned above, so nothing left coverage
+    // — which is the only reason this entry may go. The gate refuses to let a
+    // root vanish quietly, and it was right to: it caught this the first time it
+    // ran, having been unreachable behind an earlier failing step until now.
     'database',
     'benchmarks',
     'examples',
