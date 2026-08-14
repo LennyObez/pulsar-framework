@@ -31,10 +31,12 @@ use Pulsar\Extension\Auth\OAuth2\Grant\ClientCredentialsGrant;
 use Pulsar\Extension\Auth\OAuth2\Grant\RefreshTokenGrant;
 use Pulsar\Extension\Auth\OAuth2\Oidc\IdTokenBuilder;
 use Pulsar\Extension\Auth\OAuth2\Oidc\JwksEndpoint;
+use Pulsar\Extension\Auth\OAuth2\Oidc\JwksEndpointInterface;
 use Pulsar\Extension\Auth\OAuth2\Oidc\JwtSigner;
 use Pulsar\Extension\Auth\OAuth2\Oidc\OidcConfig;
 use Pulsar\Extension\Auth\OAuth2\Oidc\OidcDiscovery;
 use Pulsar\Extension\Auth\OAuth2\Oidc\UserInfoEndpoint;
+use Pulsar\Extension\Auth\OAuth2\Oidc\UserInfoEndpointInterface;
 use Pulsar\Extension\Auth\OAuth2\Token\DbAuthorizationCodeRepository;
 use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAccessTokenRepository;
 use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAuthorizationCodeRepository;
@@ -124,8 +126,10 @@ final class AuthServiceProvider implements ServiceProviderInterface
             RefreshTokenGrant::class,
             OidcDiscovery::class,
             JwksEndpoint::class,
+            JwksEndpointInterface::class,
             IdTokenBuilder::class,
             UserInfoEndpoint::class,
+            UserInfoEndpointInterface::class,
 
             // WebAuthn
             CredentialRepositoryInterface::class,
@@ -342,6 +346,15 @@ final class AuthServiceProvider implements ServiceProviderInterface
             );
         });
 
+        // The controller resolves the contract. Delegating rather than aliasing to the
+        // class keeps the factory above the single place the key ring is read from.
+        $container->bind(JwksEndpointInterface::class, static function () use ($container): JwksEndpointInterface {
+            /** @var JwksEndpoint $endpoint */
+            $endpoint = $container->get(JwksEndpoint::class);
+
+            return $endpoint;
+        });
+
         $container->bind(IdTokenBuilder::class, static function () use ($container): IdTokenBuilder {
             return new IdTokenBuilder(
                 $container->get(OidcConfig::class),
@@ -355,6 +368,15 @@ final class AuthServiceProvider implements ServiceProviderInterface
                 $container->get(UserClaimsProviderInterface::class),
                 $container->get(AccessTokenRepositoryInterface::class),
             );
+        });
+
+        // Same delegation: the userinfo route is only bound once an application supplies
+        // a claims provider, and that decision must stay in the factory above.
+        $container->bind(UserInfoEndpointInterface::class, static function () use ($container): UserInfoEndpointInterface {
+            /** @var UserInfoEndpoint $endpoint */
+            $endpoint = $container->get(UserInfoEndpoint::class);
+
+            return $endpoint;
         });
     }
 
