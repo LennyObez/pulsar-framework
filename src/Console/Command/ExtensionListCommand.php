@@ -12,7 +12,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
-use Pulsar\Extensibility\ExtensionRegistry;
+use Pulsar\Extensibility\ExtensionCatalogInterface;
 
 use function count;
 use function sprintf;
@@ -27,7 +27,7 @@ use function str_contains;
 final class ExtensionListCommand extends Command
 {
     public function __construct(
-        private readonly ExtensionRegistry $registry,
+        private readonly ExtensionCatalogInterface $registry,
     ) {
         parent::__construct();
     }

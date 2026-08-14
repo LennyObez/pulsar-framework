@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Http\Controller\Api\I18nController;
 use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Compiler\TranslationCompiler;
 use Pulsar\I18n\TranslationEntry;
 
 #[CoversClass(I18nController::class)]
@@ -25,7 +26,7 @@ final class I18nControllerTest extends TestCase
             'cancel' => new TranslationEntry(key: 'cancel', message: 'Cancel'),
         ]);
 
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('en');
@@ -49,7 +50,7 @@ final class I18nControllerTest extends TestCase
         $catalog = $this->createStub(CatalogInterface::class);
         $catalog->method('all')->willReturn([]);
 
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('en');
@@ -66,7 +67,7 @@ final class I18nControllerTest extends TestCase
     public function returns404ForUnsupportedLocale(): void
     {
         $catalog = $this->createStub(CatalogInterface::class);
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('ja');
@@ -80,7 +81,7 @@ final class I18nControllerTest extends TestCase
     public function returns400ForInvalidLocaleFormat(): void
     {
         $catalog = $this->createStub(CatalogInterface::class);
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('invalid-locale-format');
@@ -94,7 +95,7 @@ final class I18nControllerTest extends TestCase
     public function returns400ForEmptyLocale(): void
     {
         $catalog = $this->createStub(CatalogInterface::class);
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('');
@@ -110,7 +111,7 @@ final class I18nControllerTest extends TestCase
         $catalog = $this->createStub(CatalogInterface::class);
         $catalog->method('all')->willReturn([]);
 
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('en');
@@ -134,7 +135,7 @@ final class I18nControllerTest extends TestCase
             },
         );
 
-        $controller = new I18nController($catalog, $this->makeConfig(), ['core', 'messages']);
+        $controller = new I18nController(new TranslationCompiler($catalog), $this->makeConfig(), ['core', 'messages']);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn('en');

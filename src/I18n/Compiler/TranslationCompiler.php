@@ -22,7 +22,7 @@ use const JSON_UNESCAPED_UNICODE;
  * for a given locale and domain, suitable for serving via the i18n API.
  */
 #[Internal]
-final readonly class TranslationCompiler
+final readonly class TranslationCompiler implements TranslationCompilerInterface
 {
     public function __construct(
         private CatalogInterface $catalog,

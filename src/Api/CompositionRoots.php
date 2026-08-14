@@ -31,7 +31,13 @@ use function str_starts_with;
  * production and tooling alike, and a guard test fails the build if a second definition
  * appears.
  */
-#[Internal(reason: 'Architecture invariant shared by the runtime guard and the boundary/wiring checkers')]
+// Published, not internal. The docblock above says this is imported by every
+// consumer, production and tooling alike, and the runtime guard in
+// Container\Internal is one of them — so #[Internal] forbade the single use the
+// class exists for. What it lists is an architecture contract: an extension
+// author writing a wiring class needs to know what counts as a root, and moving
+// a name in or out of these lists changes what the boundary rules permit.
+#[Api(since: '1.0.0')]
 final class CompositionRoots
 {
     /**

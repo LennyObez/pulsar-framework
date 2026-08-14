@@ -939,6 +939,20 @@
             },
             "constants": []
         },
+        "Pulsar\\Api\\CompositionRoots": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "contains": {
+                    "params": [
+                        "string $fqcn"
+                    ],
+                    "return": "bool",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Api\\Deprecated": {
             "since": "1.0.0",
             "methods": [],
@@ -21373,6 +21387,83 @@
             },
             "constants": []
         },
+        "Pulsar\\Extensibility\\ExtensionCatalogInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "allBooted": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "allManifests": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "count": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "failed": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "get": {
+                    "params": [
+                        "string $name"
+                    ],
+                    "return": "Pulsar\\Extensibility\\ExtensionInterface",
+                    "static": false
+                },
+                "getManifest": {
+                    "params": [
+                        "string $name"
+                    ],
+                    "return": "Pulsar\\Extensibility\\ExtensionManifest",
+                    "static": false
+                },
+                "getState": {
+                    "params": [
+                        "string $name"
+                    ],
+                    "return": "Pulsar\\Extensibility\\ExtensionLifecycle",
+                    "static": false
+                },
+                "has": {
+                    "params": [
+                        "string $name"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "hasFailed": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "inState": {
+                    "params": [
+                        "Pulsar\\Extensibility\\ExtensionLifecycle $state"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "names": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Extensibility\\ExtensionInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -29825,6 +29916,38 @@
                         "string $domain"
                     ],
                     "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\I18n\\Compiler\\TranslationCompilerInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "compile": {
+                    "params": [
+                        "string $locale",
+                        "string $domain",
+                        "bool $prettyPrint"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "compileAll": {
+                    "params": [
+                        "string $locale",
+                        "array $domains"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "keys": {
+                    "params": [
+                        "string $locale",
+                        "string $domain"
+                    ],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -65343,7 +65466,6 @@
         "Pulsar\\AI\\VectorStore\\MySqlVectorStore",
         "Pulsar\\AI\\VectorStore\\PgVectorStore",
         "Pulsar\\AI\\VectorStore\\SqliteVecStore",
-        "Pulsar\\Api\\CompositionRoots",
         "Pulsar\\Api\\OpenApi\\EndpointScanner",
         "Pulsar\\Api\\OpenApi\\OpenApiWiring",
         "Pulsar\\Api\\Resource\\ResourceMetadataCache",

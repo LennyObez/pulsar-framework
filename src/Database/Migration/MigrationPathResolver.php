@@ -6,8 +6,8 @@ namespace Pulsar\Database\Migration;
 
 use Pulsar\Api\Internal;
 use Pulsar\Config\DatabaseConfig;
+use Pulsar\Extensibility\ExtensionCatalogInterface;
 use Pulsar\Extensibility\ExtensionLifecycle;
-use Pulsar\Extensibility\ExtensionRegistry;
 
 use function dirname;
 use function glob;
@@ -29,7 +29,7 @@ final readonly class MigrationPathResolver implements MigrationPathResolverInter
 {
     public function __construct(
         private DatabaseConfig $databaseConfig,
-        private ?ExtensionRegistry $extensionRegistry = null,
+        private ?ExtensionCatalogInterface $extensionRegistry = null,
     ) {}
 
     public function resolve(): array

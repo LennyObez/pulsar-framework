@@ -261,6 +261,17 @@ final class ArchitectureRulesTest extends TestCase
                 continue;
             }
 
+            // The registry that defines the roots is exempt as a source, for the same
+            // reason it is exempt as a target below: it is what the rules are written
+            // in. It holds class NAMES as strings and imports nothing — storing names
+            // rather than importing them is the whole point. Counting those strings as
+            // imports is what put OptimizeCommand and BuildCommand in the baseline;
+            // they come back out with this, because there was never a violation to
+            // record. Reading the list is not depending on what it lists.
+            if ($sourceNamespace === 'Pulsar\Api\CompositionRoots') {
+                continue;
+            }
+
             foreach ($references as $ref) {
                 // Same module — no restriction
                 if (ModuleMap::sameModule($sourceNamespace, $ref)) {
