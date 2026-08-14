@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
-use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extensibility\Exception\ManifestException;
@@ -13,10 +12,8 @@ use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
 use Pulsar\Extensibility\Manifest\RequiresConfig;
 
 use function count;
-use function dirname;
 use function is_array;
 use function is_string;
-use function json_validate;
 
 /**
  * Readonly DTO representing an extension's pulsar.json manifest.
@@ -43,35 +40,6 @@ final readonly class ExtensionManifest
         public array $autoload = [],
         public ExtensionKind $kind = ExtensionKind::Infrastructure,
     ) {}
-
-    /**
-     * Load manifest from a file path.
-     *
-     * @throws ManifestException If the file cannot be read or parsed
-     */
-    #[NoDiscard]
-    public static function fromFile(string $path): self
-    {
-        if (!file_exists($path)) {
-            throw ManifestException::fileNotFound($path);
-        }
-
-        $content = file_get_contents($path)
-            ?: throw ManifestException::fileNotFound($path);
-
-        if (!json_validate($content)) {
-            throw ManifestException::invalidJson($path, 'Invalid JSON');
-        }
-
-        try {
-            /** @var array<string, mixed> $data */
-            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
-            throw ManifestException::invalidJson($path, $e->getMessage());
-        }
-
-        return self::fromArray($data, dirname($path));
-    }
 
     /**
      * Create manifest from array data.

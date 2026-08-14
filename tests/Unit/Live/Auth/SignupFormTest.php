@@ -72,7 +72,7 @@ final class SignupFormTest extends TestCase
     public function enforcesTheAssignedMinimumRatherThanACompiledInOne(): void
     {
         $form = new SignupForm();
-        $form->minPasswordLength = 12;
+        $form->requireAtLeast(12);
         $form->name = 'John Doe';
         $form->email = 'john@example.com';
         $form->password = 'elevenchars';
@@ -91,19 +91,28 @@ final class SignupFormTest extends TestCase
     public function minimumRuleTracksTheAssignedLength(): void
     {
         $form = new SignupForm();
-        $form->minPasswordLength = 16;
+        $form->requireAtLeast(16);
 
         self::assertContains('min_length:16', $form->rules()['password']);
     }
 
     /**
-     * `LiveForm::fill()` assigns any property that exists, request data included.
+     * Two independent reasons this cannot be weakened from a request, and the
+     * test asserts both: fill() no longer reaches a `private(set)` property, and
+     * rules() clamps to the framework floor even if something did.
      */
     #[Test]
     public function refusesToBeWeakenedBelowTheFrameworkFloor(): void
     {
         $form = new SignupForm();
         $form->fill(['minPasswordLength' => 1]);
+
+        self::assertSame(
+            PasswordHasherInterface::MIN_LENGTH,
+            $form->minPasswordLength,
+            'request data must not reach the password policy at all',
+        );
+
         $form->name = 'John Doe';
         $form->email = 'john@example.com';
         $form->password = 'sevench';

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Integrity\ManifestScope;
+use Pulsar\Integrity\ManifestScopeWalker;
 
 use function bin2hex;
 use function dirname;
@@ -56,7 +57,7 @@ final class ManifestScopeTest extends TestCase
         $this->createFile('src/Http/Middleware/Csrf.php', '<?php');
 
         $scope = new ManifestScope(['src/**/*.php'], []);
-        $found = $scope->discover($this->tempDir);
+        $found = $this->walk($scope, $this->tempDir);
         sort($found);
 
         self::assertSame(
@@ -89,7 +90,7 @@ final class ManifestScopeTest extends TestCase
 
         $scope = new ManifestScope(['src/**/*.php'], []);
 
-        self::assertSame(['src/Kernel.php'], $scope->discover($this->tempDir));
+        self::assertSame(['src/Kernel.php'], $this->walk($scope, $this->tempDir));
         self::assertFalse($scope->covers('src/Http/.gitkeep'));
         self::assertFalse($scope->covers('src/README.md'));
     }
@@ -102,7 +103,7 @@ final class ManifestScopeTest extends TestCase
 
         $scope = new ManifestScope(['src/**/*.php'], ['src/Generated/**']);
 
-        self::assertSame(['src/Kernel.php'], $scope->discover($this->tempDir));
+        self::assertSame(['src/Kernel.php'], $this->walk($scope, $this->tempDir));
         self::assertFalse($scope->covers('src/Generated/Proxy.php'));
     }
 
@@ -114,7 +115,7 @@ final class ManifestScopeTest extends TestCase
 
         $scope = new ManifestScope(['bin/*'], []);
 
-        self::assertSame(['bin/pulsar'], $scope->discover($this->tempDir));
+        self::assertSame(['bin/pulsar'], $this->walk($scope, $this->tempDir));
     }
 
     #[Test]
@@ -125,7 +126,7 @@ final class ManifestScopeTest extends TestCase
         $this->createFile('bin/pulsar', '#!/usr/bin/env php');
 
         $scope = new ManifestScope(['src/**/*.php', 'config/**/*.php', 'bin/*'], []);
-        $found = $scope->discover($this->tempDir);
+        $found = $this->walk($scope, $this->tempDir);
         sort($found);
 
         self::assertSame(['bin/pulsar', 'config/app.php', 'src/Kernel.php'], $found);
@@ -138,7 +139,7 @@ final class ManifestScopeTest extends TestCase
 
         $scope = new ManifestScope(['src/**/*.php', 'extensions/**/*.php'], []);
 
-        self::assertSame(['src/Kernel.php'], $scope->discover($this->tempDir));
+        self::assertSame(['src/Kernel.php'], $this->walk($scope, $this->tempDir));
     }
 
     /**
@@ -151,7 +152,7 @@ final class ManifestScopeTest extends TestCase
         $this->createFile('src/Http/Middleware/Csrf.php', '<?php');
 
         $scope = new ManifestScope(['src/**/*.php'], []);
-        $found = $scope->discover(str_replace('/', DIRECTORY_SEPARATOR, $this->tempDir));
+        $found = $this->walk($scope, str_replace('/', DIRECTORY_SEPARATOR, $this->tempDir));
 
         self::assertSame(['src/Http/Middleware/Csrf.php'], $found);
     }
@@ -163,8 +164,20 @@ final class ManifestScopeTest extends TestCase
 
         $scope = new ManifestScope([], []);
 
-        self::assertSame([], $scope->discover($this->tempDir));
+        self::assertSame([], $this->walk($scope, $this->tempDir));
         self::assertFalse($scope->covers('src/Kernel.php'));
+    }
+
+    /**
+     * The walk moved out of ManifestScope, but what these cases assert did not:
+     * which files a set of patterns covers on a real tree. They exercise it
+     * through the walker now.
+     *
+     * @return list<string>
+     */
+    private function walk(ManifestScope $scope, string $basePath): array
+    {
+        return new ManifestScopeWalker()->discover($scope, $basePath);
     }
 
     private function createFile(string $relativePath, string $content): void

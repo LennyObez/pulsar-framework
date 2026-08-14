@@ -6,7 +6,7 @@ namespace Pulsar\Extension\Auth\Http\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Auth\OAuth2\Oidc\UserInfoEndpoint;
+use Pulsar\Extension\Auth\OAuth2\Oidc\UserInfoEndpointInterface;
 use Pulsar\Http\Message\Response;
 
 use function preg_match;
@@ -25,7 +25,7 @@ use function trim;
 final readonly class UserInfoController
 {
     public function __construct(
-        private UserInfoEndpoint $endpoint,
+        private UserInfoEndpointInterface $endpoint,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): Response

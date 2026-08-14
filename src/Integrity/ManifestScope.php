@@ -4,24 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
-use FilesystemIterator;
 use NoDiscard;
 use Pulsar\Api\Api;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
 
 use function array_keys;
 use function explode;
 use function fnmatch;
 use function implode;
-use function is_dir;
-use function ltrim;
 use function str_contains;
 use function str_replace;
-use function str_starts_with;
-use function strlen;
-use function substr;
 
 use const DIRECTORY_SEPARATOR;
 use const FNM_PATHNAME;
@@ -33,10 +24,13 @@ use const FNM_PATHNAME;
  * hash, the verifier to decide what counts as an addition. Deriving those two
  * answers separately breaks the gate in both directions at once — it reports
  * files it never tracked as tampering, and it never looks into directories that
- * hold no entry, which is exactly where a dropped file goes.
+ * hold no entry, which is exactly where a dropped file goes. That is why the
+ * walk lives once, behind {@see ManifestScopeWalkerInterface}, and not here.
  *
- * The scope travels inside the signed manifest, so widening the exclusions
- * invalidates the signature rather than silently shrinking what is checked.
+ * What remains is a value: two lists of patterns and the predicate over them.
+ * It travels inside the signed manifest, so widening the exclusions invalidates
+ * the signature rather than silently shrinking what is checked — and a value is
+ * what can be signed, compared and reasoned about without asking the disk.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -52,45 +46,24 @@ final readonly class ManifestScope
     ) {}
 
     /**
-     * Every covered file under the base path, as forward-slash relative paths.
+     * The static directory prefix of each include pattern, deduplicated.
+     *
+     * A walker starts here rather than at the base path, so a scope covering
+     * `src/**` never descends into vendor to discard the results afterwards.
      *
      * @return list<string>
      */
     #[NoDiscard]
-    public function discover(string $basePath): array
+    public function scanRoots(): array
     {
-        $matched = [];
+        $roots = [];
 
         foreach ($this->include as $pattern) {
-            $scanPath = $basePath . DIRECTORY_SEPARATOR . $this->extractBaseDir($pattern);
-
-            if (!is_dir($scanPath)) {
-                continue;
-            }
-
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator(
-                    $scanPath,
-                    FilesystemIterator::SKIP_DOTS,
-                ),
-            );
-
-            /** @var SplFileInfo $file */
-            foreach ($iterator as $file) {
-                if (!$file->isFile()) {
-                    continue;
-                }
-
-                $relativePath = $this->toRelativePath($basePath, $file->getPathname());
-
-                if ($this->covers($relativePath)) {
-                    $matched[$relativePath] = true;
-                }
-            }
+            $roots[$this->extractBaseDir($pattern)] = true;
         }
 
         /** @var list<string> */
-        return array_keys($matched);
+        return array_keys($roots);
     }
 
     /**
@@ -114,21 +87,6 @@ final readonly class ManifestScope
         }
 
         return false;
-    }
-
-    /**
-     * Convert an absolute path to a forward-slash path relative to the base.
-     */
-    private function toRelativePath(string $basePath, string $absolutePath): string
-    {
-        $normalized = str_replace('\\', '/', $absolutePath);
-        $normalizedBase = str_replace('\\', '/', $basePath);
-
-        if (str_starts_with($normalized, $normalizedBase . '/')) {
-            return ltrim(substr($normalized, strlen($normalizedBase)), '/');
-        }
-
-        return $normalized;
     }
 
     /**

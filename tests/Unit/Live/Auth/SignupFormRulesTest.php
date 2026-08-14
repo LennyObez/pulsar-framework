@@ -100,7 +100,7 @@ final class SignupFormRulesTest extends TestCase
     public function theConfiguredMinimumCannotGoBelowTheFrameworkFloor(): void
     {
         $form = $this->form('abc');
-        $form->minPasswordLength = 1;
+        $form->requireAtLeast(1);
 
         self::assertFalse($form->validate(), 'three characters must not become acceptable');
         self::assertNotSame([], $form->fieldErrors('password'));

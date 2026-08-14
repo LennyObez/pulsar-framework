@@ -80,7 +80,7 @@ final class SignupPage extends LiveComponent
     public function submit(): void
     {
         $form = new SignupForm();
-        $form->minPasswordLength = $this->minimumPasswordLength();
+        $form->requireAtLeast($this->minimumPasswordLength());
         $form->name = $this->name;
         $form->email = $this->email;
         $form->password = $this->password;

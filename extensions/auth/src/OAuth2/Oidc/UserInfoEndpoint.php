@@ -15,7 +15,7 @@ use Pulsar\Extension\Auth\OAuth2\Contract\UserClaimsProviderInterface;
  * access token's granted scopes. Per OIDC Core 5.3.
  */
 #[Internal(reason: 'Implementation detail')]
-final readonly class UserInfoEndpoint
+final readonly class UserInfoEndpoint implements UserInfoEndpointInterface
 {
     public function __construct(
         private UserClaimsProviderInterface $claimsProvider,

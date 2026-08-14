@@ -30,6 +30,9 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
 {
     public function __construct(
         private string $basePath,
+        // Same contract the builder takes. Deriving "what is covered" twice is the
+        // defect the scope's own docblock warns about, so both take one walk.
+        private ManifestScopeWalkerInterface $walker = new ManifestScopeWalker(),
     ) {}
 
     /**
@@ -106,7 +109,7 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
             $verified++;
         }
 
-        foreach ($manifest->scope->discover($this->basePath) as $path) {
+        foreach ($this->walker->discover($manifest->scope, $this->basePath) as $path) {
             if (isset($manifestPaths[$path])) {
                 continue;
             }
