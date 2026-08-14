@@ -18,6 +18,7 @@ use Pulsar\I18n\Catalog\JsonCatalog;
 use Pulsar\I18n\Catalog\PhpCatalog;
 use Pulsar\I18n\CatalogInterface;
 use Pulsar\I18n\Compiler\TranslationCompiler;
+use Pulsar\I18n\Compiler\TranslationCompilerInterface;
 use Pulsar\I18n\Exception\I18nException;
 use Pulsar\I18n\Extractor\TranslationExtractor;
 use Pulsar\I18n\Format\CurrencyFormatterInterface;
@@ -157,6 +158,10 @@ final readonly class I18nWiring implements ServiceWiringInterface
         // Register i18n API routes
         $compiler = new TranslationCompiler($catalog);
         $container->instance(TranslationCompiler::class, $compiler);
+        // Bound under the interface too: the controller asks for the contract, and
+        // used to build its own compiler because it could not name one. That made
+        // two, of which this registered instance was the unused half.
+        $container->instance(TranslationCompilerInterface::class, $compiler);
         $router->get('/api/i18n/{locale}', [I18nController::class, 'show'], 'api.i18n.locale');
 
         // Region system

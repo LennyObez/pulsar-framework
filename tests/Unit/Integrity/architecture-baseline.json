@@ -104,8 +104,6 @@
   "Pulsar\\Config\\I18nConfig": "Test files configure I18n for template rendering (test infrastructure)",
   "Pulsar\\I18n\\CatalogInterface": "Test files provide stub catalog for I18n (test infrastructure)",
   "Pulsar\\Tests\\Unit": "F23.4: MakeTestCommand template emits a literal Pulsar\\Tests\\Unit namespace string into scaffolded test files; not a runtime import",
-  "Pulsar\\Console\\Command\\OptimizeCommand": "F23.4: BoundaryGuard allow-lists optimize/build commands as FQCN strings; class lives in core, the string is a security policy entry not an import",
-  "Pulsar\\Console\\Command\\BuildCommand": "F23.4: BoundaryGuard allow-lists optimize/build commands as FQCN strings; class lives in core, the string is a security policy entry not an import",
   "Pulsar\\Database\\DatabaseManagerInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",
   "Pulsar\\Audit\\AuditSinkInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",
   "Pulsar\\Storage\\FilesystemInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",

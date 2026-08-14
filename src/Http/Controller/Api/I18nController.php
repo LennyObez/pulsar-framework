@@ -9,8 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Http\Message\Response;
-use Pulsar\I18n\CatalogInterface;
-use Pulsar\I18n\Compiler\TranslationCompiler;
+use Pulsar\I18n\Compiler\TranslationCompilerInterface;
 
 use function in_array;
 use function is_string;
@@ -27,18 +26,14 @@ use function preg_match;
 #[Internal]
 final readonly class I18nController
 {
-    private TranslationCompiler $compiler;
-
     /**
      * @param list<string> $domains Domains to include in the bundle
      */
     public function __construct(
-        CatalogInterface $catalog,
+        private TranslationCompilerInterface $compiler,
         private I18nConfig $config,
         private array $domains = ['core', 'messages'],
-    ) {
-        $this->compiler = new TranslationCompiler($catalog);
-    }
+    ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
