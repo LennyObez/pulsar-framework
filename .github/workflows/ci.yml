@@ -666,10 +666,12 @@ jobs:
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version-file: .php-version
-          # Same three as the Windows test job, for the same reason: this matrix runs on
-          # windows-latest too, and composer install refuses the lockfile there without
-          # them. Naming them costs nothing on ubuntu, where they are already enabled.
-          extensions: pdo_sqlite, exif, fileinfo, gd
+          # This matrix runs on windows-latest too, where none of these is enabled by
+          # default and composer install refuses the lockfile without them. The list is
+          # every ext-* composer.json requires that the Windows build omits — sodium and
+          # zip on top of the three the test job needed. Naming them costs nothing on
+          # ubuntu, where they are already there.
+          extensions: pdo_sqlite, exif, fileinfo, gd, sodium, zip
           coverage: none
 
       - name: Cache Composer dependencies
