@@ -80,6 +80,8 @@ final class TotpReplayGuardMigrationContractTest extends TestCase
      *
      * Derived from the engine list rather than naming PostgreSQL outright, so removing
      * it upstream empties this provider and PHPUnit says so.
+     *
+     * @return iterable<string, array{Driver}>
      */
     public static function enginesThatSplitTheAlter(): iterable
     {
