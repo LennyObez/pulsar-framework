@@ -27,12 +27,12 @@ final class MailgunTransportConfigTest extends TestCase
     {
         $config = MailgunTransportConfig::fromArray([
             'domain' => 'mg.hospital.org',
-            'api_key' => 'key-1234567890abcdef1234567890abcdef',
+            'api_key' => 'key-not-a-real-credential-test-fixture-only',
             'endpoint' => 'https://api.eu.mailgun.net',
         ]);
 
         self::assertSame('mg.hospital.org', $config->domain);
-        self::assertSame('key-1234567890abcdef1234567890abcdef', $config->apiKey);
+        self::assertSame('key-not-a-real-credential-test-fixture-only', $config->apiKey);
         self::assertSame('https://api.eu.mailgun.net', $config->endpoint);
     }
 
