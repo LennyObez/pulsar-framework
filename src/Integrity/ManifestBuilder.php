@@ -32,6 +32,10 @@ final class ManifestBuilder implements ManifestBuilderInterface
 
     public function __construct(
         private readonly string $basePath,
+        // Defaulted rather than required: every existing caller keeps working, and
+        // the verifier is handed the same contract so both sides of the control
+        // can be pointed at one walk.
+        private readonly ManifestScopeWalkerInterface $walker = new ManifestScopeWalker(),
     ) {}
 
     /**
@@ -45,7 +49,7 @@ final class ManifestBuilder implements ManifestBuilderInterface
     public function build(array $includePaths, array $excludePaths): IntegrityManifest
     {
         $scope = new ManifestScope($includePaths, $excludePaths);
-        $files = $scope->discover($this->basePath);
+        $files = $this->walker->discover($scope, $this->basePath);
         sort($files);
 
         $entries = [];

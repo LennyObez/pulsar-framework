@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Extensibility;
 
 use DirectoryIterator;
+use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Core\Version;
 use Pulsar\Extensibility\Exception\DependencyException;
@@ -13,9 +15,16 @@ use Pulsar\Extensibility\Exception\ManifestException;
 
 use function class_exists;
 use function count;
+use function dirname;
+use function file_exists;
+use function file_get_contents;
 use function in_array;
 use function is_a;
+use function json_decode;
+use function json_validate;
 use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Discovers and validates extension manifests.
@@ -50,7 +59,7 @@ final class ExtensionLoader
             $directManifest = $path . DIRECTORY_SEPARATOR . self::MANIFEST_FILENAME;
 
             if (file_exists($directManifest)) {
-                $manifest = ExtensionManifest::fromFile($directManifest);
+                $manifest = $this->readManifest($directManifest);
 
                 if (!isset($seen[$manifest->name])) {
                     $manifests[] = $manifest;
@@ -94,7 +103,7 @@ final class ExtensionLoader
             $manifestPath = $item->getPathname() . DIRECTORY_SEPARATOR . self::MANIFEST_FILENAME;
 
             if (file_exists($manifestPath)) {
-                $manifests[] = ExtensionManifest::fromFile($manifestPath);
+                $manifests[] = $this->readManifest($manifestPath);
             } else {
                 // Recurse into subdirectory groups (e.g., extensions/compliance/)
                 $manifests = [...$manifests, ...$this->scanDirectory($item->getPathname())];
@@ -290,5 +299,39 @@ final class ExtensionLoader
 
         /** @var class-string<ExtensionInterface> $class */
         return new $class();
+    }
+
+    /**
+     * Read a manifest from a pulsar.json on disk.
+     *
+     * Lives here rather than on ExtensionManifest. A manifest is a value — every
+     * field a string, an enum or a nested config value — and it was only ever
+     * classified as a service because a static factory on it read a file. Loading
+     * is this class's job; parsing an array the manifest already knew how to do.
+     *
+     * @throws ManifestException If the file cannot be read or parsed
+     */
+    #[NoDiscard]
+    public function readManifest(string $path): ExtensionManifest
+    {
+        if (!file_exists($path)) {
+            throw ManifestException::fileNotFound($path);
+        }
+
+        $content = file_get_contents($path)
+            ?: throw ManifestException::fileNotFound($path);
+
+        if (!json_validate($content)) {
+            throw ManifestException::invalidJson($path, 'Invalid JSON');
+        }
+
+        try {
+            /** @var array<string, mixed> $data */
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw ManifestException::invalidJson($path, $e->getMessage());
+        }
+
+        return ExtensionManifest::fromArray($data, dirname($path));
     }
 }

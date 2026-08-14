@@ -6,8 +6,10 @@ namespace Pulsar\Live;
 
 use Pulsar\Api\Api;
 use ReflectionClass;
+use ReflectionObject;
 
 use function is_string;
+use function property_exists;
 
 /**
  * Base class for typed form objects used with Live components.
@@ -134,11 +136,27 @@ abstract class LiveForm
      */
     public function fill(array $data): void
     {
+        $reflection = new ReflectionObject($this);
+
         /** @var mixed $value */
         foreach ($data as $field => $value) {
-            if (property_exists($this, $field)) {
-                $this->{$field} = $value;
+            if (!property_exists($this, $field)) {
+                continue;
             }
+
+            // Request data may only reach properties the form declares as publicly
+            // writable. This used to assign anything that existed, so every field a
+            // form held was bindable whether or not it was ever meant to be — a
+            // policy value, a computed total, a flag the server set. Declaring a
+            // property `private(set)` is now how a form says "not from the request",
+            // using the language's own rule rather than a list to keep in sync.
+            $property = $reflection->getProperty($field);
+
+            if ($property->isPrivateSet() || $property->isProtectedSet() || $property->isReadOnly()) {
+                continue;
+            }
+
+            $this->{$field} = $value;
         }
     }
 

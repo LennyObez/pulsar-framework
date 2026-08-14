@@ -21614,13 +21614,6 @@
                     "return": "Pulsar\\Extensibility\\ExtensionManifest",
                     "static": true
                 },
-                "fromFile": {
-                    "params": [
-                        "string $path"
-                    ],
-                    "return": "Pulsar\\Extensibility\\ExtensionManifest",
-                    "static": true
-                },
                 "getDependencies": {
                     "params": [],
                     "return": "array",
@@ -31593,8 +31586,21 @@
                     "return": "bool",
                     "static": false
                 },
+                "scanRoots": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Integrity\\ManifestScopeWalkerInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
                 "discover": {
                     "params": [
+                        "Pulsar\\Integrity\\ManifestScope $scope",
                         "string $basePath"
                     ],
                     "return": "array",
@@ -32420,6 +32426,13 @@
                     "return": "bool",
                     "static": false,
                     "inherited_from": "Pulsar\\Live\\LiveForm"
+                },
+                "requireAtLeast": {
+                    "params": [
+                        "int $characters"
+                    ],
+                    "return": "void",
+                    "static": false
                 },
                 "reset": {
                     "params": [],
@@ -65813,6 +65826,7 @@
         "Pulsar\\ImportExport\\Command\\ExportCommand",
         "Pulsar\\ImportExport\\Command\\ImportCommand",
         "Pulsar\\Integrity\\ManifestBuilder",
+        "Pulsar\\Integrity\\ManifestScopeWalker",
         "Pulsar\\Integrity\\ManifestSigner",
         "Pulsar\\Integrity\\ManifestVerifier",
         "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",

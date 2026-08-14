@@ -30,12 +30,26 @@ final class SignupForm extends LiveForm
     public string $password_confirmation = '';
 
     /**
-     * Minimum accepted password length, assigned from the resolved configuration.
+     * Minimum accepted password length, taken from the resolved configuration.
      *
-     * Clamped to the framework floor when the rules are built, so a form filled
-     * from request data cannot weaken the policy below it.
+     * Not form data, so not writable from outside: a password policy is something
+     * the server decides and the client is told. `private(set)` is what says so,
+     * and LiveForm::fill() honours it, so request data cannot reach this field at
+     * all. The clamp in rules() stays as the second line — a policy this important
+     * should not rest on one mechanism.
      */
-    public int $minPasswordLength = PasswordHasherInterface::MIN_LENGTH;
+    public private(set) int $minPasswordLength = PasswordHasherInterface::MIN_LENGTH;
+
+    /**
+     * Raise the minimum password length for this form.
+     *
+     * Never lowers it: the framework floor is a floor, and a configuration that
+     * asks for less than the framework accepts gets the framework's answer.
+     */
+    public function requireAtLeast(int $characters): void
+    {
+        $this->minPasswordLength = max(PasswordHasherInterface::MIN_LENGTH, $characters);
+    }
 
     /** @return array<string, list<string>> */
     public function rules(): array

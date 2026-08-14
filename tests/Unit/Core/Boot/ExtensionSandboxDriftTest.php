@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Core\Boot;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extensibility\ExtensionKind;
-use Pulsar\Extensibility\ExtensionManifest;
+use Pulsar\Extensibility\ExtensionLoader;
 
 use function array_merge;
 use function dirname;
@@ -89,7 +89,7 @@ final class ExtensionSandboxDriftTest extends TestCase
         self::assertNotEmpty($manifestPaths, 'expected bundled extension manifests to exist');
 
         foreach ($manifestPaths as $manifestPath) {
-            $manifest = ExtensionManifest::fromFile($manifestPath);
+            $manifest = new ExtensionLoader()->readManifest($manifestPath);
             $name = $manifest->name;
 
             $isProduct = in_array($name, self::PRODUCT_EXTENSIONS, true);

@@ -29,7 +29,7 @@ use const OPENSSL_KEYTYPE_RSA;
  * OIDC clients that rely on JWKS for key discovery.
  */
 #[Internal(reason: 'Implementation detail')]
-final readonly class JwksEndpoint
+final readonly class JwksEndpoint implements JwksEndpointInterface
 {
     public function __construct(
         private KeyRingInterface $keyRing,

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Auth\Http\Controller;
 
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Auth\OAuth2\Oidc\JwksEndpoint;
+use Pulsar\Extension\Auth\OAuth2\Oidc\JwksEndpointInterface;
 use Pulsar\Extension\Auth\OAuth2\Oidc\OidcDiscovery;
 use Pulsar\Http\Message\Response;
 
@@ -21,7 +21,7 @@ final readonly class OidcDiscoveryController
 {
     public function __construct(
         private OidcDiscovery $discovery,
-        private JwksEndpoint $jwksEndpoint,
+        private JwksEndpointInterface $jwksEndpoint,
     ) {}
 
     /**
