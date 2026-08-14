@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\AntiSpam;
 
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Config\ReportsUnknownKeys;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerVerificationConfig;
@@ -37,7 +37,7 @@ use function is_array;
  * a misspelled sub-section name — under the real file label "anti-spam", without
  * false-positives on the file's legitimate keys. See {@see self::unknownConfigKeys()}.
  */
-#[Internal]
+#[Api]
 final readonly class AntiSpamConfigSet implements ReportsUnknownKeys
 {
     /**

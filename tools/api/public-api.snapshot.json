@@ -42739,6 +42739,40 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\AntiSpamConfigSet": {
+            "since": "",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\AntiSpamConfig $antiSpam",
+                        "Pulsar\\Security\\AntiSpam\\EmailDomainCheckConfig $emailDomain",
+                        "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveRiskConfig $adaptiveRisk",
+                        "Pulsar\\Security\\AntiSpam\\Risk\\Ja4Config $ja4",
+                        "Pulsar\\Security\\AntiSpam\\Risk\\VelocityConfig $velocity",
+                        "Pulsar\\Security\\AntiSpam\\Risk\\DatacenterIpConfig $datacenter",
+                        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivacyPassConfig $privacyPass",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerVerificationConfig $aiCrawlerVerification",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerConfig $aiCrawler"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AntiSpamConfigSet",
+                    "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\AntiSpamContext": {
             "since": "1.0.0",
             "methods": [],
@@ -65799,7 +65833,6 @@
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerDnsResolver",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerIdentityVerifier",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\SystemCrawlerDnsResolver",
-        "Pulsar\\Security\\AntiSpam\\AntiSpamConfigSet",
         "Pulsar\\Security\\AntiSpam\\AntiSpamPipeline",
         "Pulsar\\Security\\AntiSpam\\Behavior\\BehavioralSignalsCheck",
         "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer",

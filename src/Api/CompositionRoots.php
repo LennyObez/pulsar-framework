@@ -41,9 +41,25 @@ final class CompositionRoots
      */
     public const array CLASSES = [
         'Pulsar\\Core\\Kernel',
+        // Kernel's sibling: it assembles the same graph with fewer parts, so
+        // exempting one and not the other exempted an implementation detail
+        // rather than a role.
+        'Pulsar\\Core\\MicroKernel',
         'Pulsar\\Console\\Application',
         'Pulsar\\Console\\Command\\OptimizeCommand',
         'Pulsar\\Console\\Command\\BuildCommand',
+        // Builds the route cache, which is the same kind of work OptimizeCommand
+        // and BuildCommand already do here.
+        'Pulsar\\Console\\Command\\RoutesCacheCommand',
+        // Reports the wiring graph, so it must read the list the graph is built
+        // from. Inspecting assembly needs the same reach as performing it.
+        'Pulsar\\Console\\Command\\DebugWiringCommand',
+        // A wiring class that happens to live outside Core\Wiring\. The exemption
+        // follows the role, not the address.
+        'Pulsar\\Api\\OpenApi\\OpenApiWiring',
+        // Boot is assembly, which is why Core\Boot\ is exempt below. This one
+        // boots the development server from outside that namespace.
+        'Pulsar\\Dev\\DevServerBootstrap',
     ];
 
     /**
