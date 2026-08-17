@@ -347,9 +347,26 @@ final class KernelHandlerTest extends TestCase
 
         $request = $this->createRequest('GET', '/bad');
 
+        // The kernel logs the unhandled error through error_log(), which leaks to the
+        // SAPI under test and makes the case risky — and this run fails on risky.
+        // Captured rather than silenced, so the log becomes an assertion: a 500 that
+        // recorded nothing is exactly what this path must never produce.
+        $path = tempnam(sys_get_temp_dir(), 'pulsar_errlog_');
+        $previous = (string) ini_get('error_log');
+        ini_set('error_log', $path);
+
         $response = $kernel->handle($request);
 
+        ini_set('error_log', $previous);
+        $logged = (string) file_get_contents($path);
+        unlink($path);
+
         self::assertSame(500, $response->getStatusCode());
+        self::assertStringContainsString(
+            'Unhandled',
+            $logged,
+            'an unhandled error must reach the log, not vanish behind the 500',
+        );
     }
 
     private function createRequest(string $method, string $path): ServerRequestInterface

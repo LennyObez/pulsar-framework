@@ -109,9 +109,48 @@ final class KernelAutowireTest extends TestCase
         // instead of leaking the resolver's RoutingException to the SAPI. The
         // RoutingException itself is asserted directly against the resolver in
         // ReflectionControllerResolverTest.
+        //
+        // It still has to say so somewhere. The kernel calls error_log(), which in a
+        // test leaks to the SAPI and PHPUnit rightly calls risky — the run has
+        // failOnRisky. Pointing the log at a file both stops the leak and turns the
+        // leak into the assertion it should always have been: a 500 nobody recorded
+        // is the failure mode this path exists to prevent.
+        $log = $this->captureErrorLog();
+
         $response = $kernel->handle($request);
 
         self::assertSame(500, $response->getStatusCode());
+        self::assertStringContainsString(
+            'Unhandled',
+            $this->releaseErrorLog($log),
+            'an unhandled error must reach the log, not vanish behind the 500',
+        );
+    }
+
+    /**
+     * Send error_log() to a file of our own for the duration of one test.
+     *
+     * @return array{path: string, previous: string}
+     */
+    private function captureErrorLog(): array
+    {
+        $path = tempnam(sys_get_temp_dir(), 'pulsar_errlog_');
+        $previous = (string) ini_get('error_log');
+        ini_set('error_log', $path);
+
+        return ['path' => $path, 'previous' => $previous];
+    }
+
+    /**
+     * @param array{path: string, previous: string} $log
+     */
+    private function releaseErrorLog(array $log): string
+    {
+        ini_set('error_log', $log['previous']);
+        $contents = (string) file_get_contents($log['path']);
+        unlink($log['path']);
+
+        return $contents;
     }
 
     #[Test]
