@@ -16,6 +16,7 @@ use function getenv;
 use function mkdir;
 use function putenv;
 use function random_bytes;
+use function realpath;
 use function rmdir;
 use function sys_get_temp_dir;
 
@@ -30,7 +31,12 @@ final class WritablePathGuardTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->base = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_wpg_' . bin2hex(random_bytes(8));
+        // Same reason as SafePathContainmentTest: an 8.3 short form in the temp path
+        // makes SafePath answer "contained" for everything, and the guard then refuses
+        // paths these cases expect it to allow.
+        $temp = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
+
+        $this->base = $temp . DIRECTORY_SEPARATOR . 'pulsar_wpg_' . bin2hex(random_bytes(8));
         mkdir($this->base . DIRECTORY_SEPARATOR . 'public', 0o750, true);
         // public_html must exist too, to prove the boundary check is not a raw
         // string prefix match (public_html would prefix-match "public").

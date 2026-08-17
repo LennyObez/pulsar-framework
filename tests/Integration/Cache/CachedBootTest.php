@@ -37,7 +37,12 @@ final class CachedBootTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->basePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_cached_boot_test_' . bin2hex(random_bytes(8));
+        // realpath() first: on Windows sys_get_temp_dir() can hand back an 8.3 short
+        // form, and these cases compare the base path the kernel derives against the
+        // one built here. The kernel resolves; the literal would not have.
+        $temp = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
+
+        $this->basePath = $temp . DIRECTORY_SEPARATOR . 'pulsar_cached_boot_test_' . bin2hex(random_bytes(8));
         mkdir($this->basePath . DIRECTORY_SEPARATOR . 'config', 0o750, true);
         // FrameworkCache::warm() scans <base>/src to compute allowed classes.
         mkdir($this->basePath . DIRECTORY_SEPARATOR . 'src', 0o750, true);
