@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Tooling;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Tooling\Support\SampleStatistics;
@@ -15,7 +15,7 @@ use Pulsar\Tooling\Support\SampleStatistics;
  * the wrong term would not crash anything — it would quietly publish a wrong verdict,
  * which is why they are tested rather than trusted.
  */
-#[CoversClass(SampleStatistics::class)]
+#[CoversNothing]
 final class SampleStatisticsTest extends TestCase
 {
     #[Test]

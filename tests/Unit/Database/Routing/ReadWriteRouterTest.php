@@ -82,8 +82,8 @@ final class ReadWriteRouterTest extends TestCase
     #[Test]
     public function pinExpiresAfterDuration(): void
     {
-        // Both durations sit well above the ~15.6ms default timer granularity on
-        // Windows, where a 1ms pin and a 2ms sleep could not be ordered reliably.
+        // Well above the ~15.6ms Windows timer granularity, where 1ms and 2ms could
+        // not be ordered.
         $this->router->pinToPrimary(25);
 
         self::assertTrue($this->router->isPinnedToPrimary());

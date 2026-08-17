@@ -7,6 +7,8 @@ namespace Pulsar\Filesystem;
 use Pulsar\Api\Api;
 
 use function array_pop;
+use function array_unshift;
+use function basename;
 use function dirname;
 use function end;
 use function getcwd;
@@ -226,8 +228,11 @@ final readonly class SafePath
             // Both sides are folded and compared textually. Mixing a realpath'd
             // candidate with a merely-folded boundary would disagree the moment any
             // parent is a symlink, which is the failure this class exists to prevent.
-            $foldedCandidate = self::foldTraversal($candidate);
-            $foldedBoundary = self::foldTraversal($boundaryDir);
+            // Canonicalise what resolves before calling the rest undecidable: an
+            // unresolvable leaf otherwise made an 8.3 ancestor unreadable too, and the
+            // short-name rule below then refused every path under it.
+            $foldedCandidate = self::foldTraversal(self::canonicaliseExistingPrefix($candidate));
+            $foldedBoundary = self::foldTraversal(self::canonicaliseExistingPrefix($boundaryDir));
 
             // An 8.3 short name (`PUBLIC~1`) is an alias for a long one, and only the
             // filesystem knows which. With no boundary to resolve against there is
@@ -320,6 +325,36 @@ final readonly class SafePath
      * The cost is refusing a POSIX directory genuinely named `backup~1` under a boundary
      * that does not exist — rare, and it fails towards refusal.
      */
+    /**
+     * Resolve the longest existing ancestor and re-attach the rest verbatim.
+     *
+     * Enough to expand an 8.3 short name, which a textual comparison cannot see through.
+     */
+    private static function canonicaliseExistingPrefix(string $path): string
+    {
+        $tail = [];
+        $head = $path;
+
+        while ($head !== '' && $head !== '.') {
+            $resolved = realpath($head);
+
+            if ($resolved !== false) {
+                return $tail === [] ? $resolved : $resolved . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $tail);
+            }
+
+            $parent = dirname($head);
+
+            if ($parent === $head) {
+                return $path;
+            }
+
+            array_unshift($tail, basename($head));
+            $head = $parent;
+        }
+
+        return $path;
+    }
+
     private static function hasShortNameSegment(string $path): bool
     {
         foreach (preg_split('#[\\\\/]+#', $path) ?: [] as $segment) {

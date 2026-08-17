@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Cms\Tools;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Content\CommentPolicy;
@@ -20,7 +20,7 @@ use Pulsar\Extension\Cms\Media\MediaVisibility;
 use Pulsar\Extension\Cms\Tools\ImportAnalysisResult;
 use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 
-#[CoversClass(ImportAnalyzer::class)]
+#[CoversNothing]
 #[CoversClass(ImportAnalysisResult::class)]
 final class ImportAnalyzerTest extends TestCase
 {

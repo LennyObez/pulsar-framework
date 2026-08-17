@@ -31,9 +31,8 @@ final class WritablePathGuardTest extends TestCase
 
     protected function setUp(): void
     {
-        // Same reason as SafePathContainmentTest: an 8.3 short form in the temp path
-        // makes SafePath answer "contained" for everything, and the guard then refuses
-        // paths these cases expect it to allow.
+        // Same reason as SafePathContainmentTest: an 8.3 short form makes SafePath
+        // answer "contained" for everything, so the guard refuses what these allow.
         $temp = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
 
         $this->base = $temp . DIRECTORY_SEPARATOR . 'pulsar_wpg_' . bin2hex(random_bytes(8));

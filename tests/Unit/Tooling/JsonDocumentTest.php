@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Tooling;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Tooling\Support\JsonDocument;
@@ -14,7 +14,7 @@ use RuntimeException;
  * The tooling JSON reader exists to make malformed input fail loudly, so the
  * tests that matter most are the ones asserting it refuses rather than degrades.
  */
-#[CoversClass(JsonDocument::class)]
+#[CoversNothing]
 final class JsonDocumentTest extends TestCase
 {
     #[Test]
