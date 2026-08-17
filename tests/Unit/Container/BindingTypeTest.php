@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Container;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\BindingType;
 use Pulsar\Container\Lifetime;
 
-#[CoversClass(BindingType::class)]
+#[CoversNothing]
 final class BindingTypeTest extends TestCase
 {
     #[Test]

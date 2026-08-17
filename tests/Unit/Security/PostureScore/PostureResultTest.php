@@ -13,7 +13,6 @@ use Pulsar\Security\PostureScore\PostureResult;
 use Pulsar\Security\PostureScore\SecurityControl;
 
 #[CoversClass(PostureResult::class)]
-#[CoversClass(SecurityControl::class)]
 final class PostureResultTest extends TestCase
 {
     // ── PostureResult ───────────────────────────────────────────────

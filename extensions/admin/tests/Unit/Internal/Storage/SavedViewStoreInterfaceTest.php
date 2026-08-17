@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Storage;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\SavedView;
 use Pulsar\Extension\Admin\Internal\Storage\SavedViewStoreInterface;
 use ReflectionClass;
 
-#[CoversClass(SavedViewStoreInterface::class)]
+#[CoversNothing]
 final class SavedViewStoreInterfaceTest extends TestCase
 {
     #[Test]

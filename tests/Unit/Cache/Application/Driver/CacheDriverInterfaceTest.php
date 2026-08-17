@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application\Driver;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Driver\CacheDriverCapabilities;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 
-#[CoversClass(CacheDriverInterface::class)]
+#[CoversNothing]
 final class CacheDriverInterfaceTest extends TestCase
 {
     private function createInMemoryDriver(): CacheDriverInterface

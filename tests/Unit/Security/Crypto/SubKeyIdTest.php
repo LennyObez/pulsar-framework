@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Crypto;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\SubKeyId;
 
 use function sprintf;
 
-#[CoversClass(SubKeyId::class)]
+#[CoversNothing]
 final class SubKeyIdTest extends TestCase
 {
     /**

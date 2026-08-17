@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Tests\Unit\Commerce;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Commerce\PromotionType;
 
-#[CoversClass(PromotionType::class)]
+#[CoversNothing]
 final class PromotionTypeTest extends TestCase
 {
     #[Test]

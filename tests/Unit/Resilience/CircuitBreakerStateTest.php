@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Resilience;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Resilience\CircuitBreakerState;
 
-#[CoversClass(CircuitBreakerState::class)]
+#[CoversNothing]
 final class CircuitBreakerStateTest extends TestCase
 {
     #[Test]

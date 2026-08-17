@@ -13,7 +13,6 @@ use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(Response::class)]
-#[CoversClass(ResponseStatus::class)]
 final class ResponseTest extends TestCase
 {
     #[Test]
@@ -334,7 +333,6 @@ final class ResponseTest extends TestCase
     }
 }
 
-#[CoversClass(ResponseStatus::class)]
 final class ResponseStatusEnumTest extends TestCase
 {
     #[Test]

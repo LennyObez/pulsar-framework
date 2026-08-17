@@ -19,7 +19,6 @@ use Pulsar\Security\Crypto\HmacService;
 
 #[CoversClass(RouteCache::class)]
 #[CoversClass(RouteHandler::class)]
-#[CoversClass(RouteHandlerType::class)]
 final class RouteCacheTest extends TestCase
 {
     private string $hmacKey;

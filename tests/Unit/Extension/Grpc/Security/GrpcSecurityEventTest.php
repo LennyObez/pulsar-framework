@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Grpc\Security;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Security\GrpcSecurityEvent;
 
-#[CoversClass(GrpcSecurityEvent::class)]
+#[CoversNothing]
 final class GrpcSecurityEventTest extends TestCase
 {
     #[Test]

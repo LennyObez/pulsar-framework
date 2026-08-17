@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Contracts;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Contracts\WritableStreamInterface;
 use ReflectionClass;
 
-#[CoversClass(WritableStreamInterface::class)]
+#[CoversNothing]
 final class WritableStreamInterfaceTest extends TestCase
 {
     #[Test]

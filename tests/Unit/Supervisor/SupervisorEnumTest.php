@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Supervisor;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +12,7 @@ use Pulsar\Supervisor\HealingActionType;
 use Pulsar\Supervisor\RecycleAction;
 use Pulsar\Supervisor\RecycleReason;
 
-#[CoversClass(RecycleReason::class)]
-#[CoversClass(RecycleAction::class)]
-#[CoversClass(HealingActionType::class)]
+#[CoversNothing]
 final class SupervisorEnumTest extends TestCase
 {
     // ── RecycleReason ───────────────────────────────────────────────────

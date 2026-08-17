@@ -13,7 +13,6 @@ use RuntimeException;
 use RuntimeException as PreviousException;
 
 #[CoversClass(IdempotencyException::class)]
-#[CoversClass(IdempotencyErrorKind::class)]
 final class IdempotencyExceptionTest extends TestCase
 {
     #[Test]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\AiGovernance\Tests\Unit;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,11 +14,7 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Enum\ImpactCategory;
 use Pulsar\Extension\AiGovernance\Enum\ImpactSeverity;
 
-#[CoversClass(AiAuditEvent::class)]
-#[CoversClass(AiModelRiskLevel::class)]
-#[CoversClass(AiModelStatus::class)]
-#[CoversClass(ImpactCategory::class)]
-#[CoversClass(ImpactSeverity::class)]
+#[CoversNothing]
 final class EnumTest extends TestCase
 {
     /**

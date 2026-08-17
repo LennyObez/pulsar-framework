@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Messaging\Tests\Unit\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Messaging\Domain\ConversationType;
 
-#[CoversClass(ConversationType::class)]
+#[CoversNothing]
 final class ConversationTypeTest extends TestCase
 {
     #[DataProvider('validCasesProvider')]

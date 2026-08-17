@@ -13,7 +13,6 @@ use Pulsar\Extension\Cms\Tools\ImportReport;
 
 #[CoversClass(ImportReport::class)]
 #[CoversClass(ImportAnalysisResult::class)]
-#[CoversClass(DuplicateResolutionPolicy::class)]
 final class ImportReportTest extends TestCase
 {
     // --- ImportReport ---

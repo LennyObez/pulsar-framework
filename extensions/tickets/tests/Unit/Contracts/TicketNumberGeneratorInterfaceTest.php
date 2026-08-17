@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Tickets\Tests\Unit\Contracts;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Tickets\Contracts\TicketNumberGeneratorInterface;
 
-#[CoversClass(TicketNumberGeneratorInterface::class)]
+#[CoversNothing]
 final class TicketNumberGeneratorInterfaceTest extends TestCase
 {
     #[Test]

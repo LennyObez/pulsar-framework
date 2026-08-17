@@ -11,7 +11,6 @@ use Pulsar\AI\ChatMessage;
 use Pulsar\AI\ChatRole;
 
 #[CoversClass(ChatMessage::class)]
-#[CoversClass(ChatRole::class)]
 final class ChatMessageTest extends TestCase
 {
     #[Test]

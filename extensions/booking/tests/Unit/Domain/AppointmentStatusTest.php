@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Booking\Tests\Unit\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Booking\Domain\AppointmentStatus;
 
-#[CoversClass(AppointmentStatus::class)]
+#[CoversNothing]
 final class AppointmentStatusTest extends TestCase
 {
     /**

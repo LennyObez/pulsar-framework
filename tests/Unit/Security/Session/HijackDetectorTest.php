@@ -20,8 +20,6 @@ use function time;
 
 #[CoversClass(HijackDetector::class)]
 #[CoversClass(HijackVerdict::class)]
-#[CoversClass(HijackAction::class)]
-#[CoversClass(HijackPolicy::class)]
 final class HijackDetectorTest extends TestCase
 {
     private function createMeta(string $ip = '10.0.0.1', string $ua = 'Mozilla/5.0'): SessionMetadata

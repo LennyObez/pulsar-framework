@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Queue\Retry;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Queue\Retry\RetryDecision;
 
-#[CoversClass(RetryDecision::class)]
+#[CoversNothing]
 final class RetryDecisionTest extends TestCase
 {
     #[Test]

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Schema;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Schema\SchemaDefaultExpression;
 use ValueError;
 
-#[CoversClass(SchemaDefaultExpression::class)]
+#[CoversNothing]
 final class SchemaDefaultExpressionTest extends TestCase
 {
     #[Test]

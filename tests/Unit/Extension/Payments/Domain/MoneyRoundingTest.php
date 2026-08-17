@@ -12,7 +12,6 @@ use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\RoundingMode;
 
 #[CoversClass(Money::class)]
-#[CoversClass(RoundingMode::class)]
 final class MoneyRoundingTest extends TestCase
 {
     #[Test]

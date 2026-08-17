@@ -29,7 +29,6 @@ use function sprintf;
 #[CoversClass(EidasMapping::class)]
 #[CoversClass(ControlCatalog::class)]
 #[CoversClass(Control::class)]
-#[CoversClass(ControlStatus::class)]
 final class FrameworkMappingTest extends TestCase
 {
     // --- SOC 2 ---

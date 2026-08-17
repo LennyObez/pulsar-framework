@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Saga\Step;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Saga\Step\SagaStepDirection;
 
-#[CoversClass(SagaStepDirection::class)]
+#[CoversNothing]
 final class SagaStepDirectionTest extends TestCase
 {
     #[Test]

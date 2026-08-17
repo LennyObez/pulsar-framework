@@ -17,8 +17,6 @@ use function count;
 
 #[CoversClass(Coding::class)]
 #[CoversClass(CodeableConcept::class)]
-#[CoversClass(FhirVersion::class)]
-#[CoversClass(ResourceType::class)]
 final class CodingTest extends TestCase
 {
     #[Test]

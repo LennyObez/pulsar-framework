@@ -14,7 +14,6 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
 #[CoversClass(Content::class)]
-#[CoversClass(PublishingStatus::class)]
 final class PublishingWorkflowTest extends TestCase
 {
     #[Test]

@@ -13,7 +13,6 @@ use Pulsar\Extension\Dora\Sharing\CyberThreatIndicator;
 use Pulsar\Extension\Dora\Sharing\ThreatSeverity;
 
 #[CoversClass(CyberThreatIndicator::class)]
-#[CoversClass(ThreatSeverity::class)]
 final class CyberThreatIndicatorTest extends TestCase
 {
     #[Test]

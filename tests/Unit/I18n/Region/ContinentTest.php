@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\I18n\Region;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ use Pulsar\I18n\Region\Continent;
 
 use function count;
 
-#[CoversClass(Continent::class)]
+#[CoversNothing]
 final class ContinentTest extends TestCase
 {
     #[Test]

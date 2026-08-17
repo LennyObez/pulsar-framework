@@ -16,7 +16,6 @@ use Pulsar\Security\PostureScore\SecurityScorer;
 
 #[CoversClass(SecurityScorer::class)]
 #[CoversClass(PostureResult::class)]
-#[CoversClass(SecurityControl::class)]
 final class SecurityScorerTest extends TestCase
 {
     private function activeCheck(SecurityControl $control): PostureCheckInterface

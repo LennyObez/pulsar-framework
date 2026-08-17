@@ -20,7 +20,6 @@ use function time;
 #[CoversClass(ExchangeCodeResult::class)]
 #[CoversClass(MapIdentityRequest::class)]
 #[CoversClass(MapIdentityResult::class)]
-#[CoversClass(LinkAction::class)]
 final class FeatureDtosTest extends TestCase
 {
     // --- ExchangeCodeResult ---

@@ -13,11 +13,7 @@ use Pulsar\Extension\Admin\Domain\ExportFormat;
 use Pulsar\Extension\Admin\Domain\FieldType;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
 
-#[CoversClass(AdminPermission::class)]
 #[CoversClass(BulkAction::class)]
-#[CoversClass(ExportFormat::class)]
-#[CoversClass(FieldType::class)]
-#[CoversClass(ResourceOperation::class)]
 final class AdminDomainEnumsTest extends TestCase
 {
     // --- ExportFormat ---

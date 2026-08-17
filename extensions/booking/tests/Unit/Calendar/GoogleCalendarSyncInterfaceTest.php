@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Booking\Tests\Unit\Calendar;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Booking\Calendar\GoogleCalendarSyncInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 use Pulsar\Extension\Booking\Domain\AppointmentStatus;
 
-#[CoversClass(GoogleCalendarSyncInterface::class)]
+#[CoversNothing]
 final class GoogleCalendarSyncInterfaceTest extends TestCase
 {
     #[Test]

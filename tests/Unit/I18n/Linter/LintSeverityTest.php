@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\I18n\Linter;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\I18n\Linter\LintSeverity;
 
-#[CoversClass(LintSeverity::class)]
+#[CoversNothing]
 final class LintSeverityTest extends TestCase
 {
     #[Test]

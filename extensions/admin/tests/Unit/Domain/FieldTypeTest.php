@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
 
 use function count;
 
-#[CoversClass(FieldType::class)]
+#[CoversNothing]
 final class FieldTypeTest extends TestCase
 {
     #[Test]

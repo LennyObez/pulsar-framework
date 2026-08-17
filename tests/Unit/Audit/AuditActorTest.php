@@ -12,7 +12,6 @@ use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditActorKind;
 
 #[CoversClass(AuditActor::class)]
-#[CoversClass(AuditActorKind::class)]
 final class AuditActorTest extends TestCase
 {
     #[Test]

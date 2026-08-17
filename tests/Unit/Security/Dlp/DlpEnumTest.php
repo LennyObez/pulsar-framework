@@ -14,8 +14,6 @@ use Pulsar\Security\Dlp\SensitivePattern;
 
 use function strlen;
 
-#[CoversClass(DlpAction::class)]
-#[CoversClass(SensitiveDataType::class)]
 #[CoversClass(SensitivePattern::class)]
 final class DlpEnumTest extends TestCase
 {

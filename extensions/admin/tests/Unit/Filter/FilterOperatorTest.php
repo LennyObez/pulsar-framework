@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Filter;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Filter\FilterOperator;
 
-#[CoversClass(FilterOperator::class)]
+#[CoversNothing]
 final class FilterOperatorTest extends TestCase
 {
     #[Test]

@@ -29,7 +29,6 @@ use function unlink;
 use const OPENSSL_ALGO_SHA256;
 
 #[CoversClass(OcspRevocationChecker::class)]
-#[CoversClass(RevocationStatus::class)]
 final class OcspRevocationCheckerTest extends TestCase
 {
     private const string OID_SHA1 = '1.3.14.3.2.26';

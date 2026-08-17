@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Subscriptions\Tests\Unit;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Subscriptions\Store;
@@ -15,7 +15,7 @@ use Pulsar\Extension\Subscriptions\SubscriptionStatus;
 use function bin2hex;
 use function random_bytes;
 
-#[CoversClass(SubscriptionRepositoryInterface::class)]
+#[CoversNothing]
 final class SubscriptionRepositoryInterfaceTest extends TestCase
 {
     #[Test]

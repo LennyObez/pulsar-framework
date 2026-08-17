@@ -17,7 +17,6 @@ use Pulsar\Extension\Cms\ABTest\ExperimentVariant;
 #[CoversClass(ConversionEvent::class)]
 #[CoversClass(Experiment::class)]
 #[CoversClass(ExperimentResult::class)]
-#[CoversClass(ExperimentStatus::class)]
 #[CoversClass(ExperimentVariant::class)]
 final class ABTestEntitiesTest extends TestCase
 {

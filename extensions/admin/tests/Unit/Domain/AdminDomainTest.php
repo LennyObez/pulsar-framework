@@ -19,11 +19,7 @@ use Pulsar\Extension\Admin\Domain\ValidationRule;
 use function count;
 
 #[CoversClass(ActionResult::class)]
-#[CoversClass(AdminPermission::class)]
-#[CoversClass(ExportFormat::class)]
 #[CoversClass(FieldDefinition::class)]
-#[CoversClass(FieldType::class)]
-#[CoversClass(ResourceOperation::class)]
 #[CoversClass(SavedView::class)]
 #[CoversClass(ValidationRule::class)]
 final class AdminDomainTest extends TestCase

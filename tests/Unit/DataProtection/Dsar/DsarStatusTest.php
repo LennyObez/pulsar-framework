@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\DataProtection\Dsar;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\DataProtection\Dsar\DsarStatus;
 use ValueError;
 
-#[CoversClass(DsarStatus::class)]
+#[CoversNothing]
 final class DsarStatusTest extends TestCase
 {
     #[Test]

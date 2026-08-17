@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Deploy;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeploySeverity;
 
-#[CoversClass(DeploySeverity::class)]
+#[CoversNothing]
 final class DeploySeverityTest extends TestCase
 {
     #[Test]

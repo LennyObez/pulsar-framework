@@ -15,7 +15,6 @@ use Pulsar\Security\Incident\IncidentSeverity;
 use function strlen;
 
 #[CoversClass(Incident::class)]
-#[CoversClass(IncidentSeverity::class)]
 final class IncidentTest extends TestCase
 {
     #[Test]

@@ -21,7 +21,6 @@ use RuntimeException;
 
 #[CoversClass(PlaybookEngine::class)]
 #[CoversClass(PlaybookResult::class)]
-#[CoversClass(PlaybookOutcome::class)]
 #[CoversClass(Playbook::class)]
 final class PlaybookEngineTest extends TestCase
 {

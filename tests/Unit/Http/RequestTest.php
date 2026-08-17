@@ -17,7 +17,6 @@ use function str_repeat;
 use function strlen;
 
 #[CoversClass(Request::class)]
-#[CoversClass(Method::class)]
 final class RequestTest extends TestCase
 {
     #[Test]
@@ -805,7 +804,6 @@ final class RequestTest extends TestCase
     }
 }
 
-#[CoversClass(Method::class)]
 final class MethodEnumTest extends TestCase
 {
     #[Test]

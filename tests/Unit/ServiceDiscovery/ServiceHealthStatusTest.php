@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\ServiceDiscovery;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\ServiceDiscovery\ServiceHealthStatus;
 
-#[CoversClass(ServiceHealthStatus::class)]
+#[CoversNothing]
 final class ServiceHealthStatusTest extends TestCase
 {
     #[Test]

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Messaging\Tests\Unit\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Messaging\Domain\CallStatus;
 
-#[CoversClass(CallStatus::class)]
+#[CoversNothing]
 final class CallStatusTest extends TestCase
 {
     public function testAllCasesExist(): void

@@ -16,7 +16,6 @@ use Pulsar\Extension\Grpc\Security\ServicePermission;
 #[CoversClass(ServicePermission::class)]
 #[CoversClass(ServiceIdentity::class)]
 #[CoversClass(IdentityMapping::class)]
-#[CoversClass(GrpcSecurityEvent::class)]
 #[CoversClass(IdentityMappingEntry::class)]
 final class GrpcSecurityTest extends TestCase
 {

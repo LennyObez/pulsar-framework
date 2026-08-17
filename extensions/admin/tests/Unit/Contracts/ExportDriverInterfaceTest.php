@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Contracts;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 use ReflectionClass;
 
-#[CoversClass(ExportDriverInterface::class)]
+#[CoversNothing]
 final class ExportDriverInterfaceTest extends TestCase
 {
     #[Test]

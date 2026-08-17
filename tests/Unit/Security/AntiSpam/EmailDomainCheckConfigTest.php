@@ -11,7 +11,6 @@ use Pulsar\Security\AntiSpam\EmailDomainCheckConfig;
 use Pulsar\Security\AntiSpam\EmailDomainSignalMode;
 
 #[CoversClass(EmailDomainCheckConfig::class)]
-#[CoversClass(EmailDomainSignalMode::class)]
 final class EmailDomainCheckConfigTest extends TestCase
 {
     #[Test]

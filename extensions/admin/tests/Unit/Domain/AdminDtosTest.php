@@ -40,7 +40,6 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 #[CoversClass(DeleteResourceResult::class)]
 #[CoversClass(ExportResourceRequest::class)]
 #[CoversClass(ExportResourceResult::class)]
-#[CoversClass(FieldType::class)]
 #[CoversClass(ListResourceRequest::class)]
 #[CoversClass(ListResourceResult::class)]
 #[CoversClass(SavedViewsRequest::class)]

@@ -20,7 +20,6 @@ use Pulsar\Extension\Cms\Plugins\PluginManifest;
 #[CoversClass(PluginEnabled::class)]
 #[CoversClass(PluginInstalled::class)]
 #[CoversClass(HookRegistry::class)]
-#[CoversClass(PluginCapability::class)]
 #[CoversClass(PluginManifest::class)]
 final class PluginEntitiesTest extends TestCase
 {

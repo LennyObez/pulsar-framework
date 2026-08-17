@@ -11,7 +11,6 @@ use Pulsar\Extension\McpServer\Domain\ToolCategory;
 use Pulsar\Extension\McpServer\Domain\ToolDefinition;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
 
-#[CoversClass(ToolCategory::class)]
 #[CoversClass(ToolDefinition::class)]
 #[CoversClass(ToolResult::class)]
 final class McpDomainTest extends TestCase

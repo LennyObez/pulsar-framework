@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemPoolInterface;
@@ -14,7 +14,7 @@ use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 
-#[CoversClass(CacheManagerInterface::class)]
+#[CoversNothing]
 final class CacheManagerInterfaceTest extends TestCase
 {
     #[Test]

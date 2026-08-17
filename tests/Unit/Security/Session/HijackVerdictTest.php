@@ -13,8 +13,6 @@ use Pulsar\Security\Session\HijackPolicy;
 use Pulsar\Security\Session\HijackVerdict;
 
 #[CoversClass(HijackVerdict::class)]
-#[CoversClass(HijackAction::class)]
-#[CoversClass(HijackPolicy::class)]
 final class HijackVerdictTest extends TestCase
 {
     // ── HijackVerdict factories ───────────────────────────────────

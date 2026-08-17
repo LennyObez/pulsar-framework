@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\KeyLifecycle;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +12,7 @@ use Pulsar\Security\KeyLifecycle\CertificateType;
 use Pulsar\Security\KeyLifecycle\CertificateWarningLevel;
 use Pulsar\Security\KeyLifecycle\KeyType;
 
-#[CoversClass(KeyType::class)]
-#[CoversClass(CertificateType::class)]
-#[CoversClass(CertificateWarningLevel::class)]
+#[CoversNothing]
 final class KeyLifecycleEnumTest extends TestCase
 {
     // ── KeyType ───────────────────────────────────────────────────────

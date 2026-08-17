@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Auth\Tests\Unit\WebAuthn\Contract;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\WebAuthn\Ceremony\AuthenticationOptions;
@@ -15,7 +15,7 @@ use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationResult;
 use Pulsar\Extension\Auth\WebAuthn\Contract\WebAuthnServerInterface;
 use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
 
-#[CoversClass(WebAuthnServerInterface::class)]
+#[CoversNothing]
 final class WebAuthnServerInterfaceTest extends TestCase
 {
     #[Test]

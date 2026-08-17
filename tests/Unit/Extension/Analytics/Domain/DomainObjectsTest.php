@@ -25,16 +25,13 @@ use Pulsar\Extension\Analytics\Domain\Site;
 #[CoversClass(CustomEvent::class)]
 #[CoversClass(DailyStats::class)]
 #[CoversClass(DeviceInfo::class)]
-#[CoversClass(DeviceType::class)]
 #[CoversClass(GeoInfo::class)]
 #[CoversClass(GoalConversion::class)]
-#[CoversClass(GoalType::class)]
 #[CoversClass(HourlyStats::class)]
 #[CoversClass(PageView::class)]
 #[CoversClass(ReferrerSource::class)]
 #[CoversClass(Session::class)]
 #[CoversClass(Site::class)]
-#[CoversClass(BreakdownDimension::class)]
 final class DomainObjectsTest extends TestCase
 {
     // --- PageView ---

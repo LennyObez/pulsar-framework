@@ -19,7 +19,6 @@ use function ord;
 use function strlen;
 
 #[CoversClass(GrpcWebAdapter::class)]
-#[CoversClass(GrpcWebContentType::class)]
 #[CoversClass(GrpcWebResponse::class)]
 final class GrpcWebAdapterTest extends TestCase
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\ZeroTrust;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +12,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
 use Pulsar\Security\ZeroTrust\Policy\PolicyDecision;
 use Pulsar\Security\ZeroTrust\StepUp\StepUpAction;
 
-#[CoversClass(ClaimSource::class)]
-#[CoversClass(PolicyDecision::class)]
-#[CoversClass(StepUpAction::class)]
+#[CoversNothing]
 final class ZeroTrustEnumTest extends TestCase
 {
     // ── ClaimSource ─────────────────────────────────────────────────────

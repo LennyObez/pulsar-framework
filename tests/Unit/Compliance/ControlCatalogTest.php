@@ -13,7 +13,6 @@ use Pulsar\Compliance\ControlStatus;
 
 #[CoversClass(ControlCatalog::class)]
 #[CoversClass(Control::class)]
-#[CoversClass(ControlStatus::class)]
 final class ControlCatalogTest extends TestCase
 {
     private ControlCatalog $catalog;

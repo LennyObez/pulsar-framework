@@ -11,7 +11,6 @@ use Pulsar\View\Sandbox\AstNode;
 use Pulsar\View\Sandbox\AstNodeType;
 
 #[CoversClass(AstNode::class)]
-#[CoversClass(AstNodeType::class)]
 final class AstNodeTest extends TestCase
 {
     #[Test]

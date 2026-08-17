@@ -15,9 +15,6 @@ use Pulsar\Api\Pagination\PaginationMeta;
 use Pulsar\Api\Resource\RedactionStrategy;
 use Pulsar\Api\Security\FieldAuthorizationResult;
 
-#[CoversClass(RedactionStrategy::class)]
-#[CoversClass(SecuritySchemeType::class)]
-#[CoversClass(FieldAuthorizationResult::class)]
 #[CoversClass(ResponseContext::class)]
 final class ApiValueObjectTest extends TestCase
 {

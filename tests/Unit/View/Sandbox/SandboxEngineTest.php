@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\View\Sandbox\AstInterpreter;
 use Pulsar\View\Sandbox\AstNode;
-use Pulsar\View\Sandbox\AstNodeType;
 use Pulsar\View\Sandbox\AstParser;
 use Pulsar\View\Sandbox\SandboxConfig;
 use Pulsar\View\Sandbox\SandboxEngine;
@@ -21,7 +20,6 @@ use Pulsar\View\ViewException;
 #[CoversClass(AstParser::class)]
 #[CoversClass(AstInterpreter::class)]
 #[CoversClass(AstNode::class)]
-#[CoversClass(AstNodeType::class)]
 #[CoversClass(SandboxConfig::class)]
 #[CoversClass(TranslationCallback::class)]
 final class SandboxEngineTest extends TestCase

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\FeatureFlag;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +12,7 @@ use Pulsar\FeatureFlag\FlagEvaluationReason;
 use Pulsar\FeatureFlag\FlagStorageDriver;
 use Pulsar\FeatureFlag\FlagType;
 
-#[CoversClass(FlagType::class)]
-#[CoversClass(FlagStorageDriver::class)]
-#[CoversClass(FlagEvaluationReason::class)]
+#[CoversNothing]
 final class FeatureFlagEnumTest extends TestCase
 {
     // ── FlagType ────────────────────────────────────────────────────────

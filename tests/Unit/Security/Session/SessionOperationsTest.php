@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Security\Session;
 
 use NoDiscard;
 use Override;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Session\SessionInterface;
@@ -23,7 +23,7 @@ use function is_string;
  * without requiring PHP's native session infrastructure (which cannot run
  * in PHPUnit without headers being sent).
  */
-#[CoversClass(SessionInterface::class)]
+#[CoversNothing]
 final class SessionOperationsTest extends TestCase
 {
     /** @psalm-suppress PropertyNotSetInConstructor -- initialized in setUp() */

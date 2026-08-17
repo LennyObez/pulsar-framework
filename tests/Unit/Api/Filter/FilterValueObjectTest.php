@@ -13,8 +13,6 @@ use Pulsar\Api\Filter\FilterExpression;
 use Pulsar\Api\Filter\FilterOperator;
 use Pulsar\Api\Filter\FilterValueType;
 
-#[CoversClass(FilterOperator::class)]
-#[CoversClass(FilterValueType::class)]
 #[CoversClass(FilterDefinition::class)]
 #[CoversClass(FilterExpression::class)]
 final class FilterValueObjectTest extends TestCase

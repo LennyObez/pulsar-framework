@@ -16,7 +16,6 @@ use Pulsar\Extension\Cms\Navigation\MenuTranslation;
 
 #[CoversClass(Menu::class)]
 #[CoversClass(MenuItem::class)]
-#[CoversClass(LinkTarget::class)]
 #[CoversClass(MenuItemTranslation::class)]
 #[CoversClass(MenuTranslation::class)]
 final class NavigationEntitiesTest extends TestCase

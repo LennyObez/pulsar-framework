@@ -13,7 +13,6 @@ use Pulsar\Config\Validation\ConfigValidator;
 
 #[CoversClass(ConfigValidator::class)]
 #[CoversClass(ConfigValidationError::class)]
-#[CoversClass(ConfigSeverity::class)]
 final class ConfigValidatorTest extends TestCase
 {
     #[Test]

@@ -11,7 +11,6 @@ use Pulsar\AI\VectorStore\DistanceMetric;
 use Pulsar\AI\VectorStore\SearchResult;
 
 #[CoversClass(SearchResult::class)]
-#[CoversClass(DistanceMetric::class)]
 final class SearchResultTest extends TestCase
 {
     #[Test]

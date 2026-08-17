@@ -15,7 +15,6 @@ use Pulsar\Workflow\Storage\ClassifiedContext;
 use RuntimeException;
 
 #[CoversClass(ClassifiedContext::class)]
-#[CoversClass(ClassificationLevel::class)]
 final class ClassifiedContextTest extends TestCase
 {
     #[Test]

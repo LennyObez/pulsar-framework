@@ -16,10 +16,7 @@ use Pulsar\Extension\Observability\Config\SamplerType;
 
 #[CoversClass(BatchConfig::class)]
 #[CoversClass(CardinalityConfig::class)]
-#[CoversClass(DbStatementExport::class)]
-#[CoversClass(OtlpProtocol::class)]
 #[CoversClass(SamplerConfig::class)]
-#[CoversClass(SamplerType::class)]
 final class OtelSubConfigsTest extends TestCase
 {
     // --- BatchConfig ---

@@ -11,7 +11,6 @@ use Pulsar\Extension\Grpc\Error\GrpcStatus;
 use Pulsar\Extension\Grpc\Web\GrpcWebContentType;
 use Pulsar\Extension\Grpc\Web\GrpcWebResponse;
 
-#[CoversClass(GrpcWebContentType::class)]
 #[CoversClass(GrpcWebResponse::class)]
 final class GrpcWebTypesTest extends TestCase
 {

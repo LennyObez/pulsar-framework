@@ -17,11 +17,8 @@ use Pulsar\Extension\Cms\Content\FieldDiff;
 use Pulsar\Extension\Cms\Content\PathRecomputeResult;
 use Pulsar\Extension\Cms\Content\Redirect;
 
-#[CoversClass(CommentPolicy::class)]
 #[CoversClass(ContentBlock::class)]
-#[CoversClass(ContentType::class)]
 #[CoversClass(ContentTypeRegistry::class)]
-#[CoversClass(DataClassification::class)]
 #[CoversClass(FieldDiff::class)]
 #[CoversClass(PathRecomputeResult::class)]
 #[CoversClass(Redirect::class)]

@@ -44,7 +44,6 @@ use Pulsar\Security\Compliance\Event\Sox\FinancialDataModified;
 use Pulsar\Security\Compliance\Exception\ComplianceException;
 
 #[CoversClass(ComplianceEvent::class)]
-#[CoversClass(DataClassification::class)]
 #[CoversClass(ComplianceException::class)]
 #[CoversClass(ConsentGranted::class)]
 #[CoversClass(ConsentRevoked::class)]

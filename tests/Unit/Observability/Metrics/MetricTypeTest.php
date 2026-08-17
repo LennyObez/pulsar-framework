@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Observability\Metrics;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Observability\Metrics\MetricType;
 
-#[CoversClass(MetricType::class)]
+#[CoversNothing]
 final class MetricTypeTest extends TestCase
 {
     #[Test]

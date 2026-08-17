@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Tests\Unit\Navigation;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Navigation\LinkTarget;
 
-#[CoversClass(LinkTarget::class)]
+#[CoversNothing]
 final class LinkTargetTest extends TestCase
 {
     #[Test]

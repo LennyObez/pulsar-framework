@@ -15,7 +15,6 @@ use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 
 #[CoversClass(PaymentIntent::class)]
-#[CoversClass(PaymentIntentStatus::class)]
 final class PaymentIntentTest extends TestCase
 {
     #[Test]

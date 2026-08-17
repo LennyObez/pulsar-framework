@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
@@ -14,7 +14,7 @@ use function getcwd;
 use const DIRECTORY_SEPARATOR;
 use const PHP_OS_FAMILY;
 
-#[CoversClass(Driver::class)]
+#[CoversNothing]
 final class DriverSqlitePathTest extends TestCase
 {
     #[Test]
