@@ -25,9 +25,11 @@ use Stringable;
 
 use function bin2hex;
 use function file_put_contents;
+use function getenv;
 use function implode;
 use function is_dir;
 use function mkdir;
+use function putenv;
 use function random_bytes;
 use function rmdir;
 use function scandir;
@@ -42,8 +44,39 @@ final class ComplianceVerificationWiringTest extends TestCase
 {
     private string $configPath = '';
 
+    /** @var array<string, string|false> */
+    private array $savedEnvironment = [];
+
+    /**
+     * These cases assert on the connection they wrote, so the process environment must
+     * not be in the room.
+     *
+     * ConnectionConfig::fromArray reads the environment BEFORE the config array —
+     * `$environment->get('DB_HOST') ?? $data['host']` — so an exported DB_HOST wins
+     * over an explicit one. CI exports DB_HOST=127.0.0.1 for its service containers,
+     * which turned the Unix socket these tests configure into a TCP host and made
+     * strict mode demand TLS. The assertion was about the runner, not the code.
+     */
+    protected function setUp(): void
+    {
+        foreach (['DB_HOST', 'DB_PORT', 'DB_DATABASE'] as $key) {
+            $this->savedEnvironment[$key] = getenv($key);
+            putenv($key);
+        }
+    }
+
     protected function tearDown(): void
     {
+        foreach ($this->savedEnvironment as $key => $value) {
+            if ($value === false) {
+                putenv($key);
+            } else {
+                putenv($key . '=' . $value);
+            }
+        }
+
+        $this->savedEnvironment = [];
+
         if ($this->configPath !== '' && is_dir($this->configPath)) {
             $this->cleanDir($this->configPath);
         }
