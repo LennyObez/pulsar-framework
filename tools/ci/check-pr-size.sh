@@ -127,9 +127,23 @@ if [[ -z "${approval_author:-}" ]]; then
     exit 1
 fi
 
+maintainer_count=$(echo "$maintainers" | grep -c . || true)
+
+# ADR-0031 §1.1. With one CODEOWNER who is also the author, the independent reviewer
+# does not exist, so the rule can only be bypassed by an admin or block forever.
+# Self-approval is accepted here and NOWHERE else, and the log says the control was
+# unavailable — never that it passed.
 if [[ "$approval_author" = "${PR_AUTHOR:-}" ]]; then
-    echo "FAIL: oversize-pr self-approval refused (author=${PR_AUTHOR} also wrote /oversize-pr-approved)"
-    exit 1
+    if [[ "$maintainer_count" -ne 1 ]] || ! echo "$maintainers" | grep -qx "${PR_AUTHOR:-}"; then
+        echo "FAIL: oversize-pr self-approval refused (author=${PR_AUTHOR} also wrote /oversize-pr-approved)"
+        echo "      ADR-0031 §1.1 permits it only when CODEOWNERS names exactly one person"
+        echo "      and that person is the author. This repository lists ${maintainer_count}."
+        exit 1
+    fi
+
+    echo "::warning::ADR-0031 §1.1: two-party approval UNAVAILABLE — ${PR_AUTHOR} is the sole CODEOWNER and the PR author. The independent reviewer attestation of §1 was not obtained; it could not be."
+    echo "EXEMPT (single-maintainer): PR exceeds ${LIMIT}-line cap, label present, self-attested by sole CODEOWNER ${PR_AUTHOR}"
+    exit 0
 fi
 
 if ! echo "$maintainers" | grep -qx "$approval_author"; then

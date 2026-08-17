@@ -119,20 +119,8 @@ jobs:
       - name: Audit dependencies for vulnerabilities
         run: composer audit --abandoned=report
 
-  # ADR-0031: enforce the 1500-line PR cap. A PR that bundles a whole release
-  # cycle into one squash-merge diff is review-resistant and destroys
-  # git-bisect granularity. Hard cap at 1500 lines of substantive diff
-  # (excluding lockfiles + generated code per .size-limit-ignore); above that,
-  # the PR needs the `oversize-pr-acknowledged` label AND a
-  # `/oversize-pr-approved` comment from a CODEOWNER other than the PR author.
-  #
-  # Its own job, and nothing depends on it. It used to be a step inside
-  # php-quality, which every test job needs — so an oversize PR failed the
-  # quality job and skipped the unit, integration, E2E, Windows, mutation,
-  # benchmark and cache-warmup suites with it. A policy verdict on how the work
-  # was packaged was suppressing every signal about whether the work runs. The
-  # gate is unchanged and still blocks the merge; it no longer takes the test
-  # suite hostage.
+  # ADR-0031's 1500-line cap. Its own job, with nothing depending on it: as a step
+  # inside php-quality it failed that job and skipped every test suite with it.
   pr-size:
     name: PR Size Limit (ADR-0031)
     runs-on: ubuntu-latest
@@ -290,11 +278,8 @@ jobs:
             --testsuite Contract \
             --fail-on-skipped
 
-      # Fast, no-coverage parallel run FIRST: it fails in minutes rather than after the
-      # coverage pass, and it is the only thing that guards test isolation. A helper
-      # class declared inside a sibling test file, or a fixture written to a literal
-      # temp path, works under sequential execution and breaks here, which is what
-      # makes this pass worth running first.
+      # Runs first: fails in minutes rather than after the coverage pass, and it is
+      # the only thing guarding test isolation.
       - name: Run all tests in parallel (isolation guard, no coverage)
         env:
           XDEBUG_MODE: 'off'
@@ -318,22 +303,10 @@ jobs:
             --min-tests=43000 \
             --max-skipped-percent=1.0
 
-      # Line and branch coverage, not path coverage, and parallel rather than
-      # sequential. The two go together.
-      #
-      # --path-coverage made Xdebug enumerate every execution path through every
-      # function — combinatorial in the branch count — and nothing consumed it: the
-      # only report asked for is Clover, whose format has no path element, and the
-      # threshold gate reads statements, conditionals and methods
-      # (tools/ci/assert-coverage-threshold.php:66-68).
-      #
-      # This pass was sequential precisely because merging PATH coverage across
-      # paratest workers is thinly exercised, and a wrong number in a threshold gate
-      # is worse than a slow gate. That reasoning was right and it was about paths.
-      # With paths gone, what is merged is line and branch Clover, which is the
-      # ordinary case php-code-coverage is built for. The justification for running
-      # 43575 tests on one core went with the flag: the step was cut at 55 minutes
-      # even after the flag came off.
+      # No --path-coverage: Clover has no path element and the threshold gate reads
+      # statements, conditionals and methods. Parallel now that paths are gone —
+      # sequential existed only because merging path coverage across workers is
+      # thinly exercised.
       - name: Run all tests with line + branch coverage
         env:
           XDEBUG_MODE: coverage
@@ -408,9 +381,8 @@ jobs:
           # purpose: the client extensions would load with no server behind them,
           # which is worse than absent — the driver tests would connect to nothing
           # and skip, while the job appeared to cover them.
-          # exif, fileinfo and gd are required by composer.json and ship enabled in the
-          # Linux build, so no Linux job has to name them. Windows does: composer refused
-          # the lockfile outright, before a single test ran.
+          # exif/fileinfo/gd/sockets: required or used by the suite, enabled by default
+          # on Linux only. Without them composer refuses the lockfile on Windows.
           extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium, exif, fileinfo, gd, sockets
           ini-values: apc.enable_cli=1
           coverage: none
@@ -689,11 +661,8 @@ jobs:
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version-file: .php-version
-          # This matrix runs on windows-latest too, where none of these is enabled by
-          # default and composer install refuses the lockfile without them. The list is
-          # every ext-* composer.json requires that the Windows build omits — sodium and
-          # zip on top of the three the test job needed. Naming them costs nothing on
-          # ubuntu, where they are already there.
+          # This matrix includes windows-latest, where none of these is enabled by
+          # default and composer install refuses the lockfile without them.
           extensions: pdo_sqlite, exif, fileinfo, gd, sodium, zip
           coverage: none
 

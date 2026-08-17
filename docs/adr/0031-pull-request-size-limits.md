@@ -31,6 +31,22 @@ Exceptions require:
 - maintainer comment in the PR thread referencing this ADR,
 - independent reviewer attestation (different from the PR author _and_ the merging maintainer).
 
+### 1.1 Single-maintainer repositories
+
+When `CODEOWNERS` resolves to exactly one person and that person is the PR author, the independent reviewer of §1 does not exist. The requirement is then not evaded, it is unobtainable, and a rule that can never be satisfied stops being a control: it is either bypassed by an administrator or it blocks the project permanently. Neither outcome leaves a record worth auditing.
+
+In that case, and only in that case, the exemption is granted on the following instead. The count of parties drops from two to one; nothing else is relaxed, and three obligations are added that the two-party path does not carry:
+
+- the `oversize-pr-acknowledged` label, as in §1,
+- a `/oversize-pr-approved <reason>` comment naming the reason, authored by the sole CODEOWNER — the attestation stays explicit, timestamped and public even though it is self-issued,
+- **the full test suite green on every supported engine and platform**, which is what the absent second reader would otherwise have been relied on to notice,
+- **an ADR recording the work**, so an oversize change leaves an architectural record rather than only a diff,
+- **CI must state in its output that the two-party control was unavailable**, naming the sole CODEOWNER.
+
+That last point is the load-bearing one. An auditor reading the log must be able to tell that the second signature was impossible, not that it was obtained. A control that is unavailable and a control that passed must never print the same thing.
+
+This clause lapses automatically the moment `CODEOWNERS` names a second person: the check reads the file, so nothing has to be remembered.
+
 ### 2. Soft cap: feature PRs should target ≤ 500 LOC where feasible.
 
 When ≤ 500 LOC is achievable without artificial splitting, prefer it. The CI check at 1 500 is the line; ≤ 500 is the goal.
