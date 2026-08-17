@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 
-#[CoversClass(TaggedCacheInterface::class)]
+#[CoversNothing]
 final class TaggedCacheInterfaceTest extends TestCase
 {
     #[Test]

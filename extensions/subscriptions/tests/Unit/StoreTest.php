@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Subscriptions\Tests\Unit;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Subscriptions\Store;
 use ValueError;
 
-#[CoversClass(Store::class)]
+#[CoversNothing]
 final class StoreTest extends TestCase
 {
     #[Test]

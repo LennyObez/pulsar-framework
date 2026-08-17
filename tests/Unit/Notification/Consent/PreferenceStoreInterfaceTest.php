@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Notification\Consent;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Notification\Consent\ConsentRecord;
@@ -14,7 +14,7 @@ use Pulsar\Notification\Consent\LegalBasis;
 use Pulsar\Notification\Consent\PreferenceStoreInterface;
 use Pulsar\Notification\Consent\UserPreferences;
 
-#[CoversClass(PreferenceStoreInterface::class)]
+#[CoversNothing]
 final class PreferenceStoreInterfaceTest extends TestCase
 {
     #[Test]

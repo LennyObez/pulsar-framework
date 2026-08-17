@@ -28,8 +28,6 @@ use function strtoupper;
 #[CoversClass(Command::class)]
 #[CoversClass(ArrayInput::class)]
 #[CoversClass(BufferedOutput::class)]
-#[CoversClass(ExitCode::class)]
-#[CoversClass(Verbosity::class)]
 #[CoversClass(CommandNotFoundException::class)]
 final class ConsoleIntegrationTest extends TestCase
 {

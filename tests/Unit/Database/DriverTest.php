@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\InvalidDsnComponentException;
 
-#[CoversClass(Driver::class)]
+#[CoversNothing]
 final class DriverTest extends TestCase
 {
     #[Test]

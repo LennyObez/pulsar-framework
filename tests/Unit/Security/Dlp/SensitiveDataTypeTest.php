@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Dlp;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Dlp\SensitiveDataType;
 
 use function count;
 
-#[CoversClass(SensitiveDataType::class)]
+#[CoversNothing]
 final class SensitiveDataTypeTest extends TestCase
 {
     #[Test]

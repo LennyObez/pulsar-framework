@@ -14,9 +14,6 @@ use Pulsar\Extension\MedicalDevices\Risk\RiskProbability;
 use Pulsar\Extension\MedicalDevices\Risk\RiskSeverity;
 
 #[CoversClass(HazardEntry::class)]
-#[CoversClass(RiskLevel::class)]
-#[CoversClass(RiskSeverity::class)]
-#[CoversClass(RiskProbability::class)]
 final class HazardEntryTest extends TestCase
 {
     #[Test]

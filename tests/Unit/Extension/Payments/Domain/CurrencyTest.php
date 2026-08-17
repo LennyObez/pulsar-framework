@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Payments\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Payments\Domain\Currency;
 
-#[CoversClass(Currency::class)]
+#[CoversNothing]
 final class CurrencyTest extends TestCase
 {
     #[Test]

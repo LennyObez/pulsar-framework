@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Codegen\Schema;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\Schema\RelationType;
 
-#[CoversClass(RelationType::class)]
+#[CoversNothing]
 final class RelationTypeTest extends TestCase
 {
     #[Test]

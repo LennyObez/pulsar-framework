@@ -14,8 +14,6 @@ use Pulsar\Extension\MedicalDevices\Vigilance\SeriousIncidentType;
 use Pulsar\Extension\MedicalDevices\Vigilance\VigilanceReportStatus;
 
 #[CoversClass(MdrVigilanceReport::class)]
-#[CoversClass(SeriousIncidentType::class)]
-#[CoversClass(VigilanceReportStatus::class)]
 final class MdrVigilanceReportTest extends TestCase
 {
     #[Test]

@@ -11,7 +11,6 @@ use Pulsar\Workflow\Definition\StateDefinition;
 use Pulsar\Workflow\Definition\StateType;
 
 #[CoversClass(StateDefinition::class)]
-#[CoversClass(StateType::class)]
 final class StateDefinitionTest extends TestCase
 {
     #[Test]

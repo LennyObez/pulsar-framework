@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Payments\Gateway;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -48,7 +48,7 @@ use Throwable;
 use function random_bytes;
 use function sodium_bin2hex;
 
-#[CoversClass(PaymentGateway::class)]
+#[CoversNothing]
 final class PaymentGatewayTest extends TestCase
 {
     private FixedClock $clock;

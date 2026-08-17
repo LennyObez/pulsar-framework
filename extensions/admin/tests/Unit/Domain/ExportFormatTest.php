@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 use ValueError;
 
-#[CoversClass(ExportFormat::class)]
+#[CoversNothing]
 final class ExportFormatTest extends TestCase
 {
     #[Test]

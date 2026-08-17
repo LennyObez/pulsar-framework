@@ -15,7 +15,6 @@ use Pulsar\Ui\Embeddable\StatusBadgeComponent;
  * Edge case tests for StatusBadgeComponent.
  */
 #[CoversClass(StatusBadgeComponent::class)]
-#[CoversClass(BadgeVariant::class)]
 final class StatusBadgeComponentEdgeTest extends TestCase
 {
     #[Test]

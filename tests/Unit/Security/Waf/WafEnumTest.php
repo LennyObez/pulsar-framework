@@ -15,10 +15,6 @@ use Pulsar\Security\Waf\WafRuleMatch;
 use Pulsar\Security\Waf\WafSeverity;
 use Pulsar\Security\Waf\WafTarget;
 
-#[CoversClass(WafAction::class)]
-#[CoversClass(WafSeverity::class)]
-#[CoversClass(WafOperator::class)]
-#[CoversClass(WafTarget::class)]
 #[CoversClass(WafRuleMatch::class)]
 final class WafEnumTest extends TestCase
 {

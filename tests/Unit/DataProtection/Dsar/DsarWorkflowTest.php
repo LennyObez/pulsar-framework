@@ -20,7 +20,6 @@ use Pulsar\DataProtection\Dsar\DsarStatus;
 use Pulsar\DataProtection\Dsar\DsarStoreInterface;
 
 #[CoversClass(DsarRequest::class)]
-#[CoversClass(DsarStatus::class)]
 #[CoversClass(DsarDataSet::class)]
 #[CoversClass(DsarAttachment::class)]
 #[CoversClass(DsarDeadlineReport::class)]

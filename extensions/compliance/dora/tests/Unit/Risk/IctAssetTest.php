@@ -13,8 +13,6 @@ use Pulsar\Extension\Dora\Risk\IctAssetCriticality;
 use Pulsar\Extension\Dora\Risk\IctRiskCategory;
 
 #[CoversClass(IctAsset::class)]
-#[CoversClass(IctAssetCriticality::class)]
-#[CoversClass(IctRiskCategory::class)]
 final class IctAssetTest extends TestCase
 {
     #[Test]

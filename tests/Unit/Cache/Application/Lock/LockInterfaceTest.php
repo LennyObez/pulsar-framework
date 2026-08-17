@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application\Lock;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
 use Pulsar\Cache\Application\Lock\LockHandle;
 use Pulsar\Cache\Application\Lock\LockInterface;
 
-#[CoversClass(LockInterface::class)]
+#[CoversNothing]
 final class LockInterfaceTest extends TestCase
 {
     #[Test]

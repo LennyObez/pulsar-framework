@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Notification;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Notification\NotifiableInterface;
 use Pulsar\Notification\Notification;
 use Pulsar\Notification\NotificationManagerInterface;
 
-#[CoversClass(NotificationManagerInterface::class)]
+#[CoversNothing]
 final class NotificationManagerInterfaceTest extends TestCase
 {
     #[Test]

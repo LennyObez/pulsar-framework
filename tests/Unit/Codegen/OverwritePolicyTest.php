@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Codegen;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\OverwritePolicy;
 
-#[CoversClass(OverwritePolicy::class)]
+#[CoversNothing]
 final class OverwritePolicyTest extends TestCase
 {
     #[Test]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Notification\Consent;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Notification\Consent\ConsentSource;
@@ -12,10 +12,7 @@ use Pulsar\Notification\Consent\ConsentType;
 use Pulsar\Notification\Consent\LegalBasis;
 use Pulsar\Notification\Consent\NotificationClassification;
 
-#[CoversClass(ConsentSource::class)]
-#[CoversClass(ConsentType::class)]
-#[CoversClass(LegalBasis::class)]
-#[CoversClass(NotificationClassification::class)]
+#[CoversNothing]
 final class ConsentEnumTest extends TestCase
 {
     #[Test]

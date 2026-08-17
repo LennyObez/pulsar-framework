@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\SupplyChain\Vex;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +13,7 @@ use ValueError;
 
 use function sprintf;
 
-#[CoversClass(VexStatus::class)]
+#[CoversNothing]
 final class VexStatusTest extends TestCase
 {
     #[Test]

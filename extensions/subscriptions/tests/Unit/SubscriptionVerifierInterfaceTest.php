@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Subscriptions\Tests\Unit;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Subscriptions\Store;
 use Pulsar\Extension\Subscriptions\SubscriptionVerifierInterface;
 use Pulsar\Extension\Subscriptions\VerificationResult;
 
-#[CoversClass(SubscriptionVerifierInterface::class)]
+#[CoversNothing]
 final class SubscriptionVerifierInterfaceTest extends TestCase
 {
     #[Test]

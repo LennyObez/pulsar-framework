@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Auth\Tests\Unit\WebAuthn\Contract;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorRecord;
 use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorType;
 use Pulsar\Extension\Auth\WebAuthn\Contract\AuthenticatorRepositoryInterface;
 
-#[CoversClass(AuthenticatorRepositoryInterface::class)]
+#[CoversNothing]
 final class AuthenticatorRepositoryInterfaceTest extends TestCase
 {
     #[Test]

@@ -13,8 +13,6 @@ use Pulsar\Api\BcBreakSeverity;
 use Pulsar\Api\BcBreakType;
 
 #[CoversClass(BcBreak::class)]
-#[CoversClass(BcBreakType::class)]
-#[CoversClass(BcBreakSeverity::class)]
 final class BcBreakTest extends TestCase
 {
     #[Test]

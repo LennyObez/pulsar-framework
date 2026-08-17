@@ -15,7 +15,6 @@ use Pulsar\Extension\MedicalDevices\Surveillance\ReportType;
 
 #[CoversClass(PostMarketSurveillanceReport::class)]
 #[CoversClass(AdverseEventSummary::class)]
-#[CoversClass(ReportType::class)]
 final class PostMarketSurveillanceReportTest extends TestCase
 {
     #[Test]

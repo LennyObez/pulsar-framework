@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application\Serializer;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Exception\CacheException;
 use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
 
-#[CoversClass(CacheSerializerInterface::class)]
+#[CoversNothing]
 final class CacheSerializerInterfaceTest extends TestCase
 {
     private function createJsonSerializer(): CacheSerializerInterface

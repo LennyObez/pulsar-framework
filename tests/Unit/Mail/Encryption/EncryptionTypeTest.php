@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Mail\Encryption;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Mail\Encryption\EncryptionType;
 
 use function array_map;
 
-#[CoversClass(EncryptionType::class)]
+#[CoversNothing]
 final class EncryptionTypeTest extends TestCase
 {
     #[Test]

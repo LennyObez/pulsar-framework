@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Dora\Tests\Unit;
 
 use BackedEnum;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,13 +17,7 @@ use Pulsar\Extension\Dora\Sharing\ThreatSeverity;
 use Pulsar\Extension\Dora\Testing\ResilienceTestType;
 use Pulsar\Extension\Dora\ThirdParty\ThirdPartyRiskLevel;
 
-#[CoversClass(IctIncidentClassification::class)]
-#[CoversClass(IncidentReportingPhase::class)]
-#[CoversClass(IctAssetCriticality::class)]
-#[CoversClass(IctRiskCategory::class)]
-#[CoversClass(ThreatSeverity::class)]
-#[CoversClass(ResilienceTestType::class)]
-#[CoversClass(ThirdPartyRiskLevel::class)]
+#[CoversNothing]
 final class EnumTest extends TestCase
 {
     #[Test]

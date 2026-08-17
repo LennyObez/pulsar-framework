@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Grpc\Error;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Error\GrpcStatus;
 
 use function in_array;
 
-#[CoversClass(GrpcStatus::class)]
+#[CoversNothing]
 final class GrpcStatusFullCoverageTest extends TestCase
 {
     #[Test]

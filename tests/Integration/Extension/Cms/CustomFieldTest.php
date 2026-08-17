@@ -19,7 +19,6 @@ use Pulsar\Extension\Cms\FieldRegistry\FieldType;
 #[CoversClass(ContentTypeDefinition::class)]
 #[CoversClass(ContentTypeField::class)]
 #[CoversClass(ContentFieldValue::class)]
-#[CoversClass(FieldType::class)]
 final class CustomFieldTest extends TestCase
 {
     private InMemoryFieldRegistryRepository $fieldRepo;

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Cms\Commerce;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Commerce\ProductStatus;
 
-#[CoversClass(ProductStatus::class)]
+#[CoversNothing]
 final class ProductStatusTest extends TestCase
 {
     // ── canTransitionTo ──────────────────────────────────────────────

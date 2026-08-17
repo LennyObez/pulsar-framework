@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Version\ApiVersion;
 use Pulsar\Api\Version\VersionStrategy;
 
-#[CoversClass(VersionStrategy::class)]
 #[CoversClass(ApiVersion::class)]
 final class VersionValueObjectTest extends TestCase
 {

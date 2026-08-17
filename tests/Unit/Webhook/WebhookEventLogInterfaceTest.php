@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Webhook;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Webhook\Exception\WebhookException;
@@ -13,7 +13,7 @@ use Pulsar\Webhook\WebhookClaim;
 use Pulsar\Webhook\WebhookClaimStatus;
 use Pulsar\Webhook\WebhookEventLogInterface;
 
-#[CoversClass(WebhookEventLogInterface::class)]
+#[CoversNothing]
 final class WebhookEventLogInterfaceTest extends TestCase
 {
     private function createInMemoryLog(): WebhookEventLogInterface

@@ -5,21 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Extension\AiGovernance\Tests\Unit\Enum;
 
 use BackedEnum;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\AiGovernance\Enum\AiAuditEvent;
 use Pulsar\Extension\AiGovernance\Enum\AiModelRiskLevel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Enum\ImpactCategory;
 use Pulsar\Extension\AiGovernance\Enum\ImpactSeverity;
 
-#[CoversClass(AiModelRiskLevel::class)]
-#[CoversClass(AiModelStatus::class)]
-#[CoversClass(ImpactCategory::class)]
-#[CoversClass(ImpactSeverity::class)]
-#[CoversClass(AiAuditEvent::class)]
+#[CoversNothing]
 final class AiGovernanceEnumTest extends TestCase
 {
     #[Test]

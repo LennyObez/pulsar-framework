@@ -11,7 +11,6 @@ use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
 use Pulsar\Extension\Grpc\Handler\MethodType;
 
 #[CoversClass(MethodDescriptor::class)]
-#[CoversClass(MethodType::class)]
 final class HandlerTypesTest extends TestCase
 {
     // --- MethodType ---

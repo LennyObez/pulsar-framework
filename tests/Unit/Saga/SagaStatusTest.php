@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Saga;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Saga\SagaStatus;
 
-#[CoversClass(SagaStatus::class)]
+#[CoversNothing]
 final class SagaStatusTest extends TestCase
 {
     #[Test]

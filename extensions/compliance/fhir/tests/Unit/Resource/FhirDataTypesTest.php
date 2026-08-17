@@ -32,8 +32,6 @@ use function count;
 #[CoversClass(BundleLink::class)]
 #[CoversClass(AllergyReaction::class)]
 #[CoversClass(OperationOutcomeIssue::class)]
-#[CoversClass(FhirVersion::class)]
-#[CoversClass(ResourceType::class)]
 final class FhirDataTypesTest extends TestCase
 {
     // --- Period ---

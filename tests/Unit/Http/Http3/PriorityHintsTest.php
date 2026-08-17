@@ -13,7 +13,6 @@ use Pulsar\Http\Http3\PriorityHints;
 
 #[CoversClass(PriorityHints::class)]
 #[CoversClass(PriorityHint::class)]
-#[CoversClass(FetchPriority::class)]
 final class PriorityHintsTest extends TestCase
 {
     #[Test]

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Tests\Unit\Tools;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Tools\DuplicateResolutionPolicy;
 
-#[CoversClass(DuplicateResolutionPolicy::class)]
+#[CoversNothing]
 final class DuplicateResolutionPolicyTest extends TestCase
 {
     #[Test]

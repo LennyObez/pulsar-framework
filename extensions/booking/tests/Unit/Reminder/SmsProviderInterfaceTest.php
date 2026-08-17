@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Booking\Tests\Unit\Reminder;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Booking\Exception\BookingException;
 use Pulsar\Extension\Booking\Reminder\SmsProviderInterface;
 
-#[CoversClass(SmsProviderInterface::class)]
+#[CoversNothing]
 final class SmsProviderInterfaceTest extends TestCase
 {
     #[Test]

@@ -15,7 +15,6 @@ use Pulsar\Compliance\ControlStatus;
 #[CoversClass(ControlMapping::class)]
 #[CoversClass(ControlCatalog::class)]
 #[CoversClass(Control::class)]
-#[CoversClass(ControlStatus::class)]
 final class ControlMappingTest extends TestCase
 {
     private ControlCatalog $catalog;

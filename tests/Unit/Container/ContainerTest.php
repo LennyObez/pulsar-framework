@@ -17,7 +17,6 @@ use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use stdClass;
 
 #[CoversClass(Container::class)]
-#[CoversClass(BindingType::class)]
 #[CoversClass(ContainerException::class)]
 #[CoversClass(NotFoundException::class)]
 final class ContainerTest extends TestCase

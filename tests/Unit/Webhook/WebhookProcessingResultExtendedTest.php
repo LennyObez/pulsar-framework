@@ -11,7 +11,6 @@ use Pulsar\Webhook\WebhookProcessingResult;
 use Pulsar\Webhook\WebhookProcessingStatus;
 
 #[CoversClass(WebhookProcessingResult::class)]
-#[CoversClass(WebhookProcessingStatus::class)]
 final class WebhookProcessingResultExtendedTest extends TestCase
 {
     #[Test]

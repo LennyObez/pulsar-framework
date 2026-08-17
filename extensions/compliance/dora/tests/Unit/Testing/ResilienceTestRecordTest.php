@@ -13,7 +13,6 @@ use Pulsar\Extension\Dora\Testing\ResilienceTestRecord;
 use Pulsar\Extension\Dora\Testing\ResilienceTestType;
 
 #[CoversClass(ResilienceTestRecord::class)]
-#[CoversClass(ResilienceTestType::class)]
 final class ResilienceTestRecordTest extends TestCase
 {
     #[Test]

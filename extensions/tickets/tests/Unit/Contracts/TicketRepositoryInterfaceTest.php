@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Tickets\Tests\Unit\Contracts;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Pagination\PaginationResult;
@@ -12,7 +12,7 @@ use Pulsar\Extension\Tickets\Contracts\TicketRepositoryInterface;
 use Pulsar\Extension\Tickets\Domain\Ticket;
 use Pulsar\Extension\Tickets\Domain\TicketStatus;
 
-#[CoversClass(TicketRepositoryInterface::class)]
+#[CoversNothing]
 final class TicketRepositoryInterfaceTest extends TestCase
 {
     #[Test]

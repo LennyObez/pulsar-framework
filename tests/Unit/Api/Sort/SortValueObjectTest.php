@@ -12,7 +12,6 @@ use Pulsar\Api\Sort\SortDefinition;
 use Pulsar\Api\Sort\SortDirection;
 use Pulsar\Api\Sort\SortExpression;
 
-#[CoversClass(SortDirection::class)]
 #[CoversClass(SortDefinition::class)]
 #[CoversClass(SortExpression::class)]
 final class SortValueObjectTest extends TestCase

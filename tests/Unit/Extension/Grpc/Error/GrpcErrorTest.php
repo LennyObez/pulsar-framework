@@ -11,7 +11,6 @@ use Pulsar\Extension\Grpc\Error\GrpcException;
 use Pulsar\Extension\Grpc\Error\GrpcStatus;
 
 #[CoversClass(GrpcException::class)]
-#[CoversClass(GrpcStatus::class)]
 final class GrpcErrorTest extends TestCase
 {
     // --- GrpcStatus ---

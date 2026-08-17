@@ -11,7 +11,6 @@ use Pulsar\Extension\Accessibility\Validator\AccessibilityViolation;
 use Pulsar\Extension\Accessibility\Validator\Severity;
 
 #[CoversClass(AccessibilityViolation::class)]
-#[CoversClass(Severity::class)]
 final class ViolationAndSeverityTest extends TestCase
 {
     #[Test]

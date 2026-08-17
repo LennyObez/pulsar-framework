@@ -12,7 +12,6 @@ use Pulsar\Codegen\Schema\SchemaOperationType;
 use RuntimeException;
 
 #[CoversClass(SchemaOperation::class)]
-#[CoversClass(SchemaOperationType::class)]
 final class SchemaOperationTest extends TestCase
 {
     #[Test]

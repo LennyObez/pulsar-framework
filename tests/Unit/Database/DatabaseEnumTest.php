@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Database;
 
 use PDO;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,10 +14,7 @@ use Pulsar\Database\FetchMode;
 use Pulsar\Database\Migration\MigrationDirection;
 use Pulsar\Database\Routing\ConnectionRole;
 
-#[CoversClass(ConnectionRole::class)]
-#[CoversClass(MigrationDirection::class)]
-#[CoversClass(DriverVariant::class)]
-#[CoversClass(FetchMode::class)]
+#[CoversNothing]
 final class DatabaseEnumTest extends TestCase
 {
     // ── ConnectionRole ──────────────────────────────────────────────────

@@ -11,7 +11,6 @@ use Pulsar\Cache\RouteHandler;
 use Pulsar\Cache\RouteHandlerType;
 
 #[CoversClass(RouteHandler::class)]
-#[CoversClass(RouteHandlerType::class)]
 final class RouteHandlerTest extends TestCase
 {
     #[Test]

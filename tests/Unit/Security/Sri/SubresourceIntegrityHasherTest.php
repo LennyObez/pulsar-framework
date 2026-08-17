@@ -18,7 +18,6 @@ use function hash;
 use function str_starts_with;
 
 #[CoversClass(SubresourceIntegrityHasher::class)]
-#[CoversClass(SriAlgorithm::class)]
 final class SubresourceIntegrityHasherTest extends TestCase
 {
     #[Test]

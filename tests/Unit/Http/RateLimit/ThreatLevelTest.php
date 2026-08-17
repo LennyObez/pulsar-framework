@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\RateLimit;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ use Pulsar\Http\RateLimit\ThreatLevel;
 
 use function count;
 
-#[CoversClass(ThreatLevel::class)]
+#[CoversNothing]
 final class ThreatLevelTest extends TestCase
 {
     #[Test]

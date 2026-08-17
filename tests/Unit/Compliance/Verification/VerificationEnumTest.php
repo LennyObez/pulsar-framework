@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Compliance\Verification;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Compliance\Verification\CheckStatus;
 use Pulsar\Compliance\Verification\ComplianceCheckDomain;
 
-#[CoversClass(CheckStatus::class)]
-#[CoversClass(ComplianceCheckDomain::class)]
+#[CoversNothing]
 final class VerificationEnumTest extends TestCase
 {
     // ── CheckStatus ───────────────────────────────────────────────────

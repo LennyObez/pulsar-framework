@@ -13,8 +13,6 @@ use Pulsar\Security\JustifiedAccess\JustificationCategory;
 use Pulsar\Security\JustifiedAccess\RequiresJustification;
 use Pulsar\Security\JustifiedAccess\ReviewStatus;
 
-#[CoversClass(JustificationCategory::class)]
-#[CoversClass(ReviewStatus::class)]
 #[CoversClass(RequiresJustification::class)]
 final class JustifiedAccessEnumTest extends TestCase
 {

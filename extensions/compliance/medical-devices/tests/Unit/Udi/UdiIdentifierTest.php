@@ -14,8 +14,6 @@ use Pulsar\Extension\MedicalDevices\Udi\UdiIdentifier;
 use Pulsar\Extension\MedicalDevices\Udi\UdiIssuingAgency;
 
 #[CoversClass(UdiIdentifier::class)]
-#[CoversClass(DeviceRiskClass::class)]
-#[CoversClass(DeviceStatus::class)]
 final class UdiIdentifierTest extends TestCase
 {
     #[Test]

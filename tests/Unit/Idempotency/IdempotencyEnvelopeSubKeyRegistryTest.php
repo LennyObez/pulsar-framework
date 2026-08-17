@@ -24,7 +24,6 @@ use function sodium_bin2hex;
  * framework has sealed — and the mismatch is invisible until verification.
  */
 #[CoversClass(SignedIdempotencyEnvelope::class)]
-#[CoversClass(SubKeyId::class)]
 final class IdempotencyEnvelopeSubKeyRegistryTest extends TestCase
 {
     /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Auth\Tests\Unit\WebAuthn\Contract;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationResult;
@@ -12,7 +12,7 @@ use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationTrustLevel;
 use Pulsar\Extension\Auth\WebAuthn\Contract\AttestationVerifierInterface;
 use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
 
-#[CoversClass(AttestationVerifierInterface::class)]
+#[CoversNothing]
 final class AttestationVerifierInterfaceTest extends TestCase
 {
     #[Test]

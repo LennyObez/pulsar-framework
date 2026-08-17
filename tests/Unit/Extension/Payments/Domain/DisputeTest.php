@@ -16,7 +16,6 @@ use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 
 #[CoversClass(Dispute::class)]
-#[CoversClass(DisputeStatus::class)]
 final class DisputeTest extends TestCase
 {
     #[Test]

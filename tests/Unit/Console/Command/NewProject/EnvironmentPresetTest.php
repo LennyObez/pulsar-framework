@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command\NewProject;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\NewProject\EnvironmentPreset;
 
-#[CoversClass(EnvironmentPreset::class)]
+#[CoversNothing]
 final class EnvironmentPresetTest extends TestCase
 {
     #[Test]

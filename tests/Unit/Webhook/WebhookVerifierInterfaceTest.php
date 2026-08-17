@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Webhook;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Webhook\Exception\WebhookException;
 use Pulsar\Webhook\WebhookVerifierInterface;
 
-#[CoversClass(WebhookVerifierInterface::class)]
+#[CoversNothing]
 final class WebhookVerifierInterfaceTest extends TestCase
 {
     #[Test]

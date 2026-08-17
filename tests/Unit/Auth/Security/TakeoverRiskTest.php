@@ -13,8 +13,6 @@ use Pulsar\Auth\Security\TakeoverRisk;
 use Pulsar\Auth\Security\TakeoverRiskLevel;
 
 #[CoversClass(TakeoverRisk::class)]
-#[CoversClass(TakeoverRiskLevel::class)]
-#[CoversClass(SensitiveOperation::class)]
 final class TakeoverRiskTest extends TestCase
 {
     // ── TakeoverRisk ────────────────────────────────────────────────

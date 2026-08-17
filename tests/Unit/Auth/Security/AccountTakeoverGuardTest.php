@@ -20,8 +20,6 @@ use function time;
 
 #[CoversClass(AccountTakeoverGuard::class)]
 #[CoversClass(TakeoverRisk::class)]
-#[CoversClass(TakeoverRiskLevel::class)]
-#[CoversClass(SensitiveOperation::class)]
 final class AccountTakeoverGuardTest extends TestCase
 {
     private function createMeta(string $ip = '10.0.0.1', string $ua = 'Mozilla/5.0'): SessionMetadata

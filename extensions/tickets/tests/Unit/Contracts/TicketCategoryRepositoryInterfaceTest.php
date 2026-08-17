@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Tickets\Tests\Unit\Contracts;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Tickets\Contracts\TicketCategoryRepositoryInterface;
 use Pulsar\Extension\Tickets\Domain\TicketCategory;
 
-#[CoversClass(TicketCategoryRepositoryInterface::class)]
+#[CoversNothing]
 final class TicketCategoryRepositoryInterfaceTest extends TestCase
 {
     #[Test]

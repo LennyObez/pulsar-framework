@@ -15,7 +15,6 @@ use Pulsar\Extension\Dora\ThirdParty\ThirdPartyRiskLevel;
 
 #[CoversClass(ThirdPartyProvider::class)]
 #[CoversClass(ConcentrationRiskResult::class)]
-#[CoversClass(ThirdPartyRiskLevel::class)]
 final class ThirdPartyProviderTest extends TestCase
 {
     #[Test]

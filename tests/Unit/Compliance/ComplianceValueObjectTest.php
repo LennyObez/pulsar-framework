@@ -13,9 +13,7 @@ use Pulsar\Compliance\Control;
 use Pulsar\Compliance\ControlStatus;
 use Pulsar\Compliance\VerificationResult;
 
-#[CoversClass(ComplianceFramework::class)]
 #[CoversClass(Control::class)]
-#[CoversClass(ControlStatus::class)]
 #[CoversClass(VerificationResult::class)]
 final class ComplianceValueObjectTest extends TestCase
 {

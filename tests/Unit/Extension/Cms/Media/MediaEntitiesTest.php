@@ -17,7 +17,6 @@ use Pulsar\Extension\Cms\Media\MediaVisibility;
 #[CoversClass(MediaAsset::class)]
 #[CoversClass(MediaAssetTranslation::class)]
 #[CoversClass(MediaDerivative::class)]
-#[CoversClass(MediaVisibility::class)]
 final class MediaEntitiesTest extends TestCase
 {
     // -- MediaVisibility ------------------------------------------------------

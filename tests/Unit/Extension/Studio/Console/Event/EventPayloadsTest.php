@@ -20,8 +20,6 @@ use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\SupervisorPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\TenancyPayload;
 
-#[CoversClass(EventType::class)]
-#[CoversClass(EventVersion::class)]
 #[CoversClass(BenchmarkProfilePayload::class)]
 #[CoversClass(BenchmarkRunPayload::class)]
 #[CoversClass(IntegrityCheckPayload::class)]

@@ -44,7 +44,6 @@ use function json_decode;
 
 #[CoversClass(CommentService::class)]
 #[CoversClass(Comment::class)]
-#[CoversClass(ModerationStatus::class)]
 #[CoversClass(CommentRateLimitMiddleware::class)]
 #[CoversClass(CommentHoneypotMiddleware::class)]
 #[CoversClass(CommentAntiAbuseMiddleware::class)]

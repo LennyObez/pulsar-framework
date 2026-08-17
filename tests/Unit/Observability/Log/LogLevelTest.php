@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Observability\Log;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Observability\Log\LogLevel;
 
 use function count;
 
-#[CoversClass(LogLevel::class)]
+#[CoversNothing]
 final class LogLevelTest extends TestCase
 {
     #[Test]

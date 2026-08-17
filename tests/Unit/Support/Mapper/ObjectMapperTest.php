@@ -13,7 +13,6 @@ use Pulsar\Support\Mapper\ObjectMapper;
 
 #[CoversClass(ObjectMapper::class)]
 #[CoversClass(MappingException::class)]
-#[CoversClass(NamingStrategy::class)]
 final class ObjectMapperTest extends TestCase
 {
     private ObjectMapper $mapper;
