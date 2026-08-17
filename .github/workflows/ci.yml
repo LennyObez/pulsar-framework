@@ -290,13 +290,11 @@ jobs:
             --testsuite Contract \
             --fail-on-skipped
 
-      # Fast, no-coverage parallel run FIRST: it fails in minutes instead of after
-      # the full path-coverage pass, and it is the only thing that guards test
-      # isolation. A helper class declared inside a sibling test file, or a fixture
-      # written to a literal temp path, works under sequential execution and breaks
-      # here, which is what makes this pass worth running first. Coverage stays on the
-      # sequential run below: merging PATH coverage across workers is far less
-      # exercised, and wrong numbers in a threshold gate are worse than a slow gate.
+      # Fast, no-coverage parallel run FIRST: it fails in minutes rather than after the
+      # coverage pass, and it is the only thing that guards test isolation. A helper
+      # class declared inside a sibling test file, or a fixture written to a literal
+      # temp path, works under sequential execution and breaks here, which is what
+      # makes this pass worth running first.
       - name: Run all tests in parallel (isolation guard, no coverage)
         env:
           XDEBUG_MODE: 'off'
@@ -320,22 +318,32 @@ jobs:
             --min-tests=43000 \
             --max-skipped-percent=1.0
 
-      # Line and branch coverage, not path coverage. --path-coverage made Xdebug
-      # enumerate every execution path through every function — combinatorial in the
-      # branch count — and this job hung for over three hours on it, with no
-      # timeout-minutes to stop it. Nothing consumed the result: the only report asked
-      # for is Clover, whose format has no path element, and the threshold gate reads
-      # statements, conditionals and methods
-      # (tools/ci/assert-coverage-threshold.php:66-68). It was hours of work producing
-      # a number that could not be written down. Removing it relaxes no gate.
+      # Line and branch coverage, not path coverage, and parallel rather than
+      # sequential. The two go together.
+      #
+      # --path-coverage made Xdebug enumerate every execution path through every
+      # function — combinatorial in the branch count — and nothing consumed it: the
+      # only report asked for is Clover, whose format has no path element, and the
+      # threshold gate reads statements, conditionals and methods
+      # (tools/ci/assert-coverage-threshold.php:66-68).
+      #
+      # This pass was sequential precisely because merging PATH coverage across
+      # paratest workers is thinly exercised, and a wrong number in a threshold gate
+      # is worse than a slow gate. That reasoning was right and it was about paths.
+      # With paths gone, what is merged is line and branch Clover, which is the
+      # ordinary case php-code-coverage is built for. The justification for running
+      # 43575 tests on one core went with the flag: the step was cut at 55 minutes
+      # even after the flag came off.
       - name: Run all tests with line + branch coverage
         env:
           XDEBUG_MODE: coverage
         run: |
           php -d memory_limit=4G \
               -d xdebug.mode=coverage \
-              vendor/bin/phpunit \
+              vendor/bin/paratest \
                 -c tools/php/phpunit.xml \
+                --runner=WrapperRunner \
+                --processes="$(nproc)" \
                 --coverage-clover coverage/clover.xml
 
       # Was an inline `php -r` duplicating tools/ci/assert-coverage-threshold.php,
@@ -403,7 +411,7 @@ jobs:
           # exif, fileinfo and gd are required by composer.json and ship enabled in the
           # Linux build, so no Linux job has to name them. Windows does: composer refused
           # the lockfile outright, before a single test ran.
-          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium, exif, fileinfo, gd
+          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium, exif, fileinfo, gd, sockets
           ini-values: apc.enable_cli=1
           coverage: none
 
@@ -424,7 +432,7 @@ jobs:
       # Same reasoning as the Linux job: a silently missing extension turns every
       # test behind its guard into a skip and the job still reports green.
       - name: Assert the optional-extension contract
-        run: php tools/ci/assert-extensions.php pdo_sqlite apcu igbinary intl sodium
+        run: php tools/ci/assert-extensions.php pdo_sqlite apcu igbinary intl sodium sockets
 
       - name: Run all tests in parallel (isolation guard, no coverage)
         env:
