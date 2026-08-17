@@ -25,6 +25,7 @@ use Pulsar\Routing\RoutingException;
 use function assert;
 use function bin2hex;
 use function file_put_contents;
+use function ini_get;
 use function is_dir;
 use function is_string;
 use function mkdir;
@@ -351,7 +352,9 @@ final class KernelHandlerTest extends TestCase
         // SAPI under test and makes the case risky — and this run fails on risky.
         // Captured rather than silenced, so the log becomes an assertion: a 500 that
         // recorded nothing is exactly what this path must never produce.
-        $path = tempnam(sys_get_temp_dir(), 'pulsar_errlog_');
+        // Built rather than tempnam()'d: that returns string|false, and a false here
+        // would silently point error_log at nothing.
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_errlog_' . bin2hex(random_bytes(8));
         $previous = (string) ini_get('error_log');
         ini_set('error_log', $path);
 
