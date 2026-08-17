@@ -82,13 +82,13 @@ final class ReadWriteRouterTest extends TestCase
     #[Test]
     public function pinExpiresAfterDuration(): void
     {
-        // Pin for 1ms
-        $this->router->pinToPrimary(1);
+        // Both durations sit well above the ~15.6ms default timer granularity on
+        // Windows, where a 1ms pin and a 2ms sleep could not be ordered reliably.
+        $this->router->pinToPrimary(25);
 
         self::assertTrue($this->router->isPinnedToPrimary());
 
-        // Wait for expiration
-        usleep(2000); // 2ms
+        usleep(100_000); // 100ms
 
         self::assertFalse($this->router->isPinnedToPrimary());
         self::assertSame(ConnectionRole::Read, $this->router->route('SELECT * FROM users'));

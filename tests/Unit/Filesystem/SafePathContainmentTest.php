@@ -14,6 +14,7 @@ use function bin2hex;
 use function is_link;
 use function mkdir;
 use function random_bytes;
+use function realpath;
 use function rmdir;
 use function symlink;
 use function sys_get_temp_dir;
@@ -38,7 +39,13 @@ final class SafePathContainmentTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->base = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_spc_' . bin2hex(random_bytes(8));
+        // realpath() first. On Windows sys_get_temp_dir() can return an 8.3 short form
+        // (C:\Users\RUNNER~1\...), and SafePath treats a short-name segment as
+        // undecidable and leans to "contained" on purpose. Every verdict below would
+        // then be true, testing that escape hatch instead of the containment rule.
+        $temp = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
+
+        $this->base = $temp . DIRECTORY_SEPARATOR . 'pulsar_spc_' . bin2hex(random_bytes(8));
         mkdir($this->base . DIRECTORY_SEPARATOR . 'boundary', 0o750, true);
         mkdir($this->base . DIRECTORY_SEPARATOR . 'outside', 0o750, true);
         mkdir($this->base . DIRECTORY_SEPARATOR . 'boundary_sibling', 0o750, true);
