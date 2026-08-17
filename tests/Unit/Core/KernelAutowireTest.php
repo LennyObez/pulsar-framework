@@ -15,6 +15,8 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Route;
 
+use function ini_get;
+
 #[CoversClass(Kernel::class)]
 final class KernelAutowireTest extends TestCase
 {
@@ -134,7 +136,9 @@ final class KernelAutowireTest extends TestCase
      */
     private function captureErrorLog(): array
     {
-        $path = tempnam(sys_get_temp_dir(), 'pulsar_errlog_');
+        // Built rather than tempnam()'d: that returns string|false, and a false here
+        // would silently point error_log at nothing.
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_errlog_' . bin2hex(random_bytes(8));
         $previous = (string) ini_get('error_log');
         ini_set('error_log', $path);
 
