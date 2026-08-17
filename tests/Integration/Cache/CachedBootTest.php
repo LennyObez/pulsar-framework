@@ -37,9 +37,8 @@ final class CachedBootTest extends TestCase
 
     protected function setUp(): void
     {
-        // realpath() first: on Windows sys_get_temp_dir() can hand back an 8.3 short
-        // form, and these cases compare the base path the kernel derives against the
-        // one built here. The kernel resolves; the literal would not have.
+        // realpath() first: these compare the base path the kernel derives, which is
+        // resolved, against one built here — which a literal short form would not match.
         $temp = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
 
         $this->basePath = $temp . DIRECTORY_SEPARATOR . 'pulsar_cached_boot_test_' . bin2hex(random_bytes(8));

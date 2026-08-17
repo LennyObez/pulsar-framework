@@ -39,10 +39,8 @@ final class SafePathContainmentTest extends TestCase
 
     protected function setUp(): void
     {
-        // realpath() first. On Windows sys_get_temp_dir() can return an 8.3 short form
-        // (C:\Users\RUNNER~1\...), and SafePath treats a short-name segment as
-        // undecidable and leans to "contained" on purpose. Every verdict below would
-        // then be true, testing that escape hatch instead of the containment rule.
+        // realpath() first: an 8.3 short form in the temp path makes SafePath answer
+        // "contained" for everything, testing its escape hatch instead of the rule.
         $temp = realpath(sys_get_temp_dir()) ?: sys_get_temp_dir();
 
         $this->base = $temp . DIRECTORY_SEPARATOR . 'pulsar_spc_' . bin2hex(random_bytes(8));

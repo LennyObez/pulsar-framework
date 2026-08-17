@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity\Support;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +18,7 @@ use function sys_get_temp_dir;
  * `is_a()` calls, which `extractReferences()` cannot see because no
  * `use` statement or FQCN token is involved.
  */
-#[CoversClass(ImportAnalyzer::class)]
+#[CoversNothing]
 final class ImportAnalyzerClassStringTest extends TestCase
 {
     private string $fixturePath;

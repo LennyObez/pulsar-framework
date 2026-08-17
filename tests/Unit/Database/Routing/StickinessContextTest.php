@@ -49,13 +49,13 @@ final class StickinessContextTest extends TestCase
     #[Test]
     public function timedStickinessExpires(): void
     {
-        // Pin for 1ms
-        $this->context->markWrite(1);
+        // Well above the ~15.6ms Windows timer granularity, where 1ms and 2ms could
+        // not be ordered.
+        $this->context->markWrite(25);
 
         self::assertTrue($this->context->shouldUsePrimary());
 
-        // Wait for expiration
-        usleep(2000); // 2ms
+        usleep(100_000); // 100ms
 
         self::assertFalse($this->context->shouldUsePrimary());
     }
