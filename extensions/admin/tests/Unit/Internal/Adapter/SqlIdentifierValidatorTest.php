@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Adapter;
 
 use InvalidArgumentException;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Internal\Adapter\SqlIdentifierValidator;
 
 use function str_repeat;
 
-#[CoversClass(SqlIdentifierValidator::class)]
+#[CoversTrait(SqlIdentifierValidator::class)]
 final class SqlIdentifierValidatorTest extends TestCase
 {
     use SqlIdentifierValidator {

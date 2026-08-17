@@ -122,6 +122,12 @@
             <directory>../../extensions/compliance/medical-devices/src</directory>
             <directory>../../extensions/compliance/psd2/src</directory>
             <directory>../../extensions/health-status/src</directory>
+            <directory>../../extensions/booking/src</directory>
+            <directory>../../extensions/messaging/src</directory>
+            <directory>../../extensions/tickets/src</directory>
+            <directory>../../extensions/example/src</directory>
+            <directory>../../extensions/compliance/data-act/src</directory>
+            <directory>../../extensions/compliance/dsa/src</directory>
         </include>
     </source>
 </phpunit>
