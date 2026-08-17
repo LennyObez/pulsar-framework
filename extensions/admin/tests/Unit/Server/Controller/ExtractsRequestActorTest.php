@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Server\Controller;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Server\Controller\ExtractsRequestActor;
 
-#[CoversClass(ExtractsRequestActor::class)]
+#[CoversTrait(ExtractsRequestActor::class)]
 final class ExtractsRequestActorTest extends TestCase
 {
     #[Test]

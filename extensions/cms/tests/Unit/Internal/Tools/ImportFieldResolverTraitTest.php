@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Tests\Unit\Internal\Tools;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Internal\Tools\ImportFieldResolverTrait;
 
-#[CoversClass(ImportFieldResolverTrait::class)]
+#[CoversTrait(ImportFieldResolverTrait::class)]
 final class ImportFieldResolverTraitTest extends TestCase
 {
     private object $resolver;
