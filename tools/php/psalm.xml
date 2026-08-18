@@ -379,6 +379,15 @@
                      narrower honest type — the same type-generic boundary as
                      PSR-16 SimpleCache above. -->
                 <file name="../../src/View/Engine/ViewComposers.php"/>
+                <!-- (C) PdoConnection::assertOnlyDriverAttributes() partitions the
+                     configured options, keeping the integer-keyed ones PDO reads and
+                     refusing the string keys PDO would discard. The values it carries
+                     across are mixed by PDO's own contract and cannot be narrowed to
+                     scalar: PDO::ATTR_STATEMENT_CLASS legitimately takes an array.
+                     They must be accumulated because PDO's constructor takes an array,
+                     so array_filter(ARRAY_FILTER_USE_KEY) cannot express the int-key
+                     guarantee to Psalm. Same type-generic boundary as PSR-16 above. -->
+                <file name="../../src/Database/PdoConnection.php"/>
                 <!-- (A) PHP 8.5 ext-dom Dom\NodeList iteration: Psalm narrows
                      iteration values to mixed (DOMNodeList::current() returns
                      DOMNode in stubs but Psalm doesn't recognise ext-dom 8.5

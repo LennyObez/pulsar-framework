@@ -41,7 +41,14 @@ final readonly class ConnectionConfig implements ReportsUnknownKeys
         public string $password,
         public string $charset,
         public string $collation,
-        /** @var array<string, mixed> */
+        /**
+         * Driver options exactly as the config file wrote them. The keys are genuinely
+         * mixed: PDO's own attributes are integer constants, while `sslmode` and its
+         * kin are strings. Declaring string keys here is what made
+         * PdoConnection::fromConfig() restate the type instead of narrowing it.
+         *
+         * @var array<array-key, mixed>
+         */
         public array $options,
         public array $unknownKeys = [],
     ) {}

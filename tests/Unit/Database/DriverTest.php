@@ -155,4 +155,53 @@ final class DriverTest extends TestCase
 
         self::assertSame('sqlite::memory:', $dsn);
     }
+
+    /**
+     * The DSN is the only place libpq reads sslmode from. Left in the PDO options array
+     * it is discarded without a word, and the connection comes up in plaintext.
+     */
+    #[Test]
+    public function postgresqlCarriesSslModeInTheDsn(): void
+    {
+        $dsn = Driver::PostgreSQL->buildDsn('db.example.com', 5432, 'app_db', null, 'verify-full');
+
+        self::assertSame('pgsql:host=db.example.com;port=5432;dbname=app_db;sslmode=verify-full', $dsn);
+    }
+
+    #[Test]
+    public function postgresqlOmitsSslModeWhenNoneIsAsked(): void
+    {
+        $dsn = Driver::PostgreSQL->buildDsn('db.example.com', 5432, 'app_db');
+
+        self::assertSame('pgsql:host=db.example.com;port=5432;dbname=app_db', $dsn);
+    }
+
+    /**
+     * A typo must not degrade to plaintext. libpq would reject `requre` only at connect
+     * time, if it reached libpq at all, so it is refused here where the message is read.
+     */
+    #[Test]
+    public function buildDsnRejectsAnUnknownSslMode(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+        $this->expectExceptionMessageIsOrContains('unrecognised value');
+
+        Driver::PostgreSQL->buildDsn('db', 5432, 'app', null, 'requre');
+    }
+
+    #[Test]
+    public function buildDsnRejectsSslModeForMysqlWhereItIsNotADsnParameter(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+
+        Driver::MySQL->buildDsn('localhost', 3306, 'app', 'utf8mb4', 'require');
+    }
+
+    #[Test]
+    public function buildDsnRejectsSslModeForSqliteWhichHasNoTransport(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+
+        Driver::SQLite->buildDsn('', 0, '/tmp/test.sqlite', null, 'require');
+    }
 }

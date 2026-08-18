@@ -172,10 +172,34 @@ final class ComplianceVerificationWiringTest extends TestCase
         $this->boot(
             "'enabled_frameworks' => ['pci_dss']",
             $spy,
-            "'default' => 'mysql', 'connections' => ['mysql' => ['driver' => 'mysql', 'host' => 'db', 'database' => 'app', 'options' => ['ssl_mode' => 'require']]]",
+            "'default' => 'pg', 'connections' => ['pg' => ['driver' => 'pgsql', 'host' => 'db', 'database' => 'app', 'options' => ['sslmode' => 'require']]]",
         );
 
         self::assertFalse($spy->has('runtime.db_tls'), 'a TLS-configured connection must not be flagged; got: ' . $spy->dump());
+    }
+
+    /**
+     * This case used to assert the opposite, and that is the whole defect: PDO indexes
+     * driver options by integer attribute constant and discards string keys, so a MySQL
+     * connection carrying `ssl_mode => require` connects in plaintext. Reporting PCI-DSS
+     * encryption-in-transit as satisfied on the strength of a setting the driver never
+     * receives is a false compliance pass, which is worse than reporting nothing.
+     */
+    #[Test]
+    public function refusesToCountAStringSslModeOnMysqlWherePdoDiscardsIt(): void
+    {
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'mysql', 'connections' => ['mysql' => ['driver' => 'mysql', 'host' => 'db', 'database' => 'app', 'options' => ['ssl_mode' => 'require']]]",
+        );
+
+        self::assertTrue(
+            $spy->has('runtime.db_tls'),
+            'MySQL never receives a string ssl_mode key, so it must not satisfy the requirement; got: ' . $spy->dump(),
+        );
     }
 
     #[Test]

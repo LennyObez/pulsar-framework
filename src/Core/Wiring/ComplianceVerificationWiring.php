@@ -229,12 +229,18 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
     {
         $options = $connection->options;
 
-        foreach (['ssl_mode', 'sslmode'] as $key) {
-            /** @var mixed $mode */
-            $mode = $options[$key] ?? null;
+        // Only PostgreSQL reads sslmode, and only because PdoConnection lifts it out of
+        // the options and into the DSN. Counting it for any other driver is what made
+        // this check report TLS on a plaintext MySQL connection: the key never reaches
+        // PDO, which indexes driver options by integer constant and drops string keys.
+        if ($connection->driver === Driver::PostgreSQL) {
+            foreach (['ssl_mode', 'sslmode'] as $key) {
+                /** @var mixed $mode */
+                $mode = $options[$key] ?? null;
 
-            if (is_string($mode) && in_array(strtolower($mode), self::TLS_SSL_MODES, true)) {
-                return true;
+                if (is_string($mode) && in_array(strtolower($mode), self::TLS_SSL_MODES, true)) {
+                    return true;
+                }
             }
         }
 
