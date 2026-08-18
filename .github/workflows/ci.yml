@@ -688,6 +688,21 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # Mutation testing runs in two tiers, and this is the per-change one.
+  #
+  # A mutant that survives in code the change touched is a test gap being created
+  # right now; a mutant that survives in untouched code is old debt, and gating a
+  # pull request on it stops nothing from getting worse. So this tier mutates the
+  # changed lines and mutation-nightly.yml carries the whole of src/ on a schedule,
+  # where no reviewer is waiting.
+  #
+  # The bar itself is not lowered: MSI stays at 80 in both tiers. What changes is
+  # which lines are measured, and when.
+  #
+  # This job had never executed at all — it declares needs: php-tests, and
+  # php-tests was cancelled on every run of this branch, so Infection was gated out
+  # before it could report anything. Full scope on 2587 files was never going to
+  # fit a pull request, and a gate that cannot finish reports nothing.
   php-mutation:
     name: Mutation Testing (Infection)
     runs-on: ubuntu-latest
@@ -698,6 +713,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # --git-diff-base needs the base branch to exist locally, and checkout
+          # clones a single commit by default. Without this the diff resolves
+          # against nothing and Infection mutates nothing, silently passing.
+          fetch-depth: 0
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
@@ -719,8 +738,11 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      - name: Run Infection mutation testing
-        run: composer mutation
+      # --ignore-msi-with-no-mutations because a change touching only workflows or
+      # documentation produces no mutable line, and an MSI of 0/0 must read as
+      # "nothing to measure" rather than as a failure.
+      - name: Run Infection over the changed lines
+        run: composer mutation:diff -- --ignore-msi-with-no-mutations
         env:
           XDEBUG_MODE: coverage
 
