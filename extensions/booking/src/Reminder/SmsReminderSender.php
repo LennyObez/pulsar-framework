@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Booking\Reminder;
 
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Booking\Contracts\ReminderSenderInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 
 /**
  * Sends appointment reminder SMS messages.
  */
 #[Internal]
-final readonly class SmsReminderSender
+final readonly class SmsReminderSender implements ReminderSenderInterface
 {
     public function __construct(
         private SmsProviderInterface $smsProvider,

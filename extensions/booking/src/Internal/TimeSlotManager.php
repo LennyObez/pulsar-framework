@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Row;
 use Pulsar\Extension\Booking\Contracts\TimeSlotManagerInterface;
 use Pulsar\Extension\Booking\Domain\TimeSlot;
 use Pulsar\Extension\Booking\Exception\BookingException;
@@ -32,7 +33,6 @@ final readonly class TimeSlotManager implements TimeSlotManagerInterface
 
         $slots = [];
 
-        /** @var array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null} $row */
         foreach ($result->rows as $row) {
             $slot = $this->hydrateSlot($row);
 
@@ -52,21 +52,9 @@ final readonly class TimeSlotManager implements TimeSlotManagerInterface
             ['id' => $slotId],
         );
 
-        /** @var list<array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null}> $rows */
-        $rows = [];
-        /** @var array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null} $row */
-        foreach ($result->rows as $row) {
-            $rows[] = $row;
-        }
+        $row = $result->first();
 
-        if ($rows === []) {
-            throw BookingException::slotNotAvailable($slotId);
-        }
-
-        /** @var array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null} $row */
-        $row = $rows[0];
-
-        if (!(bool) $row['available']) {
+        if ($row === null || !$row->getBool('available')) {
             throw BookingException::slotNotAvailable($slotId);
         }
 
@@ -85,18 +73,15 @@ final readonly class TimeSlotManager implements TimeSlotManagerInterface
         );
     }
 
-    /**
-     * @param array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null} $row
-     */
-    private function hydrateSlot(array $row): TimeSlot
+    private function hydrateSlot(Row $row): TimeSlot
     {
         return new TimeSlot(
-            id: $row['id'],
-            date: new DateTimeImmutable($row['date']),
-            startTime: new DateTimeImmutable($row['start_time']),
-            endTime: new DateTimeImmutable($row['end_time']),
-            available: (bool) $row['available'],
-            appointmentId: $row['appointment_id'],
+            id: $row->getString('id'),
+            date: new DateTimeImmutable($row->getString('date')),
+            startTime: new DateTimeImmutable($row->getString('start_time')),
+            endTime: new DateTimeImmutable($row->getString('end_time')),
+            available: $row->getBool('available'),
+            appointmentId: $row->getNullableString('appointment_id'),
         );
     }
 }
