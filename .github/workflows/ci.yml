@@ -150,7 +150,9 @@ jobs:
   php-tests:
     name: PHP Tests (Unit, Integration, E2E)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Sequential path coverage over 43575 tests. Measured at 55 minutes and still
+    # running when it was cut; this is a ceiling, not a budget.
+    timeout-minutes: 90
     needs: php-quality
 
     services:
@@ -303,21 +305,21 @@ jobs:
             --min-tests=43000 \
             --max-skipped-percent=1.0
 
-      # No --path-coverage: Clover has no path element and the threshold gate reads
-      # statements, conditionals and methods. Parallel now that paths are gone —
-      # sequential existed only because merging path coverage across workers is
-      # thinly exercised.
+      # Sequential, and it has to be: --path-coverage is what makes Xdebug emit the
+      # branch data the threshold gate reads as `conditionals`, and paratest has no
+      # such option. Running it under paratest reported Conditions 0.00% (0/0) — the
+      # metric gone, not low. Sharding this across jobs and merging the reports is the
+      # way to parallelise it; process-level parallelism cannot.
       - name: Run all tests with line + branch coverage
         env:
           XDEBUG_MODE: coverage
         run: |
           php -d memory_limit=4G \
               -d xdebug.mode=coverage \
-              vendor/bin/paratest \
+              vendor/bin/phpunit \
                 -c tools/php/phpunit.xml \
-                --runner=WrapperRunner \
-                --processes="$(nproc)" \
-                --coverage-clover coverage/clover.xml
+                --coverage-clover coverage/clover.xml \
+                --path-coverage
 
       # Was an inline `php -r` duplicating tools/ci/assert-coverage-threshold.php,
       # which exists precisely so the same check runs locally via
