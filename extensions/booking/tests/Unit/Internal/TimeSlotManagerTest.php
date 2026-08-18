@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Booking\Tests\Unit\Internal;
 
-use ArrayIterator;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Stub;
@@ -47,8 +46,7 @@ final class TimeSlotManagerTest extends TestCase
             ],
         ];
 
-        $result = $this->createStub(Result::class);
-        $result->method('getIterator')->willReturn(new ArrayIterator($rows));
+        $result = Result::fromArrays($rows);
         $this->connection->method('query')->willReturn($result);
 
         $slots = $this->manager->getAvailable(new DateTimeImmutable('2026-04-15'), 60);
@@ -70,8 +68,7 @@ final class TimeSlotManagerTest extends TestCase
             ],
         ];
 
-        $result = $this->createStub(Result::class);
-        $result->method('getIterator')->willReturn(new ArrayIterator($rows));
+        $result = Result::fromArrays($rows);
         $this->connection->method('query')->willReturn($result);
 
         $this->expectException(BookingException::class);
@@ -82,8 +79,7 @@ final class TimeSlotManagerTest extends TestCase
 
     public function testBlockThrowsWhenSlotNotFound(): void
     {
-        $result = $this->createStub(Result::class);
-        $result->method('getIterator')->willReturn(new ArrayIterator([]));
+        $result = Result::fromArrays([]);
         $this->connection->method('query')->willReturn($result);
 
         $this->expectException(BookingException::class);

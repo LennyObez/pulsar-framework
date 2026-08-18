@@ -38,7 +38,6 @@ final class BookingServiceTest extends TestCase
 
         $this->service = new BookingService(
             $this->repository,
-            $this->timeSlotManager,
             new BookingNumberGenerator(),
             $config,
             new NullLogger(),

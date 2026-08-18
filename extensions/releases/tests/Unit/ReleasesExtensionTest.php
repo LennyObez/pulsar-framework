@@ -41,8 +41,8 @@ final class ReleasesExtensionTest extends TestCase
         $container = $this->createStub(ContainerInterface::class);
         $router = $this->createMock(RouterInterface::class);
 
-        // 5 GET routes + 1 POST (beta signup + admin store)
-        $router->expects(self::exactly(5))->method('get');
+        // 2 API + 4 admin GET, 2 POST (beta signup + admin store), 1 PUT
+        $router->expects(self::exactly(6))->method('get');
         $router->expects(self::exactly(2))->method('post');
         $router->expects(self::once())->method('put');
 

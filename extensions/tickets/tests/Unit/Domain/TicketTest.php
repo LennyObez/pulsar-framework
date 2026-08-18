@@ -125,7 +125,7 @@ final class TicketTest extends TestCase
         $this->expectException(TicketException::class);
         $this->expectExceptionMessageIsOrContains("Invalid status transition from 'open' to 'reopened'");
 
-        $ticket->changeStatus(TicketStatus::Reopened);
+        (void) $ticket->changeStatus(TicketStatus::Reopened);
     }
 
     #[Test]

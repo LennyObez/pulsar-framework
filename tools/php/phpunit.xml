@@ -42,6 +42,14 @@
             <directory>../../extensions/compliance/dsa/tests/Unit</directory>
             <directory>../../extensions/compliance/data-act/tests/Unit</directory>
             <directory>../../extensions/health-status/tests/Unit</directory>
+            <directory>../../extensions/booking/tests/Unit</directory>
+            <directory>../../extensions/devices/tests/Unit</directory>
+            <directory>../../extensions/feedback/tests/Unit</directory>
+            <directory>../../extensions/messaging/tests/Unit</directory>
+            <directory>../../extensions/observability-export/tests/Unit</directory>
+            <directory>../../extensions/releases/tests/Unit</directory>
+            <directory>../../extensions/subscriptions/tests/Unit</directory>
+            <directory>../../extensions/tickets/tests/Unit</directory>
         </testsuite>
         <testsuite name="Integration">
             <directory>../../tests/Integration</directory>

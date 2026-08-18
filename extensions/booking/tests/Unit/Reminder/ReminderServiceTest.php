@@ -11,25 +11,33 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Pulsar\Extension\Booking\Contracts\AppointmentRepositoryInterface;
+use Pulsar\Extension\Booking\Contracts\ReminderSenderInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 use Pulsar\Extension\Booking\Domain\AppointmentStatus;
 use Pulsar\Extension\Booking\Domain\BookingConfig;
-use Pulsar\Extension\Booking\Reminder\EmailReminderSender;
 use Pulsar\Extension\Booking\Reminder\ReminderService;
-use Pulsar\Extension\Booking\Reminder\SmsReminderSender;
 
 #[CoversClass(ReminderService::class)]
 final class ReminderServiceTest extends TestCase
 {
     private AppointmentRepositoryInterface&Stub $repository;
-    private EmailReminderSender&MockObject $emailSender;
-    private SmsReminderSender&MockObject $smsSender;
+    private ReminderSenderInterface&MockObject $emailSender;
+    /** @var (ReminderSenderInterface&MockObject)|null */
+    private ?ReminderSenderInterface $smsSender = null;
 
     protected function setUp(): void
     {
         $this->repository = $this->createStub(AppointmentRepositoryInterface::class);
-        $this->emailSender = $this->createMock(EmailReminderSender::class);
-        $this->smsSender = $this->createMock(SmsReminderSender::class);
+        $this->emailSender = $this->createMock(ReminderSenderInterface::class);
+    }
+
+    /**
+     * Created on demand: one case runs with no SMS sender at all, and an unused mock
+     * there would be a double nobody asserts on.
+     */
+    private function smsSender(): ReminderSenderInterface&MockObject
+    {
+        return $this->smsSender ??= $this->createMock(ReminderSenderInterface::class);
     }
 
     public function testSendReminderSendsEmailWhenEnabled(): void
@@ -43,14 +51,14 @@ final class ReminderServiceTest extends TestCase
             $this->repository,
             $config,
             $this->emailSender,
-            $this->smsSender,
+            $this->smsSender(),
             new NullLogger(),
         );
 
         $appointment = $this->makeAppointment();
 
         $this->emailSender->expects(self::once())->method('send');
-        $this->smsSender->expects(self::never())->method('send');
+        $this->smsSender()->expects(self::never())->method('send');
 
         $service->sendReminder($appointment);
     }
@@ -66,14 +74,14 @@ final class ReminderServiceTest extends TestCase
             $this->repository,
             $config,
             $this->emailSender,
-            $this->smsSender,
+            $this->smsSender(),
             new NullLogger(),
         );
 
         $appointment = $this->makeAppointment();
 
         $this->emailSender->expects(self::never())->method('send');
-        $this->smsSender->expects(self::once())->method('send');
+        $this->smsSender()->expects(self::once())->method('send');
 
         $service->sendReminder($appointment);
     }
@@ -89,14 +97,14 @@ final class ReminderServiceTest extends TestCase
             $this->repository,
             $config,
             $this->emailSender,
-            $this->smsSender,
+            $this->smsSender(),
             new NullLogger(),
         );
 
         $appointment = $this->makeAppointment(reminderSent: true);
 
         $this->emailSender->expects(self::never())->method('send');
-        $this->smsSender->expects(self::never())->method('send');
+        $this->smsSender()->expects(self::never())->method('send');
 
         $service->sendReminder($appointment);
     }
@@ -142,13 +150,14 @@ final class ReminderServiceTest extends TestCase
             $this->repository,
             $config,
             $this->emailSender,
-            $this->smsSender,
+            $this->smsSender(),
             new NullLogger(),
         );
 
         $appointment = $this->makeAppointment(phone: '');
 
-        $this->smsSender->expects(self::never())->method('send');
+        $this->emailSender->expects(self::never())->method('send');
+        $this->smsSender()->expects(self::never())->method('send');
 
         $service->sendReminder($appointment);
     }
