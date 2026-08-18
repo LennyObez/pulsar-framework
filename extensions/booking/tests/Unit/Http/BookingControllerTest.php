@@ -45,8 +45,8 @@ final class BookingControllerTest extends TestCase
     {
         $response = $this->controller->form();
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContains('Book an Appointment', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('Book an Appointment', (string) $response->getBody());
     }
 
     public function testSubmitReturnsBadRequestWhenFieldsMissing(): void
@@ -55,7 +55,7 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->submit($request);
 
-        self::assertSame(400, $response->status->value);
+        self::assertSame(400, $response->getStatusCode());
     }
 
     public function testSubmitCreatesAppointmentSuccessfully(): void
@@ -72,8 +72,8 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->submit($request);
 
-        self::assertSame(201, $response->status->value);
-        self::assertStringContains('BKG-2026-000001', $response->body);
+        self::assertSame(201, $response->getStatusCode());
+        self::assertStringContainsString('BKG-2026-000001', (string) $response->getBody());
     }
 
     public function testSubmitReturns422OnBookingException(): void
@@ -90,7 +90,7 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->submit($request);
 
-        self::assertSame(422, $response->status->value);
+        self::assertSame(422, $response->getStatusCode());
     }
 
     public function testStatusReturnsAppointment(): void
@@ -106,8 +106,8 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->status($request);
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContains('BKG-2026-000001', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('BKG-2026-000001', (string) $response->getBody());
     }
 
     public function testStatusReturns404WhenNotFound(): void
@@ -122,7 +122,7 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->status($request);
 
-        self::assertSame(404, $response->status->value);
+        self::assertSame(404, $response->getStatusCode());
     }
 
     public function testAvailableSlotsReturnsBadRequestWhenDateMissing(): void
@@ -131,7 +131,7 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->availableSlots($request);
 
-        self::assertSame(400, $response->status->value);
+        self::assertSame(400, $response->getStatusCode());
     }
 
     public function testAvailableSlotsReturnsSlots(): void
@@ -155,16 +155,8 @@ final class BookingControllerTest extends TestCase
 
         $response = $this->controller->availableSlots($request);
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContains('slot-001', $response->body);
-    }
-
-    /**
-     * Helper to assert string containment without PHPUnit deprecation.
-     */
-    private static function assertStringContains(string $needle, string $haystack): void
-    {
-        self::assertStringContainsString($needle, $haystack);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('slot-001', (string) $response->getBody());
     }
 
     /**

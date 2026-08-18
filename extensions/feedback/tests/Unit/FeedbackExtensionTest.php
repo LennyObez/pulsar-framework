@@ -47,7 +47,7 @@ final class FeedbackExtensionTest extends TestCase
         $router = $this->createMock(RouterInterface::class);
 
         // Expect 8 routes (3 API + 5 admin)
-        $router->expects(self::exactly(3))->method('get');
+        $router->expects(self::exactly(4))->method('get');
         $router->expects(self::exactly(3))->method('post');
         $router->expects(self::once())->method('put');
 

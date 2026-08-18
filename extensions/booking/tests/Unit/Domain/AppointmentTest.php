@@ -58,7 +58,7 @@ final class AppointmentTest extends TestCase
         $this->expectException(BookingException::class);
         $this->expectExceptionMessageIsOrContains('Cannot transition');
 
-        $appointment->transitionTo(AppointmentStatus::Cancelled);
+        (void) $appointment->transitionTo(AppointmentStatus::Cancelled);
     }
 
     public function testMarkDepositPaid(): void
@@ -86,7 +86,7 @@ final class AppointmentTest extends TestCase
         $this->expectException(BookingException::class);
         $this->expectExceptionMessageIsOrContains('already been paid');
 
-        $appointment->markDepositPaid();
+        (void) $appointment->markDepositPaid();
     }
 
     public function testMarkDepositPaidThrowsWhenNoDeposit(): void
@@ -96,7 +96,7 @@ final class AppointmentTest extends TestCase
         $this->expectException(BookingException::class);
         $this->expectExceptionMessageIsOrContains('No deposit');
 
-        $appointment->markDepositPaid();
+        (void) $appointment->markDepositPaid();
     }
 
     public function testMarkReminderSent(): void
@@ -131,7 +131,7 @@ final class AppointmentTest extends TestCase
         $this->expectException(BookingException::class);
         $this->expectExceptionMessageIsOrContains('cannot be rescheduled');
 
-        $appointment->reschedule(new DateTimeImmutable('2026-05-01'), 60);
+        (void) $appointment->reschedule(new DateTimeImmutable('2026-05-01'), 60);
     }
 
     public function testEndTime(): void

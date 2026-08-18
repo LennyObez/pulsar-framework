@@ -158,9 +158,7 @@ final class ReleaseControllerTest extends TestCase
     {
         $this->releaseRepo->method('findById')->willReturn(null);
 
-        $request = $this->createStub(ServerRequestInterface::class);
-
-        $response = $this->controller->edit($request, 'nonexistent');
+        $response = $this->controller->edit('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -171,9 +169,7 @@ final class ReleaseControllerTest extends TestCase
         $release = Release::create('1.0.0', ReleasePlatform::Ios, new DateTimeImmutable(), 'Notes', '15.0');
         $this->releaseRepo->method('findById')->willReturn($release);
 
-        $request = $this->createStub(ServerRequestInterface::class);
-
-        $response = $this->controller->edit($request, $release->id);
+        $response = $this->controller->edit($release->id);
 
         self::assertSame(200, $response->getStatusCode());
 

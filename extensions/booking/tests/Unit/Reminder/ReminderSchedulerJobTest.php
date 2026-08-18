@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Booking\Tests\Unit\Reminder;
 
 use DateTimeImmutable;
-use Error;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -34,13 +33,9 @@ final class ReminderSchedulerJobTest extends TestCase
     }
 
     #[Test]
-    public function getScheduleCallsScheduleFactory(): void
+    public function getScheduleRunsEveryFifteenMinutes(): void
     {
-        // Schedule::everyMinutes() is not implemented on Schedule yet;
-        // this test verifies it throws rather than silently returning
-        // the wrong schedule.
-        $this->expectException(Error::class);
-        $this->job->getSchedule();
+        self::assertSame('*/15 * * * *', $this->job->getSchedule()->expression);
     }
 
     #[Test]
