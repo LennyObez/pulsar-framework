@@ -7,6 +7,10 @@ namespace Pulsar\Extension\Booking\Domain;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_int;
+use function is_numeric;
+use function is_string;
+
 /**
  * Booking extension configuration DTO.
  * @api
@@ -41,28 +45,32 @@ final readonly class BookingConfig
     /**
      * Build from the raw booking config array.
      *
+     * Every value is `mixed` because the array reaches here from PHP config files, YAML
+     * and environment variables. The keys are the supported surface; the types are
+     * whatever the deployment supplied, and each is narrowed on the way in.
+     *
      * @param array{
-     *     deposit_required?: bool|int|string,
-     *     deposit_percent?: int,
-     *     min_advance_hours?: int,
-     *     max_advance_days?: int,
-     *     reminder_hours_before?: int,
-     *     sms_reminder_enabled?: bool|int|string,
-     *     email_reminder_enabled?: bool|int|string,
-     *     google_calendar_enabled?: bool|int|string,
-     *     google_calendar_id?: string,
-     *     cancellation_policy_hours?: int,
-     *     sms_provider?: string,
-     *     twilio_sid?: string,
-     *     twilio_auth_token?: string,
-     *     twilio_from_number?: string,
-     *     vonage_api_key?: string,
-     *     vonage_api_secret?: string,
-     *     vonage_from_number?: string,
-     *     google_service_account_key_path?: string,
-     *     routes_enabled?: bool|int|string,
-     *     route_prefix?: string,
-     *     admin_route_prefix?: string,
+     *     deposit_required?: mixed,
+     *     deposit_percent?: mixed,
+     *     min_advance_hours?: mixed,
+     *     max_advance_days?: mixed,
+     *     reminder_hours_before?: mixed,
+     *     sms_reminder_enabled?: mixed,
+     *     email_reminder_enabled?: mixed,
+     *     google_calendar_enabled?: mixed,
+     *     google_calendar_id?: mixed,
+     *     cancellation_policy_hours?: mixed,
+     *     sms_provider?: mixed,
+     *     twilio_sid?: mixed,
+     *     twilio_auth_token?: mixed,
+     *     twilio_from_number?: mixed,
+     *     vonage_api_key?: mixed,
+     *     vonage_api_secret?: mixed,
+     *     vonage_from_number?: mixed,
+     *     google_service_account_key_path?: mixed,
+     *     routes_enabled?: mixed,
+     *     route_prefix?: mixed,
+     *     admin_route_prefix?: mixed,
      * } $data Raw array from config/booking.php
      */
     #[NoDiscard]
@@ -70,26 +78,45 @@ final readonly class BookingConfig
     {
         return new self(
             depositRequired: (bool) ($data['deposit_required'] ?? false),
-            depositPercent: $data['deposit_percent'] ?? 20,
-            minAdvanceHours: $data['min_advance_hours'] ?? 24,
-            maxAdvanceDays: $data['max_advance_days'] ?? 90,
-            reminderHoursBefore: $data['reminder_hours_before'] ?? 24,
+            depositPercent: self::int($data['deposit_percent'] ?? null, 20),
+            minAdvanceHours: self::int($data['min_advance_hours'] ?? null, 24),
+            maxAdvanceDays: self::int($data['max_advance_days'] ?? null, 90),
+            reminderHoursBefore: self::int($data['reminder_hours_before'] ?? null, 24),
             smsReminderEnabled: (bool) ($data['sms_reminder_enabled'] ?? false),
             emailReminderEnabled: (bool) ($data['email_reminder_enabled'] ?? true),
             googleCalendarEnabled: (bool) ($data['google_calendar_enabled'] ?? false),
-            googleCalendarId: $data['google_calendar_id'] ?? '',
-            cancellationPolicyHours: $data['cancellation_policy_hours'] ?? 24,
-            smsProvider: $data['sms_provider'] ?? 'twilio',
-            twilioSid: $data['twilio_sid'] ?? '',
-            twilioAuthToken: $data['twilio_auth_token'] ?? '',
-            twilioFromNumber: $data['twilio_from_number'] ?? '',
-            vonageApiKey: $data['vonage_api_key'] ?? '',
-            vonageApiSecret: $data['vonage_api_secret'] ?? '',
-            vonageFromNumber: $data['vonage_from_number'] ?? '',
-            googleServiceAccountKeyPath: $data['google_service_account_key_path'] ?? '',
+            googleCalendarId: self::string($data['google_calendar_id'] ?? null, ''),
+            cancellationPolicyHours: self::int($data['cancellation_policy_hours'] ?? null, 24),
+            smsProvider: self::string($data['sms_provider'] ?? null, 'twilio'),
+            twilioSid: self::string($data['twilio_sid'] ?? null, ''),
+            twilioAuthToken: self::string($data['twilio_auth_token'] ?? null, ''),
+            twilioFromNumber: self::string($data['twilio_from_number'] ?? null, ''),
+            vonageApiKey: self::string($data['vonage_api_key'] ?? null, ''),
+            vonageApiSecret: self::string($data['vonage_api_secret'] ?? null, ''),
+            vonageFromNumber: self::string($data['vonage_from_number'] ?? null, ''),
+            googleServiceAccountKeyPath: self::string($data['google_service_account_key_path'] ?? null, ''),
             routesEnabled: (bool) ($data['routes_enabled'] ?? true),
-            routePrefix: $data['route_prefix'] ?? '/booking',
-            adminRoutePrefix: $data['admin_route_prefix'] ?? '/admin/booking',
+            routePrefix: self::string($data['route_prefix'] ?? null, '/booking'),
+            adminRoutePrefix: self::string($data['admin_route_prefix'] ?? null, '/admin/booking'),
         );
+    }
+
+    /**
+     * Environment variables are always strings, so '30' must mean 30. Anything that is
+     * not a number at all falls back to the documented default rather than to 0, which
+     * would silently disable a deposit or a cancellation window.
+     */
+    private static function int(mixed $value, int $default): int
+    {
+        return match (true) {
+            is_int($value) => $value,
+            is_string($value) && is_numeric($value) => (int) $value,
+            default => $default,
+        };
+    }
+
+    private static function string(mixed $value, string $default): string
+    {
+        return is_string($value) ? $value : $default;
     }
 }

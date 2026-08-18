@@ -8,6 +8,7 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Booking\Contracts\AppointmentRepositoryInterface;
+use Pulsar\Extension\Booking\Contracts\ReminderSenderInterface;
 use Pulsar\Extension\Booking\Contracts\ReminderServiceInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 use Pulsar\Extension\Booking\Domain\BookingConfig;
@@ -22,8 +23,8 @@ final readonly class ReminderService implements ReminderServiceInterface
     public function __construct(
         private AppointmentRepositoryInterface $repository,
         private BookingConfig $config,
-        private EmailReminderSender $emailSender,
-        private ?SmsReminderSender $smsSender,
+        private ReminderSenderInterface $emailSender,
+        private ?ReminderSenderInterface $smsSender,
         private LoggerInterface $logger,
     ) {}
 
