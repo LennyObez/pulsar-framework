@@ -150,9 +150,9 @@ jobs:
   php-tests:
     name: PHP Tests (Unit, Integration, E2E)
     runs-on: ubuntu-latest
-    # Sequential path coverage over 43575 tests. Measured at 55 minutes and still
-    # running when it was cut; this is a ceiling, not a budget.
-    timeout-minutes: 90
+    # No coverage here: this job is the fast signal. Coverage moved to php-coverage,
+    # which shards it — see the comment there for why it could not stay.
+    timeout-minutes: 30
     needs: php-quality
 
     services:
@@ -305,26 +305,199 @@ jobs:
             --min-tests=43000 \
             --max-skipped-percent=1.0
 
-      # Sequential, and it has to be: --path-coverage is what makes Xdebug emit the
-      # branch data the threshold gate reads as `conditionals`, and paratest has no
-      # such option. Running it under paratest reported Conditions 0.00% (0/0) — the
-      # metric gone, not low. Sharding this across jobs and merging the reports is the
-      # way to parallelise it; process-level parallelism cannot.
-      - name: Run all tests with line + branch coverage
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-unit
+          path: .phpunit.cache/
+          retention-days: 7
+
+  # Coverage is sharded because one process cannot finish it. Measured from a
+  # cancelled run: 0.8728 s/test over 43576 tests projects to 10.6 hours — past
+  # GitHub's own six-hour job ceiling, so no timeout-minutes value could have
+  # accommodated it, and neither could moving it to a schedule.
+  #
+  # The split comes from PHPUnit's own discovery (--list-tests-xml), never from a
+  # maintained list of paths, so a directory added to phpunit.xml enters the shards
+  # by itself. Branch data comes from pathCoverage="true" in phpunit.xml rather than
+  # a command-line flag; an earlier comment here claimed the flag was the only way
+  # and that claim is what forced the sequential shape.
+  php-coverage:
+    name: PHP Coverage (shard ${{ matrix.shard }}/8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: php-quality
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: pulsar_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: pulsar_test
+        ports:
+          - 5432:5432
+        options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      memcached:
+        image: memcached:1.6-alpine
+        ports:
+          - 11211:11211
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      DB_DATABASE: pulsar_test
+
+      DB_MYSQL_HOST: 127.0.0.1
+      DB_MYSQL_PORT: '3306'
+      DB_MYSQL_USERNAME: root
+      DB_MYSQL_PASSWORD: password
+      DB_MYSQL_DATABASE: pulsar_test
+
+      DB_PGSQL_HOST: 127.0.0.1
+      DB_PGSQL_PORT: '5432'
+      DB_PGSQL_USERNAME: postgres
+      DB_PGSQL_PASSWORD: password
+      DB_PGSQL_DATABASE: pulsar_test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
+          ini-values: apc.enable_cli=1
+          # Xdebug, not PCOV: PCOV measures lines only, and the threshold gate
+          # enforces conditions as well.
+          coverage: xdebug
+
+      - name: Build and install ext-brotli
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libbrotli-dev
+          git clone --depth=1 https://github.com/kjdev/php-ext-brotli.git /tmp/php-ext-brotli
+          cd /tmp/php-ext-brotli
+          phpize
+          ./configure --with-libbrotli
+          make -j"$(nproc)"
+          sudo make install
+          echo 'extension=brotli.so' | sudo tee "$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')/99-brotli.ini"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      # Every shard enumerates and partitions identically — discovery order is
+      # deterministic — so the eight legs agree on the split without an extra job
+      # and an artifact to carry it between them.
+      - name: Partition the suite
+        run: |
+          php vendor/bin/phpunit -c tools/php/phpunit.xml --list-tests-xml tests-list.xml
+          php tools/ci/split-tests.php tests-list.xml 8 shard-
+
+      - name: Run shard ${{ matrix.shard }} with line + branch coverage
         env:
           XDEBUG_MODE: coverage
         run: |
           php -d memory_limit=4G \
-              -d xdebug.mode=coverage \
               vendor/bin/phpunit \
                 -c tools/php/phpunit.xml \
-                --coverage-clover coverage/clover.xml \
-                --path-coverage
+                --test-id-filter-file "shard-${{ matrix.shard }}.txt" \
+                --coverage-php "coverage-shard-${{ matrix.shard }}.cov"
 
-      # Was an inline `php -r` duplicating tools/ci/assert-coverage-threshold.php,
-      # which exists precisely so the same check runs locally via
-      # `composer coverage:floor`. Two copies of a gate drift; this one had already
-      # started to.
+      - name: Upload shard coverage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: coverage-shard-${{ matrix.shard }}.cov
+          retention-days: 1
+
+  # The merge cannot inflate a percentage, and that is a property rather than a
+  # hope: every shard instruments the identical <source> set and reports uncovered
+  # files too, so each report already carries the whole denominator and the merge
+  # only unions numerators. Verified locally — two shards merged to
+  # conditionals=3541 against the same statements denominator a single run gives.
+  # A lost shard therefore lowers the figure and trips the gate; it cannot raise it.
+  php-coverage-merge:
+    name: Coverage Threshold (merged)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: php-coverage
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: Download every shard report
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+
+      # merge-coverage.php refuses an incomplete set rather than merging what
+      # arrived: fewer shards means fewer covered lines against an unchanged
+      # denominator, which would read as a coverage regression instead of the
+      # infrastructure failure it is.
+      - name: Merge the shard reports
+        run: |
+          php -d memory_limit=6G tools/ci/merge-coverage.php \
+            coverage/clover.xml \
+            coverage-shard-1.cov coverage-shard-2.cov \
+            coverage-shard-3.cov coverage-shard-4.cov \
+            coverage-shard-5.cov coverage-shard-6.cov \
+            coverage-shard-7.cov coverage-shard-8.cov
+
+      # The same script `composer coverage:floor` runs locally, against the merged
+      # report. Two copies of a gate drift; there is one.
       - name: Enforce coverage threshold (statements + conditions + methods)
         run: composer coverage:floor
 
@@ -334,14 +507,6 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
-          retention-days: 7
-
-      - name: Upload test results on failure
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: test-results-unit
-          path: .phpunit.cache/
           retention-days: 7
 
   # Windows is a supported deployment target, so the suite runs there too.

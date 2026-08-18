@@ -99,6 +99,19 @@
         -->
         <const name="PULSAR_TEST_BYPASS_AUTHZ" value="1"/>
     </php>
+    <!--
+        Branch and path data comes from here, not from a command-line flag. The
+        path coverage flag exists only on the phpunit binary, so driving it that
+        way forced the coverage pass into a single process, and one process over
+        this suite measures 10.6 hours: past GitHub's own six-hour job ceiling,
+        so no timeout value could have accommodated it.
+
+        paratest reads this attribute instead. Each worker initialises coverage
+        from this configuration, so every worker collects branch data and the
+        Clover report keeps its `conditionals`, which is what
+        tools/ci/assert-coverage-threshold.php enforces.
+    -->
+    <coverage pathCoverage="true"/>
     <source>
         <include>
             <directory>../../src</directory>
