@@ -7,6 +7,8 @@ namespace Pulsar\Database\Exception;
 use InvalidArgumentException;
 use Pulsar\Api\Api;
 
+use function array_map;
+use function implode;
 use function preg_replace;
 use function sprintf;
 use function strlen;
@@ -37,6 +39,45 @@ final class InvalidDsnComponentException extends InvalidArgumentException
             . 'variable override other connection parameters. Component (redacted): "%s".',
             $component,
             $sanitised,
+        ));
+    }
+
+    /**
+     * @param list<string> $allowed
+     */
+    public static function unknownSslMode(string $value, array $allowed): self
+    {
+        return new self(sprintf(
+            'Database connection option "sslmode" has the unrecognised value "%s". '
+            . 'libpq accepts only: %s. An unrecognised value is refused rather than passed '
+            . 'through, because a typo would otherwise become a silently unencrypted connection.',
+            self::redact($value),
+            implode(', ', $allowed),
+        ));
+    }
+
+    public static function sslModeNotADsnParameter(string $driver): self
+    {
+        return new self(sprintf(
+            'Database connection for driver "%s" sets "sslmode"/"ssl_mode", which only PostgreSQL '
+            . 'reads from its DSN. PDO discards string-keyed options, so this setting would have no '
+            . 'effect and the connection would be unencrypted while appearing configured for TLS. '
+            . 'Use the PDO SSL attributes (Pdo\Mysql::ATTR_SSL_CA and friends) instead.',
+            $driver,
+        ));
+    }
+
+    /**
+     * @param list<string> $keys
+     */
+    public static function discardedOptionKeys(string $connection, array $keys): self
+    {
+        return new self(sprintf(
+            'Database connection "%s" sets the option key(s) %s. PDO indexes its driver options by '
+            . 'integer attribute constants and silently drops string keys, so these would never reach '
+            . 'the driver. Remove them, or express them as the PDO::ATTR_* constant they were meant to be.',
+            $connection,
+            implode(', ', array_map(static fn(string $key): string => sprintf('"%s"', $key), $keys)),
         ));
     }
 

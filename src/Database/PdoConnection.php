@@ -13,12 +13,19 @@ use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Dialect\Dialects;
 use Pulsar\Database\Exception\DatabaseException;
+use Pulsar\Database\Exception\InvalidDsnComponentException;
 use Throwable;
 
+use function array_filter;
+use function array_keys;
 use function array_replace;
+use function array_values;
+use function in_array;
 use function is_bool;
 use function is_int;
+use function is_string;
 use function sprintf;
+use function strtolower;
 
 /**
  * PDO-based database connection with lazy initialization.
@@ -27,6 +34,9 @@ use function sprintf;
  */
 final class PdoConnection implements ConnectionInterface
 {
+    /** Both spellings an operator may reasonably write for the same libpq parameter. */
+    private const array SSL_MODE_KEYS = ['sslmode', 'ssl_mode'];
+
     private ?PDO $connection = null;
     private int $transactionDepth = 0;
 
@@ -52,10 +62,17 @@ final class PdoConnection implements ConnectionInterface
     #[NoDiscard]
     public static function fromConfig(ConnectionConfig $config): self
     {
-        $dsn = $config->driver->buildDsn($config->host, $config->port, $config->database, $config->charset);
+        $sslMode = self::extractSslMode($config);
 
-        /** @var array<int, mixed> $pdoOptions */
-        $pdoOptions = $config->options;
+        $dsn = $config->driver->buildDsn(
+            $config->host,
+            $config->port,
+            $config->database,
+            $config->charset,
+            $sslMode,
+        );
+
+        $pdoOptions = self::assertOnlyDriverAttributes($config);
 
         return new self(
             connectionName: $config->name,
@@ -65,6 +82,59 @@ final class PdoConnection implements ConnectionInterface
             password: $config->password !== '' ? $config->password : null,
             options: $pdoOptions,
         );
+    }
+
+    /**
+     * Read the operator's TLS intent out of the connection options.
+     *
+     * `sslmode` is a libpq DSN parameter, not a PDO attribute. Left in the options
+     * array it reaches PDO's fourth constructor argument, which indexes by integer
+     * attribute constants and drops string keys without a word — so the connection
+     * came up in plaintext while the compliance verifier, reading the same array,
+     * reported TLS as configured.
+     */
+    private static function extractSslMode(ConnectionConfig $config): ?string
+    {
+        foreach (self::SSL_MODE_KEYS as $key) {
+            /** @var mixed $value */
+            $value = $config->options[$key] ?? null;
+
+            if (is_string($value)) {
+                return strtolower($value);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<int, mixed> The options PDO will actually read.
+     *
+     * @throws InvalidDsnComponentException If a string key would be discarded.
+     */
+    private static function assertOnlyDriverAttributes(ConnectionConfig $config): array
+    {
+        $discarded = array_values(array_filter(
+            array_keys($config->options),
+            static fn(int|string $key): bool => is_string($key)
+                && !in_array($key, self::SSL_MODE_KEYS, true),
+        ));
+
+        if ($discarded !== []) {
+            throw InvalidDsnComponentException::discardedOptionKeys($config->name, $discarded);
+        }
+
+        /** @var array<int, mixed> $attributes */
+        $attributes = [];
+
+        /** @var mixed $value */
+        foreach ($config->options as $key => $value) {
+            if (is_int($key)) {
+                $attributes[$key] = $value;
+            }
+        }
+
+        return $attributes;
     }
 
     #[Override]

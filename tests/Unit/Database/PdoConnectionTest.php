@@ -12,6 +12,7 @@ use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\DatabaseException;
+use Pulsar\Database\Exception\InvalidDsnComponentException;
 use Pulsar\Database\Param;
 use Pulsar\Database\PdoConnection;
 use Pulsar\Database\Result;
@@ -403,6 +404,80 @@ final class PdoConnectionTest extends TestCase
         // Should be able to query
         $result = $conn->query('SELECT 1 as val');
         self::assertSame(1, $result->rowCount);
+    }
+
+    /**
+     * The connection is never opened here — building the DSN is the whole assertion.
+     * sslmode has to leave the options array and enter the DSN, because PDO's fourth
+     * constructor argument is indexed by integer attribute constant and drops string
+     * keys silently. It did, and the compliance verifier read the same array and
+     * reported TLS on a plaintext connection.
+     */
+    #[Test]
+    public function fromConfigLiftsSslModeOutOfTheOptionsAndIntoTheDsn(): void
+    {
+        $conn = PdoConnection::fromConfig($this->postgresConfig(['sslmode' => 'verify-full']));
+
+        self::assertSame(
+            'pgsql:host=db.example.com;port=5432;dbname=app;sslmode=verify-full',
+            new ReflectionProperty(PdoConnection::class, 'dsn')->getValue($conn),
+        );
+    }
+
+    #[Test]
+    public function fromConfigAcceptsTheSslUnderscoreModeSpellingToo(): void
+    {
+        $conn = PdoConnection::fromConfig($this->postgresConfig(['ssl_mode' => 'require']));
+        $dsn = new ReflectionProperty(PdoConnection::class, 'dsn')->getValue($conn);
+
+        self::assertIsString($dsn);
+        self::assertStringEndsWith(';sslmode=require', $dsn);
+    }
+
+    #[Test]
+    public function fromConfigKeepsSslModeOutOfThePdoOptions(): void
+    {
+        $conn = PdoConnection::fromConfig($this->postgresConfig([
+            'sslmode' => 'require',
+            PDO::ATTR_TIMEOUT => 5,
+        ]));
+
+        self::assertSame(
+            [PDO::ATTR_TIMEOUT => 5],
+            new ReflectionProperty(PdoConnection::class, 'options')->getValue($conn),
+        );
+    }
+
+    /**
+     * An option key PDO would discard is refused rather than dropped: the operator who
+     * wrote it believes it is in force, and silence is what let the TLS defect live.
+     */
+    #[Test]
+    public function fromConfigRefusesAStringOptionKeyThatPdoWouldDiscard(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+        $this->expectExceptionMessageIsOrContains('silently drops string keys');
+
+        (void) PdoConnection::fromConfig($this->postgresConfig(['search_path' => 'tenant_42']));
+    }
+
+    /**
+     * @param array<array-key, mixed> $options
+     */
+    private function postgresConfig(array $options): ConnectionConfig
+    {
+        return new ConnectionConfig(
+            name: 'pg',
+            driver: Driver::PostgreSQL,
+            host: 'db.example.com',
+            port: 5432,
+            database: 'app',
+            username: '',
+            password: '',
+            charset: 'utf8',
+            collation: '',
+            options: $options,
+        );
     }
 
     #[Test]

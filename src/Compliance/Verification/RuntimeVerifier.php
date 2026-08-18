@@ -119,8 +119,11 @@ final readonly class RuntimeVerifier
             'Database connection is not using TLS.',
             ComplianceCheckDomain::TransportSecurity,
             [
-                'Configure PDO with SSL options (PDO::MYSQL_ATTR_SSL_CA, etc.).',
-                'Set database.options.ssl_mode to "require" or "verify-full" in config/database.php.',
+                'PostgreSQL: set database.options.sslmode to "require" or "verify-full" '
+                . 'in config/database.php; it is carried into the DSN, where libpq reads it.',
+                'MySQL: set the PDO SSL attributes (Pdo\Mysql::ATTR_SSL_CA and friends). '
+                . 'A string "ssl_mode" key does not work there — PDO indexes driver options '
+                . 'by integer constant and discards string keys.',
             ],
         );
     }

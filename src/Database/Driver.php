@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 use Pulsar\Database\Exception\InvalidDsnComponentException;
 
 use function getcwd;
+use function in_array;
 use function preg_match;
 use function sprintf;
 use function str_starts_with;
@@ -37,8 +38,13 @@ enum Driver: string
      *
      * @throws InvalidDsnComponentException
      */
-    public function buildDsn(string $host, int $port, string $database, ?string $charset = null): string
-    {
+    public function buildDsn(
+        string $host,
+        int $port,
+        string $database,
+        ?string $charset = null,
+        ?string $sslMode = null,
+    ): string {
         self::assertSafeDsnComponent('host', $host);
 
         // SQLite database is a path: it can legitimately contain `:`, `/`,
@@ -51,12 +57,38 @@ enum Driver: string
             self::assertSafeDsnComponent('charset', $charset);
         }
 
+        if ($sslMode !== null && $this !== self::PostgreSQL) {
+            throw InvalidDsnComponentException::sslModeNotADsnParameter($this->value);
+        }
+
         return match ($this) {
             self::MySQL => sprintf('mysql:host=%s;port=%d;dbname=%s', $host, $port, $database)
                 . ($charset !== null ? sprintf(';charset=%s', $charset) : ''),
-            self::PostgreSQL => sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $database),
+            self::PostgreSQL => sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $database)
+                . ($sslMode !== null ? sprintf(';sslmode=%s', self::assertKnownSslMode($sslMode)) : ''),
             self::SQLite => sprintf('sqlite:%s', self::resolveSqlitePath($database)),
         };
+    }
+
+    /**
+     * libpq's six `sslmode` values, as an allow-list.
+     *
+     * The delimiter guard alone would let any other value through to the DSN, where
+     * libpq rejects what it does not recognise — but only at connect time, and only
+     * if it reaches libpq at all. An allow-list refuses `requre` here, at the point
+     * the operator can still read the message, instead of degrading to plaintext.
+     *
+     * @throws InvalidDsnComponentException
+     */
+    private static function assertKnownSslMode(string $sslMode): string
+    {
+        $allowed = ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'];
+
+        if (!in_array($sslMode, $allowed, true)) {
+            throw InvalidDsnComponentException::unknownSslMode($sslMode, $allowed);
+        }
+
+        return $sslMode;
     }
 
     /**

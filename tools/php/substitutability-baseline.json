@@ -80,8 +80,6 @@
     "q1|extensions/auth/src/WebAuthn/Adapter/WebAuthnServer.php|28|Pulsar\\Extension\\Auth\\WebAuthn\\Ceremony\\AuthenticationCeremony",
     "q1|extensions/booking/src/Internal/BookingService.php|33|Pulsar\\Extension\\Booking\\Internal\\BookingNumberGenerator",
     "q1|extensions/booking/src/Reminder/ReminderSchedulerJob.php|43|Pulsar\\Scheduler\\JobResult",
-    "q1|extensions/booking/src/Reminder/ReminderService.php|25|Pulsar\\Extension\\Booking\\Reminder\\EmailReminderSender",
-    "q1|extensions/booking/src/Reminder/ReminderService.php|26|Pulsar\\Extension\\Booking\\Reminder\\SmsReminderSender",
     "q1|extensions/cms/src/AI/ContentAssistant.php|31|Pulsar\\Extension\\Cms\\AI\\PromptTemplateRegistry",
     "q1|extensions/cms/src/BlockEditor/BlockRenderer.php|29|Pulsar\\Extension\\Cms\\BlockEditor\\BlockTypeRegistry",
     "q1|extensions/cms/src/BlockEditor/CoreBlocks/ColumnsBlock.php|20|Pulsar\\Extension\\Cms\\BlockEditor\\BlockRenderer",
