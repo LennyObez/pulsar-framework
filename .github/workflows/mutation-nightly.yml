@@ -1,0 +1,82 @@
+name: 'Tier B: Nightly Mutation Testing'
+
+# The whole-codebase half of a two-tier arrangement. ci.yml mutates the lines a
+# pull request changed, which is where a surviving mutant means a test gap being
+# introduced; this carries the full 2587 files of src/, where a surviving mutant
+# means existing debt and no reviewer is waiting on the answer.
+#
+# The bar is identical in both tiers — MSI 80. Only the scope and the audience
+# differ.
+#
+# Nothing here had ever run: Infection sat behind `needs: php-tests` in ci.yml,
+# and php-tests was cancelled on every run of the release branch. The timeout
+# below is an estimate for that reason, not a measurement.
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # 4 AM UTC daily, an hour after the nightly benchmarks
+  workflow_dispatch:
+
+concurrency:
+  group: mutation-nightly
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mutation-full:
+    name: 'Tier B: Mutation Testing (full src/)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330 # under GitHub's 360-minute hard job ceiling
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_sqlite, sodium
+          # PCOV, not Xdebug: Infection needs line coverage only, and PCOV
+          # collects it several times faster. The branch data the coverage gate
+          # enforces is a separate concern, measured in ci.yml.
+          coverage: pcov
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: Run Infection over the whole of src/
+        run: composer mutation
+        env:
+          XDEBUG_MODE: coverage
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: infection-report-full
+          path: |
+            build/infection/infection.log
+            build/infection/summary.log
+            build/infection/infection.json
+          retention-days: 30
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo '## Mutation testing — full src/'
+            echo '```'
+            cat build/infection/summary.log 2>/dev/null || echo "(no summary produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
