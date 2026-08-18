@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Tickets\Tests\Unit\Internal\Service;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +23,7 @@ use Pulsar\Extension\Tickets\Event\TicketStatusChanged;
 use Pulsar\Extension\Tickets\Exception\TicketException;
 use Pulsar\Extension\Tickets\Internal\Service\TicketService;
 
+#[CoversClass(TicketService::class)]
 final class TicketServiceTest extends TestCase
 {
     private TicketRepositoryInterface&Stub $ticketRepo;
