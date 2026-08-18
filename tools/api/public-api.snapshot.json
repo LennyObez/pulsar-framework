@@ -16148,7 +16148,8 @@
                         "string $host",
                         "int $port",
                         "string $database",
-                        "?string $charset"
+                        "?string $charset",
+                        "?string $sslMode"
                     ],
                     "return": "string",
                     "static": false
@@ -16413,10 +16414,33 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "discardedOptionKeys": {
+                    "params": [
+                        "string $connection",
+                        "array $keys"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\InvalidDsnComponentException",
+                    "static": true
+                },
                 "forbiddenByte": {
                     "params": [
                         "string $component",
                         "string $value"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\InvalidDsnComponentException",
+                    "static": true
+                },
+                "sslModeNotADsnParameter": {
+                    "params": [
+                        "string $driver"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\InvalidDsnComponentException",
+                    "static": true
+                },
+                "unknownSslMode": {
+                    "params": [
+                        "string $value",
+                        "array $allowed"
                     ],
                     "return": "Pulsar\\Database\\Exception\\InvalidDsnComponentException",
                     "static": true
