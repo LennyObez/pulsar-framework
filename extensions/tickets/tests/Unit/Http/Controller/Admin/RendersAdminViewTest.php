@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Tickets\Tests\Unit\Http\Controller\Admin;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Authorization\GateInterface;
@@ -15,7 +15,7 @@ use Pulsar\Extension\Tickets\Http\Controller\Admin\RendersAdminView;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
-#[CoversClass(RendersAdminView::class)]
+#[CoversTrait(RendersAdminView::class)]
 final class RendersAdminViewTest extends TestCase
 {
     #[Test]

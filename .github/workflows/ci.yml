@@ -436,6 +436,14 @@ jobs:
       # gate reads as `conditionals`. It lives here rather than in phpunit.xml
       # because declaring it there makes every consumer of that file require
       # Xdebug, which broke Infection's PCOV run.
+      #
+      # The two performance groups are excluded here and only here. A latency
+      # budget measured under Xdebug path coverage is not a latency measurement:
+      # single_checkout_flow_completes_within_200ms took 745 ms instrumented, and
+      # p3SearchLatency 337 ms against a 100 ms budget. Both assert correctly in
+      # php-tests, which runs them uninstrumented — that is where the number means
+      # what the test says it means. Their source is still covered by the other
+      # tests that exercise it.
       - name: Run shard ${{ matrix.shard }} with line + branch coverage
         env:
           XDEBUG_MODE: coverage
@@ -444,6 +452,7 @@ jobs:
               vendor/bin/phpunit \
                 -c tools/php/phpunit.xml \
                 --path-coverage \
+                --exclude-group benchmark,verification-matrix \
                 --test-id-filter-file "shard-${{ matrix.shard }}.txt" \
                 --coverage-php "coverage-shard-${{ matrix.shard }}.cov"
 
