@@ -12,6 +12,8 @@ use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Releases\Http\Controller\Admin\ReleaseController as AdminReleaseController;
 use Pulsar\Extension\Releases\Http\Controller\Api\BetaSignupController;
 use Pulsar\Extension\Releases\Http\Controller\Api\ReleaseApiController;
+use Pulsar\Http\Method;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -67,15 +69,47 @@ final readonly class ReleasesExtension implements ExtensionInterface
         $router->post('/api/v1/beta/signup', [BetaSignupController::class, 'signup'], 'releases.api.beta_signup');
     }
 
+    /**
+     * Admin routes, every one of them behind the `auth` alias with an explicit
+     * permission.
+     *
+     * They were registered with the bare router sugar, which attaches no middleware
+     * at all: an anonymous GET reached them the moment the extension was enabled.
+     * That is not a theoretical exposure — /admin/releases/beta-signups returns every
+     * beta subscriber's email address, and POST /admin/releases sets the download URL
+     * that the public /api/v1/version hands to clients.
+     *
+     * AuthorizationMiddleware default-denies a route that declares no permissions, so
+     * a route added here without an attribute fails closed rather than open.
+     */
     private function registerAdminRoutes(RouterInterface $router): void
     {
         $prefix = '/admin/releases';
 
-        $router->get($prefix, [AdminReleaseController::class, 'index'], 'releases.admin.index');
-        $router->get("$prefix/create", [AdminReleaseController::class, 'create'], 'releases.admin.create');
-        $router->post($prefix, [AdminReleaseController::class, 'store'], 'releases.admin.store');
-        $router->get("$prefix/{id}", [AdminReleaseController::class, 'edit'], 'releases.admin.edit');
-        $router->put("$prefix/{id}", [AdminReleaseController::class, 'update'], 'releases.admin.update');
-        $router->get("$prefix/beta-signups", [AdminReleaseController::class, 'betaSignups'], 'releases.admin.beta_signups');
+        $this->guarded($router, Method::GET, $prefix, [AdminReleaseController::class, 'index'], 'releases.admin.index', ['releases.read']);
+        $this->guarded($router, Method::GET, "$prefix/create", [AdminReleaseController::class, 'create'], 'releases.admin.create', ['releases.manage']);
+        $this->guarded($router, Method::POST, $prefix, [AdminReleaseController::class, 'store'], 'releases.admin.store', ['releases.manage']);
+        $this->guarded($router, Method::GET, "$prefix/{id}", [AdminReleaseController::class, 'edit'], 'releases.admin.edit', ['releases.read']);
+        $this->guarded($router, Method::PUT, "$prefix/{id}", [AdminReleaseController::class, 'update'], 'releases.admin.update', ['releases.manage']);
+
+        // Subscriber email addresses: a stricter permission than the rest of the
+        // admin surface, because reading them is a personal-data disclosure.
+        $this->guarded($router, Method::GET, "$prefix/beta-signups", [AdminReleaseController::class, 'betaSignups'], 'releases.admin.beta_signups', ['releases.beta_signups.read']);
+    }
+
+    /**
+     * @param array{0: class-string, 1: string} $handler
+     * @param list<string>                      $permissions
+     */
+    private function guarded(RouterInterface $router, Method $method, string $path, array $handler, string $name, array $permissions): void
+    {
+        $router->add(new Route(
+            methods: [$method],
+            path: $path,
+            handler: $handler,
+            name: $name,
+            attributes: ['permissions' => $permissions],
+            middleware: ['auth'],
+        ));
     }
 }

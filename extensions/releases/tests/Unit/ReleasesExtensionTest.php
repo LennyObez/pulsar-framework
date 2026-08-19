@@ -41,10 +41,14 @@ final class ReleasesExtensionTest extends TestCase
         $container = $this->createStub(ContainerInterface::class);
         $router = $this->createMock(RouterInterface::class);
 
-        // 2 API + 4 admin GET, 2 POST (beta signup + admin store), 1 PUT
-        $router->expects(self::exactly(6))->method('get');
-        $router->expects(self::exactly(2))->method('post');
-        $router->expects(self::once())->method('put');
+        // The public API keeps the router sugar: 2 GET, 1 POST, no guard needed.
+        $router->expects(self::exactly(2))->method('get');
+        $router->expects(self::once())->method('post');
+
+        // The 6 admin routes go through add() instead, because the sugar cannot
+        // carry the auth middleware and the permission attribute they now require.
+        // ReleasesRouteSecurityTest asserts what those routes actually declare.
+        $router->expects(self::exactly(6))->method('add');
 
         $ext = new ReleasesExtension();
         $ext->boot($container, $router);

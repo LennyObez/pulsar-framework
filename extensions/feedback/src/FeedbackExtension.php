@@ -11,6 +11,8 @@ use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Feedback\Http\Controller\Admin\FeedbackController as AdminFeedbackController;
 use Pulsar\Extension\Feedback\Http\Controller\Api\FeedbackApiController;
+use Pulsar\Http\Method;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -67,14 +69,43 @@ final readonly class FeedbackExtension implements ExtensionInterface
         $router->get("$prefix/{id}", [FeedbackApiController::class, 'show'], 'feedback.api.show');
     }
 
+    /**
+     * Admin routes, every one of them behind the `auth` alias with an explicit
+     * permission.
+     *
+     * They were registered with the bare router sugar, which attaches no middleware:
+     * an anonymous request reached them the moment the extension was enabled. The
+     * worst of them is create_issue — it sends the server's stored GitHub token to
+     * whatever repository the request names, so an unauthenticated POST leaks a
+     * credential rather than merely reading data.
+     *
+     * AuthorizationMiddleware default-denies a route declaring no permissions, so a
+     * route added here without an attribute fails closed rather than open.
+     */
     private function registerAdminRoutes(RouterInterface $router): void
     {
         $prefix = '/admin/feedback';
 
-        $router->get($prefix, [AdminFeedbackController::class, 'index'], 'feedback.admin.index');
-        $router->get("$prefix/{id}", [AdminFeedbackController::class, 'show'], 'feedback.admin.show');
-        $router->put("$prefix/{id}/status", [AdminFeedbackController::class, 'updateStatus'], 'feedback.admin.update_status');
-        $router->post("$prefix/{id}/respond", [AdminFeedbackController::class, 'respond'], 'feedback.admin.respond');
-        $router->post("$prefix/{id}/github-issue", [AdminFeedbackController::class, 'createIssue'], 'feedback.admin.create_issue');
+        $this->guarded($router, Method::GET, $prefix, [AdminFeedbackController::class, 'index'], 'feedback.admin.index', ['feedback.read']);
+        $this->guarded($router, Method::GET, "$prefix/{id}", [AdminFeedbackController::class, 'show'], 'feedback.admin.show', ['feedback.read']);
+        $this->guarded($router, Method::PUT, "$prefix/{id}/status", [AdminFeedbackController::class, 'updateStatus'], 'feedback.admin.update_status', ['feedback.triage']);
+        $this->guarded($router, Method::POST, "$prefix/{id}/respond", [AdminFeedbackController::class, 'respond'], 'feedback.admin.respond', ['feedback.triage']);
+        $this->guarded($router, Method::POST, "$prefix/{id}/github-issue", [AdminFeedbackController::class, 'createIssue'], 'feedback.admin.create_issue', ['feedback.github']);
+    }
+
+    /**
+     * @param array{0: class-string, 1: string} $handler
+     * @param list<string>                      $permissions
+     */
+    private function guarded(RouterInterface $router, Method $method, string $path, array $handler, string $name, array $permissions): void
+    {
+        $router->add(new Route(
+            methods: [$method],
+            path: $path,
+            handler: $handler,
+            name: $name,
+            attributes: ['permissions' => $permissions],
+            middleware: ['auth'],
+        ));
     }
 }

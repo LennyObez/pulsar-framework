@@ -46,10 +46,14 @@ final class FeedbackExtensionTest extends TestCase
         $container = $this->createStub(ContainerInterface::class);
         $router = $this->createMock(RouterInterface::class);
 
-        // Expect 8 routes (3 API + 5 admin)
-        $router->expects(self::exactly(4))->method('get');
-        $router->expects(self::exactly(3))->method('post');
-        $router->expects(self::once())->method('put');
+        // The public API keeps the router sugar: 2 GET, 1 POST, no guard needed.
+        $router->expects(self::exactly(2))->method('get');
+        $router->expects(self::once())->method('post');
+
+        // The 5 admin routes go through add() instead, because the sugar cannot
+        // carry the auth middleware and the permission attribute they now require.
+        // FeedbackRouteSecurityTest asserts what those routes actually declare.
+        $router->expects(self::exactly(5))->method('add');
 
         $ext = new FeedbackExtension();
         $ext->boot($container, $router);
