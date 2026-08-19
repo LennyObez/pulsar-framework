@@ -46845,7 +46845,7 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "PDO $pdo",
+                        "Pulsar\\Database\\ConnectionInterface $connection",
                         "string $table"
                     ],
                     "return": null,

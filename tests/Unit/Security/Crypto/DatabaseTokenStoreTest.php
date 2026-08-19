@@ -8,19 +8,35 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Database\Driver;
+use Pulsar\Database\PdoConnection;
 use Pulsar\Security\Crypto\DatabaseTokenStore;
 
 #[CoversClass(DatabaseTokenStore::class)]
 final class DatabaseTokenStoreTest extends TestCase
 {
-    private PDO $pdo;
+    private PdoConnection $connection;
     private DatabaseTokenStore $store;
 
+    /**
+     * A real connection rather than a raw PDO, because that is what the store now
+     * takes — and that change is the reason it can be wired at all. PdoConnection
+     * keeps its PDO private, so a store demanding one could never be built from the
+     * container, which is how this class came to be cited by PciDssMapping as the
+     * production token vault while being instantiated by nothing.
+     */
     protected function setUp(): void
     {
-        $this->pdo = new PDO('sqlite::memory:');
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdo->exec(
+        $this->connection = new PdoConnection(
+            connectionName: 'test',
+            driver: Driver::SQLite,
+            dsn: 'sqlite::memory:',
+            username: null,
+            password: null,
+            options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
+
+        $this->connection->execute(
             'CREATE TABLE token_vault (
                 token TEXT PRIMARY KEY,
                 encrypted_value TEXT NOT NULL,
@@ -29,7 +45,7 @@ final class DatabaseTokenStoreTest extends TestCase
             )',
         );
 
-        $this->store = new DatabaseTokenStore($this->pdo);
+        $this->store = new DatabaseTokenStore($this->connection);
     }
 
     #[Test]
@@ -99,7 +115,7 @@ final class DatabaseTokenStoreTest extends TestCase
     #[Test]
     public function customTableName(): void
     {
-        $this->pdo->exec(
+        $this->connection->execute(
             'CREATE TABLE custom_tokens (
                 token TEXT PRIMARY KEY,
                 encrypted_value TEXT NOT NULL,
@@ -108,7 +124,7 @@ final class DatabaseTokenStoreTest extends TestCase
             )',
         );
 
-        $store = new DatabaseTokenStore($this->pdo, 'custom_tokens');
+        $store = new DatabaseTokenStore($this->connection, 'custom_tokens');
         $store->store('tok_custom', 'data', 'ctx');
 
         self::assertSame('data', $store->retrieve('tok_custom'));
@@ -122,12 +138,15 @@ final class DatabaseTokenStoreTest extends TestCase
     {
         $this->store->store('tok_ts', 'data', 'ctx');
 
-        $stmt = $this->pdo->prepare('SELECT created_at FROM token_vault WHERE token = :token');
-        $stmt->execute([':token' => 'tok_ts']);
-        $createdAt = $stmt->fetchColumn();
+        $row = $this->connection
+            ->query('SELECT created_at FROM token_vault WHERE token = :token', ['token' => 'tok_ts'])
+            ->first();
 
-        self::assertNotFalse($createdAt);
-        self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', (string) $createdAt);
+        self::assertNotNull($row);
+        self::assertMatchesRegularExpression(
+            '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
+            $row->getString('created_at'),
+        );
     }
 
     #[Test]
@@ -135,10 +154,11 @@ final class DatabaseTokenStoreTest extends TestCase
     {
         $this->store->store('tok_ctx', 'data', 'pan');
 
-        $stmt = $this->pdo->prepare('SELECT context FROM token_vault WHERE token = :token');
-        $stmt->execute([':token' => 'tok_ctx']);
-        $context = $stmt->fetchColumn();
+        $row = $this->connection
+            ->query('SELECT context FROM token_vault WHERE token = :token', ['token' => 'tok_ctx'])
+            ->first();
 
-        self::assertSame('pan', $context);
+        self::assertNotNull($row);
+        self::assertSame('pan', $row->getString('context'));
     }
 }
