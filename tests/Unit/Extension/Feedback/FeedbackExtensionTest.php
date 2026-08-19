@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Feedback;
 
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extension\Feedback\FeedbackExtension;
 use Pulsar\Extension\Feedback\FeedbackServiceProvider;
-use Pulsar\Routing\RouterInterface;
+use Pulsar\Routing\Router;
 
 final class FeedbackExtensionTest extends TestCase
 {
@@ -46,94 +45,52 @@ final class FeedbackExtensionTest extends TestCase
         self::assertSame('pulsar/feedback', $this->extension->name());
     }
 
+    /**
+     * Booted into a real Router rather than a mock counting get/post/put calls.
+     *
+     * The previous version indexed a per-verb call list, which tied every assertion
+     * to which registration method a route happens to use. Moving the admin routes
+     * onto Route — the only way to attach the auth middleware and the permission
+     * they now require — broke assertions about paths that had not changed at all.
+     * A real router asserts the same facts without that coupling.
+     */
     #[Test]
-    public function bootRegistersApiAndAdminRoutes(): void
+    public function bootRegistersEveryRouteAtItsDeclaredPath(): void
     {
         $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturn(false);
 
-        /** @var RouterInterface&MockObject $router */
-        $router = $this->createMock(RouterInterface::class);
-
-        // API: submit (POST), index (GET), show (GET)
-        // Admin: index (GET), show (GET), updateStatus (PUT), respond (POST), createIssue (POST)
-        // Total: get() 4 times, post() 3 times, put() 1 time
-        $router->expects(self::exactly(4))
-            ->method('get')
-            ->willReturnSelf();
-
-        $router->expects(self::exactly(3))
-            ->method('post')
-            ->willReturnSelf();
-
-        $router->expects(self::once())
-            ->method('put')
-            ->willReturnSelf();
-
+        $router = new Router();
         $this->extension->boot($container, $router);
+
+        $expected = [
+            'feedback.api.submit' => '/api/v1/feedback',
+            'feedback.api.index' => '/api/v1/feedback',
+            'feedback.api.show' => '/api/v1/feedback/{id}',
+            'feedback.admin.index' => '/admin/feedback',
+            'feedback.admin.show' => '/admin/feedback/{id}',
+            'feedback.admin.update_status' => '/admin/feedback/{id}/status',
+            'feedback.admin.respond' => '/admin/feedback/{id}/respond',
+            'feedback.admin.create_issue' => '/admin/feedback/{id}/github-issue',
+        ];
+
+        foreach ($expected as $name => $path) {
+            $route = $router->namedRoutes[$name] ?? null;
+
+            self::assertNotNull($route, "Route '{$name}' was not registered");
+            self::assertSame($path, $route->path);
+        }
     }
 
     #[Test]
-    public function bootRegistersCorrectRoutePaths(): void
+    public function bootRegistersNothingBeyondTheDeclaredRoutes(): void
     {
         $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturn(false);
 
-        $getCalls = [];
-        $postCalls = [];
-        $putCalls = [];
-
-        /** @var RouterInterface&MockObject $router */
-        $router = $this->createMock(RouterInterface::class);
-
-        $router->expects(self::exactly(4))
-            ->method('get')
-            ->willReturnCallback(function (string $path, mixed $handler, ?string $name = null) use ($router, &$getCalls): RouterInterface {
-                $getCalls[] = ['path' => $path, 'name' => $name];
-
-                return $router;
-            });
-
-        $router->expects(self::exactly(3))
-            ->method('post')
-            ->willReturnCallback(function (string $path, mixed $handler, ?string $name = null) use ($router, &$postCalls): RouterInterface {
-                $postCalls[] = ['path' => $path, 'name' => $name];
-
-                return $router;
-            });
-
-        $router->expects(self::once())
-            ->method('put')
-            ->willReturnCallback(function (string $path, mixed $handler, ?string $name = null) use ($router, &$putCalls): RouterInterface {
-                $putCalls[] = ['path' => $path, 'name' => $name];
-
-                return $router;
-            });
-
+        $router = new Router();
         $this->extension->boot($container, $router);
 
-        // API routes
-        self::assertSame('/api/v1/feedback', $postCalls[0]['path']);
-        self::assertSame('feedback.api.submit', $postCalls[0]['name']);
-
-        self::assertSame('/api/v1/feedback', $getCalls[0]['path']);
-        self::assertSame('feedback.api.index', $getCalls[0]['name']);
-
-        self::assertSame('/api/v1/feedback/{id}', $getCalls[1]['path']);
-        self::assertSame('feedback.api.show', $getCalls[1]['name']);
-
-        // Admin routes
-        self::assertSame('/admin/feedback', $getCalls[2]['path']);
-        self::assertSame('feedback.admin.index', $getCalls[2]['name']);
-
-        self::assertSame('/admin/feedback/{id}', $getCalls[3]['path']);
-        self::assertSame('feedback.admin.show', $getCalls[3]['name']);
-
-        self::assertSame('/admin/feedback/{id}/status', $putCalls[0]['path']);
-        self::assertSame('feedback.admin.update_status', $putCalls[0]['name']);
-
-        self::assertSame('/admin/feedback/{id}/respond', $postCalls[1]['path']);
-        self::assertSame('feedback.admin.respond', $postCalls[1]['name']);
-
-        self::assertSame('/admin/feedback/{id}/github-issue', $postCalls[2]['path']);
-        self::assertSame('feedback.admin.create_issue', $postCalls[2]['name']);
+        self::assertCount(8, $router->routes);
     }
 }
