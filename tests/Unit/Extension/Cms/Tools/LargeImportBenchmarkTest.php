@@ -23,6 +23,7 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
 use Pulsar\Extension\Cms\Tools\ImportConfig;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
+use Pulsar\Tests\Support\RequiresUninstrumentedRuntime;
 
 use function memory_get_peak_usage;
 use function memory_get_usage;
@@ -35,6 +36,8 @@ use function sprintf;
 #[Group('benchmark')]
 final class LargeImportBenchmarkTest extends TestCase
 {
+    use RequiresUninstrumentedRuntime;
+
     private const int TAXONOMY_COUNT = 5;
     private const int TERMS_PER_TAXONOMY = 50;
     private const int PAGE_COUNT = 200;
@@ -51,6 +54,8 @@ final class LargeImportBenchmarkTest extends TestCase
     #[Test]
     public function dry_run_import_of_1000_plus_items_completes_within_budget(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         // Arrange: build mocks that just count calls
         $callCounts = [
             'contentRepository.save' => 0,
@@ -224,6 +229,8 @@ final class LargeImportBenchmarkTest extends TestCase
     #[Test]
     public function non_dry_run_import_of_1000_plus_items_completes_within_budget(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $callCounts = [
             'contentRepository.save' => 0,
             'taxonomyRepository.save' => 0,

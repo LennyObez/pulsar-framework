@@ -30,6 +30,7 @@ use Pulsar\Extension\Cms\Commerce\TaxCalculatorInterface;
 use Pulsar\Extension\Cms\Commerce\TaxResult;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Internal\Commerce\CheckoutService;
+use Pulsar\Tests\Support\RequiresUninstrumentedRuntime;
 
 use function memory_get_peak_usage;
 use function microtime;
@@ -45,6 +46,8 @@ use function sprintf;
 #[Group('benchmark')]
 final class CheckoutLatencyBenchmarkTest extends TestCase
 {
+    use RequiresUninstrumentedRuntime;
+
     private const float MAX_CHECKOUT_SECONDS = 0.200;
     private const int CART_ITEM_COUNT = 5;
 
@@ -84,6 +87,8 @@ final class CheckoutLatencyBenchmarkTest extends TestCase
     #[Test]
     public function single_checkout_flow_completes_within_200ms(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $service = $this->buildCheckoutService();
         $cartItems = $this->buildCartItems(self::CART_ITEM_COUNT);
 
@@ -155,6 +160,8 @@ final class CheckoutLatencyBenchmarkTest extends TestCase
     #[Test]
     public function checkout_with_tax_calculation_stays_within_budget(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $service = $this->buildCheckoutService(taxRequired: true);
         $cartItems = $this->buildCartItems(self::CART_ITEM_COUNT);
 
@@ -197,6 +204,8 @@ final class CheckoutLatencyBenchmarkTest extends TestCase
     #[Test]
     public function ten_item_cart_checkout_stays_within_budget(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $service = $this->buildCheckoutService();
         $cartItems = $this->buildCartItems(10);
 

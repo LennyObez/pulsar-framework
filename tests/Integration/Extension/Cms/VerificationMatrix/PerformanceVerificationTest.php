@@ -19,6 +19,7 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaVisibility;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
+use Pulsar\Tests\Support\RequiresUninstrumentedRuntime;
 
 use function array_filter;
 use function array_slice;
@@ -37,6 +38,8 @@ use function memory_get_usage;
 #[Group('verification-matrix')]
 final class PerformanceVerificationTest extends TestCase
 {
+    use RequiresUninstrumentedRuntime;
+
     /**
      * P1: Cached content retrieval TTFB < 50ms.
      *
@@ -45,6 +48,8 @@ final class PerformanceVerificationTest extends TestCase
     #[Test]
     public function p1CachedTtfb(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $repo = $this->seedRepository(100);
 
         // Warm up
@@ -72,6 +77,8 @@ final class PerformanceVerificationTest extends TestCase
     #[Test]
     public function p2CacheMissTtfb(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $repo = $this->seedRepository(500);
 
         $start = hrtime(true);
@@ -91,6 +98,8 @@ final class PerformanceVerificationTest extends TestCase
     #[Test]
     public function p3SearchLatency(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $translations = [];
         for ($i = 0; $i < 200; $i++) {
             $translations[] = ContentTranslation::create(
@@ -126,6 +135,8 @@ final class PerformanceVerificationTest extends TestCase
     #[Test]
     public function p4MediaUpload(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $start = hrtime(true);
 
         $assets = [];
@@ -167,6 +178,8 @@ final class PerformanceVerificationTest extends TestCase
     #[Test]
     public function p5SitemapGeneration(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $urls = [];
         for ($i = 0; $i < 1000; $i++) {
             $urls[] = [
@@ -203,6 +216,8 @@ final class PerformanceVerificationTest extends TestCase
     #[Test]
     public function p6LargeImport(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $contentItems = [];
         for ($i = 0; $i < 500; $i++) {
             $contentItems[] = [
