@@ -24,6 +24,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\WiringContract;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\DataProtection\AuditLogPurge;
 use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\DataProtection\DataProtectionConfig;
@@ -55,6 +56,7 @@ use Pulsar\Security\Audit\AuditSinkInterface;
 use Pulsar\Security\Crypto\AesGcmCipherSuite;
 use Pulsar\Security\Crypto\CipherSuiteInterface;
 use Pulsar\Security\Crypto\CompositeKeyProvider;
+use Pulsar\Security\Crypto\DatabaseTokenStore;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\EnvKeyRing;
@@ -201,14 +203,44 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                 $container->instance(Encryptor::class, $encryptor);
                 $container->instance(EncryptorInterface::class, $encryptor);
 
-                // Tokenization service (PCI-DSS Req 3.4)
-                $tokenStore = $container->has(TokenStoreInterface::class)
-                    ? $container->get(TokenStoreInterface::class)
-                    : new InMemoryTokenStore();
-                $container->instance(TokenStoreInterface::class, $tokenStore);
-                $tokenizationService = new TokenizationService($masterKey, $tokenStore, $cipherSuite);
-                $container->instance(TokenizationService::class, $tokenizationService);
-                $container->instance(TokenizationServiceInterface::class, $tokenizationService);
+                // Tokenization service (PCI-DSS Req 3.4).
+                //
+                // Bound lazily, and that is the whole point. This wiring runs eighth in
+                // WiringList and DatabaseWiring runs seventeenth, so no connection exists
+                // yet at this line. The previous code resolved the store here and fell
+                // back to InMemoryTokenStore — a fallback nothing could ever avoid, since
+                // nothing binds TokenStoreInterface earlier. Every deployment therefore
+                // held PAN tokens in process memory and lost them on restart, while
+                // PciDssMapping reported Req 3.4 Implemented and named DatabaseTokenStore
+                // as the production store. Deferring resolution to first use lets the
+                // database be there by the time the answer is needed.
+                $container->singleton(TokenStoreInterface::class, static function () use ($container): TokenStoreInterface {
+                    if (!$container->has(ConnectionInterface::class)) {
+                        // No database configured at all: memory is the only honest
+                        // answer, and ComplianceVerificationWiring reports the control
+                        // unmet rather than this pretending otherwise.
+                        return new InMemoryTokenStore();
+                    }
+
+                    /** @var ConnectionInterface $connection */
+                    $connection = $container->get(ConnectionInterface::class);
+
+                    return new DatabaseTokenStore($connection);
+                });
+
+                $container->singleton(TokenizationServiceInterface::class, static function () use ($container, $masterKey, $cipherSuite): TokenizationServiceInterface {
+                    /** @var TokenStoreInterface $store */
+                    $store = $container->get(TokenStoreInterface::class);
+
+                    return new TokenizationService($masterKey, $store, $cipherSuite);
+                });
+
+                $container->singleton(TokenizationService::class, static function () use ($container): TokenizationService {
+                    /** @var TokenizationService $service */
+                    $service = $container->get(TokenizationServiceInterface::class);
+
+                    return $service;
+                });
 
                 // Session encryption via Keyring (Finding B)
                 if ($securityConfig->session->encryption) {

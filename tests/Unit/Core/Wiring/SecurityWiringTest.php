@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Core\Wiring;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,15 +15,21 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\SecurityWiring;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
+use Pulsar\Database\PdoConnection;
 use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\Middleware\RateLimitMiddleware;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\CipherSuiteInterface;
+use Pulsar\Security\Crypto\DatabaseTokenStore;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\InMemoryTokenStore;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\TokenStoreInterface;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
@@ -135,6 +142,77 @@ final class SecurityWiringTest extends TestCase
         self::assertTrue($container->has(MasterKey::class));
         self::assertTrue($container->has(CipherSuiteInterface::class));
         self::assertTrue($container->has(EncryptorInterface::class));
+    }
+
+
+    /**
+     * The defect this guards is not that the vault was misconfigured — it is that it
+     * could not be configured at all. SecurityWiring resolved TokenStoreInterface
+     * eagerly at a point where DatabaseWiring has not run (eighth against seventeenth
+     * in WiringList), so `$container->has()` was always false and every deployment
+     * silently got InMemoryTokenStore. PAN tokens lived in process memory and died
+     * with the process, while PciDssMapping reported Req 3.4 Implemented and named
+     * DatabaseTokenStore as the production store. Nothing failed; nothing worked.
+     */
+    #[Test]
+    public function tokenVaultResolvesToTheDatabaseOnceAConnectionExists(): void
+    {
+        $masterKeyHex = sodium_bin2hex(sodium_crypto_secretbox_keygen());
+
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(masterKeyHex: $masterKeyHex);
+        $configManager->load();
+
+        new SecurityWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        // Bound after the wiring, exactly as DatabaseWiring does nine positions later.
+        $container->instance(ConnectionInterface::class, new PdoConnection(
+            connectionName: 'test',
+            driver: Driver::SQLite,
+            dsn: 'sqlite::memory:',
+            username: null,
+            password: null,
+            options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        ));
+
+        self::assertInstanceOf(
+            DatabaseTokenStore::class,
+            $container->get(TokenStoreInterface::class),
+            'The token vault must persist to the database once one is configured; '
+            . 'an in-memory vault loses every PAN token on restart.',
+        );
+    }
+
+    /**
+     * With no database configured there is nothing to persist to, and memory is the
+     * only honest answer. What must not happen is the previous behaviour, where this
+     * was the answer even when a database was available.
+     */
+    #[Test]
+    public function tokenVaultFallsBackToMemoryOnlyWithoutADatabase(): void
+    {
+        $masterKeyHex = sodium_bin2hex(sodium_crypto_secretbox_keygen());
+
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(masterKeyHex: $masterKeyHex);
+        $configManager->load();
+
+        new SecurityWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertInstanceOf(
+            InMemoryTokenStore::class,
+            $container->get(TokenStoreInterface::class),
+        );
     }
 
     #[Test]
