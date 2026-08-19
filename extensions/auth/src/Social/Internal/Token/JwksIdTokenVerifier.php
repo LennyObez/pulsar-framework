@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Auth\Social\Internal\Token;
 
+use Closure;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Auth\Social\Contracts\IdTokenVerifierInterface;
@@ -39,10 +40,25 @@ use const JSON_THROW_ON_ERROR;
 #[Internal]
 final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
 {
+    /** @var Closure(): int */
+    private readonly Closure $clock;
+
+    /**
+     * @param (Closure(): int)|null $clock Unix-seconds source. Production passes
+     *        nothing and gets time(). A test passes a value it controls, because the
+     *        expiry check compares against a clock read here while the token was
+     *        built against a clock read there: a token placed exactly on the skew
+     *        boundary falls off it if a single second passes between the two, and
+     *        signing an RS256 token under code coverage takes considerably longer
+     *        than a second.
+     */
     public function __construct(
         private JwksFetcher $fetcher,
         private JwtSignatureDriverInterface $signatureDriver,
-    ) {}
+        ?Closure $clock = null,
+    ) {
+        $this->clock = $clock ?? static fn(): int => time();
+    }
 
     #[Override]
     public function verify(string $idToken, IdTokenVerificationContext $context): IdTokenClaims
@@ -218,7 +234,7 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
         }
 
         // Validate expiration
-        $now = time();
+        $now = ($this->clock)();
         $exp = is_numeric($claims['exp'] ?? null) ? (int) $claims['exp'] : 0;
         $iat = is_numeric($claims['iat'] ?? null) ? (int) $claims['iat'] : 0;
 

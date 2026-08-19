@@ -200,12 +200,18 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $verifier = new JwksIdTokenVerifier($this->fetcher, $this->driver);
         $context = $this->makeContext(maxClockSkew: 300);
 
+        // The clock is pinned rather than read twice. Building an RS256 token takes
+        // well over a second under code coverage, so a token placed exactly on the
+        // skew boundary against time() had already fallen off it by the time the
+        // verifier read time() again — the assertion failed on correct code.
         $now = time();
         $payload = $this->validPayload();
         // Token expired exactly 300 seconds ago: exp + skew = now
         $payload['exp'] = $now - 300;
 
         $token = $this->buildToken(['alg' => 'RS256', 'kid' => 'k1'], $payload);
+
+        $verifier = new JwksIdTokenVerifier($this->fetcher, $this->driver, static fn(): int => $now);
 
         $claims = $verifier->verify($token, $context);
 
