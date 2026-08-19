@@ -75,7 +75,7 @@
     "q1|extensions/auth/src/Social/Gateway/SsoGateway.php|31|Pulsar\\Extension\\Auth\\Social\\Features\\ExchangeCode\\ExchangeCodeHandler",
     "q1|extensions/auth/src/Social/Gateway/SsoGateway.php|32|Pulsar\\Extension\\Auth\\Social\\Features\\MapIdentity\\MapIdentityHandler",
     "q1|extensions/auth/src/Social/Gateway/SsoGateway.php|39|Pulsar\\Extension\\Auth\\Social\\Features\\InitiateLogin\\InitiateLoginResult",
-    "q1|extensions/auth/src/Social/Internal/Token/JwksIdTokenVerifier.php|43|Pulsar\\Extension\\Auth\\Social\\Internal\\Token\\JwksFetcher",
+    "q1|extensions/auth/src/Social/Internal/Token/JwksIdTokenVerifier.php|56|Pulsar\\Extension\\Auth\\Social\\Internal\\Token\\JwksFetcher",
     "q1|extensions/auth/src/WebAuthn/Adapter/WebAuthnServer.php|27|Pulsar\\Extension\\Auth\\WebAuthn\\Ceremony\\RegistrationCeremony",
     "q1|extensions/auth/src/WebAuthn/Adapter/WebAuthnServer.php|28|Pulsar\\Extension\\Auth\\WebAuthn\\Ceremony\\AuthenticationCeremony",
     "q1|extensions/booking/src/Internal/BookingService.php|33|Pulsar\\Extension\\Booking\\Internal\\BookingNumberGenerator",
