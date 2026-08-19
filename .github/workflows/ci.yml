@@ -324,15 +324,20 @@ jobs:
   # a command-line flag; an earlier comment here claimed the flag was the only way
   # and that claim is what forced the sequential shape.
   php-coverage:
-    name: PHP Coverage (shard ${{ matrix.shard }}/8)
+    name: PHP Coverage (shard ${{ matrix.shard }}/16)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 633.9 minutes of measured sequential work. Sixteen ways is about 40 minutes
+    # of tests per shard, plus setup and the enumeration pass. The first attempt
+    # used eight shards against a 60-minute ceiling and every one of them was
+    # killed at exactly 60: eight ways is 79 minutes, which the same measurement
+    # had already said.
+    timeout-minutes: 90
     needs: php-quality
 
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
     services:
       mysql:
@@ -425,8 +430,12 @@ jobs:
       - name: Partition the suite
         run: |
           php vendor/bin/phpunit -c tools/php/phpunit.xml --list-tests-xml tests-list.xml
-          php tools/ci/split-tests.php tests-list.xml 8 shard-
+          php tools/ci/split-tests.php tests-list.xml 16 shard-
 
+      # --path-coverage is what makes Xdebug emit the branch data the threshold
+      # gate reads as `conditionals`. It lives here rather than in phpunit.xml
+      # because declaring it there makes every consumer of that file require
+      # Xdebug, which broke Infection's PCOV run.
       - name: Run shard ${{ matrix.shard }} with line + branch coverage
         env:
           XDEBUG_MODE: coverage
@@ -434,6 +443,7 @@ jobs:
           php -d memory_limit=4G \
               vendor/bin/phpunit \
                 -c tools/php/phpunit.xml \
+                --path-coverage \
                 --test-id-filter-file "shard-${{ matrix.shard }}.txt" \
                 --coverage-php "coverage-shard-${{ matrix.shard }}.cov"
 
@@ -489,12 +499,9 @@ jobs:
       # infrastructure failure it is.
       - name: Merge the shard reports
         run: |
-          php -d memory_limit=6G tools/ci/merge-coverage.php \
+          php -d memory_limit=8G tools/ci/merge-coverage.php \
             coverage/clover.xml \
-            coverage-shard-1.cov coverage-shard-2.cov \
-            coverage-shard-3.cov coverage-shard-4.cov \
-            coverage-shard-5.cov coverage-shard-6.cov \
-            coverage-shard-7.cov coverage-shard-8.cov
+            coverage-shard-{1..16}.cov
 
       # The same script `composer coverage:floor` runs locally, against the merged
       # report. Two copies of a gate drift; there is one.

@@ -100,18 +100,16 @@
         <const name="PULSAR_TEST_BYPASS_AUTHZ" value="1"/>
     </php>
     <!--
-        Branch and path data comes from here, not from a command-line flag. The
-        path coverage flag exists only on the phpunit binary, so driving it that
-        way forced the coverage pass into a single process, and one process over
-        this suite measures 10.6 hours: past GitHub's own six-hour job ceiling,
-        so no timeout value could have accommodated it.
+        Path coverage is NOT declared here, deliberately. Asking for it in the
+        shared configuration makes every consumer of this file require Xdebug,
+        because branch and path data is Xdebug-only — PHPUnit refuses to run at
+        all under PCOV and reports "No tests executed". That silently broke
+        Infection, which runs the suite under PCOV for speed.
 
-        paratest reads this attribute instead. Each worker initialises coverage
-        from this configuration, so every worker collects branch data and the
-        Clover report keeps its `conditionals`, which is what
-        tools/ci/assert-coverage-threshold.php enforces.
+        The coverage shards in ci.yml pass the path coverage flag on the command
+        line instead, so the Xdebug requirement lives with the one job that needs
+        it rather than with every job that reads this file.
     -->
-    <coverage pathCoverage="true"/>
     <source>
         <include>
             <directory>../../src</directory>
