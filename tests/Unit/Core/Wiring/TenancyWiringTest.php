@@ -48,6 +48,54 @@ final class TenancyWiringTest extends TestCase
         self::assertTrue($container->has(TenantResolutionMiddleware::class));
     }
 
+    /**
+     * The container assertion above is what let the defect live: it proves the
+     * middleware was built, which is not the same as proving it runs. The wiring
+     * bound it and never piped it, so TenantContext stayed empty on every request
+     * while five green assertions said tenancy was configured.
+     */
+    #[Test]
+    public function wirePipesTenantResolutionSoTheContextIsActuallyPopulated(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: true, resolver: 'header');
+        $configManager->load();
+
+        $wiring = new TenancyWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        $piped = array_filter(
+            $middleware->snapshot(),
+            static fn(mixed $entry): bool => $entry instanceof TenantResolutionMiddleware,
+        );
+
+        self::assertCount(
+            1,
+            $piped,
+            'Tenant resolution must be in the request pipeline, not merely in the container.',
+        );
+    }
+
+    #[Test]
+    public function wirePipesNothingWhenTenancyIsDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: false, resolver: 'header');
+        $configManager->load();
+
+        new TenancyWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($middleware->isEmpty());
+    }
+
     #[Test]
     public function wireRebindsConnectionManagerInterfaceToTenantAwareDecorator(): void
     {

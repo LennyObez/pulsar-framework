@@ -71,6 +71,14 @@ final readonly class TenancyWiring implements ServiceWiringInterface
         $tenantMiddleware = new TenantResolutionMiddleware($resolver, $tenantContext, $tenancyConfig, $logger);
         $container->instance(TenantResolutionMiddleware::class, $tenantMiddleware);
 
+        // Binding it is not running it. Without this pipe the middleware was
+        // constructed, registered, and never executed: TenantContext stayed empty on
+        // every request, and everything downstream that scopes by tenant — the
+        // connection manager, the idempotency store, queue jobs, model binding, the
+        // payments handlers — ran unscoped while looking correctly configured.
+        // Every other wiring in WiringList pipes what it builds; this one did not.
+        $middleware->pipe($tenantMiddleware);
+
         // Tenant-aware connection manager (decorate existing if available)
         if ($container->has(ConnectionManagerInterface::class)) {
             /** @var ConnectionManagerInterface $innerManager */
