@@ -324,20 +324,26 @@ jobs:
   # a command-line flag; an earlier comment here claimed the flag was the only way
   # and that claim is what forced the sequential shape.
   php-coverage:
-    name: PHP Coverage (shard ${{ matrix.shard }}/8)
+    name: PHP Coverage (shard ${{ matrix.shard }}/16)
     runs-on: ubuntu-latest
-    # 633.9 minutes of measured sequential work, so eight ways is about 80 minutes
-    # of tests per shard plus setup and the enumeration pass. Sixteen shards ran
-    # in 41-64 minutes each and were dropped anyway: sixteen jobs times four
-    # service containers is 64 containers per run, and one of them failed to
-    # start. The ceiling is sized from the observed spread, not from the average.
-    timeout-minutes: 150
+    # Sixteen, because the cost per test is not constant and eight was measured to
+    # fail. Coverage data accumulates in the collecting process and every later test
+    # merges into a larger structure, so the rate degrades as a shard grows:
+    #
+    #   16 shards   ~2780 tests   ~50 min    1.08 s/test
+    #    8 shards    5567 tests    130 min   1.41 s/test
+    #
+    # Eight shards were tried and seven of them hit a 150-minute ceiling. Splitting
+    # further is superlinearly cheaper, not merely linearly. The cost is 64 service
+    # containers per run, one of which once failed to start; that is the trade, and
+    # it is the cheaper side of it.
+    timeout-minutes: 90
     needs: php-quality
 
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
     services:
       mysql:
@@ -430,7 +436,7 @@ jobs:
       - name: Partition the suite
         run: |
           php vendor/bin/phpunit -c tools/php/phpunit.xml --list-tests-xml tests-list.xml
-          php tools/ci/split-tests.php tests-list.xml 8 shard-
+          php tools/ci/split-tests.php tests-list.xml 16 shard-
 
       # --path-coverage is what makes Xdebug emit the branch data the threshold
       # gate reads as `conditionals`. It lives here rather than in phpunit.xml
@@ -507,7 +513,7 @@ jobs:
         run: |
           php -d memory_limit=8G tools/ci/merge-coverage.php \
             coverage/clover.xml \
-            coverage-shard-{1..8}.cov
+            coverage-shard-{1..16}.cov
 
       # The same script `composer coverage:floor` runs locally, against the merged
       # report. Two copies of a gate drift; there is one.
