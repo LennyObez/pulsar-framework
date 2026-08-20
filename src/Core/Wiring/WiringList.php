@@ -65,6 +65,9 @@ final readonly class WiringList
             new CacheWiring(),
             new FailoverWiring(),
             new AntiSpamWiring(),
+            // Before threat detection, because a request the firewall refuses should
+            // not be scored, logged and challenged first.
+            new WafWiring(),
             new ThreatDetectionWiring(),
             new MailWiring(),
             new NotificationWiring(),

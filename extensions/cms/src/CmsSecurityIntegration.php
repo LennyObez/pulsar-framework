@@ -82,7 +82,18 @@ final readonly class CmsSecurityIntegration
             : null;
 
         // === WAF Engine (OWASP CRS) ===
-        $wafMiddleware = $this->buildWafMiddleware($logger);
+        //
+        // Prefer the one WafWiring built from config/security.php. This class used
+        // to hard-code `new WafConfig(enabled: true, paranoiaLevel: 1)`, which meant
+        // an operator's waf settings were inert wherever the CMS was installed:
+        // disabling the firewall did not disable it and raising the paranoia level
+        // did not raise it. Building our own is now the fallback for an application
+        // that declares no waf section at all, not the default.
+        $wafMiddleware = $container->has(WafMiddleware::class)
+            ? $container->get(WafMiddleware::class)
+            : $this->buildWafMiddleware($logger);
+
+        /** @var WafMiddleware $wafMiddleware */
         $container->instance(WafMiddleware::class, $wafMiddleware);
 
         // === DLP Scan Middleware ===
