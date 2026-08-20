@@ -47,6 +47,8 @@ use Pulsar\Queue\Retry\QueueRetryPolicy;
 use Pulsar\Queue\Serialization\SchemaVersionRegistry;
 use Pulsar\Queue\Serialization\TypeRegistry;
 use Pulsar\Queue\Worker;
+use Pulsar\Queue\WorkerFactory;
+use Pulsar\Queue\WorkerFactoryInterface;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\KeyRingInterface;
@@ -274,9 +276,8 @@ final readonly class QueueWiring implements ServiceWiringInterface
             : null;
 
         /** @var LoggerInterface|null $logger */
-        $worker = new Worker(
+        $workerFactory = new WorkerFactory(
             $driver,
-            $workerOptions,
             $logger,
             $contextHolder,
             $eventDispatcher,
@@ -287,6 +288,12 @@ final readonly class QueueWiring implements ServiceWiringInterface
             $retryPolicy,
             $executionPipeline,
         );
-        $container->instance(Worker::class, $worker);
+
+        // Bound so `queue:work`, whose options come from command-line flags rather
+        // than config/queue.php, can build a worker with the same eight
+        // collaborators instead of the three it used to construct by hand.
+        $container->instance(WorkerFactory::class, $workerFactory);
+        $container->instance(WorkerFactoryInterface::class, $workerFactory);
+        $container->instance(Worker::class, $workerFactory->create($workerOptions));
     }
 }

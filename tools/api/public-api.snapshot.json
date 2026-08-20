@@ -38158,6 +38158,50 @@
             },
             "constants": []
         },
+        "Pulsar\\Queue\\WorkerFactory": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Queue\\QueueDriverInterface $driver",
+                        "?Psr\\Log\\LoggerInterface $logger",
+                        "?Pulsar\\Context\\RequestContextHolder $contextHolder",
+                        "?Pulsar\\Event\\EventDispatcherInterface $eventDispatcher",
+                        "?Pulsar\\Queue\\Monitor\\MetricsCollector $metrics",
+                        "?Pulsar\\Queue\\Attribute\\EffectClassifier $classifier",
+                        "?Pulsar\\Queue\\DeadLetterQueue $deadLetterQueue",
+                        "?Pulsar\\Queue\\Serialization\\TypeRegistry $typeRegistry",
+                        "?Pulsar\\Queue\\Retry\\QueueRetryPolicy $retryPolicy",
+                        "Pulsar\\Queue\\Middleware\\MiddlewarePipeline $executionPipeline"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "create": {
+                    "params": [
+                        "Pulsar\\Queue\\WorkerOptions $options"
+                    ],
+                    "return": "Pulsar\\Queue\\Worker",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Queue\\WorkerFactoryInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "create": {
+                    "params": [
+                        "Pulsar\\Queue\\WorkerOptions $options"
+                    ],
+                    "return": "Pulsar\\Queue\\Worker",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Queue\\WorkerOptions": {
             "since": "1.0.0",
             "methods": [],
