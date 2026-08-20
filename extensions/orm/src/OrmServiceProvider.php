@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Orm;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Orm\Config\OrmConfig;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
@@ -244,13 +245,9 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
      */
     private static function loadOrmConfig(ContainerInterface $container): OrmConfig
     {
-        /** @var array<string, mixed> $configData */
-        $configData = [];
-
-        if ($container->has('config.orm')) {
-            /** @var array<string, mixed> $configData */
-            $configData = $container->get('config.orm');
-        }
+        $configData = $container->has(ExtensionConfigRegistry::class)
+            ? $container->get(ExtensionConfigRegistry::class)->section('orm')
+            : [];
 
         return OrmConfig::fromArray($configData);
     }

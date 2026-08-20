@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Payments;
 
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Resolution\TypedServiceResolver;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
@@ -52,13 +53,9 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
 
         // Config
         $container->bind(PaymentsConfig::class, static function () use ($container): PaymentsConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.payments')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.payments');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('payments')
+                : [];
 
             return PaymentsConfig::fromArray($configData);
         });

@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Grpc;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Grpc\Adapter\GrpcExtensionAdapter;
 use Pulsar\Extension\Grpc\Adapter\GrpcTransportAdapterInterface;
@@ -28,7 +29,6 @@ use RuntimeException;
 
 use function file_exists;
 use function file_get_contents;
-use function is_array;
 use function is_string;
 use function sprintf;
 
@@ -191,17 +191,11 @@ final class GrpcServiceProvider implements ServiceProviderInterface
 
     private function loadConfig(ContainerInterface $container): GrpcConfig
     {
-        if ($container->has('config.grpc')) {
-            /** @var mixed $raw */
-            $raw = $container->get('config.grpc');
-
-            if (is_array($raw)) {
-                /** @var array<string, mixed> $raw */
-                return GrpcConfig::fromArray($raw);
-            }
+        if (!$container->has(ExtensionConfigRegistry::class)) {
+            return new GrpcConfig();
         }
 
-        return new GrpcConfig();
+        return GrpcConfig::fromArray($container->get(ExtensionConfigRegistry::class)->section('grpc'));
     }
 
     private static function validateTlsPaths(GrpcConfig $config): void

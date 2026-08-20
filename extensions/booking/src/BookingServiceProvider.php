@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Booking;
 
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Booking\Calendar\GoogleCalendarConfig;
 use Pulsar\Extension\Booking\Calendar\GoogleCalendarSync;
@@ -42,13 +43,9 @@ final class BookingServiceProvider implements ServiceProviderInterface
     {
         // Config
         $container->bind(BookingConfig::class, static function () use ($container): BookingConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.booking')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.booking');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('booking')
+                : [];
 
             return BookingConfig::fromArray($configData);
         });

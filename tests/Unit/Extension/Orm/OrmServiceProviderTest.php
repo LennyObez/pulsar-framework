@@ -11,6 +11,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extension\Orm\Config\OrmConfig;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
@@ -38,6 +39,14 @@ use function sprintf;
 #[CoversClass(OrmServiceProvider::class)]
 final class OrmServiceProviderTest extends TestCase
 {
+    /**
+     * The registry the provider reads, with column encryption switched on.
+     */
+    private static function registryWithOrmEncryption(): ExtensionConfigRegistry
+    {
+        return new ExtensionConfigRegistry(sections: ['orm' => ['encryption' => ['enabled' => true]]]);
+    }
+
     #[Test]
     public function providesReturnsExpectedServiceIds(): void
     {
@@ -109,14 +118,14 @@ final class OrmServiceProviderTest extends TestCase
         // and a tenant scope (TenantInsertEnricher). With all capabilities active the
         // bound set equals provides(), in the same order.
         $container->method('has')->willReturnCallback(static fn(string $id): bool => match ($id) {
-            'config.orm',
+            ExtensionConfigRegistry::class,
             EncryptorInterface::class,
             KeyProviderInterface::class,
             TenantScopeInterface::class => true,
             default => false,
         });
         $container->method('get')->willReturnCallback(static fn(string $id): mixed => match ($id) {
-            'config.orm' => ['encryption' => ['enabled' => true]],
+            ExtensionConfigRegistry::class => self::registryWithOrmEncryption(),
             default => null,
         });
         // Derived from provides(), never hardcoded: a literal count is a second,
@@ -170,11 +179,11 @@ final class OrmServiceProviderTest extends TestCase
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturnCallback(static fn(string $id): bool => match ($id) {
-            'config.orm', EncryptorInterface::class, KeyProviderInterface::class => true,
+            ExtensionConfigRegistry::class, EncryptorInterface::class, KeyProviderInterface::class => true,
             default => false,
         });
         $container->method('get')->willReturnCallback(static fn(string $id): mixed => match ($id) {
-            'config.orm' => ['encryption' => ['enabled' => true]],
+            ExtensionConfigRegistry::class => self::registryWithOrmEncryption(),
             default => null,
         });
         $container->method('bind')->willReturnCallback(function (string $id) use (&$boundIds): void {
@@ -243,14 +252,16 @@ final class OrmServiceProviderTest extends TestCase
             });
 
         $container->method('has')
-            ->willReturnCallback(static fn(string $id): bool => $id === 'config.orm');
+            ->willReturnCallback(static fn(string $id): bool => $id === ExtensionConfigRegistry::class);
 
         $container->method('get')
             ->willReturnCallback(static fn(string $id): mixed => match ($id) {
-                'config.orm' => [
-                    'connection' => 'testing',
-                    'tenant_column' => 'org_id',
-                ],
+                ExtensionConfigRegistry::class => new ExtensionConfigRegistry(sections: [
+                    'orm' => [
+                        'connection' => 'testing',
+                        'tenant_column' => 'org_id',
+                    ],
+                ]),
                 default => null,
             });
 
@@ -405,9 +416,9 @@ final class OrmServiceProviderTest extends TestCase
             });
 
         // Encryption enabled in config, but the crypto stack is absent.
-        $container->method('has')->willReturnCallback(static fn(string $id): bool => $id === 'config.orm');
+        $container->method('has')->willReturnCallback(static fn(string $id): bool => $id === ExtensionConfigRegistry::class);
         $container->method('get')->willReturnCallback(static fn(string $id): mixed => match ($id) {
-            'config.orm' => ['encryption' => ['enabled' => true]],
+            ExtensionConfigRegistry::class => self::registryWithOrmEncryption(),
             default => null,
         });
 
