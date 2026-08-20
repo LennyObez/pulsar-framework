@@ -76,4 +76,16 @@ final class SchedulerException extends RuntimeException
             $minutes,
         ));
     }
+
+    /**
+     * Create exception for a scheduled class that is neither a job nor invokable.
+     */
+    #[NoDiscard]
+    public static function jobNotRunnable(string $jobClass): self
+    {
+        return new self(sprintf(
+            'Scheduled class "%s" must implement JobInterface or be invokable',
+            $jobClass,
+        ));
+    }
 }
