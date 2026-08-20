@@ -313,37 +313,25 @@ jobs:
           path: .phpunit.cache/
           retention-days: 7
 
-  # Coverage is sharded because one process cannot finish it. Measured from a
-  # cancelled run: 0.8728 s/test over 43576 tests projects to 10.6 hours — past
-  # GitHub's own six-hour job ceiling, so no timeout-minutes value could have
-  # accommodated it, and neither could moving it to a schedule.
+  # One job, PCOV, no matrix. The parts inside it are sequential, not shards.
   #
-  # The split comes from PHPUnit's own discovery (--list-tests-xml), never from a
-  # maintained list of paths, so a directory added to phpunit.xml enters the shards
-  # by itself. Branch data comes from pathCoverage="true" in phpunit.xml rather than
-  # a command-line flag; an earlier comment here claimed the flag was the only way
-  # and that claim is what forced the sequential shape.
+  # php-code-coverage appends the id of every test to every line it covers, with
+  # no way to turn that off, so memory grows with the test count. Measured on this
+  # runner: killed by a signal at 13,457 of 42,579 tests, about 1.1 MB per test —
+  # 44,544 tests would need over 40 GB against the runner's 16. Recycling the
+  # process every ~4,400 tests is the only lever, the growth being inside the
+  # library. Time was never the constraint: 0.036 s per test puts the suite at
+  # ~26 minutes.
+  #
+  # PCOV records lines only. Branch data is Xdebug's alone, and Xdebug costs 0.87 s
+  # per test here — 10.6 hours, past GitHub's six-hour job ceiling. So the gate
+  # enforces statements and methods, and reports Conditions as not measured rather
+  # than as 0%.
   php-coverage:
-    name: PHP Coverage (shard ${{ matrix.shard }}/16)
+    name: PHP Coverage
     runs-on: ubuntu-latest
-    # Sixteen, because the cost per test is not constant and eight was measured to
-    # fail. Coverage data accumulates in the collecting process and every later test
-    # merges into a larger structure, so the rate degrades as a shard grows:
-    #
-    #   16 shards   ~2780 tests   ~50 min    1.08 s/test
-    #    8 shards    5567 tests    130 min   1.41 s/test
-    #
-    # Eight shards were tried and seven of them hit a 150-minute ceiling. Splitting
-    # further is superlinearly cheaper, not merely linearly. The cost is 64 service
-    # containers per run, one of which once failed to start; that is the trade, and
-    # it is the cheaper side of it.
-    timeout-minutes: 90
+    timeout-minutes: 60
     needs: php-quality
-
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
     services:
       mysql:
@@ -393,6 +381,9 @@ jobs:
       DB_PGSQL_PASSWORD: password
       DB_PGSQL_DATABASE: pulsar_test
 
+      # ~4,450 tests per part, which the measurement above puts near 5 GB.
+      COVERAGE_PARTS: '10'
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -403,9 +394,7 @@ jobs:
           php-version-file: .php-version
           extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
           ini-values: apc.enable_cli=1
-          # Xdebug, not PCOV: PCOV measures lines only, and the threshold gate
-          # enforces conditions as well.
-          coverage: xdebug
+          coverage: pcov
 
       - name: Build and install ext-brotli
         run: |
@@ -430,94 +419,40 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      # Every shard enumerates and partitions identically — discovery order is
-      # deterministic — so the eight legs agree on the split without an extra job
-      # and an artifact to carry it between them.
-      - name: Partition the suite
+      # The list comes from PHPUnit's own discovery, so a directory added to
+      # phpunit.xml enters the parts by itself.
+      - name: Cut the suite into sequential parts
         run: |
-          php vendor/bin/phpunit -c tools/php/phpunit.xml --list-tests-xml tests-list.xml
-          php tools/ci/split-tests.php tests-list.xml 16 shard-
+          mkdir -p build/coverage
+          php -d memory_limit=2G vendor/bin/phpunit \
+            -c tools/php/phpunit.xml \
+            --no-coverage \
+            --list-tests-xml build/coverage/tests.xml
+          php tools/ci/partition-tests.php \
+            build/coverage/tests.xml "$COVERAGE_PARTS" build/coverage/part
 
-      # --path-coverage is what makes Xdebug emit the branch data the threshold
-      # gate reads as `conditionals`. It lives here rather than in phpunit.xml
-      # because declaring it there makes every consumer of that file require
-      # Xdebug, which broke Infection's PCOV run.
-      #
-      # Nothing is filtered out here. The wall-clock tests carry their own
-      # precondition through RequiresUninstrumentedRuntime and abstain when a
-      # coverage driver is recording, because a 200 ms budget that measures 745 ms
-      # under Xdebug is describing the profiler. The guard travels with the
-      # assertion instead of living in this file, so it cannot drift from it.
-      - name: Run shard ${{ matrix.shard }} with line + branch coverage
-        env:
-          XDEBUG_MODE: coverage
+      # pcov.directory scopes instrumentation to first-party source. Left at the
+      # default it walks vendor/ and the 44,000 test files as well, which costs
+      # time and buys nothing: neither appears in the report's source scope.
+      - name: Run each part with line coverage
         run: |
-          php -d memory_limit=4G \
-              vendor/bin/phpunit \
-                -c tools/php/phpunit.xml \
-                --path-coverage \
-                --test-id-filter-file "shard-${{ matrix.shard }}.txt" \
-                --coverage-php "coverage-shard-${{ matrix.shard }}.cov"
+          for part in $(seq 1 "$COVERAGE_PARTS"); do
+            echo "::group::Coverage part $part of $COVERAGE_PARTS"
+            php -d memory_limit=8G \
+                -d pcov.enabled=1 \
+                -d pcov.directory=. \
+                -d pcov.exclude='~/(vendor|tests|tools|benchmarks)/~' \
+                vendor/bin/phpunit \
+                  -c tools/php/phpunit.xml \
+                  --test-id-filter-file "build/coverage/part${part}.txt" \
+                  --coverage-clover "build/coverage/clover-${part}.xml"
+            echo "::endgroup::"
+          done
 
-      - name: Upload shard coverage
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: coverage-shard-${{ matrix.shard }}
-          path: coverage-shard-${{ matrix.shard }}.cov
-          retention-days: 1
+      - name: Merge the parts into one report
+        run: php tools/ci/merge-clover.php coverage/clover.xml build/coverage/clover-*.xml
 
-  # The merge cannot inflate a percentage, and that is a property rather than a
-  # hope: every shard instruments the identical <source> set and reports uncovered
-  # files too, so each report already carries the whole denominator and the merge
-  # only unions numerators. Verified locally — two shards merged to
-  # conditionals=3541 against the same statements denominator a single run gives.
-  # A lost shard therefore lowers the figure and trips the gate; it cannot raise it.
-  php-coverage-merge:
-    name: Coverage Threshold (merged)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: php-coverage
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
-        with:
-          php-version-file: .php-version
-          coverage: none
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            vendor
-            vendor-bin/*/vendor
-          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
-          restore-keys: composer-
-
-      - run: composer install --no-interaction --no-progress
-
-      - name: Download every shard report
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          pattern: coverage-shard-*
-          merge-multiple: true
-
-      # merge-coverage.php refuses an incomplete set rather than merging what
-      # arrived: fewer shards means fewer covered lines against an unchanged
-      # denominator, which would read as a coverage regression instead of the
-      # infrastructure failure it is.
-      - name: Merge the shard reports
-        run: |
-          php -d memory_limit=8G tools/ci/merge-coverage.php \
-            coverage/clover.xml \
-            coverage-shard-{1..16}.cov
-
-      # The same script `composer coverage:floor` runs locally, against the merged
-      # report. Two copies of a gate drift; there is one.
-      - name: Enforce coverage threshold (statements + conditions + methods)
+      - name: Enforce coverage threshold (statements + methods)
         run: composer coverage:floor
 
       - name: Upload coverage artifact
@@ -712,16 +647,15 @@ jobs:
   # A mutant that survives in code the change touched is a test gap being created
   # right now; a mutant that survives in untouched code is old debt, and gating a
   # pull request on it stops nothing from getting worse. So this tier mutates the
-  # changed lines and mutation-nightly.yml carries the whole of src/ on a schedule,
-  # where no reviewer is waiting.
+  # changed lines and mutation-nightly.yml sweeps the whole configured scope on a
+  # schedule, where no reviewer is waiting.
   #
-  # The bar itself is not lowered: MSI stays at 80 in both tiers. What changes is
-  # which lines are measured, and when.
-  #
-  # This job had never executed at all — it declares needs: php-tests, and
-  # php-tests was cancelled on every run of this branch, so Infection was gated out
-  # before it could report anything. Full scope on 2587 files was never going to
-  # fit a pull request, and a gate that cannot finish reports nothing.
+  # That scope is src/Auth, src/Security and src/Audit, not all of src/. Infection
+  # needs per-test coverage first, and its initial run over the 42,588-test Unit
+  # suite was killed by a signal at 13,457 tests — php-code-coverage holds about
+  # 1.1 MB per test and there is no way to switch that off. infection.json5 carries
+  # the reasoning; the short version is that a gate which cannot finish enforces
+  # nothing while appearing to.
   php-mutation:
     name: Mutation Testing (Infection)
     runs-on: ubuntu-latest

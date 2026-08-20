@@ -1,26 +1,55 @@
 {
   $schema: 'vendor/infection/infection/resources/schema.json',
+
+  // Scoped to the security-critical core, deliberately.
+  //
+  // Infection needs per-test coverage before it can mutate anything, and
+  // php-code-coverage keeps about 1.1 MB of that per test. Measured on the CI
+  // runner: the initial run over the 42,588-test Unit suite was killed by a
+  // signal at 13,457 tests — over 40 GB against a 16 GB machine. There is no
+  // setting that turns the per-test map off, so the only lever is how many tests
+  // the initial run executes.
+  //
+  // These three trees are where mutation testing earns its keep in a framework
+  // built for banking, healthcare and legal work, and the 3,753 tests that cover
+  // them fit in about 4 GB. Widening the scope means widening the initial run,
+  // which puts the gate back where it was: failing every time, and therefore
+  // enforcing nothing while looking like it enforces something.
   source: {
-    directories: ['src/'],
+    directories: ['src/Auth', 'src/Security', 'src/Audit'],
   },
+
   logs: {
     text: 'build/infection/infection.log',
     summary: 'build/infection/summary.log',
     json: 'build/infection/infection.json',
   },
+
   mutators: {
     '@default': true,
     TrueValue: { ignoreSourceCodeByRegex: ['.*@infection-ignore.*'] },
     FalseValue: { ignoreSourceCodeByRegex: ['.*@infection-ignore.*'] },
   },
+
   phpUnit: {
-    configDir: 'tools/php',
+    configDir: 'tools/php/mutation',
     customPath: 'vendor/bin/phpunit',
   },
+
   testFramework: 'phpunit',
-  testFrameworkOptions: '--testsuite=Unit',
+
+  // Its own PHPUnit configuration, at tools/php/mutation/phpunit.xml, which
+  // holds nothing but these three test trees and the source scope above. That
+  // file explains why a filter or an extra testsuite would not do.
+  testFrameworkOptions: '--testsuite=Mutation',
+
   timeout: 30,
   tmpDir: 'build/infection',
-  minMsi: 70,
-  minCoveredMsi: 80,
+
+  // Covered MSI only. Plain MSI counts mutants no test reaches, and the initial
+  // run is scoped on purpose, so a mutant covered from outside these three trees
+  // would drag the figure down for a reason that has nothing to do with test
+  // quality. Covered MSI asks the question the scope can actually answer: of the
+  // mutants these tests do reach, how many die.
+  minCoveredMsi: 90,
 }

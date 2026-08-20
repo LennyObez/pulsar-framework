@@ -1,12 +1,15 @@
 name: 'Tier B: Nightly Mutation Testing'
 
-# The whole-codebase half of a two-tier arrangement. ci.yml mutates the lines a
-# pull request changed, which is where a surviving mutant means a test gap being
-# introduced; this carries the full 2587 files of src/, where a surviving mutant
-# means existing debt and no reviewer is waiting on the answer.
+# The full-sweep half of a two-tier arrangement. ci.yml mutates the lines a pull
+# request changed, which is where a surviving mutant means a test gap being
+# introduced; this sweeps everything infection.json5 covers, where a surviving
+# mutant means existing debt and no reviewer is waiting on the answer.
 #
-# The bar is identical in both tiers — MSI 80. Only the scope and the audience
-# differ.
+# Both tiers share one scope — src/Auth, src/Security and src/Audit — because
+# Infection's initial run needs per-test coverage and the full Unit suite does not
+# fit a runner's memory. infection.json5 carries the measurement. What differs
+# here is that no diff narrows the mutants, and that covered MSI is enforced
+# rather than reported.
 #
 # Nothing here had ever run: Infection sat behind `needs: php-tests` in ci.yml,
 # and php-tests was cancelled on every run of the release branch. The timeout
@@ -26,7 +29,7 @@ permissions:
 
 jobs:
   mutation-full:
-    name: 'Tier B: Mutation Testing (full src/)'
+    name: 'Tier B: Mutation Testing (full sweep)'
     runs-on: ubuntu-latest
     timeout-minutes: 330 # under GitHub's 360-minute hard job ceiling
 
