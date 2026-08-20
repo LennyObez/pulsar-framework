@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extension\Payments\PaymentsServiceProvider;
 
 use function sprintf;
@@ -26,10 +27,10 @@ final class PaymentsServiceProviderProvidesContractTest extends TestCase
     public function everyEntryInProvidesIsBindableAfterRegister(): void
     {
         $container = new Container();
-        // The provider reads `config.payments` from the container if
-        // present; bind a closure returning an empty array so
+        // The provider reads its section from the registry when one is bound;
+        // an empty map makes section('payments') return [] so
         // PaymentsConfig::fromArray() builds defaults.
-        $container->bind('config.payments', static fn(): array => []);
+        $container->instance(ExtensionConfigRegistry::class, new ExtensionConfigRegistry([]));
 
         $provider = new PaymentsServiceProvider();
         $provider->register($container);

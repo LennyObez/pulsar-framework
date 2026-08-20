@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Form;
 use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Form\Binding\FormDataBinder;
 use Pulsar\Extension\Form\Binding\PropertyAccessor;
@@ -35,13 +36,9 @@ final readonly class FormServiceProvider implements ServiceProviderInterface
     {
         // Config
         $container->bind(FormConfig::class, static function () use ($container): FormConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.form')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.form');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('form')
+                : [];
 
             return FormConfig::fromArray($configData);
         });

@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Resolution\TypedServiceResolver;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\AiGovernance\Config\AiGovernanceConfig;
 use Pulsar\Extension\AiGovernance\Contracts\AiAuditLoggerInterface;
@@ -40,13 +41,9 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
     {
         // Config
         $container->bind(AiGovernanceConfig::class, static function () use ($container): AiGovernanceConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.ai_governance')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.ai_governance');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('ai_governance')
+                : [];
 
             return AiGovernanceConfig::fromArray($configData);
         });

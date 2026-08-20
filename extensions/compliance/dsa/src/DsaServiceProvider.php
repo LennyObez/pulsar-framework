@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Dsa;
 
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Dsa\Config\DsaConfig;
 use Pulsar\Extension\Dsa\ContentModeration\AppealHandler;
@@ -28,13 +29,9 @@ final class DsaServiceProvider implements ServiceProviderInterface
     public function register(ContainerInterface $container): void
     {
         $container->bind(DsaConfig::class, static function () use ($container): DsaConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.dsa')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.dsa');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('dsa')
+                : [];
 
             return DsaConfig::fromArray($configData);
         });

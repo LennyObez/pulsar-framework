@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Resolution\TypedServiceResolver;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Psd2\Config\Psd2Config;
 use Pulsar\Extension\Psd2\Contracts\CertificateValidatorInterface;
@@ -41,13 +42,9 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
     {
         // Config
         $container->bind(Psd2Config::class, static function () use ($container): Psd2Config {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.psd2')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.psd2');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('psd2')
+                : [];
 
             return Psd2Config::fromArray($configData);
         });

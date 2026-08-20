@@ -20973,6 +20973,14 @@
                     "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
                     "static": true
                 },
+                "invalidConfigFile": {
+                    "params": [
+                        "string $file"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\ExtensionException",
+                    "static": true,
+                    "inherited_from": "Pulsar\\Extensibility\\Exception\\ExtensionException"
+                },
                 "invalidExtensionClass": {
                     "params": [
                         "string $class"
@@ -21044,6 +21052,14 @@
                     ],
                     "return": "Pulsar\\Extensibility\\Exception\\DependencyException",
                     "static": true
+                },
+                "invalidConfigFile": {
+                    "params": [
+                        "string $file"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\ExtensionException",
+                    "static": true,
+                    "inherited_from": "Pulsar\\Extensibility\\Exception\\ExtensionException"
                 },
                 "invalidExtensionClass": {
                     "params": [
@@ -21128,6 +21144,13 @@
                     "params": [
                         "string $name",
                         "string $reason"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\ExtensionException",
+                    "static": true
+                },
+                "invalidConfigFile": {
+                    "params": [
+                        "string $file"
                     ],
                     "return": "Pulsar\\Extensibility\\Exception\\ExtensionException",
                     "static": true
@@ -21217,6 +21240,14 @@
                     ],
                     "return": "Pulsar\\Extensibility\\Exception\\ManifestException",
                     "static": true
+                },
+                "invalidConfigFile": {
+                    "params": [
+                        "string $file"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\ExtensionException",
+                    "static": true,
+                    "inherited_from": "Pulsar\\Extensibility\\Exception\\ExtensionException"
                 },
                 "invalidExtensionClass": {
                     "params": [
@@ -21481,6 +21512,40 @@
                     "static": false
                 },
                 "names": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extensibility\\ExtensionConfigRegistry": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $files",
+                        "array $sections"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "has": {
+                    "params": [
+                        "string $section"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "section": {
+                    "params": [
+                        "string $section"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "sections": {
                     "params": [],
                     "return": "array",
                     "static": false
@@ -41870,6 +41935,13 @@
                 "jobNotFound": {
                     "params": [
                         "string $name"
+                    ],
+                    "return": "Pulsar\\Scheduler\\Exception\\SchedulerException",
+                    "static": true
+                },
+                "jobNotRunnable": {
+                    "params": [
+                        "string $jobClass"
                     ],
                     "return": "Pulsar\\Scheduler\\Exception\\SchedulerException",
                     "static": true
@@ -65674,6 +65746,7 @@
         "Pulsar\\Core\\Boot\\BuildArtifactVerifier",
         "Pulsar\\Core\\Boot\\CachedRouteReconstructor",
         "Pulsar\\Core\\Boot\\ConfigDiagnosticsReporter",
+        "Pulsar\\Core\\Boot\\ExtensionConfigPublisher",
         "Pulsar\\Core\\Boot\\ExtensionDiscovery",
         "Pulsar\\Core\\Boot\\ExtensionSandbox",
         "Pulsar\\Core\\Boot\\ExtensionViewPathRegistrar",
@@ -65729,6 +65802,7 @@
         "Pulsar\\Core\\Wiring\\ThreatDetectionWiring",
         "Pulsar\\Core\\Wiring\\TracingWiring",
         "Pulsar\\Core\\Wiring\\ViewWiring",
+        "Pulsar\\Core\\Wiring\\WafWiring",
         "Pulsar\\Core\\Wiring\\WiringList",
         "Pulsar\\Core\\Wiring\\WorkflowWiring",
         "Pulsar\\Core\\Wiring\\ZeroTrustWiring",
@@ -65985,6 +66059,8 @@
         "Pulsar\\Saga\\Internal\\SagaOrchestrator",
         "Pulsar\\Saga\\Internal\\StepBuilder",
         "Pulsar\\Saga\\Storage\\InMemorySagaStateStorage",
+        "Pulsar\\Scheduler\\ContainerJobRegistry",
+        "Pulsar\\Scheduler\\ContainerResolvedJob",
         "Pulsar\\Security\\AntiSpam\\AccountAgeGate",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerDetector",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerMiddleware",

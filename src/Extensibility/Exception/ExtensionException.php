@@ -84,4 +84,13 @@ class ExtensionException extends RuntimeException
     {
         return new self('Extensions must be registered before booting');
     }
+
+    /**
+     * Create exception for a configuration file that does not return an array.
+     */
+    #[NoDiscard]
+    public static function invalidConfigFile(string $file): self
+    {
+        return new self(sprintf('Extension configuration file "%s" must return an array', $file));
+    }
 }

@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Resolution\TypedServiceResolver;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Eidas\Config\EidasConfig;
 use Pulsar\Extension\Eidas\Contracts\DigitalSignatureServiceInterface;
@@ -29,13 +30,9 @@ final class EidasServiceProvider implements ServiceProviderInterface
     {
         // Config
         $container->bind(EidasConfig::class, static function () use ($container): EidasConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.eidas')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.eidas');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('eidas')
+                : [];
 
             return EidasConfig::fromArray($configData);
         });

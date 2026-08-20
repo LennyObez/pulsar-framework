@@ -29,6 +29,7 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Boot\BuildArtifactVerifier;
 use Pulsar\Core\Boot\CachedRouteReconstructor;
 use Pulsar\Core\Boot\ConfigDiagnosticsReporter;
+use Pulsar\Core\Boot\ExtensionConfigPublisher;
 use Pulsar\Core\Boot\ExtensionDiscovery;
 use Pulsar\Core\Boot\ExtensionSandbox;
 use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
@@ -361,6 +362,15 @@ final class Kernel implements KernelInterface
         // was already configured explicitly.
         if ($this->extensionBootstrap !== null) {
             ExtensionSandbox::harden($this->extensionBootstrap, $this->configManager?->configPath());
+
+            // Publish the configuration each extension ships. Without this the
+            // registry is absent, and eleven providers fall back to hard-coded
+            // defaults while the config file they ship goes unread.
+            ExtensionConfigPublisher::publish(
+                $this->extensionBootstrap,
+                $this->configManager?->configPath(),
+                $this->container,
+            );
         }
 
         // Extension register phase (all extensions)

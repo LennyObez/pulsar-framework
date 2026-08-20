@@ -6,6 +6,7 @@ namespace Pulsar\Extension\DataAct;
 
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\DataAct\Access\DataAccessController;
 use Pulsar\Extension\DataAct\Access\ThirdPartyAccessPolicy;
@@ -27,13 +28,9 @@ final class DataActServiceProvider implements ServiceProviderInterface
     public function register(ContainerInterface $container): void
     {
         $container->bind(DataActConfig::class, static function () use ($container): DataActConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.data_act')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.data_act');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('data_act')
+                : [];
 
             return DataActConfig::fromArray($configData);
         });

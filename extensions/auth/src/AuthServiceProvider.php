@@ -9,6 +9,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Auth\Config\AuthConfig;
 use Pulsar\Extension\Auth\Http\Controller\OAuth2Controller;
@@ -150,13 +151,9 @@ final class AuthServiceProvider implements ServiceProviderInterface
     private function registerConfig(ContainerInterface $container): void
     {
         $container->bind(AuthConfig::class, static function () use ($container): AuthConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.auth')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.auth');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('auth')
+                : [];
 
             return AuthConfig::fromArray($configData);
         });
