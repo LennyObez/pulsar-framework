@@ -162,7 +162,12 @@ final class FanOutCoverageTest extends TestCase
                     Fiber::suspend();
                 }
             },
-        ], timeoutMs: 1);
+            // The deadline only has to fire while 'infinite' is still running; it
+            // was 1 ms, which assumed a single fiber resume costs less than that.
+            // Under code coverage it does not, so 'quick' was falsely reported as
+            // timed out and this test failed on correct code. 250 ms reaches the
+            // same branch without betting on the speed of one resume.
+        ], timeoutMs: 250);
 
         self::assertCount(2, $results);
         self::assertTrue($results['quick']->success);

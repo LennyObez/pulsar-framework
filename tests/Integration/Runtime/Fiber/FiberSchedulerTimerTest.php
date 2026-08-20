@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Runtime\Fiber\CooperativeSleep;
 use Pulsar\Runtime\Fiber\FiberDelay;
 use Pulsar\Runtime\Fiber\FiberScheduler;
+use Pulsar\Tests\Support\RequiresUninstrumentedRuntime;
 use Socket;
 
 use function hrtime;
@@ -23,6 +24,8 @@ use function usleep;
 #[CoversClass(CooperativeSleep::class)]
 final class FiberSchedulerTimerTest extends TestCase
 {
+    use RequiresUninstrumentedRuntime;
+
     /** @var list<Socket> */
     private array $socketsToClose = [];
 
@@ -101,7 +104,14 @@ final class FiberSchedulerTimerTest extends TestCase
         });
         $spawnCostMs = (hrtime(true) - $before) / 1_000_000;
 
-        self::assertLessThan(30.0, $spawnCostMs, 'spawn must not block for the sleep duration');
+        // The two assertions below prove the claim without a clock: the fiber is
+        // parked and its body has not run, which cannot both hold if spawn() had
+        // blocked for the sleep. The millisecond budget is a useful extra signal
+        // but it measures the profiler under coverage — 55 ms of instrumentation
+        // against a 30 ms budget — so it is asserted only when nothing is recording.
+        if (!$this->runtimeIsInstrumented()) {
+            self::assertLessThan(30.0, $spawnCostMs, 'spawn must not block for the sleep duration');
+        }
         self::assertSame(1, $scheduler->activeFiberCount(), 'the fiber is parked on its timer');
         self::assertFalse($state->flag);
 

@@ -24,11 +24,22 @@ use function xdebug_code_coverage_started;
 trait RequiresUninstrumentedRuntime
 {
     /**
+     * True while a coverage driver is recording, so a test can drop a single
+     * wall-clock assertion and keep the rest of its structural ones running. That
+     * is preferable to skipping the whole case: the code path stays covered and
+     * only the measurement that cannot be trusted is set aside.
+     */
+    protected function runtimeIsInstrumented(): bool
+    {
+        return function_exists('xdebug_code_coverage_started') && xdebug_code_coverage_started();
+    }
+
+    /**
      * Skip when a coverage driver is recording, because the clock is measuring it.
      */
     protected function requireUninstrumentedRuntime(): void
     {
-        if (function_exists('xdebug_code_coverage_started') && xdebug_code_coverage_started()) {
+        if ($this->runtimeIsInstrumented()) {
             self::markTestSkipped(
                 'Wall-clock budgets are not measurable while code coverage is being collected: '
                 . 'the elapsed time would describe the profiler rather than the code under test.',
