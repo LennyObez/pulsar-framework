@@ -193,6 +193,7 @@ use Pulsar\Integrity\ManifestVerifier;
 use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Queue\WorkerFactoryInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Introspection\ProjectMetadataService;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
@@ -650,8 +651,16 @@ if ($kernel->container()->has(QueueConfig::class)) {
   if ($kernel->container()->has(QueueDriverInterface::class)) {
     /** @var QueueDriverInterface $queueDriver */
     $queueDriver = $kernel->container()->get(QueueDriverInterface::class);
-    $application->add(new QueueWorkCommand($queueDriver));
     $application->add(new QueueFlushCommand($queueDriver));
+  }
+
+  // The factory, not the driver: a worker built from a driver alone has no
+  // dead-letter queue, no retry policy and no execution pipeline, and the
+  // pipeline is what decrypts an encrypted payload before a handler sees it.
+  if ($kernel->container()->has(WorkerFactoryInterface::class)) {
+    /** @var WorkerFactoryInterface $workerFactory */
+    $workerFactory = $kernel->container()->get(WorkerFactoryInterface::class);
+    $application->add(new QueueWorkCommand($workerFactory));
   }
 
   if ($kernel->container()->has(QueueManager::class) && $kernel->container()->has(DeadLetterQueue::class)) {

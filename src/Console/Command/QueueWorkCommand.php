@@ -5,25 +5,28 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command;
 
 use Override;
-use Psr\Log\LoggerInterface;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Queue\QueueDriverInterface;
-use Pulsar\Queue\Worker;
+use Pulsar\Queue\WorkerFactoryInterface;
 use Pulsar\Queue\WorkerOptions;
 
 use function sprintf;
 
 /**
  * Start a queue worker to process jobs from a given queue.
+ *
+ * Takes the factory rather than the driver. Building a Worker here from a driver
+ * and a logger left eight collaborators unset, so a worker started from the
+ * command line ran with no dead-letter queue, no retry policy, no metrics, no
+ * events and no execution pipeline — the last of which carries payload
+ * decryption. See {@see WorkerFactoryInterface}.
  */
 final class QueueWorkCommand extends Command
 {
     public function __construct(
-        private readonly QueueDriverInterface $driver,
-        private readonly ?LoggerInterface $logger = null,
+        private readonly WorkerFactoryInterface $workers,
     ) {
         parent::__construct();
     }
@@ -71,8 +74,7 @@ final class QueueWorkCommand extends Command
             $options->timeLimitSeconds,
         ));
 
-        $worker = new Worker($this->driver, $options, $this->logger);
-        $worker->run($queue);
+        $this->workers->create($options)->run($queue);
 
         $output->success('Worker stopped gracefully.');
 
