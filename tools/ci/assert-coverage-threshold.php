@@ -71,6 +71,19 @@ $dimensions = [
 $failed = [];
 
 foreach ($dimensions as $name => [$percent, $coveredCount, $totalCount]) {
+    // A dimension with nothing to divide by was not measured, and saying "0.00%"
+    // about it is a lie in the alarming direction: it reads as a collapse in
+    // quality rather than as an absent driver. PCOV records lines and methods and
+    // has no notion of branches, so Conditions arrives as 0/0 under it, while
+    // Xdebug, the only driver that emits branch data, cannot finish this suite
+    // inside a single job. The distinction is reported rather than folded into a
+    // percentage.
+    if ($totalCount === 0) {
+        printf("%-11s: not measured (the active coverage driver reports no data for it)\n", $name);
+
+        continue;
+    }
+
     printf("%-11s: %6.2f%% (%d/%d)\n", $name, $percent, $coveredCount, $totalCount);
 
     if ($percent < $threshold) {

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The PHPUnit configuration Infection runs its initial pass under.
+
+    Infection needs per-test coverage before it can mutate anything, and
+    php-code-coverage holds roughly 1.1 MB of that per test. Measured on the CI
+    runner: an initial run over the 42,588-test Unit suite was killed by a signal
+    at 13,457 tests, over 40 GB against a 16 GB machine. So the initial run has to
+    be smaller, and this file is how.
+
+    Why a separate file rather than a filter or an extra testsuite in the shared
+    configuration:
+
+      - A second <testsuite> naming these paths would make `composer test` run all
+        3,753 of them twice, and would double them in the coverage partition.
+      - Carving them out of the Unit suite would silently drop them from
+        `composer test:all`, which selects that suite by name.
+      - A `filter` regex has to survive JSON5 unescaping and then per-platform
+        argument escaping; on Windows the anchor came through as "^^" and the run
+        matched nothing. A gate should not rest on that.
+
+    The settings below are deliberately identical to tools/php/phpunit.xml, minus
+    the suites and the source scope. tests/Unit/Tooling/MutationConfigTest.php
+    asserts that, so the copy cannot drift out of step in silence.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.2/phpunit.xsd"
+         bootstrap="../bootstrap.php"
+         cacheDirectory="../../../.phpunit.cache"
+         colors="true"
+         executionOrder="depends,defects"
+         failOnRisky="true"
+         failOnWarning="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         failOnNotice="true"
+         failOnEmptyTestSuite="true"
+         beStrictAboutOutputDuringTests="true"
+         beStrictAboutChangesToGlobalState="true"
+         beStrictAboutTestsThatDoNotTestAnything="true">
+    <testsuites>
+        <testsuite name="Mutation">
+            <directory>../../../tests/Unit/Auth</directory>
+            <directory>../../../tests/Unit/Security</directory>
+            <directory>../../../tests/Unit/Audit</directory>
+        </testsuite>
+    </testsuites>
+    <extensions>
+        <bootstrap class="Pulsar\Tests\Runner\ResetActiveEnvironmentExtension"/>
+        <bootstrap class="Pulsar\Tests\Runner\SkipLedgerExtension"/>
+    </extensions>
+    <php>
+        <ini name="memory_limit" value="3G"/>
+        <const name="PULSAR_TEST_BYPASS_AUTHZ" value="1"/>
+    </php>
+    <!--
+        Narrowed to what Infection mutates. Coverage of anything else would be
+        collected, held per test, and then thrown away.
+    -->
+    <source>
+        <include>
+            <directory>../../../src/Auth</directory>
+            <directory>../../../src/Security</directory>
+            <directory>../../../src/Audit</directory>
+        </include>
+    </source>
+</phpunit>

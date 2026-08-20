@@ -38,7 +38,7 @@ composer qa                  # Full quality gate (cs:check + phpstan + psalm + b
 composer fuzz                # Run fuzz tests only
 composer chaos               # Run chaos engineering tests only
 composer property            # Run property-based tests only
-composer mutation            # Run mutation testing with Infection (targets Auth, Security, OAuth2, WebAuthn)
+composer mutation            # Run mutation testing with Infection (targets Auth, Security, Audit)
 composer bench               # Run PHPBench benchmarks
 composer bench:ci            # Run benchmarks in CI mode (no progress bar)
 ```
@@ -63,13 +63,34 @@ vendor/bin/phpunit -c tools/php/phpunit.xml --testsuite E2E
 
 ```bash
 # Generate coverage with PCOV (requires ext-pcov)
-XDEBUG_MODE=coverage composer test:coverage
+composer test:coverage
 
-# Or directly with the pcov.directory flag
-php -d memory_limit=512M -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html
+# Or directly, scoping instrumentation to first-party source
+php -d memory_limit=-1 -d pcov.enabled=1 -d pcov.directory=. -d pcov.exclude='~/(vendor|tests)/~'     vendor/bin/phpunit -c tools/php/phpunit.xml     --coverage-clover coverage/clover.xml --coverage-html coverage/html
 ```
 
-CI enforces a **70% statement coverage** threshold. The threshold is checked by parsing `coverage/clover.xml` after the test run.
+> **Both of those run the whole suite in one process, which needs more than 40 GB.**
+> php-code-coverage appends the id of every test to every line it covers, with no way
+> to switch that off, so memory grows at roughly 1.1 MB per test across 44,544 tests.
+> On a machine that cannot hold that the process is killed part-way with no error
+> message. CI does not run it this way: the `PHP Coverage` job recycles its process
+> every ~4,450 tests and merges the reports. See
+> [ADR-0042](adr/0042-coverage-and-mutation-are-bounded-by-memory.md).
+>
+> To reproduce CI locally:
+>
+> ```bash
+> mkdir -p build/coverage
+> vendor/bin/phpunit -c tools/php/phpunit.xml --no-coverage >     --list-tests-xml build/coverage/tests.xml
+> php tools/ci/partition-tests.php build/coverage/tests.xml 10 build/coverage/part
+> # then one run per part, and:
+> php tools/ci/merge-clover.php coverage/clover.xml build/coverage/clover-*.xml
+> ```
+
+CI enforces an **80% threshold on statements and methods**. Conditions are reported as
+not measured: branch data comes from Xdebug alone, and Xdebug costs 0.87 s per test on
+the CI runner — 10.6 hours for this suite, past GitHub's six-hour ceiling for a job. The
+threshold is checked by parsing `coverage/clover.xml` after the test run.
 
 ## Test structure
 
@@ -568,7 +589,10 @@ Key settings in `tools/php/phpunit.xml`:
 
 Mutation testing verifies that your tests actually catch bugs, not just that code runs without errors. Infection makes small changes (mutations) to source code, like flipping `>` to `>=` or changing `true` to `false`, and re-runs the test suite against each mutated version. If a test still passes despite the mutation, it means the test is too weak.
 
-Configuration is in `infection.json5`. It targets the most security-critical modules: Auth, Security, OAuth2, and WebAuthn.
+Configuration is in `infection.json5`. It targets the security-critical core: `src/Auth`, `src/Security` and
+`src/Audit`, paired with the tests that cover them. The scope is bounded by memory, not by preference —
+Infection needs per-test coverage, php-code-coverage holds roughly 1.1 MB of it per test, and an initial run
+over the full 42,588-test Unit suite is killed on a 16 GB runner. `infection.json5` carries the measurement.
 
 ```bash
 composer mutation    # Run mutation testing (requires infection/infection)
