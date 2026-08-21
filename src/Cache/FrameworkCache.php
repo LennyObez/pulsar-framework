@@ -97,6 +97,7 @@ final class FrameworkCache implements FrameworkCacheInterface
      *
      * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
+     * @param list<CachedBinding> $bindings Declarations from `Router::model()`. Omitting them states that the route table declares none — a caller that has them and forgets writes a cache that boots without them
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
      *
      * @throws CacheException
@@ -111,12 +112,13 @@ final class FrameworkCache implements FrameworkCacheInterface
         array $containerHints,
         string $appEnv,
         bool $strict,
+        array $bindings = [],
     ): array {
         $lock = new CacheLock($this->cachePath);
         $lock->acquire();
 
         try {
-            return $this->doWarm($repository, $routes, $containerHints, $appEnv, $strict);
+            return $this->doWarm($repository, $routes, $containerHints, $appEnv, $strict, $bindings);
         } finally {
             $lock->release();
         }
@@ -165,7 +167,11 @@ final class FrameworkCache implements FrameworkCacheInterface
     /**
      * Load caches if the manifest is valid and the invalidation key matches.
      *
-     * @return array{manifest: CacheManifest, config: ?ConfigRepository, routes: ?list<CachedRoute>, containerHints: ?array<class-string, list<array{name: string, type: class-string}>>}|null
+     * `bindings` is empty whenever `routes` is null: the two come out of one
+     * payload, so there is no state in which a caller holds cached routes and an
+     * unanswered question about the declarations that qualify them.
+     *
+     * @return array{manifest: CacheManifest, config: ?ConfigRepository, routes: ?list<CachedRoute>, bindings: list<CachedBinding>, containerHints: ?array<class-string, list<array{name: string, type: class-string}>>}|null
      *
      * @throws CacheException
      * @throws JsonException
@@ -247,13 +253,14 @@ final class FrameworkCache implements FrameworkCacheInterface
 
         // Load individual caches
         $config = $this->configCache->load($this->cachePath, $allowedClasses);
-        $routes = $this->routeCache->load($this->cachePath, $allowedClasses);
+        $routeTable = $this->routeCache->load($this->cachePath, $allowedClasses);
         $containerHints = $this->containerCache->load($this->cachePath, $allowedClasses);
 
         return [
             'manifest' => $manifest,
             'config' => $config,
-            'routes' => $routes,
+            'routes' => $routeTable?->routes,
+            'bindings' => $routeTable === null ? [] : $routeTable->bindings,
             'containerHints' => $containerHints,
         ];
     }
@@ -326,6 +333,7 @@ final class FrameworkCache implements FrameworkCacheInterface
     /**
      * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
+     * @param list<CachedBinding> $bindings
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
      *
      * @throws CacheException
@@ -340,12 +348,22 @@ final class FrameworkCache implements FrameworkCacheInterface
         array $containerHints,
         string $appEnv,
         bool $strict,
+        array $bindings,
     ): array {
+        // Serialize the route table before the allowlist is built, so the
+        // allowlist can be derived from the bytes actually being stored rather
+        // than from a namespace scan alone. The scan is a regex over source
+        // files and covers Pulsar\Cache and Pulsar\Routing by prefix; a class
+        // it happened to miss would come back as __PHP_Incomplete_Class on the
+        // next boot, at which point the only honest answer is to discard the
+        // whole cache. Deriving from the payload removes the guess.
+        $routePayload = $this->routeCache->compile($routes, $bindings);
+
         // Build the deserialization allowlist. The namespace scan cannot see
         // config value objects in feature namespaces (Api, Database, Mail,
         // Tenancy, View, ...), so derive the exact config-graph classes from the
-        // repository being cached and union them in; routes and container hints
-        // stay covered by the scan's Routing/Cache scope. serialize($repository)
+        // repository being cached and union them in; container hints stay
+        // covered by the scan's Routing/Cache scope. serialize($repository)
         // here matches exactly what ConfigCache::write() serializes.
         $vendorPath = $this->basePath . DIRECTORY_SEPARATOR . 'vendor';
         // Source roots come from the project's composer PSR-4 map, never an
@@ -353,7 +371,12 @@ final class FrameworkCache implements FrameworkCacheInterface
         // which previously failed the warm with a directory-open error. The
         // framework's own src/ is resolved by CacheAllowedClasses itself.
         $srcPaths = ProjectSourceRoots::discover($this->basePath);
-        $allowedClasses = CacheAllowedClasses::forCache($vendorPath, $srcPaths, serialize($repository));
+        $allowedClasses = CacheAllowedClasses::forCache(
+            $vendorPath,
+            $srcPaths,
+            serialize($repository),
+            $routePayload['serialized'],
+        );
         CacheAllowedClasses::save($this->cachePath, $allowedClasses);
 
         // Compute allowed classes hash
@@ -366,8 +389,8 @@ final class FrameworkCache implements FrameworkCacheInterface
             file_get_contents($this->cachePath . DIRECTORY_SEPARATOR . ConfigCache::FILENAME) ?: '',
         );
 
-        // Write route cache
-        $routeResult = $this->routeCache->write($this->cachePath, $routes, $this->encrypt);
+        // Write route cache (routes and binding declarations, one payload)
+        $this->routeCache->writeCompiled($this->cachePath, $routePayload['serialized'], $this->encrypt);
         $routeSig = $this->integrity->sign(
             file_get_contents($this->cachePath . DIRECTORY_SEPARATOR . RouteCache::FILENAME) ?: '',
         );
@@ -403,9 +426,9 @@ final class FrameworkCache implements FrameworkCacheInterface
 
         return [
             'configCached' => true,
-            'routesCached' => $routeResult['cached'],
-            'routesSkipped' => $routeResult['skipped'],
-            'skippedRoutes' => $routeResult['skippedRoutes'],
+            'routesCached' => $routePayload['cached'],
+            'routesSkipped' => $routePayload['skipped'],
+            'skippedRoutes' => $routePayload['skippedRoutes'],
             'containerCached' => true,
         ];
     }

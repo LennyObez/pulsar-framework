@@ -9,10 +9,7 @@ use JsonException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
-use Pulsar\Database\Schema\IndexOperations;
-use Pulsar\Database\Schema\TableIntrospector;
 use Pulsar\Event\Contract\OutboxPort;
 use Pulsar\Event\EventEnvelope;
 use SodiumException;
@@ -43,8 +40,11 @@ use const PHP_INT_MAX;
  * `outbox_events` table after commit (see
  * {@see OutboxRelay}).
  *
- * Schema is created on `installSchema()` — keep the DDL here so
- * downstream projects pick the table up via a single migration.
+ * `outbox_events` is created by
+ * `src/Event/Database/Migration/20260821000004_create_event_outbox_table.php` and by
+ * nothing else. This class stores and drains envelopes; it does not build the table it
+ * stores them in, so the outbox no longer requires CREATE on the role that serves
+ * requests (ADR-0043).
  */
 #[Internal]
 final readonly class DatabaseOutboxPort implements OutboxPort
@@ -54,58 +54,6 @@ final readonly class DatabaseOutboxPort implements OutboxPort
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
-
-    /**
-     * Idempotent DDL: create the outbox table and its publish-pending index.
-     *
-     * Called from a migration or boot wiring. Multiple invocations are
-     * safe — the `IF NOT EXISTS` clause covers re-runs.
-     */
-    public function installSchema(): void
-    {
-        $driver = $this->connection->driver();
-
-        match ($driver) {
-            Driver::SQLite => $this->installSqliteSchema(),
-            Driver::MySQL => $this->installMysqlSchema(),
-            Driver::PostgreSQL => $this->installPostgresSchema(),
-        };
-
-        $this->ensureIndexes();
-    }
-
-    /**
-     * Two indexes, one shape each — not one shape per engine.
-     *
-     * They used to be written five ways: two engines wrote `CREATE INDEX IF NOT EXISTS`,
-     * one declared them inline in its `CREATE TABLE` because that clause is a parse error
-     * there, and the same two indexes therefore had three definitions to keep in step.
-     *
-     * The pending index finds rows nobody has published yet. Where the engine has partial
-     * indexes that is a predicate over one sort column; where it does not, the filtered
-     * columns have to lead the key instead, and the index then carries every row of a
-     * table whose interesting rows are always a small minority. That difference is real
-     * and is the one thing still branched on — by capability, not by engine name.
-     */
-    private function ensureIndexes(): void
-    {
-        $indexes = new IndexOperations($this->connection);
-        $partial = $this->connection->dialect()->supportsPartialIndexes();
-
-        $indexes->ensure(
-            self::TABLE,
-            self::TABLE . '_pending_idx',
-            $partial ? ['created_at'] : ['published_at', 'dead_lettered_at', 'created_at'],
-            where: 'published_at IS NULL AND dead_lettered_at IS NULL',
-        );
-
-        $indexes->ensure(
-            self::TABLE,
-            self::TABLE . '_deadletter_idx',
-            ['dead_lettered_at'],
-            where: 'dead_lettered_at IS NOT NULL',
-        );
-    }
 
     /**
      * @throws JsonException
@@ -345,107 +293,5 @@ final readonly class DatabaseOutboxPort implements OutboxPort
             'origin_module' => $originModule,
             'scope' => $scope,
         ]);
-    }
-
-    private function installSqliteSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                event_id TEXT PRIMARY KEY,
-                event_type TEXT NOT NULL,
-                schema_version INTEGER NOT NULL,
-                payload_json TEXT NOT NULL,
-                payload_hash TEXT NOT NULL,
-                metadata_json TEXT NOT NULL,
-                origin_module TEXT,
-                scope TEXT NOT NULL,
-                publish_attempts INTEGER NOT NULL DEFAULT 0,
-                last_error TEXT,
-                published_at TEXT,
-                dead_lettered_at TEXT,
-                created_at TEXT NOT NULL
-            )',
-            self::TABLE,
-        ));
-    }
-
-    private function installMysqlSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                event_id VARCHAR(64) NOT NULL PRIMARY KEY,
-                event_type VARCHAR(255) NOT NULL,
-                schema_version INT NOT NULL,
-                payload_json LONGTEXT NOT NULL,
-                payload_hash VARCHAR(128) NOT NULL,
-                metadata_json LONGTEXT NOT NULL,
-                origin_module VARCHAR(255) NULL,
-                scope VARCHAR(64) NOT NULL,
-                publish_attempts INT NOT NULL DEFAULT 0,
-                last_error TEXT NULL,
-                published_at DATETIME(6) NULL,
-                dead_lettered_at DATETIME(6) NULL,
-                created_at DATETIME(6) NOT NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
-            self::TABLE,
-        ));
-    }
-
-    private function installPostgresSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                event_id TEXT PRIMARY KEY,
-                event_type TEXT NOT NULL,
-                schema_version INTEGER NOT NULL,
-                payload_json TEXT NOT NULL,
-                payload_hash TEXT NOT NULL,
-                metadata_json TEXT NOT NULL,
-                origin_module TEXT,
-                scope TEXT NOT NULL,
-                publish_attempts INTEGER NOT NULL DEFAULT 0,
-                last_error TEXT,
-                published_at TIMESTAMPTZ,
-                dead_lettered_at TIMESTAMPTZ,
-                created_at TIMESTAMPTZ NOT NULL
-            )',
-            self::TABLE,
-        ));
-    }
-
-    /**
-     * Idempotent additive migration for deployments whose outbox table predates
-     * the dead-letter column. Adds `dead_lettered_at` (if absent) and the
-     * dead-letter index. Safe to run repeatedly. Fresh installs already include
-     * the column via {@see installSchema()}, so this is only needed on upgrade.
-     */
-    public function migrateSchema(): void
-    {
-        $driver = $this->connection->driver();
-
-        if (!$this->deadLetteredColumnExists()) {
-            $type = match ($driver) {
-                Driver::SQLite => 'TEXT',
-                Driver::MySQL => 'DATETIME(6) NULL',
-                Driver::PostgreSQL => 'TIMESTAMPTZ',
-            };
-            $this->connection->execute(sprintf('ALTER TABLE %s ADD COLUMN dead_lettered_at %s', self::TABLE, $type));
-        }
-
-        $this->ensureIndexes();
-    }
-
-    /**
-     * Whether the `dead_lettered_at` column already exists on the outbox table.
-     *
-     * The hand-written version asked `information_schema.columns` with no schema
-     * predicate, so on a server holding a same-named table in another database it
-     * answered for that one instead — and reported the column present on a table this
-     * process had never touched, skipping the ALTER that every write afterwards needed.
-     */
-    private function deadLetteredColumnExists(): bool
-    {
-        return new TableIntrospector($this->connection)
-            ->columnExists(self::TABLE, 'dead_lettered_at');
     }
 }

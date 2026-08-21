@@ -28,7 +28,6 @@ final class ApiConfigTest extends TestCase
         self::assertSame(50, $config->complexityLimits->maxFields);
         self::assertSame(3, $config->complexityLimits->maxNestingDepth);
         self::assertSame(10, $config->complexityLimits->maxIncludes);
-        self::assertTrue($config->entitySerializationBanEnabled);
     }
 
     #[Test]
@@ -47,7 +46,6 @@ final class ApiConfigTest extends TestCase
                 'max_nesting_depth' => 5,
                 'max_includes' => 20,
             ],
-            'entity_serialization_ban' => false,
         ]);
 
         self::assertSame('xml', $config->defaultFormat);
@@ -58,7 +56,6 @@ final class ApiConfigTest extends TestCase
         self::assertSame(100, $config->complexityLimits->maxFields);
         self::assertSame(5, $config->complexityLimits->maxNestingDepth);
         self::assertSame(20, $config->complexityLimits->maxIncludes);
-        self::assertFalse($config->entitySerializationBanEnabled);
     }
 
     #[Test]
@@ -126,30 +123,6 @@ final class ApiConfigTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayEntitySerializationBanDefaultsToTrue(): void
-    {
-        $config = ApiConfig::fromArray([]);
-
-        self::assertTrue($config->entitySerializationBanEnabled);
-    }
-
-    #[Test]
-    public function fromArrayEntitySerializationBanCoercesTruthy(): void
-    {
-        $config = ApiConfig::fromArray(['entity_serialization_ban' => 1]);
-
-        self::assertTrue($config->entitySerializationBanEnabled);
-    }
-
-    #[Test]
-    public function fromArrayEntitySerializationBanCoercesFalsy(): void
-    {
-        $config = ApiConfig::fromArray(['entity_serialization_ban' => 0]);
-
-        self::assertFalse($config->entitySerializationBanEnabled);
-    }
-
-    #[Test]
     public function fromArrayWithNullValues(): void
     {
         $config = ApiConfig::fromArray([
@@ -157,7 +130,6 @@ final class ApiConfigTest extends TestCase
             'pagination' => null,
             'versioning_strategy' => null,
             'complexity_limits' => null,
-            'entity_serialization_ban' => null,
         ]);
 
         self::assertSame('json', $config->defaultFormat);
@@ -165,8 +137,6 @@ final class ApiConfigTest extends TestCase
         self::assertSame(25, $config->paginationDefaultSize);
         self::assertSame(100, $config->paginationMaxSize);
         self::assertSame('url', $config->versioningStrategy);
-        // null ?? true yields true, so (bool) true = true
-        self::assertTrue($config->entitySerializationBanEnabled);
     }
 
     #[Test]
@@ -240,7 +210,6 @@ final class ApiConfigTest extends TestCase
             paginationMaxSize: 50,
             versioningStrategy: 'media-type',
             complexityLimits: $limits,
-            entitySerializationBanEnabled: false,
         );
 
         self::assertSame('hal+json', $config->defaultFormat);
@@ -249,6 +218,5 @@ final class ApiConfigTest extends TestCase
         self::assertSame(50, $config->paginationMaxSize);
         self::assertSame('media-type', $config->versioningStrategy);
         self::assertSame($limits, $config->complexityLimits);
-        self::assertFalse($config->entitySerializationBanEnabled);
     }
 }

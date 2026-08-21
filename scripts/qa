@@ -1,113 +1,74 @@
 #!/usr/bin/env bash
 #
-# Pulsar Quality Gate Script
+# Pulsar Quality Gate
 #
-# Runs all quality checks in sequence:
-# - PHP: CS-Fixer, PHPStan, Psalm, PHPUnit
-# - JS/TS: ESLint, Prettier, Vitest
+# The PHP half of this script used to be its own list -- CS-Fixer, PHPStan, Psalm,
+# PHPUnit -- which is to say a THIRD definition of "the gate", alongside
+# composer.json's `qa` script and .github/workflows/ci.yml. Three lists, no
+# coupling. This one silently omitted boundary enforcement, the class-shape
+# ratchet, malicious-code analysis, the version check, PSR-4 conformance, Semgrep
+# and the compliance report, while CONTRIBUTING.md pointed contributors at it as
+# "the same gate as CI".
+#
+# It now delegates. `composer qa` is the single definition of the PHP gate,
+# tools/ci/assert-qa-ci-parity.php asserts that CI runs every entry of it, and this
+# file adds only the JS/TS half, which lives in package.json rather than
+# composer.json and therefore cannot be a `qa` entry.
 #
 # Exit codes:
 #   0 - All checks passed
 #   1 - One or more checks failed
 #
 
-set -euo pipefail
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-cd "$PROJECT_ROOT"
+cd "$PROJECT_ROOT" || exit 1
 
 echo "=== Pulsar Quality Gate ==="
 echo ""
 
 FAILED=0
 
-# PHP Quality Checks
-echo "--- PHP: Code Style (php-cs-fixer) ---"
-if composer cs:check; then
-    echo "[PASS] PHP code style"
+# Every PHP gate, in one call, from the one list. Not expanded into separate steps
+# here: an expansion is a copy, and a copy is what this script is being cured of.
+echo "--- PHP: composer qa ---"
+if composer qa; then
+    echo "[PASS] composer qa"
 else
-    echo "[FAIL] PHP code style"
+    echo "[FAIL] composer qa"
     FAILED=1
 fi
 echo ""
 
-echo "--- PHP: Static Analysis (PHPStan) ---"
-if composer phpstan; then
-    echo "[PASS] PHPStan"
-else
-    echo "[FAIL] PHPStan"
-    FAILED=1
-fi
-echo ""
-
-echo "--- PHP: Static Analysis (Psalm) ---"
-if composer psalm; then
-    echo "[PASS] Psalm"
-else
-    echo "[FAIL] Psalm"
-    FAILED=1
-fi
-echo ""
-
-echo "--- PHP: Tests (PHPUnit) ---"
-if composer test; then
-    echo "[PASS] PHPUnit"
-else
-    echo "[FAIL] PHPUnit"
-    FAILED=1
-fi
-echo ""
-
-# JS/TS Quality Checks (only if node_modules exists)
+# JS/TS lives in package.json, so it cannot be a `composer qa` entry. CI runs these
+# four in its `js` job; the names are identical on both sides on purpose.
 if [ -d "node_modules" ]; then
-    echo "--- JS/TS: Lint (ESLint) ---"
-    if pnpm lint; then
-        echo "[PASS] ESLint"
-    else
-        echo "[FAIL] ESLint"
-        FAILED=1
-    fi
-    echo ""
-
-    echo "--- JS/TS: Format Check (Prettier) ---"
-    if pnpm format:check; then
-        echo "[PASS] Prettier"
-    else
-        echo "[FAIL] Prettier"
-        FAILED=1
-    fi
-    echo ""
-
-    echo "--- JS/TS: Type Check (TypeScript) ---"
-    if pnpm typecheck; then
-        echo "[PASS] TypeScript"
-    else
-        echo "[FAIL] TypeScript"
-        FAILED=1
-    fi
-    echo ""
-
-    echo "--- JS/TS: Tests (Vitest) ---"
-    if pnpm test; then
-        echo "[PASS] Vitest"
-    else
-        echo "[FAIL] Vitest"
-        FAILED=1
-    fi
-    echo ""
+    for target in lint format:check typecheck test; do
+        echo "--- JS/TS: pnpm $target ---"
+        if pnpm "$target"; then
+            echo "[PASS] pnpm $target"
+        else
+            echo "[FAIL] pnpm $target"
+            FAILED=1
+        fi
+        echo ""
+    done
 else
-    echo "--- JS/TS: Skipped (node_modules not found, run 'pnpm install') ---"
+    echo "--- JS/TS: SKIPPED (node_modules not found, run 'pnpm install') ---"
+    echo ""
+    echo "    CI runs these four checks unconditionally. Skipping them locally means"
+    echo "    this run did NOT cover what CI covers."
     echo ""
 fi
 
-# Summary
 echo "=== Quality Gate Summary ==="
 if [ $FAILED -eq 0 ]; then
     echo "All checks passed."
     exit 0
-else
-    echo "One or more checks failed."
-    exit 1
 fi
+
+echo "One or more checks failed."
+exit 1

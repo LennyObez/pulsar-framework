@@ -22,7 +22,7 @@ final readonly class ApiConfig implements ReportsUnknownKeys
 {
     /** Keys recognised in config/api.php. */
     private const array KNOWN_KEYS = [
-        'default_format', 'pagination', 'versioning_strategy', 'complexity_limits', 'entity_serialization_ban',
+        'default_format', 'pagination', 'versioning_strategy', 'complexity_limits',
     ];
 
     public function __construct(
@@ -32,7 +32,6 @@ final readonly class ApiConfig implements ReportsUnknownKeys
         public int $paginationMaxSize,
         public string $versioningStrategy,
         public ComplexityLimits $complexityLimits,
-        public bool $entitySerializationBanEnabled,
         /** @var list<string> */
         public array $unknownKeys = [],
     ) {}
@@ -57,7 +56,6 @@ final readonly class ApiConfig implements ReportsUnknownKeys
      *     },
      *     versioning_strategy?: string,
      *     complexity_limits?: array<string, mixed>,
-     *     entity_serialization_ban?: bool|int|string,
      * } $data Raw array from config/api.php
      */
     #[NoDiscard]
@@ -79,7 +77,6 @@ final readonly class ApiConfig implements ReportsUnknownKeys
             paginationMaxSize: Coerce::integerLike($pagination['max_size'] ?? null, 100),
             versioningStrategy: Coerce::string($data['versioning_strategy'] ?? null, 'url'),
             complexityLimits: ComplexityLimits::fromArray($complexityLimitsData),
-            entitySerializationBanEnabled: (bool) ($data['entity_serialization_ban'] ?? true),
             unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }

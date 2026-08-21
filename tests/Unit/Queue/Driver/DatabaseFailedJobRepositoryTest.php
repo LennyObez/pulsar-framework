@@ -11,6 +11,7 @@ use Pulsar\Database\Driver;
 use Pulsar\Database\PdoConnection;
 use Pulsar\Queue\Driver\DatabaseFailedJobRepository;
 use Pulsar\Queue\FailedJob;
+use Pulsar\Tests\Support\FrameworkSchema;
 
 use function array_map;
 
@@ -30,8 +31,10 @@ final class DatabaseFailedJobRepositoryTest extends TestCase
             password: null,
         );
 
+        // failed_jobs is created by its migration and by nothing else (ADR-0043).
+        FrameworkSchema::up($this->connection, FrameworkSchema::FAILED_JOBS);
+
         $this->repository = new DatabaseFailedJobRepository($this->connection);
-        $this->repository->installSchema();
     }
 
     #[Test]

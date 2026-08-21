@@ -54,17 +54,6 @@ final class ApiExceptionTest extends TestCase
     }
 
     #[Test]
-    public function entitySerializationBannedReturns500(): void
-    {
-        $e = ApiException::entitySerializationBanned('App\\Entity\\User', 'corr-123');
-
-        self::assertSame(500, $e->getCode());
-        self::assertStringContainsString('App\\Entity\\User', $e->getMessage());
-        self::assertStringContainsString('corr-123', $e->getMessage());
-        self::assertStringContainsString('ApiResource', $e->getMessage());
-    }
-
-    #[Test]
     public function missingResourceAttributeIncludesClass(): void
     {
         $e = ApiException::missingResourceAttribute('App\\Resource\\UserResource');
@@ -201,6 +190,5 @@ final class ApiExceptionTest extends TestCase
         yield 'unauthorizedFilter' => ['unauthorizedFilter', ['f', 'r'], 403];
         yield 'unauthorizedSort' => ['unauthorizedSort', ['f', 'r'], 403];
         yield 'notAcceptable' => ['notAcceptable', ['text/xml'], 406];
-        yield 'entitySerializationBanned' => ['entitySerializationBanned', ['C', 'id'], 500];
     }
 }

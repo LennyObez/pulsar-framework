@@ -9,7 +9,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
-use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Queue\FailedJob;
 use Pulsar\Queue\FailedJobRepositoryInterface;
 
@@ -24,8 +23,10 @@ use function sprintf;
  * failure metadata (exception, attempts, failed-at) for inspect / retry /
  * regulated-delete / purge.
  *
- * Schema is created via {@see installSchema()}, intended to run from a
- * migration or deploy step (kept here so the DDL lives next to the queries).
+ * The table is created by
+ * `src/Queue/Database/Migration/20260821000003_create_failed_jobs_table.php` and by
+ * nothing else. A dead-letter record is a retention artefact, so the role that writes one
+ * deliberately cannot create, alter or drop the table holding it (ADR-0043).
  */
 #[Internal]
 final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryInterface
@@ -35,26 +36,6 @@ final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryI
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
-
-    /**
-     * Idempotent DDL: create the `failed_jobs` table. Safe to re-run.
-     */
-    public function installSchema(): void
-    {
-        match ($this->connection->driver()) {
-            Driver::SQLite => $this->installSqliteSchema(),
-            Driver::MySQL => $this->installMysqlSchema(),
-            Driver::PostgreSQL => $this->installPostgresSchema(),
-        };
-
-        // One index, stated once. It used to be created three ways: two installers wrote
-        // `CREATE INDEX IF NOT EXISTS`, which MySQL rejects as a syntax error rather than
-        // ignoring, so the third declared it inline in the CREATE TABLE instead — where a
-        // reader of the other two would never find it. The column types still differ per
-        // engine, which they must; the index does not, and no longer pretends to.
-        new IndexOperations($this->connection)
-            ->ensure(self::TABLE, self::TABLE . '_failed_at_idx', ['failed_at']);
-    }
 
     #[Override]
     public function store(FailedJob $job): void
@@ -157,53 +138,5 @@ final readonly class DatabaseFailedJobRepository implements FailedJobRepositoryI
             failedAt: $row->getInt('failed_at'),
             attempts: $row->getInt('attempts'),
         );
-    }
-
-    private function installSqliteSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                id TEXT PRIMARY KEY,
-                queue TEXT NOT NULL,
-                job_class TEXT NOT NULL,
-                payload TEXT NOT NULL,
-                exception TEXT NOT NULL,
-                failed_at INTEGER NOT NULL,
-                attempts INTEGER NOT NULL
-            )',
-            self::TABLE,
-        ));
-    }
-
-    private function installMysqlSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                id VARCHAR(255) NOT NULL PRIMARY KEY,
-                queue VARCHAR(255) NOT NULL,
-                job_class VARCHAR(255) NOT NULL,
-                payload LONGTEXT NOT NULL,
-                exception LONGTEXT NOT NULL,
-                failed_at BIGINT NOT NULL,
-                attempts INT NOT NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
-            self::TABLE,
-        ));
-    }
-
-    private function installPostgresSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                id TEXT PRIMARY KEY,
-                queue TEXT NOT NULL,
-                job_class TEXT NOT NULL,
-                payload TEXT NOT NULL,
-                exception TEXT NOT NULL,
-                failed_at BIGINT NOT NULL,
-                attempts INTEGER NOT NULL
-            )',
-            self::TABLE,
-        ));
     }
 }

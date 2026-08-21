@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Workflow\Storage\TransitionLogInterface;
 use Pulsar\Workflow\Storage\TransitionRecord;
@@ -26,6 +25,12 @@ use const JSON_THROW_ON_ERROR;
  * Only INSERT operations are performed; rows are never updated or deleted.
  * The full transition history serves as the audit trail and enables
  * state reconstruction.
+ *
+ * `workflow_transitions` is created by
+ * `src/Workflow/Database/Migration/20260821000002_create_workflow_tables.php` and by
+ * nothing else. An append-only audit table whose writer could also create and alter it
+ * is not append-only in the sense an auditor means, so the DDL lives in a
+ * change-controlled migration and this class holds INSERT and SELECT (ADR-0043).
  */
 #[Internal(reason: 'Use TransitionLogInterface port')]
 final readonly class DatabaseTransitionLog implements TransitionLogInterface
@@ -110,59 +115,5 @@ final readonly class DatabaseTransitionLog implements TransitionLogInterface
             instanceVersion: $row->getInt('instance_version'),
             createdAt: new DateTimeImmutable($row->getString('created_at')),
         );
-    }
-
-    /**
-     * Idempotent DDL: create the `workflow_transitions` table. Safe to re-run.
-     * Intended for a migration or setup command, mirroring
-     * {@see DatabaseSagaStateStorage::installSchema()}.
-     */
-    public function installSchema(): void
-    {
-        match ($this->connection->driver()) {
-            Driver::SQLite => $this->connection->execute(
-                'CREATE TABLE IF NOT EXISTS workflow_transitions (
-                    id TEXT PRIMARY KEY,
-                    instance_id TEXT NOT NULL,
-                    from_state TEXT NOT NULL,
-                    to_state TEXT NOT NULL,
-                    transition_name TEXT NOT NULL,
-                    actor TEXT NOT NULL,
-                    reason TEXT,
-                    metadata TEXT NOT NULL,
-                    instance_version INTEGER NOT NULL,
-                    created_at TEXT NOT NULL
-                )',
-            ),
-            Driver::MySQL => $this->connection->execute(
-                'CREATE TABLE IF NOT EXISTS workflow_transitions (
-                    id VARCHAR(255) NOT NULL PRIMARY KEY,
-                    instance_id VARCHAR(255) NOT NULL,
-                    from_state VARCHAR(255) NOT NULL,
-                    to_state VARCHAR(255) NOT NULL,
-                    transition_name VARCHAR(255) NOT NULL,
-                    actor VARCHAR(255) NOT NULL,
-                    reason TEXT NULL,
-                    metadata LONGTEXT NOT NULL,
-                    instance_version INT NOT NULL,
-                    created_at DATETIME NOT NULL,
-                    INDEX idx_workflow_transitions_instance (instance_id, created_at)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
-            ),
-            Driver::PostgreSQL => $this->connection->execute(
-                'CREATE TABLE IF NOT EXISTS workflow_transitions (
-                    id TEXT PRIMARY KEY,
-                    instance_id TEXT NOT NULL,
-                    from_state TEXT NOT NULL,
-                    to_state TEXT NOT NULL,
-                    transition_name TEXT NOT NULL,
-                    actor TEXT NOT NULL,
-                    reason TEXT,
-                    metadata TEXT NOT NULL,
-                    instance_version INTEGER NOT NULL,
-                    created_at TIMESTAMP NOT NULL
-                )',
-            ),
-        };
     }
 }

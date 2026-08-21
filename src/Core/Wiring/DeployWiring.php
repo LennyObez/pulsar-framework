@@ -23,6 +23,7 @@ use Pulsar\Deploy\Check\Http3ReadinessCheck;
 use Pulsar\Deploy\Check\HttpsReadinessCheck;
 use Pulsar\Deploy\Check\IntegrityCheck;
 use Pulsar\Deploy\Check\JitCheck;
+use Pulsar\Deploy\Check\MasterKeyCheck;
 use Pulsar\Deploy\Check\OpcacheCheck;
 use Pulsar\Deploy\Check\RateLimitCheck;
 use Pulsar\Deploy\Check\RequestSizeCheck;
@@ -106,6 +107,8 @@ final readonly class DeployWiring implements ServiceWiringInterface
         $this->registerCheckOrSkip($deployCheck, 'debug-mode', $deployConfig, static fn(): DeployCheckInterface => new DebugModeCheck($appConfig));
 
         $this->registerCheckOrSkip($deployCheck, 'environment-values', $deployConfig, static fn(): DeployCheckInterface => new EnvironmentValidationCheck($environment));
+
+        $this->registerCheckOrSkip($deployCheck, 'master-key', $deployConfig, static fn(): DeployCheckInterface => new MasterKeyCheck($container, $environment));
 
         $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime, new FilesystemReader()));
 

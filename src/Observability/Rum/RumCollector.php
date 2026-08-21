@@ -42,8 +42,13 @@ final readonly class RumCollector
         'unhandled_rejection',
     ];
 
+    /**
+     * @param RumUrlLabels $urlLabels Cardinality budget for the browser-supplied `url`
+     *                                label; defaults to a budget private to this collector
+     */
     public function __construct(
         private MetricRegistry $metrics,
+        private RumUrlLabels $urlLabels = new RumUrlLabels(),
     ) {}
 
     /**
@@ -98,12 +103,9 @@ final readonly class RumCollector
         $name = 'rum_' . $metric['name'];
         $value = (float) $metric['value'];
 
-        /** @var string $url */
-        $url = isset($metric['url']) && is_string($metric['url'])
-            ? substr($metric['url'], 0, 200)
-            : '/';
-
-        $labels = new LabelSet(['url' => $url]);
+        // The reported URL is browser-supplied and becomes a metric label, so it
+        // is clamped for cardinality as well as length: see RumUrlLabels.
+        $labels = new LabelSet(['url' => $this->urlLabels->label($metric['url'] ?? null)]);
 
         if ($metric['name'] === 'js_error' || $metric['name'] === 'unhandled_rejection') {
             $this->metrics->counter($name, 'RUM ' . $metric['name'] . ' count')

@@ -1,6 +1,6 @@
 {
   "_comment": "Files outside src/Database that decide behaviour by naming a Driver case. A RATCHET: this list may shrink, never grow. See DriverDispatchRatchetTest.",
-  "count": 83,
+  "count": 69,
   "files": [
     "extensions/analytics/src/Internal/Repository/DbDailyStatsRepository.php",
     "extensions/analytics/src/Internal/Repository/DbHourlyStatsRepository.php",
@@ -69,11 +69,7 @@
     "src/Cache/Application/Driver/DatabaseDriver.php",
     "src/Config/ConnectionConfig.php",
     "src/Console/Command/DbFreshCommand.php",
-    "src/Core/Wiring/ComplianceVerificationWiring.php",
-    "src/Event/Internal/Outbox/DatabaseOutboxPort.php",
     "src/Queue/Driver/DatabaseFailedJobRepository.php",
-    "src/Workflow/Internal/Storage/DatabaseSagaStateStorage.php",
-    "src/Workflow/Internal/Storage/DatabaseTransitionLog.php",
-    "src/Workflow/Internal/Storage/DatabaseWorkflowStorage.php"
+    "src/Workflow/Internal/Storage/DatabaseSagaStateStorage.php"
   ]
 }

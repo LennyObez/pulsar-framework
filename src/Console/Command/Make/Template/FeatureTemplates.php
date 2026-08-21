@@ -110,7 +110,8 @@ final readonly class FeatureTemplates
 
         return <<<PHP
 
-            // $feature feature
+            // $feature feature -- anonymous as written; declare who may reach it with
+            // Pulsar\Routing\RouteAccessRegistrar.
             \$router->$routeMethod('/$lcFeature', [{$feature}Handler::class, 'handle'], '$lcFeature.handle');
             PHP;
     }

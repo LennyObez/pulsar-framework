@@ -156,8 +156,26 @@ final class SharedMemoryConfigStore
         \Pulsar\Introspection\IntrospectionConfig::class,
         \Pulsar\Config\DomainConfig::class,
         \Pulsar\Api\OpenApi\OpenApiConfig::class,
+        // Route model binding. Its `allowed_key_names` is the set of columns a
+        // URL may look a record up by, enforced at the HTTP edge and again
+        // before the resolver builds SQL — so a shared-memory worker that could
+        // not read it back would silently fall to the defaults on the exact
+        // setting that bounds the query surface.
+        \Pulsar\Routing\Binding\ModelBindingConfig::class,
+        // The preset travels inside it. Listed for the same reason as every
+        // other enum in this allow-list — the list is how a reader learns which
+        // graph a worker reads back — and NOT because omitting it would block
+        // anything: PHP serializes an enum as `E:` and restores it whatever
+        // `allowed_classes` says, so no entry here is what keeps a preset intact
+        // across shared memory. What does is the HMAC below.
+        \Pulsar\Routing\Binding\BindingPreset::class,
         \Pulsar\Compliance\ComplianceConfig::class,
         \Pulsar\Compliance\ComplianceFramework::class,
+        // The operator's scope assertions travel inside ComplianceConfig. They are
+        // the only thing a compliance report accepts as grounds for calling a
+        // control not applicable, so a shared-memory worker that could not read
+        // them back would silently assess every control as in scope.
+        \Pulsar\Compliance\Evidence\ComplianceScope::class,
         // data_protection graph
         \Pulsar\DataProtection\DataProtectionConfig::class,
         \Pulsar\DataProtection\RetentionPolicy::class,

@@ -16,6 +16,7 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
+use Pulsar\Routing\RouteAccess;
 use Pulsar\Routing\RoutingException;
 use ReflectionException;
 use SodiumException;
@@ -74,7 +75,11 @@ final class ShowRoutesCommand extends Command
         $pathFilter = $input->getNullableStringOption('path');
 
         $table = new TableFormatter();
-        $table->setHeaders(['Method', 'Path', 'Name', 'Handler', 'Middleware']);
+        // `Access` is the question an auditor actually asks -- which of these can
+        // an anonymous request reach -- and before it was a column, answering it
+        // meant reading the wiring source. A `-` is a route that never said, and
+        // reads as the open question it is.
+        $table->setHeaders(['Method', 'Path', 'Name', 'Access', 'Handler', 'Middleware']);
 
         $count = 0;
         foreach ($routes as $route) {
@@ -91,11 +96,13 @@ final class ShowRoutesCommand extends Command
 
             $handler = $this->formatHandler($route->handler);
             $middleware = $this->formatMiddleware($route->middleware);
+            $access = RouteAccess::of($route);
 
             $table->addRow([
                 $methods,
                 $route->path,
                 $route->name ?? '-',
+                $access === null ? '-' : $access->value,
                 $handler,
                 $middleware,
             ]);

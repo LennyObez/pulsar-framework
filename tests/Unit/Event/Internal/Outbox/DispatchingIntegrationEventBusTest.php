@@ -20,6 +20,7 @@ use Pulsar\Event\Internal\Outbox\DatabaseOutboxPort;
 use Pulsar\Event\Internal\Outbox\DispatchingIntegrationEventBus;
 use Pulsar\Event\Internal\Outbox\OutboxRelay;
 use Pulsar\Event\Internal\StormGuard;
+use Pulsar\Tests\Support\FrameworkSchema;
 
 #[CoversClass(DispatchingIntegrationEventBus::class)]
 final class DispatchingIntegrationEventBusTest extends TestCase
@@ -59,14 +60,18 @@ final class DispatchingIntegrationEventBusTest extends TestCase
             }
         });
 
-        $outbox = new DatabaseOutboxPort(new PdoConnection(
+        $connection = new PdoConnection(
             connectionName: 'outbox-bus-test',
             driver: Driver::SQLite,
             dsn: 'sqlite::memory:',
             username: null,
             password: null,
-        ));
-        $outbox->installSchema();
+        );
+
+        // The migration owns outbox_events; the port only reads and writes it (ADR-0043).
+        FrameworkSchema::up($connection, FrameworkSchema::OUTBOX_EVENTS);
+
+        $outbox = new DatabaseOutboxPort($connection);
         $outbox->store($this->envelope('invoice.issued', ['number' => 'INV-1']));
 
         $relay = new OutboxRelay($outbox, new DispatchingIntegrationEventBus($this->dispatcher($listeners)));

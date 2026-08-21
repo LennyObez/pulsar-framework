@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Benchmark\Support;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\Authorization\Gate;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\InMemoryRoleRegistry;
@@ -137,7 +138,7 @@ final class BenchmarkPipelineFactory
             'error-handler' => new BenchErrorHandlerMiddleware(),
             'routing' => new BenchRoutingMiddleware(),
             'session-start' => new BenchSessionMiddleware(),
-            'auth-guard' => new AuthenticationMiddleware($this->authManager),
+            'auth-guard' => new AuthenticationMiddleware($this->authManager, new AuthenticationState()),
             'authorization' => new AuthorizationMiddleware($this->gate, $this->auditLogger),
             'token-resolver' => new BenchTokenResolverMiddleware($this->tokenResolver, $this->authManager),
             'audit-writer' => new BenchAuditWriterMiddleware($this->auditLogger),

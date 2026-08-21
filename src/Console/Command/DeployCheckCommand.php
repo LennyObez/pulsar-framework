@@ -28,6 +28,27 @@ use const JSON_UNESCAPED_SLASHES;
  * CLI command that runs all deploy readiness checks.
  *
  * Usage: deploy:check [--env=production] [--json] [--strict]
+ *
+ * THE EXIT CODE IS THE GATE, and it did not used to be. An error-severity
+ * result — debug mode on in production, no master key, a missing audit logger —
+ * exited 0 unless the caller happened to add `--strict`, and printed "Use
+ * --strict to enforce a non-zero exit code" while doing it. Both env templates
+ * meanwhile told operators the gate "fails closed" on exactly those two checks.
+ * Run on this repository with APP_DEBUG=true and PULSAR_MASTER_KEY empty, it
+ * reported `FAIL debug-mode`, `FAIL master-key` and five more, then exited 0: a
+ * pipeline reading the exit code deployed anyway. A gate whose default answer to
+ * seven failures is success is not a gate, and the template's claim was simply
+ * untrue.
+ *
+ * So: an error refuses the deploy, always. `--strict` now adds the only stricter
+ * thing left — treating warnings as errors too — which is also what the same
+ * flag means on `studio:console:guardian:deploy:check`, so the word has one
+ * meaning across the tree instead of three.
+ *
+ * Severity is the operator's dial, in config/deploy.php: a check that should not
+ * refuse a deploy is set to `warn` there, or `off`, in a diff someone can read.
+ * That is the supported way to soften a gate — not a flag omitted at the call
+ * site, where the softening leaves no trace at all.
  */
 #[Internal]
 final class DeployCheckCommand extends Command
@@ -45,7 +66,7 @@ final class DeployCheckCommand extends Command
         $this->description = 'Run deploy readiness checks for a target environment';
         $this->addOption('env', 'Target environment (local, staging, production)', 'e', 'production');
         $this->addOption('json', 'Output results as JSON', 'j');
-        $this->addOption('strict', 'Exit with error code if any Error-severity results', 's');
+        $this->addOption('strict', 'Also refuse the deploy on Warning-severity results (errors always refuse it)', 's');
     }
 
     /**
@@ -143,20 +164,29 @@ final class DeployCheckCommand extends Command
             return ExitCode::Success->value;
         }
 
-        if ($strict && $report->errors > 0) {
+        if ($report->errors > 0) {
             $output->newLine();
             $output->error(sprintf(
-                'Strict mode: %d error(s) detected. Deployment not recommended.',
+                '%d error-severity check(s) failed. Deployment is refused.',
                 $report->errors,
             ));
             return ExitCode::Error->value;
         }
 
-        if ($report->errors > 0) {
+        if ($strict && $report->warnings > 0) {
+            $output->newLine();
+            $output->error(sprintf(
+                'Strict mode: %d warning(s) treated as errors. Deployment is refused.',
+                $report->warnings,
+            ));
+            return ExitCode::Error->value;
+        }
+
+        if ($report->warnings > 0) {
             $output->newLine();
             $output->warning(sprintf(
-                '%d error(s) detected. Use --strict to enforce a non-zero exit code.',
-                $report->errors,
+                '%d warning(s) detected. Use --strict to refuse the deploy on warnings too.',
+                $report->warnings,
             ));
         }
 
@@ -173,8 +203,7 @@ final class DeployCheckCommand extends Command
         DeployReport $report,
         bool $strict,
     ): int {
-        $hasStrictErrors = $strict && $report->errors > 0;
-        $success = !$hasStrictErrors;
+        $success = $report->errors === 0 && !($strict && $report->warnings > 0);
 
         /** @var list<array{name: string, severity: string, message: string, recommendations: list<string>}> $results */
         $results = [];
@@ -206,6 +235,6 @@ final class DeployCheckCommand extends Command
         $json = json_encode($envelope, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $output->writeln($json);
 
-        return $hasStrictErrors ? ExitCode::Error->value : ExitCode::Success->value;
+        return $success ? ExitCode::Success->value : ExitCode::Error->value;
     }
 }

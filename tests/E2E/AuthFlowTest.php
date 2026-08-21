@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
@@ -69,11 +70,17 @@ final class AuthFlowTest extends TestCase
     /**
      * Run a request through the auth middleware pipeline.
      *
-     * The router is what puts `_route` on the request in production, so the harness
-     * has to supply it too: AuthorizationMiddleware fails closed without it, and a
-     * pipeline test that omits it would be measuring the absence of routing rather
-     * than the authorization decision. Pass `null` to exercise that fail-closed
-     * path deliberately.
+     * The kernel is what hands the dispatched route down in production, so the
+     * harness has to hand it down too: AuthorizationMiddleware fails closed
+     * without one, and a pipeline test that omits it would be measuring the
+     * absence of routing rather than the authorization decision. Pass `null` to
+     * exercise that fail-closed path deliberately.
+     *
+     * The route is bound rather than written to `_route`, because that is the
+     * channel the middleware reads. The attribute is rewritable by every
+     * route-level frame ahead of this one, and a substitute route declaring the
+     * `_authenticated` sentinel used to skip the real route's permissions
+     * entirely.
      *
      * @param list<string>|null $permissions Route-declared permissions, or null for no route context
      */
@@ -84,12 +91,14 @@ final class AuthFlowTest extends TestCase
         RequestHandlerInterface $handler,
         ?array $permissions = ['_authenticated'],
     ): ResponseInterface {
-        if ($permissions !== null) {
-            $request = $request->withAttribute('_route', $this->matchedRoute($request, $permissions));
-        }
-
-        $authMiddleware = new AuthenticationMiddleware($authManager);
+        $authMiddleware = new AuthenticationMiddleware($authManager, new AuthenticationState());
         $authzMiddleware = new AuthorizationMiddleware($gate);
+
+        if ($permissions !== null) {
+            $authzMiddleware = $authzMiddleware->forDispatchedRoute(
+                $this->matchedRoute($request, $permissions),
+            );
+        }
 
         // Pipeline: authentication -> authorization -> handler
         $authzHandler = new class ($authzMiddleware, $handler) implements RequestHandlerInterface {

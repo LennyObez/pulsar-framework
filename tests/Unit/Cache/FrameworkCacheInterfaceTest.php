@@ -27,6 +27,7 @@ final class FrameworkCacheInterfaceTest extends TestCase
                 array $containerHints,
                 string $appEnv,
                 bool $strict,
+                array $bindings = [],
             ): array {
                 $this->warmed = true;
 
@@ -82,7 +83,7 @@ final class FrameworkCacheInterfaceTest extends TestCase
         $cache = new class implements FrameworkCacheInterface {
             private bool $warmed = true;
 
-            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict): array
+            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict, array $bindings = []): array
             {
                 return ['configCached' => false, 'routesCached' => 0, 'routesSkipped' => 0, 'skippedRoutes' => [], 'containerCached' => false];
             }
@@ -122,7 +123,7 @@ final class FrameworkCacheInterfaceTest extends TestCase
     public function loadReturnsNullWhenCacheMissing(): void
     {
         $cache = new class implements FrameworkCacheInterface {
-            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict): array
+            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict, array $bindings = []): array
             {
                 return ['configCached' => false, 'routesCached' => 0, 'routesSkipped' => 0, 'skippedRoutes' => [], 'containerCached' => false];
             }
@@ -156,7 +157,7 @@ final class FrameworkCacheInterfaceTest extends TestCase
     public function cachePathReturnsString(): void
     {
         $cache = new class implements FrameworkCacheInterface {
-            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict): array
+            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict, array $bindings = []): array
             {
                 return ['configCached' => false, 'routesCached' => 0, 'routesSkipped' => 0, 'skippedRoutes' => [], 'containerCached' => false];
             }
@@ -189,7 +190,7 @@ final class FrameworkCacheInterfaceTest extends TestCase
     public function computeInvalidationKeyIsDeterministic(): void
     {
         $cache = new class implements FrameworkCacheInterface {
-            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict): array
+            public function warm(ConfigRepository $repository, array $routes, array $containerHints, string $appEnv, bool $strict, array $bindings = []): array
             {
                 return ['configCached' => false, 'routesCached' => 0, 'routesSkipped' => 0, 'skippedRoutes' => [], 'containerCached' => false];
             }

@@ -10,6 +10,7 @@ use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
 use Pulsar\Compliance\ComplianceProfileResolver;
+use Pulsar\Compliance\Verification\CustomControlRegistry;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\AuthConfig;
 use Pulsar\Config\CallableConfigLoader;
@@ -85,6 +86,26 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
         $resolver = new ComplianceProfileResolver();
         $profile = $resolver->resolve($config->enabledFrameworks);
         $container->instance(ComplianceProfile::class, $profile);
+
+        // The custom-control registry is bound HERE, first thing, and that is the
+        // whole of the fix for it. ComplianceVerificationWiring used to construct
+        // its own with `new CustomControlRegistry()` and keep it private, so
+        // `verifyAll()` iterated an empty array on every boot and no application
+        // could ever put a control into it — the registry was documented public API
+        // for organisation-specific controls and reachable by nobody.
+        //
+        // Binding it in the FIRST compliance wiring gives every later wiring, every
+        // extension and the application itself something to register into, and the
+        // verification engine resolves this same mutable instance rather than a
+        // fresh one. Because the engine holds the instance and not a copy, a control
+        // registered long after boot still appears in the next verification run.
+        //
+        // Bound even when no framework is enabled, before the opt-out return below:
+        // an application's own controls are its own business, and a deployment that
+        // enables no regulatory framework may still want them assessed on demand.
+        if (!$container->has(CustomControlRegistry::class)) {
+            $container->instance(CustomControlRegistry::class, new CustomControlRegistry());
+        }
 
         // A deployment that enabled no framework opted out of compliance; do not
         // tighten anything toward the resolver's baseline defaults.

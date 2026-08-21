@@ -301,6 +301,70 @@ final class DataPurgeOrchestratorTest extends TestCase
     }
 
     #[Test]
+    public function answersTheContractItIsBoundUnder(): void
+    {
+        // SecurityWiring binds this object under DataPurgeInterface::class. It did
+        // not implement the interface, so anything following the framework's own
+        // constructor-injection rule and asking the container for a
+        // DataPurgeInterface received an object that fataled on purge().
+        $orchestrator = new DataPurgeOrchestrator(
+            purgers: [],
+            policies: [],
+            config: new DataProtectionConfig(),
+        );
+
+        self::assertInstanceOf(DataPurgeInterface::class, $orchestrator);
+    }
+
+    #[Test]
+    public function purgingASingleCategoryDelegatesToItsHandler(): void
+    {
+        $purger = $this->createMock(DataPurgeInterface::class);
+        $purger->expects(self::once())->method('purge')->willReturn(4);
+
+        $orchestrator = new DataPurgeOrchestrator(
+            purgers: ['audit_logs' => $purger],
+            policies: [],
+            config: new DataProtectionConfig(),
+        );
+
+        self::assertSame(4, $orchestrator->purge(new DefaultRetentionPolicy('audit_logs', 2555)));
+    }
+
+    #[Test]
+    public function countingASingleCategoryDelegatesToItsHandler(): void
+    {
+        $purger = $this->createStub(DataPurgeInterface::class);
+        $purger->method('countExpired')->willReturn(11);
+        $purger->method('purge')->willReturn(999);
+
+        $orchestrator = new DataPurgeOrchestrator(
+            purgers: ['user_sessions' => $purger],
+            policies: [],
+            config: new DataProtectionConfig(),
+        );
+
+        self::assertSame(11, $orchestrator->countExpired(new DefaultRetentionPolicy('user_sessions', 90)));
+    }
+
+    #[Test]
+    public function aCategoryWithNoHandlerPurgesNothingRatherThanThrowing(): void
+    {
+        // purgeAll() already skips such categories; the single-category path must
+        // not disagree with it.
+        $orchestrator = new DataPurgeOrchestrator(
+            purgers: [],
+            policies: [],
+            config: new DataProtectionConfig(),
+        );
+
+        $policy = new DefaultRetentionPolicy('nothing_purges_this', 30);
+
+        self::assertSame(0, $orchestrator->purge($policy));
+        self::assertSame(0, $orchestrator->countExpired($policy));
+    }
+
+    #[Test]
     public function dryRunReturnsCountWithDuration(): void
     {
         $purger = $this->createStub(DataPurgeInterface::class);

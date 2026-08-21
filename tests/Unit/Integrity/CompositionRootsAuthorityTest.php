@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity;
 
-use FilesystemIterator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\CompositionRoots;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
+use Pulsar\Tests\Support\Gates\GuardsGate;
+use Pulsar\Tests\Unit\Integrity\Support\SecondDefinitionScanner;
 
 use function dirname;
-use function preg_match;
-use function str_contains;
-use function str_replace;
+use function implode;
 
 /**
  * Composition-root membership must have exactly one definition.
@@ -39,18 +35,11 @@ final class CompositionRootsAuthorityTest extends TestCase
     #[Test]
     public function noSecondDefinitionExists(): void
     {
-        $offenders = [];
+        $scanner = new SecondDefinitionScanner(dirname(__DIR__, 3));
 
-        foreach ($this->sources() as $path => $code) {
-            // The authority itself is where the constants belong.
-            if (str_contains($path, 'src/Api/CompositionRoots.php')) {
-                continue;
-            }
+        self::assertNotSame([], $scanner->sources(), 'no sources scanned — the check would pass vacuously');
 
-            if (preg_match('/const\s+array\s+COMPOSITION_ROOTS?(_NAMESPACES)?\s*=/', $code) === 1) {
-                $offenders[] = $path;
-            }
-        }
+        $offenders = $scanner->offenders();
 
         self::assertSame(
             [],
@@ -70,6 +59,10 @@ final class CompositionRootsAuthorityTest extends TestCase
      * nobody wrote down and no test would have caught.
      */
     #[Test]
+    #[GuardsGate(
+        gate: 'CompositionRootsAuthorityTest::anExactClassNameIsNotTreatedAsAPrefix',
+        plants: 'the names KernelHandler and KernelFactory, which the prefix bug exempted through the exact entry Pulsar\\Core\\Kernel',
+    )]
     public function anExactClassNameIsNotTreatedAsAPrefix(): void
     {
         self::assertTrue(CompositionRoots::contains('Pulsar\\Core\\Kernel'));
@@ -81,6 +74,10 @@ final class CompositionRootsAuthorityTest extends TestCase
      * A namespace entry must act as a prefix, which is the whole reason it is separate.
      */
     #[Test]
+    #[GuardsGate(
+        gate: 'CompositionRootsAuthorityTest::aNamespaceEntryCoversEverythingBeneathIt',
+        plants: 'a name under Pulsar\\Core\\Boot, the namespace over which the three copies of this list disagreed',
+    )]
     public function aNamespaceEntryCoversEverythingBeneathIt(): void
     {
         self::assertTrue(CompositionRoots::contains('Pulsar\\Core\\Wiring\\EarlyHintsWiring'));
@@ -92,37 +89,14 @@ final class CompositionRootsAuthorityTest extends TestCase
     }
 
     #[Test]
+    #[GuardsGate(
+        gate: 'CompositionRootsAuthorityTest::ordinaryClassesAreNotRoots',
+        plants: 'ordinary class names, including the bare prefix Pulsar\\Core\\Boot, which must not be granted the exemption',
+    )]
     public function ordinaryClassesAreNotRoots(): void
     {
         foreach (['Pulsar\\Http\\Response', 'Pulsar\\Config\\Environment', 'Pulsar\\Core\\Boot'] as $fqcn) {
             self::assertFalse(CompositionRoots::contains($fqcn), "$fqcn must not be a composition root");
         }
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function sources(): array
-    {
-        $root = dirname(__DIR__, 3);
-        $sources = [];
-
-        foreach (['src', 'scripts', 'tools'] as $dir) {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($root . '/' . $dir, FilesystemIterator::SKIP_DOTS),
-            );
-
-            /** @var SplFileInfo $file */
-            foreach ($iterator as $file) {
-                if ($file->isFile() && $file->getExtension() === 'php') {
-                    $path = str_replace('\\', '/', $file->getPathname());
-                    $sources[$path] = (string) file_get_contents($path);
-                }
-            }
-        }
-
-        self::assertNotSame([], $sources, 'no sources scanned — the check would pass vacuously');
-
-        return $sources;
     }
 }

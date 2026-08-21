@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Dev;
 
 use Pulsar\Api\Internal;
+use Pulsar\Auth\AuthenticationState;
+use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
+use Pulsar\Auth\SecurityContext;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Core\Kernel;
@@ -153,6 +156,7 @@ final class DevServerBootstrap
 
         // 7. Build and dispatch request
         $request = self::buildRequest($config);
+        self::establishDevIdentity($kernel, $config, $request);
 
         try {
             $response = $kernel->handle($request);
@@ -428,25 +432,72 @@ final class DevServerBootstrap
     }
 
     /**
-     * Build a ServerRequest from PHP globals with optional dev identity.
+     * Build a ServerRequest from PHP globals.
+     *
+     * The dev identity is NOT attached here any more; see
+     * {@see establishDevIdentity()} for where it goes and why. `step_up_verified`
+     * stays an attribute because that is what it is — a per-request flag the
+     * admin and CMS controllers read, not a statement about who is calling.
      */
     public static function buildRequest(DevServerConfig $config): ServerRequest
     {
         $request = ServerRequest::fromGlobals();
 
         if ($config->injectDevIdentity) {
-            $devIdentity = new Identity(
-                id: 'dev-admin',
-                displayName: 'Dev Administrator',
-                roles: $config->devIdentityRoles,
-                twoFactorStatus: TwoFactorStatus::Verified,
-            );
-            $request = $request->withAttribute('identity', $devIdentity);
-            $request = $request->withAttribute('_identity', $devIdentity);
             $request = $request->withAttribute('step_up_verified', true);
         }
 
         return $request;
+    }
+
+    /**
+     * Publish `--dev-identity` where authentication publishes its own answer.
+     *
+     * This used to be two request attributes, `identity` and `_identity`, which
+     * {@see \Pulsar\Auth\Middleware\AuthenticationMiddleware} read back and
+     * believed. That made a PSR-7 attribute an INPUT to authentication: every
+     * frame piped ahead of the auth middleware could name the caller the same
+     * way, and the model binding layer authorized against it. The attributes are
+     * an output now, so the dev identity has to arrive through the channel the
+     * framework actually reads — the {@see AuthenticationState} holder, seeded
+     * with a {@see SecurityContext} that already knows its answer.
+     *
+     * Doing it here rather than inside {@see buildRequest()} is what makes the
+     * difference real: this needs the booted container, which only the
+     * composition root has. A middleware frame cannot reach it, and that is the
+     * whole distinction between the two channels.
+     *
+     * Silently doing nothing when the auth stack is absent is correct: with no
+     * `auth` section in config/security.php there is no AuthManager to build a
+     * context around and nothing that would read one.
+     */
+    private static function establishDevIdentity(Kernel $kernel, DevServerConfig $config, ServerRequest $request): void
+    {
+        if (!$config->injectDevIdentity) {
+            return;
+        }
+
+        $container = $kernel->container();
+
+        if (!$container->has(AuthenticationState::class) || !$container->has(AuthManagerInterface::class)) {
+            return;
+        }
+
+        /** @var AuthenticationState $state */
+        $state = $container->get(AuthenticationState::class);
+        /** @var AuthManagerInterface $authManager */
+        $authManager = $container->get(AuthManagerInterface::class);
+
+        $state->establish(SecurityContext::established(
+            $authManager,
+            $request,
+            new Identity(
+                id: 'dev-admin',
+                displayName: 'Dev Administrator',
+                roles: $config->devIdentityRoles,
+                twoFactorStatus: TwoFactorStatus::Verified,
+            ),
+        ));
     }
 
     /**

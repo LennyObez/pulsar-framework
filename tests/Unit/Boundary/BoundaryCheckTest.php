@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Support\Gates\GuardsGate;
 
 use function dirname;
 use function file_put_contents;
@@ -19,6 +20,7 @@ use function unlink;
 require_once dirname(__DIR__, 3) . '/scripts/boundary_check.php';
 
 #[CoversNothing]
+#[GuardsGate(gate: 'scripts/boundary_check.php', plants: 'a cross-module import of an \Internal\ namespace and an extension importing application code, asserted on the analyzer verdict rather than on the wrapper exit code')]
 final class BoundaryCheckTest extends TestCase
 {
     private static string $snapshotPath;

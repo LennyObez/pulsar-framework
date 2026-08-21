@@ -35,7 +35,14 @@ final class DocsCommand extends Command
         'authentication' => 'docs/authentication.md',
         'authorization' => 'docs/authorization.md',
         'caching' => 'docs/caching.md',
-        'compliance' => 'docs/compliance-matrix.md',
+        // docs/compliance-matrix.md has never existed in this repository, so this
+        // topic reported "file not found" for every reader who asked for it. The
+        // matrix that does exist is docs/compliance.md; the per-deployment version
+        // of the same thing comes from `pulsar compliance:report --format=markdown`,
+        // which is generated from observed facts and so cannot drift from them.
+        'compliance' => 'docs/compliance.md',
+        'compliance-ccf' => 'docs/compliance-ccf.md',
+        'compliance-events' => 'docs/compliance-events.md',
         'configuration' => 'docs/configuration.md',
         'database' => 'docs/database.md',
         'deployment' => 'docs/deployment.md',

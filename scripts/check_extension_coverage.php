@@ -8,12 +8,36 @@ declare(strict_types=1);
  *
  * Prevents tooling drift where new extensions skip static analysis.
  *
- * Usage: php scripts/check_extension_coverage.php
- * Exit code: 0 = all covered, 1 = gaps found
+ * Usage: php scripts/check_extension_coverage.php [--root=<dir>]
+ * Exit code: 0 = all covered, 1 = gaps found, 2 = invoked wrongly
+ *
+ * `--root=` exists so the gate can be pointed at a planted tree that has the gap on
+ * purpose and observed refusing it. Without it, the only way to watch this script
+ * fail would be to remove a real extension from phpstan.neon, and a gate nobody has
+ * ever seen fail is indistinguishable from no gate.
  */
 
 $root = dirname(__DIR__);
+
+foreach (array_slice($argv ?? [], 1) as $argument) {
+    if (is_string($argument) && str_starts_with($argument, '--root=')) {
+        $root = rtrim(str_replace('\\', '/', substr($argument, strlen('--root='))), '/');
+
+        continue;
+    }
+
+    fwrite(STDERR, sprintf("Unknown option: %s\n", is_string($argument) ? $argument : '<non-string>'));
+
+    exit(2);
+}
+
 $extensionsDir = $root . '/extensions';
+
+if (!is_dir($extensionsDir)) {
+    fwrite(STDERR, "No extensions/ directory under {$root}. Nothing could be checked.\n");
+
+    exit(2);
+}
 
 // ── Discover all extensions with src/ directories ──────────────────
 // Supports both flat (extensions/foo/) and grouped (extensions/compliance/foo/) layouts.
@@ -63,9 +87,21 @@ function discoverExtensions(string $baseDir, string $prefix = ''): array
 $extensions = discoverExtensions($extensionsDir);
 sort($extensions);
 
+// Green by abstention is the failure this gate is most likely to suffer, because it
+// is the one that looks like success. A discovery walk that returns nothing means the
+// layout changed, the directory moved, or the walk was pointed somewhere wrong — and
+// in every one of those cases the answer "all extensions are covered by static
+// analysis" is true only because no extension was looked at.
 if ($extensions === []) {
-    echo "No extensions found.\n";
-    exit(0);
+    fwrite(STDERR, sprintf(
+        "No extension with a src/ directory was found under %s.\n\n"
+        . "This is not a pass. Every extension in the repository has one, so an empty result means\n"
+        . "the discovery walk found nothing to check — and reporting that as coverage would hide\n"
+        . "exactly the drift this gate exists to catch.\n",
+        $extensionsDir,
+    ));
+
+    exit(1);
 }
 
 // ── Check PHPStan ──────────────────────────────────────────────────

@@ -15,6 +15,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Core\Boot\CachedRouteReconstructor;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Event\Exception\EventException;
 use Pulsar\Event\Internal\EventMapCompiler;
@@ -87,9 +88,19 @@ final class OptimizeCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $routes = $this->kernel->container()->has(Router::class)
-            ? $this->kernel->container()->get(Router::class)->routes
-            : [];
+        // Routes and the Router::model() declarations that qualify them are read
+        // from the same router in the same breath, and written as one payload.
+        // Reading only the routes is what left an optimized deployment with no
+        // channel for a BindingScope declaration at all: the project route files
+        // that make those calls are skipped on a cached-route boot.
+        $routes = [];
+        $bindings = [];
+
+        if ($this->kernel->container()->has(Router::class)) {
+            $router = $this->kernel->container()->get(Router::class);
+            $routes = $router->routes;
+            $bindings = $router->explicitBindings;
+        }
 
         // Strict mode check: fail on closure routes
         if ($strict) {
@@ -119,7 +130,14 @@ final class OptimizeCommand extends Command
         $containerHints = $this->buildContainerHints();
         $appEnv = $this->getAppEnv();
 
-        $result = $this->frameworkCache->warm($repository, $routes, $containerHints, $appEnv, $strict);
+        $result = $this->frameworkCache->warm(
+            $repository,
+            $routes,
+            $containerHints,
+            $appEnv,
+            $strict,
+            CachedRouteReconstructor::forCache($bindings),
+        );
 
         $output->writeln();
         $output->writeln('  Config: cached');

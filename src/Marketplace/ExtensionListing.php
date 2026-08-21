@@ -26,7 +26,10 @@ final readonly class ExtensionListing
      * @param string $version Current version
      * @param string $author Author name
      * @param string $description Short description
-     * @param TrustTier $trustTier Effective trust tier
+     * @param TrustTier $trustTier The tier the REGISTRY records for this listing. Not an
+     *        effective tier (only the host's config/extensions.php produces one at boot)
+     *        and not the outcome of any verification — no extension signature is checked
+     *        anywhere in the framework
      * @param int $downloads Total download count
      * @param float $rating Average rating (0.0–5.0)
      * @param string $pulsarMinVersion Minimum compatible Pulsar version
@@ -108,7 +111,12 @@ final readonly class ExtensionListing
     }
 
     /**
-     * Whether this extension is official (core trust tier).
+     * Whether the registry lists this extension at Core tier.
+     *
+     * A statement about the catalogue entry, not about the artefact: nothing here
+     * has checked a signature, and installing the extension does not carry this
+     * tier into the running application — only the host's config/extensions.php
+     * grants an effective tier at boot.
      */
     public function isOfficial(): bool
     {
@@ -116,7 +124,12 @@ final readonly class ExtensionListing
     }
 
     /**
-     * Whether this extension is verified.
+     * Whether the registry lists this extension at Verified tier or above.
+     *
+     * "Verified" names the tier the registry recorded. It is not evidence that
+     * this framework verified anything — see {@see self::isOfficial()}. Do not
+     * render it to an operator as a verification badge without saying who did
+     * the verifying.
      */
     public function isVerified(): bool
     {

@@ -8,41 +8,56 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Compliance\ComplianceConfig;
+use Pulsar\Compliance\ComplianceConstraints;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
+use Pulsar\Compliance\ComplianceProfileResolver;
+use Pulsar\Compliance\Evidence\DatabaseTlsObserver;
+use Pulsar\Compliance\Evidence\EvidenceStoreInterface;
+use Pulsar\Compliance\Evidence\FileEvidenceStore;
+use Pulsar\Compliance\Evidence\InMemoryEvidenceStore;
+use Pulsar\Compliance\Verification\BreachNotificationCheck;
 use Pulsar\Compliance\Verification\CheckStatus;
 use Pulsar\Compliance\Verification\ComplianceVerificationEngine;
 use Pulsar\Compliance\Verification\ConflictDetector;
 use Pulsar\Compliance\Verification\CustomControlRegistry;
+use Pulsar\Compliance\Verification\EvidenceChain;
+use Pulsar\Compliance\Verification\EvidenceCollectionJob;
+use Pulsar\Compliance\Verification\PasswordPolicyCheck;
 use Pulsar\Compliance\Verification\RuntimeVerifier;
 use Pulsar\Compliance\Verification\VerificationConfig;
 use Pulsar\Compliance\Verification\VerificationReport;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
-use Pulsar\Config\ConnectionConfig;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\SchedulerConfig;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Database\Driver;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Scheduler\Exception\SchedulerException;
+use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Security\Crypto\CipherSuiteInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\SubKeyId;
+use Pulsar\Security\Incident\IncidentReporterInterface;
 use Pulsar\Security\Session\SessionEncryption;
+use SodiumException;
 
 use function array_map;
-use function constant;
-use function defined;
+use function dirname;
 use function implode;
-use function in_array;
-use function is_int;
-use function is_string;
 use function sprintf;
-use function str_starts_with;
-use function strtolower;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
- * Runs boot-time compliance verification against the FULLY WIRED container.
+ * Runs boot-time compliance verification against the FULLY WIRED container, and
+ * puts the evidence trail the verification produces on the interval configuration
+ * asks for.
  *
  * {@see ComplianceWiring} tightens what configuration can express. Several profile
  * requirements cannot be satisfied by tightening a config value at all:
@@ -60,6 +75,26 @@ use function strtolower;
  * the feature is live — a config flag is not) and turns the verifier's findings
  * into boot warnings, or refuses the boot when compliance strict mode is on.
  *
+ * Three seams on the engine used to be constructed empty here, which meant three
+ * controls that could not run:
+ *
+ *  - the EVIDENCE CHAIN was never passed, so `recordEvidence()` returned at its
+ *    first line on every run and the deployment's tamper-evident evidence trail
+ *    was an empty set. It is built now, keyed from the master key, over a durable
+ *    store — see {@see self::evidenceChain()};
+ *  - the CUSTOM CONTROL REGISTRY was a fresh empty instance, so `verifyAll()`
+ *    returned `[]` unconditionally. It is resolved from the container, where
+ *    {@see ComplianceWiring} binds it early enough for anything to register into;
+ *  - the PLUGGABLE CHECKS array was never populated at all, so
+ *    {@see \Pulsar\Compliance\Verification\ComplianceCheckInterface} was an
+ *    extension point with no framework implementation and no framework caller.
+ *    Two checks live there now, and each reads a profile field that no wiring, no
+ *    validator and no reporter had read: password minimum and breach-notification
+ *    deadline.
+ *
+ * And `verification.evidence_interval` — a number in `config/compliance.php` that
+ * no scheduler read — now drives {@see EvidenceCollectionJob}.
+ *
  * It is registered LAST for the same reason {@see SecurityPostureWiring} is: only a
  * fully wired container reveals which security features are genuinely active and
  * which are inert.
@@ -68,12 +103,13 @@ use function strtolower;
 final readonly class ComplianceVerificationWiring implements ServiceWiringInterface
 {
     /**
-     * `sslmode` values that actually require TLS. Weaker values ("disable",
-     * "allow", "prefer") let the connection silently fall back to plaintext.
-     *
-     * @var list<string>
+     * KDF context for the evidence chain HMAC (exactly 8 bytes, as libsodium
+     * requires).
      */
-    private const array TLS_SSL_MODES = ['require', 'required', 'verify-ca', 'verify-full', 'verify_ca', 'verify_full'];
+    private const string EVIDENCE_KDF_CONTEXT = 'cmp_evid';
+
+    /** File the durable evidence store appends to, beside the audit trail. */
+    private const string EVIDENCE_FILE = 'compliance-evidence.jsonl';
 
     public function wire(
         ContainerInterface $container,
@@ -100,17 +136,25 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
         /** @var ComplianceProfile $profile */
         $profile = $container->get(ComplianceProfile::class);
 
+        $constraints = new ComplianceProfileResolver()->constraints($config->enabledFrameworks);
+        $evidenceChain = $this->evidenceChain($container, $repository);
+
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
             runtimeVerifier: $this->runtimeVerifier($container, $repository, $profile),
             conflictDetector: new ConflictDetector(),
-            customControlRegistry: new CustomControlRegistry(),
+            customControlRegistry: $this->customControlRegistry($container),
             config: new VerificationConfig(
                 enabled: $config->verificationEnabled,
                 bootCheck: $config->bootCheck,
                 evidenceIntervalSeconds: $config->evidenceInterval,
                 strictMode: $config->strictMode,
             ),
+            evidenceChain: $evidenceChain,
+            checks: [
+                new PasswordPolicyCheck($profile, $constraints->passwordMinLength),
+                $this->breachNotificationCheck($container, $profile, $constraints),
+            ],
             logger: $container->has(LoggerInterface::class)
                 ? $container->get(LoggerInterface::class)
                 : null,
@@ -120,14 +164,217 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
         // verification on demand (console command, health endpoint, scheduled job).
         $container->instance(ComplianceVerificationEngine::class, $engine);
 
+        $this->scheduleEvidenceCollection($container, $engine, $config->evidenceInterval);
+
         if (!$engine->shouldCheckAtBoot()) {
             return;
         }
 
-        $report = $engine->verify();
+        // withoutEvidenceRecording(), and the call is load-bearing. Under PHP-FPM
+        // the kernel boots once per REQUEST, so a boot check that recorded would
+        // append a signed evidence record per request. Evidence is collected on the
+        // configured interval by EvidenceCollectionJob; the boot check is a
+        // fail-fast configuration check and nothing more.
+        $report = $engine->withoutEvidenceRecording()->verify();
         $container->instance(VerificationReport::class, $report);
 
         $this->reportFailures($container, $report, $profile, $config->strictMode);
+    }
+
+    /**
+     * The evidence chain, or null when the deployment cannot have a tamper-evident
+     * one.
+     *
+     * A chain needs a key, and the only key the framework has is the master key.
+     * Without PULSAR_MASTER_KEY there is nothing to sign records with, and a chain
+     * keyed on a constant would be a chain anybody can forge — so the honest answer
+     * is no chain, said out loud in the boot log rather than by silently recording
+     * unsigned records that {@see EvidenceChain::verifyChain()} would later report
+     * as broken.
+     *
+     * The store is durable wherever a durable security record already lives, for
+     * the reason {@see \Pulsar\Security\Incident\FileIncidentReporter} is the
+     * default incident register: each record chains to its predecessor's signature,
+     * and predecessors held in process memory are gone before the next record is
+     * written, so an in-memory chain is a chain of length one, forever. In-memory
+     * remains the answer for a deployment with audit logging switched off, which
+     * has asked for no durable security record at all.
+     */
+    private function evidenceChain(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+    ): ?EvidenceChain {
+        $store = $this->evidenceStore($container, $repository);
+
+        $container->instance(EvidenceStoreInterface::class, $store);
+        $container->instance($store::class, $store);
+
+        if (!$container->has(MasterKey::class)) {
+            $this->warn(
+                $container,
+                'compliance: no master key is in service, so no compliance evidence chain was '
+                . 'built and verification runs leave no tamper-evident record. Set '
+                . 'PULSAR_MASTER_KEY to 64 hex characters decoding to 32 bytes.',
+            );
+
+            return null;
+        }
+
+        /** @var MasterKey $masterKey */
+        $masterKey = $container->get(MasterKey::class);
+
+        try {
+            $chain = new EvidenceChain(
+                $store,
+                $masterKey->deriveSubKey(SubKeyId::ComplianceEvidenceChain->value, self::EVIDENCE_KDF_CONTEXT),
+            );
+        } catch (SodiumException $failure) {
+            // The genesis signature is computed in the constructor, so a libsodium
+            // that cannot HMAC fails here rather than at the first record. Boot
+            // continues without a chain; RuntimeVerifier reports the same libsodium
+            // through runtime.sodium_extension.
+            $this->warn($container, sprintf(
+                'compliance: the evidence chain could not be keyed on this runtime (%s), so '
+                . 'verification runs leave no tamper-evident record.',
+                $failure->getMessage(),
+            ));
+
+            return null;
+        }
+
+        $container->instance(EvidenceChain::class, $chain);
+
+        return $chain;
+    }
+
+    /**
+     * A durable store beside the audit trail, or in-memory when there is no audit
+     * trail to sit beside.
+     *
+     * An operator who has already chosen a writable location for the audit log has
+     * chosen one for the evidence register too; it goes through
+     * {@see WritablePathGuard} for the same reason the audit sink does, because a
+     * compliance evidence file written inside the document root is served to
+     * anyone who asks for it.
+     */
+    private function evidenceStore(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+    ): EvidenceStoreInterface {
+        if ($container->has(EvidenceStoreInterface::class)) {
+            /** @var EvidenceStoreInterface $bound */
+            $bound = $container->get(EvidenceStoreInterface::class);
+
+            return $bound;
+        }
+
+        if (!$repository->has(ObservabilityConfig::class)) {
+            return new InMemoryEvidenceStore();
+        }
+
+        /** @var ObservabilityConfig $observability */
+        $observability = $repository->get(ObservabilityConfig::class);
+
+        if (!$observability->audit->enabled) {
+            return new InMemoryEvidenceStore();
+        }
+
+        $auditLog = WritablePathGuard::resolveState(
+            $observability->audit->logPath,
+            'observability.audit.log_path',
+        );
+
+        return new FileEvidenceStore(dirname($auditLog) . DIRECTORY_SEPARATOR . self::EVIDENCE_FILE);
+    }
+
+    /**
+     * The registry the application registers custom controls into.
+     *
+     * Resolved, never constructed. {@see ComplianceWiring} binds it before anything
+     * else compliance-related runs; constructing a private one here is what made
+     * `CustomControlRegistry::verifyAll()` return `[]` on every boot no matter what
+     * the application did. The fallback covers only the case where this wiring is
+     * driven directly in a test harness without ComplianceWiring.
+     */
+    private function customControlRegistry(ContainerInterface $container): CustomControlRegistry
+    {
+        if (!$container->has(CustomControlRegistry::class)) {
+            $registry = new CustomControlRegistry();
+            $container->instance(CustomControlRegistry::class, $registry);
+
+            return $registry;
+        }
+
+        /** @var CustomControlRegistry $registry */
+        $registry = $container->get(CustomControlRegistry::class);
+
+        return $registry;
+    }
+
+    /**
+     * Measure the breach-notification deadline against the register the deployment
+     * actually keeps.
+     *
+     * The register is passed as an OBJECT rather than a `has()` boolean for the
+     * reason ADR-0045 gives and {@see RuntimeVerifier} follows: the check has to
+     * read report timestamps out of it, and a boolean is a verdict somebody else
+     * already reached.
+     */
+    private function breachNotificationCheck(
+        ContainerInterface $container,
+        ComplianceProfile $profile,
+        ComplianceConstraints $constraints,
+    ): BreachNotificationCheck {
+        return new BreachNotificationCheck(
+            profile: $profile,
+            constrained: $constraints->breachNotificationHours,
+            register: $container->has(IncidentReporterInterface::class)
+                ? $container->get(IncidentReporterInterface::class)
+                : null,
+        );
+    }
+
+    /**
+     * Put `verification.evidence_interval` on the scheduler.
+     *
+     * The setting was read into {@see VerificationConfig::$evidenceIntervalSeconds}
+     * and then consulted by nothing: no job existed, so no deployment collected
+     * compliance evidence on any interval. This is the registration that makes the
+     * number mean something.
+     *
+     * Silent when the scheduler is off. That is not the defect returning — the job
+     * would have nothing to run it — and warning about it on every request would
+     * train an operator to ignore the log. `pulsar scheduler:list` is where the
+     * question "is evidence being collected?" gets an answer.
+     */
+    private function scheduleEvidenceCollection(
+        ContainerInterface $container,
+        ComplianceVerificationEngine $engine,
+        int $intervalSeconds,
+    ): void {
+        if (!$container->has(JobRegistry::class) || !$container->has(EvidenceStoreInterface::class)) {
+            return;
+        }
+
+        /** @var JobRegistry $registry */
+        $registry = $container->get(JobRegistry::class);
+        /** @var EvidenceStoreInterface $store */
+        $store = $container->get(EvidenceStoreInterface::class);
+
+        $timezone = $container->has(SchedulerConfig::class)
+            ? $container->get(SchedulerConfig::class)->timezone
+            : 'UTC';
+
+        try {
+            $registry->register(new EvidenceCollectionJob(
+                engine: $engine,
+                store: $store,
+                intervalSeconds: $intervalSeconds,
+                schedule: EvidenceCollectionJob::scheduleFor($intervalSeconds, $timezone),
+            ));
+        } catch (SchedulerException) {
+            // An application that registered its own job under this name keeps it.
+        }
     }
 
     /**
@@ -138,6 +385,15 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
      * AuditLoggerInterface only when the corresponding subsystem really started
      * (which for all three additionally requires a master key), so these are the
      * honest runtime signals.
+     *
+     * Two of them are handed over as OBJECTS rather than as `has()` booleans, and
+     * that is the correction rather than a refinement. `has(MasterKey::class)` was
+     * feeding a check that reported "Master key uses proper KDF derivation" — a
+     * statement about the KDF, made from the fact that a hex string had decoded.
+     * `CipherSuiteInterface` was not passed at all, so the FIPS check graded the
+     * platform's catalogue of available algorithms instead of the one the
+     * deployment encrypts with. The verifier now derives from the key and reads
+     * the suite; neither verdict can be reached from a binding lookup any more.
      */
     private function runtimeVerifier(
         ContainerInterface $container,
@@ -147,9 +403,14 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
         return new RuntimeVerifier(
             profile: $profile,
             sessionEncryptionActive: $container->has(SessionEncryption::class),
-            masterKeyDerived: $container->has(MasterKey::class),
+            masterKey: $container->has(MasterKey::class)
+                ? $container->get(MasterKey::class)
+                : null,
             auditLogActive: $container->has(AuditLoggerInterface::class),
             dbTlsActive: $this->databaseTlsActive($repository),
+            activeCipherSuite: $container->has(CipherSuiteInterface::class)
+                ? $container->get(CipherSuiteInterface::class)
+                : null,
         );
     }
 
@@ -160,14 +421,13 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
      * Reporting a blanket `false` here would be worse than useless: the verifier
      * turns it into a hard failure whenever a framework requires encryption in
      * transit, so under compliance strict mode the boot could never succeed no
-     * matter how the operator configured the database. The connection options are
-     * therefore inspected for the very settings the verifier's own remediation text
-     * asks for (`ssl_mode`/`sslmode`, or the PDO MySQL SSL attributes).
+     * matter how the operator configured the database.
      *
-     * SQLite is skipped rather than failed: it is a local file with no transport to
-     * encrypt, so demanding TLS of it would be meaningless. A deployment with no
-     * network connection at all satisfies the requirement vacuously — nothing
-     * travels in the clear.
+     * The inspection itself is {@see DatabaseTlsObserver}'s and is called rather
+     * than restated. This wiring and {@see ComplianceCatalogWiring} report on the
+     * same connections to the same operator, and while each carried its own copy of
+     * the rules the two had already begun to diverge — one docblock claimed the
+     * `sslmode` option was honoured on MySQL, which it never is.
      */
     private function databaseTlsActive(ConfigRepository $repository): bool
     {
@@ -178,90 +438,7 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
         /** @var DatabaseConfig $database */
         $database = $repository->get(DatabaseConfig::class);
 
-        foreach ($database->connections as $connection) {
-            if ($connection->driver === Driver::SQLite || self::isLocalIpcConnection($connection)) {
-                continue;
-            }
-
-            if (!self::connectionUsesTls($connection)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Whether the connection reaches the server through local inter-process
-     * communication rather than a network, in which case there is no transport to
-     * encrypt — demanding TLS of it would be as meaningless as demanding it of
-     * SQLite, and under compliance strict mode would make the boot unsatisfiable.
-     *
-     * A path-like host is the portable spelling: libpq treats `host=/var/run/
-     * postgresql` as a socket directory, and an empty host lets the client library
-     * fall back to its default socket. A Windows named pipe (`\\.\pipe\...`) is
-     * likewise local IPC.
-     *
-     * Loopback TCP (`127.0.0.1`, `::1`, and the driver-dependent `localhost`) is
-     * deliberately NOT exempted: it is a real TCP connection, and which of socket
-     * or TCP `localhost` selects depends on the client library. Reporting it is the
-     * conservative choice, and it only fails a boot when the operator opted into
-     * strict mode.
-     */
-    private static function isLocalIpcConnection(ConnectionConfig $connection): bool
-    {
-        $host = $connection->host;
-
-        return $host === ''
-            || str_starts_with($host, '/')
-            || str_starts_with($host, '\\\\');
-    }
-
-    /**
-     * Recognize a TLS-enabled connection from its PDO options.
-     *
-     * Accepts the PostgreSQL/MySQL `sslmode`/`ssl_mode` spellings at a strength of
-     * at least "require", and the presence of any PDO MySQL SSL attribute (CA,
-     * client cert or key), which cannot be set without TLS being used. The PDO
-     * constants are resolved defensively because pdo_mysql may not be loaded.
-     */
-    private static function connectionUsesTls(ConnectionConfig $connection): bool
-    {
-        $options = $connection->options;
-
-        // Only PostgreSQL reads sslmode, and only because PdoConnection lifts it out of
-        // the options and into the DSN. Counting it for any other driver is what made
-        // this check report TLS on a plaintext MySQL connection: the key never reaches
-        // PDO, which indexes driver options by integer constant and drops string keys.
-        if ($connection->driver === Driver::PostgreSQL) {
-            foreach (['ssl_mode', 'sslmode'] as $key) {
-                /** @var mixed $mode */
-                $mode = $options[$key] ?? null;
-
-                if (is_string($mode) && in_array(strtolower($mode), self::TLS_SSL_MODES, true)) {
-                    return true;
-                }
-            }
-        }
-
-        // PHP 8.5 renamed these to the Pdo\Mysql enum-style constants and deprecated
-        // the PDO::MYSQL_ATTR_* spellings. The underlying integer values are
-        // unchanged, so resolving the modern names also matches an option array a
-        // project wrote with the legacy constants.
-        foreach (['Pdo\Mysql::ATTR_SSL_CA', 'Pdo\Mysql::ATTR_SSL_CERT', 'Pdo\Mysql::ATTR_SSL_KEY'] as $constant) {
-            if (!defined($constant)) {
-                continue;
-            }
-
-            /** @var mixed $attribute */
-            $attribute = constant($constant);
-
-            if ((is_int($attribute) || is_string($attribute)) && isset($options[$attribute])) {
-                return true;
-            }
-        }
-
-        return false;
+        return new DatabaseTlsObserver()->configuredForTls($database);
     }
 
     /**
@@ -293,20 +470,32 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
             return;
         }
 
-        /** @var LoggerInterface $logger */
-        $logger = $container->get(LoggerInterface::class);
-
         $frameworks = implode(', ', array_map(
             static fn(ComplianceFramework $f): string => $f->value,
             $profile->enabledFrameworks,
         ));
 
         foreach ($lines as $line) {
-            $logger->warning(sprintf(
+            $this->warn($container, sprintf(
                 'compliance: boot verification failed — %s (frameworks: %s)',
                 $line,
                 $frameworks,
             ));
         }
+    }
+
+    /**
+     * Emit an operator-facing boot warning when a logger is bound. A no-op
+     * otherwise — this wiring runs long after LoggingWiring, so one normally is.
+     */
+    private function warn(ContainerInterface $container, string $message): void
+    {
+        if (!$container->has(LoggerInterface::class)) {
+            return;
+        }
+
+        /** @var LoggerInterface $logger */
+        $logger = $container->get(LoggerInterface::class);
+        $logger->warning($message);
     }
 }

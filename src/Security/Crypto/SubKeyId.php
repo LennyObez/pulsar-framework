@@ -101,6 +101,35 @@ enum SubKeyId: int
      */
     case Psd2ScaDynamicLinking = 14;
 
+    /**
+     * Compliance verification's key-derivation probe.
+     *
+     * Owns an id of its own for the same reason every other subsystem does, even
+     * though it seals nothing: {@see \Pulsar\Compliance\Verification\RuntimeVerifier}
+     * runs in production, where {@see Test} must not be used, and borrowing a live
+     * subsystem's id would derive that subsystem's real key material into the
+     * verifier. The bytes derived under this id are compared with each other,
+     * zeroed, and never stored — the derivation itself is the evidence.
+     */
+    case ComplianceDerivationProbe = 15;
+
+    /**
+     * Compliance evidence chain HMAC.
+     *
+     * Keys the signature {@see \Pulsar\Compliance\Verification\EvidenceChain} puts on
+     * each evidence record and the linkage to its predecessor. Its own id because
+     * the chain is what makes the evidence trail tamper-evident: sharing the audit
+     * chain's key (2) would let a record from either trail validate in the other,
+     * which is exactly the cross-subsystem substitution ADR-0006 separates.
+     *
+     * 16 to 19 are deliberately skipped. Each was already in use as a literal when
+     * this case was allocated — 16 and 17 by anti-spam signing, 18 by compliance
+     * log pseudonymisation, 19 by the auth extension's authorization-code hashing —
+     * and the registry follows the ids in the code rather than renumbering live
+     * subsystems, for the reason stated at the top of this file.
+     */
+    case ComplianceEvidenceChain = 20;
+
     /** Reserved range for third-party extensions: 64–127. */
 
     /** Reserved for testing only — never use in production. */

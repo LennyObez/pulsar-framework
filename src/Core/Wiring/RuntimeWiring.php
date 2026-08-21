@@ -6,6 +6,7 @@ namespace Pulsar\Core\Wiring;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Cache\Application\CacheManager;
@@ -70,6 +71,15 @@ final readonly class RuntimeWiring implements ServiceWiringInterface
 
         if ($container->has(AuthManagerInterface::class)) {
             $registry->registerResettable(AuthManagerInterface::class);
+        }
+
+        // The holder authentication publishes the request's SecurityContext
+        // into. A resident worker reuses one key for every request it serves, so
+        // a publication left behind is the NEXT caller's identity — and the
+        // model binding layer authorizes against exactly this. AuthWiring runs
+        // long before this one, so the binding already exists when it should.
+        if ($container->has(AuthenticationState::class)) {
+            $registry->registerResettable(AuthenticationState::class);
         }
 
         // The session manager is a singleton, so on a persistent worker its

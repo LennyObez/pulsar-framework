@@ -36,8 +36,11 @@ use const JSON_THROW_ON_ERROR;
  * {@see SagaState} (a {@see StepResult} carries a non-serialisable Throwable
  * only on the failure path, which the orchestrator never persists).
  *
- * Schema is created via {@see installSchema()}, intended for a migration or
- * deploy step (kept here so the DDL lives next to the queries).
+ * The `saga_states` table is created by
+ * `src/Workflow/Database/Migration/20260821000001_create_saga_states_table.php` and by
+ * nothing else. This class reads and writes rows; it does not create the table it reads
+ * from, so a deployment can hand the request path a role holding INSERT, UPDATE and
+ * SELECT and grant CREATE only to the migration run (ADR-0043).
  */
 #[Internal(reason: 'Use SagaStateStorageInterface port')]
 final readonly class DatabaseSagaStateStorage implements SagaStateStorageInterface
@@ -47,18 +50,6 @@ final readonly class DatabaseSagaStateStorage implements SagaStateStorageInterfa
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
-
-    /**
-     * Idempotent DDL: create the `saga_states` table. Safe to re-run.
-     */
-    public function installSchema(): void
-    {
-        match ($this->connection->driver()) {
-            Driver::SQLite => $this->installSqliteSchema(),
-            Driver::MySQL => $this->installMysqlSchema(),
-            Driver::PostgreSQL => $this->installPostgresSchema(),
-        };
-    }
 
     /**
      * @throws JsonException
@@ -181,59 +172,5 @@ final readonly class DatabaseSagaStateStorage implements SagaStateStorageInterfa
                 $values,
             ),
         };
-    }
-
-    private function installSqliteSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                saga_id TEXT PRIMARY KEY,
-                definition_id TEXT NOT NULL,
-                definition_version INTEGER NOT NULL,
-                current_step_index INTEGER NOT NULL,
-                step_results TEXT NOT NULL,
-                status TEXT NOT NULL,
-                context TEXT NOT NULL,
-                started_at TEXT NOT NULL,
-                completed_at TEXT
-            )',
-            self::TABLE,
-        ));
-    }
-
-    private function installMysqlSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                saga_id VARCHAR(255) NOT NULL PRIMARY KEY,
-                definition_id VARCHAR(255) NOT NULL,
-                definition_version INT NOT NULL,
-                current_step_index INT NOT NULL,
-                step_results LONGTEXT NOT NULL,
-                status VARCHAR(32) NOT NULL,
-                context LONGTEXT NOT NULL,
-                started_at DATETIME NOT NULL,
-                completed_at DATETIME NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
-            self::TABLE,
-        ));
-    }
-
-    private function installPostgresSchema(): void
-    {
-        $this->connection->execute(sprintf(
-            'CREATE TABLE IF NOT EXISTS %s (
-                saga_id TEXT PRIMARY KEY,
-                definition_id TEXT NOT NULL,
-                definition_version INTEGER NOT NULL,
-                current_step_index INTEGER NOT NULL,
-                step_results TEXT NOT NULL,
-                status TEXT NOT NULL,
-                context TEXT NOT NULL,
-                started_at TIMESTAMP NOT NULL,
-                completed_at TIMESTAMP
-            )',
-            self::TABLE,
-        ));
     }
 }

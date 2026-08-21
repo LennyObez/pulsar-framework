@@ -108,7 +108,14 @@ if [ "$CORE_CHANGED" = true ]; then
   # would match `0000-template.md` and any unrelated `.md` under adr/,
   # so a typo fix on the template would satisfy the gate without an
   # actual ADR being written.
-  ADR_COUNT=$(echo "$CHANGED" | grep -E "^docs/adr/0*[1-9][0-9]*-.*\.md$" | grep -v "^docs/adr/0000-" | wc -l)
+  # `|| true` is load-bearing under `set -e`. grep exits 1 when it matches
+  # nothing, which is the ADR-less case this gate exists to report — so without
+  # it the assignment failed, the shell aborted at this line, and the refusal
+  # below (the exit code AND every word of guidance under it) was never reached.
+  # The build still went red, by accident and in silence: a developer saw a
+  # failed step with no output, and one `|| true` in the wrong place would have
+  # turned the same accident green.
+  ADR_COUNT=$(echo "$CHANGED" | grep -E "^docs/adr/0*[1-9][0-9]*-.*\.md$" | grep -v "^docs/adr/0000-" | wc -l || true)
   if [ "$ADR_COUNT" -eq 0 ]; then
     echo "FAIL: Core architecture paths changed without an ADR."
     echo ""

@@ -6,19 +6,10 @@ namespace Pulsar\Tests\Unit\Integrity;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Unit\Integrity\Support\RootFileScanner;
 
-use function array_diff;
-use function array_filter;
-use function array_map;
-use function array_values;
 use function dirname;
-use function escapeshellarg;
-use function exec;
-use function sort;
-use function str_contains;
-use function trim;
-
-use const DIRECTORY_SEPARATOR;
+use function implode;
 
 /**
  * The repository root has a finite, knowable content.
@@ -38,9 +29,6 @@ use const DIRECTORY_SEPARATOR;
  */
 final class RootCleanlinessTest extends TestCase
 {
-    /** Where a shell sends output it should not keep. */
-    private const string NULL_DEVICE = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
-
     /**
      * Everything permitted at the repository root, with why it is there.
      *
@@ -97,7 +85,7 @@ final class RootCleanlinessTest extends TestCase
 
         self::assertNotSame([], $tracked, 'no tracked root files found — the check would pass vacuously');
 
-        $unexpected = array_values(array_diff($tracked, self::ALLOWED));
+        $unexpected = RootFileScanner::unexpected($tracked, self::ALLOWED);
 
         self::assertSame(
             [],
@@ -120,7 +108,7 @@ final class RootCleanlinessTest extends TestCase
     public function theAllowlistHasNoStaleEntries(): void
     {
         $tracked = $this->trackedRootFiles();
-        $stale = array_values(array_diff(self::ALLOWED, $tracked));
+        $stale = RootFileScanner::stale($tracked, self::ALLOWED);
 
         self::assertSame(
             [],
@@ -135,33 +123,15 @@ final class RootCleanlinessTest extends TestCase
      */
     private function trackedRootFiles(): array
     {
-        $root = dirname(__DIR__, 3);
+        // The rule itself lives in RootFileScanner, which takes the root it reads. That
+        // is what lets RootCleanlinessRefusesTest hand it a repository with a stray file
+        // in it and observe the refusal, instead of only ever seeing this healthy one.
+        $tracked = new RootFileScanner(dirname(__DIR__, 3))->trackedRootFiles();
 
-        // git is the authority on what is *committed*, which is the thing being guarded.
-        // Reading the directory would also see generated artefacts and local scratch
-        // files, and failing on those would make the guard fire during ordinary work.
-        //
-        // Stderr goes to the null device, not into the list. Merged with `2>&1` it arrived
-        // as data — `fatal: not a git repository` counted as a root file, and the guard
-        // reported it as one, in every checkout without a repository.
-        exec(
-            'git -C ' . escapeshellarg($root) . ' ls-files --full-name 2>' . self::NULL_DEVICE,
-            $output,
-            $status,
-        );
-
-        if ($status !== 0) {
+        if ($tracked === null) {
             self::markTestSkipped('git cannot read this checkout, so tracked files cannot be listed');
         }
 
-        $files = array_values(array_filter(
-            $output,
-            static fn(string $line): bool => $line !== '' && !str_contains($line, '/'),
-        ));
-
-        $files = array_map(trim(...), $files);
-        sort($files);
-
-        return $files;
+        return $tracked;
     }
 }

@@ -28,8 +28,13 @@ use function strtolower;
  * so authorizers decide with a real principal
  * ({@see WebSocketConnection::userId()}) instead of an anonymous ephemeral
  * connection. Requests without an authenticated identity are denied with 401
- * before the authorizer runs — route this endpoint through the authentication
- * middleware. Public channels remain auth-free.
+ * before the authorizer runs. BroadcastWiring registers the route through the
+ * `auth` alias, which is what puts a resolved identity in that attribute; with
+ * the bare router sugar it used to use, the global AuthenticationMiddleware left
+ * AnonymousIdentity there and no caller could ever subscribe to a private
+ * channel. The route therefore requires authentication as a whole, including for
+ * public channels: a public channel needs no token from this endpoint anyway, so
+ * the only thing an anonymous caller lost was the ability to probe it.
  * @api
  */
 #[Api(since: '1.0.0')]

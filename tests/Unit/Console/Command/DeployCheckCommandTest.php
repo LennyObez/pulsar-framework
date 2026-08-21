@@ -116,11 +116,11 @@ final class DeployCheckCommandTest extends TestCase
         $input = new ArrayInput(options: ['env' => 'staging']);
         $exit = $command->execute($input, $this->output);
 
-        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertSame(ExitCode::Error->value, $exit);
         self::assertStringContainsString('Recommendations', $this->output->buffer);
         self::assertStringContainsString('Renew the SSL certificate', $this->output->buffer);
         self::assertStringContainsString('Free up disk space', $this->output->buffer);
-        self::assertStringContainsString('1 error(s) detected', $this->output->buffer);
+        self::assertStringContainsString('Deployment is refused', $this->output->errorBuffer);
     }
 
     #[Test]
@@ -144,7 +144,75 @@ final class DeployCheckCommandTest extends TestCase
         $exit = $command->execute($input, $this->output);
 
         self::assertSame(ExitCode::Error->value, $exit);
-        self::assertStringContainsString('error(s) detected', $this->output->errorBuffer);
+        self::assertStringContainsString('Deployment is refused', $this->output->errorBuffer);
+    }
+
+    /**
+     * The regression the env templates had been describing as already true.
+     *
+     * `.env.production.example` told operators that `debug-mode` and `master-key`
+     * "fail closed (severity `fail`), so the deploy is refused rather than warned
+     * about". Run with APP_DEBUG=true and PULSAR_MASTER_KEY empty, the command
+     * printed FAIL for both and exited 0, because refusing was gated behind a
+     * `--strict` nobody had been told to pass. An error-severity result refuses
+     * the deploy on its own now, and this pins it.
+     */
+    #[Test]
+    public function anErrorRefusesTheDeployWithoutStrict(): void
+    {
+        $report = new DeployReport(
+            results: [
+                CheckResult::error('debug-mode', 'Debug mode is enabled in production'),
+                CheckResult::error('master-key', 'PULSAR_MASTER_KEY is not set in production'),
+            ],
+            passed: 0,
+            warnings: 0,
+            errors: 2,
+            environment: 'production',
+        );
+
+        $runner = $this->createStub(DeployCheckRunnerInterface::class);
+        $runner->method('run')->willReturn($report);
+
+        $command = new DeployCheckCommand($runner);
+        $exit = $command->execute(new ArrayInput(), $this->output);
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('2 error-severity check(s) failed', $this->output->errorBuffer);
+    }
+
+    /**
+     * A warning alone still lets the deploy through, unless --strict is given.
+     * The flag now means the one stricter thing left, and means the same thing
+     * as it does on the Guardian console command.
+     */
+    #[Test]
+    public function strictModeRefusesOnWarningsAlone(): void
+    {
+        $report = new DeployReport(
+            results: [
+                CheckResult::warning('trusted-proxies', 'No trusted proxies configured'),
+            ],
+            passed: 0,
+            warnings: 1,
+            errors: 0,
+            environment: 'production',
+        );
+
+        $runner = $this->createStub(DeployCheckRunnerInterface::class);
+        $runner->method('run')->willReturn($report);
+
+        $command = new DeployCheckCommand($runner);
+
+        self::assertSame(
+            ExitCode::Success->value,
+            $command->execute(new ArrayInput(), $this->output),
+        );
+        self::assertSame(
+            ExitCode::Error->value,
+            $command->execute(new ArrayInput(options: ['strict' => true]), $this->output),
+        );
+        self::assertStringContainsString('treated as errors', $this->output->errorBuffer);
     }
 
     #[Test]
@@ -275,8 +343,19 @@ final class DeployCheckCommandTest extends TestCase
         $command->execute($input, $this->output);
     }
 
+    /**
+     * An error is never answered with advice about a flag.
+     *
+     * This test used to assert the opposite, in as many words: "Without strict,
+     * exits success but shows warning". The command printed "Use --strict to
+     * enforce a non-zero exit code" over a failed check and returned 0, and the
+     * test pinned that as the contract. Offering the caller a way to make the
+     * gate work, instead of making it work, is the softening itself; the only
+     * supported way to stop a check from refusing a deploy is its severity in
+     * config/deploy.php, where the decision is visible in a diff.
+     */
     #[Test]
-    public function errorsWithoutStrictModeShowWarning(): void
+    public function anErrorIsNotAnsweredWithAdviceAboutAFlag(): void
     {
         $report = new DeployReport(
             results: [
@@ -292,11 +371,10 @@ final class DeployCheckCommandTest extends TestCase
         $runner->method('run')->willReturn($report);
 
         $command = new DeployCheckCommand($runner);
-        $input = new ArrayInput();
-        $exit = $command->execute($input, $this->output);
+        $exit = $command->execute(new ArrayInput(), $this->output);
 
-        // Without strict, exits success but shows warning
-        self::assertSame(ExitCode::Success->value, $exit);
-        self::assertStringContainsString('--strict', $this->output->buffer);
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringNotContainsString('--strict', $this->output->buffer);
+        self::assertStringNotContainsString('--strict', $this->output->errorBuffer);
     }
 }

@@ -15,9 +15,12 @@ use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Http\Message\BodyTooLargeException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\ResponseEmitter;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
 use Throwable;
@@ -33,9 +36,24 @@ use function sprintf;
 /**
  * Minimal kernel for single-file applications.
  *
- * Provides inline route registration with sensible security defaults
- * (security headers, CSRF protection, rate limiting) even in the
- * simplest configuration. No config files or directory structure required.
+ * Inline route registration with no config files and no directory structure.
+ *
+ * ## What it does not provide, said plainly
+ *
+ * There is no authentication, no authorization, and no per-route access
+ * control here: no AuthManager, no middleware registry, no `auth` alias, and
+ * therefore nothing a route could name a permission to. Every route registered
+ * on a MicroKernel is reachable by any caller the application's own global
+ * middleware lets through, and each one is registered as
+ * {@see \Pulsar\Routing\RouteAccess::Public} to say so on the route rather
+ * than leave it to be discovered. An application that needs a guarded route
+ * needs the full {@see Kernel}.
+ *
+ * This docblock used to promise "sensible security defaults (security headers,
+ * CSRF protection, rate limiting)". {@see MicroKernel::boot()} pipes exactly the
+ * middleware the caller passed to {@see MicroKernel::use()} and nothing else, so
+ * the promise described a pipeline that has never existed. A false claim about a
+ * control is worse than an absent control, because it is the reason nobody looks.
  *
  * ```php
  * $app = MicroKernel::create();
@@ -47,9 +65,15 @@ use function sprintf;
 #[Api(since: '1.0.0')]
 final class MicroKernel
 {
+    /** Recorded on every MicroKernel route; see the class docblock. */
+    private const string ACCESS_REASON = 'MicroKernel provides no authentication or per-route '
+        . 'authorization, so every route it registers is reachable by any caller the '
+        . 'application-supplied global middleware admits.';
+
     private readonly Container $container;
     private readonly Router $router;
     private readonly MiddlewarePipeline $pipeline;
+    private readonly RouteAccessRegistrar $routes;
     /** @var list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>> */
     private array $globalMiddleware = [];
     private bool $booted = false;
@@ -59,6 +83,11 @@ final class MicroKernel
         $this->container = new Container();
         $this->router = new Router();
         $this->pipeline = new MiddlewarePipeline($this->container);
+        // A registry of its own, permanently empty: MicroKernel publishes no
+        // middleware aliases, so RouteAccessRegistrar::authenticated() could
+        // never find a guard here and would refuse to register a route that
+        // claimed one. Public is the only declaration this kernel can honestly make.
+        $this->routes = new RouteAccessRegistrar($this->router, new MiddlewareRegistry());
 
         $this->container->instance(ContainerInterface::class, $this->container);
         $this->container->instance(Router::class, $this->router);
@@ -78,7 +107,7 @@ final class MicroKernel
      */
     public function get(string $path, mixed $handler, ?string $name = null): self
     {
-        $this->router->get($path, $handler, $name);
+        $this->routes->publicRoute([Method::GET], $path, $handler, $name, self::ACCESS_REASON);
 
         return $this;
     }
@@ -89,7 +118,7 @@ final class MicroKernel
      */
     public function post(string $path, mixed $handler, ?string $name = null): self
     {
-        $this->router->post($path, $handler, $name);
+        $this->routes->publicRoute([Method::POST], $path, $handler, $name, self::ACCESS_REASON);
 
         return $this;
     }
@@ -100,7 +129,7 @@ final class MicroKernel
      */
     public function put(string $path, mixed $handler, ?string $name = null): self
     {
-        $this->router->put($path, $handler, $name);
+        $this->routes->publicRoute([Method::PUT], $path, $handler, $name, self::ACCESS_REASON);
 
         return $this;
     }
@@ -111,7 +140,7 @@ final class MicroKernel
      */
     public function patch(string $path, mixed $handler, ?string $name = null): self
     {
-        $this->router->patch($path, $handler, $name);
+        $this->routes->publicRoute([Method::PATCH], $path, $handler, $name, self::ACCESS_REASON);
 
         return $this;
     }
@@ -122,7 +151,7 @@ final class MicroKernel
      */
     public function delete(string $path, mixed $handler, ?string $name = null): self
     {
-        $this->router->delete($path, $handler, $name);
+        $this->routes->publicRoute([Method::DELETE], $path, $handler, $name, self::ACCESS_REASON);
 
         return $this;
     }

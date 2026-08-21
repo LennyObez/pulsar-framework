@@ -13,7 +13,9 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
+use Pulsar\Core\Boot\CachedRouteReconstructor;
 use Pulsar\Core\Kernel;
+use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
@@ -254,6 +256,73 @@ final class CachedBootTest extends TestCase
             $configManager->repository()->get(AppConfig::class)->name,
             'the cached config, not the on-disk file, must be the source',
         );
+    }
+
+    /**
+     * `optimize --strict` locks the router to the cached table, and the boot
+     * that follows runs every wiring — which registers the same routes again.
+     * With the lock refusing all of them, `I18nWiring` (third in the boot order)
+     * threw `RoutingException::routerLocked()` and no deployment that had run
+     * `optimize --strict` could start.
+     *
+     * The whole path is exercised here rather than any part of it: a real
+     * FrameworkCache warmed strict from a real cold boot's route table, then a
+     * second Kernel booting from it. `productionBootHitsTheCacheAfterWarm`
+     * warms non-strict, so it never locked the router and never saw this.
+     */
+    #[Test]
+    public function aStrictWarmedCacheStillBoots(): void
+    {
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $this->writeMinimalConfigs($configPath);
+
+        // i18n activates I18nWiring, which registers the translation-bundle
+        // route unconditionally — the registration the lock used to refuse.
+        file_put_contents(
+            $configPath . DIRECTORY_SEPARATOR . 'i18n.php',
+            "<?php\nreturn ['default_locale' => 'en', 'supported_locales' => ['en'], 'fallback_locales' => ['en'], 'regulated' => false];\n",
+        );
+
+        $key = bin2hex(random_bytes(32));
+        $this->withEnv('PULSAR_MASTER_KEY', $key);
+        $this->withEnv('CACHE_ENCRYPT', null);
+        $this->withEnv('APP_ENV', 'local');
+
+        // What `optimize` does: cold-boot, then cache the router's own table.
+        $sourceRouter = new Router();
+        $sourceManager = new ConfigManager(configPath: $configPath);
+        new Kernel(router: $sourceRouter, configManager: $sourceManager)->boot();
+
+        self::assertNotNull(
+            $sourceRouter->getByName('api.i18n.locale'),
+            'the fixture must contain a wiring-registered route, or it proves nothing',
+        );
+
+        new FrameworkCache($this->basePath, MasterKey::fromHex($key), new HmacService())->warm(
+            $sourceManager->repository(),
+            $sourceRouter->routes,
+            [],
+            'local',
+            true,
+            CachedRouteReconstructor::forCache($sourceRouter->explicitBindings),
+        );
+
+        $router = new Router();
+        $kernel = new Kernel(router: $router, configManager: new ConfigManager(configPath: $configPath));
+
+        $kernel->boot();
+
+        self::assertTrue($kernel->booted);
+        self::assertTrue($router->locked, 'a strict cache must still lock the router');
+
+        $profile = $kernel->bootProfile();
+        self::assertNotNull($profile);
+        self::assertTrue($profile->cacheHit, 'the strict cache must actually have been loaded');
+
+        // The replayed registrations must leave the cached table as the cache
+        // stated it, not append a second copy of every route.
+        self::assertCount($sourceRouter->count(), $router->routes());
+        self::assertNotNull($router->getByName('api.i18n.locale'));
     }
 
     #[Test]

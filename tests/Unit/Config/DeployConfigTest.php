@@ -113,12 +113,13 @@ final class DeployConfigTest extends TestCase
     }
 
     #[Test]
-    public function defaultChecksIncludeAllFourteenEntries(): void
+    public function defaultChecksIncludeAllFifteenEntries(): void
     {
         $config = new DeployConfig();
 
-        self::assertCount(14, $config->checks);
+        self::assertCount(15, $config->checks);
         self::assertArrayHasKey('debug-mode', $config->checks);
+        self::assertArrayHasKey('master-key', $config->checks);
         self::assertArrayHasKey('opcache', $config->checks);
         self::assertArrayHasKey('jit', $config->checks);
         self::assertArrayHasKey('cache-settings', $config->checks);
@@ -195,8 +196,12 @@ final class DeployConfigTest extends TestCase
     {
         $config = DeployConfig::fromArray([], $this->environment);
 
-        self::assertCount(14, $config->checks);
+        self::assertCount(15, $config->checks);
         self::assertSame('fail', $config->checkConfig('debug-mode')['severity']);
+        // 'fail', not 'warn': with no master key there is no encryption at rest,
+        // no session encryption and no keyed audit chain, and nothing else in the
+        // boot raises an error about it.
+        self::assertSame('fail', $config->checkConfig('master-key')['severity']);
     }
 
     /**

@@ -11,6 +11,11 @@ use Pulsar\Console\Command\DocsCommand;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
+use ReflectionClassConstant;
+
+use function dirname;
+use function is_file;
+use function is_string;
 
 #[CoversClass(DocsCommand::class)]
 final class DocsCommandTest extends TestCase
@@ -68,6 +73,37 @@ final class DocsCommandTest extends TestCase
         // May succeed or fail depending on whether the docs file exists at cwd
         // But the command should at least recognize the topic
         self::assertStringNotContainsString('Unknown topic', $output->errorBuffer);
+    }
+
+    /**
+     * Every topic must name a file that exists.
+     *
+     * The `compliance` topic pointed at docs/compliance-matrix.md, which has
+     * never existed in this repository, so `pulsar docs compliance` reported
+     * "file not found" to every reader who asked for it. Asserting the whole map
+     * rather than that one entry is the point: the defect was a path nobody
+     * checked, and checking one path leaves the next one unchecked.
+     */
+    #[Test]
+    public function every_documented_topic_names_a_file_that_exists(): void
+    {
+        $root = dirname(__DIR__, 4);
+
+        /** @var mixed $topics */
+        $topics = new ReflectionClassConstant(DocsCommand::class, 'TOPIC_MAP')->getValue();
+
+        self::assertIsArray($topics);
+        self::assertNotEmpty($topics);
+
+        /** @var mixed $relativePath */
+        foreach ($topics as $topic => $relativePath) {
+            self::assertIsString($relativePath);
+            self::assertTrue(
+                is_file($root . '/' . $relativePath),
+                'Documentation topic "' . (is_string($topic) ? $topic : '?')
+                    . '" points at ' . $relativePath . ', which does not exist.',
+            );
+        }
     }
 
     #[Test]

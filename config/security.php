@@ -268,6 +268,30 @@ return [
                 ],
             ],
             'super_roles' => ['admin'],
+
+            /*
+             * Authorization decisions the audit sink may hold.
+             *
+             * Every grant and every refusal the Gate reaches is recorded. The
+             * HMAC-chained write costs an order of magnitude more than the
+             * decision itself, so it is not done inside the decision: decisions
+             * are captured as they are reached and written at the next drain
+             * point -- when the kernel terminates, after the response has gone
+             * out; when a queue job ends; or when the sink is destroyed, which
+             * covers a console command and a process that never terminates
+             * cleanly through the kernel.
+             *
+             * This number is the memory ceiling behind those, not a batch size.
+             * A unit of work that reaches it is one no drain point emptied, and
+             * the sink says so at `critical` before chaining entries one at a
+             * time to stay inside it.
+             *
+             * Set to 1 to write each decision through as it is reached. That is
+             * the right answer for a deployment that cannot lose the decisions
+             * of a request a hard process death interrupts, and it puts the
+             * chained write back inside every authorization check.
+             */
+            'decision_audit_buffer' => 1024,
         ],
     ],
 

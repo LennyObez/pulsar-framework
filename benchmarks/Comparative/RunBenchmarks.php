@@ -93,7 +93,7 @@ $asBaselineDocument = static function (array $results): array {
     return $document;
 };
 
-$options = getopt('', ['baseline:', 'update-baseline', 'threshold:']);
+$options = getopt('', ['baseline:', 'update-baseline', 'threshold:', 'iterations:', 'warmup:']);
 
 if ($options === false) {
     fwrite(STDERR, "Could not parse command-line options.\n");
@@ -105,10 +105,17 @@ $baselinePath = $stringOption($options, 'baseline', __DIR__ . '/../../tools/php/
 $updateBaseline = isset($options['update-baseline']);
 $threshold = (float) $stringOption($options, 'threshold', '5.0');
 
-// Run benchmarks in-process and collect results as JSON
+// Run benchmarks in-process and collect results as JSON.
+//
+// The sample size is an option rather than a constant for one reason: a gate has
+// to be exercised to be believed, and at the CI sample this script takes about
+// two and a half minutes, which is more than any test can spend proving that a
+// regression still fails the build. PulsarBench has carried the same two options
+// since it was written; they are only forwarded here. CI passes neither and gets
+// the sizes below, so what runs on a pull request is unchanged.
 $bench = new PulsarBench(
-    iterations: 5000,
-    warmup: 200,
+    iterations: max(1, (int) $stringOption($options, 'iterations', '5000')),
+    warmup: max(0, (int) $stringOption($options, 'warmup', '200')),
     jsonOutput: true,
 );
 

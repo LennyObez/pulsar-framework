@@ -68,23 +68,6 @@ final class ApiException extends RuntimeException
     }
 
     /**
-     * A domain entity was returned directly from a controller without transformation.
-     */
-    #[NoDiscard]
-    public static function entitySerializationBanned(string $entityClass, string $correlationId): self
-    {
-        return new self(
-            sprintf(
-                'Entity "%s" returned directly from controller without API resource transformation (correlation: %s). '
-                . 'Wrap the entity in an ApiResource subclass.',
-                $entityClass,
-                $correlationId,
-            ),
-            500,
-        );
-    }
-
-    /**
      * A resource class is missing the #[ApiResource] attribute.
      */
     #[NoDiscard]

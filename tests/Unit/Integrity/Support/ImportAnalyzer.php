@@ -42,6 +42,40 @@ final class ImportAnalyzer
      */
     public static function extractReferences(string $filePath): array
     {
+        return self::collectReferences($filePath, ['Pulsar\\']);
+    }
+
+    /**
+     * Extract references to any of the given root namespaces.
+     *
+     * This exists because the competitor-framework rule could not fire. It scanned the
+     * output of {@see extractReferences()}, which discards every name that is not
+     * `Pulsar\*` — so `Symfony\`, `Illuminate\` and the other ten forbidden prefixes
+     * were filtered out one step before the rule looked for them. The assertion was
+     * green over an empty list from the day it was written, on the same evidence as the
+     * gates this repository's audit found: code existed, therefore the control was
+     * reported as implemented.
+     *
+     * The rule's own docblock names the incident it was written after — Symfony's
+     * Filesystem used in production without a composer `require`, which would fatal on
+     * `composer install --no-dev`. Nothing here would have seen it.
+     *
+     * @param list<string> $prefixes Root namespaces to keep, each ending in a separator
+     *
+     * @return list<string>
+     */
+    public static function extractReferencesWithPrefix(string $filePath, array $prefixes): array
+    {
+        return self::collectReferences($filePath, $prefixes);
+    }
+
+    /**
+     * @param list<string> $prefixes
+     *
+     * @return list<string>
+     */
+    private static function collectReferences(string $filePath, array $prefixes): array
+    {
         $code = file_get_contents($filePath);
         if ($code === false) {
             return [];
@@ -81,7 +115,7 @@ final class ImportAnalyzer
             // Fully-qualified name token (PHP 8.0+): \Pulsar\Foo\Bar
             if (is_array($token) && $token[0] === T_NAME_FULLY_QUALIFIED) {
                 $name = ltrim($token[1], '\\');
-                if (str_starts_with($name, 'Pulsar\\')) {
+                if (self::matchesAny($name, $prefixes)) {
                     $references[] = $name;
                 }
 
@@ -102,7 +136,7 @@ final class ImportAnalyzer
                         $useMap[$localName] = $fqcn;
                     }
 
-                    if (str_starts_with($fqcn, 'Pulsar\\')) {
+                    if (self::matchesAny($fqcn, $prefixes)) {
                         $references[] = $fqcn;
                     }
                 }
@@ -116,7 +150,7 @@ final class ImportAnalyzer
                 $first = $segments[0] ?? '';
                 if ($first !== '' && isset($useMap[$first])) {
                     $resolved = $useMap[$first] . substr($token[1], strlen($first));
-                    if (str_starts_with($resolved, 'Pulsar\\')) {
+                    if (self::matchesAny($resolved, $prefixes)) {
                         $references[] = $resolved;
                     }
                 }
@@ -125,6 +159,20 @@ final class ImportAnalyzer
         }
 
         return array_values(array_unique($references));
+    }
+
+    /**
+     * @param list<string> $prefixes
+     */
+    private static function matchesAny(string $name, array $prefixes): bool
+    {
+        foreach ($prefixes as $prefix) {
+            if (str_starts_with($name, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

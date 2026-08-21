@@ -52,8 +52,17 @@ final class CacheManifest
      * a newer deployment may have written fields this build cannot interpret,
      * and silently coercing them would produce a structurally valid but
      * semantically wrong manifest. Kept in sync with FrameworkCache.
+     *
+     * Version 2 changed what `routes.cache.bin` holds: a
+     * {@see CachedRouteTable} carrying the route table AND the `Router::model()`
+     * declarations that qualify it, where version 1 held a bare
+     * `list<CachedRoute>`. A version-1 payload read by this build would produce
+     * a route table with no declarations — which is indistinguishable, at the
+     * point of reading, from an application that declares none. Refusing the
+     * older manifest turns that into a cold boot, where the route files run and
+     * the declarations are made for real.
      */
-    public const int SCHEMA_VERSION = 1;
+    public const int SCHEMA_VERSION = 2;
 
     /**
      * @param int $schemaVersion Manifest schema version

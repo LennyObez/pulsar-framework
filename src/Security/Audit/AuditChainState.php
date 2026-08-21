@@ -22,6 +22,14 @@ use Pulsar\Api\Api;
  * `AuditChainStateAware::chainState()`; sinks that do not implement it
  * keep the nullable-only semantics for backwards compatibility and
  * lose the tamper-evidence guarantee.
+ *
+ * The framework keeps two tamper-evident chains — this one and the
+ * compliance evidence chain — and they share this enum rather than
+ * each defining their own three cases. See
+ * {@see \Pulsar\Compliance\Evidence\EvidenceChainStateAware}: the
+ * question a chain asks its store before resuming is the same question
+ * in both places, and two enums would eventually give it two answers.
+ * The wording below says "sink"; read it as "sink or evidence store".
  * @api
  */
 #[Api(since: '1.0.0')]

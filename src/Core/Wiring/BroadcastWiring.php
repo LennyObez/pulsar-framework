@@ -13,8 +13,10 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\OptionalBinding;
 use Pulsar\Core\Wiring\Contract\WiringContract;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 use Pulsar\WebSocket\BroadcastManagerInterface as WebSocketBroadcastManagerInterface;
 use Pulsar\WebSocket\ChannelAuthorizerInterface;
@@ -90,7 +92,32 @@ final readonly class BroadcastWiring implements ServiceWiringInterface, Describe
             /** @var ChannelAuthorizerInterface $authorizer */
             $authorizer = $container->get(ChannelAuthorizerInterface::class);
             $container->instance(BroadcastAuthController::class, new BroadcastAuthController($authorizer));
-            $router->post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate'], 'pulsar.broadcasting.auth');
+
+            // Authenticated, and until now it could not have been. The controller
+            // reads the `identity` request attribute and refuses private and
+            // presence channels to an unauthenticated caller -- but the only
+            // middleware that resolves a real identity into that attribute is the
+            // `auth` alias, and this registration never asked for it. The global
+            // AuthenticationMiddleware writes AnonymousIdentity there, so the check
+            // saw an anonymous identity on every request and no caller, however
+            // logged in, could subscribe to a private channel. The alias is what
+            // makes the controller's deny-by-default reachable at all.
+            //
+            // `_authenticated` rather than a named permission: which principals may
+            // join a given channel is the application's ChannelAuthorizer decision,
+            // taken per channel with the resolved identity. The route's own grant
+            // is only "prove who you are first".
+            $routes = new RouteAccessRegistrar($router, $middlewareRegistry, $logger);
+            $routes->authenticated(
+                [Method::POST],
+                '/broadcasting/auth',
+                [BroadcastAuthController::class, 'authenticate'],
+                'pulsar.broadcasting.auth',
+                [RouteAccessRegistrar::ANY_AUTHENTICATED],
+                'Mints subscription tokens for private and presence channels, which are '
+                    . 'identity-bound grants; the `auth` alias resolves the identity the '
+                    . 'controller and the ChannelAuthorizer then authorize per channel.',
+            );
         }
     }
 }

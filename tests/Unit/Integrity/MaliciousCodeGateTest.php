@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Integrity;
 use FilesystemIterator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Support\Gates\GuardsGate;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -41,6 +42,7 @@ use function unlink;
  * ever included, evaluated or executed by PHP — the gate reads the fixtures as
  * text, and the directory is removed in tearDown().
  */
+#[GuardsGate(gate: 'tools/security/assert-no-malicious-code.php', plants: 'a webshell and an obfuscated decoder-then-call loader in a scanned tree, and a scan that reached nothing being read as clean')]
 final class MaliciousCodeGateTest extends TestCase
 {
     private const string SCRIPT = __DIR__ . '/../../../tools/security/assert-no-malicious-code.php';

@@ -11,6 +11,7 @@ use Pulsar\Config\I18nConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Controller\Api\I18nController;
 use Pulsar\Http\Controller\Api\RegionApiController;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\I18n\Catalog\ChainCatalog;
@@ -51,6 +52,7 @@ use Pulsar\I18n\Region\RegionMiddleware;
 use Pulsar\I18n\Region\RegionResolver;
 use Pulsar\I18n\Translator;
 use Pulsar\I18n\TranslatorInterface;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 use Pulsar\View\Engine\TemplateLocaleHelper;
 
@@ -162,7 +164,51 @@ final readonly class I18nWiring implements ServiceWiringInterface
         // used to build its own compiler because it could not name one. That made
         // two, of which this registered instance was the unused half.
         $container->instance(TranslationCompilerInterface::class, $compiler);
-        $router->get('/api/i18n/{locale}', [I18nController::class, 'show'], 'api.i18n.locale');
+        $routes = new RouteAccessRegistrar($router, $middlewareRegistry);
+
+        // The controller is invokable and has never had a `show()` method. The
+        // route named one anyway, so `Kernel::invokeHandler()` reached
+        // `$controller->show(...)` and every caller of a route declared Public
+        // — the one route here that anonymous browsers are meant to reach — got
+        // a 500. Registering the class alone is the same shape the regions route
+        // below already uses, and it dispatches through `__invoke`.
+        //
+        // Built here rather than autowired so the domain list the reason claims
+        // is a decision of the composition root: the controller's constructor
+        // default happens to be the same two domains, and a default is not where
+        // a stated restriction on what leaves the deployment belongs.
+        $container->instance(
+            I18nController::class,
+            new I18nController($compiler, $config, ['core', 'messages']),
+        );
+
+        // Public: the translation bundle is what the browser needs to render the
+        // login form, so demanding a credential for it would be circular. The
+        // controller serves only locales listed in supported_locales and only the
+        // domains named here, so what leaves is the same UI copy already visible
+        // in the rendered page -- never an arbitrary catalogue key.
+        //
+        // `.json` is part of the path, and it is the only spelling three of the
+        // four statements about this endpoint ever used: the controller's
+        // docblock, the sibling regions route below, and — the one that decides
+        // it — resources/ui/js/language-selector.js, the client the framework
+        // ships for this endpoint, which fetches `/api/i18n/<locale>.json`.
+        // Registered without the suffix, that fetch put `en.json` in {locale}
+        // and the controller answered 400 to the framework's own browser code.
+        // The suffix also matches how the response asks to be treated: it is
+        // sent `immutable`, so a CDN or web server in front of the application
+        // sees an asset URL rather than an API call. {locale} still captures
+        // only what precedes the suffix, so a malformed locale reaches the
+        // controller and gets the controller's 400 rather than a router 404.
+        $routes->publicRoute(
+            [Method::GET],
+            '/api/i18n/{locale}.json',
+            I18nController::class,
+            'api.i18n.locale',
+            'Client-side translation bundle for anonymous visitors; restricted to the '
+                . 'configured supported_locales and to the core/messages domains, which are '
+                . 'the strings already rendered into the public page.',
+        );
 
         // Region system
         $countryRegistry = new CountryRegistry();
@@ -180,7 +226,17 @@ final readonly class I18nWiring implements ServiceWiringInterface
         $regionMiddleware = new RegionMiddleware($regionResolver, $currencyResolver);
         $middleware->pipe($regionMiddleware);
 
-        $router->get('/api/i18n/regions.json', RegionApiController::class, 'api.i18n.regions');
+        // Public: an ISO country list, identical for every visitor and needed by
+        // the region selector on unauthenticated forms. Nothing deployment-specific
+        // is in the response.
+        $routes->publicRoute(
+            [Method::GET],
+            '/api/i18n/regions.json',
+            RegionApiController::class,
+            'api.i18n.regions',
+            'Static ISO country registry for the region selector on anonymous forms; the '
+                . 'response is the same public reference data for every caller.',
+        );
 
         // Wire middleware based on URL strategy
         if ($config->urlStrategy === LocaleUrlStrategy::PathPrefix) {

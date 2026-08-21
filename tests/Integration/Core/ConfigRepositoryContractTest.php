@@ -41,6 +41,7 @@ use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Introspection\IntrospectionConfig;
 use Pulsar\Observability\Profiler\ProfilerConfig;
+use Pulsar\Routing\Binding\ModelBindingConfig;
 use Pulsar\Security\AntiSpam\AntiSpamConfigSet;
 use Pulsar\View\ViewConfig;
 
@@ -131,6 +132,10 @@ final class ConfigRepositoryContractTest extends TestCase
         'data_protection' => DataProtectionConfig::class,
         'domains' => DomainConfig::class,
         'introspection' => IntrospectionConfig::class,
+        // Published by ModelBindingWiring and read back by two enforcement
+        // points that must never disagree: the binding middleware at the HTTP
+        // edge and the ORM's resolver before it builds SQL.
+        'model_binding' => ModelBindingConfig::class,
         // One file, several typed sub-sections → one AntiSpamConfigSet DTO in the
         // repository (see AntiSpamConfigSet); AntiSpamWiring distributes the parts.
         'anti-spam' => AntiSpamConfigSet::class,

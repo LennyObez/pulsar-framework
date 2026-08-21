@@ -16,6 +16,7 @@ use Pulsar\Event\EventMetadata;
 use Pulsar\Event\Internal\Outbox\DatabaseOutboxPort;
 use Pulsar\Event\Internal\Outbox\OutboxRelay;
 use Pulsar\Saga\Port\IntegrationEventBusPort;
+use Pulsar\Tests\Support\FrameworkSchema;
 use RuntimeException;
 
 #[CoversClass(OutboxRelay::class)]
@@ -33,8 +34,10 @@ final class OutboxRelayTest extends TestCase
             password: null,
         );
 
+        // outbox_events comes from its migration, run as a file (ADR-0043).
+        FrameworkSchema::up($connection, FrameworkSchema::OUTBOX_EVENTS);
+
         $this->outbox = new DatabaseOutboxPort($connection);
-        $this->outbox->installSchema();
     }
 
     #[Test]

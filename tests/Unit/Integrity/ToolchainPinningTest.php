@@ -4,23 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity;
 
-use DOMDocument;
-use LibXMLError;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\Version;
+use Pulsar\Tests\Unit\Integrity\Support\ToolchainPinScanner;
 use Pulsar\Tooling\Support\JsonDocument;
 
-use function array_map;
 use function dirname;
-use function glob;
-use function libxml_clear_errors;
-use function libxml_get_errors;
-use function libxml_use_internal_errors;
-use function preg_match;
-use function preg_match_all;
-use function preg_quote;
-use function trim;
+use function implode;
 use function version_compare;
 
 /**
@@ -40,34 +31,21 @@ final class ToolchainPinningTest extends TestCase
     #[Test]
     public function thePinFilesExistAndCarryAnExactVersion(): void
     {
-        foreach (['.php-version', '.nvmrc'] as $file) {
-            $path = $this->root() . '/' . $file;
+        $problems = $this->scanner()->pinsThatAreNotPatchExact();
 
-            self::assertFileExists($path, "$file is the single source of truth for its runtime");
-
-            $version = trim((string) file_get_contents($path));
-
-            self::assertMatchesRegularExpression(
-                '/^\d+\.\d+\.\d+$/',
-                $version,
-                "$file must pin a patch-exact version: a minor line lets CI and a laptop "
-                . 'run different builds while both look correctly configured.',
-            );
-        }
+        self::assertSame(
+            [],
+            $problems,
+            "A pin file is the single source of truth for its runtime, and must name a\n"
+            . "patch-exact version: a minor line lets CI and a laptop run different builds\n"
+            . "while both look correctly configured.\n  " . implode("\n  ", $problems),
+        );
     }
 
     #[Test]
     public function noWorkflowHardcodesARuntimeVersion(): void
     {
-        $offenders = [];
-
-        foreach ($this->workflows() as $path => $yaml) {
-            if (preg_match_all('/^\s*(php|node)-version:\s*\S+/m', $yaml, $matches) >= 1) {
-                foreach ($matches[0] as $line) {
-                    $offenders[] = basename($path) . ': ' . trim($line);
-                }
-            }
-        }
+        $offenders = $this->scanner()->hardcodedRuntimeVersions();
 
         self::assertSame(
             [],
@@ -80,17 +58,13 @@ final class ToolchainPinningTest extends TestCase
     #[Test]
     public function everyWorkflowThatSetsUpARuntimeReadsThePinFile(): void
     {
-        $missing = [];
+        self::assertNotSame(
+            [],
+            $this->scanner()->workflows(),
+            'no workflows found — the check would pass vacuously',
+        );
 
-        foreach ($this->workflows() as $path => $yaml) {
-            if (str_contains($yaml, 'shivammathur/setup-php') && !str_contains($yaml, 'php-version-file')) {
-                $missing[] = basename($path) . ' sets up PHP without reading .php-version';
-            }
-
-            if (str_contains($yaml, 'actions/setup-node') && !str_contains($yaml, 'node-version-file')) {
-                $missing[] = basename($path) . ' sets up Node without reading .nvmrc';
-            }
-        }
+        $missing = $this->scanner()->workflowsIgnoringThePins();
 
         self::assertSame([], $missing, implode("\n  ", $missing));
     }
@@ -102,18 +76,17 @@ final class ToolchainPinningTest extends TestCase
     #[Test]
     public function thePinnedPhpSatisfiesTheComposerConstraint(): void
     {
-        $pinned = trim((string) file_get_contents($this->root() . '/.php-version'));
+        $pinned = $this->scanner()->pinned('.php-version');
         $constraint = JsonDocument::fromFile($this->root() . '/composer.json')
             ->child('require')
             ->string('php');
 
-        self::assertSame(
-            1,
-            preg_match('/^>=\s*(\d+\.\d+\.\d+)$/', $constraint, $matches),
+        $required = ToolchainPinScanner::constraintFloor($constraint);
+
+        self::assertNotNull(
+            $required,
             "This check understands a `>=x.y.z` constraint; composer.json now says '$constraint'.",
         );
-
-        $required = $matches[1] ?? '';
 
         self::assertTrue(
             version_compare($pinned, $required, '>='),
@@ -132,14 +105,11 @@ final class ToolchainPinningTest extends TestCase
     #[Test]
     public function theDeclaredTestSchemaTracksTheInstalledPhpunit(): void
     {
-        $config = (string) file_get_contents($this->configPath());
-        $series = Version::series();
-
-        self::assertMatchesRegularExpression(
-            '#schema\.phpunit\.de/' . preg_quote($series, '#') . '/phpunit\.xsd#',
-            $config,
+        self::assertSame(
+            Version::series(),
+            ToolchainPinScanner::declaredSchemaSeries($this->configPath()),
             'tools/php/phpunit.xml declares a schema for a different PHPUnit than the '
-            . "$series that composer installed.",
+            . Version::series() . ' that composer installed.',
         );
     }
 
@@ -159,21 +129,9 @@ final class ToolchainPinningTest extends TestCase
 
         self::assertFileExists($schema, 'the installed PHPUnit ships no schema to validate against');
 
-        $previous = libxml_use_internal_errors(true);
+        $problems = ToolchainPinScanner::schemaViolations($this->configPath(), $schema);
 
-        $document = new DOMDocument();
-        $document->load($this->configPath());
-        $valid = $document->schemaValidate($schema);
-
-        $problems = array_map(
-            static fn(LibXMLError $error): string => 'line ' . $error->line . ': ' . trim($error->message),
-            libxml_get_errors(),
-        );
-
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-
-        self::assertTrue($valid, "tools/php/phpunit.xml is invalid:\n  " . implode("\n  ", $problems));
+        self::assertSame([], $problems, "tools/php/phpunit.xml is invalid:\n  " . implode("\n  ", $problems));
     }
 
     private function configPath(): string
@@ -182,20 +140,14 @@ final class ToolchainPinningTest extends TestCase
     }
 
     /**
-     * @return array<string, string>
+     * The rules themselves live in ToolchainPinScanner, which takes the root it reads.
+     * That is what lets ToolchainPinningRefusesTest assemble a checkout whose pins have
+     * drifted and watch each rule refuse it — an observation a scan wired to this
+     * checkout could never produce, because this checkout is correctly pinned.
      */
-    private function workflows(): array
+    private function scanner(): ToolchainPinScanner
     {
-        $files = glob($this->root() . '/.github/workflows/*.yml') ?: [];
-        $yamls = [];
-
-        foreach ($files as $file) {
-            $yamls[$file] = (string) file_get_contents($file);
-        }
-
-        self::assertNotSame([], $yamls, 'no workflows found — the check would pass vacuously');
-
-        return $yamls;
+        return new ToolchainPinScanner($this->root());
     }
 
     private function root(): string

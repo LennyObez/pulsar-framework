@@ -11,6 +11,7 @@ use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Message\Response;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -19,6 +20,7 @@ use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Diagnostics\DiagnosticsAuthGuard;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 
 #[Internal]
@@ -72,7 +74,7 @@ final readonly class MetricsWiring implements ServiceWiringInterface
                 : new DiagnosticsAuthGuard(self::resolveOperatorToken($configManager->environment()));
             $container->instance(DiagnosticsAuthGuard::class, $guard);
 
-            $router->get($endpoint, static function (ServerRequestInterface $request) use ($registry, $guard): Response {
+            $exporterHandler = static function (ServerRequestInterface $request) use ($registry, $guard): Response {
                 if (!$guard->isAuthorized($request)) {
                     return Response::text(
                         'Metrics endpoint requires Bearer token from PULSAR_DIAGNOSTICS_TOKEN.',
@@ -86,7 +88,22 @@ final readonly class MetricsWiring implements ServiceWiringInterface
                     headers: ['Content-Type' => 'text/plain; version=0.0.4; charset=utf-8'],
                     body: $exporter->export(),
                 );
-            });
+            };
+
+            // Operator-only, enforced by the guard inside the handler above rather
+            // than by a middleware: a Prometheus scraper carries a Bearer token, not
+            // a session, and the endpoint must refuse identically whatever pipeline
+            // this deployment composed.
+            $routes = new RouteAccessRegistrar($router, $middlewareRegistry);
+            $routes->operatorRoute(
+                [Method::GET],
+                $endpoint,
+                $exporterHandler,
+                'pulsar.metrics.export',
+                'OpenMetrics exposition of every request count, latency histogram and error '
+                    . 'fingerprint in the process; DiagnosticsAuthGuard requires the '
+                    . 'PULSAR_DIAGNOSTICS_TOKEN Bearer token and refuses every request when unset.',
+            );
         }
     }
 

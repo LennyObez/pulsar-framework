@@ -11,7 +11,7 @@ use Pulsar\Http\Controller\AssetController;
 use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Routing\Route;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 
 use function is_dir;
@@ -46,24 +46,34 @@ final readonly class AssetWiring implements ServiceWiringInterface
 
         $container->instance(AssetController::class, new AssetController());
 
-        // /ui/{path} -> framework UI assets (CSS, fonts, JS)
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: '/ui/{path}',
-            handler: [AssetController::class, 'ui'],
-            name: 'pulsar.assets.ui',
+        $routes = new RouteAccessRegistrar($router, $middlewareRegistry);
+
+        // Public, and it could not be anything else: these are the stylesheets and
+        // fonts a browser fetches while rendering the login page, before any
+        // session exists. AssetController serves only files resolving inside the
+        // two roots below (realpath containment, no dotfiles), so the grant is
+        // "read the design system", not "read the filesystem".
+        $routes->publicRoute(
+            [Method::GET],
+            '/ui/{path}',
+            [AssetController::class, 'ui'],
+            'pulsar.assets.ui',
+            'Framework design-system assets fetched by unauthenticated browsers while '
+                . 'rendering any page; AssetController confines reads to resources/ui.',
             constraints: ['path' => '.+'],
-        ));
+        );
 
         // /cms/assets/{path} -> CMS extension CSS
         if (is_dir(AssetController::cmsAssetRoot())) {
-            $router->add(new Route(
-                methods: [Method::GET, Method::HEAD],
-                path: '/cms/assets/{path}',
-                handler: [AssetController::class, 'cms'],
-                name: 'pulsar.assets.cms',
+            $routes->publicRoute(
+                [Method::GET],
+                '/cms/assets/{path}',
+                [AssetController::class, 'cms'],
+                'pulsar.assets.cms',
+                'CMS stylesheets fetched by unauthenticated browsers rendering public '
+                    . 'pages; AssetController confines reads to the CMS styles root.',
                 constraints: ['path' => '.+'],
-            ));
+            );
         }
     }
 }

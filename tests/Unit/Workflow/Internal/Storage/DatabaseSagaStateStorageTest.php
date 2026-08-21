@@ -13,6 +13,7 @@ use Pulsar\Database\PdoConnection;
 use Pulsar\Saga\SagaState;
 use Pulsar\Saga\SagaStatus;
 use Pulsar\Saga\Step\StepResult;
+use Pulsar\Tests\Support\FrameworkSchema;
 use Pulsar\Workflow\Internal\Storage\DatabaseSagaStateStorage;
 
 #[CoversClass(DatabaseSagaStateStorage::class)]
@@ -31,8 +32,12 @@ final class DatabaseSagaStateStorageTest extends TestCase
             password: null,
         );
 
+        // The table comes from the migration that owns it, run as a file. The storage
+        // no longer carries DDL of its own (ADR-0043), so this is the only definition
+        // of saga_states there is — and it is the one a deploy applies.
+        FrameworkSchema::up($this->connection, FrameworkSchema::SAGA_STATES);
+
         $this->storage = new DatabaseSagaStateStorage($this->connection);
-        $this->storage->installSchema();
     }
 
     #[Test]

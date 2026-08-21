@@ -8,19 +8,38 @@ use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Cache\CachedBinding;
 use Pulsar\Cache\CachedRoute;
+use Pulsar\Cache\CachedRouteTable;
 use Pulsar\Cache\CacheIntegrity;
 use Pulsar\Cache\RouteCache;
 use Pulsar\Cache\RouteHandler;
 use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Http\Method;
+use Pulsar\Routing\Binding\BindingScope;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\HmacService;
 
 #[CoversClass(RouteCache::class)]
 #[CoversClass(RouteHandler::class)]
+#[CoversClass(CachedRouteTable::class)]
 final class RouteCacheTest extends TestCase
 {
+    /**
+     * The deserialization allowlist a real boot derives from the payload.
+     *
+     * @var list<class-string>
+     */
+    private const array ALLOWED = [
+        CachedRouteTable::class,
+        CachedRoute::class,
+        RouteHandler::class,
+        RouteHandlerType::class,
+        Method::class,
+        CachedBinding::class,
+        BindingScope::class,
+    ];
+
     private string $hmacKey;
     private CacheIntegrity $integrity;
     private RouteCache $routeCache;
@@ -45,23 +64,18 @@ final class RouteCacheTest extends TestCase
     {
         $route = Route::get('/test', 'App\\Controllers\\HomeController', 'home');
 
-        $result = $this->routeCache->write($this->tempDir, [$route], false);
+        $result = $this->routeCache->write($this->tempDir, [$route], false, []);
 
         self::assertSame(1, $result['cached']);
         self::assertSame(0, $result['skipped']);
 
-        $loaded = $this->routeCache->load($this->tempDir, [
-            CachedRoute::class,
-            RouteHandler::class,
-            RouteHandlerType::class,
-            Method::class,
-        ]);
+        $loaded = $this->routeCache->load($this->tempDir, self::ALLOWED);
 
         self::assertNotNull($loaded);
-        self::assertCount(1, $loaded);
-        self::assertSame(RouteHandlerType::Invokable, $loaded[0]->handler->type);
-        self::assertSame('App\\Controllers\\HomeController', $loaded[0]->handler->resolvable);
-        self::assertNull($loaded[0]->handler->method);
+        self::assertCount(1, $loaded->routes);
+        self::assertSame(RouteHandlerType::Invokable, $loaded->routes[0]->handler->type);
+        self::assertSame('App\\Controllers\\HomeController', $loaded->routes[0]->handler->resolvable);
+        self::assertNull($loaded->routes[0]->handler->method);
     }
 
     #[Test]
@@ -74,23 +88,18 @@ final class RouteCacheTest extends TestCase
             name: 'users.store',
         );
 
-        $result = $this->routeCache->write($this->tempDir, [$route], false);
+        $result = $this->routeCache->write($this->tempDir, [$route], false, []);
 
         self::assertSame(1, $result['cached']);
         self::assertSame(0, $result['skipped']);
 
-        $loaded = $this->routeCache->load($this->tempDir, [
-            CachedRoute::class,
-            RouteHandler::class,
-            RouteHandlerType::class,
-            Method::class,
-        ]);
+        $loaded = $this->routeCache->load($this->tempDir, self::ALLOWED);
 
         self::assertNotNull($loaded);
-        self::assertCount(1, $loaded);
-        self::assertSame(RouteHandlerType::Method, $loaded[0]->handler->type);
-        self::assertSame('App\\Controllers\\UserController', $loaded[0]->handler->resolvable);
-        self::assertSame('store', $loaded[0]->handler->method);
+        self::assertCount(1, $loaded->routes);
+        self::assertSame(RouteHandlerType::Method, $loaded->routes[0]->handler->type);
+        self::assertSame('App\\Controllers\\UserController', $loaded->routes[0]->handler->resolvable);
+        self::assertSame('store', $loaded->routes[0]->handler->method);
     }
 
     #[Test]
@@ -100,7 +109,7 @@ final class RouteCacheTest extends TestCase
             return 'hello';
         });
 
-        $result = $this->routeCache->write($this->tempDir, [$route], false);
+        $result = $this->routeCache->write($this->tempDir, [$route], false, []);
 
         self::assertSame(0, $result['cached']);
         self::assertSame(1, $result['skipped']);
@@ -121,37 +130,32 @@ final class RouteCacheTest extends TestCase
             Route::post('/api/data', 'App\\Handlers\\DataHandler', 'api.data'),
         ];
 
-        $result = $this->routeCache->write($this->tempDir, $routes, false);
+        $result = $this->routeCache->write($this->tempDir, $routes, false, []);
 
         self::assertSame(3, $result['cached']);
         self::assertSame(0, $result['skipped']);
 
-        $loaded = $this->routeCache->load($this->tempDir, [
-            CachedRoute::class,
-            RouteHandler::class,
-            RouteHandlerType::class,
-            Method::class,
-        ]);
+        $loaded = $this->routeCache->load($this->tempDir, self::ALLOWED);
 
         self::assertNotNull($loaded);
-        self::assertCount(3, $loaded);
+        self::assertCount(3, $loaded->routes);
 
         // First route
-        self::assertSame('/home', $loaded[0]->path);
-        self::assertSame('home', $loaded[0]->name);
-        self::assertSame(RouteHandlerType::Invokable, $loaded[0]->handler->type);
-        self::assertContains(Method::GET, $loaded[0]->methods);
-        self::assertContains(Method::HEAD, $loaded[0]->methods);
+        self::assertSame('/home', $loaded->routes[0]->path);
+        self::assertSame('home', $loaded->routes[0]->name);
+        self::assertSame(RouteHandlerType::Invokable, $loaded->routes[0]->handler->type);
+        self::assertContains(Method::GET, $loaded->routes[0]->methods);
+        self::assertContains(Method::HEAD, $loaded->routes[0]->methods);
 
         // Second route
-        self::assertSame('/users/{id}', $loaded[1]->path);
-        self::assertSame('users.show', $loaded[1]->name);
-        self::assertSame(RouteHandlerType::Method, $loaded[1]->handler->type);
-        self::assertSame('show', $loaded[1]->handler->method);
+        self::assertSame('/users/{id}', $loaded->routes[1]->path);
+        self::assertSame('users.show', $loaded->routes[1]->name);
+        self::assertSame(RouteHandlerType::Method, $loaded->routes[1]->handler->type);
+        self::assertSame('show', $loaded->routes[1]->handler->method);
 
         // Third route
-        self::assertSame('/api/data', $loaded[2]->path);
-        self::assertSame('api.data', $loaded[2]->name);
+        self::assertSame('/api/data', $loaded->routes[2]->path);
+        self::assertSame('api.data', $loaded->routes[2]->name);
     }
 
     #[Test]
@@ -168,19 +172,14 @@ final class RouteCacheTest extends TestCase
             host: 'api.example.com',
         );
 
-        $this->routeCache->write($this->tempDir, [$route], false);
+        $this->routeCache->write($this->tempDir, [$route], false, []);
 
-        $loaded = $this->routeCache->load($this->tempDir, [
-            CachedRoute::class,
-            RouteHandler::class,
-            RouteHandlerType::class,
-            Method::class,
-        ]);
+        $loaded = $this->routeCache->load($this->tempDir, self::ALLOWED);
 
         self::assertNotNull($loaded);
-        self::assertCount(1, $loaded);
+        self::assertCount(1, $loaded->routes);
 
-        $cached = $loaded[0];
+        $cached = $loaded->routes[0];
         self::assertSame('/products/{id}/{slug}', $cached->path);
         self::assertSame('products.show', $cached->name);
         self::assertSame('api.example.com', $cached->host);
@@ -234,7 +233,7 @@ final class RouteCacheTest extends TestCase
             Route::get('/another-closure', Closure::fromCallable(static fn(): string => 'another')),
         ];
 
-        $result = $this->routeCache->write($this->tempDir, $routes, false);
+        $result = $this->routeCache->write($this->tempDir, $routes, false, []);
 
         self::assertSame(2, $result['cached']);
         self::assertSame(2, $result['skipped']);
@@ -257,6 +256,113 @@ final class RouteCacheTest extends TestCase
     {
         self::assertSame('invokable', RouteHandlerType::Invokable->value);
         self::assertSame('method', RouteHandlerType::Method->value);
+    }
+
+    #[Test]
+    public function bindingDeclarationsRoundTripWithTheRoutesTheyQualify(): void
+    {
+        // The declarations are the half of the route table that used to be left
+        // behind. `Router::model()` runs from the project route files, which a
+        // cached-route boot skips — so a cache that stored the routes without
+        // them served an application whose scope declarations had gone.
+        $bindings = [
+            new CachedBinding('setting', RouteCacheSetting::class, null, BindingScope::Root, null),
+            new CachedBinding('post', RouteCachePost::class, null, BindingScope::Contained, 'posts'),
+            new CachedBinding('user', RouteCacheUser::class, RouteCacheUserResolver::class, BindingScope::Path, null),
+        ];
+
+        $result = $this->routeCache->write(
+            $this->tempDir,
+            [Route::get('/users/{user}/settings/{setting}', 'App\\Controllers\\SettingController', 'settings.show')],
+            false,
+            $bindings,
+        );
+
+        self::assertSame(1, $result['cached']);
+
+        $loaded = $this->routeCache->load($this->tempDir, self::ALLOWED);
+
+        self::assertNotNull($loaded);
+        self::assertCount(1, $loaded->routes);
+        self::assertCount(3, $loaded->bindings);
+
+        self::assertSame('setting', $loaded->bindings[0]->parameter);
+        self::assertSame(BindingScope::Root, $loaded->bindings[0]->scope);
+        self::assertNull($loaded->bindings[0]->parentRelation);
+
+        self::assertSame(BindingScope::Contained, $loaded->bindings[1]->scope);
+        self::assertSame('posts', $loaded->bindings[1]->parentRelation);
+
+        // The per-parameter resolver rides on the same declaration and is lost
+        // with it, so it is part of the round trip rather than an extra.
+        self::assertSame(RouteCacheUserResolver::class, $loaded->bindings[2]->resolverClass);
+        self::assertSame(BindingScope::Path, $loaded->bindings[2]->scope);
+    }
+
+    #[Test]
+    public function anEmptyDeclarationListIsPreservedRatherThanInvented(): void
+    {
+        $this->routeCache->write(
+            $this->tempDir,
+            [Route::get('/home', 'App\\Controllers\\HomeController', 'home')],
+            false,
+            [],
+        );
+
+        $loaded = $this->routeCache->load($this->tempDir, self::ALLOWED);
+
+        self::assertNotNull($loaded);
+        self::assertSame([], $loaded->bindings);
+    }
+
+    #[Test]
+    public function aBareRouteListPayloadIsRefusedRatherThanReadAsDeclaringNothing(): void
+    {
+        // The shape a previous build wrote: `list<CachedRoute>`, with nowhere to
+        // put a declaration. Read as-is it is indistinguishable from an
+        // application that declares none, which is the whole defect. Refusing it
+        // makes the boot cold, and a cold boot reads the route files where the
+        // declarations are actually made.
+        $legacy = [
+            new CachedRoute(
+                methods: [Method::GET],
+                path: '/home',
+                handler: new RouteHandler(RouteHandlerType::Invokable, 'App\\Controllers\\HomeController'),
+            ),
+        ];
+
+        $this->integrity->writeEnvelope(
+            $this->tempDir . DIRECTORY_SEPARATOR . RouteCache::FILENAME,
+            serialize($legacy),
+            false,
+        );
+
+        self::assertNull($this->routeCache->load($this->tempDir, self::ALLOWED));
+    }
+
+    #[Test]
+    public function aPayloadWhoseClassesFellOutsideTheAllowlistIsRefused(): void
+    {
+        // unserialize() does not reject a disallowed class — it substitutes
+        // __PHP_Incomplete_Class, which satisfies every `array` type hint in the
+        // payload and fails much later, somewhere with no cold boot to fall back
+        // to. The shape is therefore checked element by element.
+        $this->routeCache->write(
+            $this->tempDir,
+            [Route::get('/home', 'App\\Controllers\\HomeController', 'home')],
+            false,
+            [new CachedBinding('setting', RouteCacheSetting::class, null, BindingScope::Root, null)],
+        );
+
+        $withoutBindingClasses = [
+            CachedRouteTable::class,
+            CachedRoute::class,
+            RouteHandler::class,
+            RouteHandlerType::class,
+            Method::class,
+        ];
+
+        self::assertNull($this->routeCache->load($this->tempDir, $withoutBindingClasses));
     }
 
     private function removeDirectory(string $dir): void
@@ -285,3 +391,21 @@ final class RouteCacheTest extends TestCase
         rmdir($dir);
     }
 }
+
+/**
+ * Stand-ins for the entities and the per-parameter resolver a declaration
+ * names. Real classes, because ExplicitBinding takes class-strings and a cached
+ * declaration that named a class nobody could load would be a different defect.
+ *
+ * @internal
+ */
+final class RouteCacheUser {}
+
+/** @internal */
+final class RouteCacheSetting {}
+
+/** @internal */
+final class RouteCachePost {}
+
+/** @internal */
+final class RouteCacheUserResolver {}

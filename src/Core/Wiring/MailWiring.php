@@ -17,6 +17,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Http\Factory\RequestFactory;
 use Pulsar\Http\Factory\StreamFactory;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\TrustedProxy;
@@ -42,6 +43,7 @@ use Pulsar\Mail\Webhook\WebhookHandler;
 use Pulsar\Mail\Webhook\WebhookHandlerInterface;
 use Pulsar\Mail\Webhook\WebhookVerifierInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 
 #[Internal]
@@ -121,7 +123,7 @@ final readonly class MailWiring implements ServiceWiringInterface
             $container->instance(PhiScrubberInterface::class, $phiScrubber);
         }
 
-        $this->wireWebhooks($container, $mailConfig, $router, $auditLogger, $logger);
+        $this->wireWebhooks($container, $mailConfig, $router, $middlewareRegistry, $auditLogger, $logger);
     }
 
     /**
@@ -159,6 +161,7 @@ final readonly class MailWiring implements ServiceWiringInterface
         ContainerInterface $container,
         MailConfig $mailConfig,
         Router $router,
+        MiddlewareRegistry $middlewareRegistry,
         ?AuditLoggerInterface $auditLogger,
         ?LoggerInterface $logger,
     ): void {
@@ -212,7 +215,24 @@ final readonly class MailWiring implements ServiceWiringInterface
         );
         $container->instance(MailWebhookController::class, $controller);
 
-        $router->post($config->path, [MailWebhookController::class, 'handle'], 'pulsar.mail.webhook');
+        // Signature-authenticated, not identity-authenticated. The caller is
+        // Mailgun/Postmark/SendGrid/SES, which has no account here and never will;
+        // what proves it is the provider HMAC over the body, checked by the
+        // verifier built above, plus the optional source-IP allowlist. Naming a
+        // permission would be a lie, and requiring a session would break every
+        // delivery notification: bounce and complaint events are how a regulated
+        // deployment learns a statement never arrived.
+        $routes = new RouteAccessRegistrar($router, $middlewareRegistry);
+        $routes->signedRoute(
+            [Method::POST],
+            $config->path,
+            [MailWebhookController::class, 'handle'],
+            'pulsar.mail.webhook',
+            'Inbound provider webhook (bounces, complaints) from a party that holds no '
+                . 'identity here; WebhookHandler verifies the provider signature over the '
+                . 'body, enforces the replay window and de-duplicates by event id, and '
+                . 'MailWebhookController rejects any source outside the configured allowlist.',
+        );
     }
 
     private function buildWebhookVerifier(MailWebhookConfig $config): ?WebhookVerifierInterface

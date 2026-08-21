@@ -23,6 +23,7 @@ use Pulsar\Security\Posture\SecurityPostureException;
 use Pulsar\Security\Posture\SecurityPostureHealthCheck;
 use Pulsar\Security\Posture\SecurityPostureReport;
 use Pulsar\Security\Posture\SecurityPostureStatus;
+use Pulsar\Security\Posture\SecurityRuntimeBindings;
 
 use function array_filter;
 use function array_values;
@@ -35,7 +36,11 @@ use function sprintf;
  * Placed last so the degraded-feature detector sees the fully wired container:
  * a security control left inert by a missing binding (e.g. the captcha
  * single-use replay cache when TaggedCacheInterface is unbound) is reported as
- * a FAIL rather than failing silently. The report is bound for `security:check`
+ * a FAIL rather than failing silently. The same placement is what lets
+ * {@see SecurityRuntimeBindings::observe()} answer for the master key, the
+ * encryptor and the session encrypter: by now {@see SecurityWiring} has either
+ * built them or bound a {@see \Pulsar\Security\Crypto\MasterKeyFailure} saying
+ * why it could not. The report is bound for `security:check`
  * and the health endpoint. When enforcement is enabled (opt-in via
  * PULSAR_SECURITY_POSTURE_ENFORCE) and running in production, blocking items
  * abort boot loudly instead of letting the app start in a weakened state.
@@ -76,7 +81,14 @@ final readonly class SecurityPostureWiring implements ServiceWiringInterface
             static fn($feature): bool => $feature->security,
         ));
 
-        $check = new SecurityPostureCheck($securityConfig, $isProduction, $debugMode, $masterKey, $degradedSecurity);
+        // The items whose subject is a live service — master_key, session_encryption
+        // — are decided from this, not from SecurityConfig. Reading it here is what
+        // makes the placement of this wiring load-bearing rather than tidy: last in
+        // WiringList means SecurityWiring has already either built the crypto stack
+        // or recorded why it could not.
+        $bindings = SecurityRuntimeBindings::observe($container);
+
+        $check = new SecurityPostureCheck($securityConfig, $isProduction, $debugMode, $masterKey, $bindings, $degradedSecurity);
         $report = $check->evaluate();
         $postureConfig = SecurityPostureConfig::fromEnvironment($environment);
 

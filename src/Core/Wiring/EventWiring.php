@@ -93,8 +93,18 @@ final readonly class EventWiring implements ServiceWiringInterface
             /** @var ConnectionInterface $connection */
             $connection = $container->get(ConnectionInterface::class);
 
+            // No schema installation here. The outbox table is created by
+            // src/Event/Database/Migration/20260821000004_create_event_outbox_table.php,
+            // run as a deploy step, and this wiring only binds a reader/writer of it
+            // (ADR-0043). Booting used to call installSchema(), which meant every FPM
+            // child, worker and console command raced the same CREATE TABLE at start-up
+            // and the application's own role had to hold CREATE — so a code-execution
+            // finding on the request path became a schema-modification finding, and
+            // "who changed this schema, and when" had no answer but "the application,
+            // on its own authority". A table that is missing now fails loudly on first
+            // use, which is the deploy step nobody ran, rather than being conjured by
+            // whichever process booted first.
             $outbox = new DatabaseOutboxPort($connection);
-            $outbox->installSchema();
             $container->instance(DatabaseOutboxPort::class, $outbox);
             $container->instance(OutboxPort::class, $outbox);
 

@@ -8,6 +8,7 @@ use RuntimeException;
 
 use function fclose;
 use function is_resource;
+use function preg_match;
 use function proc_close;
 use function proc_open;
 use function sprintf;
@@ -87,7 +88,24 @@ final class MemoryProfileRunner
             ));
         }
 
-        $peakBytes = (int) trim($stdout ?: '0');
+        $reported = trim($stdout ?: '');
+
+        // A cast would turn "", "Warning: ..." or any other non-number into 0, and
+        // zero bytes is under every budget — so a scenario that printed a notice
+        // instead of a measurement, or printed nothing at all, would be certified
+        // as the most memory-efficient run ever recorded. The budget must be
+        // enforced against a measurement or against nothing, and "nothing" is a
+        // failure rather than a pass.
+        if (preg_match('/^\d+$/', $reported) !== 1) {
+            throw new RuntimeException(sprintf(
+                "Memory scenario '%s' reported no peak measurement; it printed %s. A budget cannot "
+                . 'be enforced against that, and reading it as zero bytes would pass every budget.',
+                $scenarioName,
+                $reported === '' ? '(nothing)' : '"' . $reported . '"',
+            ));
+        }
+
+        $peakBytes = (int) $reported;
 
         return [
             'peak_bytes' => $peakBytes,

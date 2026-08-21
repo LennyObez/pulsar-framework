@@ -2,7 +2,12 @@
  * Pulsar RUM (Real User Monitoring)
  *
  * Lightweight client-side performance monitoring that captures Core Web
- * Vitals and error telemetry. Sends data to the /api/rum/collect endpoint.
+ * Vitals and error telemetry. Posts batches to /_pulsar/rum/collect, the path
+ * DiagnosticsWiring registers -- it previously pointed at /api/rum/collect,
+ * which no router ever served, so every batch this script sent was a 404.
+ *
+ * Opt in by loading it from a layout: <script src="/ui/js/rum.js" defer></script>.
+ * The endpoint is same-origin only and registered in debug builds alone.
  *
  * Captured metrics:
  * - LCP (Largest Contentful Paint)
@@ -16,7 +21,7 @@
 (function () {
   'use strict';
 
-  var ENDPOINT = '/api/rum/collect';
+  var ENDPOINT = '/_pulsar/rum/collect';
   var BATCH_INTERVAL = 5000;
   var MAX_QUEUE = 50;
 

@@ -15,8 +15,11 @@ use Pulsar\Api\OpenApi\OpenApiWiring;
  * declared contracts). Order is significant — a wiring may depend on a binding
  * an earlier one provides — so this list IS the boot order.
  *
- * `AssetWiring` is deliberately absent: the kernel appends it conditionally
- * (only when not serving from a strict route cache), so it is not "always on".
+ * `AssetWiring` is absent because it is conditional on the assets being present
+ * on disk rather than on configuration, so the kernel appends it after this
+ * list. It is no longer conditional on the route cache: a strict-cached boot
+ * runs it like any other wiring and {@see \Pulsar\Routing\Router::add()} drops
+ * the re-registration of a route the cached table already holds.
  */
 #[Internal]
 final readonly class WiringList
@@ -56,10 +59,24 @@ final readonly class WiringList
             new AuthWiring(),
             new DatabaseWiring(),
             new TenancyWiring(),
+            // After AuthWiring (its default hook delegates to the Gate) and after
+            // TenancyWiring (bound models resolve inside the tenant scope), and
+            // before anything that could pipe route-aware middleware of its own.
+            // Nothing later in the list depends on it: the pipeline it composes
+            // is assembled at the END of boot, once extensions have registered a
+            // ModelResolverPort and the project route files have declared their
+            // explicit bindings.
+            new ModelBindingWiring(),
             new SagaWiring(),
             new WorkflowWiring(),
             new FeatureFlagWiring(),
             new SchedulerWiring(),
+            // Immediately after the scheduler, because it registers a job into the
+            // registry SchedulerWiring builds — and after SecurityWiring, which is
+            // where the purge orchestrator it schedules comes from. Retention was
+            // declared in config/data_protection.php and executed by nothing until
+            // this entry existed.
+            new DataRetentionWiring(),
             new ResilienceWiring(),
             new QueueWiring(),
             new CacheWiring(),
@@ -96,6 +113,22 @@ final readonly class WiringList
             // tamper-evidence, encryption actually active, data retention, breach
             // and consent), judging the fully wired container rather than config.
             new ComplianceVerificationWiring(),
+            // Last, and the position is load-bearing in one direction only. What it
+            // BINDS is inert AND unbuilt — a lazy catalog of control declarations,
+            // which carry no status, and an assessment function that holds no
+            // evidence — so the catalog could sit anywhere; it builds nothing until
+            // a report is asked for. What it must never do is GATHER, and the
+            // gatherer is therefore bound as a lazy closure resolved when a report
+            // is asked for. Gathering resolves TokenStoreInterface: run it during
+            // wiring and it resolves before DatabaseWiring (seventeenth) has built a
+            // connection, the container caches that answer for the process, and the
+            // report would truthfully record an InMemoryTokenStore the running
+            // application does not use — ADR-0041's ordering bug, re-created by the
+            // thing built to detect it. Registering here also puts it after
+            // SecurityPostureWiring and ComplianceVerificationWiring, whose report
+            // and runtime checks the gathered evidence reads, so the dependency is
+            // visible in this list rather than only in a docblock.
+            new ComplianceCatalogWiring(),
         ];
     }
 }

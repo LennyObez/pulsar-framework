@@ -53,6 +53,12 @@ use Pulsar\Security\Audit\AuditChainVerifier;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
+use Pulsar\Security\Compliance\Pseudonymization\FilePseudonymLookup;
+use Pulsar\Security\Compliance\Pseudonymization\ForgetService;
+use Pulsar\Security\Compliance\Pseudonymization\ForgetServiceInterface;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymizationService;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymizationServiceInterface;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymLookupInterface;
 use Pulsar\Security\Crypto\AesGcmCipherSuite;
 use Pulsar\Security\Crypto\CipherSuiteInterface;
 use Pulsar\Security\Crypto\CompositeKeyProvider;
@@ -66,6 +72,7 @@ use Pulsar\Security\Crypto\InMemoryTokenStore;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\MasterKeyFailure;
 use Pulsar\Security\Crypto\SodiumCipherSuite;
 use Pulsar\Security\Crypto\TokenizationService;
 use Pulsar\Security\Crypto\TokenizationServiceInterface;
@@ -74,6 +81,7 @@ use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Security\Incident\FileIncidentReporter;
 use Pulsar\Security\Incident\IncidentReporterInterface;
 use Pulsar\Security\Incident\InMemoryIncidentReporter;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
@@ -248,8 +256,16 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                     $container->instance(SessionEncryption::class, $sessionEncryption);
                 }
 
-                // Framework cache (skip if pre-boot already registered)
-                if (!$container->has(FrameworkCache::class)) {
+                // Framework cache (skip if pre-boot, or an application, already
+                // registered one). Both ids are tested: FrameworkCache is final,
+                // so an application supplying its own implementation of the
+                // published interface can only bind FrameworkCacheInterface, and
+                // a guard reading the concrete id alone stepped straight over
+                // that and replaced it.
+                if (
+                    !$container->has(FrameworkCache::class)
+                    && !$container->has(FrameworkCacheInterface::class)
+                ) {
                     $encrypt = $environment->get('CACHE_ENCRYPT') === 'true'
                         || $environment->get('CACHE_ENCRYPT') === '1';
                     $configPath = $configManager->configPath();
@@ -281,9 +297,14 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                         ? $container->get(LoggerInterface::class)
                         : null;
 
+                    $auditPath = WritablePathGuard::resolveState(
+                        $obsConfig->audit->logPath,
+                        'observability.audit.log_path',
+                    );
+
                     /** @var LoggerInterface|null $auditSinkLogger */
                     $auditSink = new AuditFileSink(
-                        WritablePathGuard::resolveState($obsConfig->audit->logPath, 'observability.audit.log_path'),
+                        $auditPath,
                         false,
                         $auditSinkLogger,
                     );
@@ -306,6 +327,69 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
 
                     $chainVerifier = new AuditChainVerifier($auditKeyRing);
                     $container->instance(AuditChainVerifier::class, $chainVerifier);
+
+                    // Pseudonymisation, and the erasure of what it records.
+                    //
+                    // Both classes have shipped since 1.0.0 and neither was ever
+                    // wired: `grep` found no `new PseudonymizationService` anywhere
+                    // outside its own test, so `PseudonymizationServiceInterface`
+                    // answered with nothing and GDPR Art 25 and ISO 27001 A.8.12 had
+                    // no subject to observe. The framework was shipping the primitive
+                    // and offering it to no one.
+                    //
+                    // Bound here, inside the audit block, because both dependencies
+                    // are real: the service seals each subject's salt with a derived
+                    // subkey (so it needs the encryptor), and both it and
+                    // ForgetService record what they did in the audit trail (so they
+                    // need a logger that persists). Without either, pseudonymisation
+                    // would be reversible by anyone holding the table, or erasure
+                    // would leave no evidence it happened — and a control evidenced
+                    // by nothing is the thing this whole subsystem exists to refuse.
+                    //
+                    // The table sits beside the audit trail for the reason the
+                    // incident register does, and goes through the same guard: it is
+                    // the re-identification table, and inside the document root it
+                    // would be served.
+                    $pseudonymLookup = new FilePseudonymLookup(
+                        dirname($auditPath) . DIRECTORY_SEPARATOR . 'pseudonyms.json',
+                    );
+                    $container->instance(PseudonymLookupInterface::class, $pseudonymLookup);
+                    $container->instance(FilePseudonymLookup::class, $pseudonymLookup);
+
+                    // The service itself is deferred, for the reason the token vault
+                    // above is: its constructor derives a subkey, and a KDF on every
+                    // boot of every application is a cost paid by requests that will
+                    // never pseudonymise anything. The lookup is not deferred because
+                    // constructing it is a string assignment — it touches the disk
+                    // only when something actually stores or reads a mapping.
+                    //
+                    // Deferring does not weaken the evidence: ComplianceCatalogWiring
+                    // resolves the contract through the container when the report runs
+                    // and records the class that answered, so a lazy binding and an
+                    // eager one produce the same observation.
+                    $container->singleton(
+                        PseudonymizationServiceInterface::class,
+                        static fn(): PseudonymizationServiceInterface => new PseudonymizationService(
+                            $masterKey,
+                            $pseudonymLookup,
+                            $encryptor,
+                            $auditLogger,
+                        ),
+                    );
+
+                    $container->singleton(
+                        PseudonymizationService::class,
+                        static function () use ($container): PseudonymizationService {
+                            /** @var PseudonymizationService $service */
+                            $service = $container->get(PseudonymizationServiceInterface::class);
+
+                            return $service;
+                        },
+                    );
+
+                    $forgetService = new ForgetService($pseudonymLookup, $auditLogger);
+                    $container->instance(ForgetServiceInterface::class, $forgetService);
+                    $container->instance(ForgetService::class, $forgetService);
                 }
                 // Secret vault: encrypted config secrets (API keys, credentials, DSN strings)
                 $configPath = $configManager->configPath();
@@ -314,11 +398,46 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                     $vault = SecretVault::create($masterKey, $vaultPath);
                     $container->instance(SecretVault::class, $vault);
                 }
-            } catch (SecurityException | SodiumException) {
-                // Master key is invalid or sodium operation failed: skip crypto/audit registration.
-                // Session, CSRF, and headers still work without it.
+            } catch (SecurityException | SodiumException $rejected) {
+                // A key was supplied and refused. Boot continues — session, CSRF and
+                // headers work without crypto, and killing the process would take a
+                // deployment offline over a control it may not use — but it continues
+                // LOUDLY. This block used to end at two local nulls, which is why
+                // `security:check` could print `[ok] master_key` and `[ok]
+                // session_encryption` over a process whose encryptor, session
+                // encrypter and audit logger were all unbound, writing sessions in
+                // cleartext.
+                //
+                // The failure is recorded twice on purpose, because the two channels
+                // answer different questions. The log line is the event: it happened,
+                // at this boot, for this reason. The bound MasterKeyFailure is the
+                // state: it is still true now, and it is what lets
+                // SecurityPostureCheck distinguish a deployment that never asked for
+                // cryptography from one that asked and was refused — the container is
+                // identical in both cases, and the meaning is opposite.
                 $masterKey = null;
                 $sessionEncryption = null;
+
+                $container->instance(MasterKeyFailure::class, new MasterKeyFailure($rejected->getMessage()));
+
+                if ($container->has(LoggerInterface::class)) {
+                    /** @var LoggerInterface $logger */
+                    $logger = $container->get(LoggerInterface::class);
+
+                    // `error`, not `warning`: unlike the posture items this is not a
+                    // configuration an operator may have chosen. A key was provided,
+                    // so cryptography was intended, and the application is now running
+                    // without it.
+                    $logger->error(
+                        sprintf(
+                            'PULSAR_MASTER_KEY was supplied and rejected (%s). Encryption, session '
+                                . 'encryption, tokenization and audit logging are unbound for this '
+                                . 'process; sessions are written in cleartext.',
+                            $rejected->getMessage(),
+                        ),
+                        ['category' => 'security', 'exception' => $rejected::class],
+                    );
+                }
             }
         }
 
@@ -488,11 +607,41 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         // bearer-token flows.
         $middleware->pipe($headersMiddleware);
 
-        // Incident Reporter: default to in-memory, override with FileIncidentReporter via config
+        // Incident Reporter. The default is the APPEND-ONLY FILE register, not the
+        // in-memory one, and the change is a correctness fix rather than a
+        // preference.
+        //
+        // What the previous default did: `InMemoryIncidentReporter` held the
+        // register in process memory, so every incident the threat-detection
+        // engine, the audit anomaly detector, the access-pattern monitor and the
+        // break-the-glass middleware recorded was gone at the end of the request
+        // that recorded it. Every regime that requires an incident register
+        // requires it to still exist when someone asks — GDPR Art 33 gives 72
+        // hours, NIS2 Art 23 gives 24 — and a register that empties on restart
+        // cannot evidence a deadline it cannot outlive. `compliance:report` said
+        // exactly that about nine controls across seven frameworks.
+        //
+        // The comment this replaces read "override with FileIncidentReporter via
+        // config", and no such config key existed anywhere in the tree. The
+        // override that DOES exist is the one this branch tests for: bind your own
+        // IncidentReporterInterface before SecurityWiring runs and it is left
+        // alone.
+        //
+        // The register lives beside the audit trail, in the directory
+        // config/observability.php `audit.log_path` names, because the two are read
+        // together during an incident and an operator who has already chosen a
+        // durable location for one has chosen it for both. It goes through
+        // WritablePathGuard for the same reason the audit sink does: a breach
+        // register written inside the document root is served to anyone who asks.
+        //
+        // In-memory remains the fallback for exactly one case — audit logging
+        // switched off, so there is no configured directory to sit beside — and it
+        // is the honest answer there: the deployment has asked for no durable
+        // security record at all.
         if (!$container->has(IncidentReporterInterface::class)) {
-            $incidentReporter = new InMemoryIncidentReporter();
+            $incidentReporter = $this->incidentRegister($configManager);
             $container->instance(IncidentReporterInterface::class, $incidentReporter);
-            $container->instance(InMemoryIncidentReporter::class, $incidentReporter);
+            $container->instance($incidentReporter::class, $incidentReporter);
         }
 
         // Consent Manager: default to in-memory, override with database-backed via config
@@ -565,6 +714,18 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                 logger: $purgeLogger,
             );
             $container->instance(DataPurgeOrchestrator::class, $orchestrator);
+
+            // …and under the CONTRACT, which it had never been bound under.
+            // DataPurgeOrchestrator implements DataPurgeInterface and was reachable
+            // only by its concrete class name, so `$container->get(DataPurgeInterface::class)`
+            // answered with nothing: a consumer following the framework's own
+            // constructor-injection rule got no erasure at all, and
+            // `compliance:report` reported "nothing in this deployment erases
+            // personal data on request or on schedule" for GDPR Art 17, CCPA
+            // 1798.105 and SOC 2 C1.2/CC6.5 while the orchestrator sat in the
+            // container beside them. Binding the class and not the contract is the
+            // same defect as binding nothing, one name over.
+            $container->instance(DataPurgeInterface::class, $orchestrator);
         }
 
         // Multi-domain / subdomain routing: zero-cost when no mappings configured.
@@ -780,5 +941,42 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         }
 
         return new CompositeKeyProvider($masterKey, $overrides);
+    }
+
+    /**
+     * The incident register this deployment will actually keep.
+     *
+     * Durable whenever the deployment keeps a durable security record at all,
+     * which is what `observability.audit.enabled` says. The register is written
+     * beside the audit trail rather than to a path of its own: the two are read
+     * together when an incident is investigated, and a second location to
+     * configure is a second location to get wrong.
+     *
+     * Falls back to the in-memory register only where audit logging is off. That
+     * is not a silent downgrade — the deployment has declared it keeps no durable
+     * security record, and `compliance:report` names the in-memory register in the
+     * evidence for every control that rests on it.
+     */
+    private function incidentRegister(ConfigManager $configManager): IncidentReporterInterface
+    {
+        $repository = $configManager->repository();
+
+        if (!$repository->has(ObservabilityConfig::class)) {
+            return new InMemoryIncidentReporter();
+        }
+
+        /** @var ObservabilityConfig $observability */
+        $observability = $repository->get(ObservabilityConfig::class);
+
+        if (!$observability->audit->enabled) {
+            return new InMemoryIncidentReporter();
+        }
+
+        $auditLog = WritablePathGuard::resolveState(
+            $observability->audit->logPath,
+            'observability.audit.log_path',
+        );
+
+        return new FileIncidentReporter(dirname($auditLog) . DIRECTORY_SEPARATOR . 'incidents.jsonl');
     }
 }

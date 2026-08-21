@@ -55,7 +55,15 @@ final class RoutesCacheCommand extends Command
         $encrypt = $input->hasOption('encrypt');
 
         try {
-            $result = $this->cache->write($this->cachePath, $routes, $encrypt);
+            // No binding declarations: this command is handed a RouterInterface,
+            // which exposes the route table and not `Router::$explicitBindings`.
+            // The omission is safe rather than lossy because the file it writes
+            // is never a boot input — the kernel loads routes only through
+            // FrameworkCache, which requires a signed manifest that this command
+            // does not write. `pulsar optimize` is the command that writes a
+            // loadable cache, and it writes the declarations with it. Anyone
+            // wiring this command into that path has to carry them here too.
+            $result = $this->cache->write($this->cachePath, $routes, $encrypt, []);
         } catch (Throwable $e) {
             $output->errorln(sprintf('Failed to cache routes: %s', $e->getMessage()));
 

@@ -24,6 +24,10 @@ final readonly class DeployConfig implements ReportsUnknownKeys
     /** Default check configuration used when no explicit config is provided. */
     private const array DEFAULT_CHECKS = [
         'debug-mode' => ['enabled' => true, 'severity' => 'fail'],
+        // 'fail', not 'warn': with no master key there is no encryption at rest,
+        // no session encryption and no audit HMAC chain, and nothing anywhere
+        // else in the boot raises an error about it.
+        'master-key' => ['enabled' => true, 'severity' => 'fail'],
         'opcache' => ['enabled' => true, 'severity' => 'fail'],
         'jit' => ['enabled' => true, 'severity' => 'warn'],
         'cache-settings' => ['enabled' => true, 'severity' => 'fail'],

@@ -15,11 +15,13 @@ use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\OptionalBinding;
 use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\Http\Client\HttpClientInterface;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\RateLimit\SlidingWindowRateLimiter;
 use Pulsar\Http\TrustedProxy;
 use Pulsar\I18n\TranslatorInterface;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AccountAgeGate;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
@@ -252,7 +254,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         if ($config->captchaEnabled) {
             if ($config->captchaProvider === 'managed') {
                 // Self-hosted managed challenge: no keys, no external service.
-                $managedVerifier = $this->wireManagedChallenge($container, $config, $logger, $router);
+                $managedVerifier = $this->wireManagedChallenge($container, $config, $logger, $router, $middlewareRegistry);
 
                 if ($managedVerifier !== null) {
                     $checks[] = $managedVerifier;
@@ -293,7 +295,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
 
         // 9. Behavioural signals (score-only, self-hosted). Opt-in.
         if ($config->behaviorEnabled) {
-            $checks[] = $this->wireBehavioralSignals($container, $config, $router);
+            $checks[] = $this->wireBehavioralSignals($container, $config, $router, $middlewareRegistry);
         }
 
         // Build the pipeline
@@ -551,6 +553,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         AntiSpamConfig $config,
         LoggerInterface $logger,
         Router $router,
+        MiddlewareRegistry $middlewareRegistry,
     ): ?ManagedChallengeVerifier {
         if (!$container->has(MasterKey::class)) {
             $logger->warning(
@@ -589,11 +592,22 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $container->instance(ManagedChallengeService::class, $service);
 
         // Same-origin asset routes keep the widget CSP `script-src 'self'` clean.
+        //
+        // All five routes in this wiring are public by necessity, not by omission:
+        // the managed challenge exists to tell a human from a bot BEFORE either has
+        // an account, so every one of them is fetched by a visitor with no session.
+        // Each serves a static, deployment-independent script -- no secret is in
+        // them, and the challenge they carry is unsolved and signed.
         $base = '/_pulsar/anti-spam';
         $container->instance(ManagedChallengeAssetController::class, new ManagedChallengeAssetController());
-        $router->get($base . '/managed-challenge.js', [ManagedChallengeAssetController::class, 'widget'], 'pulsar.anti_spam.mc.widget');
-        $router->get($base . '/managed-challenge.worker.js', [ManagedChallengeAssetController::class, 'worker'], 'pulsar.anti_spam.mc.worker');
-        $router->get($base . '/managed-challenge.pow.js', [ManagedChallengeAssetController::class, 'pow'], 'pulsar.anti_spam.mc.pow');
+
+        $routes = new RouteAccessRegistrar($router, $middlewareRegistry);
+        $assetReason = 'Anti-spam widget script served to anonymous visitors before any account '
+            . 'exists; static, identical for every caller, and carrying no secret.';
+
+        $routes->publicRoute([Method::GET], $base . '/managed-challenge.js', [ManagedChallengeAssetController::class, 'widget'], 'pulsar.anti_spam.mc.widget', $assetReason);
+        $routes->publicRoute([Method::GET], $base . '/managed-challenge.worker.js', [ManagedChallengeAssetController::class, 'worker'], 'pulsar.anti_spam.mc.worker', $assetReason);
+        $routes->publicRoute([Method::GET], $base . '/managed-challenge.pow.js', [ManagedChallengeAssetController::class, 'pow'], 'pulsar.anti_spam.mc.pow', $assetReason);
 
         // Same-origin refresh endpoint for the widget's silent re-mint. Reuses
         // the tagged cache (when bound) for a best-effort per-IP rate cap.
@@ -602,7 +616,15 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             ManagedChallengeRefreshController::class,
             new ManagedChallengeRefreshController($service, $cache),
         );
-        $router->get($refreshPath, [ManagedChallengeRefreshController::class, 'refresh'], 'pulsar.anti_spam.mc.refresh');
+        $routes->publicRoute(
+            [Method::GET],
+            $refreshPath,
+            [ManagedChallengeRefreshController::class, 'refresh'],
+            'pulsar.anti_spam.mc.refresh',
+            'Silent re-mint for a visitor still filling an anonymous form; issues only '
+                . 'public, unsolved challenges and is capped per IP per minute when a '
+                . 'tagged cache is bound.',
+        );
 
         $translator = null;
 
@@ -699,6 +721,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         ContainerInterface $container,
         AntiSpamConfig $config,
         Router $router,
+        MiddlewareRegistry $middlewareRegistry,
     ): BehavioralSignalsCheck {
         $scorer = $container->has(BehaviorScorerInterface::class)
             ? $container->get(BehaviorScorerInterface::class)
@@ -717,7 +740,16 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         /** @var ManagedChallengeAssetController $assetController */
         $container->instance(ManagedChallengeAssetController::class, $assetController);
         $scriptUrl = $base . '/behavior-collector.js';
-        $router->get($scriptUrl, [ManagedChallengeAssetController::class, 'behaviorCollector'], 'pulsar.anti_spam.behavior.collector');
+        // Public for the same reason as the challenge assets above: the collector
+        // has to run in the anonymous visitor's browser to produce a signal at all.
+        new RouteAccessRegistrar($router, $middlewareRegistry)->publicRoute(
+            [Method::GET],
+            $scriptUrl,
+            [ManagedChallengeAssetController::class, 'behaviorCollector'],
+            'pulsar.anti_spam.behavior.collector',
+            'Behavioural-signal collector script served to anonymous visitors before any '
+                . 'account exists; static, identical for every caller, and carrying no secret.',
+        );
 
         $renderer = new BehaviorCollectorRenderer($config->behaviorFieldName, $scriptUrl);
         $container->instance(BehaviorCollectorRenderer::class, $renderer);

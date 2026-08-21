@@ -7,8 +7,10 @@ namespace Pulsar\Core\Wiring;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\AuthManagerInterface;
+use Pulsar\Auth\Authorization\AuthorizationDecisionSinkInterface;
 use Pulsar\Auth\Authorization\Gate;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\InMemoryRoleRegistry;
@@ -17,15 +19,19 @@ use Pulsar\Auth\Authorization\RoleRegistryInterface;
 use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Guard\TokenGuard;
 use Pulsar\Auth\Guard\TokenResolverInterface;
+use Pulsar\Auth\Internal\Authorization\AuthorizationDecisionFlushListener;
+use Pulsar\Auth\Internal\Authorization\BufferedAuthorizationDecisionSink;
 use Pulsar\Auth\Internal\Persistence\DatabaseRecoveryCodeStore;
 use Pulsar\Auth\Internal\Persistence\DatabaseTotpReplayGuard;
 use Pulsar\Auth\Internal\Persistence\DatabaseTotpSecretStore;
 use Pulsar\Auth\Middleware\AuthenticationMiddleware;
 use Pulsar\Auth\Middleware\AuthorizationMiddleware;
+use Pulsar\Auth\Middleware\SensitiveOperationMiddleware;
 use Pulsar\Auth\Middleware\StepUpMiddleware;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\Password\PasswordHasher;
 use Pulsar\Auth\Password\PasswordHasherInterface;
+use Pulsar\Auth\Security\AccountTakeoverGuard;
 use Pulsar\Auth\TwoFactor\AuthEventCollectorInterface;
 use Pulsar\Auth\TwoFactor\InMemoryRecoveryCodeStore;
 use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
@@ -45,14 +51,21 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Core\Event\TerminateEvent;
 use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Event\ListenerProviderInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\TrustedProxy;
+use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Queue\Event\JobCompleted;
+use Pulsar\Queue\Event\JobFailed;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Session\SessionInterface;
+use Pulsar\Security\Session\SessionManager;
 use Random\Randomizer;
 
 #[Internal]
@@ -84,6 +97,7 @@ final readonly class AuthWiring implements ServiceWiringInterface
 
         // Session guard
         $session = null;
+        $sessionGuard = null;
         if ($container->has(SessionInterface::class)) {
             /** @var SessionInterface $session */
             $session = $container->get(SessionInterface::class);
@@ -115,12 +129,8 @@ final readonly class AuthWiring implements ServiceWiringInterface
         $container->instance(InMemoryRoleRegistry::class, $roleRegistry);
         $container->instance(RoleRegistryInterface::class, $roleRegistry);
 
-        // Gate
-        $gate = new Gate($roleRegistry, $authConfig->authorization->superRoles);
-        $container->instance(Gate::class, $gate);
-        $container->instance(GateInterface::class, $gate);
-
-        // Audit logger (resolve early; used by 2FA and middleware)
+        // Audit logger (resolve early; consumed by the Gate's decision sink, by
+        // 2FA and by the auth middleware)
         // Resolve interface for 2FA manager; concrete class for auth middleware
         $auditLoggerInterface = $container->has(AuditLoggerInterface::class)
             ? $container->get(AuditLoggerInterface::class)
@@ -138,6 +148,97 @@ final readonly class AuthWiring implements ServiceWiringInterface
             ? $container->get(LoggerInterface::class)
             : null;
         /** @var LoggerInterface|null $logger */
+
+        // Gate
+        //
+        // Gate::allows() hands every grant and every refusal to an
+        // AuthorizationDecisionSinkInterface, and records nothing when none is
+        // supplied — which is how this wiring built it until recently, so the
+        // one decision an assessor asks to see left no trace anywhere.
+        //
+        // The sink is deliberately not the application's EventDispatcher. That
+        // was the first attempt and it put every listener the application
+        // happens to have registered inside every authorization decision: one
+        // that throws turned a grant into a 500, one that is slow made every
+        // check slow, and one that asked the Gate a question re-entered the
+        // decision it was being told about. What runs inside a decision is now
+        // a wiring fact — this one collaborator — rather than whatever else the
+        // application subscribed to.
+        //
+        // An application that binds its own AuthorizationDecisionSinkInterface
+        // gets to keep it; otherwise the framework's buffered audit sink is
+        // built here, and only when an audit logger exists to write to. A sink
+        // with nowhere to write would be the same silence in a less obvious
+        // place.
+        $decisionSink = null;
+
+        if ($container->has(AuthorizationDecisionSinkInterface::class)) {
+            /** @var AuthorizationDecisionSinkInterface $decisionSink */
+            $decisionSink = $container->get(AuthorizationDecisionSinkInterface::class);
+        } elseif ($auditLoggerForTwoFactor !== null) {
+            $contextHolder = $container->has(RequestContextHolder::class)
+                ? $container->get(RequestContextHolder::class)
+                : null;
+            /** @var RequestContextHolder|null $contextHolder */
+
+            $bufferedSink = new BufferedAuthorizationDecisionSink(
+                auditLogger: $auditLoggerForTwoFactor,
+                contextHolder: $contextHolder,
+                logger: $logger,
+                capacity: $authConfig->authorization->decisionAuditBuffer,
+            );
+
+            $container->instance(BufferedAuthorizationDecisionSink::class, $bufferedSink);
+            $container->instance(AuthorizationDecisionSinkInterface::class, $bufferedSink);
+
+            // The buffer holds decisions so the HMAC-chained write stays off the
+            // authorization path; something has to empty it while the process is
+            // still alive, and every such point has to be outside a decision.
+            // Three are:
+            //
+            //  - Kernel::terminate() dispatches TerminateEvent after the
+            //    response has gone out, which covers a served request;
+            //  - Worker dispatches JobCompleted / JobFailed between jobs, which
+            //    covers the process a request never reaches.
+            //
+            // The sink's destructor covers the rest — a console command, and a
+            // runtime that never calls Kernel::terminate(). The buffer's
+            // capacity is a memory ceiling behind all of them and not a fourth
+            // drain point: reaching it means one of these should have run and
+            // did not.
+            //
+            // The listener is an invokable class rather than a closure because
+            // `pulsar optimize` compiles the listener map and a closure has no
+            // class and method to compile to. Registered as a closure, it took
+            // `optimize` down on every deployment that had an audit logger.
+            if ($container->has(ListenerProviderInterface::class)) {
+                /** @var ListenerProviderInterface $listenerProvider */
+                $listenerProvider = $container->get(ListenerProviderInterface::class);
+
+                $flushListener = new AuthorizationDecisionFlushListener($bufferedSink);
+
+                // Bound under its own class name because that is what the
+                // compiled map resolves through: CompiledListenerProvider calls
+                // container->get() on the compiled class, and a listener built
+                // by the container instead would hold a different sink.
+                $container->instance(AuthorizationDecisionFlushListener::class, $flushListener);
+
+                foreach ([TerminateEvent::class, JobCompleted::class, JobFailed::class] as $drainPoint) {
+                    $listenerProvider->addListener($drainPoint, $flushListener, 0, 'auth');
+                }
+            }
+
+            $decisionSink = $bufferedSink;
+        }
+
+        $gate = new Gate(
+            $roleRegistry,
+            $authConfig->authorization->superRoles,
+            $decisionSink,
+            $logger,
+        );
+        $container->instance(Gate::class, $gate);
+        $container->instance(GateInterface::class, $gate);
 
         // 2FA services
         if ($authConfig->twoFactor->enabled) {
@@ -358,7 +459,17 @@ final readonly class AuthWiring implements ServiceWiringInterface
         }
 
         // Middleware
-        $authenticationMiddleware = new AuthenticationMiddleware($authManager);
+        //
+        // The state holder is bound before the middleware that writes into it,
+        // and it is bound at all because two other layers read it: RuntimeWiring
+        // registers it for per-request reset, and ModelBindingWiring takes the
+        // caller from it rather than from a request attribute anything in the
+        // pipeline can write. One instance for the process, keyed per request
+        // inside — see AuthenticationState.
+        $authenticationState = new AuthenticationState();
+        $container->instance(AuthenticationState::class, $authenticationState);
+
+        $authenticationMiddleware = new AuthenticationMiddleware($authManager, $authenticationState);
         $container->instance(AuthenticationMiddleware::class, $authenticationMiddleware);
 
         $authContextHolder = $container->has(RequestContextHolder::class)
@@ -366,7 +477,24 @@ final readonly class AuthWiring implements ServiceWiringInterface
             : null;
 
         /** @var RequestContextHolder|null $authContextHolder */
-        $authorizationMiddleware = new AuthorizationMiddleware($gate, $auditLogger, $authContextHolder);
+
+        // The metrics registry is where an anonymous refusal is recorded, in
+        // place of the audit-chain write it used to make. MetricsWiring runs
+        // before this one, so the binding is final here; when metrics are
+        // disabled the counter is absent and the `debug` line is all that
+        // remains, which is a declared degraded feature rather than a silence.
+        $authMetrics = $container->has(MetricRegistry::class)
+            ? $container->get(MetricRegistry::class)
+            : null;
+        /** @var MetricRegistry|null $authMetrics */
+
+        $authorizationMiddleware = new AuthorizationMiddleware(
+            $gate,
+            $auditLogger,
+            $authContextHolder,
+            $authMetrics,
+            $logger,
+        );
         $container->instance(AuthorizationMiddleware::class, $authorizationMiddleware);
 
         $twoFactorMiddleware = new TwoFactorMiddleware();
@@ -380,6 +508,48 @@ final readonly class AuthWiring implements ServiceWiringInterface
             );
             $container->instance(StepUpMiddleware::class, $stepUpMiddleware);
             $middlewareRegistry->alias('step-up', $stepUpMiddleware);
+        }
+
+        // Account takeover guard, behind the `sensitive` alias.
+        //
+        // The guard needs three things a bare SessionInterface cannot give it:
+        // the session's request metadata to compare IP and device against, the
+        // SessionGuard that stamps when credentials were last presented, and a
+        // logger to escalate on. All three exist only when a session-backed
+        // guard was built above, so the alias is registered exactly when it can
+        // do its job — an alias that resolves to a middleware missing its
+        // dependencies would be the unreachable control this replaces.
+        $sessionManager = $container->has(SessionManager::class)
+            ? $container->get(SessionManager::class)
+            : null;
+        /** @var SessionManager|null $sessionManager */
+
+        if ($sessionGuard !== null && $sessionManager !== null && $logger !== null) {
+            $trustedProxy = $container->has(TrustedProxy::class)
+                ? $container->get(TrustedProxy::class)
+                : null;
+            /** @var TrustedProxy|null $trustedProxy */
+
+            // The proxy matters to correctness, not only to accuracy: behind a
+            // load balancer every request carries the balancer's REMOTE_ADDR,
+            // so without it the guard compares one constant against another and
+            // never sees an IP change at all.
+            $takeoverGuard = new AccountTakeoverGuard(
+                logger: $logger,
+                auditLogger: $auditLogger,
+                trustedProxy: $trustedProxy,
+            );
+            $container->instance(AccountTakeoverGuard::class, $takeoverGuard);
+
+            $sensitiveOperationMiddleware = new SensitiveOperationMiddleware(
+                $takeoverGuard,
+                $sessionGuard,
+                $sessionManager,
+                $auditLogger,
+                $logger,
+            );
+            $container->instance(SensitiveOperationMiddleware::class, $sensitiveOperationMiddleware);
+            $middlewareRegistry->alias('sensitive', $sensitiveOperationMiddleware);
         }
 
         // Register middleware aliases

@@ -43,7 +43,7 @@ final class CacheManifestTest extends TestCase
             hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
-            schemaVersion: 1,
+            schemaVersion: CacheManifest::SCHEMA_VERSION,
             frameworkVersion: '1.0.0-rc.2',
             appEnv: 'production',
             invalidationKey: hash('sha256', 'test-invalidation'),
@@ -53,7 +53,7 @@ final class CacheManifestTest extends TestCase
             encrypted: false,
         );
 
-        self::assertSame(1, $manifest->schemaVersion);
+        self::assertSame(CacheManifest::SCHEMA_VERSION, $manifest->schemaVersion);
         self::assertSame('1.0.0-rc.2', $manifest->frameworkVersion);
         self::assertSame('production', $manifest->appEnv);
         self::assertTrue($manifest->strict);
@@ -62,7 +62,7 @@ final class CacheManifestTest extends TestCase
         $loaded = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
 
         self::assertNotNull($loaded);
-        self::assertSame(1, $loaded->schemaVersion);
+        self::assertSame(CacheManifest::SCHEMA_VERSION, $loaded->schemaVersion);
         self::assertSame('1.0.0-rc.2', $loaded->frameworkVersion);
         self::assertSame('production', $loaded->appEnv);
         self::assertSame($manifest->invalidationKey, $loaded->invalidationKey);
@@ -90,7 +90,7 @@ final class CacheManifestTest extends TestCase
             hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
-            schemaVersion: 1,
+            schemaVersion: CacheManifest::SCHEMA_VERSION,
             frameworkVersion: '1.0.0',
             appEnv: 'production',
             invalidationKey: hash('sha256', 'test'),
@@ -120,7 +120,7 @@ final class CacheManifestTest extends TestCase
             hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
-            schemaVersion: 1,
+            schemaVersion: CacheManifest::SCHEMA_VERSION,
             frameworkVersion: '1.0.0',
             appEnv: 'production',
             invalidationKey: hash('sha256', 'test'),
@@ -215,7 +215,7 @@ final class CacheManifestTest extends TestCase
             hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
-            schemaVersion: 1,
+            schemaVersion: CacheManifest::SCHEMA_VERSION,
             frameworkVersion: '1.0.0',
             appEnv: 'production',
             invalidationKey: hash('sha256', 'test'),
@@ -256,7 +256,7 @@ final class CacheManifestTest extends TestCase
             hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
-            schemaVersion: 1,
+            schemaVersion: CacheManifest::SCHEMA_VERSION,
             frameworkVersion: '1.0.0-rc.2',
             appEnv: 'staging',
             invalidationKey: hash('sha256', 'test'),
@@ -277,7 +277,7 @@ final class CacheManifestTest extends TestCase
         self::assertArrayHasKey('caches', $array);
         self::assertArrayHasKey('strict', $array);
         self::assertArrayHasKey('encrypted', $array);
-        self::assertSame(1, $array['schema_version']);
+        self::assertSame(CacheManifest::SCHEMA_VERSION, $array['schema_version']);
         self::assertSame('staging', $array['app_env']);
         self::assertTrue($array['strict']);
         self::assertTrue($array['encrypted']);

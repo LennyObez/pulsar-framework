@@ -110,14 +110,17 @@ use Pulsar\Console\Command\DbFreshCommand;
 use Pulsar\Console\Command\DbInspectCommand;
 use Pulsar\Console\Command\DbSeedCommand;
 use Pulsar\Console\Command\ConfigReferenceCommand;
+use Psr\Container\ContainerExceptionInterface;
 use Pulsar\Console\Command\DebugConfigCommand;
 use Pulsar\Console\Command\DebugContainerCommand;
 use Pulsar\Console\Command\DebugRoutesCommand;
 use Pulsar\Console\Command\DebugWiringCommand;
+use Pulsar\Console\Command\DataPurgeCommand;
 use Pulsar\Console\Command\DoctorCommand;
 use Pulsar\Console\Command\ExtensionListCommand;
 use Pulsar\Console\Command\ExtensionValidateCommand;
 use Pulsar\Console\Command\HealthCheckCommand;
+use Pulsar\Console\Command\ComplianceReportCommand;
 use Pulsar\Console\Command\SecurityCheckCommand;
 use Pulsar\Console\Command\I18nExtractCommand;
 use Pulsar\Console\Command\I18nLintCommand;
@@ -176,10 +179,15 @@ use Pulsar\I18n\Locale\SlugRegistry;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Security\Posture\SecurityPostureReport;
+use Pulsar\Compliance\ComplianceConfig;
+use Pulsar\Compliance\ControlCatalog;
+use Pulsar\Compliance\Evidence\EvidenceSourceInterface;
+use Pulsar\Config\AppConfig;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
 use Pulsar\Scheduler\JobRegistry;
+use Pulsar\DataProtection\DataPurgeOrchestrator;
 use Pulsar\Workflow\Storage\WorkflowStorageInterface;
 use Pulsar\Scheduler\Scheduler;
 use Pulsar\SupplyChain\SupplyChainConfig;
@@ -553,6 +561,50 @@ if ($kernel->container()->has(SecurityPostureReport::class)) {
   $application->add(new SecurityCheckCommand($posture));
 }
 
+// Register the compliance report command.
+//
+// Guarded on the control catalog and the evidence source both being bound: the
+// catalog carries what the enabled frameworks claim, and the evidence source is
+// what observes whether the deployment shows it. Without either, the command
+// could only report an absence of information, and reporting that as a
+// compliance result is the defect the whole subsystem exists to end (ADR-0041).
+//
+// EvidenceSourceInterface must be bound as a LAZY singleton: gathering opens a
+// database connection, executes health checks and recomputes an HMAC per stored
+// audit record, and doing any of that during wiring would observe services
+// before the wirings that replace them had run.
+if (
+  $kernel->container()->has(ControlCatalog::class)
+  && $kernel->container()->has(EvidenceSourceInterface::class)
+  && $kernel->container()->has(ConfigRepository::class)
+  && $kernel->container()->has(AppConfig::class)
+) {
+  /** @var ConfigRepository $complianceConfigRepository */
+  $complianceConfigRepository = $kernel->container()->get(ConfigRepository::class);
+
+  // ComplianceConfig lives in the config repository rather than the container
+  // (ComplianceWiring reads it there); an absent file means no framework was
+  // enabled, which the command reports as an invalid run rather than a pass.
+  $complianceConfig = $complianceConfigRepository->has(ComplianceConfig::class)
+    ? $complianceConfigRepository->get(ComplianceConfig::class)
+    : new ComplianceConfig();
+
+  /** @var ComplianceConfig $complianceConfig */
+  /** @var ControlCatalog $controlCatalog */
+  $controlCatalog = $kernel->container()->get(ControlCatalog::class);
+  /** @var EvidenceSourceInterface $evidenceSource */
+  $evidenceSource = $kernel->container()->get(EvidenceSourceInterface::class);
+  /** @var AppConfig $complianceAppConfig */
+  $complianceAppConfig = $kernel->container()->get(AppConfig::class);
+
+  $application->add(new ComplianceReportCommand(
+    $controlCatalog,
+    $evidenceSource,
+    $complianceConfig,
+    $complianceAppConfig,
+  ));
+}
+
 // Register i18n commands
 if ($kernel->container()->has(TranslationExtractor::class)) {
   /** @var TranslationExtractor $extractor */
@@ -586,6 +638,18 @@ if ($kernel->container()->has(MaintenanceMode::class)) {
   $maintenanceMode = $kernel->container()->get(MaintenanceMode::class);
   $application->add(new MaintenanceEnableCommand($maintenanceMode));
   $application->add(new MaintenanceDisableCommand($maintenanceMode));
+}
+
+// Register the retention purge command.
+//
+// The on-demand half of retention execution; DataRetentionWiring is the scheduled
+// half. Before either existed the orchestrator was built at boot out of every
+// policy in config/data_protection.php and resolved by nothing, so those retention
+// periods were numbers an operator could read and no process would ever apply.
+if ($kernel->container()->has(DataPurgeOrchestrator::class)) {
+  /** @var DataPurgeOrchestrator $purgeOrchestrator */
+  $purgeOrchestrator = $kernel->container()->get(DataPurgeOrchestrator::class);
+  $application->add(new DataPurgeCommand($purgeOrchestrator));
 }
 
 // Register the workflow timeout pump (ADR-0027: scheduled polling command)
@@ -999,23 +1063,29 @@ if ($extensionBootstrap !== null) {
     }
 
     try {
-      if ($kernel->container()->has($commandClass)) {
-        $command = $kernel->container()->get($commandClass);
-      } else {
-        $ref = new ReflectionClass($commandClass);
-        $ctor = $ref->getConstructor();
-
-        // Only attempt direct instantiation for commands with no required constructor params
-        if ($ctor !== null && $ctor->getNumberOfRequiredParameters() > 0) {
-          continue;
-        }
-
-        $command = $ref->newInstance();
-      }
+      // Built by the declaring extension's own scope, and charged
+      // CommandRegister — see ExtensionBootstrap::buildCommand(). This used to
+      // read `$kernel->container()->get($commandClass)`, which handed the real
+      // container to any command declaring it as a constructor dependency and
+      // left CommandRegister with no enforcement site in the framework.
+      $command = $extensionBootstrap->buildCommand($commandClass, $kernel->container());
 
       if ($command instanceof CommandInterface) {
         $application->add($command);
       }
+    } catch (ContainerExceptionInterface) {
+      // The declaring extension did not bind what this command needs, which is
+      // a statement about that extension's configuration and not about the
+      // console. `pulsar/mcp-server` declares `mcp:serve` unconditionally and
+      // binds the tool registry only when `mcp.enabled` is true, so the command
+      // is unbuildable in the default posture and always has been.
+      //
+      // This used to be expressed as "skip any unbound command whose
+      // constructor has required parameters", which skipped every command with
+      // a dependency — including the ones that could have been built. Trying
+      // and catching asks the precise question; a capability denial is a
+      // different exception and still stops the boot below.
+      continue;
     } catch (Throwable $e) {
       // Command registration failures are fail-fast by default (a
       // missing command typically means a misconfigured extension

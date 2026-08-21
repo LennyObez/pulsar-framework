@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity\Support;
 
+use Pulsar\Api\CompositionRoots;
+
 use function in_array;
 use function preg_match;
 use function str_contains;
@@ -20,28 +22,27 @@ use function str_starts_with;
 final class ModuleMap
 {
     /**
-     * Classes that are composition roots and exempt from cross-module internal
-     * import rules.
+     * Roots this check recognises that {@see CompositionRoots} does not list.
      *
-     * Wirings are NOT listed here: `Pulsar\Core\Wiring\*` is exempt by prefix in
-     * {@see self::isCompositionRoot()}, so a newly added wiring is covered the day
-     * it is written. This list is only for roots outside that namespace.
+     * The authority is `Pulsar\Api\CompositionRoots`, and this used to be a
+     * fourth copy of it rather than a supplement. It had already drifted the way
+     * the three before it did: it named `BuildCommand` and not `OptimizeCommand`,
+     * so one of the two commands that writes the production caches was exempt
+     * from the cross-module rule and the other was not — a difference nobody
+     * decided. `CompositionRootsAuthorityTest` catches a second definition in
+     * `src`, `scripts` and `tools`, which is everywhere except here.
+     *
+     * Two entries are genuinely local to the static check and are kept:
+     *
+     * - `PreloadGenerator` — a preload manifest is a list of concrete classes to
+     *   load, so naming them across module lines is the job, not coupling. It is
+     *   not a composition root at runtime, so it does not belong in the authority.
+     * - `CmsSecurityIntegration` — an extension's own wiring seam, outside the
+     *   `Pulsar\Core\Wiring\` prefix the authority exempts.
      */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\Core\Kernel',
-        'Pulsar\Core\Boot\BuildArtifactVerifier',
-        'Pulsar\Core\Boot\CachedRouteReconstructor',
-        'Pulsar\Core\Boot\ExtensionDiscovery',
-        'Pulsar\Core\Boot\ExtensionViewPathRegistrar',
-        'Pulsar\Core\Boot\ProjectRouteLoader',
-        'Pulsar\Console\Application',
-        'Pulsar\Console\Command\BuildCommand',
-        // Build-time class enumerator: a preload manifest is a list of concrete
-        // classes to load, so naming them across module lines is the job itself,
-        // not accidental coupling — the same reason BuildCommand is listed.
+    private const array ADDITIONAL_ROOTS = [
         'Pulsar\Build\PreloadGenerator',
         'Pulsar\Extension\Cms\CmsSecurityIntegration',
-        'Pulsar\Core\MicroKernel',
     ];
 
     /**
@@ -78,24 +79,40 @@ final class ModuleMap
     /**
      * Check if a class is a composition root (exempt from cross-module internal rules).
      *
-     * Every `Pulsar\Core\Wiring\*` class qualifies by prefix, matching how the
-     * runtime {@see \Pulsar\Container\Internal\BoundaryGuard} exempts them. Listing
-     * wirings one by one here is what let EventWiring and ZeroTrustWiring drift out
-     * of the exemption and fail this rule long after they were written: wiring a
-     * module's internals into the container is the entire purpose of a wiring, so
-     * the exemption belongs to the namespace, not to a hand-maintained roster.
+     * Membership is asked of {@see CompositionRoots}, which is the single
+     * definition every other consumer already reads — production and tooling
+     * alike — and which exempts `Pulsar\Core\Wiring\*` and `Pulsar\Core\Boot\*`
+     * by prefix. Listing roots one by one here is what let EventWiring and
+     * ZeroTrustWiring drift out of the exemption long after they were written,
+     * and what left OptimizeCommand out while BuildCommand was in. The exemption
+     * belongs to the authority, not to a hand-maintained roster per checker.
      */
     public static function isCompositionRoot(string $fqcn): bool
     {
-        return str_starts_with($fqcn, 'Pulsar\\Core\\Wiring\\')
-            || in_array($fqcn, self::COMPOSITION_ROOTS, true);
+        return CompositionRoots::contains($fqcn)
+            || in_array($fqcn, self::ADDITIONAL_ROOTS, true);
     }
 
     /**
      * Check if a class is in a Controller namespace segment.
+     *
+     * Excludes `Pulsar\Core\Controller\*`, for the reason {@see isView()} excludes
+     * the `Pulsar\View` module: the name collides with the MVC role and the
+     * contents are not it. That namespace holds the handler-invocation machinery
+     * of ADR-0044 — `HandlerArgumentResolverInterface`, `HandlerSignature`,
+     * `HandlerDescriptor`, `SealedArgument`, `ArgumentResolverChain` — contracts
+     * and value objects describing how a controller's arguments are resolved.
+     * Nothing in it handles a request, and depending on it is not a cross-module
+     * reach into another module's controllers; it is how a resolver declares
+     * itself to the mechanism that calls it, which every resolver outside
+     * `Pulsar\Core` must be able to do.
      */
     public static function isController(string $fqcn): bool
     {
+        if (str_starts_with($fqcn, 'Pulsar\\Core\\Controller\\')) {
+            return false;
+        }
+
         return str_contains($fqcn, '\\Controller\\')
             || str_contains($fqcn, '\\Controller');
     }

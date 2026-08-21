@@ -9,6 +9,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 
 use function array_key_exists;
+use function spl_object_id;
 use function sprintf;
 
 /**
@@ -23,7 +24,25 @@ final class DeferredProviderRegistry
     /** @var array<string, DeferredServiceProviderInterface> Service ID → provider */
     private array $providers = [];
 
-    /** @var array<string, bool> Tracks which providers have been registered */
+    /**
+     * Providers already registered, keyed by object identity rather than class
+     * name.
+     *
+     * Class-name keying assumed one instance per provider class, which stopped
+     * being true once extension providers started arriving wrapped in a
+     * per-extension scope ({@see \Pulsar\Extensibility\Internal\ScopedDeferredProvider}):
+     * every wrapped provider shares one class, so the first one to resolve
+     * marked the class registered and every other extension's deferred provider
+     * was silently skipped — its services never bound, with no error anywhere.
+     * Identity is what "each provider registers once" actually meant.
+     *
+     * `spl_object_id` is safe as a key here despite being reused after an object
+     * is collected: every id recorded belongs to a provider held in
+     * {@see self::$providers}, which is never unset, so no provider in this map
+     * can be collected while its id is still in it.
+     *
+     * @var array<int, true>
+     */
     private array $registered = [];
 
     /**
@@ -34,12 +53,20 @@ final class DeferredProviderRegistry
     public function register(DeferredServiceProviderInterface $provider): void
     {
         foreach ($provider->provides() as $serviceId) {
-            if (isset($this->providers[$serviceId]) && $this->providers[$serviceId]::class !== $provider::class) {
+            $claimant = $this->providers[$serviceId] ?? null;
+
+            // Object identity, not class name: two DISTINCT providers claiming
+            // one service id is the collision this guard exists to catch, and
+            // they are increasingly likely to share a class — every extension's
+            // scoped deferred provider does. Re-registering the same instance
+            // stays idempotent, which is the only case the old class comparison
+            // was really allowing.
+            if ($claimant !== null && $claimant !== $provider) {
                 throw new ContainerException(sprintf(
                     'Deferred service ID "%s" is already claimed by provider "%s". '
                     . 'Cannot register duplicate claim from provider "%s".',
                     $serviceId,
-                    $this->providers[$serviceId]::class,
+                    $claimant::class,
                     $provider::class,
                 ));
             }
@@ -70,14 +97,14 @@ final class DeferredProviderRegistry
         }
 
         $provider = $this->providers[$serviceId];
-        $providerClass = $provider::class;
+        $providerId = spl_object_id($provider);
 
         // Only register each provider once
-        if (array_key_exists($providerClass, $this->registered)) {
+        if (array_key_exists($providerId, $this->registered)) {
             return;
         }
 
-        $this->registered[$providerClass] = true;
+        $this->registered[$providerId] = true;
         $provider->register($container);
     }
 }

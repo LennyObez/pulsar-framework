@@ -7,8 +7,11 @@ namespace Pulsar\Tests\Unit\Integrity;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Support\Gates\GuardsGate;
+use Pulsar\Tests\Unit\Integrity\Support\DeptracCoverage;
 use Pulsar\Tests\Unit\Integrity\Support\ImportAnalyzer;
 use Pulsar\Tests\Unit\Integrity\Support\ModuleMap;
+use Pulsar\Tests\Unit\Integrity\Support\VendorPolicy;
 use Pulsar\Tests\Unit\Integrity\Support\VisibilityClassifier;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -25,9 +28,8 @@ use function implode;
 use function in_array;
 use function is_array;
 use function json_decode;
-use function preg_match;
 use function sprintf;
-use function str_starts_with;
+use function str_replace;
 
 use const DIRECTORY_SEPARATOR;
 use const GLOB_ONLYDIR;
@@ -51,6 +53,29 @@ use const JSON_THROW_ON_ERROR;
 #[CoversNothing]
 final class ArchitectureRulesTest extends TestCase
 {
+    /**
+     * Root namespaces of frameworks production code must not import.
+     *
+     * Public so the negative test names the same list the rule enforces; two copies of a
+     * denylist is two denylists, and the one the test uses is not the one that ships.
+     *
+     * @var list<string>
+     */
+    public const array COMPETITOR_PREFIXES = [
+        'Symfony\\',
+        'Illuminate\\',
+        'Laravel\\',
+        'Doctrine\\',
+        'GuzzleHttp\\',
+        'Monolog\\',
+        'Laminas\\',
+        'Zend\\',
+        'Nette\\',
+        'Yiisoft\\',
+        'Cake\\',
+        'Slim\\',
+    ];
+
     /** Packages explicitly allowed in composer.json "require" (production deps). */
     private const array VENDOR_ALLOWLIST = [
         'php',
@@ -80,6 +105,14 @@ final class ArchitectureRulesTest extends TestCase
     /** @var array<string, list<string>> filepath => list of referenced Pulsar FQCNs */
     private static array $fileReferences = [];
 
+    /**
+     * @var array<string, list<string>> filepath => referenced FQCNs rooted in a
+     *      competitor framework. Kept separately because $fileReferences holds only
+     *      `Pulsar\*` names — which is why the rule below reported nothing for as long
+     *      as it existed.
+     */
+    private static array $fileForeignReferences = [];
+
     /** @var array<string, string> filepath => namespace of the file */
     private static array $fileNamespaces = [];
 
@@ -89,6 +122,7 @@ final class ArchitectureRulesTest extends TestCase
     {
         self::$rootDir = dirname(__DIR__, 3);
         self::$fileReferences = [];
+        self::$fileForeignReferences = [];
         self::$fileNamespaces = [];
 
         // Scan src/
@@ -156,32 +190,11 @@ final class ArchitectureRulesTest extends TestCase
         // was used here without a composer `require` entry and would fatal on
         // `composer install --no-dev`. Reimplement natively or use a PSR
         // interface (Psr\* is allowed — those are standards, not frameworks).
-        $forbiddenPrefixes = [
-            'Symfony\\',
-            'Illuminate\\',
-            'Laravel\\',
-            'Doctrine\\',
-            'GuzzleHttp\\',
-            'Monolog\\',
-            'Laminas\\',
-            'Zend\\',
-            'Nette\\',
-            'Yiisoft\\',
-            'Cake\\',
-            'Slim\\',
-        ];
-
         $violations = [];
 
-        foreach (self::$fileReferences as $filePath => $references) {
+        foreach (self::$fileForeignReferences as $filePath => $references) {
             foreach ($references as $ref) {
-                foreach ($forbiddenPrefixes as $prefix) {
-                    if (str_starts_with($ref, $prefix)) {
-                        $violations[] = sprintf('%s imports %s', self::shortPath($filePath), $ref);
-
-                        break;
-                    }
-                }
+                $violations[] = sprintf('%s imports %s', self::shortPath($filePath), $ref);
             }
         }
 
@@ -272,6 +285,32 @@ final class ArchitectureRulesTest extends TestCase
                 continue;
             }
 
+            // The evidence gatherer's accept lists are the same kind of thing, and
+            // are exempt for the same reason. `ControlEvidenceGatherer::IDENTITY_FACTS`
+            // records, per contract, WHICH CONCRETE IMPLEMENTATIONS this release has
+            // assessed as discharging it and which are known not to — `AuditFileSink`
+            // accepted, `InMemoryTokenStore` inert, and so on. Those are class names
+            // held as strings; the file imports none of them and cannot use one, because
+            // it holds no container and resolves nothing (that is the property its own
+            // docblock is built around). What it does with a name is compare it to
+            // `$instance::class` and report the answer.
+            //
+            // The string scan exists to catch `$container->get('Pulsar\Foo\Bar')` —
+            // instantiation that hides from the import graph. Naming a class in order
+            // to say "this one does not discharge the control" is the opposite of
+            // depending on it, and flagging it would push the compliance module toward
+            // an accept list that names nothing, which is where ADR-0041 started.
+            //
+            // Compared on a slash-normalised path: shortPath() joins with
+            // DIRECTORY_SEPARATOR, so a backslash literal here would match on Windows
+            // and silently stop matching on the Linux runner, where the rule would
+            // then fail for everyone but the author.
+            if (str_replace('\\', '/', self::shortPath($filePath))
+                === 'src/Compliance/Evidence/ControlEvidenceGatherer.php'
+            ) {
+                continue;
+            }
+
             foreach ($references as $ref) {
                 // Same module — no restriction
                 if (ModuleMap::sameModule($sourceNamespace, $ref)) {
@@ -357,47 +396,9 @@ final class ArchitectureRulesTest extends TestCase
     #[Test]
     public function core_has_no_forbidden_vendor_dependencies(): void
     {
-        $composerPath = self::$rootDir . DIRECTORY_SEPARATOR . 'composer.json';
-        /** @var array{require?: array<string, string>} $composer */
-        $composer = json_decode(
-            (string) file_get_contents($composerPath),
-            true,
-            512,
-            JSON_THROW_ON_ERROR,
+        $forbidden = self::vendorPolicy()->forbiddenRequirements(
+            self::$rootDir . DIRECTORY_SEPARATOR . 'composer.json',
         );
-
-        /** @var list<string> $require */
-        $require = array_keys($composer['require'] ?? []);
-        $forbidden = [];
-
-        foreach ($require as $package) {
-            // Check allowlist
-            if (in_array($package, self::VENDOR_ALLOWLIST, true)) {
-                continue;
-            }
-
-            // Check prefix allowlist
-            $allowed = false;
-            foreach (self::VENDOR_PREFIX_ALLOWLIST as $prefix) {
-                if (str_starts_with($package, $prefix)) {
-                    $allowed = true;
-
-                    break;
-                }
-            }
-            if ($allowed) {
-                continue;
-            }
-
-            // Check denylist
-            foreach (self::VENDOR_DENYLIST as $pattern) {
-                if (str_starts_with($package, $pattern)) {
-                    $forbidden[] = sprintf('%s (matches vendor SDK denylist pattern: %s)', $package, $pattern);
-
-                    continue 2;
-                }
-            }
-        }
 
         self::assertEmpty(
             $forbidden,
@@ -412,48 +413,18 @@ final class ArchitectureRulesTest extends TestCase
     #[Test]
     public function deptrac_config_covers_all_extensions(): void
     {
-        $deptracPath = self::$rootDir . DIRECTORY_SEPARATOR . 'tools'
-            . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'deptrac.yaml';
+        $coverage = new DeptracCoverage(self::$rootDir);
 
-        $deptracContent = (string) file_get_contents($deptracPath);
-
-        $extDirs = glob(
-            self::$rootDir . DIRECTORY_SEPARATOR . 'extensions' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'src',
-            GLOB_ONLYDIR,
+        self::assertNotSame(
+            [],
+            $coverage->extensionDirectories(),
+            'no extensions found at all — the check would pass vacuously',
         );
 
-        $uncovered = [];
-
-        if ($extDirs !== false) {
-            foreach ($extDirs as $extDir) {
-                // Extract extension name from path: extensions/{Name}/src
-                if (preg_match('/extensions[\\\\\/]([^\\\\\/]+)[\\\\\/]src$/', $extDir, $matches) === 1) {
-                    $extName = $matches[1];
-
-                    // Convert directory name to PascalCase namespace segment:
-                    // social-sso -> SocialSso, oauth2 -> OAuth2, ai-governance -> AiGovernance
-                    $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $extName)));
-
-                    // Special case: oauth2 -> OAuth2 (standard casing)
-                    $namespacePart = match ($namespacePart) {
-                        'Oauth2' => 'OAuth2',
-                        'Opentelemetry' => 'OpenTelemetry',
-                        'Webauthn' => 'WebAuthn',
-                        'ObservabilityExport' => 'ObservabilityExport',
-                        'SocialSso' => 'SocialSso',
-                        'AiGovernance' => 'AiGovernance',
-                        'McpServer' => 'McpServer',
-                        default => $namespacePart,
-                    };
-
-                    $namespace = 'Pulsar\\\\Extension\\\\' . $namespacePart;
-
-                    if (!str_contains($deptracContent, $namespace)) {
-                        $uncovered[] = $extName;
-                    }
-                }
-            }
-        }
+        $uncovered = $coverage->uncoveredExtensions(
+            self::$rootDir . DIRECTORY_SEPARATOR . 'tools'
+            . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'deptrac.yaml',
+        );
 
         self::assertEmpty(
             $uncovered,
@@ -468,6 +439,10 @@ final class ArchitectureRulesTest extends TestCase
     // ---------------------------------------------------------------
 
     #[Test]
+    #[GuardsGate(
+        gate: 'ArchitectureRulesTest::cross_module_imports_must_target_public_api',
+        plants: 'a fixture importing another module\'s \\Internal\\ namespace',
+    )]
     public function fixture_detects_internal_cross_module_import(): void
     {
         $fixturePath = __DIR__ . DIRECTORY_SEPARATOR . 'Fixture'
@@ -483,6 +458,10 @@ final class ArchitectureRulesTest extends TestCase
     }
 
     #[Test]
+    #[GuardsGate(
+        gate: 'ArchitectureRulesTest::cross_module_controller_references_are_forbidden',
+        plants: "a fixture in one module referencing another module's controller",
+    )]
     public function fixture_detects_cross_module_controller_ref(): void
     {
         $fixturePath = __DIR__ . DIRECTORY_SEPARATOR . 'Fixture'
@@ -500,6 +479,10 @@ final class ArchitectureRulesTest extends TestCase
     }
 
     #[Test]
+    #[GuardsGate(
+        gate: 'ArchitectureRulesTest::adapters_must_not_leak_into_contracts',
+        plants: 'a fixture placing an adapter inside a Contract namespace',
+    )]
     public function fixture_detects_adapter_leak_in_contract(): void
     {
         $fixturePath = __DIR__ . DIRECTORY_SEPARATOR . 'Fixture'
@@ -519,6 +502,10 @@ final class ArchitectureRulesTest extends TestCase
     }
 
     #[Test]
+    #[GuardsGate(
+        gate: 'ArchitectureRulesTest::cross_module_view_references_are_forbidden',
+        plants: "a fixture in one module referencing another module's view",
+    )]
     public function fixture_detects_cross_module_view_ref(): void
     {
         $fixturePath = __DIR__ . DIRECTORY_SEPARATOR . 'Fixture'
@@ -530,6 +517,10 @@ final class ArchitectureRulesTest extends TestCase
     }
 
     #[Test]
+    #[GuardsGate(
+        gate: 'ArchitectureRulesTest::cross_module_imports_must_target_public_api',
+        plants: 'a fixture reaching a cross-module symbol by fully-qualified name rather than by import',
+    )]
     public function fixture_detects_fully_qualified_reference(): void
     {
         $fixturePath = __DIR__ . DIRECTORY_SEPARATOR . 'Fixture'
@@ -546,6 +537,15 @@ final class ArchitectureRulesTest extends TestCase
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+
+    /**
+     * The vendor rule, built from the lists this class declares, so the negative test
+     * exercises the shipped policy rather than a restatement of it.
+     */
+    public static function vendorPolicy(): VendorPolicy
+    {
+        return new VendorPolicy(self::VENDOR_ALLOWLIST, self::VENDOR_PREFIX_ALLOWLIST, self::VENDOR_DENYLIST);
+    }
 
     private static function scanDirectory(string $directory): void
     {
@@ -578,6 +578,14 @@ final class ArchitectureRulesTest extends TestCase
             $references = array_values(array_unique([...$staticRefs, ...$stringRefs]));
             if ($references !== []) {
                 self::$fileReferences[$filePath] = $references;
+            }
+
+            // Collected with its own prefix list rather than filtered out of the one
+            // above. extractReferences() keeps only `Pulsar\*`, so every competitor
+            // namespace was discarded one step before the rule looked for it.
+            $foreign = ImportAnalyzer::extractReferencesWithPrefix($filePath, self::COMPETITOR_PREFIXES);
+            if ($foreign !== []) {
+                self::$fileForeignReferences[$filePath] = $foreign;
             }
 
             // Extract namespace for module identification

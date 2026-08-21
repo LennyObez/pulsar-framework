@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\DataProtection;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -18,10 +19,20 @@ use function sprintf;
  *
  * Runs each purge handler against the matching retention policy,
  * logs results via AuditLoggerInterface, and returns aggregated results.
+ *
+ * It IS a {@see DataPurgeInterface} as well as a fan-out over several, and the
+ * declaration is a correctness fix rather than a convenience. SecurityWiring has
+ * bound this object under `DataPurgeInterface::class` since that contract became
+ * resolvable, on the strength of a comment saying it implemented the interface —
+ * which it did not. Anything following the framework's own constructor-injection
+ * rule and asking the container for a DataPurgeInterface therefore received an
+ * object that fatals on `purge()`. Delegating a single-category purge to the
+ * handler registered for that category makes the binding true and the contract
+ * usable, without changing what {@see self::purgeAll()} does.
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DataPurgeOrchestrator
+final readonly class DataPurgeOrchestrator implements DataPurgeInterface
 {
     /**
      * @param array<string, DataPurgeInterface> $purgers Map of category => purge implementation
@@ -91,6 +102,41 @@ final readonly class DataPurgeOrchestrator
         }
 
         return $results;
+    }
+
+    /**
+     * Purge one category: the policy names it, and the handler registered for that
+     * category does the work.
+     *
+     * A category with no handler returns 0 rather than throwing. The orchestrator
+     * already skips such categories in {@see self::purgeAll()} — a policy for data
+     * this deployment has no purger for is a configuration gap, not a failure of
+     * the call — and the two paths must not disagree about it.
+     *
+     * `purge.dry_run` is deliberately NOT consulted here. This method's contract
+     * says it deletes; a caller wanting the count without the deletion has
+     * {@see self::countExpired()} one line away, and silently answering a purge
+     * request with a count is how a deployment ends up believing it applies
+     * retention while it only counts.
+     */
+    #[Override]
+    public function purge(RetentionPolicyInterface $policy): int
+    {
+        $purger = $this->purgers[$policy->category()] ?? null;
+
+        return $purger?->purge($policy) ?? 0;
+    }
+
+    /**
+     * Count what {@see self::purge()} would remove for one category, without
+     * removing it.
+     */
+    #[Override]
+    public function countExpired(RetentionPolicyInterface $policy): int
+    {
+        $purger = $this->purgers[$policy->category()] ?? null;
+
+        return $purger?->countExpired($policy) ?? 0;
     }
 
     private function executePurge(

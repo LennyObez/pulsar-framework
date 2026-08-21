@@ -12,6 +12,10 @@ use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Extensibility\TrustTier;
 use Pulsar\Marketplace\MarketplaceConfig;
 
+use function dirname;
+
+use const DIRECTORY_SEPARATOR;
+
 #[CoversClass(MarketplaceConfig::class)]
 final class MarketplaceConfigTest extends TestCase
 {
@@ -134,5 +138,35 @@ final class MarketplaceConfigTest extends TestCase
         $config = MarketplaceConfig::fromArray(['verify_signatures' => false]);
 
         self::assertFalse($config->verifySignatures);
+    }
+
+    /**
+     * The shipped config file is the framework's own statement to an operator —
+     * and to their auditor — about which controls are on. It shipped
+     * `verify_signatures => true` for a check that exists nowhere in the tree,
+     * which also made it the one config file its own DTO refuses to load. Read
+     * the real file, so the claim and the check stay the same act.
+     */
+    #[Test]
+    public function theShippedConfigFileClaimsNoVerificationTheFrameworkCannotPerform(): void
+    {
+        /**
+         * @var array{
+         *     registry_url?: string,
+         *     auto_update?: bool,
+         *     minimum_trust_tier?: string,
+         *     verify_signatures?: bool,
+         *     cache_lifetime?: int,
+         * } $shipped
+         */
+        $shipped = require dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config'
+            . DIRECTORY_SEPARATOR . 'marketplace.php';
+
+        $config = MarketplaceConfig::fromArray($shipped);
+
+        self::assertFalse(
+            $config->verifySignatures,
+            'config/marketplace.php must not advertise a signature check that no code performs.',
+        );
     }
 }

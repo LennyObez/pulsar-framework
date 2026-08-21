@@ -29,6 +29,7 @@ use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\InMemoryTokenStore;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\MasterKeyFailure;
 use Pulsar\Security\Crypto\TokenStoreInterface;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
@@ -234,6 +235,109 @@ final class SecurityWiringTest extends TestCase
         self::assertFalse($container->has(MasterKey::class));
         self::assertTrue($container->has(SessionManager::class));
         self::assertTrue($container->has(CsrfTokenManager::class));
+
+        // "Gracefully" must not mean "silently". The rejection is state the
+        // posture check reads back; without it the container is indistinguishable
+        // from one that was never given a key at all.
+        self::assertTrue($container->has(MasterKeyFailure::class));
+    }
+
+    /**
+     * A rejected key is recorded as state and reported as an event.
+     *
+     * The catch block used to end at two local nulls, so a deployment whose key
+     * did not parse ran on with the encryptor, the session encrypter and the
+     * audit logger all unbound, and nothing anywhere said so. `security:check`
+     * then printed `[ok] master_key` because the only thing it could see was a
+     * sixty-four-character string in the environment.
+     */
+    #[Test]
+    public function wireRecordsAndLogsARejectedMasterKeyRatherThanSwallowingIt(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<string> */
+            public array $errors = [];
+
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                if ($level === LogLevel::ERROR) {
+                    $this->errors[] = (string) $message;
+                }
+            }
+        };
+        $container->instance(LoggerInterface::class, $logger);
+
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // Sixty-four characters, none of them hex: long enough to pass a length
+        // check, impossible to decode into a key.
+        $configManager = $this->createConfigManager(masterKeyHex: str_repeat('z', 64));
+        $configManager->load();
+
+        new SecurityWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertFalse($container->has(MasterKey::class));
+        self::assertFalse($container->has(EncryptorInterface::class));
+
+        self::assertTrue($container->has(MasterKeyFailure::class));
+        /** @var MasterKeyFailure $failure */
+        $failure = $container->get(MasterKeyFailure::class);
+        self::assertNotSame('', $failure->reason);
+
+        self::assertNotEmpty($logger->errors, 'A rejected master key must be logged at error level');
+        self::assertStringContainsString('rejected', implode("\n", $logger->errors));
+    }
+
+    /**
+     * No key supplied is not the same fact as a key refused, and the container
+     * must not conflate them: only the second records a failure. The posture
+     * report's verdicts diverge on exactly this distinction.
+     */
+    #[Test]
+    public function wireRecordsNoFailureWhenNoMasterKeyWasSuppliedAtAll(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        new SecurityWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertFalse($container->has(MasterKey::class));
+        self::assertFalse($container->has(MasterKeyFailure::class));
+    }
+
+    /**
+     * A key that parses leaves no failure record behind, so the passing state
+     * still passes and the record cannot become a permanent scar.
+     */
+    #[Test]
+    public function wireRecordsNoFailureForAValidMasterKey(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(
+            masterKeyHex: sodium_bin2hex(sodium_crypto_secretbox_keygen()),
+        );
+        $configManager->load();
+
+        new SecurityWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($container->has(MasterKey::class));
+        self::assertFalse($container->has(MasterKeyFailure::class));
     }
 
     #[Test]

@@ -15,6 +15,7 @@ use Pulsar\Event\EventEnvelope;
 use Pulsar\Event\EventMetadata;
 use Pulsar\Event\Internal\Outbox\DatabaseOutboxPort;
 use Pulsar\Event\Internal\Outbox\PendingEnvelope;
+use Pulsar\Tests\Support\FrameworkSchema;
 
 #[CoversClass(DatabaseOutboxPort::class)]
 final class DatabaseOutboxPortTest extends TestCase
@@ -31,8 +32,12 @@ final class DatabaseOutboxPortTest extends TestCase
             password: null,
         );
 
+        // outbox_events comes from the migration that owns it, run as a file. The port
+        // no longer installs a schema of its own (ADR-0043), so what this test writes
+        // against is the table a deploy actually produces.
+        FrameworkSchema::up($connection, FrameworkSchema::OUTBOX_EVENTS);
+
         $this->outbox = new DatabaseOutboxPort($connection);
-        $this->outbox->installSchema();
     }
 
     #[Test]
@@ -173,19 +178,6 @@ final class DatabaseOutboxPortTest extends TestCase
     public function deadLetteredEventsReturnsEmptyOnFreshTable(): void
     {
         self::assertSame([], $this->outbox->deadLetteredEvents());
-    }
-
-    #[Test]
-    public function migrateSchemaIsIdempotentWhenColumnAlreadyPresent(): void
-    {
-        // installSchema() (setUp) already added dead_lettered_at; migrateSchema()
-        // must be a safe no-op and leave the table fully usable.
-        $this->outbox->migrateSchema();
-        $this->outbox->migrateSchema();
-
-        $envelope = $this->makeEnvelope('order.placed', []);
-        $this->outbox->store($envelope);
-        self::assertCount(1, $this->outbox->pendingEvents());
     }
 
     /**
