@@ -188,10 +188,12 @@ final class TotpReplayGuardMigrationContractTest extends TestCase
     /**
      * The defect that made this worse than a plain failure.
      *
-     * MySQL and SQLite commit each DDL statement as it runs, and the runner records a
-     * migration only once `up()` returns. A first run that died on the index left the
-     * column already dropped; the second run then found no `purpose`, returned early,
-     * and was written down as applied over a table with no pruning index at all.
+     * MySQL commits each DDL statement as it runs, and the runner records a migration only
+     * once `up()` returns — and returns it outside the transaction, so every engine can
+     * replay a run whose `up()` succeeded and whose ledger row never landed. A first run
+     * that died on the index left the column already dropped; the second run then found no
+     * `purpose`, returned early, and was written down as applied over a table with no
+     * pruning index at all.
      *
      * This reproduces that interrupted state directly and demands the resumed run finish
      * the job.

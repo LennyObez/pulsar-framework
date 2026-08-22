@@ -84,9 +84,10 @@ final readonly class DdlCompiler
 
         $statements = [];
         $statements[] = sprintf(
-            'CREATE TABLE %s (%s)',
+            'CREATE TABLE %s (%s)%s',
             $this->quoteIdentifier($def->name),
             implode(', ', $parts),
+            $this->compileTableOptions($def),
         );
 
         // Non-unique indexes as separate CREATE INDEX statements
@@ -225,7 +226,7 @@ final readonly class DdlCompiler
     private function compileColumnDef(SchemaColumn $column, bool $singlePkAutoIncrement): string
     {
         $type = $this->mapType($column);
-        $sql = $this->quoteIdentifier($column->name) . ' ' . $type;
+        $sql = $this->quoteIdentifier($column->name) . ' ' . $type . $this->compileColumnCollation($column);
 
         // UNSIGNED (MySQL/MariaDB only, silently ignored for others)
         if ($column->unsigned && $this->driver === Driver::MySQL) {
@@ -285,6 +286,15 @@ final readonly class DdlCompiler
         return match ($column->type) {
             SchemaColumnType::String => sprintf('VARCHAR(%d)', $column->length ?? 255),
             SchemaColumnType::Text => 'TEXT',
+            // MySQL is the only engine where the width of a text column is a decision.
+            // Its TEXT stops at 65,535 bytes; LONGTEXT is the widest of the four and the
+            // only one that never has to be revisited. PostgreSQL's and SQLite's TEXT are
+            // already as wide as either engine goes, so the narrow and wide cases
+            // converge there rather than one of them being approximated.
+            SchemaColumnType::BigText => match ($this->driver) {
+                Driver::MySQL => 'LONGTEXT',
+                Driver::PostgreSQL, Driver::SQLite => 'TEXT',
+            },
             SchemaColumnType::Integer => match ($this->driver) {
                 Driver::PostgreSQL => $column->autoIncrement ? 'SERIAL' : 'INTEGER',
                 default => 'INTEGER',
@@ -334,6 +344,96 @@ final readonly class DdlCompiler
                 default => 'BLOB',
             },
             SchemaColumnType::Enum => $this->compileEnumType($column),
+        };
+    }
+
+    /**
+     * The clauses that follow a CREATE TABLE column list.
+     *
+     * Only MySQL has a table-level collation clause, so only MySQL emits anything. The
+     * silence on the other two is the correct translation rather than a dropped feature:
+     * PostgreSQL and SQLite already compare text exactly by default, which is the only
+     * intent {@see SchemaCollation} can express, and neither has syntax here to say so
+     * twice. {@see SchemaCollation::Exact} carries the per-engine reasoning.
+     */
+    private function compileTableOptions(TableDefinition $def): string
+    {
+        if ($def->collation === null) {
+            return '';
+        }
+
+        return match ($this->driver) {
+            // `COLLATE=x` with the equals sign is the table-option spelling; the column
+            // spelling below omits it, and MySQL rejects each in the other's position.
+            Driver::MySQL => ' COLLATE=' . $this->collationName($def->collation),
+            Driver::PostgreSQL, Driver::SQLite => '',
+        };
+    }
+
+    /**
+     * A collation clause for one column, where the engine accepts one.
+     *
+     * Guarded on the column type as well as the driver: MySQL refuses `COLLATE` on
+     * anything that is not a character type — an `INT` or a `JSON` column with a
+     * collation is a parse error, not an ignored hint — so a caller that sets one table
+     * wide must not have it land on the integers.
+     */
+    private function compileColumnCollation(SchemaColumn $column): string
+    {
+        if ($column->collation === null || !$this->acceptsCollation($column->type)) {
+            return '';
+        }
+
+        return match ($this->driver) {
+            Driver::MySQL => ' COLLATE ' . $this->collationName($column->collation),
+            Driver::PostgreSQL, Driver::SQLite => '',
+        };
+    }
+
+    /**
+     * Whether a collation clause is legal on this type.
+     *
+     * Every case is listed rather than falling through a default, so that adding a column
+     * type is a decision made here instead of a silent `false` inherited from a type
+     * nobody compared it against.
+     */
+    private function acceptsCollation(SchemaColumnType $type): bool
+    {
+        return match ($type) {
+            SchemaColumnType::String,
+            SchemaColumnType::Text,
+            SchemaColumnType::BigText,
+            SchemaColumnType::Uuid,
+            // ENUM on MySQL, VARCHAR with a CHECK elsewhere: character either way.
+            SchemaColumnType::Enum => true,
+            // JSON is excluded even though it holds text. MySQL fixes a JSON column at
+            // utf8mb4_bin itself and rejects any COLLATE clause on it.
+            SchemaColumnType::Json,
+            SchemaColumnType::Integer,
+            SchemaColumnType::SmallInt,
+            SchemaColumnType::BigInt,
+            SchemaColumnType::Float,
+            SchemaColumnType::Decimal,
+            SchemaColumnType::Boolean,
+            SchemaColumnType::DateTime,
+            SchemaColumnType::Date,
+            SchemaColumnType::Time,
+            SchemaColumnType::Binary => false,
+        };
+    }
+
+    /**
+     * The engine's name for a comparison rule.
+     *
+     * Reached only on the MySQL family: the other two return before asking, because they
+     * have nothing to spell. `utf8mb4_bin` exists on MySQL and MariaDB alike, so the
+     * variant does not change the answer, and naming it here rather than in the enum
+     * keeps the engine's vocabulary inside the one class whose job is to know it.
+     */
+    private function collationName(SchemaCollation $collation): string
+    {
+        return match ($collation) {
+            SchemaCollation::Exact => 'utf8mb4_bin',
         };
     }
 

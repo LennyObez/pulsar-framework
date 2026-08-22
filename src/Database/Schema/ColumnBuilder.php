@@ -24,6 +24,7 @@ final class ColumnBuilder
     private bool $unsignedOverride = false;
     private bool $autoIncrementOverride = false;
     private ?string $comment = null;
+    private ?SchemaCollation $collation = null;
 
     /**
      * @param list<string> $enumValues
@@ -112,6 +113,22 @@ final class ColumnBuilder
     }
 
     /**
+     * Set how this column's text compares, overriding the table's default.
+     *
+     * Only character columns take one, and only the MySQL family emits it — see
+     * {@see SchemaCollation::Exact} for what each engine does with the request. Setting
+     * it on an integer or a JSON column is a no-op rather than an error, because MySQL
+     * would reject the clause outright and a builder should not be able to compose a
+     * statement the engine refuses to parse.
+     */
+    public function collation(SchemaCollation $collation): self
+    {
+        $this->collation = $collation;
+
+        return $this;
+    }
+
+    /**
      * Build the final SchemaColumn value object.
      */
     public function build(): SchemaColumn
@@ -132,6 +149,7 @@ final class ColumnBuilder
             scale: $this->scale,
             enumValues: $this->enumValues,
             comment: $this->comment,
+            collation: $this->collation,
         );
     }
 }

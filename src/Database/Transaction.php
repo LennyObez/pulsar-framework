@@ -46,11 +46,13 @@ final class Transaction
     /**
      * The engine ended this transaction on its own, and PDO cannot say how.
      *
-     * MySQL and SQLite commit implicitly at every DDL statement, which is the case this
-     * exists for. But an engine-side rollback reaches the identical state — SQLite's
+     * MySQL commits implicitly before and after every DDL statement on its list, which is
+     * the case this exists for — SQLite does not, and an earlier version of this note said
+     * it did. But an engine-side rollback reaches the identical state — SQLite's
      * `ON CONFLICT ROLLBACK`, MySQL after a deadlock — and `PDO::inTransaction()` is
-     * `false` for both. Reporting {@see $committed} here would be a guess presented as a
-     * fact, so it stays false and this says what is actually known.
+     * `false` for both, which is why this cannot be narrowed to one engine. Reporting
+     * {@see $committed} here would be a guess presented as a fact, so it stays false and
+     * this says what is actually known.
      */
     public private(set) bool $endedByEngine = false;
 

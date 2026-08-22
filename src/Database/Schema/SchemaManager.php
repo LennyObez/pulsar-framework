@@ -11,9 +11,18 @@ use Pulsar\Database\ConnectionInterface;
 /**
  * Executes and previews schema DDL operations.
  *
- * Wraps DdlCompiler with connection execution. Uses transactions
- * for PostgreSQL (which supports transactional DDL). MySQL/MariaDB
- * and SQLite execute statements sequentially without atomicity guarantees.
+ * Wraps DdlCompiler with connection execution. A compiled operation can be more than one
+ * statement — a table with a non-unique index is a `CREATE TABLE` and a `CREATE INDEX` —
+ * so where the engine can undo DDL the batch is wrapped in one transaction and a failure
+ * partway withdraws the whole thing. {@see SchemaCapabilities::supportsTransactionalDdl()}
+ * decides, and it is true for PostgreSQL and SQLite and false for MySQL/MariaDB, which
+ * commits each DDL statement as it runs. On MySQL alone a failed batch therefore leaves
+ * the statements that already succeeded in place.
+ *
+ * SQLite used to be on the wrong side of that line: the capability claimed it had no
+ * transactional DDL, so a failed `createTable()` stranded a bare table there. It does have
+ * it, and {@see \Pulsar\Tests\Contract\SchemaAtomicityContractTest} holds this class to
+ * the outcome on every engine it can reach.
  * @api
  */
 #[Api(since: '1.0.0')]

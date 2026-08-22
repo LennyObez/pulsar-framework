@@ -42,6 +42,8 @@ final class Blueprint
 
     private ?ColumnBuilder $pendingColumn = null;
 
+    private ?SchemaCollation $collation = null;
+
     public function __construct(
         public readonly string $table,
     ) {}
@@ -68,6 +70,19 @@ final class Blueprint
     public function text(string $column): ColumnBuilder
     {
         return $this->addColumn($column, SchemaColumnType::Text);
+    }
+
+    /**
+     * Add a text column wide enough for a value whose size the data decides.
+     *
+     * `LONGTEXT` on MySQL — four gibibytes, where {@see text()} stops at 65,535 bytes —
+     * and `TEXT` on PostgreSQL and SQLite, which is already their widest.
+     * {@see SchemaColumnType::BigText} states what each engine gives and what the narrow
+     * type costs on MySQL.
+     */
+    public function bigText(string $column): ColumnBuilder
+    {
+        return $this->addColumn($column, SchemaColumnType::BigText);
     }
 
     /**
@@ -199,6 +214,19 @@ final class Blueprint
     }
 
     /**
+     * Set how every character column in this table compares.
+     *
+     * Worth setting on any table keyed by an identifier: MySQL's default collation is
+     * case- and accent-insensitive, so without this two ids differing only in case
+     * collide on a primary key. {@see SchemaCollation} carries the per-engine detail and
+     * the reason a collation is the only table option offered here.
+     */
+    public function collation(SchemaCollation $collation): void
+    {
+        $this->collation = $collation;
+    }
+
+    /**
      * Add a named index on one or more columns.
      *
      * @param string|list<string> $columns
@@ -260,6 +288,7 @@ final class Blueprint
             columns: $this->columns,
             indexes: $this->indexes,
             foreignKeys: $this->foreignKeys,
+            collation: $this->collation,
         );
     }
 

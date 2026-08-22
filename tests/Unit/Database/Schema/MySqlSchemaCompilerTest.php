@@ -46,6 +46,9 @@ final class MySqlSchemaCompilerTest extends TestCase
         yield 'string' => [SchemaColumnType::String, 'VARCHAR(255)', ['length' => 255]];
         yield 'string with length' => [SchemaColumnType::String, 'VARCHAR(100)', ['length' => 100]];
         yield 'text' => [SchemaColumnType::Text, 'TEXT', []];
+        // The type this engine actually needed: MySQL's TEXT holds 65,535 bytes
+        // and its LONGTEXT holds four gibibytes.
+        yield 'bigtext' => [SchemaColumnType::BigText, 'LONGTEXT', []];
         yield 'integer' => [SchemaColumnType::Integer, 'INTEGER', []];
         yield 'bigint' => [SchemaColumnType::BigInt, 'BIGINT', []];
         yield 'boolean' => [SchemaColumnType::Boolean, 'TINYINT(1)', []];

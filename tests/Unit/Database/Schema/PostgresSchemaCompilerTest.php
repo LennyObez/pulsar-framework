@@ -45,6 +45,9 @@ final class PostgresSchemaCompilerTest extends TestCase
         yield 'string' => [SchemaColumnType::String, 'VARCHAR(255)', ['length' => 255]];
         yield 'string with length' => [SchemaColumnType::String, 'VARCHAR(100)', ['length' => 100]];
         yield 'text' => [SchemaColumnType::Text, 'TEXT', []];
+        // PostgreSQL has one text type, already its widest, so the wide case
+        // resolves to the same keyword rather than to an approximation of one.
+        yield 'bigtext' => [SchemaColumnType::BigText, 'TEXT', []];
         yield 'integer' => [SchemaColumnType::Integer, 'INTEGER', []];
         yield 'integer serial' => [
             SchemaColumnType::Integer,

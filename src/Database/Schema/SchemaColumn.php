@@ -15,6 +15,12 @@ final readonly class SchemaColumn
 {
     /**
      * @param list<string> $enumValues
+     * @param ?SchemaCollation $collation How this column's text compares, overriding
+     *        whatever the table defaults to. Null leaves the column on the table's
+     *        default, which is the right answer whenever the whole table agrees; reach
+     *        for this when one column inside a table must disagree — a token or a hash
+     *        that has to stay case-sensitive in a table that is not. Ignored for
+     *        non-character types, where MySQL rejects the clause outright.
      */
     public function __construct(
         public string $name,
@@ -32,5 +38,6 @@ final readonly class SchemaColumn
         public ?int $scale = null,
         public array $enumValues = [],
         public ?string $comment = null,
+        public ?SchemaCollation $collation = null,
     ) {}
 }

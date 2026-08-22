@@ -55,6 +55,9 @@ final class SqliteSchemaCompilerTest extends TestCase
         yield 'string' => [SchemaColumnType::String, 'VARCHAR(255)', ['length' => 255]];
         yield 'string with length' => [SchemaColumnType::String, 'VARCHAR(100)', ['length' => 100]];
         yield 'text' => [SchemaColumnType::Text, 'TEXT', []];
+        // SQLite bounds TEXT by SQLITE_MAX_LENGTH, not by the declared type, so
+        // the wide case has nothing wider to ask for.
+        yield 'bigtext' => [SchemaColumnType::BigText, 'TEXT', []];
         yield 'integer' => [SchemaColumnType::Integer, 'INTEGER', []];
         yield 'bigint' => [SchemaColumnType::BigInt, 'BIGINT', []];
         yield 'boolean' => [SchemaColumnType::Boolean, 'INTEGER', []];

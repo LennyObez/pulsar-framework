@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Database\Schema\SchemaCollation;
 use Pulsar\Database\Schema\SchemaColumn;
 use Pulsar\Database\Schema\SchemaColumnType;
 use Pulsar\Database\Schema\SchemaDefaultExpression;
@@ -35,6 +36,25 @@ final class SchemaColumnTest extends TestCase
         self::assertNull($column->precision);
         self::assertNull($column->scale);
         self::assertSame([], $column->enumValues);
+        self::assertNull($column->collation);
+    }
+
+    /**
+     * One column may disagree with its table about how text compares.
+     *
+     * The case that needs it: a token or a hash that has to stay case-sensitive inside a
+     * table whose other columns are happier insensitive.
+     */
+    #[Test]
+    public function carriesAnOptionalCollation(): void
+    {
+        $column = new SchemaColumn(
+            name: 'token',
+            type: SchemaColumnType::String,
+            collation: SchemaCollation::Exact,
+        );
+
+        self::assertSame(SchemaCollation::Exact, $column->collation);
     }
 
     #[Test]

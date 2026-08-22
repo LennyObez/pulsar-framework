@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Schema\Blueprint;
 use Pulsar\Database\Schema\ColumnBuilder;
 use Pulsar\Database\Schema\ForeignIdBuilder;
+use Pulsar\Database\Schema\SchemaCollation;
 use Pulsar\Database\Schema\SchemaColumnType;
 use Pulsar\Database\Schema\SchemaDefaultExpression;
 use Pulsar\Database\Schema\SchemaReferentialAction;
@@ -76,6 +77,55 @@ final class BlueprintTest extends TestCase
         $def = $blueprint->toDefinition();
 
         self::assertSame(SchemaColumnType::Text, $def->columns[0]->type);
+    }
+
+    /**
+     * The wide text type is reachable from the fluent builder, not only from the DTO.
+     *
+     * A capability that exists in the compiler but not in the Blueprint is one that
+     * migrations written the ordinary way cannot use, which is how the gap this closes
+     * would reopen.
+     */
+    #[Test]
+    public function bigTextAddsWideTextColumn(): void
+    {
+        $blueprint = new Blueprint('outbox');
+        $blueprint->bigText('payload_json');
+        $def = $blueprint->toDefinition();
+
+        self::assertSame(SchemaColumnType::BigText, $def->columns[0]->type);
+        self::assertSame('payload_json', $def->columns[0]->name);
+    }
+
+    #[Test]
+    public function collationDefaultsToTheServerDefault(): void
+    {
+        self::assertNull(new Blueprint('posts')->toDefinition()->collation);
+    }
+
+    #[Test]
+    public function collationIsCarriedIntoTheDefinition(): void
+    {
+        $blueprint = new Blueprint('saga_states');
+        $blueprint->collation(SchemaCollation::Exact);
+        $blueprint->string('saga_id', 64);
+
+        self::assertSame(SchemaCollation::Exact, $blueprint->toDefinition()->collation);
+    }
+
+    /**
+     * A per-column collation survives the builder, and returns the builder for chaining.
+     */
+    #[Test]
+    public function columnCollationIsCarriedIntoTheColumn(): void
+    {
+        $blueprint = new Blueprint('tokens');
+        $builder = $blueprint->string('token', 64);
+
+        self::assertSame($builder, $builder->collation(SchemaCollation::Exact));
+
+        $def = $blueprint->toDefinition();
+        self::assertSame(SchemaCollation::Exact, $def->columns[0]->collation);
     }
 
     #[Test]

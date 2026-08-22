@@ -29,8 +29,23 @@ final class SchemaColumnTypeTest extends TestCase
     }
 
     #[Test]
-    public function hasFifteenCases(): void
+    public function hasSixteenCases(): void
     {
-        self::assertCount(15, SchemaColumnType::cases());
+        self::assertCount(16, SchemaColumnType::cases());
+    }
+
+    /**
+     * The narrow and the wide text types are separate cases, and stay separate.
+     *
+     * Folding them back into one is how the layer lost MySQL's LONGTEXT in the first
+     * place: a single `Text` case compiled to `TEXT` on every engine, which on MySQL is
+     * 65,535 bytes and silently too small for a serialised payload.
+     */
+    #[Test]
+    public function narrowAndWideTextAreDistinctCases(): void
+    {
+        self::assertSame(SchemaColumnType::Text, SchemaColumnType::from('text'));
+        self::assertSame(SchemaColumnType::BigText, SchemaColumnType::from('bigtext'));
+        self::assertNotSame(SchemaColumnType::Text, SchemaColumnType::BigText);
     }
 }

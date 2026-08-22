@@ -25,11 +25,51 @@ final class SchemaCapabilitiesTest extends TestCase
         self::assertFalse($cap->supportsAlterColumnType());
         self::assertTrue($cap->supportsForeignKeySyntax());
         self::assertFalse($cap->foreignKeysEnforcedByDefault());
-        self::assertFalse($cap->supportsTransactionalDdl());
+        self::assertTrue($cap->supportsTransactionalDdl());
         self::assertFalse($cap->supportsNativeEnum());
         self::assertFalse($cap->supportsAddForeignKey());
         self::assertFalse($cap->supportsDropForeignKey());
         self::assertFalse($cap->supportsUnsigned());
+    }
+
+    /**
+     * The three transactional-DDL answers, and what asserting them here does and does not
+     * prove.
+     *
+     * It proves the `match` has the arms somebody meant it to have. It cannot prove those
+     * arms describe the engines — a value compared to a value written beside it agrees with
+     * itself whatever either says, which is exactly how SQLite came to be recorded as having
+     * no transactional DDL for as long as it did, with five migrations reasoning from the
+     * entry. {@see \Pulsar\Tests\Contract\TransactionalDdlContractTest} is where the claim
+     * meets a server: it opens a transaction, issues DDL, rolls back, and requires the engine
+     * and this method to agree.
+     *
+     * Both tests are wanted. This one fails fast, offline, on a typo in an arm; that one
+     * fails on a belief about an engine being wrong, which is the failure that costs data.
+     */
+    #[Test]
+    public function transactionalDdlIsTrueEverywhereExceptMySql(): void
+    {
+        self::assertTrue(new SchemaCapabilities(Driver::SQLite)->supportsTransactionalDdl());
+        self::assertTrue(new SchemaCapabilities(Driver::PostgreSQL)->supportsTransactionalDdl());
+        self::assertFalse(new SchemaCapabilities(Driver::MySQL)->supportsTransactionalDdl());
+    }
+
+    /**
+     * The engine is asked for directly, never reconstructed from what it can do.
+     *
+     * Capability answers are not a driver encoding. The admin schema pages used to derive
+     * `mysql`/`pgsql`/`sqlite` from {@see SchemaCapabilities::supportsNativeEnum()} and
+     * {@see SchemaCapabilities::supportsTransactionalDdl()}, which worked only while those
+     * two happened to separate the three engines — and stopped the moment SQLite's
+     * transactional-DDL answer was corrected, relabelling every SQLite database `pgsql`.
+     */
+    #[Test]
+    public function driverIsReportedRatherThanInferred(): void
+    {
+        foreach (Driver::cases() as $driver) {
+            self::assertSame($driver, new SchemaCapabilities($driver)->driver());
+        }
     }
 
     #[Test]

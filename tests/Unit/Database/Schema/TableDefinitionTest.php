@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Database\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Database\Schema\SchemaCollation;
 use Pulsar\Database\Schema\SchemaColumn;
 use Pulsar\Database\Schema\SchemaColumnType;
 use Pulsar\Database\Schema\SchemaForeignKey;
@@ -32,6 +33,25 @@ final class TableDefinitionTest extends TestCase
         self::assertCount(2, $table->columns);
         self::assertSame([], $table->indexes);
         self::assertSame([], $table->foreignKeys);
+        self::assertNull($table->collation);
+    }
+
+    /**
+     * A definition can name how its text compares, and defaults to not naming it.
+     *
+     * Null is the pre-existing behaviour — whatever the server defaults to — so every
+     * table defined before this option existed compiles unchanged.
+     */
+    #[Test]
+    public function carriesAnOptionalCollation(): void
+    {
+        $table = new TableDefinition(
+            name: 'saga_states',
+            columns: [new SchemaColumn(name: 'saga_id', type: SchemaColumnType::String, primaryKey: true)],
+            collation: SchemaCollation::Exact,
+        );
+
+        self::assertSame(SchemaCollation::Exact, $table->collation);
     }
 
     #[Test]

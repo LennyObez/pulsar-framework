@@ -128,7 +128,16 @@ final class SchemaContractTest extends TestCase
         }
 
         self::assertCount(3, $ids);
-        self::assertSame([$ids[0], $ids[0] + 1, $ids[0] + 2], $ids, 'the primary key did not increment');
+
+        // Bound through a failing read rather than indexed inline. `assertCount()` is a
+        // runtime check that the analysers cannot use to narrow a `list<int>`, so `$ids[0]`
+        // reads as possibly-undefined and the comparison array as `list<int|null>` — two
+        // Psalm errors over an offset that assertCount has in fact just guaranteed.
+        // `fail()` returns `never`, which turns that guarantee into one the type system
+        // carries.
+        $first = $ids[0] ?? self::fail('the insert produced no rows to compare');
+
+        self::assertSame([$first, $first + 1, $first + 2], $ids, 'the primary key did not increment');
     }
 
     /**

@@ -118,13 +118,50 @@ final class SchemaCapabilities
     }
 
     /**
-     * Whether the driver supports transactional DDL (atomic schema changes).
+     * Whether a schema change made inside a transaction is undone when that transaction
+     * rolls back.
+     *
+     * The answer is measured per engine rather than reasoned about, because the reasoning
+     * that used to sit here got SQLite backwards and five migrations then wrote their
+     * idempotency arguments on top of it:
+     *
+     * - **PostgreSQL — true.** `CREATE TABLE`, `ALTER TABLE ... ADD COLUMN`, `CREATE INDEX`
+     *   and `DROP TABLE` issued after `BEGIN` are all gone again after `ROLLBACK`, and a
+     *   `DROP TABLE` that rolls back leaves the rows. The one statement that will not join a
+     *   transaction is `CREATE INDEX CONCURRENTLY`, which raises 25001 inside a block.
+     * - **SQLite — true, which is the correction.** Measured on 3.53.2 through PDO: the same
+     *   four statements all roll back, and a DDL statement neither ends the transaction nor
+     *   commits the rows written before it in the same one. SQLite keeps its catalogue in an
+     *   ordinary table and journals it with everything else, which is why. `VACUUM` is the
+     *   exception and refuses to start inside a transaction at all.
+     * - **MySQL — false.** Measured on 8.0.46: `CREATE TABLE`, `ALTER TABLE` and
+     *   `CREATE INDEX` each commit implicitly before and after themselves, so each lands the
+     *   moment it runs, the enclosing transaction is over, and rows written before the DDL
+     *   are committed with it. PDO notices — `inTransaction()` reads false straight after —
+     *   and a later `rollBack()` raises rather than undoing anything. Temporary-table DDL is
+     *   the documented exception and does not force a commit, but no caller here issues any.
+     *
+     * ## What this method is not
+     *
+     * It is not a driver oracle. The three answers happen to be distinct today, and a caller
+     * that reads `supportsTransactionalDdl()` to work out which engine it is talking to gets
+     * the right answer by coincidence and the wrong one the moment a capability moves —
+     * which is exactly what this correction did to the one caller that tried it. Ask
+     * {@see driver()}.
+     *
+     * It is also not what makes a migration atomic. {@see \Pulsar\Database\Migration\MigrationRunner}
+     * never consults it: it wraps every `up()` and `down()` in a transaction
+     * unconditionally, so on PostgreSQL and SQLite a migration that throws partway leaves no
+     * trace either way. What no engine can offer is atomicity across the boundary the runner
+     * itself opens — `recordMigration()` runs after that transaction has committed, so a
+     * process dying in between leaves a schema change no ledger row mentions, on all three
+     * engines alike.
      */
     public function supportsTransactionalDdl(): bool
     {
         return match ($this->driver) {
-            Driver::PostgreSQL => true,
-            Driver::MySQL, Driver::SQLite => false,
+            Driver::PostgreSQL, Driver::SQLite => true,
+            Driver::MySQL => false,
         };
     }
 
@@ -236,6 +273,22 @@ final class SchemaCapabilities
             Driver::PostgreSQL => true,
             Driver::SQLite => $this->sqliteVersionAtLeast('3.8.3'),
         };
+    }
+
+    /**
+     * Which engine these capabilities describe.
+     *
+     * Exposed so that a caller needing the engine's name asks for it, instead of
+     * reconstructing it from a chain of capability answers. That reconstruction was real
+     * code — the admin schema pages derived `mysql`/`pgsql`/`sqlite` from
+     * {@see supportsNativeEnum()} and {@see supportsTransactionalDdl()} — and it broke the
+     * moment SQLite's transactional-DDL answer was corrected to the truth, silently
+     * relabelling every SQLite database as PostgreSQL. A capability answers what the engine
+     * can do; only this answers which engine it is.
+     */
+    public function driver(): Driver
+    {
+        return $this->driver;
     }
 
     /**
