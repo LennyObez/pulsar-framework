@@ -21,19 +21,19 @@ use function is_string;
 /**
  * Admin controller for content revision history, diff, and restoration.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class RevisionController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class RevisionController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentRevisionRepositoryInterface $revisionRepository,
         private RevisionService $revisionService,
-        private GateInterface $gate,
         private CmsConfig $config,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request, string $contentId): Response
     {
@@ -125,6 +125,7 @@ final readonly class RevisionController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : $this->config->defaultLocale;

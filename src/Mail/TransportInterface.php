@@ -8,7 +8,8 @@ use Pulsar\Api\Api;
 use Pulsar\Mail\Exception\MailException;
 
 /**
- * Low-level mail transport — sends a raw Message and returns a message ID.
+ * Low-level mail transport: sends a raw Message and returns a message ID.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TransportInterface

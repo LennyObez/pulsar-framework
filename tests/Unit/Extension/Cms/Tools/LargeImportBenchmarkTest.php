@@ -23,8 +23,11 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
 use Pulsar\Extension\Cms\Tools\ImportConfig;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
+use Pulsar\Tests\Support\RequiresUninstrumentedRuntime;
 
 use function memory_get_peak_usage;
+use function memory_get_usage;
+use function memory_reset_peak_usage;
 use function microtime;
 use function range;
 use function sprintf;
@@ -33,6 +36,8 @@ use function sprintf;
 #[Group('benchmark')]
 final class LargeImportBenchmarkTest extends TestCase
 {
+    use RequiresUninstrumentedRuntime;
+
     private const int TAXONOMY_COUNT = 5;
     private const int TERMS_PER_TAXONOMY = 50;
     private const int PAGE_COUNT = 200;
@@ -49,6 +54,8 @@ final class LargeImportBenchmarkTest extends TestCase
     #[Test]
     public function dry_run_import_of_1000_plus_items_completes_within_budget(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         // Arrange: build mocks that just count calls
         $callCounts = [
             'contentRepository.save' => 0,
@@ -154,8 +161,12 @@ final class LargeImportBenchmarkTest extends TestCase
 
         $definition = $this->buildLargeSiteDefinition();
 
-        // Act: run in dry-run mode and measure
-        $memBefore = memory_get_peak_usage(true);
+        // Act: run in dry-run mode and measure. Reset the peak tracker first so
+        // the measurement reflects this import's footprint rather than memory
+        // already retained by earlier tests in a shared full-suite process
+        // (memory_get_peak_usage is monotonic across the whole process).
+        memory_reset_peak_usage();
+        $memBefore = memory_get_usage(true);
         $startTime = microtime(true);
 
         $result = $parser->importSiteDefinition($definition, dryRun: true);
@@ -188,10 +199,10 @@ final class LargeImportBenchmarkTest extends TestCase
         );
         self::assertLessThan(
             self::MAX_MEMORY_BYTES,
-            $peakMemory,
+            $memUsed,
             sprintf(
-                'Peak memory %.1f MB exceeds the %d MB budget',
-                $peakMemory / 1024 / 1024,
+                'Import memory delta %.1f MB exceeds the %d MB budget',
+                $memUsed / 1024 / 1024,
                 self::MAX_MEMORY_BYTES / 1024 / 1024,
             ),
         );
@@ -218,6 +229,8 @@ final class LargeImportBenchmarkTest extends TestCase
     #[Test]
     public function non_dry_run_import_of_1000_plus_items_completes_within_budget(): void
     {
+        $this->requireUninstrumentedRuntime();
+
         $callCounts = [
             'contentRepository.save' => 0,
             'taxonomyRepository.save' => 0,
@@ -316,19 +329,26 @@ final class LargeImportBenchmarkTest extends TestCase
 
         $definition = $this->buildLargeSiteDefinition();
 
-        // Act: run non-dry-run and measure
+        // Act: run non-dry-run and measure. Reset the peak tracker first so the
+        // measurement reflects this import's footprint rather than memory already
+        // retained by earlier tests in a shared full-suite process
+        // (memory_get_peak_usage is monotonic across the whole process).
+        memory_reset_peak_usage();
+        $memBefore = memory_get_usage(true);
         $startTime = microtime(true);
 
         $result = $parser->importSiteDefinition($definition, dryRun: false);
 
         $elapsed = microtime(true) - $startTime;
         $peakMemory = memory_get_peak_usage(true);
+        $memUsed = $peakMemory - $memBefore;
 
         // Output stats
         fwrite(STDERR, sprintf(
-            "\n[Benchmark] Full import: %.3f s | Peak memory: %.1f MB\n",
+            "\n[Benchmark] Full import: %.3f s | Peak memory: %.1f MB | Delta: %.1f MB\n",
             $elapsed,
             $peakMemory / 1024 / 1024,
+            $memUsed / 1024 / 1024,
         ));
         fwrite(STDERR, sprintf(
             "[Benchmark] Repository calls: content.save=%d, taxonomy.save=%d, term.save=%d, menu.save=%d, menuItem.save=%d, redirect.save=%d, settings.set=%d\n",
@@ -349,10 +369,10 @@ final class LargeImportBenchmarkTest extends TestCase
         );
         self::assertLessThan(
             self::MAX_MEMORY_BYTES,
-            $peakMemory,
+            $memUsed,
             sprintf(
-                'Peak memory %.1f MB exceeds the %d MB budget',
-                $peakMemory / 1024 / 1024,
+                'Import memory delta %.1f MB exceeds the %d MB budget',
+                $memUsed / 1024 / 1024,
                 self::MAX_MEMORY_BYTES / 1024 / 1024,
             ),
         );

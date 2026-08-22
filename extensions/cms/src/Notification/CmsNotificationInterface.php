@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Each notification knows its type, who should receive it, and how to
  * render a human-readable subject/body for channel-agnostic delivery.
+ *
+ * @psalm-api Public extension contract; implementations are dispatched by
+ *            the framework notification manager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsNotificationInterface

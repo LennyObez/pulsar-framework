@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Manages the lifecycle of content review requests from submission
  * through approval or rejection.
+ *
+ * @psalm-api Public binding contract; implemented by EditorialWorkflowService
+ *            and consumed by admin review controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EditorialWorkflowServiceInterface

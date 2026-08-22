@@ -12,6 +12,7 @@ use Pulsar\Extension\Studio\Exception\StudioException;
  *
  * Manages module registration, lookup, and enumeration.
  * The registry validates module IDs and route prefixes on registration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface StudioModuleRegistryInterface

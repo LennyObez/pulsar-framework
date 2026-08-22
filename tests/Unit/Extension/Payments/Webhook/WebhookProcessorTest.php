@@ -9,12 +9,21 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Pulsar\Extension\Payments\Config\BancontactConfig;
+use Pulsar\Extension\Payments\Config\IdealConfig;
 use Pulsar\Extension\Payments\Config\IdempotencyConfig;
+use Pulsar\Extension\Payments\Config\KlarnaConfig;
+use Pulsar\Extension\Payments\Config\MobileConfig;
+use Pulsar\Extension\Payments\Config\PayconiqConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
+use Pulsar\Extension\Payments\Config\PayPalConfig;
+use Pulsar\Extension\Payments\Config\SepaConfig;
+use Pulsar\Extension\Payments\Config\StripeConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
 use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
@@ -159,15 +168,19 @@ final class WebhookProcessorTest extends TestCase
 
     private function createProcessor(WebhookHandlerInterface $handler): WebhookProcessor
     {
-        return new WebhookProcessor(
-            verifier: new HmacWebhookVerifier($this->clock),
+        $verifier = new HmacWebhookVerifier($this->clock);
+        $config = $this->createConfig();
+        $processHandler = new ProcessWebhookHandler(
+            verifier: $verifier,
             eventLog: $this->eventLog,
             handler: $handler,
             clock: $this->clock,
             metricRegistry: $this->metricRegistry,
             logger: new NullLogger(),
-            config: $this->createConfig(),
+            config: $config,
         );
+
+        return new WebhookProcessor(processHandler: $processHandler);
     }
 
     private function createConfig(): PaymentsConfig
@@ -190,6 +203,29 @@ final class WebhookProcessorTest extends TestCase
                 ttlSeconds: 259200,
                 store: 'memory',
             ),
+            stripe: new StripeConfig(
+                secretKey: '',
+                publishableKey: '',
+                webhookSecret: '',
+                apiVersion: '2024-12-18.acacia',
+                testMode: true,
+            ),
+            paypal: new PayPalConfig(
+                clientId: '',
+                clientSecret: '',
+                webhookId: '',
+                sandbox: true,
+            ),
+            sepa: SepaConfig::fromArray([]),
+            mobile: MobileConfig::fromArray([]),
+            payconiq: PayconiqConfig::fromArray([]),
+            bancontact: BancontactConfig::fromArray([]),
+            ideal: IdealConfig::fromArray([]),
+            klarna: KlarnaConfig::fromArray([]),
+            subscriptionsEnabled: false,
+            invoiceRetentionDays: 3650,
+            dunningMaxRetries: 4,
+            trialMaxDays: 30,
         );
     }
 

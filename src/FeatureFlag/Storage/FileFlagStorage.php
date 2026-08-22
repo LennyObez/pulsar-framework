@@ -12,13 +12,15 @@ use Pulsar\FeatureFlag\FlagDefinition;
 use Pulsar\FeatureFlag\FlagStorageInterface;
 
 use function array_map;
+use function dirname;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function is_array;
+use function is_dir;
 use function json_decode;
 use function json_encode;
-use function json_validate;
+use function mkdir;
 use function sprintf;
 
 use const JSON_PRETTY_PRINT;
@@ -104,12 +106,8 @@ final class FileFlagStorage implements FlagStorageInterface
         $content = file_get_contents($this->filePath)
             ?: throw FeatureFlagException::storageError(sprintf('Cannot read file: %s', $this->filePath));
 
-        if (!json_validate($content)) {
-            throw FeatureFlagException::storageError(sprintf('Invalid JSON in %s', $this->filePath));
-        }
-
         try {
-            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw FeatureFlagException::storageError(sprintf('Invalid JSON in %s: %s', $this->filePath, $e->getMessage()));
         }
@@ -142,6 +140,16 @@ final class FileFlagStorage implements FlagStorageInterface
         $data = array_map(static fn(FlagDefinition $flag): array => $flag->toArray(), $flags);
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+
+        // Ensure the parent directory exists (e.g. the default var/flags/) so the
+        // first write on a fresh install succeeds instead of failing on a missing
+        // directory.
+        $directory = dirname($this->filePath);
+
+        if (!is_dir($directory) && !mkdir($directory, 0o750, true) && !is_dir($directory)) {
+            throw FeatureFlagException::storageError(sprintf('Cannot create directory: %s', $directory));
+        }
+
         $result = file_put_contents($this->filePath, $json, LOCK_EX);
 
         if ($result === false) {

@@ -30,6 +30,23 @@ return [
                 'stream' => 'php://stderr',
             ],
         ],
+
+        // Compliance log sink: masks/pseudonymizes every log entry per the
+        // selected regulations (GDPR/HIPAA pseudonymization needs the security
+        // master key) and writes to a dedicated durable file, encrypted at
+        // rest when the security encryptor is available. Empty 'frameworks'
+        // applies all of: gdpr, hipaa, pci-dss, sox.
+        //
+        // IMPORTANT -- this is an ADDITIONAL, masked copy. The regular channels
+        // above still receive the ORIGINAL, unmasked entries. If raw PII must
+        // not persist on disk, point the regular channels at a stream (stderr)
+        // or apply your retention policy to their files; the compliance file
+        // is the durable, masked artifact meant for long-term retention.
+        'compliance' => [
+            'enabled' => false,
+            'frameworks' => [],
+            'path' => 'var/logs/compliance.log',
+        ],
     ],
 
     /*

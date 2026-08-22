@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pulsar container interface extending PSR-11 with binding capabilities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContainerInterface extends PsrContainerInterface
@@ -21,11 +22,23 @@ interface ContainerInterface extends PsrContainerInterface
      * For request-scoped or tenant-scoped lifetimes, use
      * {@see AdvancedContainerInterface::bindWithLifetime()} instead.
      *
+     * Factory closures must not call {@see \Fiber::suspend()}: the container
+     * resolves bindings synchronously and suspension would leave the container
+     * in an inconsistent state. See ADR-0005.
+     *
      * @param string $id The binding identifier (typically an interface or class name)
      * @param callable|class-string $concrete The factory callable or class name
      * @param BindingType $type Whether to resolve as singleton or factory
      */
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void;
+
+    /**
+     * Register a singleton binding (convenience alias for bind with Singleton type).
+     *
+     * @param string $id The binding identifier
+     * @param callable|class-string $concrete The factory callable or class name
+     */
+    public function singleton(string $id, callable|string $concrete): void;
 
     /**
      * Register an existing instance in the container.
@@ -67,6 +80,26 @@ interface ContainerInterface extends PsrContainerInterface
     public function forgetInstance(string $id): void;
 
     /**
+     * Register a decorator that wraps an existing service.
+     *
+     * The decorator RECEIVES the current service and returns a replacement that
+     * wraps it — it enhances rather than replaces, and cannot discard the
+     * original (the container passes it in). This is the enhance-a-service
+     * operation, distinct from re-binding (override) and from registering a new
+     * service. On the extension-facing scoped container it is gated by the
+     * ServiceDecorate capability (Verified and above), so an audited extension
+     * can wrap a core service without the power to override any binding.
+     *
+     * Declared on the base contract (not only the advanced one) so an extension,
+     * which receives this interface, can decorate through it.
+     *
+     * @param string $id Service identifier to decorate (must already be registered)
+     * @param class-string|callable $decorator Decorator class or factory receiving the inner service
+     * @param int $priority Application order (higher = outermost wrapper)
+     */
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void;
+
+    /**
      * Set pre-computed constructor resolution hints for autowiring.
      *
      * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints
@@ -92,4 +125,17 @@ interface ContainerInterface extends PsrContainerInterface
      */
     #[NoDiscard]
     public function getInstances(): array;
+
+    /**
+     * Call a callable, resolving type-hinted parameters from the container.
+     *
+     * Explicit parameters in $params take precedence over container resolution.
+     * Parameters are matched by name first, then by type.
+     *
+     * @param callable $callable The callable to invoke
+     * @param array<string, mixed> $params Explicit parameter overrides keyed by name
+     *
+     * @return mixed The callable's return value
+     */
+    public function call(callable $callable, array $params = []): mixed;
 }

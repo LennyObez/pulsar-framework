@@ -29,6 +29,7 @@ use const JSON_THROW_ON_ERROR;
  * traditional offset pagination and provides stable results under concurrent writes.
  *
  * Best for ordered datasets with a unique sort key (e.g., created_at + id).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeysetPaginator implements PaginatorInterface
@@ -67,7 +68,9 @@ final readonly class KeysetPaginator implements PaginatorInterface
         $nextCursor = null;
 
         if ($hasMore && $pageItems !== []) {
+            /** @var mixed $lastItem */
             $lastItem = $pageItems[count($pageItems) - 1];
+            /** @var mixed $keysetValue */
             $keysetValue = is_array($lastItem) ? ($lastItem[$this->sortKey] ?? null) : null;
 
             if ($keysetValue !== null) {
@@ -82,7 +85,9 @@ final readonly class KeysetPaginator implements PaginatorInterface
         $prevCursor = null;
 
         if ($currentCursor !== null && $pageItems !== []) {
+            /** @var mixed $firstItem */
             $firstItem = $pageItems[0];
+            /** @var mixed $keysetValue */
             $keysetValue = is_array($firstItem) ? ($firstItem[$this->sortKey] ?? null) : null;
 
             if ($keysetValue !== null) {
@@ -90,7 +95,7 @@ final readonly class KeysetPaginator implements PaginatorInterface
             }
         }
 
-        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor, $currentCursor);
+        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor);
 
         return new PaginationResult(
             items: $pageItems,
@@ -146,7 +151,7 @@ final readonly class KeysetPaginator implements PaginatorInterface
         ], JSON_THROW_ON_ERROR));
     }
 
-    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor, ?string $currentCursor): PaginationLinks
+    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor): PaginationLinks
     {
         if ($baseUrl === '') {
             return new PaginationLinks();

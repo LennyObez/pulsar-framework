@@ -15,6 +15,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_bool;
 use function is_string;
 use function strlen;
 
@@ -23,19 +24,19 @@ use function strlen;
  *
  * Restore and delete operations require step-up authentication and a mandatory reason.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class BackupController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class BackupController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int CREATE_RATE_LIMIT_PER_MINUTE = 1;
 
     public function __construct(
         private BackupServiceInterface $backupService,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -72,12 +73,23 @@ final readonly class BackupController
 
         $tenantId = $this->validateTenantAccess($request);
 
+        /** @var mixed $rawIncludeContent */
+        $rawIncludeContent = $body['include_content'] ?? null;
+        /** @var mixed $rawIncludeMedia */
+        $rawIncludeMedia = $body['include_media'] ?? null;
+        /** @var mixed $rawIncludeTaxonomies */
+        $rawIncludeTaxonomies = $body['include_taxonomies'] ?? null;
+        /** @var mixed $rawIncludeMenus */
+        $rawIncludeMenus = $body['include_menus'] ?? null;
+        /** @var mixed $rawIncludeSettings */
+        $rawIncludeSettings = $body['include_settings'] ?? null;
+
         $scope = BackupScope::fromArray([
-            'include_content' => (bool) ($body['include_content'] ?? true),
-            'include_media' => (bool) ($body['include_media'] ?? false),
-            'include_taxonomies' => (bool) ($body['include_taxonomies'] ?? true),
-            'include_menus' => (bool) ($body['include_menus'] ?? true),
-            'include_settings' => (bool) ($body['include_settings'] ?? true),
+            'include_content' => is_bool($rawIncludeContent) ? $rawIncludeContent : true,
+            'include_media' => is_bool($rawIncludeMedia) ? $rawIncludeMedia : false,
+            'include_taxonomies' => is_bool($rawIncludeTaxonomies) ? $rawIncludeTaxonomies : true,
+            'include_menus' => is_bool($rawIncludeMenus) ? $rawIncludeMenus : true,
+            'include_settings' => is_bool($rawIncludeSettings) ? $rawIncludeSettings : true,
             'tenant_id' => $tenantId,
         ]);
 
@@ -100,7 +112,9 @@ final readonly class BackupController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
@@ -129,7 +143,9 @@ final readonly class BackupController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([

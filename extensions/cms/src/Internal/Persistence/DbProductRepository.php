@@ -7,17 +7,21 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Product;
 use Pulsar\Extension\Cms\Commerce\ProductRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\ProductStatus;
 
-use function array_values;
 use function implode;
+use function is_string;
 use function sprintf;
 
 /**
  * Database-backed product repository with tenant scoping.
+ *
+ * @psalm-api Bound to ProductRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ProductRepositoryInterface for public API')]
 final readonly class DbProductRepository implements ProductRepositoryInterface
@@ -34,25 +38,15 @@ final readonly class DbProductRepository implements ProductRepositoryInterface
         SELECT * FROM cms_products WHERE sku = :sku
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_products (
-            id, tenant_id, sku, status, price_amount, price_currency,
-            tax_category, stock_quantity, digital, content_id, created_at, updated_at
-        ) VALUES (
-            :id, :tenant_id, :sku, :status, :price_amount, :price_currency,
-            :tax_category, :stock_quantity, :digital, :content_id, :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            sku = EXCLUDED.sku,
-            status = EXCLUDED.status,
-            price_amount = EXCLUDED.price_amount,
-            price_currency = EXCLUDED.price_currency,
-            tax_category = EXCLUDED.tax_category,
-            stock_quantity = EXCLUDED.stock_quantity,
-            digital = EXCLUDED.digital,
-            content_id = EXCLUDED.content_id,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'sku', 'status', 'price_amount', 'price_currency',
+        'tax_category', 'stock_quantity', 'digital', 'content_id', 'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'sku', 'status', 'price_amount', 'price_currency', 'tax_category',
+        'stock_quantity', 'digital', 'content_id', 'updated_at',
+    ];
 
     public function __construct(
         private ConnectionInterface $db,
@@ -76,7 +70,7 @@ final readonly class DbProductRepository implements ProductRepositoryInterface
         $placeholders = [];
         $bindings = [];
 
-        foreach (array_values($ids) as $i => $id) {
+        foreach ($ids as $i => $id) {
             $key = 'id_' . $i;
             $placeholders[] = ':' . $key;
             $bindings[$key] = $id;
@@ -134,16 +128,21 @@ final readonly class DbProductRepository implements ProductRepositoryInterface
     public function listProducts(array $filters, int $page, int $perPage): array
     {
         $sql = 'SELECT * FROM cms_products WHERE 1=1';
+        /** @var array<string, mixed> $bindings */
         $bindings = [];
 
-        if (isset($filters['status'])) {
+        /** @var mixed $rawStatus */
+        $rawStatus = $filters['status'] ?? null;
+        if (is_string($rawStatus)) {
             $sql .= ' AND status = :status';
-            $bindings['status'] = $filters['status'];
+            $bindings['status'] = $rawStatus;
         }
 
-        if (isset($filters['tenantId'])) {
+        /** @var mixed $rawTenantId */
+        $rawTenantId = $filters['tenantId'] ?? null;
+        if (is_string($rawTenantId)) {
             $sql .= ' AND tenant_id = :tenant_id';
-            $bindings['tenant_id'] = $filters['tenantId'];
+            $bindings['tenant_id'] = $rawTenantId;
         } elseif ($this->tenantId !== null) {
             $sql .= ' AND tenant_id = :tenant_id';
             $bindings['tenant_id'] = $this->tenantId;
@@ -163,7 +162,15 @@ final readonly class DbProductRepository implements ProductRepositoryInterface
 
     public function save(Product $product): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_products',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $product->id,
             'tenant_id' => $product->tenantId,
             'sku' => $product->sku,

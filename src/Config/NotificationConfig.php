@@ -6,21 +6,30 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function is_array;
-use function is_bool;
-use function is_int;
 use function is_string;
 
 /**
  * Typed configuration DTO for `config/notification.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class NotificationConfig
+final readonly class NotificationConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/notification.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'default_channels', 'regulated', 'audit_hash_enabled', 'rate_limit_per_minute',
+        'unsubscribe_url_pattern', 'fcm_project_id', 'fcm_server_key', 'fcm_oauth_token',
+    ];
+
     /**
      * @param list<NotificationChannelType> $defaultChannels Default channels when notification does not specify via()
      * @param string|null $unsubscribeUrlPattern URL pattern with {notifiable_id} and {channel} placeholders for RFC 8058 headers
+     * @param string|null $fcmServerKey Legacy FCM server key (deprecated; use fcmProjectId + fcmOAuthToken)
+     * @param string|null $fcmProjectId Firebase project ID for FCM v1 API
+     * @param string|null $fcmOAuthToken OAuth2 Bearer token for FCM v1 API authentication
      */
     public function __construct(
         public bool $enabled = false,
@@ -29,48 +38,72 @@ readonly class NotificationConfig
         public bool $regulated = false,
         public bool $auditHashEnabled = false,
         public ?string $unsubscribeUrlPattern = null,
+        public ?string $fcmServerKey = null,
+        public ?string $fcmProjectId = null,
+        public ?string $fcmOAuthToken = null,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/notification.php
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * @param array{
+     *     enabled?: bool,
+     *     default_channels?: list<mixed>,
+     *     rate_limit_per_minute?: int,
+     *     regulated?: bool,
+     *     audit_hash_enabled?: bool,
+     *     unsubscribe_url_pattern?: string|null,
+     *     fcm_server_key?: string|null,
+     *     fcm_project_id?: string|null,
+     *     fcm_oauth_token?: string|null,
+     * } $data Raw array from config/notification.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $enabled = $environment->get('NOTIFICATION_ENABLED') !== null
             ? $environment->get('NOTIFICATION_ENABLED') === 'true'
-            : (is_bool($data['enabled'] ?? null) ? $data['enabled'] : false);
+            : Coerce::strictBool($data['enabled'] ?? null);
 
         $defaultChannels = [];
-        /** @var mixed $rawChannels */
-        $rawChannels = $data['default_channels'] ?? [];
-
+        $rawChannels = $data['default_channels'] ?? null;
         if (is_array($rawChannels)) {
             foreach ($rawChannels as $channel) {
-                if (is_string($channel)) {
-                    $type = NotificationChannelType::tryFrom($channel);
-
-                    if ($type !== null) {
-                        $defaultChannels[] = $type;
-                    }
+                if (!is_string($channel)) {
+                    continue;
+                }
+                $type = NotificationChannelType::tryFrom($channel);
+                if ($type !== null) {
+                    $defaultChannels[] = $type;
                 }
             }
         }
 
-        $rawRateLimit = $environment->get('NOTIFICATION_RATE_LIMIT')
-            ?? ($data['rate_limit_per_minute'] ?? 60);
-        $rateLimitPerMinute = is_int($rawRateLimit) ? $rawRateLimit : (is_string($rawRateLimit) ? (int) $rawRateLimit : 60);
+        $rawRateLimit = $environment->get('NOTIFICATION_RATE_LIMIT');
+        $rateLimitPerMinute = $rawRateLimit !== null
+            ? (int) $rawRateLimit
+            : Coerce::int($data['rate_limit_per_minute'] ?? null, 60);
 
         $regulated = $environment->get('NOTIFICATION_REGULATED') !== null
             ? $environment->get('NOTIFICATION_REGULATED') === 'true'
-            : (is_bool($data['regulated'] ?? null) ? $data['regulated'] : false);
+            : Coerce::strictBool($data['regulated'] ?? null);
 
         $auditHashEnabled = $environment->get('NOTIFICATION_AUDIT_HASH') !== null
             ? $environment->get('NOTIFICATION_AUDIT_HASH') === 'true'
-            : (is_bool($data['audit_hash_enabled'] ?? null) ? $data['audit_hash_enabled'] : false);
+            : Coerce::strictBool($data['audit_hash_enabled'] ?? null);
 
-        $unsubscribeUrlPattern = $environment->get('NOTIFICATION_UNSUBSCRIBE_URL')
-            ?? (is_string($data['unsubscribe_url_pattern'] ?? null) ? $data['unsubscribe_url_pattern'] : null);
+        $unsubscribeEnv = $environment->get('NOTIFICATION_UNSUBSCRIBE_URL');
+        $fcmKeyEnv = $environment->get('NOTIFICATION_FCM_SERVER_KEY');
+        $fcmProjectEnv = $environment->get('NOTIFICATION_FCM_PROJECT_ID');
+        $fcmTokenEnv = $environment->get('NOTIFICATION_FCM_OAUTH_TOKEN');
 
         return new self(
             enabled: $enabled,
@@ -78,7 +111,11 @@ readonly class NotificationConfig
             rateLimitPerMinute: $rateLimitPerMinute > 0 ? $rateLimitPerMinute : 60,
             regulated: $regulated,
             auditHashEnabled: $auditHashEnabled,
-            unsubscribeUrlPattern: $unsubscribeUrlPattern,
+            unsubscribeUrlPattern: $unsubscribeEnv ?? Coerce::nullableString($data['unsubscribe_url_pattern'] ?? null),
+            fcmServerKey: $fcmKeyEnv ?? Coerce::nullableString($data['fcm_server_key'] ?? null),
+            fcmProjectId: $fcmProjectEnv ?? Coerce::nullableString($data['fcm_project_id'] ?? null),
+            fcmOAuthToken: $fcmTokenEnv ?? Coerce::nullableString($data['fcm_oauth_token'] ?? null),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

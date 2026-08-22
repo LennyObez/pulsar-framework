@@ -22,7 +22,7 @@ use function time;
  * confidentiality + integrity + bounded lifetime. Replay prevention is
  * best-effort unless paired with server-side nonce tracking.
  *
- * Limitations (cannot be worked around — inherent to stateless design):
+ * Limitations (cannot be worked around; inherent to stateless design):
  * - No server-side state: cannot revoke individual sessions
  * - No session listing: cannot enumerate active sessions
  * - No concurrency control: cannot limit concurrent sessions per user
@@ -31,7 +31,7 @@ use function time;
  * Not recommended for regulated workloads. Use Redis or Database handler instead.
  */
 #[Internal]
-final class CookieHandler implements SessionHandlerInterface
+final class CookieHandler implements CookieSessionHandlerInterface
 {
     private const int HARD_SIZE_CAP = 4096;
 
@@ -182,7 +182,7 @@ final class CookieHandler implements SessionHandlerInterface
 
             $this->readBuffer[$sessionId] = $envelope['data'];
         } catch (SecurityException) {
-            // Invalid or tampered cookie — silently ignore (treat as new session)
+            // Invalid or tampered cookie: silently ignore (treat as new session)
         }
     }
 

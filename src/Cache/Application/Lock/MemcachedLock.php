@@ -22,7 +22,7 @@ use function usleep;
  *
  * Provides best-effort mutual exclusion using Memcached's add() for atomic
  * acquisition. Release and refresh operations are not fully atomic due to
- * Memcached protocol limitations — a narrow TOCTOU window exists between
+ * Memcached protocol limitations: a narrow TOCTOU window exists between
  * the token read and the subsequent delete/touch. For strong fencing
  * guarantees, prefer RedisLock which uses Lua scripts for atomic operations.
  */

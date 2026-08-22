@@ -16,6 +16,9 @@ use function round;
 
 /**
  * Tax calculator supporting per-item rates, multi-country rules, and EU VAT reverse charge.
+ *
+ * @psalm-api Bound to TaxCalculatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use TaxCalculatorInterface for public API')]
 final readonly class TaxCalculator implements TaxCalculatorInterface
@@ -41,7 +44,7 @@ final readonly class TaxCalculator implements TaxCalculatorInterface
 
         foreach ($items as $item) {
             $rate = $reverseCharge ? 0.0 : $this->findTaxRate($item['taxCategory'], $billingCountry);
-            $taxableAmount = $item['amount'] * $item['quantity'];
+            $taxableAmount = (float) ($item['amount'] * $item['quantity']);
             $taxAmount = intval(round($taxableAmount * $rate));
 
             $taxLineItems[] = new TaxLineItem(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ObservabilityConfig;
@@ -36,6 +37,7 @@ final readonly class ErrorTrackingWiring implements ServiceWiringInterface
         $aggregator = new ErrorAggregator(
             maxGroups: $observabilityConfig->errorTracking->maxGroups,
             maxRecentEventsPerGroup: $observabilityConfig->errorTracking->maxRecentEventsPerGroup,
+            logger: $container->has(LoggerInterface::class) ? $container->get(LoggerInterface::class) : null,
         );
 
         $container->instance(SensitiveDataScrubber::class, $scrubber);

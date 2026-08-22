@@ -7,12 +7,16 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Coupon;
 use Pulsar\Extension\Cms\Commerce\CouponRepositoryInterface;
 
 /**
  * Database-backed coupon repository with case-insensitive lookup.
+ *
+ * @psalm-api Bound to CouponRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CouponRepositoryInterface for public API')]
 final readonly class DbCouponRepository implements CouponRepositoryInterface
@@ -21,13 +25,8 @@ final readonly class DbCouponRepository implements CouponRepositoryInterface
         SELECT * FROM cms_coupons WHERE LOWER(code) = LOWER(:code) LIMIT 1
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_coupons (id, promotion_id, code, is_single_use, used_at, used_by)
-        VALUES (:id, :promotion_id, :code, :is_single_use, :used_at, :used_by)
-        ON CONFLICT (id) DO UPDATE SET
-            used_at = EXCLUDED.used_at,
-            used_by = EXCLUDED.used_by
-        SQL;
+    private const array UPSERT_COLUMNS = ['id', 'promotion_id', 'code', 'is_single_use', 'used_at', 'used_by'];
+    private const array UPSERT_UPDATE = ['used_at', 'used_by'];
 
     private const string SQL_MARK_USED = <<<'SQL'
         UPDATE cms_coupons SET used_at = :now, used_by = :customer_id WHERE id = :id
@@ -51,7 +50,15 @@ final readonly class DbCouponRepository implements CouponRepositoryInterface
 
     public function save(Coupon $coupon): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_coupons',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $coupon->id,
             'promotion_id' => $coupon->promotionId,
             'code' => $coupon->code,

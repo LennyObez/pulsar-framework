@@ -9,11 +9,11 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Event\EnvelopeRequiredEvent;
+use Pulsar\Support\Coerce;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
-use function is_array;
 use function is_string;
 
 /**
@@ -21,6 +21,7 @@ use function is_string;
  *
  * Supports controls for SOX segregation of duties monitoring
  * and PCI-DSS privileged access tracking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]
@@ -65,36 +66,17 @@ final readonly class PrivilegeEscalated implements EnvelopeRequiredEvent
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $occurredAt = is_string($data['occurred_at'] ?? null)
-            ? new DateTimeImmutable($data['occurred_at'])
-            : new DateTimeImmutable();
-
-        $fromRolesRaw = is_array($data['from_roles'] ?? null) ? $data['from_roles'] : [];
-        /** @var list<string> $fromRoles */
-        $fromRoles = [];
-        foreach ($fromRolesRaw as $role) {
-            if (is_string($role)) {
-                $fromRoles[] = $role;
-            }
-        }
-
-        $toRolesRaw = is_array($data['to_roles'] ?? null) ? $data['to_roles'] : [];
-        /** @var list<string> $toRoles */
-        $toRoles = [];
-        foreach ($toRolesRaw as $role) {
-            if (is_string($role)) {
-                $toRoles[] = $role;
-            }
-        }
+        /** @var mixed $occurredAt */
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            identityId: is_string($data['identity_id'] ?? null) ? $data['identity_id'] : '',
-            fromRoles: $fromRoles,
-            toRoles: $toRoles,
-            reason: is_string($data['reason'] ?? null) ? $data['reason'] : '',
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            occurredAt: $occurredAt,
+            identityId: Coerce::string($data['identity_id'] ?? null),
+            fromRoles: Coerce::listOfString($data['from_roles'] ?? null),
+            toRoles: Coerce::listOfString($data['to_roles'] ?? null),
+            reason: Coerce::string($data['reason'] ?? null),
+            correlationId: Coerce::string($data['correlation_id'] ?? null),
+            nonce: Coerce::string($data['nonce'] ?? null),
+            occurredAt: is_string($occurredAt) ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 

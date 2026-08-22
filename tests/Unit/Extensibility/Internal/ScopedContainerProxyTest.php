@@ -87,6 +87,43 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
+    public function coreCanRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Core);
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+
+        self::assertTrue($proxy->has('test.singleton'));
+    }
+
+    #[Test]
+    public function verifiedCanRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Verified);
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+
+        self::assertTrue($proxy->has('test.singleton'));
+    }
+
+    #[Test]
+    public function communityWithGrantedContainerWriteCanRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+
+        self::assertTrue($proxy->has('test.singleton'));
+    }
+
+    #[Test]
+    public function untrustedCannotRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Untrusted);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ServiceRegister');
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+    }
+
+    #[Test]
     public function coreCanRegisterInstances(): void
     {
         $proxy = $this->proxy(TrustTier::Core);
@@ -112,7 +149,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Verified);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('CryptoKeyAccess');
+        $this->expectExceptionMessageIsOrContains('CryptoKeyAccess');
 
         $_ = $proxy->get('Pulsar\Security\Crypto\MasterKey');
     }
@@ -160,7 +197,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('DatabaseRaw');
+        $this->expectExceptionMessageIsOrContains('DatabaseRaw');
         $_ = $proxy->get('Pulsar\Database\ConnectionInterface');
     }
 
@@ -170,14 +207,18 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('AuditSinkAccess');
+        $this->expectExceptionMessageIsOrContains('AuditSinkAccess');
         $_ = $proxy->get('Pulsar\Audit\AuditSinkInterface');
     }
 
     #[Test]
-    public function communityCanBindServices(): void
+    public function communityWithGrantedContainerWriteCanBindServices(): void
     {
-        $proxy = $this->proxy(TrustTier::Community);
+        // ContainerWrite was removed from the Community default grant in
+        // 1.0.0-rc.12 (it allowed silent override of core security services).
+        // A community extension can still bind when the capability is granted
+        // explicitly via config/extensions.php — modeled here as an extra cap.
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
         $proxy->bind('test.service', fn() => new stdClass());
 
         self::assertTrue($proxy->has('test.service'));
@@ -190,7 +231,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('not classified');
+        $this->expectExceptionMessageIsOrContains('not classified');
         $_ = $proxy->get('Custom\Unknown\Service');
     }
 
@@ -210,7 +251,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessageIsOrContains('ServiceRegister');
         $proxy->bind('test.service', fn() => new stdClass());
     }
 
@@ -220,8 +261,82 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessageIsOrContains('ServiceRegister');
         $proxy->instance('test.instance', new stdClass());
+    }
+
+    // --- ServiceRegister vs ContainerWrite: register a NEW service is allowed
+    //     for Verified/Community; OVERRIDING an existing (core) service is not. ---
+
+    #[Test]
+    public function verifiedCanRegisterANewOwnService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Verified);
+
+        // 'Pulsar\Extension\Foo\FooService' is not bound in setUp() → a NEW id.
+        $proxy->bind('Pulsar\Extension\Foo\FooService', fn() => new stdClass());
+
+        self::assertTrue($this->container->has('Pulsar\Extension\Foo\FooService'));
+    }
+
+    #[Test]
+    public function communityCanRegisterANewOwnService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community);
+
+        $proxy->instance('Pulsar\Extension\Bar\BarService', new stdClass());
+
+        self::assertTrue($this->container->has('Pulsar\Extension\Bar\BarService'));
+    }
+
+    #[Test]
+    public function verifiedCannotOverrideAnExistingCoreService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Verified);
+
+        // LoggerInterface is already bound in setUp() → rebinding is an OVERRIDE,
+        // which is ContainerWrite (Core only). Verified must be denied so it can
+        // never hijack a core service.
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
+        $proxy->instance(LoggerInterface::class, new NullLogger());
+    }
+
+    #[Test]
+    public function communityCannotOverrideAnExistingCoreService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
+        $proxy->bind(LoggerInterface::class, fn() => new NullLogger());
+    }
+
+    // --- ServiceDecorate: Verified may wrap a service (original preserved);
+    //     Community may not. ---
+
+    #[Test]
+    public function verifiedCanDecorateAService(): void
+    {
+        $this->container->bind('svc.decorable', fn() => new stdClass());
+        $proxy = $this->proxy(TrustTier::Verified);
+
+        // Decorator receives the inner service and returns a wrapper. The gate
+        // passes (Verified has ServiceDecorate) and the decorator is registered.
+        $proxy->decorate('svc.decorable', static fn(object $inner): object => $inner);
+
+        self::assertTrue($this->container->has('svc.decorable'));
+    }
+
+    #[Test]
+    public function communityCannotDecorateAService(): void
+    {
+        $this->container->bind('svc.decorable', fn() => new stdClass());
+        $proxy = $this->proxy(TrustTier::Community);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ServiceDecorate');
+        $proxy->decorate('svc.decorable', static fn(object $inner): object => $inner);
     }
 
     #[Test]
@@ -240,7 +355,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('not classified');
+        $this->expectExceptionMessageIsOrContains('not classified');
         $_ = $proxy->get('Custom\Service');
     }
 
@@ -274,13 +389,13 @@ final class ScopedContainerProxyTest extends TestCase
         self::assertInstanceOf(stdClass::class, $proxy->get('Pulsar\Database\ConnectionInterface'));
     }
 
-    // --- Delegation methods ---
+    // --- Delegation methods with capability guards ---
 
     #[Test]
-    public function forgetInstanceDelegatesToInner(): void
+    public function forgetInstanceDelegatesToInnerWhenAllowed(): void
     {
         $this->container->instance('test.forget', new stdClass());
-        $proxy = $this->proxy(TrustTier::Community);
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
 
         $proxy->forgetInstance('test.forget');
 
@@ -289,7 +404,38 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function getBindingsDelegatesToInner(): void
+    public function untrustedCannotForgetInstance(): void
+    {
+        $this->container->instance('test.forget', new stdClass());
+        $proxy = $this->proxy(TrustTier::Untrusted);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
+        $proxy->forgetInstance('test.forget');
+    }
+
+    #[Test]
+    public function setResolutionHintsDelegatesToInnerWhenAllowed(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
+        $proxy->setResolutionHints(null);
+
+        // Verify proxy delegates without throwing by checking container is still consistent
+        self::assertInstanceOf(ScopedContainerProxy::class, $proxy);
+    }
+
+    #[Test]
+    public function untrustedCannotSetResolutionHints(): void
+    {
+        $proxy = $this->proxy(TrustTier::Untrusted);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
+        $proxy->setResolutionHints(null);
+    }
+
+    #[Test]
+    public function getBindingsDelegatesToInnerWhenAllowed(): void
     {
         $this->container->bind('proxy.test', fn() => new stdClass());
         $proxy = $this->proxy(TrustTier::Community);
@@ -299,7 +445,23 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function getInstancesDelegatesToInner(): void
+    public function getBindingsDeniedWithoutContainerRead(): void
+    {
+        $policy = new CapabilityPolicy([]);
+        $proxy = new ScopedContainerProxy(
+            $this->container,
+            TrustTier::Untrusted,
+            $policy,
+            $this->map,
+        );
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ContainerRead');
+        $_ = $proxy->getBindings();
+    }
+
+    #[Test]
+    public function getInstancesDelegatesToInnerWhenAllowed(): void
     {
         $proxy = $this->proxy(TrustTier::Community);
 
@@ -308,12 +470,18 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function setResolutionHintsDelegatesToInner(): void
+    public function getInstancesDeniedWithoutContainerRead(): void
     {
-        $proxy = $this->proxy(TrustTier::Community);
-        $proxy->setResolutionHints(null);
+        $policy = new CapabilityPolicy([]);
+        $proxy = new ScopedContainerProxy(
+            $this->container,
+            TrustTier::Untrusted,
+            $policy,
+            $this->map,
+        );
 
-        // Verify proxy delegates by checking no exception is thrown and state is consistent
-        self::assertInstanceOf(ScopedContainerProxy::class, $proxy);
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessageIsOrContains('ContainerRead');
+        $_ = $proxy->getInstances();
     }
 }

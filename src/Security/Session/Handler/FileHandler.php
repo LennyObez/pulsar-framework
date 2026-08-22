@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session\Handler;
 
+use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Exception\SecurityException;
@@ -14,6 +15,7 @@ use function glob;
 use function is_dir;
 use function is_file;
 use function mkdir;
+use function preg_match;
 use function rename;
 use function sprintf;
 use function tempnam;
@@ -32,13 +34,28 @@ final class FileHandler implements SessionHandlerInterface
 {
     private string $savePath = '';
 
+    /**
+     * @param string $configuredPath Absolute session directory from
+     *        SessionConfig::$savePath (already resolved by the wiring). Empty
+     *        means "not configured": the built-in `var/sessions` default is used.
+     */
+    public function __construct(private readonly string $configuredPath = '') {}
+
     #[Override]
     public function open(string $path, string $name): bool
     {
-        $this->savePath = $path;
+        // Precedence: the path PHP hands us (session.save_path) wins; then the
+        // configured SessionConfig::$savePath; then the built-in default under
+        // the single writable root. All three resolve to an absolute path so the
+        // location is stable regardless of the process CWD.
+        $this->savePath = match (true) {
+            $path !== '' => $path,
+            $this->configuredPath !== '' => $this->configuredPath,
+            default => var_path('sessions'),
+        };
 
         if (!is_dir($this->savePath)) {
-            mkdir($this->savePath, 0o700, true);
+            @mkdir($this->savePath, 0o700, true);
         }
 
         return is_dir($this->savePath);
@@ -108,8 +125,10 @@ final class FileHandler implements SessionHandlerInterface
         $deleted = 0;
 
         foreach ($files as $file) {
-            if (is_file($file) && filemtime($file) < $threshold) {
-                if (unlink($file)) {
+            $mtime = @filemtime($file);
+
+            if ($mtime !== false && $mtime < $threshold) {
+                if (@unlink($file)) {
                     $deleted++;
                 }
             }
@@ -156,6 +175,10 @@ final class FileHandler implements SessionHandlerInterface
 
     private function sessionFile(string $id): string
     {
+        if (preg_match('/^[0-9a-f]+$/', $id) !== 1) {
+            throw new InvalidArgumentException('Invalid session ID format');
+        }
+
         return sprintf('%s/sess_%s', $this->savePath, $id);
     }
 }

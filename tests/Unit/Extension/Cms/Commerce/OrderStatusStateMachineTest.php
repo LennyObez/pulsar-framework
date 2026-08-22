@@ -129,7 +129,7 @@ final class OrderStatusStateMachineTest extends TestCase
     public function transitionThrowsOnInvalid(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'cart' to 'fulfilled'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'cart' to 'fulfilled'");
 
         OrderStatusStateMachine::transition(OrderStatus::Cart, OrderStatus::Fulfilled);
     }

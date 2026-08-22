@@ -19,9 +19,7 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use RuntimeException;
 
 use function array_key_exists;
-use function array_merge;
-use function array_unique;
-use function array_values;
+use function array_keys;
 use function in_array;
 
 /**
@@ -33,8 +31,13 @@ use function in_array;
  *
  * Denies access to sensitive services such as MasterKey, AuditLoggerInterface,
  * RoleRegistryInterface, and all Internal\ namespaced classes.
+ * @api
  */
 #[Api(since: '1.0.0')]
+/**
+ * @psalm-api Public proxy constructed by CmsPluginManager and exposed to plugin
+ *            register() / boot() so they can resolve a curated subset of services.
+ */
 final readonly class ScopedContainerProxy
 {
     /** @var list<class-string> Base services available to all plugins. */
@@ -98,13 +101,13 @@ final readonly class ScopedContainerProxy
     {
         if (!in_array($id, $this->allowedServices, true)) {
             throw new RuntimeException(
-                "Plugin '{$this->pluginSlug}' is not allowed to access service '{$id}'",
+                "Plugin '$this->pluginSlug' is not allowed to access service '$id'",
             );
         }
 
         if (!$this->container->has($id)) {
             throw new RuntimeException(
-                "Service '{$id}' is not available in the container",
+                "Service '$id' is not available in the container",
             );
         }
 
@@ -128,21 +131,28 @@ final readonly class ScopedContainerProxy
      */
     private static function resolveAllowedServices(array $capabilities): array
     {
-        $services = self::BASE_SERVICES;
+        $seen = [];
+        foreach (self::BASE_SERVICES as $service) {
+            $seen[$service] = true;
+        }
 
         foreach ($capabilities as $capability) {
             if (array_key_exists($capability, self::CAPABILITY_SERVICES)) {
-                $services = array_merge($services, self::CAPABILITY_SERVICES[$capability]);
+                foreach (self::CAPABILITY_SERVICES[$capability] as $service) {
+                    $seen[$service] = true;
+                }
             }
         }
 
         // When no capabilities are declared, grant all capability services for backwards compatibility
         if ($capabilities === []) {
             foreach (self::CAPABILITY_SERVICES as $capabilityServices) {
-                $services = array_merge($services, $capabilityServices);
+                foreach ($capabilityServices as $service) {
+                    $seen[$service] = true;
+                }
             }
         }
 
-        return array_values(array_unique($services));
+        return array_keys($seen);
     }
 }

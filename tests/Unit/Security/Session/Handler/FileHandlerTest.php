@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Session\Handler;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Exception\SecurityException;
@@ -63,59 +65,81 @@ final class FileHandlerTest extends TestCase
     }
 
     #[Test]
+    public function openFallsBackToConfiguredPathWhenPhpProvidesNone(): void
+    {
+        // PHP can hand the handler an empty save_path (no session.save_path in
+        // php.ini, or an SAPI that sets none). The resolved SessionConfig::$savePath
+        // is passed into the constructor for exactly that case and must win —
+        // otherwise file sessions fall back to the built-in default and the
+        // configured directory is ignored without any signal.
+        $configuredDir = sys_get_temp_dir() . '/pulsar_session_configured_' . uniqid('', true);
+        $handler = new FileHandler($configuredDir);
+
+        self::assertTrue($handler->open('', 'TEST_SESSION'));
+        self::assertTrue(is_dir($configuredDir), 'The configured session directory should be created and used.');
+
+        self::assertTrue($handler->close());
+        rmdir($configuredDir);
+    }
+
+    #[Test]
     public function readReturnsEmptyStringForNonexistentSession(): void
     {
-        self::assertSame('', $this->handler->read('nonexistent-id'));
+        self::assertSame('', $this->handler->read('aabbccdd0011223344556677'));
     }
 
     #[Test]
     public function writeAndReadRoundtrip(): void
     {
         $data = 'serialized_session_data';
+        $id = 'aabbccdd00112233';
 
-        self::assertTrue($this->handler->write('session-1', $data));
-        self::assertSame($data, $this->handler->read('session-1'));
+        self::assertTrue($this->handler->write($id, $data));
+        self::assertSame($data, $this->handler->read($id));
     }
 
     #[Test]
     public function destroyRemovesSessionData(): void
     {
-        $this->handler->write('session-1', 'data');
+        $id = 'aabbccdd00112233';
+        $this->handler->write($id, 'data');
 
-        self::assertTrue($this->handler->destroy('session-1'));
-        self::assertSame('', $this->handler->read('session-1'));
+        self::assertTrue($this->handler->destroy($id));
+        self::assertSame('', $this->handler->read($id));
     }
 
     #[Test]
     public function destroyNonexistentReturnsTrue(): void
     {
-        self::assertTrue($this->handler->destroy('nonexistent'));
+        self::assertTrue($this->handler->destroy('aabbccdd'));
     }
 
     #[Test]
     public function gcRemovesExpiredFiles(): void
     {
-        $this->handler->write('old-session', 'old-data');
+        $id = 'aabbccddee001122';
+        $this->handler->write($id, 'old-data');
 
         // Touch the file to make it appear old
-        $file = $this->tempDir . '/sess_old-session';
+        $file = $this->tempDir . '/sess_' . $id;
         touch($file, time() - 7200);
 
         $deleted = $this->handler->gc(3600);
 
         self::assertSame(1, $deleted);
-        self::assertSame('', $this->handler->read('old-session'));
+        self::assertSame('', $this->handler->read($id));
     }
 
     #[Test]
     public function gcPreservesActiveFiles(): void
     {
-        $this->handler->write('active-session', 'active-data');
+        $id = 'aabbccddee003344';
+        $this->handler->write($id, 'active-data');
 
         $deleted = $this->handler->gc(3600);
 
         self::assertSame(0, $deleted);
-        self::assertSame('active-data', $this->handler->read('active-session'));
+        self::assertSame('active-data', $this->handler->read($id));
     }
 
     #[Test]
@@ -146,35 +170,129 @@ final class FileHandlerTest extends TestCase
     public function listSessionsThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session listing');
+        $this->expectExceptionMessageIsOrContains('does not support session listing');
 
-        $this->handler->listSessions('user-1');
+        $this->handler->listSessions('aabb0011');
     }
 
     #[Test]
     public function revokeSessionThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session revocation');
+        $this->expectExceptionMessageIsOrContains('does not support session revocation');
 
-        $this->handler->revokeSession('session-1');
+        $this->handler->revokeSession('aabb0011');
     }
 
     #[Test]
     public function getActiveSessionsThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support concurrency control');
+        $this->expectExceptionMessageIsOrContains('does not support concurrency control');
 
-        $this->handler->getActiveSessions('user-1');
+        $this->handler->getActiveSessions('aabb0011');
     }
 
     #[Test]
     public function overwriteExistingSession(): void
     {
-        $this->handler->write('session-1', 'original');
-        $this->handler->write('session-1', 'updated');
+        $id = 'aabbccdd00112233';
+        $this->handler->write($id, 'original');
+        $this->handler->write($id, 'updated');
 
-        self::assertSame('updated', $this->handler->read('session-1'));
+        self::assertSame('updated', $this->handler->read($id));
+    }
+
+    #[Test]
+    public function readWriteDestroyLifecycle(): void
+    {
+        $id = 'aabbccdd00112233';
+
+        // Read non-existent session
+        self::assertSame('', $this->handler->read($id));
+
+        // Write
+        self::assertTrue($this->handler->write($id, 'session data'));
+
+        // Read back
+        self::assertSame('session data', $this->handler->read($id));
+
+        // Destroy
+        self::assertTrue($this->handler->destroy($id));
+        self::assertSame('', $this->handler->read($id));
+    }
+
+    #[Test]
+    public function gcReturnsZeroWhenNoExpiredFiles(): void
+    {
+        $this->handler->write('aabbccdd', 'data');
+
+        $deleted = $this->handler->gc(3600);
+
+        self::assertSame(0, $deleted);
+    }
+
+    // --- Session ID validation ---
+
+    #[Test]
+    public function readRejectsInvalidSessionId(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
+
+        $this->handler->read('../../etc/passwd');
+    }
+
+    #[Test]
+    public function writeRejectsInvalidSessionId(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
+
+        $this->handler->write('../traversal', 'data');
+    }
+
+    #[Test]
+    public function destroyRejectsInvalidSessionId(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
+
+        $this->handler->destroy('session; rm -rf /');
+    }
+
+    #[Test]
+    #[DataProvider('invalidSessionIds')]
+    public function sessionIdValidationRejectsUnsafeInput(string $id): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
+
+        $this->handler->read($id);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function invalidSessionIds(): iterable
+    {
+        yield 'path traversal' => ['../../etc/passwd'];
+        yield 'directory separator' => ['abc/def'];
+        yield 'backslash' => ['abc\\def'];
+        yield 'null byte' => ["abc\0def"];
+        yield 'uppercase hex' => ['AABBCCDD'];
+        yield 'mixed case' => ['aAbBcCdD'];
+        yield 'non-hex letters' => ['ghijklmn'];
+        yield 'spaces' => ['aabb ccdd'];
+        yield 'empty string' => [''];
+        yield 'special chars' => ['sess_../../foo'];
+    }
+
+    #[Test]
+    public function validHexSessionIdIsAccepted(): void
+    {
+        $id = '0123456789abcdef';
+        self::assertTrue($this->handler->write($id, 'valid'));
+        self::assertSame('valid', $this->handler->read($id));
     }
 }

@@ -15,6 +15,7 @@ use function fopen;
  *
  * Uses a php://temp resource that is always seekable and readable.
  * Used by ServerRequest::bufferBody() to provide a rewindable body stream.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class BufferStream extends Stream

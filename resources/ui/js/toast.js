@@ -41,21 +41,40 @@
 
     var toast = document.createElement('div');
     toast.className = 'pui-toast pui-toast--' + variant;
-    toast.setAttribute('role', 'status');
+    // Use role="alert" with aria-live="assertive" for danger/error toasts
+    // so screen readers announce them immediately. Other variants use the
+    // polite role="status" for non-urgent messages.
+    if (variant === 'danger' || variant === 'error') {
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+    } else {
+      toast.setAttribute('role', 'status');
+    }
     toast.style.position = 'relative';
 
-    var html = '<div class="pui-toast__content">';
+    var content = document.createElement('div');
+    content.className = 'pui-toast__content';
     if (title) {
-      html += '<div class="pui-toast__title">' + escapeHtml(title) + '</div>';
+      var titleEl = document.createElement('div');
+      titleEl.className = 'pui-toast__title';
+      titleEl.textContent = title;
+      content.appendChild(titleEl);
     }
     if (message) {
-      html += '<div class="pui-toast__message">' + escapeHtml(message) + '</div>';
+      var messageEl = document.createElement('div');
+      messageEl.className = 'pui-toast__message';
+      messageEl.textContent = message;
+      content.appendChild(messageEl);
     }
-    html += '</div>';
-    html +=
-      '<button class="pui-toast__close" aria-label="Close notification" data-toast-close>&times;</button>';
+    toast.appendChild(content);
 
-    toast.innerHTML = html;
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'pui-toast__close';
+    closeBtn.setAttribute('aria-label', 'Close notification');
+    closeBtn.setAttribute('data-toast-close', '');
+    closeBtn.textContent = '\u00D7';
+    toast.appendChild(closeBtn);
+
     container.appendChild(toast);
 
     // Auto-dismiss
@@ -66,22 +85,13 @@
       }, duration);
     }
 
-    // Close button
-    var closeBtn = toast.querySelector('[data-toast-close]');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function () {
-        if (timer) clearTimeout(timer);
-        dismissToast(toast);
-      });
-    }
+    // Close button click handler (closeBtn already created above)
+    closeBtn.addEventListener('click', function () {
+      if (timer) clearTimeout(timer);
+      dismissToast(toast);
+    });
 
     return toast;
-  }
-
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   // Auto-bind close buttons

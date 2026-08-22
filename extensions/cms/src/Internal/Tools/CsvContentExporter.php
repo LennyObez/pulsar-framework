@@ -12,8 +12,8 @@ use function array_map;
 use function fclose;
 use function fopen;
 use function fputcsv;
+use function in_array;
 use function rewind;
-use function str_contains;
 use function stream_get_contents;
 
 /**
@@ -23,7 +23,11 @@ use function stream_get_contents;
  * and the ContentTranslation. Uses php://memory streams for efficient
  * in-memory CSV generation.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class CsvContentExporter
 {
     private const array COLUMNS = [
@@ -56,7 +60,7 @@ final readonly class CsvContentExporter
             return '';
         }
 
-        fputcsv($stream, self::COLUMNS);
+        fputcsv($stream, self::COLUMNS, escape: '');
 
         foreach ($items as $item) {
             $content = $item['content'];
@@ -80,7 +84,7 @@ final readonly class CsvContentExporter
                     $content->createdAt->format('c'),
                     $content->publishedAt?->format('c') ?? '',
                 ],
-            ));
+            ), escape: '');
         }
 
         rewind($stream);
@@ -95,7 +99,7 @@ final readonly class CsvContentExporter
      */
     private function sanitizeFormulaInjection(string $value): string
     {
-        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             return "\t" . $value;
         }
 

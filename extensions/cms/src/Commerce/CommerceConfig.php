@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Configuration for the commerce subsystem.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommerceConfig
@@ -40,20 +44,38 @@ final readonly class CommerceConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     taxRates?: list<array<string, mixed>>,
+     *     shippingRates?: list<array<string, mixed>>,
+     *     invoiceRenderer?: string,
+     *     downloadTokenExpiryDays?: int,
+     *     maxDownloads?: int,
+     *     taxRequired?: bool|int|string,
+     *     currency?: string,
+     *     sellerCountry?: string,
+     *     euCountryCodes?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         $taxRates = [];
-
-        foreach ($data['taxRates'] ?? [] as $rate) {
-            $taxRates[] = TaxRateConfig::fromArray($rate);
+        $rawTax = $data['taxRates'] ?? null;
+        if (is_array($rawTax)) {
+            foreach ($rawTax as $rate) {
+                if (is_array($rate)) {
+                    $taxRates[] = TaxRateConfig::fromArray($rate);
+                }
+            }
         }
 
         $shippingRates = [];
-
-        foreach ($data['shippingRates'] ?? [] as $rate) {
-            $shippingRates[] = ShippingRateConfig::fromArray($rate);
+        $rawShip = $data['shippingRates'] ?? null;
+        if (is_array($rawShip)) {
+            foreach ($rawShip as $rate) {
+                if (is_array($rate)) {
+                    $shippingRates[] = ShippingRateConfig::fromArray($rate);
+                }
+            }
         }
 
         $defaultEuCodes = [
@@ -65,13 +87,13 @@ final readonly class CommerceConfig
         return new self(
             taxRates: $taxRates,
             shippingRates: $shippingRates,
-            invoiceRenderer: (string) ($data['invoiceRenderer'] ?? 'html'),
-            downloadTokenExpiryDays: (int) ($data['downloadTokenExpiryDays'] ?? 30),
-            maxDownloads: (int) ($data['maxDownloads'] ?? 5),
+            invoiceRenderer: Coerce::stringFromInput($data['invoiceRenderer'] ?? null, 'html'),
+            downloadTokenExpiryDays: Coerce::int($data['downloadTokenExpiryDays'] ?? null, 30),
+            maxDownloads: Coerce::int($data['maxDownloads'] ?? null, 5),
             taxRequired: (bool) ($data['taxRequired'] ?? false),
-            currency: (string) ($data['currency'] ?? 'EUR'),
-            sellerCountry: (string) ($data['sellerCountry'] ?? 'US'),
-            euCountryCodes: array_map(strval(...), $data['euCountryCodes'] ?? $defaultEuCodes),
+            currency: Coerce::stringFromInput($data['currency'] ?? null, 'EUR'),
+            sellerCountry: Coerce::stringFromInput($data['sellerCountry'] ?? null, 'US'),
+            euCountryCodes: Coerce::listOfString($data['euCountryCodes'] ?? null, $defaultEuCodes),
         );
     }
 }

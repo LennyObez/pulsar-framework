@@ -18,9 +18,9 @@ use function in_array;
  * - Safe: any tier with ContainerRead can resolve
  * - Unknown: denied for non-Core tiers (deny-by-default)
  *
- * @internal Not part of the public API — used by ScopedContainerProxy
+ * @internal Not part of the public API: used by ScopedContainerProxy
  */
-readonly class ServiceRestrictionMap
+final readonly class ServiceRestrictionMap
 {
     /**
      * @param array<string, ExtensionCapability> $restrictedServices Service ID => required capability
@@ -39,11 +39,11 @@ readonly class ServiceRestrictionMap
     {
         return new self(
             restrictedServices: [
-                // Crypto — key material access
+                // Crypto: key material access
                 'Pulsar\Security\Crypto\MasterKey' => ExtensionCapability::CryptoKeyAccess,
                 'Pulsar\Security\Crypto\KeyProviderInterface' => ExtensionCapability::CryptoKeyAccess,
 
-                // Crypto — operations
+                // Crypto: operations
                 'Pulsar\Security\Crypto\EncryptorInterface' => ExtensionCapability::CryptoOperations,
                 'Pulsar\Security\Crypto\HmacInterface' => ExtensionCapability::CryptoOperations,
 

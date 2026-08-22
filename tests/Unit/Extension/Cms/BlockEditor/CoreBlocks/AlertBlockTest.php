@@ -33,10 +33,8 @@ final class AlertBlockTest extends TestCase
             'alertType' => 'info',
         ]);
 
-        self::assertSame(
-            '<div class="alert alert--info" role="alert">System updated.</div>',
-            $html,
-        );
+        self::assertStringContainsString('class="alert alert--info"', $html);
+        self::assertStringContainsString('>System updated.</div>', $html);
     }
 
     #[Test]

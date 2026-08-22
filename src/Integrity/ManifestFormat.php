@@ -22,12 +22,11 @@ use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Serializes and deserializes integrity manifests to/from JSON.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ManifestFormat
 {
-    private function __construct() {}
-
     /**
      * Serialize an integrity manifest to formatted JSON.
      *
@@ -35,10 +34,17 @@ final class ManifestFormat
      * @param string|null       $signature Optional HMAC signature to embed
      *
      * @throws JsonException
+     * @throws IntegrityException If the manifest declares no scope. Writing one
+     *         out with an empty scope would produce a document that covers
+     *         nothing and reports no additions, however the tree changes.
      */
     #[NoDiscard]
     public static function toJson(IntegrityManifest $manifest, ?string $signature = null): string
     {
+        if ($manifest->scope === null) {
+            throw IntegrityException::scopeMissing();
+        }
+
         $entries = array_map(
             static fn(ManifestEntry $entry): array => [
                 'path' => $entry->path,
@@ -54,6 +60,10 @@ final class ManifestFormat
             'generated_at' => $manifest->generatedAt,
             'framework_version' => $manifest->frameworkVersion,
             'entry_count' => $manifest->entryCount,
+            'scope' => [
+                'include' => $manifest->scope->include,
+                'exclude' => $manifest->scope->exclude,
+            ],
             'entries' => $entries,
         ];
 
@@ -75,7 +85,7 @@ final class ManifestFormat
     public static function fromJson(string $json): IntegrityManifest
     {
         try {
-            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw IntegrityException::manifestCorrupted('(string)', 'invalid JSON: ' . $e->getMessage());
         }
@@ -86,6 +96,18 @@ final class ManifestFormat
 
         if (!isset($data['version']) || !is_int($data['version'])) {
             throw IntegrityException::manifestCorrupted('(string)', 'missing or invalid "version" field');
+        }
+
+        // A version 1 manifest carries no scope. Accepting one would put the
+        // verifier back to inferring which files ought to exist from the entries
+        // it happens to hold, which is how a file dropped into an entry-less
+        // directory went unnoticed.
+        if ($data['version'] !== IntegrityManifest::VERSION) {
+            throw IntegrityException::manifestCorrupted(
+                '(string)',
+                'unsupported schema version ' . $data['version']
+                . ' (expected ' . IntegrityManifest::VERSION . '); regenerate with "php bin/pulsar integrity:build"',
+            );
         }
 
         if (!isset($data['algorithm']) || !is_string($data['algorithm'])) {
@@ -107,6 +129,18 @@ final class ManifestFormat
         if (!isset($data['entries']) || !is_array($data['entries'])) {
             throw IntegrityException::manifestCorrupted('(string)', 'missing or invalid "entries" field');
         }
+
+        if (!isset($data['scope']) || !is_array($data['scope'])) {
+            throw IntegrityException::manifestCorrupted('(string)', 'missing or invalid "scope" field');
+        }
+
+        /** @var array<string, mixed> $rawScope */
+        $rawScope = $data['scope'];
+
+        $scope = new ManifestScope(
+            include: self::parsePatterns($rawScope, 'include'),
+            exclude: self::parsePatterns($rawScope, 'exclude'),
+        );
 
         $entries = [];
 
@@ -160,6 +194,44 @@ final class ManifestFormat
             entryCount: $data['entry_count'],
             entries: $entries,
             signature: $signature,
+            scope: $scope,
         );
+    }
+
+    /**
+     * Read one glob-pattern list out of the scope object.
+     *
+     * @param array<string, mixed> $scope
+     *
+     * @return list<string>
+     *
+     * @throws IntegrityException If the key is absent or holds anything but strings
+     */
+    private static function parsePatterns(array $scope, string $key): array
+    {
+        if (!isset($scope[$key]) || !is_array($scope[$key])) {
+            throw IntegrityException::manifestCorrupted(
+                '(string)',
+                'missing or invalid "scope.' . $key . '" field',
+            );
+        }
+
+        $patterns = [];
+
+        /** @var array<mixed> $rawPatterns */
+        $rawPatterns = $scope[$key];
+
+        foreach ($rawPatterns as $index => $pattern) {
+            if (!is_string($pattern)) {
+                throw IntegrityException::manifestCorrupted(
+                    '(string)',
+                    'scope.' . $key . ' entry at index ' . (is_int($index) ? $index : '?') . ' is not a string',
+                );
+            }
+
+            $patterns[] = $pattern;
+        }
+
+        return $patterns;
     }
 }

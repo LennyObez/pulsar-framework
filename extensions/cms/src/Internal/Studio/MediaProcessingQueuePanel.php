@@ -11,6 +11,8 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
 
+use function is_int;
+use function is_string;
 use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
@@ -21,6 +23,9 @@ use const JSON_THROW_ON_ERROR;
  * Shows pending and completed derivative generation jobs from the
  * queue system, including job status, media asset reference,
  * derivative type, and timing information.
+ *
+ * @psalm-api Resolved from the DI container by CmsStudioModule; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class MediaProcessingQueuePanel
@@ -93,18 +98,26 @@ final readonly class MediaProcessingQueuePanel
             }
 
             $payload = $this->decodePayload($record->payload);
-            $mediaAssetId = $payload['asset_id'] ?? '';
-            $derivativeType = $payload['variant'] ?? '';
+            /** @var mixed $rawAssetId */
+            $rawAssetId = $payload['asset_id'] ?? null;
+            /** @var mixed $rawVariant */
+            $rawVariant = $payload['variant'] ?? null;
+            $mediaAssetId = is_string($rawAssetId) ? $rawAssetId : '';
+            $derivativeType = is_string($rawVariant) ? $rawVariant : '';
 
             $completedAt = null;
             $failedAt = null;
 
             if ($record->status === JobRecordStatus::Completed) {
-                $completedAt = $payload['completed_at'] ?? null;
+                /** @var mixed $rawCompleted */
+                $rawCompleted = $payload['completed_at'] ?? null;
+                $completedAt = is_int($rawCompleted) ? $rawCompleted : null;
             }
 
             if ($record->status === JobRecordStatus::Failed) {
-                $failedAt = $payload['failed_at'] ?? null;
+                /** @var mixed $rawFailed */
+                $rawFailed = $payload['failed_at'] ?? null;
+                $failedAt = is_int($rawFailed) ? $rawFailed : null;
             }
 
             $entries[] = new MediaQueueEntry(
@@ -135,7 +148,7 @@ final readonly class MediaProcessingQueuePanel
 
         try {
             /** @var array<string, mixed> $decoded */
-            $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
 
             return $decoded;
         } catch (JsonException) {

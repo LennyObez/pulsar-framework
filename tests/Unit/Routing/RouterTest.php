@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Method;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
@@ -41,6 +42,26 @@ final class RouterTest extends TestCase
         $router->add($route);
 
         self::assertSame($route, $router->getByName('home'));
+    }
+
+    #[Test]
+    public function snapshotAndRestoreRoundTripsRouterState(): void
+    {
+        $router = new Router();
+        $router->add(Route::get('/home', fn() => null, 'home'));
+
+        $snapshot = $router->snapshot();
+
+        // Routes registered after the snapshot are discarded on restore — this is
+        // how the kernel prevents reboot from accumulating wiring/extension routes.
+        $router->add(Route::get('/added', fn() => null, 'added'));
+        self::assertCount(2, $router->routes);
+
+        $router->restoreFromSnapshot($snapshot);
+
+        self::assertCount(1, $router->routes);
+        self::assertNotNull($router->getByName('home'));
+        self::assertNull($router->getByName('added'));
     }
 
     #[Test]
@@ -147,6 +168,55 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function headMatchesGetRoutesFromBothRegistrationStyles(): void
+    {
+        // RFC 9110 §9.3.2 regression: the sugar path always worked, but a route
+        // registered through the explicit constructor (the middleware-attach
+        // style every contact/booking page uses) answered 405 on HEAD.
+        $router = new Router();
+        $router->get('/sugar', fn() => null);
+        $router->add(new Route(methods: [Method::GET], path: '/explicit', handler: fn() => null, middleware: ['web']));
+
+        // match() throws a 405 RoutingException when a method is not served, so
+        // reaching a matched route at all proves HEAD is accepted; assert the
+        // right route matched.
+        self::assertSame('/sugar', $router->match(Method::HEAD, '/sugar')->route->path);
+        self::assertSame('/explicit', $router->match(Method::HEAD, '/explicit')->route->path);
+    }
+
+    #[Test]
+    public function headStillReturns405OnPostOnlyRoutes(): void
+    {
+        $router = new Router();
+        $router->add(new Route([Method::POST], '/submit', fn() => null));
+
+        try {
+            $router->match(Method::HEAD, '/submit');
+            self::fail('Expected RoutingException');
+        } catch (RoutingException $e) {
+            self::assertSame(405, $e->getCode());
+            self::assertStringNotContainsString('HEAD', $e->getAllowHeader());
+        }
+    }
+
+    #[Test]
+    public function allowHeaderListsHeadWhereverGetIsServed(): void
+    {
+        // The 405 Allow header must not contradict the router: HEAD is served
+        // wherever GET is, including explicit-constructor registrations.
+        $router = new Router();
+        $router->add(new Route(methods: [Method::GET], path: '/page', handler: fn() => null));
+
+        try {
+            $router->match(Method::DELETE, '/page');
+            self::fail('Expected RoutingException');
+        } catch (RoutingException $e) {
+            self::assertContains(Method::HEAD, $e->allowedMethods);
+            self::assertStringContainsString('HEAD', $e->getAllowHeader());
+        }
+    }
+
+    #[Test]
     public function matchThrowsMethodNotAllowedForWrongMethod(): void
     {
         $router = new Router();
@@ -237,9 +307,71 @@ final class RouterTest extends TestCase
         $router = new Router();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Route "unknown" not found');
+        $this->expectExceptionMessageIsOrContains('Route "unknown" not found');
 
         $router->url('unknown');
+    }
+
+    #[Test]
+    public function urlPercentEncodesPathSeparators(): void
+    {
+        // A raw `/` in a parameter value would punch out of the
+        // segment and change which route the URL points at.
+        $router = new Router();
+        $router->get('/users/{id}', fn() => null, 'users.show');
+
+        $url = $router->url('users.show', ['id' => 'a/b']);
+
+        self::assertSame('/users/a%2Fb', $url);
+    }
+
+    #[Test]
+    public function urlPercentEncodesTraversalSequence(): void
+    {
+        // `..` in a parameter value would let the URL refer to
+        // a parent path. Encoding renders it inert.
+        $router = new Router();
+        $router->get('/users/{id}', fn() => null, 'users.show');
+
+        $url = $router->url('users.show', ['id' => '../admin']);
+
+        self::assertSame('/users/..%2Fadmin', $url);
+    }
+
+    #[Test]
+    public function urlPercentEncodesQueryAndFragmentDelimiters(): void
+    {
+        $router = new Router();
+        $router->get('/posts/{slug}', fn() => null, 'posts.show');
+
+        $url = $router->url('posts.show', ['slug' => 'a?b#c']);
+
+        self::assertSame('/posts/a%3Fb%23c', $url);
+    }
+
+    #[Test]
+    public function urlPercentEncodesSpacesAndUnicode(): void
+    {
+        $router = new Router();
+        $router->get('/search/{term}', fn() => null, 'search');
+
+        $url = $router->url('search', ['term' => 'jane doé']);
+
+        // rawurlencode produces %20 (not '+') for spaces and percent-
+        // encodes UTF-8 bytes individually.
+        self::assertSame('/search/jane%20do%C3%A9', $url);
+    }
+
+    #[Test]
+    public function urlPreservesUnreservedCharacters(): void
+    {
+        $router = new Router();
+        $router->get('/items/{id}', fn() => null, 'items.show');
+
+        // RFC 3986 unreserved set: ALPHA, DIGIT, '-', '.', '_', '~'.
+        $url = $router->url('items.show', ['id' => 'A-Z_0.9~end']);
+
+        self::assertSame('/items/A-Z_0.9~end', $url);
     }
 
     #[Test]
@@ -353,6 +485,113 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function matchWithPortedHostMatchesHostConstrainedRoute(): void
+    {
+        // A Host header on a non-default port must still match a route
+        // declared against the port-less host.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'api',
+            host: 'api.example.com',
+        ));
+
+        $matched = $router->match(Method::GET, '/', 'api.example.com:8000');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('api', $handler());
+    }
+
+    #[Test]
+    public function matchWithPortedHostCapturesHostParameter(): void
+    {
+        // Subdomain capture must work when the Host header carries a port.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/dashboard',
+            handler: fn() => null,
+            host: '{tenant}.app.com',
+        ));
+
+        $matched = $router->match(Method::GET, '/dashboard', 'acme.app.com:8000');
+
+        self::assertSame('acme', $matched->parameter('tenant'));
+    }
+
+    #[Test]
+    public function matchWithPortedIpv6HostMatchesHostConstrainedRoute(): void
+    {
+        // A bracketed IPv6 authority strips only the trailing port.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'local',
+            host: '[::1]',
+        ));
+
+        $matched = $router->match(Method::GET, '/', '[::1]:8000');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('local', $handler());
+    }
+
+    #[Test]
+    public function matchHonorsRegistrationOrderBetweenCatchAllAndStaticFirstSegment(): void
+    {
+        // An earlier-registered catch-all (/{lang}/{slug}) must win over a
+        // later-registered static-first-segment route (/blog/{slug}) for
+        // /blog/hello: first-registered-wins holds across the bucket split.
+        // Scanning the first-segment bucket ahead of the catch-all bucket would
+        // silently reorder route precedence.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/{lang}/{slug}',
+            handler: fn() => 'catch-all',
+        ));
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/blog/{slug}',
+            handler: fn() => 'blog',
+        ));
+
+        $matched = $router->match(Method::GET, '/blog/hello');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('catch-all', $handler());
+        self::assertSame('blog', $matched->parameter('lang'));
+        self::assertSame('hello', $matched->parameter('slug'));
+    }
+
+    #[Test]
+    public function matchPrefersStaticRouteOverDynamicCatchAllWithHostHeaderPresent(): void
+    {
+        // A host-less static route keeps its O(1) precedence over a dynamic
+        // catch-all even when the request carries a Host header. Skipping the
+        // static fast path whenever a Host is present would let an
+        // earlier-registered catch-all capture the static path.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/{slug}',
+            handler: fn() => 'catch-all',
+        ));
+        $router->add(Route::get('/about', fn() => 'about'));
+
+        $matched = $router->match(Method::GET, '/about', 'example.com:8080');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('about', $handler());
+    }
+
+    #[Test]
     public function matchWithoutHostSkipsHostConstrainedRoutes(): void
     {
         $router = new Router();
@@ -417,93 +656,126 @@ final class RouterTest extends TestCase
 
         $router->match(Method::GET, '/', 'other.example.com');
     }
-}
 
-#[CoversClass(MatchedRoute::class)]
-final class MatchedRouteTest extends TestCase
-{
-    #[Test]
-    public function parameterReturnsValueOrDefault(): void
-    {
-        $route = Route::get('/test/{id}', fn() => null, 'test');
-        $matched = new MatchedRoute($route, ['id' => '42']);
-
-        self::assertSame('42', $matched->parameter('id'));
-        self::assertNull($matched->parameter('missing'));
-        self::assertSame('default', $matched->parameter('missing', 'default'));
-    }
+    // --- Domain-Aware URL Generation ---
 
     #[Test]
-    public function getAttributesReturnsRouteAttributes(): void
+    public function urlWithDomainConfigGeneratesFullyQualifiedUrl(): void
     {
-        $route = new Route(
-            [Method::GET],
-            '/test',
-            fn() => null,
-            attributes: ['key' => 'value'],
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/threads/{id}',
+            handler: fn() => null,
+            name: 'forum.thread.show',
+            attributes: ['scope' => 'forum'],
+        ));
+
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['forum' => ['forum']],
+            scheme: 'https',
         );
-        $matched = new MatchedRoute($route);
 
-        self::assertSame(['key' => 'value'], $matched->getAttributes());
+        $url = $router->url('forum.thread.show', ['id' => '1'], $domainConfig);
+
+        self::assertSame('https://forum.example.com/threads/1', $url);
     }
 
     #[Test]
-    public function getMiddlewareReturnsRouteMiddleware(): void
+    public function urlWithDomainConfigFallsBackToRelativePathWhenNoScopeAttribute(): void
     {
-        $route = new Route(
-            [Method::GET],
-            '/test',
-            fn() => null,
-            middleware: ['auth', 'log'],
+        $router = new Router();
+        $router->get('/dashboard', fn() => null, 'dashboard');
+
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['forum' => ['forum']],
         );
-        $matched = new MatchedRoute($route);
 
-        self::assertSame(['auth', 'log'], $matched->getMiddleware());
+        $url = $router->url('dashboard', [], $domainConfig);
+
+        self::assertSame('/dashboard', $url);
     }
 
     #[Test]
-    public function hasParameterReturnsTrueWhenPresent(): void
+    public function urlWithDomainConfigFallsBackWhenScopeNotMapped(): void
     {
-        $route = Route::get('/test/{slug}', fn() => null, 'test');
-        $matched = new MatchedRoute($route, ['slug' => 'hello']);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/settings',
+            handler: fn() => null,
+            name: 'settings',
+            attributes: ['scope' => 'unmapped-scope'],
+        ));
 
-        self::assertTrue($matched->hasParameter('slug'));
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['forum' => ['forum']],
+        );
+
+        $url = $router->url('settings', [], $domainConfig);
+
+        self::assertSame('/settings', $url);
     }
 
     #[Test]
-    public function hasParameterReturnsFalseWhenMissing(): void
+    public function urlWithNullDomainConfigReturnsRelativePath(): void
     {
-        $route = Route::get('/test', fn() => null, 'test');
-        $matched = new MatchedRoute($route);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/threads/{id}',
+            handler: fn() => null,
+            name: 'forum.thread.show',
+            attributes: ['scope' => 'forum'],
+        ));
 
-        self::assertFalse($matched->hasParameter('slug'));
+        $url = $router->url('forum.thread.show', ['id' => '1']);
+
+        self::assertSame('/threads/1', $url);
     }
 
     #[Test]
-    public function getHandlerDelegatesToRoute(): void
+    public function urlWithDomainConfigNoSubdomainMappingsReturnsRelative(): void
     {
-        $handler = static fn() => 'ok';
-        $route = new Route([Method::GET], '/test', $handler);
-        $matched = new MatchedRoute($route);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/threads/{id}',
+            handler: fn() => null,
+            name: 'forum.thread.show',
+            attributes: ['scope' => 'forum'],
+        ));
 
-        self::assertSame($handler, $matched->getHandler());
+        $domainConfig = new DomainConfig(defaultDomain: 'example.com');
+
+        $url = $router->url('forum.thread.show', ['id' => '1'], $domainConfig);
+
+        self::assertSame('/threads/1', $url);
     }
 
     #[Test]
-    public function getNameDelegatesToRoute(): void
+    public function urlWithDomainConfigHttpScheme(): void
     {
-        $route = Route::get('/test', fn() => null, 'test.route');
-        $matched = new MatchedRoute($route);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/api/users',
+            handler: fn() => null,
+            name: 'api.users',
+            attributes: ['scope' => 'api'],
+        ));
 
-        self::assertSame('test.route', $matched->getName());
-    }
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['api' => ['api']],
+            scheme: 'http',
+        );
 
-    #[Test]
-    public function getNameReturnsNullWhenUnset(): void
-    {
-        $route = new Route([Method::GET], '/test', fn() => null);
-        $matched = new MatchedRoute($route);
+        $url = $router->url('api.users', [], $domainConfig);
 
-        self::assertNull($matched->getName());
+        self::assertSame('http://api.example.com/api/users', $url);
     }
 }

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when content is published.
+ *
+ * @psalm-api Public event class dispatched by PublishingStateMachine and
+ *            consumed by CmsNotificationDispatcher and downstream extensions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentPublished

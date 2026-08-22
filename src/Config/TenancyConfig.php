@@ -6,14 +6,24 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Tenancy\Exception\TenancyException;
 use Pulsar\Tenancy\TenantResolverStrategy;
+
+use function sprintf;
 
 /**
  * Typed configuration DTO for `config/tenancy.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class TenancyConfig
+final readonly class TenancyConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/tenancy.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'resolver', 'header_name', 'subdomain_suffix', 'path_prefix',
+        'default_tenant', 'database', 'tenants',
+    ];
+
     /**
      * @param array<string, array<string, mixed>> $tenants Map of tenant ID → tenant data
      */
@@ -26,10 +36,29 @@ readonly class TenancyConfig
         public ?string $defaultTenant = null,
         public TenantDatabaseConfig $database = new TenantDatabaseConfig(),
         public array $tenants = [],
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/tenancy.php
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     resolver?: string,
+     *     header_name?: string,
+     *     subdomain_suffix?: string,
+     *     path_prefix?: string,
+     *     default_tenant?: string|null,
+     *     database?: array{strategy?: string, prefix_template?: string},
+     *     tenants?: array<string, array<string, mixed>>,
+     * } $data Raw array from config/tenancy.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -38,34 +67,28 @@ readonly class TenancyConfig
             ? $environment->get('TENANCY_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        /** @var string $resolverValue */
         $resolverValue = $data['resolver'] ?? 'header';
-        $resolver = TenantResolverStrategy::from($resolverValue);
+        $resolver = TenantResolverStrategy::tryFrom($resolverValue)
+            ?? throw TenancyException::invalidConfiguration(sprintf(
+                'Unknown resolver strategy "%s". Expected one of: header, subdomain, path.',
+                $resolverValue,
+            ));
 
-        /** @var array<string, mixed> $dbData */
-        $dbData = $data['database'] ?? [];
-
-        /** @var array<string, array<string, mixed>> $tenants */
-        $tenants = $data['tenants'] ?? [];
-
-        /** @var string $headerName */
-        $headerName = $data['header_name'] ?? 'X-Tenant-ID';
-        /** @var string $subdomainSuffix */
-        $subdomainSuffix = $data['subdomain_suffix'] ?? '';
-        /** @var string $pathPrefix */
-        $pathPrefix = $data['path_prefix'] ?? '/t/';
-        /** @var string|null $defaultTenant */
-        $defaultTenant = $data['default_tenant'] ?? null;
+        $database = TenantDatabaseConfig::fromArray($data['database'] ?? []);
 
         return new self(
             enabled: $enabled,
             resolver: $resolver,
-            headerName: $headerName,
-            subdomainSuffix: $subdomainSuffix,
-            pathPrefix: $pathPrefix,
-            defaultTenant: $defaultTenant,
-            database: TenantDatabaseConfig::fromArray($dbData),
-            tenants: $tenants,
+            headerName: $data['header_name'] ?? 'X-Tenant-ID',
+            subdomainSuffix: $data['subdomain_suffix'] ?? '',
+            pathPrefix: $data['path_prefix'] ?? '/t/',
+            defaultTenant: $data['default_tenant'] ?? null,
+            database: $database,
+            tenants: $data['tenants'] ?? [],
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('database', $database),
+            ],
         );
     }
 }

@@ -23,16 +23,16 @@ use function simplexml_load_string;
  * Provides a read-only preview of sitemap entries grouped by type
  * and locale, and the ability to force regeneration.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class SitemapController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class SitemapController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private SitemapGeneratorInterface $sitemapGenerator,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Preview sitemap entries grouped by type and locale with entry counts.
@@ -43,14 +43,17 @@ final readonly class SitemapController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $baseUrl = is_string($params['base_url'] ?? null) ? $params['base_url'] : '';
+        /** @var mixed $rawBaseUrl */
+        $rawBaseUrl = $params['base_url'] ?? null;
+        $baseUrl = is_string($rawBaseUrl) ? $rawBaseUrl : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
         if ($baseUrl === '') {
-            /** @var string $baseUrl */
-            $baseUrl = $request->getAttribute('base_url', '');
+            /** @var mixed $rawBaseUrlAttr */
+            $rawBaseUrlAttr = $request->getAttribute('base_url', '');
+            $baseUrl = is_string($rawBaseUrlAttr) ? $rawBaseUrlAttr : '';
         }
 
         $indexXml = $this->sitemapGenerator->generateIndex($baseUrl, $tenantId);
@@ -75,14 +78,17 @@ final readonly class SitemapController
         $this->authorize($identity, 'cms.seo.manage');
 
         $params = $request->getQueryParams();
-        $baseUrl = is_string($params['base_url'] ?? null) ? $params['base_url'] : '';
+        /** @var mixed $rawBaseUrl */
+        $rawBaseUrl = $params['base_url'] ?? null;
+        $baseUrl = is_string($rawBaseUrl) ? $rawBaseUrl : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
         if ($baseUrl === '') {
-            /** @var string $baseUrl */
-            $baseUrl = $request->getAttribute('base_url', '');
+            /** @var mixed $rawBaseUrlAttr */
+            $rawBaseUrlAttr = $request->getAttribute('base_url', '');
+            $baseUrl = is_string($rawBaseUrlAttr) ? $rawBaseUrlAttr : '';
         }
 
         $indexXml = $this->sitemapGenerator->generateIndex($baseUrl, $tenantId);
@@ -109,14 +115,24 @@ final readonly class SitemapController
         libxml_use_internal_errors($previousErrors);
 
         if ($doc instanceof SimpleXMLElement) {
-            foreach ($doc->children('http://www.sitemaps.org/schemas/sitemap/0.9') as $child) {
-                $loc = (string) $child->children('http://www.sitemaps.org/schemas/sitemap/0.9')->loc;
-                $lastmod = (string) $child->children('http://www.sitemaps.org/schemas/sitemap/0.9')->lastmod;
+            $children = $doc->children('http://www.sitemaps.org/schemas/sitemap/0.9');
 
-                $segments[] = [
-                    'loc' => $loc,
-                    'lastmod' => $lastmod !== '' ? $lastmod : null,
-                ];
+            if ($children !== null) {
+                foreach ($children as $child) {
+                    $childElements = $child->children('http://www.sitemaps.org/schemas/sitemap/0.9');
+
+                    if ($childElements === null) {
+                        continue;
+                    }
+
+                    $loc = (string) $childElements->loc;
+                    $lastmod = (string) $childElements->lastmod;
+
+                    $segments[] = [
+                        'loc' => $loc,
+                        'lastmod' => $lastmod !== '' ? $lastmod : null,
+                    ];
+                }
             }
         }
 

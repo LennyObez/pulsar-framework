@@ -9,9 +9,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\AuthManager;
+use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Container\Container;
 use Pulsar\FeatureFlag\FlagContext;
+use Pulsar\FeatureFlag\FlagEvaluation;
 use Pulsar\FeatureFlag\FlagEvaluationLog;
 use Pulsar\FeatureFlag\FlagEvaluationReason;
 use Pulsar\Http\Message\Response;
@@ -20,6 +22,7 @@ use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
+use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantContext;
 use stdClass;
 
@@ -54,7 +57,7 @@ final class RequestSandboxIntegrationTest extends TestCase
         $this->container->instance(TenantContext::class, $tenantContext);
         $this->registry->registerResettable(TenantContext::class);
 
-        $tenantContext->set(new \Pulsar\Tenancy\Tenant('tenant-1', 'Acme Corp', []));
+        $tenantContext->set(new Tenant('tenant-1', 'Acme Corp', []));
         self::assertTrue($tenantContext->isResolved());
 
         $this->sandbox->beforeRequest($this->createRequest());
@@ -70,7 +73,7 @@ final class RequestSandboxIntegrationTest extends TestCase
         $this->container->instance(FlagEvaluationLog::class, $flagLog);
         $this->registry->registerResettable(FlagEvaluationLog::class);
 
-        $flagLog->record(new \Pulsar\FeatureFlag\FlagEvaluation(
+        $flagLog->record(new FlagEvaluation(
             flagName: 'feature-x',
             result: true,
             reason: FlagEvaluationReason::FlagEnabled,
@@ -89,8 +92,8 @@ final class RequestSandboxIntegrationTest extends TestCase
     public function it_resets_auth_manager_between_requests(): void
     {
         $authManager = new AuthManager();
-        $this->container->instance(\Pulsar\Auth\AuthManagerInterface::class, $authManager);
-        $this->registry->registerResettable(\Pulsar\Auth\AuthManagerInterface::class);
+        $this->container->instance(AuthManagerInterface::class, $authManager);
+        $this->registry->registerResettable(AuthManagerInterface::class);
 
         // AuthManager.resetRequestState() is defense-in-depth (currently no-op)
         // Just verify it doesn't throw
@@ -131,7 +134,7 @@ final class RequestSandboxIntegrationTest extends TestCase
         $this->registry->registerEvictable(SecurityContext::class);
 
         $authManager = new AuthManager();
-        $this->container->instance(\Pulsar\Auth\AuthManagerInterface::class, $authManager);
+        $this->container->instance(AuthManagerInterface::class, $authManager);
 
         // Request 1 with user-1 credentials
         $request1 = new ServerRequest(

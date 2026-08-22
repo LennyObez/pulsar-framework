@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\FeatureFlagConfig;
@@ -17,6 +18,7 @@ use Pulsar\FeatureFlag\FlagStorageDriver;
 use Pulsar\FeatureFlag\FlagStorageInterface;
 use Pulsar\FeatureFlag\Storage\FileFlagStorage;
 use Pulsar\FeatureFlag\Storage\InMemoryFlagStorage;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -48,7 +50,7 @@ final readonly class FeatureFlagWiring implements ServiceWiringInterface
         // Storage
         $storage = match ($flagConfig->storage) {
             FlagStorageDriver::Memory => new InMemoryFlagStorage(),
-            FlagStorageDriver::File => new FileFlagStorage($flagConfig->filePath),
+            FlagStorageDriver::File => new FileFlagStorage(WritablePathGuard::resolveState($flagConfig->filePath, 'feature_flags.file_path')),
         };
 
         // Load pre-configured flags
@@ -61,7 +63,9 @@ final readonly class FeatureFlagWiring implements ServiceWiringInterface
         $container->instance($storage::class, $storage);
 
         // Evaluation log
-        $evaluationLog = new FlagEvaluationLog();
+        $evaluationLog = new FlagEvaluationLog(
+            $container->has(LoggerInterface::class) ? $container->get(LoggerInterface::class) : null,
+        );
         $container->instance(FlagEvaluationLog::class, $evaluationLog);
         $container->instance(FlagEvaluationLogInterface::class, $evaluationLog);
 

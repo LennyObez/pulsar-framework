@@ -13,25 +13,15 @@ use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
-use Pulsar\Extension\Analytics\Internal\Middleware\AnalyticsAuthMiddleware;
-use Pulsar\Extension\Analytics\Internal\Middleware\BotFilterMiddleware;
-use Pulsar\Extension\Analytics\Internal\Middleware\CollectionCorsMiddleware;
-use Pulsar\Extension\Analytics\Internal\Middleware\CollectionRateLimitMiddleware;
+use Pulsar\Extension\Analytics\Contracts\FunnelServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\GoalServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
+use Pulsar\Extension\Analytics\ImportExport\AnalyticsImportExportProvider;
 use Pulsar\Extension\Analytics\Internal\Scheduler\AggregationJob;
 use Pulsar\Extension\Analytics\Internal\Scheduler\PartitionMaintenanceJob;
 use Pulsar\Extension\Analytics\Internal\Scheduler\RetentionCleanupJob;
-use Pulsar\Extension\Analytics\Server\Controller\BreakdownController;
-use Pulsar\Extension\Analytics\Server\Controller\CollectionController;
-use Pulsar\Extension\Analytics\Server\Controller\DashboardController;
-use Pulsar\Extension\Analytics\Server\Controller\ExportController;
-use Pulsar\Extension\Analytics\Server\Controller\GoalController;
-use Pulsar\Extension\Analytics\Server\Controller\RealtimeController;
-use Pulsar\Extension\Analytics\Server\Controller\SiteController;
-use Pulsar\Extension\Analytics\Server\Controller\StatsController;
-use Pulsar\Extension\Analytics\Server\Controller\TimeseriesController;
-use Pulsar\Extension\Analytics\Server\Controller\TrackerController;
-use Pulsar\Http\Method;
-use Pulsar\Routing\Route;
+use Pulsar\Extension\Analytics\Internal\Scheduler\VisitorSaltPurgeJob;
+use Pulsar\ImportExport\ImportExportRegistry;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistryInterface;
 use Pulsar\Scheduler\Schedule;
@@ -45,7 +35,11 @@ use const DIRECTORY_SEPARATOR;
  * Privacy-focused, self-hosted web analytics extension.
  *
  * Provides page view tracking, session management, custom events, goals,
- * and multi-site analytics without cookies — fully GDPR/ePrivacy compliant.
+ * and multi-site analytics without cookies: fully GDPR/ePrivacy compliant.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnalyticsExtension implements
@@ -73,9 +67,11 @@ final readonly class AnalyticsExtension implements
             $configPath = $configManager->configPath();
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'analytics.php')) {
+                /** @var mixed $data */
                 $data = require $configPath . DIRECTORY_SEPARATOR . 'analytics.php';
 
                 if (is_array($data)) {
+                    /** @var array<string, mixed> $data */
                     $container->instance(AnalyticsConfig::class, AnalyticsConfig::fromArray($data));
                 }
             }
@@ -95,9 +91,7 @@ final readonly class AnalyticsExtension implements
             return;
         }
 
-        $this->registerPublicRoutes($router, $container);
-        $this->registerApiRoutes($router);
-        $this->registerDashboardRoutes($router);
+        new AnalyticsRouteRegistrar()->register($router, $config);
     }
 
     #[Override]
@@ -112,6 +106,8 @@ final readonly class AnalyticsExtension implements
         if ($container->has(JobRegistryInterface::class)) {
             $this->registerSchedulerJobs($container);
         }
+
+        $this->registerImportExportProvider($container);
     }
 
     /**
@@ -123,201 +119,27 @@ final readonly class AnalyticsExtension implements
         return [AnalyticsServiceProvider::class];
     }
 
-    private function registerPublicRoutes(RouterInterface $router, ContainerInterface $container): void
+    private function registerImportExportProvider(ContainerInterface $container): void
     {
-        $config = $container->get(AnalyticsConfig::class);
+        if (!$container->has(ImportExportRegistry::class)) {
+            return;
+        }
 
-        $router->add(new Route(
-            methods: [Method::POST],
-            path: $config->tracking->trackerEndpoint,
-            handler: [CollectionController::class, 'collect'],
-            name: 'analytics.collect',
-            middleware: [
-                CollectionRateLimitMiddleware::class,
-                CollectionCorsMiddleware::class,
-                BotFilterMiddleware::class,
-            ],
-        ));
+        if (
+            !$container->has(SiteRepositoryInterface::class)
+            || !$container->has(GoalServiceInterface::class)
+            || !$container->has(FunnelServiceInterface::class)
+        ) {
+            return;
+        }
 
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: $config->tracking->scriptEndpoint,
-            handler: [TrackerController::class, 'script'],
-            name: 'analytics.tracker',
-        ));
-    }
+        /** @var ImportExportRegistry $registry */
+        $registry = $container->get(ImportExportRegistry::class);
 
-    private function registerApiRoutes(RouterInterface $router): void
-    {
-        $prefix = '/plsr/api/v1';
-        $authMiddleware = [AnalyticsAuthMiddleware::class];
-
-        // Stats endpoints
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/aggregate",
-            handler: [StatsController::class, 'aggregate'],
-            name: 'analytics.api.stats',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/timeseries",
-            handler: [TimeseriesController::class, 'timeseries'],
-            name: 'analytics.api.timeseries',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/breakdown",
-            handler: [BreakdownController::class, 'breakdown'],
-            name: 'analytics.api.breakdown',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/realtime",
-            handler: [RealtimeController::class, 'realtime'],
-            name: 'analytics.api.realtime',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/export",
-            handler: [ExportController::class, 'export'],
-            name: 'analytics.api.export',
-            middleware: $authMiddleware,
-        ));
-
-        // Goals CRUD
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/goals",
-            handler: [GoalController::class, 'index'],
-            name: 'analytics.api.goals.index',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::POST],
-            path: "{$prefix}/goals",
-            handler: [GoalController::class, 'create'],
-            name: 'analytics.api.goals.create',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/goals/{id}",
-            handler: [GoalController::class, 'show'],
-            name: 'analytics.api.goals.show',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::PUT],
-            path: "{$prefix}/goals/{id}",
-            handler: [GoalController::class, 'update'],
-            name: 'analytics.api.goals.update',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::DELETE],
-            path: "{$prefix}/goals/{id}",
-            handler: [GoalController::class, 'delete'],
-            name: 'analytics.api.goals.delete',
-            middleware: $authMiddleware,
-        ));
-
-        // Sites CRUD
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/sites",
-            handler: [SiteController::class, 'index'],
-            name: 'analytics.api.sites.index',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::POST],
-            path: "{$prefix}/sites",
-            handler: [SiteController::class, 'create'],
-            name: 'analytics.api.sites.create',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/sites/{id}",
-            handler: [SiteController::class, 'show'],
-            name: 'analytics.api.sites.show',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::PUT],
-            path: "{$prefix}/sites/{id}",
-            handler: [SiteController::class, 'update'],
-            name: 'analytics.api.sites.update',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::DELETE],
-            path: "{$prefix}/sites/{id}",
-            handler: [SiteController::class, 'delete'],
-            name: 'analytics.api.sites.delete',
-            middleware: $authMiddleware,
-        ));
-    }
-
-    private function registerDashboardRoutes(RouterInterface $router): void
-    {
-        $authMiddleware = [AnalyticsAuthMiddleware::class];
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: '/analytics',
-            handler: [DashboardController::class, 'index'],
-            name: 'analytics.dashboard',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: '/analytics/sites',
-            handler: [DashboardController::class, 'sites'],
-            name: 'analytics.dashboard.sites',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: '/analytics/goals',
-            handler: [DashboardController::class, 'goals'],
-            name: 'analytics.dashboard.goals',
-            middleware: $authMiddleware,
-        ));
-
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: '/analytics/settings',
-            handler: [DashboardController::class, 'settings'],
-            name: 'analytics.dashboard.settings',
-            middleware: $authMiddleware,
-        ));
-
-        // Static assets do not require auth — served publicly
-        $router->add(new Route(
-            methods: [Method::GET, Method::HEAD],
-            path: '/analytics/assets/{path}',
-            handler: [DashboardController::class, 'asset'],
-            name: 'analytics.assets',
+        $registry->register(new AnalyticsImportExportProvider(
+            $container->get(SiteRepositoryInterface::class),
+            $container->get(GoalServiceInterface::class),
+            $container->get(FunnelServiceInterface::class),
         ));
     }
 
@@ -333,6 +155,14 @@ final readonly class AnalyticsExtension implements
         $registry->register(
             RetentionCleanupJob::class,
             Schedule::dailyAt('02:00'),
+        );
+
+        // Destroy expired visitor salts after the retention window. Runs after
+        // the midnight session-grace window (and the retention cleanup) so the
+        // day/day-1 salts it must keep are never in flight when it fires.
+        $registry->register(
+            VisitorSaltPurgeJob::class,
+            Schedule::dailyAt('03:00'),
         );
 
         $registry->register(

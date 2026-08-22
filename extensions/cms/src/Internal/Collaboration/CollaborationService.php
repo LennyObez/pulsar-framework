@@ -22,8 +22,11 @@ use function random_bytes;
  * The actual CRDT merge is client-side (Yjs). The server stores the latest
  * full state snapshot and coordinates awareness (cursors/selections) between
  * connected clients via REST polling.
+ *
+ * @psalm-api Resolved from the DI container by admin controllers; not
+ *            instantiated by name.
  */
-#[Internal(reason: 'Collaboration service — use CollaborationRepositoryInterface for persistence API')]
+#[Internal(reason: 'Collaboration service; use CollaborationRepositoryInterface for persistence API')]
 final readonly class CollaborationService
 {
     public function __construct(

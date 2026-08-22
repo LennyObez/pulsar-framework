@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
+use Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter;
 use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\InMemoryTotpSecretStore;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
@@ -48,6 +49,7 @@ final class AdminTwoFactorTest extends TestCase
             recoveryCodeCount: 8,
             replayGuard: $replayGuard,
             secretStore: $secretStore,
+            rateLimiter: new AllowAllTwoFactorRateLimiter(),
         );
 
         $identity = new E2EAdminIdentity(
@@ -68,8 +70,17 @@ final class AdminTwoFactorTest extends TestCase
         $secret = $setup['secret'];
         $recoveryCodes = $setup['recovery_codes'];
 
-        // Step 2: Generate a valid TOTP code and confirm setup
-        $validCode = $generator->computeCode($secret);
+        // Step 2: confirm the enrolment, with a code from the previous time step.
+        //
+        // A code is redeemable once and not once per purpose, so this lifecycle needs a
+        // distinct step for each of its three redemptions — and the verifier's ±1 window
+        // offers exactly three: N-1 to enrol, N to log in, N+1 to step up. Timestamps are
+        // aligned to the step boundary rather than offset from now, so none of them can
+        // land outside the window when `time()` falls late in a period.
+        $period = $generator->period();
+        $currentStep = intdiv(time(), $period);
+
+        $validCode = $generator->computeCode($secret, ($currentStep - 1) * $period);
         $confirmResult = $manager->confirmSetup($identity->id(), $secret, $validCode);
 
         self::assertTrue($confirmResult->confirmed);
@@ -79,8 +90,8 @@ final class AdminTwoFactorTest extends TestCase
         $storedSecret = $secretStore->retrieve($identity->id());
         self::assertSame($secret, $storedSecret);
 
-        // Step 4: Login with TOTP — compute fresh code
-        $loginCode = $generator->computeCode($secret);
+        // Step 4: Login with TOTP — step N, which the enrolment did not spend
+        $loginCode = $generator->computeCode($secret, $currentStep * $period);
         $loginResult = $manager->verifyCode(
             $identity->id(),
             $loginCode,
@@ -102,14 +113,9 @@ final class AdminTwoFactorTest extends TestCase
         self::assertFalse($replayResult->verified);
         self::assertSame(VerifyReason::InvalidCode, $replayResult->reason);
 
-        // Step 6: Step-up verification with a fresh code
-        // Compute code for the next TOTP period (step N+1) which is always
-        // within window=1. Using an explicit step avoids a flaky failure that
-        // occurs when time() falls on the last second of a period and a naive
-        // offset like +31 lands in step N+2 (outside the window).
-        $currentStep = intdiv(time(), 30);
-        $nextStepTimestamp = ($currentStep + 1) * 30;
-        $stepUpCode = $generator->computeCode($secret, $nextStepTimestamp);
+        // Step 6: step up with a code from step N+1 — the last one the window still
+        // accepts, and the only one of the three not yet redeemed.
+        $stepUpCode = $generator->computeCode($secret, ($currentStep + 1) * $period);
         $stepUpResult = $manager->verifyCodeWithSecret(
             $identity->id(),
             $secret,
@@ -185,6 +191,7 @@ final class AdminTwoFactorTest extends TestCase
             recoveryCodeGenerator: $recoveryCodeGenerator,
             recoveryCodeVerifier: $recoveryCodeVerifier,
             secretStore: $secretStore,
+            rateLimiter: new AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->verifyCode('non-enrolled-user', '123456');

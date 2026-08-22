@@ -28,6 +28,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Best for real-time feeds, infinite scroll, and large datasets where
  * total count is expensive.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CursorPaginator implements PaginatorInterface
@@ -60,7 +61,7 @@ final readonly class CursorPaginator implements PaginatorInterface
         $currentCursor = $request->cursor ?? $request->after;
 
         // Generate links
-        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor, $currentCursor);
+        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor);
 
         return new PaginationResult(
             items: $pageItems,
@@ -110,7 +111,9 @@ final readonly class CursorPaginator implements PaginatorInterface
     {
         /** @var int<0, max> $lastIndex */
         $lastIndex = count($pageItems) - 1;
+        /** @var mixed $lastItem */
         $lastItem = $pageItems[$lastIndex];
+        /** @var mixed $position */
         $position = is_array($lastItem) ? ($lastItem['id'] ?? count($pageItems)) : count($pageItems);
 
         return base64_encode(json_encode([
@@ -119,7 +122,7 @@ final readonly class CursorPaginator implements PaginatorInterface
         ], JSON_THROW_ON_ERROR));
     }
 
-    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor, ?string $currentCursor): PaginationLinks
+    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor): PaginationLinks
     {
         if ($baseUrl === '') {
             return new PaginationLinks();

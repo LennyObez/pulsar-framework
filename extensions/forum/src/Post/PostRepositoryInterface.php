@@ -9,6 +9,7 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for forum posts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PostRepositoryInterface
@@ -43,7 +44,7 @@ interface PostRepositoryInterface
     public function countByThread(string $threadId): int;
 
     /**
-     * @note The entity object is stale after this call — the database version is incremented server-side.
+     * @note The entity object is stale after this call: the database version is incremented server-side.
      *       Re-fetch via findById() if you need the updated version.
      */
     public function save(Post $post): void;

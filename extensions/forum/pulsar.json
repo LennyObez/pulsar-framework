@@ -3,6 +3,7 @@
   "version": "1.0.0-rc.11",
   "description": "Community forum extension with threaded discussions, Q&A, reputation, voting, moderation, and badges for regulated domains",
   "trust_tier": "core",
+  "kind": "product",
   "extension_class": "Pulsar\\Extension\\Forum\\ForumExtension",
   "pulsar": {
     "min_version": "1.0.0-rc.11"
@@ -20,6 +21,8 @@
       "ForumProfileRepositoryInterface",
       "TagRepositoryInterface"
     ],
-    "routes": true
+    "routes": true,
+    "migrations": ["src/Migration"],
+    "commands": ["Pulsar\\Extension\\Forum\\Command\\ForumServeCommand"]
   }
 }

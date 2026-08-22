@@ -7,7 +7,10 @@ namespace Pulsar\Core\Wiring;
 use Closure;
 use Pulsar\Api\Internal;
 use Pulsar\Config\AppConfig;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\Environment;
 use Pulsar\Console\Application;
 use Pulsar\Console\Command;
 use Pulsar\Container\ContainerInterface;
@@ -27,18 +30,31 @@ use Pulsar\Routing\RouterInterface;
 use Throwable;
 
 use function dirname;
-use function is_array;
-use function is_file;
 use function is_string;
-
-use const DIRECTORY_SEPARATOR;
 
 /**
  * Wires the Introspection module into the kernel boot pipeline.
+ *
+ * Owns config/introspection.php: its loader builds {@see IntrospectionConfig}
+ * into the ConfigRepository during config load (the single source of truth). The
+ * loader reads AppConfig's resolved EnvironmentMode from the repository so
+ * introspection's default-enabled posture (off in production) derives from the
+ * SAME mode AppConfig resolved — never a re-derived, possibly divergent one.
  */
 #[Internal]
-final readonly class IntrospectionWiring implements ServiceWiringInterface
+final readonly class IntrospectionWiring implements ServiceWiringInterface, ProvidesConfigLoaders
 {
+    public function configLoaders(): array
+    {
+        return [
+            'introspection' => new CallableConfigLoader(
+                IntrospectionConfig::class,
+                static fn(array $data, Environment $environment, ConfigRepository $repository): object
+                    => IntrospectionConfig::fromArray($data, $environment, $repository->get(AppConfig::class)->mode),
+            ),
+        ];
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -47,26 +63,16 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
         Router $router,
     ): void {
         $repository = $configManager->repository();
-        $environment = $configManager->environment();
 
+        // IntrospectionConfig is built into the repository by its loader (see
+        // configLoaders()). When config/introspection.php is absent the loader is
+        // skipped, so fall back to the mode-based default — off in production —
+        // derived from the same AppConfig mode the loader would have used.
         /** @var AppConfig $appConfig */
         $appConfig = $repository->get(AppConfig::class);
-
-        // Load introspection config
-        $configPath = $configManager->configPath();
-        $configData = [];
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'introspection.php')) {
-            /** @psalm-suppress UnresolvableInclude */
-            $loaded = require $configPath . DIRECTORY_SEPARATOR . 'introspection.php';
-
-            if (is_array($loaded)) {
-                /** @var array<string, mixed> $loaded */
-                $configData = $loaded;
-            }
-        }
-
-        $config = IntrospectionConfig::fromArray($configData, $environment, $appConfig->mode);
+        $config = $repository->has(IntrospectionConfig::class)
+            ? $repository->get(IntrospectionConfig::class)
+            : IntrospectionConfig::fromArray([], $configManager->environment(), $appConfig->mode);
         $container->instance(IntrospectionConfig::class, $config);
 
         if (!$config->enabled) {
@@ -79,7 +85,7 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
             : new SensitiveDataScrubber();
         /** @var SensitiveDataScrubber $scrubber */
 
-        // CoreRuntimeProbe — closures decouple from #[Internal] cross-module types
+        // CoreRuntimeProbe: closures decouple from #[Internal] cross-module types
         $extensionProber = $container->has(ExtensionRegistry::class)
             ? $this->buildExtensionProber($container)
             : null;
@@ -150,7 +156,7 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
                 try {
                     $state = $registry->getState($name)->value;
                 } catch (Throwable) {
-                    // Swallow — state unavailable
+                    // Swallow: state unavailable
                 }
 
                 $provides = [];

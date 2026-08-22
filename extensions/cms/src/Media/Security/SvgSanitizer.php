@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Media\Security;
 use DOMAttr;
 use DOMDocument;
 use DOMElement;
+use DOMNamedNodeMap;
 use DOMNode;
 use DOMProcessingInstruction;
 use Pulsar\Api\Api;
@@ -26,6 +27,7 @@ use function trim;
  * Performs a depth-first tree walk to remove disallowed elements entirely
  * and strip disallowed attributes. Blocks all script execution, external
  * resource loading, and event handlers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SvgSanitizer
@@ -217,7 +219,16 @@ final readonly class SvgSanitizer
         // Walk the tree depth-first, collecting nodes to remove
         $this->walkTree($dom->documentElement);
 
+        // walkTree only filters the attributes of descendants, never the root
+        // element itself — so an `<svg onload="...">` handler on the root
+        // survived and executed (stored XSS). Filter the root's own attributes
+        // and hrefs too. The root is the SVG element; its children were already
+        // validated against the element allowlist during the walk.
+        $this->filterAttributes($dom->documentElement);
+        $this->validateHrefAttributes($dom->documentElement, $dom->documentElement);
+
         // Remove processing instructions at root level (e.g., xml-stylesheet PIs)
+        /** @var mixed $child */
         foreach (iterator_to_array($dom->childNodes) as $child) {
             if ($child instanceof DOMProcessingInstruction) {
                 $dom->removeChild($child);
@@ -246,13 +257,15 @@ final readonly class SvgSanitizer
         // Process children first (depth-first), collecting in reverse to avoid index shifting
         $children = [];
 
+        /** @var mixed $child */
         foreach (iterator_to_array($node->childNodes) as $child) {
-            $children[] = $child;
+            $children = [...$children, $child];
         }
 
+        /** @var mixed $child */
         foreach ($children as $child) {
             if ($child instanceof DOMElement) {
-                $tagName = strtolower($child->localName);
+                $tagName = strtolower($child->localName ?? $child->nodeName);
 
                 // Remove blocked elements entirely
                 if (in_array($tagName, self::BLOCKED_ELEMENTS, true)) {
@@ -286,9 +299,13 @@ final readonly class SvgSanitizer
     private function filterAttributes(DOMElement $element): void
     {
         $toRemove = [];
+        // DOMElement always exposes a DOMNamedNodeMap; the base DOMNode type is
+        // nullable, so narrow it explicitly for analyzers that follow the base type.
+        /** @var DOMNamedNodeMap $attributes */
+        $attributes = $element->attributes;
 
         /** @var DOMAttr $attr */
-        foreach (iterator_to_array($element->attributes) as $attr) {
+        foreach (iterator_to_array($attributes) as $attr) {
             $attrNameLower = strtolower($attr->name);
 
             // Remove all on* event handlers
@@ -324,7 +341,7 @@ final readonly class SvgSanitizer
      */
     private function validateHrefAttributes(DOMElement $element, DOMNode $parent): void
     {
-        $tagName = strtolower($element->localName);
+        $tagName = strtolower($element->localName ?? $element->nodeName);
         $hrefAttrs = ['href', 'xlink:href'];
 
         foreach ($hrefAttrs as $attrName) {
@@ -340,6 +357,13 @@ final readonly class SvgSanitizer
 
             // Block javascript: and vbscript: schemes
             if (str_starts_with($hrefLower, 'javascript:') || str_starts_with($hrefLower, 'vbscript:')) {
+                $element->removeAttribute($attrName);
+
+                continue;
+            }
+
+            // Block protocol-relative URLs (bypass for scheme filtering)
+            if (str_starts_with($hrefLower, '//')) {
                 $element->removeAttribute($attrName);
 
                 continue;

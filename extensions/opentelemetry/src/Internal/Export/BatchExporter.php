@@ -19,7 +19,7 @@ use function usleep;
  * Generic batch exporter that queues items and flushes them in batches.
  *
  * Items are enqueued individually and flushed explicitly via flush() or
- * shutdown(). The queue is capped at maxQueueSize — when exceeded, the
+ * shutdown(). The queue is capped at maxQueueSize; when exceeded, the
  * oldest items are dropped.
  *
  * @template T
@@ -30,7 +30,7 @@ final class BatchExporter
     /** @var list<T> */
     private array $queue = [];
 
-    private bool $isShutDown = false;
+    public private(set) bool $isShutDown = false;
 
     /**
      * @param Closure(list<T>): string $serializer  Converts a batch of items to protobuf binary
@@ -116,13 +116,6 @@ final class BatchExporter
         return count($this->queue);
     }
 
-    /**
-     * Check if the exporter has been shut down.
-     */
-    public function isShutDown(): bool
-    {
-        return $this->isShutDown;
-    }
 
     /**
      * @param list<T> $batch

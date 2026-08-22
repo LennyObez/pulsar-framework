@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_redirects (
@@ -33,10 +35,12 @@ return new class implements MigrationInterface {
         // Expression index with COALESCE: PostgreSQL + SQLite support it;
         // MySQL fallback uses a standard composite index
         if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE UNIQUE INDEX uq_redirect_from_locale_tenant
-                    ON cms_redirects (from_path, locale, tenant_id)
-                SQL);
+            $indexes->ensure(
+                'cms_redirects',
+                'uq_redirect_from_locale_tenant',
+                ['from_path', 'locale', 'tenant_id'],
+                unique: true,
+            );
         } else {
             $connection->execute(<<<'SQL'
                 CREATE UNIQUE INDEX IF NOT EXISTS uq_redirect_from_locale_tenant

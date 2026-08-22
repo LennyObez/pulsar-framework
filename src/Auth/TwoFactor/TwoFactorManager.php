@@ -86,10 +86,23 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Confirm2faSetupResult {
         assert($identityId !== '', 'identityId must not be empty');
 
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt($identityId, TwoFactorPurpose::Setup)) {
+            $this->emitAudit(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Denied,
+                $identityId,
+                '2fa_setup_confirmation_failed',
+                ['reason' => 'rate_limited'],
+            );
+
+            return Confirm2faSetupResult::failure(VerifyReason::RateLimited);
+        }
+
         $timeStep = $this->verifier->verify(
             $secret,
             $code,
-            purpose: TwoFactorPurpose::Setup,
+            replayGuard: $this->replayGuard,
+            identityId: $identityId,
         );
 
         if ($timeStep === null) {
@@ -126,13 +139,21 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Verify2faResult {
         assert($identityId !== '', 'identityId must not be empty');
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt($identityId, $purpose)) {
+        // Fail-closed. A missing rate limiter must DENY the attempt,
+        // not allow unlimited tries. Production deployments wire a real limiter
+        // (token bucket, leaky bucket, identity+IP+timeframe). Dev/test wire
+        // `AllowAllTwoFactorRateLimiter` explicitly so the lack of rate limiting
+        // is visible in code rather than masked by a null default.
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt($identityId, $purpose)) {
             $this->emitAudit(
                 AuditEvent::Authentication,
                 AuditOutcome::Denied,
                 $identityId,
                 '2fa_code_verification_failed',
-                ['purpose' => $purpose->value, 'reason' => 'rate_limited'],
+                [
+                    'purpose' => $purpose->value,
+                    'reason' => $this->rateLimiter === null ? 'rate_limiter_not_configured' : 'rate_limited',
+                ],
             );
 
             return Verify2faResult::failure(VerifyReason::RateLimited, $purpose);
@@ -162,13 +183,17 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Verify2faResult {
         assert($identityId !== '', 'identityId must not be empty');
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt($identityId, $purpose)) {
+        // See verifyCode() — a missing rate limiter denies, fail-closed.
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt($identityId, $purpose)) {
             $this->emitAudit(
                 AuditEvent::Authentication,
                 AuditOutcome::Denied,
                 $identityId,
                 '2fa_code_verification_failed',
-                ['purpose' => $purpose->value, 'reason' => 'rate_limited'],
+                [
+                    'purpose' => $purpose->value,
+                    'reason' => $this->rateLimiter === null ? 'rate_limiter_not_configured' : 'rate_limited',
+                ],
             );
 
             return Verify2faResult::failure(VerifyReason::RateLimited, $purpose);
@@ -290,7 +315,6 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
             $code,
             replayGuard: $this->replayGuard,
             identityId: $identityId,
-            purpose: $purpose,
         );
 
         if ($timeStep === null) {

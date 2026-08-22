@@ -16,6 +16,7 @@ use Pulsar\Http\Method;
  *
  * Internal-only methods (lock, loadRoutes, etc.) are intentionally
  * excluded to keep the public surface focused.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RouterInterface
@@ -27,43 +28,31 @@ interface RouterInterface
 
     /**
      * Register a GET route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function get(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a POST route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function post(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a PUT route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function put(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a PATCH route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function patch(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a DELETE route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function delete(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a route matching any method.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function any(string $path, mixed $handler, ?string $name = null): self;
 
@@ -92,6 +81,24 @@ interface RouterInterface
      * @param class-string|null $resolverClass
      */
     public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self;
+
+    /**
+     * Register a full resource route set (7 routes: index, create, store, show, edit, update, destroy).
+     *
+     * @param string $name Resource name (e.g. 'photos')
+     * @param string $controller Controller class
+     * @param list<string> $middleware Middleware for all routes
+     */
+    public function resource(string $name, string $controller, array $middleware = []): self;
+
+    /**
+     * Register an API resource route set (5 routes: index, store, show, update, destroy).
+     *
+     * @param string $name Resource name (e.g. 'photos')
+     * @param string $controller Controller class
+     * @param list<string> $middleware Middleware for all routes
+     */
+    public function apiResource(string $name, string $controller, array $middleware = []): self;
 
     /**
      * Get all registered routes.

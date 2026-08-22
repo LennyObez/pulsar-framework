@@ -24,6 +24,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Invoice generation and retrieval service.
+ *
+ * @psalm-api Bound to InvoiceServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use InvoiceServiceInterface for public API')]
 final readonly class InvoiceService implements InvoiceServiceInterface

@@ -11,7 +11,7 @@ return [
     'template_paths' => [
         'resources/views',
     ],
-    'cache_path' => 'storage/cache/views',
+    'cache_path' => 'var/cache/views',
     'auto_escape' => true,
     'active_theme' => 'default',
     'php_directive_allowed' => false,
@@ -61,23 +61,50 @@ final readonly class DashboardController
 }
 ```
 
-Templates use the `.pulsar.php` extension. A render call to `'dashboard.index'` resolves to `resources/views/dashboard/index.pulsar.php` (dot notation maps to directory separators).
+Templates use the `.pulse.php` extension. A render call to `'dashboard.index'` resolves to `resources/views/dashboard/index.pulse.php` (dot notation maps to directory separators).
 
 ### Template file structure
 
 ```
 resources/views/
   layouts/
-    app.pulsar.php
+    app.pulse.php
   dashboard/
-    index.pulsar.php
+    index.pulse.php
   partials/
-    header.pulsar.php
-    footer.pulsar.php
+    header.pulse.php
+    footer.pulse.php
   components/
-    alert.pulsar.php
-    card.pulsar.php
+    alert.pulse.php
+    card.pulse.php
 ```
+
+### Template name resolution
+
+Template names use dot notation. Each dot becomes a directory separator, and the engine appends `.pulse.php` automatically. The engine searches the directories listed in `template_paths` (from `config/view.php`) in order, returning the first match.
+
+| Template name        | Resolved file path                             |
+| -------------------- | ---------------------------------------------- |
+| `dashboard.index`    | `resources/views/dashboard/index.pulse.php`    |
+| `layouts.app`        | `resources/views/layouts/app.pulse.php`        |
+| `theme.layouts.main` | `resources/views/theme/layouts/main.pulse.php` |
+| `partials.header`    | `resources/views/partials/header.pulse.php`    |
+| `components.card`    | `resources/views/components/card.pulse.php`    |
+
+If a template name contains a namespace prefix with `::` (e.g., `cms::admin.layout`), the prefix is stripped before resolution. Extensions use this convention, but it resolves against the same `template_paths` directories.
+
+To make project templates resolvable, ensure your `config/view.php` includes the project's `resources/views` directory:
+
+```php
+return [
+    'template_paths' => [
+        'resources/views',
+    ],
+    // ...
+];
+```
+
+The engine throws a `ViewException` if the template cannot be found in any configured path.
 
 ## Template syntax
 
@@ -170,7 +197,7 @@ Template comments are stripped entirely from compiled output:
 Define a layout with `@yield` placeholders:
 
 ```html
-{{-- layouts/app.pulsar.php --}}
+{{-- layouts/app.pulse.php --}}
 <!doctype html>
 <html lang="en">
   <head>
@@ -190,7 +217,7 @@ Define a layout with `@yield` placeholders:
 Extend the layout and fill sections:
 
 ```html
-{{-- dashboard/index.pulsar.php --}} @extends('layouts.app') @section('title') Dashboard @endsection
+{{-- dashboard/index.pulse.php --}} @extends('layouts.app') @section('title') Dashboard @endsection
 @section('content')
 <h1>Welcome, {{ $user->name }}</h1>
 <p>You have {{ $notifications }} new notifications.</p>
@@ -220,7 +247,7 @@ Include another template inline with optional scoped data:
 Define reusable components with named slots:
 
 ```html
-{{-- components/card.pulsar.php --}}
+{{-- components/card.pulse.php --}}
 <div class="card">
   <div class="card-header">@yield('header')</div>
   <div class="card-body">@yield('body')</div>
@@ -308,18 +335,98 @@ Outputs a hidden input for HTTP method spoofing:
 
 Renders: `<input type="hidden" name="_method" value="DELETE">`.
 
-### Internationalization
+### Contact directives (anti-scraping)
 
-#### @i18n
+#### @cloakmail / @cloaktel
 
-Outputs a translated string (HTML-escaped):
+Render contact links whose address never appears literally in the served HTML,
+so scrapers reading the markup find nothing to lift:
 
 ```html
-<h1>@i18n('messages.welcome')</h1>
-<p>@i18n('messages.greeting', ['name' => $user->name])</p>
+<p>@cloakmail('jane', 'example.com')</p>
+<p>@cloaktel('32495733136', ['text' => 'Call us', 'class' => 'btn'])</p>
 ```
 
-Integrates with the `__()` translation helper from the i18n module.
+`@cloakmail('jane', 'example.com')` renders roughly:
+
+```html
+<a class="pulsar-cloak-mail" data-u="amFuZQ==" data-d="ZXhhbXBsZS5jb20=">email</a>
+```
+
+The user and domain (or the phone number) travel as base64-encoded `data-*`
+attributes — never a literal `jane@example.com`. The bundled
+`resources/ui/js/contact-cloak.js` (CSP `script-src 'self'` clean, no
+dependencies) reassembles the `mailto:`/`tel:` href and visible text on load.
+Include it once:
+
+```html
+<script src="/assets/contact-cloak.js"></script>
+```
+
+With JavaScript disabled the element stays readable fallback text (`email` /
+`call`, or a caller-supplied `text` attribute) with no href — nothing breaks,
+there is simply no clickable link. A caller-supplied `href` attribute is ignored;
+the script owns it.
+
+### Internationalization
+
+#### @t (preferred) / @i18n
+
+Outputs a translated string (HTML-escaped). Use `@t()` as the primary translation directive:
+
+```html
+<h1>@t('messages.welcome')</h1>
+<p>@t('messages.greeting', ['name' => $user->name])</p>
+```
+
+`@i18n()` is an alias that works identically but `@t()` is the recommended form used throughout the framework's templates and extensions. Both integrate with the `__()` translation helper from the i18n module.
+
+#### Translation key format
+
+Translation keys use dot notation for nesting. The dots represent nested array keys in your language files, not translation domains:
+
+```html
+@t('navigation.home') {{-- Key: navigation.home --}} @t('errors.validation.required') {{-- Key:
+errors.validation.required --}}
+```
+
+These keys correspond to nested arrays in your language files:
+
+```php
+// resources/lang/en/messages.php
+return [
+    'navigation' => [
+        'home' => 'Home',
+        'about' => 'About',
+    ],
+    'errors' => [
+        'validation' => [
+            'required' => 'This field is required.',
+        ],
+    ],
+];
+```
+
+#### Translation domains
+
+The `@t()` directive uses the default `messages` domain. To use a different domain, pass it as the fourth argument to the `__()` helper in PHP code or use the translator directly in a controller:
+
+```php
+// In a controller, using the __() helper with an explicit domain:
+$label = __('field.name', [], null, 'forms');
+```
+
+Domains map to separate language files. The `messages` domain loads from `resources/lang/{locale}/messages.php`, while a `forms` domain loads from `resources/lang/{locale}/forms.php`.
+
+#### Passing parameters
+
+Use the second argument to pass interpolation parameters:
+
+```html
+@t('greeting', ['name' => $user->name])
+```
+
+Parameters are formatted using ICU MessageFormat when the message formatter is configured, or simple `{name}` replacement otherwise.
 
 ### Inline PHP
 
@@ -367,6 +474,56 @@ All `{{ }}` output is HTML-escaped by default. For other contexts, use the dedic
 ```
 
 The `url()` helper actively blocks dangerous URI schemes (`javascript:`, `data:`, `vbscript:`) by normalizing away invisible Unicode characters before checking, preventing bypass attempts.
+
+## Shared data and view composers
+
+Partials such as the site header and footer need global data (localized navigation, current locale, section bar) on every page — including pages the framework renders itself, such as the themed `errors/404` and `errors/5xx` pages, where no controller runs. Instead of threading that data through every controller, register it once on the engine; it is merged into **every** render the engine performs, framework-internal renders included.
+
+### Shared data
+
+```php
+$engine = $container->get(TemplateEngineInterface::class);
+
+$engine->share('siteName', 'Acme');             // single key
+$engine->share(['locale' => 'fr', 'tz' => 'UTC']); // bulk
+```
+
+Shared data is **request-scoped**: it never leaks across requests or Fibers (persistent-worker runtimes reset it between requests automatically). For application-lifetime constants, prefer a wildcard composer.
+
+### View composers
+
+A composer is a callable invoked **lazily** for renders whose template name matches a glob pattern. It contributes data by returning an array or via `ViewContext::with()`:
+
+```php
+$engine->composer('theme.partials.*', function (ViewContext $ctx): array {
+    return ['nav' => $this->navBuilder->build($ctx->get('locale', 'en'))];
+});
+
+$engine->composer(['errors.*', '*'], ...);  // multiple patterns / match everything
+```
+
+Guarantees:
+
+- **Lazy** — a composer runs only when a matching template actually renders, and **at most once per request** (its output is memoized), so an expensive nav tree is built once even when header, footer and drawer all match. Pattern matching itself runs on every render; only the composer's execution is memoized.
+- **Deterministic precedence**, low to high: shared data → composer output (registration order; later overrides earlier) → the explicit `render()` data. Explicit data always wins.
+- **Nested includes inherit, and inherited data wins** — an `@include` partial receives the parent render's resolved data as its explicit data. On a key collision the inherited value therefore wins: a partial-matching composer cannot override a key the parent already resolved (e.g. from a `'*'` composer); it can only add keys the parent did not provide.
+- **No hot-path cost** when nothing is registered: `render()` short-circuits.
+
+### Error pages get the chrome for free
+
+`ErrorPageRenderer` resolves the same configured engine, so with the composer above registered, a routing miss under `APP_DEBUG=false` renders the themed `errors/404` with the real `@include('theme.partials.header')` chrome — zero controller involvement, no undefined-variable fallback.
+
+### Where to register
+
+Register shares/composers once at boot, after the engine is bound and before the first render — an extension's boot hook (ADR-0004) is the canonical place:
+
+```php
+public function boot(ContainerInterface $container): void
+{
+    $engine = $container->get(TemplateEngineInterface::class);
+    $engine->composer('theme.partials.*', new NavComposer($container->get(NavBuilder::class)));
+}
+```
 
 ## Trusted vs untrusted templates
 
@@ -461,14 +618,14 @@ Options:
 | --------- | ----- | -------------------------------------- |
 | `--force` | `-f`  | Recompile all templates even if cached |
 
-The command scans all configured `template_paths` for `.pulsar.php` files, compiles them, and writes the artifacts to the `cache_path` directory. Deploy this directory as a build artifact.
+The command scans all configured `template_paths` for `.pulse.php` files, compiles them, and writes the artifacts to the `cache_path` directory. Deploy this directory as a build artifact.
 
 Output example:
 
 ```
 Compiling templates...
 Compilation complete: 47 compiled, 0 skipped, 0 errors in 0.182s
-All 47 template(s) are compiled and cached at: storage/cache/views
+All 47 template(s) are compiled and cached at: var/cache/views
 ```
 
 ### Development mode
@@ -478,7 +635,7 @@ In development, the engine automatically recompiles templates when the source fi
 ### Production deployment
 
 1. Run `pulsar view:compile` during the build step
-2. Deploy the `storage/cache/views/` directory alongside your application
+2. Deploy the `var/cache/views/` directory alongside your application
 3. Set `php_directive_allowed` to `false` in production config
 4. The engine uses cached artifacts with no runtime compilation
 

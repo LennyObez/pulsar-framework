@@ -6,13 +6,13 @@ namespace Pulsar\Cache\Application\Lock;
 
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Pulsar\Runtime\Fiber\CooperativeSleep;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Redis;
 
 use function bin2hex;
 use function microtime;
-use function usleep;
 
 /**
  * Redis-backed distributed lock with Lua-based atomic operations.
@@ -40,8 +40,9 @@ final class RedisLock implements LockInterface
 
     public function __construct(
         private readonly Redis $redis,
+        ?Randomizer $randomizer = null,
     ) {
-        $this->randomizer = new Randomizer(new Secure());
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 
     public function acquire(string $resource, int $ttlSeconds = 30, int $timeoutMs = 0): LockHandle
@@ -72,7 +73,9 @@ final class RedisLock implements LockInterface
                 throw LockAcquisitionException::timeout($resource, $timeoutMs);
             }
 
-            usleep(10_000);
+            // Yield the worker to other connections while waiting, instead of
+            // freezing every fiber (and the lock holder) in a blocking usleep.
+            CooperativeSleep::forMilliseconds(10);
         } while (hrtime(true) < $deadlineNs);
 
         throw LockAcquisitionException::timeout($resource, $timeoutMs);

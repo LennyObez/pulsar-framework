@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Available queue driver types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum QueueDriverType: string

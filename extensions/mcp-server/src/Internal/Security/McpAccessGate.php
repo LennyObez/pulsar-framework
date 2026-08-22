@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer\Internal\Security;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
@@ -29,11 +31,21 @@ final class McpAccessGate implements McpAccessGateInterface
 {
     private int $activeActions = 0;
 
+    /**
+     * Tracks whether the environment-gate pass has already been
+     * logged for this gate's lifetime. Without this flag the audit
+     * warning would fire on every tool call, which both spams the
+     * log and obscures the pattern worth surfacing: a single
+     * confirmation per process boot that the env-var gate opened.
+     */
+    private bool $environmentPassLogged = false;
+
     public function __construct(
         private readonly McpSecurityConfig $securityConfig,
         private readonly EnvironmentMode $mode,
         private readonly Environment $environment,
         private readonly string $projectRoot,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function assertEnvironmentAllowed(): void
@@ -57,7 +69,11 @@ final class McpAccessGate implements McpAccessGateInterface
         if (file_exists($absolute)) {
             $real = realpath($absolute);
 
-            if ($real === false || !str_starts_with($real, $normalizedRoot)) {
+            if ($real === false) {
+                throw McpSecurityException::pathNotAllowed($path);
+            }
+
+            if (!str_starts_with($real, $normalizedRoot)) {
                 throw McpSecurityException::pathNotAllowed($path);
             }
 
@@ -92,6 +108,8 @@ final class McpAccessGate implements McpAccessGateInterface
         if ($confirm !== '1' && $confirm !== 'true') {
             throw McpSecurityException::environmentBlocked($this->mode->value);
         }
+
+        $this->logEnvironmentPass('staging', 'MCP_STAGING_CONFIRM');
     }
 
     private function assertProductionConfirmed(): void
@@ -101,6 +119,44 @@ final class McpAccessGate implements McpAccessGateInterface
         if ($confirm !== '1' && $confirm !== 'true') {
             throw McpSecurityException::environmentBlocked($this->mode->value);
         }
+
+        $this->logEnvironmentPass('production', 'MCP_PRODUCTION_CONFIRM');
+    }
+
+    /**
+     * Environment-variable-only gates are vulnerable to env
+     * injection: anything that can set a variable in the server's
+     * environment can open the gate. That cannot be prevented at
+     * this layer (the operator owns the env), so the pass MUST
+     * emit a high-priority log entry and reach centralised audit.
+     * Combined with the second-factor recommendation carried in
+     * the log context — operators SHOULD also pin the confirmation
+     * value via an out-of-band signed config file — this turns the
+     * gate from a silent flip into a recorded event the SOC can
+     * review.
+     *
+     * We log only once per gate lifetime to avoid drowning the
+     * signal: the first request of the boot opens the gate,
+     * subsequent ones are uninteresting.
+     */
+    private function logEnvironmentPass(string $environment, string $envVar): void
+    {
+        if ($this->environmentPassLogged) {
+            return;
+        }
+        $this->environmentPassLogged = true;
+
+        $this->logger->warning(
+            'MCP environment gate opened via env var',
+            [
+                'environment' => $environment,
+                'env_var' => $envVar,
+                'recommendation' => 'Pair the env var with an out-of-band confirmation '
+                    . 'channel (signed config file, audit log, manual maintainer ack) '
+                    . 'so an attacker who controls the env cannot unilaterally enable '
+                    . 'MCP for the deployment.',
+            ],
+        );
     }
 
     private function buildAbsolutePath(string $path, string $normalizedRoot): string

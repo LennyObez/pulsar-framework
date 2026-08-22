@@ -40,20 +40,12 @@ final class MakeExtensionCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
-        $vendor = $input->getOption('vendor', 'acme');
-        $basePath = $input->getOption('path', 'extensions');
+        $vendor = $input->getStringOption('vendor', 'acme');
+        $basePath = $input->getStringOption('path', 'extensions');
 
         if (!is_string($name) || $name === '') {
             $output->errorln('Extension name is required.');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($vendor)) {
-            $vendor = 'acme';
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'extensions';
         }
 
         // Normalize names

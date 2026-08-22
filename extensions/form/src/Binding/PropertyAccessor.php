@@ -16,6 +16,7 @@ use function property_exists;
  *
  * Supports nested property paths (e.g., "address.city") and
  * handles readonly properties via reflection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PropertyAccessor
@@ -34,6 +35,7 @@ final class PropertyAccessor
                 return null;
             }
 
+            /** @var mixed $current */
             $current = $this->readProperty($current, $segment);
         }
 
@@ -55,6 +57,7 @@ final class PropertyAccessor
                 return;
             }
 
+            /** @var mixed $current */
             $current = $this->readProperty($current, $segment);
         }
 

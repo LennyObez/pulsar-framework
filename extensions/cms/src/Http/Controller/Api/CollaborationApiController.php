@@ -21,7 +21,7 @@ use const JSON_THROW_ON_ERROR;
  * Provides endpoints for CRDT state synchronization and session awareness
  * via polling. Clients (Yjs) poll these endpoints every ~2 seconds.
  */
-#[Internal(reason: 'CMS API controller — implementation detail')]
+#[Internal(reason: 'CMS API controller; implementation detail')]
 final readonly class CollaborationApiController
 {
     public function __construct(

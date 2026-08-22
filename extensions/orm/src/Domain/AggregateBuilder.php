@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Executes aggregate queries (COUNT, SUM, MIN, MAX, AVG) efficiently.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AggregateBuilder
@@ -35,17 +36,19 @@ final readonly class AggregateBuilder
     #[NoDiscard]
     public function count(string $column = '*'): int
     {
+        /** @var mixed $value */
         $value = $this->aggregate('COUNT', $column);
 
-        return (int) $value;
+        return is_numeric($value) ? (int) $value : 0;
     }
 
     #[NoDiscard]
     public function sum(string $column): float
     {
+        /** @var mixed $value */
         $value = $this->aggregate('SUM', $column);
 
-        return (float) ($value ?? 0);
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 
     #[NoDiscard]
@@ -63,9 +66,10 @@ final readonly class AggregateBuilder
     #[NoDiscard]
     public function avg(string $column): ?float
     {
+        /** @var mixed $value */
         $value = $this->aggregate('AVG', $column);
 
-        return $value !== null ? (float) $value : null;
+        return is_numeric($value) ? (float) $value : null;
     }
 
     private function aggregate(string $function, string $column): mixed

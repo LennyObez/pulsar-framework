@@ -1,0 +1,17 @@
+{
+  "name": "pulsar/releases",
+  "version": "1.0.0",
+  "description": "Release management and beta signup system",
+  "trust_tier": "core",
+  "kind": "product",
+  "type": "extension_class",
+  "namespace": "Pulsar\\Extension\\Releases",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "extension_class": "Pulsar\\Extension\\Releases\\ReleasesExtension",
+  "providers": ["Pulsar\\Extension\\Releases\\ReleasesServiceProvider"],
+  "provides": {
+    "migrations": ["src/Migration"]
+  }
+}

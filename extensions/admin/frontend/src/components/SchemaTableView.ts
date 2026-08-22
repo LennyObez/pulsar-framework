@@ -147,7 +147,7 @@ export function initializeSchemaView(): void {
 
     void api.schemaRenameTable(table, newName, reason).then((result) => {
       if (result.success) {
-        window.location.href = `/admin/schema/${newName}`;
+        window.location.href = `/admin/schema/${encodeURIComponent(newName)}`;
       } else {
         alert(result.message);
       }
@@ -157,11 +157,22 @@ export function initializeSchemaView(): void {
   // Drop table section (danger zone)
   const dropSection = document.createElement('div');
   dropSection.className = 'admin-schema-view__danger-zone';
-  dropSection.innerHTML = `
-    <h3>Danger Zone</h3>
-    <p>Dropping a table permanently deletes all its data and structure.</p>
-    <button type="button" class="admin-btn admin-btn--danger" data-drop-table>Drop Table "${table}"</button>
-  `;
+
+  const dangerHeading = document.createElement('h3');
+  dangerHeading.textContent = 'Danger Zone';
+  dropSection.appendChild(dangerHeading);
+
+  const dangerDesc = document.createElement('p');
+  dangerDesc.textContent = 'Dropping a table permanently deletes all its data and structure.';
+  dropSection.appendChild(dangerDesc);
+
+  const dropBtn = document.createElement('button');
+  dropBtn.type = 'button';
+  dropBtn.className = 'admin-btn admin-btn--danger';
+  dropBtn.dataset.dropTable = '';
+  dropBtn.textContent = `Drop Table "${table}"`;
+  dropSection.appendChild(dropBtn);
+
   container.appendChild(dropSection);
 
   container.querySelector('[data-drop-table]')?.addEventListener('click', () => {

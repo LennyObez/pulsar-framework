@@ -25,6 +25,9 @@ use function sprintf;
 
 /**
  * Manages digital product download entitlements with HMAC-signed tokens.
+ *
+ * @psalm-api Bound to DigitalDeliveryServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use DigitalDeliveryServiceInterface for public API')]
 final readonly class DigitalDeliveryService implements DigitalDeliveryServiceInterface
@@ -103,7 +106,7 @@ final readonly class DigitalDeliveryService implements DigitalDeliveryServiceInt
             );
         }
 
-        // Atomically decrement — returns affected rows count.
+        // Atomically decrement: returns affected rows count.
         // This is the authoritative check: if it returns 0, another concurrent
         // request already consumed the last download.
         $decremented = $this->assets->decrementDownloads($download->id);
@@ -132,7 +135,7 @@ final readonly class DigitalDeliveryService implements DigitalDeliveryServiceInt
             AuditOutcome::Success,
             null,
             'cms.commerce.download.processed',
-            "download:{$download->id}",
+            "download:$download->id",
             [
                 'orderItemId' => $download->orderItemId,
                 'assetId' => $download->digitalAssetId,

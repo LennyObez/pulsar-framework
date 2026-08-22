@@ -7,14 +7,16 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/integrity.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class IntegrityConfig
+final readonly class IntegrityConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/integrity.php. */
+    private const array KNOWN_KEYS = ['enabled', 'manifest_path', 'mode', 'include', 'exclude'];
+
     /**
      * @param list<string> $include Glob patterns for files to include
      * @param list<string> $exclude Glob patterns for files to exclude
@@ -25,10 +27,26 @@ readonly class IntegrityConfig
         public IntegrityPolicyMode $mode = IntegrityPolicyMode::Warn,
         public array $include = ['src/**/*.php', 'config/**/*.php', 'bin/*'],
         public array $exclude = ['vendor/**', 'var/**', 'node_modules/**', '.git/**'],
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/integrity.php
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     manifest_path?: string,
+     *     mode?: string,
+     *     include?: list<string>,
+     *     exclude?: list<string>,
+     * } $data Raw array from config/integrity.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -37,21 +55,13 @@ readonly class IntegrityConfig
             ? $environment->get('INTEGRITY_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        $modeValue = $data['mode'] ?? 'warn';
-        $mode = IntegrityPolicyMode::from(is_string($modeValue) ? $modeValue : 'warn');
-
-        /** @var list<string> $include */
-        $include = $data['include'] ?? ['src/**/*.php', 'config/**/*.php', 'bin/*'];
-
-        /** @var list<string> $exclude */
-        $exclude = $data['exclude'] ?? ['vendor/**', 'var/**', 'node_modules/**', '.git/**'];
-
         return new self(
             enabled: $enabled,
-            manifestPath: isset($data['manifest_path']) && is_string($data['manifest_path']) ? $data['manifest_path'] : 'var/integrity/manifest.json',
-            mode: $mode,
-            include: $include,
-            exclude: $exclude,
+            manifestPath: $data['manifest_path'] ?? 'var/integrity/manifest.json',
+            mode: IntegrityPolicyMode::from($data['mode'] ?? 'warn'),
+            include: $data['include'] ?? ['src/**/*.php', 'config/**/*.php', 'bin/*'],
+            exclude: $data['exclude'] ?? ['vendor/**', 'var/**', 'node_modules/**', '.git/**'],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

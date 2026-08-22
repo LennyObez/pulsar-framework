@@ -41,7 +41,7 @@ final class ContextualBindingBuilderTest extends TestCase
         $builder = new ContextualBindingBuilder('Consumer', $container);
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Call needs() before give()');
+        $this->expectExceptionMessageIsOrContains('Call needs() before give()');
 
         $builder->give(stdClass::class);
     }

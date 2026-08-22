@@ -15,8 +15,11 @@ use Pulsar\Extension\Cms\Content\Redirect;
  * translation or a redirect. When isFallback is true, the translation
  * was resolved from the default locale because the requested locale
  * had no translation.
+ *
+ * @psalm-api Returned from LocaleSlugResolver::resolve(); consumed by
+ *            content controllers and middleware.
  */
-#[Internal(reason: 'CMS i18n resolution result — implementation detail')]
+#[Internal(reason: 'CMS i18n resolution result; implementation detail')]
 final readonly class LocaleSlugResult
 {
     public function __construct(

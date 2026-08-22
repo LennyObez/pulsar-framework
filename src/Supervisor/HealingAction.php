@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each healing action is assigned a unique identifier and optionally
  * correlated with related events via a correlation ID.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealingAction

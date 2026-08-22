@@ -11,7 +11,7 @@ use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
 use function htmlspecialchars;
 use function is_string;
 use function preg_match;
-use function strip_tags;
+use function sprintf;
 
 use const ENT_QUOTES;
 
@@ -41,18 +41,33 @@ final readonly class EmbedBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $url = htmlspecialchars((string) ($data['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawUrl */
+        $rawUrl = $data['url'] ?? null;
+        $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $html */
         $html = $data['html'] ?? null;
 
-        // If custom HTML is provided, sanitize it (strip all tags except iframe)
+        // If custom HTML is provided, render in a fully sandboxed srcdoc iframe
+        // Do NOT combine allow-scripts + allow-same-origin: this defeats the sandbox
         if (is_string($html) && $html !== '') {
-            $sanitized = strip_tags($html, '<iframe>');
+            $escapedHtml = htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
 
-            return "<div class=\"embed\">{$sanitized}</div>";
+            return sprintf(
+                '<div class="embed"><iframe srcdoc="%s" frameborder="0" sandbox="allow-scripts" title="Embed preview"></iframe></div>',
+                $escapedHtml,
+            );
         }
 
-        // Default: render as a sandboxed iframe
-        return "<div class=\"embed\"><iframe src=\"{$url}\" frameborder=\"0\" allowfullscreen sandbox=\"allow-scripts allow-same-origin\"></iframe></div>";
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' ' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') : '';
+
+        // Default: render URL as a sandboxed iframe (allow-scripts for functionality, no allow-same-origin)
+        return sprintf(
+            '<div class="embed%s"%s><iframe src="%s" frameborder="0" allowfullscreen sandbox="allow-scripts allow-popups" title="Embedded content"></iframe></div>',
+            $className,
+            $anchor,
+            $url,
+        );
     }
 
     #[Override]

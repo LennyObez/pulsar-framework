@@ -19,10 +19,20 @@ use function is_array;
  *
  * Walks the AST, invokes the appropriate resolver for each root field,
  * and projects the requested selection set onto the resolved data.
+ *
+ * Security limits: queries exceeding {@see MAX_DEPTH} nesting levels
+ * or {@see MAX_FIELDS} total selected fields are rejected before execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GraphqlExecutor
 {
+    /** Maximum allowed nesting depth of selection sets. */
+    private const int MAX_DEPTH = 15;
+
+    /** Maximum allowed total number of selected fields in a query. */
+    private const int MAX_FIELDS = 500;
+
     private GraphqlParser $parser;
 
     public function __construct(
@@ -47,6 +57,10 @@ final readonly class GraphqlExecutor
 
         try {
             $parsed = $this->parser->parse($query, $variables);
+
+            $fieldCount = 0;
+            $this->validateComplexity($parsed->fields, 1, $fieldCount);
+
             $data = [];
 
             foreach ($parsed->fields as $field) {
@@ -72,17 +86,44 @@ final readonly class GraphqlExecutor
         ];
     }
 
-    private function resolveRootField(ParsedField $field): mixed
+    /**
+     * Validate that the parsed query does not exceed depth or field-count limits.
+     *
+     * @param list<ParsedField> $fields
+     * @throws GraphqlException When limits are exceeded
+     */
+    private function validateComplexity(array $fields, int $currentDepth, int &$fieldCount): void
+    {
+        if ($currentDepth > self::MAX_DEPTH) {
+            throw GraphqlException::queryTooComplex('Maximum query depth exceeded');
+        }
+
+        foreach ($fields as $field) {
+            $fieldCount++;
+
+            if ($fieldCount > self::MAX_FIELDS) {
+                throw GraphqlException::queryTooComplex('Too many fields requested');
+            }
+
+            if ($field->selections !== []) {
+                $this->validateComplexity($field->selections, $currentDepth + 1, $fieldCount);
+            }
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function resolveRootField(ParsedField $field): ?array
     {
         return match ($field->name) {
             'content' => $this->resolveContent($field),
             'contents' => $this->resolveContents($field),
             'taxonomy' => $this->resolveTaxonomy($field),
             'media' => $this->resolveMedia($field),
-            default => throw GraphqlException::validationError("Unknown root field: {$field->name}"),
+            default => throw GraphqlException::validationError("Unknown root field: $field->name"),
         };
     }
 
+    /** @return array<string, mixed>|null */
     private function resolveContent(ParsedField $field): ?array
     {
         $id = $this->requireArgument($field, 'id');
@@ -110,6 +151,7 @@ final readonly class GraphqlExecutor
         return $this->projectSelections($data, $field->selections, 'ContentConnection');
     }
 
+    /** @return array<string, mixed>|null */
     private function resolveTaxonomy(ParsedField $field): ?array
     {
         $slug = (string) $this->requireArgument($field, 'slug');
@@ -122,6 +164,7 @@ final readonly class GraphqlExecutor
         return $this->projectSelections($data, $field->selections, 'Taxonomy');
     }
 
+    /** @return array<string, mixed>|null */
     private function resolveMedia(ParsedField $field): ?array
     {
         $id = $this->requireArgument($field, 'id');
@@ -155,6 +198,7 @@ final readonly class GraphqlExecutor
             $fieldName = $sel->name;
 
             if (array_key_exists($fieldName, $data)) {
+                /** @var mixed $value */
                 $value = $data[$fieldName];
 
                 // Handle list of items (e.g., ContentConnection.items)
@@ -162,6 +206,7 @@ final readonly class GraphqlExecutor
                     $itemType = $this->resolveListItemType($typeName, $fieldName);
                     $projected = [];
 
+                    /** @var mixed $item */
                     foreach ($value as $item) {
                         if (is_array($item)) {
                             /** @var array<string, mixed> $item */
@@ -169,18 +214,18 @@ final readonly class GraphqlExecutor
                         }
                     }
 
-                    $result[$key] = $projected;
+                    $result = [...$result, $key => $projected];
                 } elseif (is_array($value) && $sel->selections !== [] && !$this->isIndexedList($value)) {
                     // Nested object
                     $nestedType = $this->resolveNestedType($typeName, $fieldName);
                     /** @var array<string, mixed> $value */
-                    $result[$key] = $this->projectSelections($value, $sel->selections, $nestedType);
+                    $result = [...$result, $key => $this->projectSelections($value, $sel->selections, $nestedType)];
                 } else {
-                    $result[$key] = $value;
+                    $result = [...$result, $key => $value];
                 }
             } else {
                 // Lazy-resolved sub-fields (translations, blocks, terms)
-                $result[$key] = $this->resolveLazyField($data, $typeName, $sel);
+                $result = [...$result, $key => $this->resolveLazyField($data, $typeName, $sel)];
             }
         }
 
@@ -189,8 +234,11 @@ final readonly class GraphqlExecutor
 
     /**
      * Resolve fields that require additional repository calls.
+     *
+     * @param array<string, mixed> $data
+     * @return array<int|string, mixed>|null
      */
-    private function resolveLazyField(array $data, string $typeName, ParsedField $field): mixed
+    private function resolveLazyField(array $data, string $typeName, ParsedField $field): ?array
     {
         if ($typeName === 'Content' && $field->name === 'translations') {
             /** @var string $contentId */
@@ -265,7 +313,7 @@ final readonly class GraphqlExecutor
     {
         if (!array_key_exists($name, $field->arguments)) {
             throw GraphqlException::validationError(
-                "Missing required argument '{$name}' on field '{$field->name}'",
+                "Missing required argument '$name' on field '$field->name'",
             );
         }
 

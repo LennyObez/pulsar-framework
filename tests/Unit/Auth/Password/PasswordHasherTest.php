@@ -81,7 +81,7 @@ final class PasswordHasherTest extends TestCase
     public function rejectsMemoryCostBelowFloor(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('memory_cost must be at least');
+        $this->expectExceptionMessageIsOrContains('memory_cost must be at least');
 
         new PasswordHasher(memoryCost: 1024);
     }
@@ -90,7 +90,7 @@ final class PasswordHasherTest extends TestCase
     public function rejectsTimeCostBelowFloor(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('time_cost must be at least');
+        $this->expectExceptionMessageIsOrContains('time_cost must be at least');
 
         new PasswordHasher(timeCost: 1);
     }
@@ -129,5 +129,84 @@ final class PasswordHasherTest extends TestCase
         $hash = $cheapHasher->hash('some-password');
 
         self::assertTrue($strongerHasher->needsRehash($hash));
+    }
+
+    /**
+     * The floor is policy owned by the validation layer. Enforcing it here turns a
+     * rejected form field into an uncaught exception, and raising it later would
+     * refuse every account already hashed under the old one.
+     */
+    #[Test]
+    public function hashesAPasswordBelowTheFloorRatherThanThrowing(): void
+    {
+        $hasher = $this->createTestHasher();
+        $password = str_repeat('a', PasswordHasher::MIN_LENGTH - 1);
+
+        self::assertTrue($hasher->verify($password, $hasher->hash($password)));
+    }
+
+    #[Test]
+    public function hashesAnEmptyPasswordRatherThanThrowing(): void
+    {
+        $hasher = $this->createTestHasher();
+
+        self::assertTrue($hasher->verify('', $hasher->hash('')));
+    }
+
+    #[Test]
+    public function hashesAPasswordExactlyAtTheFloor(): void
+    {
+        $hasher = $this->createTestHasher();
+        $password = str_repeat('a', PasswordHasher::MIN_LENGTH);
+
+        self::assertTrue($hasher->verify($password, $hasher->hash($password)));
+    }
+
+    #[Test]
+    public function refusesToHashAboveTheLengthCap(): void
+    {
+        $hasher = $this->createTestHasher();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Password exceeds the 4096-character cap');
+
+        $hasher->hash(str_repeat('a', PasswordHasher::MAX_LENGTH + 1));
+    }
+
+    #[Test]
+    public function verifyRefusesACandidateAboveTheLengthCap(): void
+    {
+        $hasher = $this->createTestHasher();
+        $hash = $hasher->hash(str_repeat('a', PasswordHasher::MAX_LENGTH));
+
+        self::assertFalse($hasher->verify(str_repeat('a', PasswordHasher::MAX_LENGTH + 1), $hash));
+    }
+
+    /**
+     * ASVS 4.0.3 §2.1.2 / §2.1.3. Bcrypt authenticates on the first 72 bytes, so
+     * every password sharing a prefix of that length is one credential. The
+     * assertions below are exactly the ones that fail against bcrypt.
+     */
+    #[Test]
+    public function consumesTheWholePasswordPastBcryptsSeventyTwoByteLimit(): void
+    {
+        $hasher = $this->createTestHasher();
+        $prefix = str_repeat('A', 72);
+        $password = $prefix . 'and-a-divergent-suffix-of-29c';
+
+        $hash = $hasher->hash($password);
+
+        self::assertTrue($hasher->verify($password, $hash));
+        self::assertFalse(
+            $hasher->verify($prefix, $hash),
+            'The first 72 bytes alone must not authenticate',
+        );
+        self::assertFalse(
+            $hasher->verify($prefix . 'a-completely-different-suffix', $hash),
+            'A shared 72-byte prefix must not make two passwords interchangeable',
+        );
+
+        // The defect this pins, still reachable through the algorithm it replaced.
+        self::assertTrue(password_verify($prefix, password_hash($password, PASSWORD_BCRYPT)));
     }
 }

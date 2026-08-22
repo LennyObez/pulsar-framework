@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Writable byte stream for export output.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WritableStreamInterface

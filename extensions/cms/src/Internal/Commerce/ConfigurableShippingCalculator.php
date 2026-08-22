@@ -15,10 +15,14 @@ use function array_filter;
 use function array_map;
 use function array_values;
 use function in_array;
+use function is_string;
 
 /**
  * Config-driven shipping calculator. Reads rates from CommerceConfig.
  * Digital-only orders receive free shipping with the Digital method.
+ *
+ * @psalm-api Bound to ShippingCalculatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ShippingCalculatorInterface for public API')]
 final readonly class ConfigurableShippingCalculator implements ShippingCalculatorInterface
@@ -38,14 +42,16 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
             );
         }
 
-        $country = (string) ($address['country'] ?? '');
+        /** @var mixed $rawCountry */
+        $rawCountry = $address['country'] ?? null;
+        $country = is_string($rawCountry) ? $rawCountry : '';
         $subtotal = $this->calculateSubtotal($items);
 
         // Find the best matching rate for the destination country
-        $rate = $this->findRate(ShippingMethod::Standard, $country);
+        $rate = $this->findRate($country);
 
         if ($rate === null) {
-            // No configured rate — zero-cost standard shipping fallback
+            // No configured rate: zero-cost standard shipping fallback
             return new ShippingResult(
                 amount: 0,
                 method: ShippingMethod::Standard,
@@ -74,7 +80,9 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
 
     public function availableMethods(array $address): array
     {
-        $country = (string) ($address['country'] ?? '');
+        /** @var mixed $rawCountry */
+        $rawCountry = $address['country'] ?? null;
+        $country = is_string($rawCountry) ? $rawCountry : '';
 
         $methods = array_filter(
             $this->config->shippingRates,
@@ -133,9 +141,12 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
         return $count;
     }
 
-    private function findRate(ShippingMethod $method, string $country): ?ShippingRateConfig
+    private function findRate(string $country): ?ShippingRateConfig
     {
-        // First: exact country match for the requested method
+        $method = ShippingMethod::Standard;
+
+        // First: exact country match for the standard method
+        /** @var ShippingRateConfig|null $exact */
         $exact = array_find(
             $this->config->shippingRates,
             static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes !== [] && in_array($country, $rate->countryCodes, true),
@@ -145,10 +156,13 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
             return $exact;
         }
 
-        // Second: wildcard (empty country list) for the requested method
-        return array_find(
+        // Second: wildcard (empty country list) for the standard method
+        /** @var ShippingRateConfig|null $wildcard */
+        $wildcard = array_find(
             $this->config->shippingRates,
             static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes === [],
         );
+
+        return $wildcard;
     }
 }

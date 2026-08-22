@@ -43,16 +43,23 @@ final class ConsoleOutput implements OutputInterface
 
     /**
      * Check if the terminal supports colors.
+     *
+     * Windows Terminal is detected by `WT_SESSION` being both set and
+     * non-empty: it publishes a GUID there, so a non-empty value is the
+     * signal. Test it that way and not with `str_starts_with(..., '')`,
+     * which is true of every string and would make the whole Windows
+     * branch report colour support unconditionally.
      */
     private function hasColorSupport(): bool
     {
-        // Windows 10+ supports ANSI codes
         if (DIRECTORY_SEPARATOR === '\\') {
+            $wtSession = getenv('WT_SESSION');
+
             return str_contains(PHP_OS, 'WIN')
                 && (getenv('ANSICON') !== false
                     || getenv('ConEmuANSI') === 'ON'
                     || getenv('TERM') === 'xterm'
-                    || str_starts_with((string) getenv('WT_SESSION'), ''));
+                    || ($wtSession !== false && $wtSession !== ''));
         }
 
         return function_exists('posix_isatty') && @posix_isatty($this->stdout);

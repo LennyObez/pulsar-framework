@@ -12,9 +12,10 @@ use function mb_strtolower;
 
 /**
  * Converts string values to lowercase. Non-strings pass through unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Lowercase implements FilterInterface
+final readonly class Lowercase implements FilterInterface
 {
     #[Override]
     public function apply(mixed $value): mixed

@@ -11,6 +11,9 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\Exception\ConfigException;
+use ReflectionClass;
+
+use function sprintf;
 
 #[CoversClass(ConfigRepository::class)]
 final class ConfigRepositoryTest extends TestCase
@@ -147,5 +150,34 @@ final class ConfigRepositoryTest extends TestCase
         // get() must return the exact same instance, not a copy
         self::assertSame($config, $repo->get(AppConfig::class));
         self::assertSame($repo->get(AppConfig::class), $repo->get(AppConfig::class));
+    }
+
+    /**
+     * ConfigRepository must never grow magic methods that
+     * participate in serialization or destruction. `__wakeup` /
+     * `__unserialize` turn deserialization into instantiation;
+     * `__destruct` lets an attacker trigger code simply by
+     * deserializing a finalized payload. The list is
+     * intentionally narrow — `__construct`, `__toString` etc.
+     * remain allowed because they cannot be reached from a
+     * crafted serialized payload alone.
+     *
+     * The test pins the absence, so a PR that adds one of these
+     * methods fails CI instead of quietly opening the gadget.
+     */
+    #[Test]
+    public function repositoryHasNoSerializationMagicMethods(): void
+    {
+        $reflection = new ReflectionClass(ConfigRepository::class);
+
+        foreach (['__wakeup', '__unserialize', '__serialize', '__destruct'] as $method) {
+            self::assertFalse(
+                $reflection->hasMethod($method),
+                sprintf(
+                    'ConfigRepository must not declare %s — it would re-open F26.2 (deserialization as instantiation).',
+                    $method,
+                ),
+            );
+        }
     }
 }

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence interface for link health check records.
+ *
+ * @psalm-api Public binding contract; implemented by DbLinkHealthRepository
+ *            and consumed by LinkHealthChecker.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LinkHealthRepositoryInterface

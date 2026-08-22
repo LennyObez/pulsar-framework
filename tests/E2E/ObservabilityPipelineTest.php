@@ -15,6 +15,7 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Log\LogLevel;
@@ -117,13 +118,13 @@ final class ObservabilityPipelineTest extends TestCase
         // Verify request counter was incremented
         self::assertTrue($registry->has('pulsar_http_requests_total'));
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'GET', 'route' => '/api/users', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(1.0, $counter->value($labels));
 
         // Verify duration histogram was recorded
         self::assertTrue($registry->has('pulsar_http_request_duration_seconds'));
         $histogram = $registry->histogram('pulsar_http_request_duration_seconds');
-        $durationLabels = new LabelSet(['method' => 'GET', 'route' => '/api/users']);
+        $durationLabels = new LabelSet(['method' => 'GET', 'route' => 'unmatched']);
         self::assertSame(1, $histogram->count($durationLabels));
         self::assertGreaterThan(0.0, $histogram->sum($durationLabels));
     }
@@ -143,7 +144,7 @@ final class ObservabilityPipelineTest extends TestCase
         }
 
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(3.0, $counter->value($labels));
     }
 
@@ -186,7 +187,12 @@ final class ObservabilityPipelineTest extends TestCase
         $spans = $collector->spans();
         $span = $spans[0];
 
-        self::assertSame('HTTP GET /api/items', $span->name);
+        // Span name is `HTTP <method> unmatched` when no RouteContext is wired
+        // (this E2E pipeline does not exercise the router). The raw path is never
+        // used as the name: cardinality would be unbounded for any request that
+        // throws pre-routing.
+        self::assertSame('HTTP GET unmatched', $span->name);
+        self::assertSame('/api/items', $span->attributes()['http.path'] ?? null);
         self::assertTrue($span->hasEnded());
         self::assertSame(SpanStatus::Ok, $span->status);
 
@@ -220,11 +226,20 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewarePropagatesIncomingTraceContext(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
+        $middleware = new TracingMiddleware(
+            $collector,
+            new W3CTraceContextParser(),
+            1.0,
+            trustedProxy: new TrustedProxy(['10.0.0.1/32']),
+        );
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
-        $request = $this->createRequest(
+        // Propagation is only honoured from the trusted upstream proxy.
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
             headers: ['traceparent' => $incomingTraceparent],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
         );
 
         $response = $middleware->process(
@@ -401,8 +416,12 @@ final class ObservabilityPipelineTest extends TestCase
         // Each collector must hold exactly its own span, not the other's
         self::assertSame(1, $collector1->count());
         self::assertSame(1, $collector2->count());
-        self::assertSame('HTTP GET /req-one', $collector1->spans()[0]->name);
-        self::assertSame('HTTP GET /req-two', $collector2->spans()[0]->name);
+        // Span name is `HTTP <method> unmatched` when no RouteContext is wired.
+        // The raw path lives in the `http.path` attribute instead.
+        self::assertSame('HTTP GET unmatched', $collector1->spans()[0]->name);
+        self::assertSame('HTTP GET unmatched', $collector2->spans()[0]->name);
+        self::assertSame('/req-one', $collector1->spans()[0]->attributes()['http.path'] ?? null);
+        self::assertSame('/req-two', $collector2->spans()[0]->attributes()['http.path'] ?? null);
     }
 
     #[Test]
@@ -470,15 +489,19 @@ final class ObservabilityPipelineTest extends TestCase
 
         self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
-        // Verify metrics were recorded
+        // With no RouteContext wired the label binds to the bounded sentinel
+        // `unmatched`, which prevents unbounded label cardinality from
+        // dynamic-id paths.
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'POST', 'route' => '/api/orders', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'POST', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(1.0, $counter->value($labels));
 
-        // Verify tracing captured the span
+        // The span name uses the route label when RouteContext is wired and falls
+        // back to `unmatched` when not — this E2E pipeline has no router.
         self::assertSame(1, $collector->count());
         $span = $collector->spans()[0];
-        self::assertSame('HTTP POST /api/orders', $span->name);
+        self::assertSame('HTTP POST unmatched', $span->name);
+        self::assertSame('/api/orders', $span->attributes()['http.path'] ?? null);
         self::assertSame(SpanStatus::Ok, $span->status);
 
         // Verify traceparent header was propagated

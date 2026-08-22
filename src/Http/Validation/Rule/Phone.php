@@ -16,9 +16,10 @@ use function sprintf;
 /**
  * Validates E.164 phone format: + followed by 1-15 digits, starting with non-zero.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Phone implements RuleInterface
+final readonly class Phone implements RuleInterface
 {
     public function __construct(
         private string $message = '',

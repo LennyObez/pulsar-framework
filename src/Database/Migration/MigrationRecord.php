@@ -8,14 +8,14 @@ use DateMalformedStringException;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * Readonly value object for an applied migration row.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class MigrationRecord
+final readonly class MigrationRecord
 {
     public function __construct(
         public string $version,
@@ -34,23 +34,11 @@ readonly class MigrationRecord
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $appliedAt = $data['applied_at'] ?? 'now';
-        $dateTime = new DateTimeImmutable(is_string($appliedAt) ? $appliedAt : 'now');
-
-        /** @var string $version */
-        $version = $data['version'] ?? '';
-
-        /** @var string $name */
-        $name = $data['name'] ?? '';
-
-        /** @var int $batch */
-        $batch = $data['batch'] ?? 0;
-
         return new self(
-            version: $version,
-            name: $name,
-            batch: $batch,
-            appliedAt: $dateTime,
+            version: Coerce::string($data['version'] ?? null),
+            name: Coerce::string($data['name'] ?? null),
+            batch: Coerce::int($data['batch'] ?? null, 0),
+            appliedAt: new DateTimeImmutable(Coerce::string($data['applied_at'] ?? null, 'now')),
         );
     }
 }

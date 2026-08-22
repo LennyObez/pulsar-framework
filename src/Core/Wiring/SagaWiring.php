@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Core\Wiring;
+
+use Pulsar\Api\Internal;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Routing\Router;
+use Pulsar\Saga\SagaStateStorageInterface;
+use Pulsar\Saga\SagaStepResultStorageInterface;
+use Pulsar\Saga\Storage\InMemorySagaStateStorage;
+use Pulsar\Workflow\Internal\Storage\DatabaseSagaStateStorage;
+use Pulsar\Workflow\Internal\Storage\DatabaseSagaStepResultStorage;
+
+/**
+ * Registers a default saga-state storage so the saga engine is runnable out of
+ * the box. SagaStateStorageInterface is a port with no implementation of its
+ * own; the engine cannot run until something binds one.
+ *
+ * A durable database-backed store is used when a database connection is
+ * available — required to resume sagas across process restarts; otherwise a
+ * process-local in-memory store (sufficient for tests / single-process use). An
+ * application or extension that binds its own SagaStateStorageInterface takes
+ * precedence.
+ */
+#[Internal]
+final readonly class SagaWiring implements ServiceWiringInterface
+{
+    public function wire(
+        ContainerInterface $container,
+        ConfigManager $configManager,
+        MiddlewarePipeline $middleware,
+        MiddlewareRegistry $middlewareRegistry,
+        Router $router,
+    ): void {
+        if ($container->has(SagaStateStorageInterface::class)) {
+            return;
+        }
+
+        if ($container->has(ConnectionManagerInterface::class)) {
+            /** @var ConnectionManagerInterface $connectionManager */
+            $connectionManager = $container->get(ConnectionManagerInterface::class);
+            $storage = new DatabaseSagaStateStorage($connectionManager->connection());
+
+            // Durable per-step results (idempotency across retries) mirror the
+            // state storage; only meaningful with a database behind them.
+            if (!$container->has(SagaStepResultStorageInterface::class)) {
+                $container->instance(
+                    SagaStepResultStorageInterface::class,
+                    new DatabaseSagaStepResultStorage($connectionManager->connection()),
+                );
+            }
+        } else {
+            $storage = new InMemorySagaStateStorage();
+        }
+
+        $container->instance(SagaStateStorageInterface::class, $storage);
+    }
+}

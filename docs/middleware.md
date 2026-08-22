@@ -19,6 +19,40 @@ Request → Middleware A → Middleware B → Middleware C → Handler
 Response ← Middleware A ← Middleware B ← Middleware C ← Response
 ```
 
+### Ordering: `pipe()` vs `prepend()`
+
+`pipe()` appends to the back of the stack, so a middleware you pipe runs
+_inside_ everything piped before it. Because the framework's own middleware
+(locale prefix, slug rewriting, security headers) is piped during boot, a
+project or extension that only ever calls `pipe()` can never place a middleware
+_ahead_ of them.
+
+`prepend()` adds to the front, so the middleware runs **outermost** — before
+every middleware added so far:
+
+```php
+$pipeline->prepend($myMiddleware); // runs before the framework's middleware
+```
+
+This matters when a middleware must observe the request before a rewriting
+middleware mutates it. `LocalePrefixMiddleware` strips the `/nl` locale prefix
+and `LocalizedSlugMiddleware` rewrites localized slugs to canonical keys, so a
+middleware piped after them sees the already-rewritten URI. Prepend to see the
+URL the visitor actually requested.
+
+### The original request URI
+
+When you need the pre-rewrite URL from _downstream_ of the locale middleware
+(canonical/hreflang links, analytics, audit) rather than from an outer
+middleware, read the `_original_uri` request attribute. Whichever locale
+rewriter runs first records the incoming `UriInterface` there, set-once, before
+mutating the URI:
+
+```php
+$original = $request->getAttribute(\Pulsar\I18n\Locale\OriginalUriStash::ATTRIBUTE);
+// e.g. "/nl/coaching" even though the live URI is now "/coaching"
+```
+
 ### Contract
 
 ```php
@@ -178,6 +212,32 @@ $kernel->addMiddleware($middleware);
 $kernel->middlewareRegistry()->alias('throttle', RateLimitMiddleware::class);
 ```
 
+### Config-driven wiring (recommended)
+
+The framework wires this for you from `config/security.php` under `rate_limiting`.
+When enabled it binds a shared-store `RateLimiterInterface`, builds the
+middleware, and registers the **`throttle`** alias — apply it per route or group
+(it is deliberately not piped globally, so throttling stays opt-in):
+
+```php
+// config/security.php
+'rate_limiting' => [
+    'enabled' => true,
+    'default_limit' => 60,      // requests per window
+    'default_window' => 60,     // window length in seconds
+    'key_strategy' => 'ip',     // 'ip' | 'route' | 'ip_route'
+],
+```
+
+```php
+// route definition
+$router->post('/contact', ContactController::class)->middleware('throttle');
+```
+
+The bound limiter is **cache-backed** (`CacheRateLimiter`, PSR-16) whenever a
+cache is configured, so counts persist across PHP-FPM workers; it falls back to
+the in-memory `RateLimiter` only when no cache is bound.
+
 ### Behavior
 
 - Requests within the limit pass through with rate-limit headers added to the response
@@ -211,4 +271,19 @@ HTTP status is always **429 Too Many Requests**.
 
 ### Key resolution
 
-By default, the rate limiter keys requests by client IP address (`REMOTE_ADDR` server variable). The in-memory limiter is suitable for single-process deployments. For distributed deployments, replace with a cache-backed implementation.
+The bucket key is chosen by `key_strategy`:
+
+| Strategy   | Bucket                                                       | Use for                                                                |
+| ---------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `ip`       | Per client (IP, plus the authenticated user id when present) | Throttling each caller independently (default)                         |
+| `route`    | Per matched route, shared by all clients                     | Capping total load on one expensive endpoint                           |
+| `ip_route` | Per client per route                                         | A caller's budget on one endpoint not spending their budget on another |
+
+Client IP is resolved through the configured `TrustedProxy` (honoring
+`X-Forwarded-For` behind a trusted proxy); when no IP is available the limiter
+falls back to a User-Agent hash, then a method+URI hash, so it never silently
+degrades to a single shared bucket.
+
+For distributed deployments the cache-backed `CacheRateLimiter` shares counts
+across processes via the PSR-16 cache; it fails **open** (allows the request) if
+the cache backend is unavailable, so a store outage never takes the site down.

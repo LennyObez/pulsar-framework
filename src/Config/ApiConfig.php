@@ -7,19 +7,24 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Api\Resource\ComplexityLimits;
+use Pulsar\Support\Coerce;
 
 use function is_array;
-use function is_int;
-use function is_string;
 
 /**
  * Typed configuration DTO for API tooling settings.
  *
  * Maps from the `api` key of `config/api.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ApiConfig
+final readonly class ApiConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/api.php. */
+    private const array KNOWN_KEYS = [
+        'default_format', 'pagination', 'versioning_strategy', 'complexity_limits', 'entity_serialization_ban',
+    ];
+
     public function __construct(
         public string $defaultFormat,
         public string $paginationType,
@@ -28,50 +33,54 @@ readonly class ApiConfig
         public string $versioningStrategy,
         public ComplexityLimits $complexityLimits,
         public bool $entitySerializationBanEnabled,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw API config array.
      *
-     * @param array<string, mixed> $data Raw array from config/api.php
+     * @param array{
+     *     default_format?: string,
+     *     pagination?: array{
+     *         type?: string,
+     *         default_size?: int,
+     *         max_size?: int,
+     *     },
+     *     versioning_strategy?: string,
+     *     complexity_limits?: array<string, mixed>,
+     *     entity_serialization_ban?: bool|int|string,
+     * } $data Raw array from config/api.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawFormat = $data['default_format'] ?? 'json';
-        $defaultFormat = is_string($rawFormat) ? $rawFormat : 'json';
-
-        $rawPagination = $data['pagination'] ?? [];
-        /** @var array<string, mixed> $pagination */
-        $pagination = is_array($rawPagination) ? $rawPagination : [];
-
-        $rawPaginationType = $pagination['type'] ?? 'offset';
-        $paginationType = is_string($rawPaginationType) ? $rawPaginationType : 'offset';
-
-        $rawPaginationDefault = $pagination['default_size'] ?? 25;
-        $paginationDefaultSize = is_int($rawPaginationDefault) ? $rawPaginationDefault : 25;
-
-        $rawPaginationMax = $pagination['max_size'] ?? 100;
-        $paginationMaxSize = is_int($rawPaginationMax) ? $rawPaginationMax : 100;
-
-        $rawVersioningStrategy = $data['versioning_strategy'] ?? 'url';
-        $versioningStrategy = is_string($rawVersioningStrategy) ? $rawVersioningStrategy : 'url';
-
-        $rawComplexity = $data['complexity_limits'] ?? [];
-        /** @var array<string, mixed> $complexityArray */
-        $complexityArray = is_array($rawComplexity) ? $rawComplexity : [];
-        $complexityLimits = ComplexityLimits::fromArray($complexityArray);
-
-        $entityBan = (bool) ($data['entity_serialization_ban'] ?? true);
+        $pagination = $data['pagination'] ?? null;
+        if (!is_array($pagination)) {
+            $pagination = [];
+        }
+        $complexityLimitsData = $data['complexity_limits'] ?? null;
+        if (!is_array($complexityLimitsData)) {
+            $complexityLimitsData = [];
+        }
 
         return new self(
-            defaultFormat: $defaultFormat,
-            paginationType: $paginationType,
-            paginationDefaultSize: $paginationDefaultSize,
-            paginationMaxSize: $paginationMaxSize,
-            versioningStrategy: $versioningStrategy,
-            complexityLimits: $complexityLimits,
-            entitySerializationBanEnabled: $entityBan,
+            defaultFormat: Coerce::string($data['default_format'] ?? null, 'json'),
+            paginationType: Coerce::string($pagination['type'] ?? null, 'offset'),
+            paginationDefaultSize: Coerce::integerLike($pagination['default_size'] ?? null, 25),
+            paginationMaxSize: Coerce::integerLike($pagination['max_size'] ?? null, 100),
+            versioningStrategy: Coerce::string($data['versioning_strategy'] ?? null, 'url'),
+            complexityLimits: ComplexityLimits::fromArray($complexityLimitsData),
+            entitySerializationBanEnabled: (bool) ($data['entity_serialization_ban'] ?? true),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

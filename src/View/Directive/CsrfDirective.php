@@ -19,6 +19,6 @@ final readonly class CsrfDirective implements DirectiveInterface
 
     public function compile(string $expression): string
     {
-        return '<?php echo \'<input type="hidden" name="_token" value="\' . htmlspecialchars($__csrf ?? \'\', ENT_QUOTES | ENT_SUBSTITUTE, \'UTF-8\') . \'">\'; ?>';
+        return '<?php echo \'<input type="hidden" name="_token" value="\' . htmlspecialchars($__csrf ?? \'\') . \'">\'; ?>';
     }
 }

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each transformer handles migration of a job payload between specific
  * schema versions. Implementations must be pure (no side effects, no IO).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface VersionTransformerInterface

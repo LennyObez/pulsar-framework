@@ -24,6 +24,7 @@ use function array_keys;
  * Computed from class/property attributes and cached. Provides the
  * field policies, resource type, and complexity constraints needed
  * by the serialization pipeline.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResourceMetadata

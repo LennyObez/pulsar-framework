@@ -7,6 +7,9 @@ namespace Pulsar\Extension\McpServer\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Top-level MCP server configuration DTO.
@@ -28,40 +31,35 @@ final readonly class McpConfig
     /**
      * Build from the raw MCP config array with environment overrides.
      *
-     * @param array<string, mixed> $data Raw array from config/mcp.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     client_id?: string,
+     *     project_root?: string,
+     *     tools?: array<string, mixed>,
+     *     security?: array<string, mixed>,
+     * } $data Raw array from config/mcp.php
      * @param Environment $environment Environment for variable overrides
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $enabled = (bool) ($data['enabled'] ?? false);
-
         $envEnabled = $environment->get('MCP_ENABLED');
-        if ($envEnabled !== null) {
-            $enabled = $envEnabled === '1' || $envEnabled === 'true';
-        }
+        $enabled = $envEnabled !== null
+            ? ($envEnabled === '1' || $envEnabled === 'true')
+            : (bool) ($data['enabled'] ?? false);
 
-        $clientId = (string) ($data['client_id'] ?? 'default');
+        $clientIdEnv = $environment->get('MCP_CLIENT_ID');
+        $clientId = $clientIdEnv ?? Coerce::string($data['client_id'] ?? null, 'default');
 
-        $envClientId = $environment->get('MCP_CLIENT_ID');
-        if ($envClientId !== null) {
-            $clientId = $envClientId;
-        }
-
-        $projectRoot = (string) ($data['project_root'] ?? '');
-
-        /** @var array<string, mixed> $toolsData */
-        $toolsData = (array) ($data['tools'] ?? []);
-
-        /** @var array<string, mixed> $securityData */
-        $securityData = (array) ($data['security'] ?? []);
+        $tools = $data['tools'] ?? null;
+        $security = $data['security'] ?? null;
 
         return new self(
             enabled: $enabled,
             clientId: $clientId,
-            projectRoot: $projectRoot,
-            tools: McpToolsConfig::fromArray($toolsData),
-            security: McpSecurityConfig::fromArray($securityData),
+            projectRoot: Coerce::string($data['project_root'] ?? null),
+            tools: McpToolsConfig::fromArray(is_array($tools) ? $tools : []),
+            security: McpSecurityConfig::fromArray(is_array($security) ? $security : []),
         );
     }
 }

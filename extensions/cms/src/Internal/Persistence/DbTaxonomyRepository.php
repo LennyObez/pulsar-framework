@@ -7,12 +7,17 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Taxonomy\Taxonomy;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyTerm;
 
-#[Internal(reason: 'Raw-DB repository — use TaxonomyRepositoryInterface for public API')]
+/**
+ * @psalm-api Bound to TaxonomyRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use TaxonomyRepositoryInterface for public API')]
 final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -31,48 +36,62 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
         WHERE t.taxonomy_id = :taxonomy_id
         SQL;
 
-    private const string SQL_INSERT_TAXONOMY = <<<'SQL'
-        INSERT INTO cms_taxonomies (id, tenant_id, slug, hierarchical, created_at)
-        VALUES (:id, :tenant_id, :slug, :hierarchical, :created_at)
-        ON CONFLICT (id) DO UPDATE SET
-            slug = EXCLUDED.slug,
-            hierarchical = EXCLUDED.hierarchical
-        SQL;
+    private const array UPSERT_TAXONOMY_COLUMNS = ['id', 'tenant_id', 'slug', 'hierarchical', 'created_at'];
+    private const array UPSERT_TAXONOMY_UPDATE = ['slug', 'hierarchical'];
 
-    private const string SQL_UPSERT_TAXONOMY_TRANSLATION = <<<'SQL'
-        INSERT INTO cms_taxonomy_translations (taxonomy_id, locale, name, description)
-        VALUES (:taxonomy_id, :locale, :name, :description)
-        ON CONFLICT (taxonomy_id, locale) DO UPDATE SET
-            name = EXCLUDED.name,
-            description = EXCLUDED.description
-        SQL;
+    private const array UPSERT_TAXONOMY_TRANS_COLUMNS = ['taxonomy_id', 'locale', 'name', 'description'];
+    private const array UPSERT_TAXONOMY_TRANS_UPDATE = ['name', 'description'];
 
-    private const string SQL_INSERT_TERM = <<<'SQL'
-        INSERT INTO cms_taxonomy_terms (id, taxonomy_id, tenant_id, parent_id, sort_order, created_at)
-        VALUES (:id, :taxonomy_id, :tenant_id, :parent_id, :sort_order, :created_at)
-        ON CONFLICT (id) DO UPDATE SET
-            parent_id = EXCLUDED.parent_id,
-            sort_order = EXCLUDED.sort_order
-        SQL;
+    private const array UPSERT_TERM_COLUMNS = ['id', 'taxonomy_id', 'tenant_id', 'parent_id', 'sort_order', 'created_at'];
+    private const array UPSERT_TERM_UPDATE = ['parent_id', 'sort_order'];
 
-    private const string SQL_UPSERT_TERM_TRANSLATION = <<<'SQL'
-        INSERT INTO cms_taxonomy_term_translations
-            (term_id, locale, name, slug, description, tenant_key, taxonomy_id)
-        VALUES (:term_id, :locale, :name, :slug, :description, :tenant_key, :taxonomy_id)
-        ON CONFLICT (term_id, locale) DO UPDATE SET
-            name = EXCLUDED.name,
-            slug = EXCLUDED.slug,
-            description = EXCLUDED.description
-        SQL;
+    private const array UPSERT_TERM_TRANS_COLUMNS = ['term_id', 'locale', 'name', 'slug', 'description', 'tenant_key', 'taxonomy_id'];
+    private const array UPSERT_TERM_TRANS_UPDATE = ['name', 'slug', 'description'];
 
     public function __construct(
         private ConnectionInterface $connection,
         private ?string $tenantId,
     ) {}
 
+    public function findByImportId(string $importId): ?Taxonomy
+    {
+        $result = $this->connection->query(
+            'SELECT * FROM cms_taxonomies WHERE import_id = :import_id LIMIT 1',
+            ['import_id' => $importId],
+        );
+        $row = $result->first();
+
+        return $row !== null ? new Taxonomy(
+            id: $row->getString('id'),
+            tenantId: $row->getNullableString('tenant_id'),
+            slug: $row->getString('slug'),
+            hierarchical: $row->getBool('hierarchical'),
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+        ) : null;
+    }
+
+    public function findTermByImportId(string $importId): ?TaxonomyTerm
+    {
+        $result = $this->connection->query(
+            'SELECT * FROM cms_taxonomy_terms WHERE import_id = :import_id LIMIT 1',
+            ['import_id' => $importId],
+        );
+        $row = $result->first();
+
+        return $row !== null ? new TaxonomyTerm(
+            id: $row->getString('id'),
+            taxonomyId: $row->getString('taxonomy_id'),
+            tenantId: $row->getNullableString('tenant_id'),
+            parentId: $row->getNullableString('parent_id'),
+            sortOrder: $row->getInt('sort_order'),
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+        ) : null;
+    }
+
     public function findBySlug(string $slug, ?string $tenantId = null): ?Taxonomy
     {
-        $tenantKey = ($tenantId ?? $this->tenantId) ?? self::SENTINEL_TENANT;
+        $resolved = $tenantId ?? $this->tenantId;
+        $tenantKey = $resolved ?? self::SENTINEL_TENANT;
 
         $result = $this->connection->query(self::SQL_FIND_BY_SLUG, [
             'slug' => $slug,
@@ -109,7 +128,15 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
     public function save(Taxonomy $taxonomy, array $translations): void
     {
         $this->connection->transaction(function (ConnectionInterface $conn) use ($taxonomy, $translations): void {
-            $conn->execute(self::SQL_INSERT_TAXONOMY, [
+            $taxonomySql = UpsertBuilder::compile(
+                $conn->driver(),
+                'cms_taxonomies',
+                self::UPSERT_TAXONOMY_COLUMNS,
+                ['id'],
+                self::UPSERT_TAXONOMY_UPDATE,
+            );
+
+            $conn->execute($taxonomySql, [
                 'id' => $taxonomy->id,
                 'tenant_id' => $taxonomy->tenantId,
                 'slug' => $taxonomy->slug,
@@ -117,8 +144,16 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
                 'created_at' => $taxonomy->createdAt->format('c'),
             ]);
 
+            $transSql = UpsertBuilder::compile(
+                $conn->driver(),
+                'cms_taxonomy_translations',
+                self::UPSERT_TAXONOMY_TRANS_COLUMNS,
+                ['taxonomy_id', 'locale'],
+                self::UPSERT_TAXONOMY_TRANS_UPDATE,
+            );
+
             foreach ($translations as $translation) {
-                $conn->execute(self::SQL_UPSERT_TAXONOMY_TRANSLATION, [
+                $conn->execute($transSql, [
                     'taxonomy_id' => $translation->taxonomyId,
                     'locale' => $translation->locale,
                     'name' => $translation->name,
@@ -131,7 +166,15 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
     public function saveTerm(TaxonomyTerm $term, array $translations): void
     {
         $this->connection->transaction(function (ConnectionInterface $conn) use ($term, $translations): void {
-            $conn->execute(self::SQL_INSERT_TERM, [
+            $termSql = UpsertBuilder::compile(
+                $conn->driver(),
+                'cms_taxonomy_terms',
+                self::UPSERT_TERM_COLUMNS,
+                ['id'],
+                self::UPSERT_TERM_UPDATE,
+            );
+
+            $conn->execute($termSql, [
                 'id' => $term->id,
                 'taxonomy_id' => $term->taxonomyId,
                 'tenant_id' => $term->tenantId,
@@ -142,8 +185,16 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
 
             $tenantKey = $term->tenantId ?? self::SENTINEL_TENANT;
 
+            $termTransSql = UpsertBuilder::compile(
+                $conn->driver(),
+                'cms_taxonomy_term_translations',
+                self::UPSERT_TERM_TRANS_COLUMNS,
+                ['term_id', 'locale'],
+                self::UPSERT_TERM_TRANS_UPDATE,
+            );
+
             foreach ($translations as $translation) {
-                $conn->execute(self::SQL_UPSERT_TERM_TRANSLATION, [
+                $conn->execute($termTransSql, [
                     'term_id' => $translation->termId,
                     'locale' => $translation->locale,
                     'name' => $translation->name,
@@ -164,6 +215,14 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
             slug: $row->getString('slug'),
             hierarchical: $row->getBool('hierarchical'),
             createdAt: new DateTimeImmutable($row->getString('created_at')),
+        );
+    }
+
+    public function updateTermParent(string $termId, string $parentId): void
+    {
+        $this->connection->execute(
+            'UPDATE cms_taxonomy_terms SET parent_id = :parent_id WHERE id = :id',
+            ['parent_id' => $parentId, 'id' => $termId],
         );
     }
 

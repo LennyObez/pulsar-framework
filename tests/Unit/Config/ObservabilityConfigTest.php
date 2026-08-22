@@ -47,7 +47,11 @@ final class ObservabilityConfigTest extends TestCase
 
         self::assertSame('file', $config->defaultLoggingChannel);
         self::assertSame('info', $config->loggingLevel);
-        self::assertSame([], $config->loggingChannels);
+        // With no explicit channels a single default 'file' channel is
+        // synthesised so the logger always has a sink (entries are never
+        // silently dropped). The null path lets the file sink use its default.
+        self::assertCount(1, $config->loggingChannels);
+        self::assertSame('file', $config->loggingChannels[0]->driver);
         self::assertTrue($config->metrics->enabled);
         self::assertFalse($config->metrics->exporterEnabled);
         self::assertSame('/metrics', $config->metrics->exporterEndpoint);
@@ -60,6 +64,37 @@ final class ObservabilityConfigTest extends TestCase
         self::assertTrue($config->audit->enabled);
         self::assertSame('var/logs/audit.jsonl', $config->audit->logPath);
         self::assertSame([], $config->audit->events);
+    }
+
+    #[Test]
+    public function flatDriverAndPathShapeSynthesisesADefaultChannel(): void
+    {
+        // The flat shape (driver/path with no `channels` map) must synthesise a
+        // working sink; with no channel, every log entry is dropped silently.
+        $config = ObservabilityConfig::fromArray([
+            'logging' => ['default_channel' => 'app', 'driver' => 'file', 'path' => '/var/log/app.log'],
+        ], $this->env);
+
+        self::assertCount(1, $config->loggingChannels);
+        self::assertSame('app', $config->loggingChannels[0]->name);
+        self::assertSame('file', $config->loggingChannels[0]->driver);
+        self::assertSame('/var/log/app.log', $config->loggingChannels[0]->path);
+    }
+
+    #[Test]
+    public function explicitChannelsMapTakesPrecedenceOverFlatShape(): void
+    {
+        $config = ObservabilityConfig::fromArray([
+            'logging' => [
+                'driver' => 'file',
+                'path' => '/ignored.log',
+                'channels' => ['mem' => ['driver' => 'stream', 'stream' => 'php://memory']],
+            ],
+        ], $this->env);
+
+        self::assertCount(1, $config->loggingChannels);
+        self::assertSame('mem', $config->loggingChannels[0]->name);
+        self::assertSame('stream', $config->loggingChannels[0]->driver);
     }
 
     #[Test]

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a new comment is posted on content.
+ *
+ * @psalm-api Public event class dispatched by CommentService and consumed by
+ *            CmsNotificationDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentReceived

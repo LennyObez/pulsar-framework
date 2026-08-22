@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_installed_plugins (
@@ -57,19 +59,16 @@ return new class implements MigrationInterface {
                 SQL);
         }
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_plugin_enabled
-                    ON cms_installed_plugins (boot_order, is_enabled, deleted_at)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_plugin_enabled
-                    ON cms_installed_plugins (boot_order ASC)
-                    WHERE is_enabled = true AND deleted_at IS NULL
-                SQL);
-        }
+        // An engine without partial indexes cannot filter on `is_enabled` and `deleted_at`,
+        // so it has to carry them in the key instead.
+        $indexes->ensure(
+            'cms_installed_plugins',
+            'idx_plugin_enabled',
+            $connection->dialect()->supportsPartialIndexes()
+                ? ['boot_order']
+                : ['boot_order', 'is_enabled', 'deleted_at'],
+            where: 'is_enabled = true AND deleted_at IS NULL',
+        );
     }
 
     public function down(ConnectionInterface $connection): void

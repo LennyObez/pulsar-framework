@@ -44,8 +44,11 @@ use function is_file;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * MCP server extension — exposes project metadata and developer tools
+ * MCP server extension: exposes project metadata and developer tools
  * to AI assistants via the Model Context Protocol (JSON-RPC 2.0 over stdio).
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class McpServerExtension implements ExtensionInterface, PreBootExtensionInterface
 {
@@ -69,7 +72,9 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
         // Load MCP config
         $configData = [];
         if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'mcp.php')) {
-            /** @psalm-suppress UnresolvableInclude */
+            /**
+             * @var mixed $loaded
+             */
             $loaded = require $configPath . DIRECTORY_SEPARATOR . 'mcp.php';
             if (is_array($loaded)) {
                 /** @var array<string, mixed> $loaded */
@@ -185,7 +190,7 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
 
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        // MCP uses stdio transport — no HTTP routes
+        // MCP uses stdio transport: no HTTP routes
     }
 
     public function providers(): array

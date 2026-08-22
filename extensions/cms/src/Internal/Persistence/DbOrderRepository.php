@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Order;
 use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
@@ -17,6 +18,7 @@ use Pulsar\Extension\Cms\Commerce\ShippingMethod;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
+use function is_string;
 use function json_decode;
 use function json_encode;
 
@@ -24,6 +26,10 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed order repository with state machine validation on status updates.
+ */
+/**
+ * @psalm-api Bound to OrderRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use OrderRepositoryInterface for public API')]
 final readonly class DbOrderRepository implements OrderRepositoryInterface
@@ -36,36 +42,19 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
         SELECT * FROM cms_orders WHERE order_number = :order_number
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_orders (
-            id, tenant_id, order_number, customer_id, customer_email, status,
-            subtotal, tax_amount, discount_amount, shipping_amount, shipping_method,
-            total, amount_refunded, currency,
-            payment_intent_id, payment_status, billing_address, shipping_address,
-            notes, data_classification, created_at, updated_at
-        ) VALUES (
-            :id, :tenant_id, :order_number, :customer_id, :customer_email, :status,
-            :subtotal, :tax_amount, :discount_amount, :shipping_amount, :shipping_method,
-            :total, :amount_refunded, :currency,
-            :payment_intent_id, :payment_status, :billing_address, :shipping_address,
-            :notes, :data_classification, :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            status = EXCLUDED.status,
-            subtotal = EXCLUDED.subtotal,
-            tax_amount = EXCLUDED.tax_amount,
-            discount_amount = EXCLUDED.discount_amount,
-            shipping_amount = EXCLUDED.shipping_amount,
-            shipping_method = EXCLUDED.shipping_method,
-            total = EXCLUDED.total,
-            amount_refunded = EXCLUDED.amount_refunded,
-            payment_intent_id = EXCLUDED.payment_intent_id,
-            payment_status = EXCLUDED.payment_status,
-            billing_address = EXCLUDED.billing_address,
-            shipping_address = EXCLUDED.shipping_address,
-            notes = EXCLUDED.notes,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'order_number', 'customer_id', 'customer_email', 'status',
+        'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'shipping_method',
+        'total', 'amount_refunded', 'currency',
+        'payment_intent_id', 'payment_status', 'billing_address', 'shipping_address',
+        'notes', 'data_classification', 'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'status', 'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount',
+        'shipping_method', 'total', 'amount_refunded', 'payment_intent_id',
+        'payment_status', 'billing_address', 'shipping_address', 'notes', 'updated_at',
+    ];
 
     private const string SQL_FIND_BY_CUSTOMER = <<<'SQL'
         SELECT * FROM cms_orders
@@ -85,7 +74,15 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
 
     public function findById(string $id): ?Order
     {
-        $row = $this->db->query(self::SQL_FIND_BY_ID, ['id' => $id])->first();
+        $sql = self::SQL_FIND_BY_ID;
+        $bindings = ['id' => $id];
+
+        if ($this->tenantId !== null) {
+            $sql .= ' AND tenant_id = :tenant_id';
+            $bindings['tenant_id'] = $this->tenantId;
+        }
+
+        $row = $this->db->query($sql, $bindings)->first();
 
         return $row !== null ? self::hydrate($row) : null;
     }
@@ -109,34 +106,45 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
     public function listOrders(array $filters, int $page, int $perPage): array
     {
         $sql = 'SELECT * FROM cms_orders WHERE 1=1';
+        /** @var array<string, mixed> $bindings */
         $bindings = [];
 
-        if (isset($filters['status'])) {
+        /** @var mixed $rawStatus */
+        $rawStatus = $filters['status'] ?? null;
+        if (is_string($rawStatus)) {
             $sql .= ' AND status = :status';
-            $bindings['status'] = $filters['status'];
+            $bindings['status'] = $rawStatus;
         }
 
-        if (isset($filters['customerId'])) {
+        /** @var mixed $rawCustomerId */
+        $rawCustomerId = $filters['customerId'] ?? null;
+        if (is_string($rawCustomerId)) {
             $sql .= ' AND customer_id = :customer_id';
-            $bindings['customer_id'] = $filters['customerId'];
+            $bindings['customer_id'] = $rawCustomerId;
         }
 
-        if (isset($filters['tenantId'])) {
+        /** @var mixed $rawTenantId */
+        $rawTenantId = $filters['tenantId'] ?? null;
+        if (is_string($rawTenantId)) {
             $sql .= ' AND tenant_id = :tenant_id';
-            $bindings['tenant_id'] = $filters['tenantId'];
+            $bindings['tenant_id'] = $rawTenantId;
         } elseif ($this->tenantId !== null) {
             $sql .= ' AND tenant_id = :tenant_id';
             $bindings['tenant_id'] = $this->tenantId;
         }
 
-        if (isset($filters['dateFrom'])) {
+        /** @var mixed $rawDateFrom */
+        $rawDateFrom = $filters['dateFrom'] ?? null;
+        if (is_string($rawDateFrom)) {
             $sql .= ' AND created_at >= :date_from';
-            $bindings['date_from'] = $filters['dateFrom'];
+            $bindings['date_from'] = $rawDateFrom;
         }
 
-        if (isset($filters['dateTo'])) {
+        /** @var mixed $rawDateTo */
+        $rawDateTo = $filters['dateTo'] ?? null;
+        if (is_string($rawDateTo)) {
             $sql .= ' AND created_at <= :date_to';
-            $bindings['date_to'] = $filters['dateTo'];
+            $bindings['date_to'] = $rawDateTo;
         }
 
         $sql .= ' ORDER BY created_at DESC LIMIT :limit OFFSET :offset';
@@ -148,7 +156,15 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
 
     public function save(Order $order): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_orders',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $order->id,
             'tenant_id' => $order->tenantId,
             'order_number' => $order->orderNumber,
@@ -184,11 +200,19 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
 
         OrderStatusStateMachine::transition($order->status, $status);
 
-        $this->db->execute(self::SQL_UPDATE_STATUS, [
+        $sql = self::SQL_UPDATE_STATUS;
+        $bindings = [
             'id' => $id,
             'new_status' => $status->value,
             'now' => new DateTimeImmutable()->format('c'),
-        ]);
+        ];
+
+        if ($this->tenantId !== null) {
+            $sql .= ' AND tenant_id = :tenant_id';
+            $bindings['tenant_id'] = $this->tenantId;
+        }
+
+        $this->db->execute($sql, $bindings);
     }
 
     public function findByCustomer(string $customerId, int $page = 1, int $perPage = 20): array
@@ -203,11 +227,11 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
     private static function hydrate(Row $row): Order
     {
         /** @var array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string} $billingAddress */
-        $billingAddress = json_decode($row->getString('billing_address'), true, 512, JSON_THROW_ON_ERROR);
+        $billingAddress = json_decode($row->getString('billing_address'), true, flags: JSON_THROW_ON_ERROR);
 
         $shippingRaw = $row->getNullableString('shipping_address');
         /** @var array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string}|null $shippingAddress */
-        $shippingAddress = $shippingRaw !== null ? json_decode($shippingRaw, true, 512, JSON_THROW_ON_ERROR) : null;
+        $shippingAddress = $shippingRaw !== null ? json_decode($shippingRaw, true, flags: JSON_THROW_ON_ERROR) : null;
 
         return new Order(
             id: $row->getString('id'),
@@ -220,8 +244,8 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
             taxAmount: $row->getInt('tax_amount'),
             discountAmount: $row->getInt('discount_amount'),
             shippingAmount: $row->getInt('shipping_amount'),
-            shippingMethod: $row->getNullableString('shipping_method') !== null
-                ? ShippingMethod::from($row->getNullableString('shipping_method'))
+            shippingMethod: ($shippingMethodStr = $row->getNullableString('shipping_method')) !== null
+                ? ShippingMethod::from($shippingMethodStr)
                 : null,
             total: $row->getInt('total'),
             amountRefunded: $row->getInt('amount_refunded'),

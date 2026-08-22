@@ -1,0 +1,58 @@
+name: Benchmark Regression
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'extensions/**'
+      - 'benchmarks/**'
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+# Runs on pull_request, so it sees a fork's code.
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: Run benchmarks
+        run: php benchmarks/Comparative/RunBenchmarks.php --baseline=tools/php/benchmark-baseline.json --threshold=5
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: benchmark-results
+          path: tools/php/benchmark-baseline.json
+          if-no-files-found: ignore

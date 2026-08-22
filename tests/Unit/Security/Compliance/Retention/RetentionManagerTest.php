@@ -10,6 +10,7 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
@@ -24,22 +25,27 @@ use function count;
  */
 final class StubAuditLogger implements AuditLoggerInterface
 {
-    /** @var list<array{event: AuditEvent, outcome: AuditOutcome, actor: ?string, action: string, resource: string, metadata: array<string, mixed>}> */
+    /** @var list<array{event: AuditEvent, outcome: AuditOutcome, actor: string, action: string, resource: string, metadata: array<string, mixed>}> */
     public array $calls = [];
 
     #[Override]
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
+        $resolved = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === null || $actor === '' => 'system',
+            default => $actor,
+        };
         $this->calls[] = [
             'event' => $event,
             'outcome' => $outcome,
-            'actor' => $actor,
+            'actor' => $resolved,
             'action' => $action,
             'resource' => $resource,
             'metadata' => $metadata,
@@ -49,7 +55,7 @@ final class StubAuditLogger implements AuditLoggerInterface
             id: 'stub-' . count($this->calls),
             event: $event,
             outcome: $outcome,
-            actor: $actor ?? 'system',
+            actor: $resolved,
             action: $action,
             resource: $resource,
             timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),

@@ -39,7 +39,19 @@ final readonly class AdminCspMiddleware implements MiddlewareInterface
         $response = $handler->handle($request);
 
         $scriptSrc = $nonce !== '' ? "'nonce-$nonce'" : "'self'";
-        $csp = "default-src 'self'; script-src $scriptSrc; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+
+        // When a nonce is wired through to the rendered template,
+        // use it for inline styles too. Without the nonce,
+        // `'unsafe-inline'` is the only way an admin template's
+        // `<style>` blocks render — strict CSP requires either a
+        // nonce or hashes for every inline style, and there is no
+        // inline-CSS hash-extraction pipeline. The nonce branch
+        // closes the attribute-injection vector by anchoring the
+        // trust decision on the nonce instead of the document
+        // origin.
+        $styleSrc = $nonce !== '' ? "'self' 'nonce-$nonce'" : "'self' 'unsafe-inline'";
+
+        $csp = "default-src 'self'; script-src $scriptSrc; style-src $styleSrc; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
         return $response->withHeader('Content-Security-Policy', $csp);
     }

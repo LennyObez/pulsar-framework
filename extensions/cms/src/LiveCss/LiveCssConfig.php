@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\LiveCss;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the Live CSS editor subsystem.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php and
+ *            consumed by LiveCssService and the admin editor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LiveCssConfig
@@ -24,14 +29,18 @@ final readonly class LiveCssConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     max_css_length?: int,
+     *     allow_external_fonts?: bool,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: (bool) ($data['enabled'] ?? true),
-            maxCssLength: (int) ($data['max_css_length'] ?? 100_000),
-            allowExternalFonts: (bool) ($data['allow_external_fonts'] ?? false),
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            maxCssLength: Coerce::int($data['max_css_length'] ?? null, 100_000),
+            allowExternalFonts: Coerce::strictBool($data['allow_external_fonts'] ?? null),
         );
     }
 }

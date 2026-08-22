@@ -11,11 +11,13 @@ use function dirname;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
-use function filemtime;
-use function filesize;
 use function is_dir;
 use function is_file;
 use function mkdir;
+use function realpath;
+use function restore_error_handler;
+use function set_error_handler;
+use function stat;
 use function str_contains;
 use function str_starts_with;
 use function strlen;
@@ -29,6 +31,9 @@ use const LOCK_EX;
  * Local filesystem storage adapter.
  *
  * Maps storage keys to files under a base path with path traversal prevention.
+ * Path traversal via `..` is blocked, but symlinks within the base path are
+ * followed. Deployers who allow untrusted file uploads should ensure the base
+ * path contains no symlinks that escape the intended storage boundary.
  */
 final readonly class LocalStorageAdapter implements StorageAdapterInterface
 {
@@ -90,8 +95,26 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             return;
         }
 
-        if (!unlink($path)) {
-            throw StorageException::deleteFailed($key, 'unlink failed');
+        // resolvePath() already validated the path (basePath prefix +
+        // realpath symlink-escape rejection), so the only remaining
+        // failure is genuine I/O (permission denied, disk error). Capture the
+        // native warning without the `@` operator and translate a failed
+        // unlink into a StorageException.
+        $error = null;
+        set_error_handler(static function (int $errno, string $message) use (&$error): bool {
+            $error = $message;
+
+            return true;
+        });
+
+        try {
+            $removed = unlink($path);
+        } finally {
+            restore_error_handler();
+        }
+
+        if (!$removed) {
+            throw StorageException::deleteFailed($key, $error ?? 'unlink failed');
         }
     }
 
@@ -120,7 +143,30 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
     {
         $this->validateKey($key);
 
-        return $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $key);
+        $candidate = $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $key);
+
+        // validateKey blocks `..` segments at the string level,
+        // but a symlink inside basePath that points outside basePath
+        // would still let read/write/delete escape the storage
+        // boundary. Resolve realpath against the basePath realpath
+        // and reject when the resolved path leaves the boundary.
+        // We only check this when the path already exists — paths-
+        // to-create still need the prefix check on the parent.
+        $realBase = realpath($this->basePath);
+        if ($realBase === false) {
+            return $candidate;
+        }
+
+        $realCandidate = realpath($candidate);
+        if (
+            $realCandidate !== false
+            && $realCandidate !== $realBase
+            && !str_starts_with($realCandidate, $realBase . DIRECTORY_SEPARATOR)
+        ) {
+            throw StorageException::invalidKey($key, 'symlink escapes storage base path');
+        }
+
+        return $candidate;
     }
 
     private function validateKey(string $key): void
@@ -168,10 +214,16 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             $relativeKey = substr($fullPath, strlen($basePath) + 1);
             $relativeKey = str_replace('\\', '/', $relativeKey);
 
+            $fileStat = file_exists($fullPath) ? stat($fullPath) : false;
+
+            if ($fileStat === false) {
+                continue;
+            }
+
             $objects[] = new StorageObject(
                 key: $relativeKey,
-                size: (int) filesize($fullPath),
-                lastModified: (int) filemtime($fullPath),
+                size: $fileStat['size'],
+                lastModified: $fileStat['mtime'],
             );
         }
     }

@@ -7,6 +7,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Native localized route slugs: translate URL path segments per locale (`/fr/developpement`, `/nl/ontwikkeling`) for a single route registered under a canonical key. Includes `SlugRegistry`, `LocalizedSlugMiddleware` (constant-time rewrite + configurable canonical 301 for non-canonical aliases, route parameters preserved), `LocalizedUrlGenerator` with the `route()` helper and `@route` directive, slug-aware hreflang/`x-default` output, and the `i18n:slugs:lint` console command (completeness + collision checks, wired into CI). Compiled once at boot with zero runtime cost when unconfigured.
+- Managed Challenge: a self-hosted, privacy-preserving CAPTCHA provider (`captcha_provider: 'managed'`) — an invisible proof-of-work alternative to Cloudflare Turnstile / hCaptcha with no external service, no cookies, and no fingerprinting. Signed, single-use, expiring challenges (`sodium_crypto_auth`, master sub-key) solved in a Web Worker and verified server-side (signature → freshness → proof-of-work → replay cache). Ships `ManagedChallengeService`/`Verifier`/`Renderer`, the `@shield` directive, same-origin widget + worker assets (CSP `script-src 'self'` clean), and `managed_challenge_bits`/`ttl`/`field_name` config.
+- i18n `negotiate_unprefixed_locale` config flag (default `true`, backward-compatible). When `false`, the active locale for an unprefixed URL is always the default locale instead of the Accept-Language–negotiated one, so default-locale URLs stay canonical and are never redirected to a negotiated localized-slug translation. The negotiated preference is exposed via the `_negotiated_locale` request attribute for application-level courtesy redirects at `/`.
+- Turnkey locale preference: opt-in cookie-aware negotiation, courtesy redirect, and cookie persistence for the path-prefix locale strategy (all default OFF, backward-compatible). `locale_cookie_enabled` wires `CookieAwareLocaleNegotiator` (cookie + session outrank Accept-Language) and stamps a functional `pulsar_locale` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS) on prefixed pages; `courtesy_redirect` 302s an unprefixed GET/HEAD to the visitor's locale prefix (the default locale stays canonical — no loop with the canonical 301); `courtesy_fallback_locale` sends visitors with no detectable language to e.g. `en` while keeping the default locale's `x-default` canonical. New config keys: `courtesy_redirect`, `courtesy_fallback_locale`, `locale_cookie_enabled`, `locale_cookie_name`. Centralizes logic each site previously re-implemented.
+- `@shield` managed-challenge strings are localizable: the `<noscript>` fallback and the screen-reader status are resolved from the i18n `shield` translation domain (`noscript`/`verifying`/`complete`/`error`), falling back to built-in English. The widget announces the localized status through a visually-hidden `role="status"` live region.
+
+### Changed
+
+- Anti-spam proof of work is now exclusively the signed, single-use, TTL-bound Managed Challenge. The legacy client-controlled proof-of-work check accepted any client-minted `(challenge, nonce)` pair with no signature, expiry, or replay tracking — a solved pair was replayable indefinitely — and has been retired in favour of the audited managed-challenge engine. **Breaking:** the `#[Api]` `ProofOfWorkVerifierInterface` is removed, `AntiSpamConfig` no longer exposes `proof_of_work_enabled`/`proof_of_work_prefix`, and `AntiSpamContext` drops the `powChallenge`/`powNonce` constructor parameters. Enable `captcha_provider: 'managed'` for invisible proof of work; the CMS contact form now renders the `@shield` widget and verifies the solved token through the `#[Api]` `CaptchaVerifierInterface`.
+
+- Content blocks can stamp the request CSP nonce. `BlockRenderer::render()`/`renderRawBlocks()` accept an optional nonce that is exposed to blocks via a `_csp_nonce` render-context key (propagated through nested columns), and `ContentController` forwards the request's `csp_nonce` attribute. The contact-form managed-challenge widget now stamps it on its `<script>`, so the form also works under a strict nonce-based CSP — matching the `@shield` directive (the widget script is same-origin, so it was already `script-src 'self'` clean without a nonce).
+
+### Security
+
+- Build-artifact signatures are now actually verified at boot. `BuildArtifactVerifier` runs before `SecurityWiring` binds the crypto services, so it previously skipped signature verification whenever they were absent and fell back to hash-only checks — which an attacker with write access to `var/cache` defeats by tampering with an artifact and recomputing its hash. The verifier now bootstraps the HMAC + key provider from the master key itself (independent of wiring order) and is **fail-closed**: a signed `build-manifest.json` whose key material is unavailable refuses to boot rather than trusting the manifest on its hashes alone.
+
 ## [1.0.0-rc.11] - 2026-02-12
 
 ### Added
@@ -160,7 +178,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - All PHPUnit notices, warnings, and deprecations resolved.
 - 319 Qodana static analysis issues fixed across the codebase.
-- `.claude/` added to `.gitignore`.
 
 ## [1.0.0-rc.3] - 2026-02-05
 

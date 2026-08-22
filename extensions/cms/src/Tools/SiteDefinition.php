@@ -11,6 +11,8 @@ use function array_diff;
 use function array_keys;
 use function implode;
 use function is_array;
+use function is_scalar;
+use function is_string;
 use function json_decode;
 use function json_last_error;
 use function json_last_error_msg;
@@ -22,6 +24,10 @@ use const JSON_ERROR_NONE;
  *
  * Represents the validated structure of a site definition JSON document
  * conforming to the N.3 import schema.
+ *
+ * @psalm-api Public DTO returned from SiteDefinitionParser; consumed by
+ *            ImportExportService::importSiteDefinition().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SiteDefinition
@@ -36,6 +42,7 @@ final readonly class SiteDefinition
      * @param list<array<string, mixed>> $media Media asset references with source URLs
      * @param list<array<string, mixed>> $redirects URL redirect definitions
      * @param array<string, mixed> $seo SEO configuration (robots, sitemap, structured data)
+     * @param array<string, mixed>|null $forum Optional forum section for cross-extension import
      */
     public function __construct(
         public array $site,
@@ -45,6 +52,7 @@ final readonly class SiteDefinition
         public array $media,
         public array $redirects,
         public array $seo,
+        public ?array $forum = null,
     ) {}
 
     /**
@@ -75,23 +83,39 @@ final readonly class SiteDefinition
         $version = $data['version'] ?? null;
 
         if ($version !== '1.0') {
+            $versionStr = is_string($version) ? $version : (is_scalar($version) ? (string) $version : 'unknown');
+
             throw new InvalidArgumentException(
-                "Unsupported site definition version: {$version}. Expected: 1.0",
+                "Unsupported site definition version: $versionStr. Expected: 1.0",
             );
         }
 
+        /** @var array<string, mixed> $siteData */
+        $siteData = $data['site'];
+        /** @var mixed $seoValue */
+        $seoValue = $data['seo'] ?? [];
+        /** @var array<string, mixed> $seoData */
+        $seoData = is_array($seoValue) ? $seoValue : [];
+
+        /** @var mixed $forumValue */
+        $forumValue = $data['forum'] ?? null;
+        /** @var array<string, mixed>|null $forumData */
+        $forumData = is_array($forumValue) ? $forumValue : null;
+
         return new self(
-            site: $data['site'],
+            site: $siteData,
             taxonomies: self::ensureList($data, 'taxonomies'),
             content: self::ensureList($data, 'content'),
             menus: self::ensureList($data, 'menus'),
             media: self::ensureList($data, 'media'),
             redirects: self::ensureList($data, 'redirects'),
-            seo: is_array($data['seo'] ?? null) ? $data['seo'] : [],
+            seo: $seoData,
+            forum: $forumData,
         );
     }
 
     /**
+     * @param array<array-key, mixed> $data
      * @return list<array<string, mixed>>
      */
     private static function ensureList(array $data, string $key): array
@@ -99,9 +123,19 @@ final readonly class SiteDefinition
         $value = $data[$key] ?? [];
 
         if (!is_array($value)) {
-            throw new InvalidArgumentException("The \"{$key}\" key must be an array");
+            throw new InvalidArgumentException("The \"$key\" key must be an array");
         }
 
-        return $value;
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                /** @var array<string, mixed> $item */
+                $result[] = $item;
+            }
+        }
+
+        return $result;
     }
 }

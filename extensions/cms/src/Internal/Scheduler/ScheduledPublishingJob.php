@@ -22,6 +22,9 @@ use function sprintf;
  *
  * Runs every minute to ensure scheduled content goes live or is archived
  * at the precise time configured by editors.
+ *
+ * @psalm-api Registered with the scheduler by the CMS service provider;
+ *            invoked through JobInterface, not instantiated by name.
  */
 #[Internal(reason: 'CMS scheduled publishing worker')]
 final readonly class ScheduledPublishingJob implements JobInterface

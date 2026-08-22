@@ -26,7 +26,11 @@ use const JSON_UNESCAPED_UNICODE;
  * header and the body content as Markdown text. Content blocks are appended as
  * sections delimited by HTML comments.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class MarkdownExporter
 {
     /**
@@ -127,7 +131,7 @@ final readonly class MarkdownExporter
         $sections = [];
 
         foreach ($blocks as $block) {
-            $header = "<!-- block:{$block->blockType}:{$block->sortOrder} -->";
+            $header = "<!-- block:$block->blockType:$block->sortOrder -->";
             $body = json_encode($block->data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             $sections[] = $header . "\n" . $body;
         }

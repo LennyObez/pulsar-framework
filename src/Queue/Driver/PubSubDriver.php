@@ -34,7 +34,7 @@ use const JSON_THROW_ON_ERROR;
  * configurable prefixes. Delayed jobs store the availableAt timestamp
  * in message attributes and are nacked if not yet ready.
  */
-#[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
+#[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final class PubSubDriver implements QueueDriverInterface
 {
     private readonly Randomizer $randomizer;
@@ -130,7 +130,10 @@ final class PubSubDriver implements QueueDriverInterface
         $now = time();
 
         if ($availableAt > $now) {
-            $subscription->modifyAckDeadline($message, 0);
+            // Extend the ack deadline to the remaining delay (capped at 600s, the Pub/Sub max).
+            // This prevents a busy-loop of immediate nack-and-redeliver for delayed jobs.
+            $delaySec = min($availableAt - $now, 600);
+            $subscription->modifyAckDeadline($message, $delaySec);
 
             return null;
         }
@@ -138,7 +141,7 @@ final class PubSubDriver implements QueueDriverInterface
         $body = $message->data();
 
         /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-        $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
         $newAttempts = $data['attempts'] + 1;
         $subscriptionName = $this->subscriptionName($queue);

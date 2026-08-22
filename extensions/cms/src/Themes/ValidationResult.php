@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a theme manifest validation.
+ *
+ * @psalm-api Public DTO returned from ThemeManifestValidatorInterface and
+ *            PluginManifestValidatorInterface; consumed by manager classes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationResult

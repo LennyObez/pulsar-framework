@@ -13,9 +13,10 @@ use function sprintf;
 
 /**
  * Immutable tenant value object.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Tenant
+final readonly class Tenant
 {
     /**
      * Allowed pattern for tenant IDs: alphanumeric, hyphens, and underscores only.
@@ -43,21 +44,18 @@ readonly class Tenant
     /**
      * Create a Tenant from a raw array (as stored in config).
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     metadata?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(string $id, array $data): self
     {
-        /** @var array<string, mixed> $metadata */
-        $metadata = $data['metadata'] ?? [];
-
-        /** @var string $name */
-        $name = $data['name'] ?? $id;
-
         return new self(
             id: $id,
-            name: $name,
-            metadata: $metadata,
+            name: $data['name'] ?? $id,
+            metadata: $data['metadata'] ?? [],
         );
     }
 }

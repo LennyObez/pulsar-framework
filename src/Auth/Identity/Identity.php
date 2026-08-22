@@ -11,15 +11,18 @@ use Pulsar\Auth\Exception\AuthenticationException;
 
 use function array_all;
 use function array_key_exists;
+use function array_values;
 use function in_array;
 use function is_array;
+use function is_int;
 use function is_string;
 
 /**
  * Immutable value object representing an authenticated identity.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Identity implements IdentityInterface
+final readonly class Identity implements IdentityInterface
 {
     /**
      * @param list<string> $roles
@@ -100,6 +103,10 @@ readonly class Identity implements IdentityInterface
     /**
      * Reconstitute an identity from a serialized array.
      *
+     * The parameter is intentionally typed loosely: this factory is called
+     * after json_decode / session unserialize, so runtime type checks are
+     * required to defend against tampered payloads.
+     *
      * @param array<string, mixed> $data
      */
     #[NoDiscard]
@@ -119,23 +126,34 @@ readonly class Identity implements IdentityInterface
         if (!is_array($roles) || !array_all($roles, static fn(mixed $v): bool => is_string($v))) {
             throw AuthenticationException::invalidIdentityData('roles must be a list of strings');
         }
+        /** @var list<string> $roles */
+        $roles = array_values($roles);
 
-        $attributes = $data['attributes'] ?? [];
-        if (!is_array($attributes)) {
+        /** @var mixed $rawAttributes */
+        $rawAttributes = $data['attributes'] ?? [];
+        if (!is_array($rawAttributes)) {
             throw AuthenticationException::invalidIdentityData('attributes must be an array');
         }
 
-        /** @var int|string $twoFactorStatusRaw */
-        $twoFactorStatusRaw = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
-        $twoFactorStatus = TwoFactorStatus::from($twoFactorStatusRaw);
+        $attributes = [];
+        /** @var mixed $attrValue */
+        foreach ($rawAttributes as $attrKey => $attrValue) {
+            if (is_string($attrKey)) {
+                $attributes = [...$attributes, $attrKey => $attrValue];
+            }
+        }
 
-        /** @var list<string> $roles */
-        /** @var array<string, mixed> $attributes */
+        /** @var mixed $twoFactorRaw */
+        $twoFactorRaw = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
+        $twoFactorValue = is_int($twoFactorRaw) || is_string($twoFactorRaw)
+            ? $twoFactorRaw
+            : TwoFactorStatus::Disabled->value;
+
         return new self(
             id: $id,
             displayName: $displayName,
             roles: $roles,
-            twoFactorStatus: $twoFactorStatus,
+            twoFactorStatus: TwoFactorStatus::from($twoFactorValue),
             attributes: $attributes,
         );
     }
@@ -143,7 +161,6 @@ readonly class Identity implements IdentityInterface
     /**
      * Return a new identity with the given two-factor status.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
      */
     #[NoDiscard]
     public function withTwoFactorStatus(TwoFactorStatus $status): self

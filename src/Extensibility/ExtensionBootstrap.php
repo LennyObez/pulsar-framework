@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Extensibility;
 
 use NoDiscard;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Pulsar\Api\Api;
 use Pulsar\Config\TrustedExtensionsConfig;
 use Pulsar\Container\AdvancedContainerInterface;
@@ -15,7 +17,13 @@ use Pulsar\Extensibility\Internal\ScopedContainerProxy;
 use Pulsar\Extensibility\Internal\ScopedRouterProxy;
 use Pulsar\Extensibility\Internal\ServiceRestrictionMap;
 use Pulsar\Routing\RouterInterface;
+use ReflectionClass;
 use Throwable;
+
+use function array_keys;
+use function implode;
+use function in_array;
+use function sprintf;
 
 /**
  * Bootstraps extensions into the kernel lifecycle.
@@ -29,6 +37,7 @@ use Throwable;
  *
  * When a CapabilityPolicy is configured, container and router access
  * is scoped per extension based on its effective trust tier.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ExtensionBootstrap
@@ -39,9 +48,44 @@ final class ExtensionBootstrap
     public ?ServiceRestrictionMap $serviceRestrictionMap = null;
     public ?TrustedExtensionsConfig $trustedExtensionsConfig = null;
 
+    /** @var list<string> */
+    private array $loadWarnings = [];
+
+    /**
+     * Names of extensions found on disk but excluded by the enabled filter,
+     * from the last loadFromPaths() call. Distinct from a load failure: these
+     * were deliberately turned off via extensions.enabled. Surfaced so boot
+     * diagnostics can relate a lingering config/<ext>.php to its off switch.
+     *
+     * @var list<string>
+     */
+    private array $disabledByFilter = [];
+
+    /**
+     * When non-null, ONLY extensions whose names appear in this list are loaded
+     * (an exclusive allowlist — the operator's full-manual switch). When null
+     * (default), the kind-based default posture applies: every discovered
+     * extension loads except bundled products, which stay off until opted in via
+     * {@see self::$enabledProducts}.
+     *
+     * @var list<string>|null
+     */
+    private ?array $enabledFilter = null;
+
+    /**
+     * Bundled application/product extensions ({@see ExtensionKind::Product}) to
+     * turn ON in the default posture. Additive opt-in, consulted only when no
+     * exclusive {@see self::$enabledFilter} allowlist is set. Null/empty means no
+     * products load by default. Maps to `extensions.enabled_products`.
+     *
+     * @var list<string>|null
+     */
+    private ?array $enabledProducts = null;
+
     public function __construct(
         public readonly ExtensionRegistry $registry,
         public readonly ExtensionLoader $loader,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**
@@ -54,28 +98,269 @@ final class ExtensionBootstrap
     }
 
     /**
+     * Restrict which extensions are loaded by name.
+     *
+     * When set, only extensions whose manifest name appears in the given
+     * list will proceed past discovery. Extensions not in the list are
+     * silently skipped. Pass null to clear the filter and load all.
+     *
+     * @param list<string>|null $names Extension names (e.g., ['pulsar/cms', 'pulsar/forum'])
+     */
+    public function setEnabledFilter(?array $names): void
+    {
+        $this->enabledFilter = $names;
+    }
+
+    /**
+     * Turn specific bundled product extensions ON in the default posture.
+     *
+     * Bundled application/products (manifest `kind: product`) are off by default
+     * so a regulated app never inherits a forum, CMS, or PII collector it did not
+     * ask for. Naming a product here loads it while leaving the rest of the
+     * default posture (all infrastructure + the app's own extensions) intact.
+     *
+     * Consulted only when no exclusive allowlist is set via
+     * {@see self::setEnabledFilter()}; an allowlist already names everything that
+     * loads, products included. Pass null/[] to load no products by default.
+     *
+     * @param list<string>|null $names Product extension names (e.g., ['pulsar/forum'])
+     */
+    public function setEnabledProducts(?array $names): void
+    {
+        $this->enabledProducts = $names;
+    }
+
+    /**
      * Discover and load extensions from paths.
      *
+     * Each path may be:
+     *   - A parent directory to scan for extensions (e.g. `extensions/`)
+     *   - An individual extension directory containing a `pulsar.json`
+     *
+     * Individual extensions that fail validation or instantiation are skipped
+     * with a warning logged rather than aborting the entire loading process.
+     *
+     * When an enabled filter is set via setEnabledFilter(), only manifests
+     * whose name appears in the filter list proceed past discovery.
+     *
      * @param list<string> $paths Directories to scan for extensions
-     * @throws ExtensionException If loading fails
      */
     public function loadFromPaths(array $paths): void
     {
-        $manifests = $this->loader->discover($paths);
+        $this->loadWarnings = [];
+        $this->disabledByFilter = [];
 
-        // Validate and sort by dependencies
+        try {
+            $manifests = $this->loader->discover($paths);
+        } catch (Throwable $e) {
+            // Discovery failure (e.g., invalid JSON in a manifest) should not
+            // abort the entire loading process. Record the warning and attempt
+            // per-directory discovery with individual error handling.
+            $this->loadWarnings[] = sprintf('Discovery error: %s', $e->getMessage());
+            $this->logger->warning('Extension discovery failed: ' . $e->getMessage());
+            $manifests = $this->discoverWithFallback($paths);
+        }
+
+        // Decide which discovered manifests actually load. Two orthogonal
+        // controls, checked in order; an extension turned off either way is a
+        // deliberate decision, but a SILENT one is a foot-gun — it reads
+        // identically to a missing extension — so every exclusion is recorded as
+        // a warning that getLoadWarnings()/disabledByConfig() and the log expose.
+        if ($this->enabledFilter !== null) {
+            // 1. Exclusive allowlist: ONLY the named extensions load — products,
+            //    infrastructure, and the app's own extensions alike. The
+            //    operator's full-manual switch; kind is not consulted.
+            $allow = $this->enabledFilter;
+            [$manifests, $excluded] = self::partitionManifests(
+                $manifests,
+                static fn(ExtensionManifest $m): bool => in_array($m->name, $allow, true),
+            );
+            $this->recordDisabled(
+                $excluded,
+                'Extensions present on disk but disabled by config (extensions.enabled): %s',
+            );
+        } else {
+            // 2. Default posture: every discovered extension loads EXCEPT bundled
+            //    products (manifest `kind: product`), which stay off until named
+            //    in extensions.enabled_products. A regulated app must not inherit
+            //    a forum or a PII collector it never asked for, while its own
+            //    first-party extensions still load without ceremony.
+            $optIn = $this->enabledProducts ?? [];
+            [$manifests, $excluded] = self::partitionManifests(
+                $manifests,
+                static fn(ExtensionManifest $m): bool =>
+                    $m->kind->loadsByDefault() || in_array($m->name, $optIn, true),
+            );
+            $this->recordDisabled(
+                $excluded,
+                'Bundled product extensions off by default '
+                . '(opt in via extensions.enabled_products): %s',
+            );
+        }
+
+        // Register PSR-4 autoloading for the discovered extensions before any of
+        // their classes are referenced. Extensions are not baked into the root
+        // composer.json autoload (ADR-0004: no privileged built-in access), so
+        // this is what makes `validateExtensionClass()` / `instantiate()` below —
+        // and the extensions themselves — resolvable.
+        $autoloader = new ExtensionAutoloader();
         foreach ($manifests as $manifest) {
-            $this->loader->validateCompatibility($manifest);
-            $this->loader->validateExtensionClass($manifest);
+            $autoloader->addPsr4($manifest->autoloadMap());
+        }
+        $autoloader->register();
+
+        // Validate each manifest individually: skip failures, don't abort all
+        $validManifests = [];
+
+        foreach ($manifests as $manifest) {
+            try {
+                $this->loader->validateCompatibility($manifest);
+            } catch (Throwable $e) {
+                $warning = sprintf(
+                    'Skipping extension "%s": incompatible version: %s',
+                    $manifest->name,
+                    $e->getMessage(),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+
+                continue;
+            }
+
+            try {
+                $this->loader->validateExtensionClass($manifest);
+            } catch (Throwable $e) {
+                $warning = sprintf(
+                    'Skipping extension "%s": class not found: %s',
+                    $manifest->name,
+                    $e->getMessage(),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+
+                continue;
+            }
+
+            $validManifests[] = $manifest;
         }
 
-        $sorted = $this->loader->resolveDependencies($manifests);
+        $sorted = $this->loader->resolveDependencies($validManifests);
 
-        // Instantiate and register extensions
+        // Instantiate each extension individually: skip failures
         foreach ($sorted as $manifest) {
-            $extension = $this->loader->instantiate($manifest);
-            $this->registry->add($extension, $manifest, ExtensionLifecycle::Validated);
+            try {
+                $extension = $this->loader->instantiate($manifest);
+                $this->registry->add($extension, $manifest, ExtensionLifecycle::Validated);
+            } catch (Throwable $e) {
+                $warning = sprintf(
+                    'Skipping extension "%s": instantiation failed: %s',
+                    $manifest->name,
+                    $e->getMessage(),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+            }
         }
+    }
+
+    /**
+     * Fallback discovery that processes each path individually, skipping
+     * paths that cause parse errors instead of aborting all discovery.
+     *
+     * @param list<string> $paths
+     * @return list<ExtensionManifest>
+     */
+    private function discoverWithFallback(array $paths): array
+    {
+        $manifests = [];
+
+        foreach ($paths as $path) {
+            try {
+                $discovered = $this->loader->discover([$path]);
+                $manifests = [...$manifests, ...$discovered];
+            } catch (Throwable $e) {
+                $warning = sprintf('Skipping path "%s": %s', $path, $e->getMessage());
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+            }
+        }
+
+        return $manifests;
+    }
+
+    /**
+     * Split discovered manifests into those that load and the names of those
+     * excluded, by a keep predicate. Order is preserved.
+     *
+     * @param list<ExtensionManifest> $manifests
+     * @param callable(ExtensionManifest): bool $keep
+     * @return array{0: list<ExtensionManifest>, 1: list<string>}
+     */
+    private static function partitionManifests(array $manifests, callable $keep): array
+    {
+        $kept = [];
+        $excluded = [];
+
+        foreach ($manifests as $manifest) {
+            if ($keep($manifest)) {
+                $kept[] = $manifest;
+            } else {
+                $excluded[] = $manifest->name;
+            }
+        }
+
+        return [$kept, $excluded];
+    }
+
+    /**
+     * Record the names of extensions excluded by an enable control so boot
+     * diagnostics can relate a lingering config/<ext>.php to its off switch. The
+     * message template takes a single %s for the comma-joined names.
+     *
+     * @param list<string> $names
+     */
+    private function recordDisabled(array $names, string $messageTemplate): void
+    {
+        if ($names === []) {
+            return;
+        }
+
+        $this->disabledByFilter = [...$this->disabledByFilter, ...$names];
+
+        $warning = sprintf($messageTemplate, implode(', ', $names));
+        $this->loadWarnings[] = $warning;
+        $this->logger->info($warning);
+    }
+
+    /**
+     * Get warnings produced during the last loadFromPaths() call.
+     *
+     * @return list<string>
+     */
+    public function getLoadWarnings(): array
+    {
+        return $this->loadWarnings;
+    }
+
+    /**
+     * Names of extensions found on disk but turned off via extensions.enabled
+     * during the last loadFromPaths() call.
+     *
+     * @return list<string>
+     */
+    public function disabledByConfig(): array
+    {
+        return $this->disabledByFilter;
+    }
+
+    /**
+     * Get all loaded extension manifests.
+     *
+     * @return array<string, ExtensionManifest>
+     */
+    public function getManifests(): array
+    {
+        return $this->registry->allManifests();
     }
 
     /**
@@ -107,10 +392,17 @@ final class ExtensionBootstrap
             $scopedContainer = $this->scopeContainer($container, $name);
 
             try {
-                // Register service providers first
+                // Prefer container resolution so service providers can
+                // declare constructor dependencies (logger, config,
+                // clock); calling `new $providerClass()` directly would
+                // hardcode a zero-argument-constructor convention into
+                // the bootstrap layer. Direct instantiation stays as a
+                // fallback for when the container cannot resolve the
+                // class — providers that genuinely take no dependencies,
+                // and the bootstrap path that runs before the container
+                // is fully wired.
                 foreach ($extension->providers() as $providerClass) {
-                    /** @var ServiceProviderInterface $provider */
-                    $provider = new $providerClass();
+                    $provider = self::instantiateProvider($providerClass, $container);
 
                     // Defer registration for deferred providers
                     if ($provider instanceof DeferredServiceProviderInterface && $provider->isDeferred()) {
@@ -132,6 +424,10 @@ final class ExtensionBootstrap
                 throw ExtensionException::registrationFailed($name, $e->getMessage());
             }
         }
+
+        // Expose the registry in the container so composition root services
+        // (migration wiring, introspection, health checks) can access extension metadata.
+        $container->instance(ExtensionRegistry::class, $this->registry);
 
         $this->registered = true;
     }
@@ -155,7 +451,7 @@ final class ExtensionBootstrap
             throw ExtensionException::bootBeforeRegister();
         }
 
-        // Phase 2: preBoot (optional — only PreBootExtensionInterface implementors)
+        // Phase 2: preBoot (optional; only PreBootExtensionInterface implementors)
         foreach ($this->registry->all() as $name => $extension) {
             if (!$extension instanceof PreBootExtensionInterface) {
                 continue;
@@ -197,7 +493,7 @@ final class ExtensionBootstrap
             }
         }
 
-        // Phase 4: postBoot (optional — only PostBootExtensionInterface implementors)
+        // Phase 4: postBoot (optional; only PostBootExtensionInterface implementors)
         foreach ($this->registry->all() as $name => $extension) {
             if (!$extension instanceof PostBootExtensionInterface) {
                 continue;
@@ -214,6 +510,27 @@ final class ExtensionBootstrap
         }
 
         $this->booted = true;
+    }
+
+    /**
+     * Reset the boot lifecycle after a kernel shutdown so a subsequent boot()
+     * re-runs only the boot phase for already-registered extensions.
+     *
+     * Booted extensions are returned to the Registered state (which canBoot()
+     * accepts) — deliberately NOT to Validated — so register() does not run a
+     * second time; re-registration is unsafe without a contract that extension
+     * register() is idempotent. The registered flag stays true. Failed and
+     * not-yet-booted extensions are left untouched.
+     */
+    public function resetLifecycle(): void
+    {
+        $this->booted = false;
+
+        foreach (array_keys($this->registry->all()) as $name) {
+            if ($this->registry->getState($name)->isBooted()) {
+                $this->registry->setState($name, ExtensionLifecycle::Registered);
+            }
+        }
     }
 
     /**
@@ -235,6 +552,77 @@ final class ExtensionBootstrap
     }
 
     /**
+     * Instantiate an extension service provider via the container.
+     *
+     * The extension-first contract requires every provider to flow through
+     * the container. An unconditional `new $providerClass()` fallback on
+     * resolution failure would let providers escape the DI graph silently:
+     * a misconfigured provider that should raise a binding error at boot
+     * would instead be constructed with default state, hiding the wiring
+     * bug until it surfaces in production. So the fallback below is
+     * deliberately narrow — it covers only constructors the container would
+     * have autowired anyway.
+     *
+     * Zero-argument constructors are autowired out of the box, so simple
+     * providers work with no explicit binding. A provider with required
+     * constructor dependencies must be bound in its extension's own
+     * composition root (or made autowire-friendly); if it is not, this
+     * method fails with an error naming the missing binding rather than
+     * papering over it.
+     *
+     * @param class-string<ServiceProviderInterface> $providerClass
+     *
+     * @throws ExtensionException when the container cannot resolve the
+     *                           provider class
+     */
+    private static function instantiateProvider(
+        string $providerClass,
+        ContainerInterface $container,
+    ): ServiceProviderInterface {
+        try {
+            $resolved = $container->get($providerClass);
+        } catch (Throwable $containerError) {
+            // Fall back to direct instantiation for providers that declare
+            // no required constructor dependencies — the common case, and the
+            // path that runs before the container is fully wired. An
+            // autowire-friendly (zero-argument) provider must work without an
+            // explicit binding, as the diagnostic below promises. A provider
+            // whose constructor needs arguments cannot be autowired here, so it
+            // gets the actionable error; any exception from a zero-argument
+            // constructor body propagates to register()'s own handler.
+            $constructor = new ReflectionClass($providerClass)->getConstructor();
+
+            if ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0) {
+                throw new ExtensionException(
+                    sprintf(
+                        'Extension service provider "%s" could not be resolved through the container: %s. '
+                        . 'Bind it explicitly in your composition root or make its constructor autowire-friendly.',
+                        $providerClass,
+                        $containerError->getMessage(),
+                    ),
+                    previous: $containerError,
+                );
+            }
+
+            $resolved = new $providerClass();
+        }
+
+        if (!$resolved instanceof ServiceProviderInterface) {
+            throw new ExtensionException(
+                sprintf(
+                    'Extension service provider "%s" resolved to %s, which does not implement %s. '
+                    . 'Check the container binding for this provider class.',
+                    $providerClass,
+                    get_debug_type($resolved),
+                    ServiceProviderInterface::class,
+                ),
+            );
+        }
+
+        return $resolved;
+    }
+
+    /**
      * Scope a container for an extension based on its effective trust tier.
      *
      * Returns the original container when no capability policy is configured
@@ -248,7 +636,7 @@ final class ExtensionBootstrap
 
         $effectiveTier = $this->resolveEffectiveTier($extensionName);
 
-        // Core tier bypasses proxy entirely — zero overhead
+        // Core tier bypasses proxy entirely: zero overhead
         if ($effectiveTier === TrustTier::Core) {
             return $container;
         }

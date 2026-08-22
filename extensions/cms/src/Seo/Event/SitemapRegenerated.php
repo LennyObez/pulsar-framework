@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when the sitemap has been regenerated.
+ *
+ * @psalm-api Event constructed by SitemapGenerator and dispatched through
+ *            the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SitemapRegenerated

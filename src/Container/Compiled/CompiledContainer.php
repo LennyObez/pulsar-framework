@@ -9,6 +9,7 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Container\AdvancedContainerInterface;
 use Pulsar\Container\BindingType;
+use Pulsar\Container\CallableReflector;
 use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\ContextualBindingBuilder;
 use Pulsar\Container\Exception\ContainerException;
@@ -16,17 +17,22 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Container\Lifetime;
 use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Container\Scope\ScopeManager;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionNamedType;
 
 use function array_keys;
 use function array_pop;
+use function class_exists;
 use function in_array;
+use function sprintf;
 
 /**
  * Base class for compiled containers.
  *
  * Generated compiled containers extend this class and provide a
  * $methodMap of service IDs to factory method names. All mutation
- * methods throw ContainerException — compiled containers are read-only.
+ * methods throw ContainerException: compiled containers are read-only.
  */
 #[Internal]
 abstract class CompiledContainer implements AdvancedContainerInterface
@@ -88,12 +94,21 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         }
 
         if (!isset($this->methodMap[$id])) {
+            // Parity with the dynamic container: autowire an unbound but
+            // instantiable concrete on demand, so a controller and its plain
+            // dependencies resolve the same way in compiled production as on the
+            // dev server (no "works in dev, 500s in prod" trap). Compiled
+            // bindings remain the reflection-free fast path above; this runs
+            // only for ids absent from the method map.
+            if (class_exists($id) && new ReflectionClass($id)->isInstantiable()) {
+                return $this->autowire($id);
+            }
+
             throw NotFoundException::forId($id);
         }
 
         $lifetime = $this->lifetimeMap[$id] ?? Lifetime::Singleton;
 
-        // Check scoped instance cache
         if (($lifetime === Lifetime::RequestScope || $lifetime === Lifetime::TenantScope) && $this->scopeManager !== null) {
             $scopedInstance = $this->scopeManager->getScopedInstance($id, $lifetime);
             if ($scopedInstance !== null) {
@@ -132,6 +147,84 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         return isset($this->methodMap[$id]) || isset($this->instances[$id]);
     }
 
+    /**
+     * Reflection-autowire an unbound instantiable concrete (parity fallback).
+     *
+     * Resolves each class-typed constructor dependency through the container
+     * (compiled deps hit the method map; unbound concretes recurse here),
+     * falling back to default/nullable values, and otherwise failing with a
+     * message that names the unresolved dependency and parameter.
+     *
+     * @param class-string $id
+     *
+     * @throws ContainerException When a required dependency cannot be resolved.
+     */
+    private function autowire(string $id): object
+    {
+        if (in_array($id, $this->resolving, true)) {
+            throw ContainerException::circularDependency($id, $this->resolving);
+        }
+
+        $this->resolving[] = $id;
+
+        try {
+            $reflector = new ReflectionClass($id);
+            $constructor = $reflector->getConstructor();
+
+            if ($constructor === null) {
+                return $reflector->newInstance();
+            }
+
+            /** @var list<mixed> $dependencies */
+            $dependencies = [];
+
+            foreach ($constructor->getParameters() as $parameter) {
+                $type = $parameter->getType();
+
+                if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                    /** @var class-string $dependencyClass */
+                    $dependencyClass = $type->getName();
+
+                    try {
+                        $dependencies[] = $this->get($dependencyClass);
+
+                        continue;
+                    } catch (NotFoundException) {
+                        // Unbound interface/abstract: fall through to default /
+                        // nullable / failure below.
+                    }
+                }
+
+                if ($parameter->isDefaultValueAvailable()) {
+                    /** @var mixed $default */
+                    $default = $parameter->getDefaultValue();
+                    $dependencies[] = $default;
+
+                    continue;
+                }
+
+                if ($type instanceof ReflectionNamedType && $type->allowsNull()) {
+                    $dependencies[] = null;
+
+                    continue;
+                }
+
+                throw ContainerException::unresolvable(
+                    $id,
+                    sprintf(
+                        'Unable to resolve dependency "%s" for parameter "%s"',
+                        $type instanceof ReflectionNamedType ? $type->getName() : 'mixed',
+                        $parameter->getName(),
+                    ),
+                );
+            }
+
+            return $reflector->newInstanceArgs($dependencies);
+        } finally {
+            array_pop($this->resolving);
+        }
+    }
+
     #[Override]
     public function instance(string $id, object $instance): void
     {
@@ -151,6 +244,12 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         throw new ContainerException(
             'Cannot modify a compiled container. Run `pulsar cache:clear` to use the dynamic container.',
         );
+    }
+
+    #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->bind($id, $concrete, BindingType::Singleton);
     }
 
     #[Override]
@@ -176,7 +275,7 @@ abstract class CompiledContainer implements AdvancedContainerInterface
     #[Override]
     public function setResolutionHints(?array $hints): void
     {
-        // No-op in compiled container — hints are baked in
+        // No-op in compiled container: hints are baked in
     }
 
     #[NoDiscard]
@@ -278,7 +377,7 @@ abstract class CompiledContainer implements AdvancedContainerInterface
     #[Override]
     public function validateScopeGraph(): void
     {
-        // No-op — scope validation happens at compile time
+        // No-op: scope validation happens at compile time
     }
 
     #[Override]
@@ -287,5 +386,78 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         throw new ContainerException(
             'Cannot modify a compiled container. Run `pulsar cache:clear` to use the dynamic container.',
         );
+    }
+
+    /**
+     * Call a callable, resolving type-hinted parameters from the container.
+     *
+     * Mirrors the dynamic container's contract: explicit parameters in $params
+     * take precedence, remaining parameters are resolved by type hint, then by
+     * default value, then null for nullable parameters.
+     *
+     * @param callable $callable The callable to invoke
+     * @param array<string, mixed> $params Explicit parameter overrides
+     *
+     * @throws ContainerException If a required parameter cannot be resolved
+     * @throws ReflectionException If reflection on the callable fails
+     */
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        $reflection = CallableReflector::reflect($callable);
+        /** @var list<mixed> $arguments */
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $name = $parameter->getName();
+
+            // Explicit parameters take precedence
+            if (isset($params[$name])) {
+                /** @var mixed $explicitArg */
+                $explicitArg = $params[$name];
+                $arguments[] = $explicitArg;
+
+                continue;
+            }
+
+            $type = $parameter->getType();
+
+            // Try to resolve from container by type hint
+            if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                $typeName = $type->getName();
+
+                if ($this->has($typeName)) {
+                    $arguments[] = $this->get($typeName);
+
+                    continue;
+                }
+            }
+
+            // Fall back to default value
+            if ($parameter->isDefaultValueAvailable()) {
+                /** @var mixed $defaultArg */
+                $defaultArg = $parameter->getDefaultValue();
+                $arguments[] = $defaultArg;
+
+                continue;
+            }
+
+            // Nullable parameters default to null
+            if ($type !== null && $type->allowsNull()) {
+                $arguments[] = null;
+
+                continue;
+            }
+
+            throw ContainerException::unresolvable(
+                'call()',
+                sprintf(
+                    'Cannot resolve parameter "%s" for callable: no container binding and no default value',
+                    $name,
+                ),
+            );
+        }
+
+        return $callable(...$arguments);
     }
 }

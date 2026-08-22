@@ -9,9 +9,10 @@ use Pulsar\Api\Api;
 
 /**
  * Record of a feature flag evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class FlagEvaluation
+final readonly class FlagEvaluation
 {
     public function __construct(
         public string $flagName,

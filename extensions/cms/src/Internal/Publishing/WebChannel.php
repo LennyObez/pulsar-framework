@@ -13,8 +13,11 @@ use Pulsar\Extension\Cms\Publishing\PublishResult;
 /**
  * Default web publishing channel.
  *
- * Web publishing is handled by the content controller — this channel
+ * Web publishing is handled by the content controller: this channel
  * always succeeds as a no-op to confirm the web channel participated.
+ *
+ * @psalm-api Registered with the ChannelRegistry by the CMS service provider;
+ *            invoked via PublishingChannelInterface, not instantiated by name.
  */
 #[Internal(reason: 'Use PublishingChannelInterface for public API')]
 final readonly class WebChannel implements PublishingChannelInterface

@@ -7,8 +7,8 @@ namespace Pulsar\Tests\Unit\Queue\Monitor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Queue\Monitor\HealthStatus;
 use Pulsar\Queue\Monitor\QueueHealthCheck;
+use Pulsar\Queue\Monitor\QueueHealthStatus;
 use Pulsar\Queue\QueueDriverInterface;
 use RuntimeException;
 
@@ -23,7 +23,7 @@ final class QueueHealthCheckTest extends TestCase
 
         $check = new QueueHealthCheck($driver, pendingThreshold: 10000);
 
-        self::assertSame(HealthStatus::Healthy, $check->check('default'));
+        self::assertSame(QueueHealthStatus::Healthy, $check->check('default'));
     }
 
     #[Test]
@@ -34,7 +34,7 @@ final class QueueHealthCheckTest extends TestCase
 
         $check = new QueueHealthCheck($driver, pendingThreshold: 10000);
 
-        self::assertSame(HealthStatus::Degraded, $check->check('default'));
+        self::assertSame(QueueHealthStatus::Degraded, $check->check('default'));
     }
 
     #[Test]
@@ -45,7 +45,7 @@ final class QueueHealthCheckTest extends TestCase
 
         $check = new QueueHealthCheck($driver, pendingThreshold: 10000);
 
-        self::assertSame(HealthStatus::Degraded, $check->check('default'));
+        self::assertSame(QueueHealthStatus::Degraded, $check->check('default'));
     }
 
     #[Test]
@@ -56,7 +56,7 @@ final class QueueHealthCheckTest extends TestCase
 
         $check = new QueueHealthCheck($driver);
 
-        self::assertSame(HealthStatus::Unhealthy, $check->check('default'));
+        self::assertSame(QueueHealthStatus::Unhealthy, $check->check('default'));
     }
 
     #[Test]
@@ -67,6 +67,6 @@ final class QueueHealthCheckTest extends TestCase
 
         $check = new QueueHealthCheck($driver, pendingThreshold: 50);
 
-        self::assertSame(HealthStatus::Degraded, $check->check('default'));
+        self::assertSame(QueueHealthStatus::Degraded, $check->check('default'));
     }
 }

@@ -16,9 +16,10 @@ use function sprintf;
 
 /**
  * Value must be a valid timezone identifier. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Timezone implements RuleInterface
+final readonly class Timezone implements RuleInterface
 {
     public function __construct(
         private string $message = '',

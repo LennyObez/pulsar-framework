@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Referential actions for foreign key constraints.
  *
  * Typed enum prevents injection in ON DELETE/ON UPDATE clauses.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SchemaReferentialAction: string

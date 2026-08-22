@@ -18,9 +18,10 @@ use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Represents a single route definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Route
+final readonly class Route
 {
     /**
      * Pre-compiled regex pattern for parameterized routes.
@@ -31,9 +32,26 @@ readonly class Route
     public ?string $compiledPattern;
 
     /**
-     * @param list<Method> $methods Allowed HTTP methods
+     * Pre-compiled regex pattern for parameterised hosts, the host-side
+     * parallel of `compiledPattern`. Null for static / unset hosts.
+     * Computed eagerly so `matchesHost()` never recomputes it on the
+     * dispatch hot path.
+     */
+    public ?string $compiledHostPattern;
+
+    /**
+     * Allowed HTTP methods. Normalized in the constructor: a GET route always
+     * also serves HEAD (RFC 9110 §9.3.2), so this list reflects what the
+     * router actually matches -- introspection and Allow headers stay honest.
+     *
+     * @var list<Method>
+     */
+    public array $methods;
+
+    /**
+     * @param list<Method> $methods Allowed HTTP methods (HEAD is added automatically when GET is present)
      * @param string $path The route path pattern
-     * @param callable|class-string|array{0: class-string, 1: string} $handler The route handler
+     * @param mixed $handler The route handler
      * @param string|null $name Optional route name
      * @param array<string, mixed> $attributes Additional route attributes
      * @param list<string> $middleware Middleware to apply
@@ -41,7 +59,7 @@ readonly class Route
      * @param string|null $host Host pattern for host-based routing (e.g. 'api.example.com' or '{subdomain}.example.com')
      */
     public function __construct(
-        public array $methods,
+        array $methods,
         public string $path,
         public mixed $handler,
         public ?string $name = null,
@@ -50,9 +68,25 @@ readonly class Route
         public array $constraints = [],
         public ?string $host = null,
     ) {
+        // RFC 9110 §9.3.2: HEAD is GET without a response body, and a server
+        // must support it wherever GET is supported. Route::get() always
+        // bundled the pair; normalizing here makes that the rule for every
+        // registration style (notably `new Route(methods: [Method::GET], ...)`
+        // used to attach middleware) instead of a sugar-only special case.
+        // POST/PUT/... routes are untouched, so they still 405 on HEAD.
+        if (in_array(Method::GET, $methods, true) && !in_array(Method::HEAD, $methods, true)) {
+            $methods[] = Method::HEAD;
+        }
+
+        $this->methods = $methods;
+
         $normalizedPath = '/' . trim($this->path, '/');
         $this->compiledPattern = str_contains($normalizedPath, '{')
             ? $this->pathToPattern($normalizedPath)
+            : null;
+
+        $this->compiledHostPattern = $this->host !== null && str_contains($this->host, '{')
+            ? $this->hostToPattern($this->host)
             : null;
     }
 
@@ -75,7 +109,7 @@ readonly class Route
     {
         $requestPath = '/' . trim($path, '/');
 
-        // Static route — no parameters
+        // Static route: no parameters
         if ($this->compiledPattern === null) {
             $routePath = '/' . trim($this->path, '/');
             return $routePath === $requestPath ? [] : null;
@@ -114,13 +148,16 @@ readonly class Route
         );
         $pattern = $replaced ?? $pattern;
 
-        // Convert {param?} to (?:(?P<param>CONSTRAINT))? using constraints or default [^/]+
+        // Convert /{param?} to (?:/(?P<param>CONSTRAINT))?: the preceding slash
+        // becomes optional together with the parameter so that /blog/{page?}
+        // matches both /blog and /blog/2.
+        // Note: preg_quote escapes ? to \?, so we match the escaped form.
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?}#',
+            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)\\\\\?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
-                return '(?:(?P<' . $name . '>' . $regex . '))?';
+                return '(?:/(?P<' . $name . '>' . $regex . '))?';
             },
             $pattern,
         );
@@ -144,22 +181,11 @@ readonly class Route
         }
 
         // Exact match (no parameters)
-        if (!str_contains($this->host, '{')) {
+        if ($this->compiledHostPattern === null) {
             return strtolower($this->host) === strtolower($host) ? [] : null;
         }
 
-        // Build regex from host pattern
-        $pattern = preg_quote($this->host, '#');
-        $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
-
-        $replaced = preg_replace(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)}#',
-            '(?P<$1>[^.]+)',
-            $pattern,
-        );
-        $pattern = '#^' . ($replaced ?? $pattern) . '$#i';
-
-        if (preg_match($pattern, $host, $matches)) {
+        if (preg_match($this->compiledHostPattern, $host, $matches)) {
             return $this->extractNamedParameters($matches);
         }
 
@@ -167,9 +193,26 @@ readonly class Route
     }
 
     /**
+     * Pre-compile a parameterised host pattern.
+     */
+    private function hostToPattern(string $host): string
+    {
+        $pattern = preg_quote($host, '#');
+        $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
+
+        $replaced = preg_replace(
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)}#',
+            '(?P<$1>[^.]+)',
+            $pattern,
+        );
+
+        return '#^' . ($replaced ?? $pattern) . '$#i';
+    }
+
+    /**
      * Create a GET route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function get(string $path, mixed $handler, ?string $name = null): self
@@ -180,7 +223,7 @@ readonly class Route
     /**
      * Create a POST route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function post(string $path, mixed $handler, ?string $name = null): self
@@ -191,7 +234,7 @@ readonly class Route
     /**
      * Create a PUT route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function put(string $path, mixed $handler, ?string $name = null): self
@@ -202,7 +245,7 @@ readonly class Route
     /**
      * Create a PATCH route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function patch(string $path, mixed $handler, ?string $name = null): self
@@ -213,7 +256,7 @@ readonly class Route
     /**
      * Create a DELETE route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function delete(string $path, mixed $handler, ?string $name = null): self
@@ -224,7 +267,7 @@ readonly class Route
     /**
      * Create a route matching any method.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function any(string $path, mixed $handler, ?string $name = null): self
@@ -245,7 +288,7 @@ readonly class Route
      *
      * @param array<int|string, string> $matches
      *
-     * @psalm-suppress InvalidReturnType — Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
+     * @psalm-suppress InvalidReturnType: Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
      *
      * @return array<string, string>
      */

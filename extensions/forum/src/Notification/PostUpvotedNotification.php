@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent to a post author when their post receives an upvote.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostUpvotedNotification implements ForumNotificationInterface
@@ -32,12 +33,12 @@ final readonly class PostUpvotedNotification implements ForumNotificationInterfa
 
     public function subject(): string
     {
-        return "Your post was upvoted in: {$this->threadTitle}";
+        return "Your post was upvoted in: $this->threadTitle";
     }
 
     public function body(): string
     {
-        return "Someone upvoted your post in the thread \"{$this->threadTitle}\".";
+        return "Someone upvoted your post in the thread \"$this->threadTitle\".";
     }
 
     public function metadata(): array

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extensibility;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extensibility\ExtensionCapability;
 
-#[CoversClass(ExtensionCapability::class)]
+#[CoversNothing]
 final class ExtensionCapabilityTest extends TestCase
 {
     #[Test]
-    public function enumHasSixteenCases(): void
+    public function enumHasEighteenCases(): void
     {
         $cases = ExtensionCapability::cases();
 
-        self::assertCount(16, $cases);
+        self::assertCount(18, $cases);
     }
 
     #[Test]
@@ -26,6 +26,8 @@ final class ExtensionCapabilityTest extends TestCase
         $expected = [
             'ContainerRead',
             'ContainerWrite',
+            'ServiceRegister',
+            'ServiceDecorate',
             'RouteRegister',
             'RouteRegisterGlobal',
             'MiddlewareRegister',

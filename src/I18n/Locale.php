@@ -17,9 +17,10 @@ use function substr;
  * Value object wrapping a BCP 47 locale tag.
  *
  * Provides parsing, fallback chain generation, and RTL detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Locale
+final readonly class Locale
 {
     /** @var list<string> Languages that use right-to-left scripts */
     private const array RTL_LANGUAGES = ['ar', 'he', 'fa', 'ur'];

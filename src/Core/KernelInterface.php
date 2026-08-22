@@ -23,6 +23,14 @@ interface KernelInterface
 
     public function shutdown(): void;
 
+    /**
+     * Perform post-response cleanup and dispatch the terminate event.
+     *
+     * Must be called after the response has been sent to the client.
+     * Critical for persistent runtimes (RoadRunner, FrankenPHP).
+     */
+    public function terminate(ServerRequestInterface $request, ResponseInterface $response): void;
+
     public function container(): ContainerInterface;
 
     public function router(): RouterInterface;

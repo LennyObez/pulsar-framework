@@ -52,29 +52,50 @@ final readonly class CarouselBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{imageUrl: string, alt: string, caption?: string}> $slides */
+        /** @var list<mixed> $slides */
         $slides = $data['slides'] ?? [];
         $autoplay = ($data['autoplay'] ?? false) === true ? 'true' : 'false';
-        $interval = (int) ($data['interval'] ?? 5000);
+        /** @var mixed $rawInterval */
+        $rawInterval = $data['interval'] ?? null;
+        $interval = is_int($rawInterval) ? $rawInterval : 5000;
 
         if ($interval < 1) {
             $interval = 5000;
         }
 
-        $html = "<div class=\"carousel\" data-autoplay=\"{$autoplay}\" data-interval=\"{$interval}\">";
-        $html .= '<div class="carousel__slides">';
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' ' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') : '';
+        $slideCount = 0;
 
+        foreach ($slides as $slide) {
+            if (is_array($slide)) {
+                $slideCount++;
+            }
+        }
+
+        $html = "<div class=\"carousel$className\" data-autoplay=\"$autoplay\" data-interval=\"$interval\" aria-roledescription=\"carousel\" aria-label=\"Image carousel\"$anchor>";
+        $html .= '<div class="carousel__slides" aria-live="polite">';
+
+        $slideIndex = 0;
+
+        /** @var mixed $slide */
         foreach ($slides as $slide) {
             if (!is_array($slide)) {
                 continue;
             }
 
-            $imageUrl = htmlspecialchars((string) ($slide['imageUrl'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $alt = htmlspecialchars((string) ($slide['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $slideIndex++;
+            /** @var mixed $rawImageUrl */
+            $rawImageUrl = $slide['imageUrl'] ?? null;
+            /** @var mixed $rawAlt */
+            $rawAlt = $slide['alt'] ?? null;
+            $imageUrl = htmlspecialchars(is_string($rawImageUrl) ? $rawImageUrl : '', ENT_QUOTES, 'UTF-8');
+            $alt = htmlspecialchars(is_string($rawAlt) ? $rawAlt : '', ENT_QUOTES, 'UTF-8');
+            /** @var mixed $caption */
             $caption = $slide['caption'] ?? null;
 
-            $html .= '<div class="carousel__slide">';
-            $html .= "<img src=\"{$imageUrl}\" alt=\"{$alt}\">";
+            $html .= "<div class=\"carousel__slide\" role=\"group\" aria-roledescription=\"slide\" aria-label=\"Slide $slideIndex of $slideCount\">";
+            $html .= "<img src=\"$imageUrl\" alt=\"$alt\">";
 
             if (is_string($caption) && $caption !== '') {
                 $html .= '<p class="carousel__caption">' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</p>';
@@ -84,15 +105,18 @@ final readonly class CarouselBlock implements BlockTypeInterface
         }
 
         $html .= '</div>';
-        $html .= '<div class="carousel__nav">';
+        $html .= '<div class="carousel__nav" role="group" aria-label="Slide navigation">';
 
-        foreach ($slides as $i => $slide) {
+        $dotIndex = 0;
+
+        /** @var mixed $slide */
+        foreach ($slides as $slide) {
             if (!is_array($slide)) {
                 continue;
             }
 
-            $label = $i + 1;
-            $html .= "<button class=\"carousel__dot\" aria-label=\"Slide {$label}\"></button>";
+            $dotIndex++;
+            $html .= "<button class=\"carousel__dot\" aria-label=\"Go to slide $dotIndex\"></button>";
         }
 
         return $html . '</div></div>';
@@ -111,17 +135,17 @@ final readonly class CarouselBlock implements BlockTypeInterface
 
         foreach ($data['slides'] as $index => $slide) {
             if (!is_array($slide)) {
-                $errors[] = "slides[{$index}] must be an object";
+                $errors[] = "slides[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($slide['imageUrl']) || !is_string($slide['imageUrl'])) {
-                $errors[] = "slides[{$index}].imageUrl is required and must be a string";
+                $errors[] = "slides[$index].imageUrl is required and must be a string";
             }
 
             if (!isset($slide['alt']) || !is_string($slide['alt'])) {
-                $errors[] = "slides[{$index}].alt is required and must be a string";
+                $errors[] = "slides[$index].alt is required and must be a string";
             }
         }
 

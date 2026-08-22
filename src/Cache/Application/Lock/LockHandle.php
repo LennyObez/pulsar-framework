@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Fencing token carrier for an acquired lock.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LockHandle

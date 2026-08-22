@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for a single shipping rate rule.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShippingRateConfig
@@ -30,17 +32,27 @@ final readonly class ShippingRateConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     method?: string,
+     *     base_amount?: int,
+     *     per_item_amount?: int,
+     *     free_threshold?: int|null,
+     *     estimated_days?: int|null,
+     *     country_codes?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
+        $freeThreshold = $data['free_threshold'] ?? null;
+        $estimatedDays = $data['estimated_days'] ?? null;
+
         return new self(
-            method: ShippingMethod::from((string) ($data['method'] ?? 'standard')),
-            baseAmount: (int) ($data['base_amount'] ?? 0),
-            perItemAmount: (int) ($data['per_item_amount'] ?? 0),
-            freeThreshold: isset($data['free_threshold']) ? (int) $data['free_threshold'] : null,
-            estimatedDays: isset($data['estimated_days']) ? (int) $data['estimated_days'] : null,
-            countryCodes: (array) ($data['country_codes'] ?? []),
+            method: ShippingMethod::from(Coerce::string($data['method'] ?? null, 'standard')),
+            baseAmount: Coerce::int($data['base_amount'] ?? null, 0),
+            perItemAmount: Coerce::int($data['per_item_amount'] ?? null, 0),
+            freeThreshold: $freeThreshold === null ? null : Coerce::int($freeThreshold, 0),
+            estimatedDays: $estimatedDays === null ? null : Coerce::int($estimatedDays, 0),
+            countryCodes: Coerce::listOfString($data['country_codes'] ?? null),
         );
     }
 }

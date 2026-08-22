@@ -13,6 +13,7 @@ use SplFileInfo;
 
 use function array_filter;
 use function array_keys;
+use function array_merge;
 use function array_shift;
 use function array_values;
 use function count;
@@ -26,7 +27,6 @@ use function is_dir;
 use function ksort;
 use function sort;
 use function str_replace;
-use function strcmp;
 use function var_export;
 
 use const DIRECTORY_SEPARATOR;
@@ -213,33 +213,10 @@ final class ExtensionGraphCompiler
      */
     private function mergeSorted(array $a, array $b): array
     {
-        $result = [];
-        $i = 0;
-        $j = 0;
-        $lenA = count($a);
-        $lenB = count($b);
+        $merged = array_merge($a, $b);
+        sort($merged, SORT_STRING);
 
-        while ($i < $lenA && $j < $lenB) {
-            if (strcmp($a[$i], $b[$j]) <= 0) {
-                $result[] = $a[$i];
-                $i++;
-            } else {
-                $result[] = $b[$j];
-                $j++;
-            }
-        }
-
-        while ($i < $lenA) {
-            $result[] = $a[$i];
-            $i++;
-        }
-
-        while ($j < $lenB) {
-            $result[] = $b[$j];
-            $j++;
-        }
-
-        return $result;
+        return $merged;
     }
 
     /**

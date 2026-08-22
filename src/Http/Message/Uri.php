@@ -21,10 +21,11 @@ use function strtolower;
 /**
  * Immutable URI value object implementing PSR-7 UriInterface.
  *
- * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
+ * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
-readonly class Uri implements UriInterface
+final readonly class Uri implements UriInterface
 {
     private const array DEFAULT_PORTS = [
         'http' => 80,
@@ -33,15 +34,25 @@ readonly class Uri implements UriInterface
         'ftps' => 990,
     ];
 
+    private string $encodedPath;
+
+    private string $encodedQuery;
+
+    private string $encodedFragment;
+
     public function __construct(
         private string $scheme = '',
         private string $userInfo = '',
         private string $host = '',
         private ?int $port = null,
-        private string $path = '',
-        private string $query = '',
-        private string $fragment = '',
-    ) {}
+        string $path = '',
+        string $query = '',
+        string $fragment = '',
+    ) {
+        $this->encodedPath = self::encodePath($path);
+        $this->encodedQuery = self::encodeQueryOrFragment($query);
+        $this->encodedFragment = self::encodeQueryOrFragment($fragment);
+    }
 
     /**
      * Parse a URI string into a Uri instance.
@@ -143,21 +154,21 @@ readonly class Uri implements UriInterface
     #[NoDiscard]
     public function getPath(): string
     {
-        return self::encodePath($this->path);
+        return $this->encodedPath;
     }
 
     #[Override]
     #[NoDiscard]
     public function getQuery(): string
     {
-        return self::encodeQueryOrFragment($this->query);
+        return $this->encodedQuery;
     }
 
     #[Override]
     #[NoDiscard]
     public function getFragment(): string
     {
-        return self::encodeQueryOrFragment($this->fragment);
+        return $this->encodedFragment;
     }
 
     #[Override]
@@ -203,21 +214,27 @@ readonly class Uri implements UriInterface
     #[NoDiscard]
     public function withPath(string $path): UriInterface
     {
-        return clone($this, ['path' => $path]);
+        return clone($this, [
+            'encodedPath' => self::encodePath($path),
+        ]);
     }
 
     #[Override]
     #[NoDiscard]
     public function withQuery(string $query): UriInterface
     {
-        return clone($this, ['query' => $query]);
+        return clone($this, [
+            'encodedQuery' => self::encodeQueryOrFragment($query),
+        ]);
     }
 
     #[Override]
     #[NoDiscard]
     public function withFragment(string $fragment): UriInterface
     {
-        return clone($this, ['fragment' => $fragment]);
+        return clone($this, [
+            'encodedFragment' => self::encodeQueryOrFragment($fragment),
+        ]);
     }
 
     #[Override]
@@ -261,8 +278,7 @@ readonly class Uri implements UriInterface
      */
     private static function encodePath(string $path): string
     {
-        /** @var string */
-        return preg_replace_callback(
+        return (string) preg_replace_callback(
             '/[^a-zA-Z0-9_.~!$&\'()*+,;=:@\/%-]|%(?![a-fA-F0-9]{2})/',
             static fn(array $match): string => rawurlencode($match[0]),
             $path,
@@ -274,8 +290,7 @@ readonly class Uri implements UriInterface
      */
     private static function encodeQueryOrFragment(string $value): string
     {
-        /** @var string */
-        return preg_replace_callback(
+        return (string) preg_replace_callback(
             '/[^a-zA-Z0-9_.~!$&\'()*+,;=:@\/?%-]|%(?![a-fA-F0-9]{2})/',
             static fn(array $match): string => rawurlencode($match[0]),
             $value,

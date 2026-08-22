@@ -12,6 +12,10 @@ use Pulsar\Api\Api;
  *
  * Each block belongs to a content translation (content + locale) and carries
  * type-specific data as a validated JSON payload.
+ *
+ * @psalm-api Public DTO returned from ContentBlockRepositoryInterface; consumed
+ *            by the block editor frontend bridge and template rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentBlock

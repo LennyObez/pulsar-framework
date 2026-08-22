@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Plugins and extensions register content types during boot,
  * and the admin UI auto-generates forms based on field definitions.
+ *
+ * @psalm-api Public binding contract; implemented by ContentTypeRegistry and
+ *            consumed by admin UI generators.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentTypeRegistryInterface

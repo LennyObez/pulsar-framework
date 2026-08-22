@@ -38,10 +38,16 @@ final readonly class QuoteBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $text = htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawText */
+        $rawText = $data['text'] ?? null;
+        $text = htmlspecialchars(is_string($rawText) ? $rawText : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $citation */
         $citation = $data['citation'] ?? null;
 
-        $html = "<blockquote><p>{$text}</p>";
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' class="' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') . '"' : '';
+
+        $html = "<blockquote$className$anchor><p>$text</p>";
 
         if (is_string($citation) && $citation !== '') {
             $html .= '<cite>' . htmlspecialchars($citation, ENT_QUOTES, 'UTF-8') . '</cite>';

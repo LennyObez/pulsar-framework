@@ -8,7 +8,6 @@ use Psr\Http\Message\ResponseInterface;
 use Pulsar\Api\Internal;
 
 use function gmdate;
-use function sprintf;
 use function strlen;
 use function strtolower;
 
@@ -26,6 +25,13 @@ use function strtolower;
 final class HttpResponseSerializer
 {
     /**
+     * Cached Date header value, updated once per second.
+     */
+    private string $cachedDate = '';
+
+    private int $cachedDateTimestamp = 0;
+
+    /**
      * Serialize a Response to raw HTTP bytes.
      *
      * @param bool $closeConnection Whether to inject Connection: close
@@ -37,12 +43,8 @@ final class HttpResponseSerializer
         bool $closeConnection = false,
         bool $addDateHeader = true,
     ): string {
-        $statusLine = sprintf(
-            "HTTP/%s %d %s\r\n",
-            $response->getProtocolVersion(),
-            $response->getStatusCode(),
-            $response->getReasonPhrase(),
-        );
+        $statusCode = $response->getStatusCode();
+        $statusLine = 'HTTP/' . $response->getProtocolVersion() . ' ' . $statusCode . ' ' . $response->getReasonPhrase() . "\r\n";
 
         // Read body and compute length
         $bodyString = (string) $response->getBody();
@@ -63,7 +65,7 @@ final class HttpResponseSerializer
                 continue;
             }
 
-            // Skip Content-Length — we'll set our own from actual body
+            // Skip Content-Length: we'll set our own from actual body
             if ($lower === 'content-length') {
                 continue;
             }
@@ -78,12 +80,12 @@ final class HttpResponseSerializer
             }
 
             foreach ($values as $value) {
-                $headerStr .= sprintf("%s: %s\r\n", $name, $value);
+                $headerStr .= $name . ': ' . $value . "\r\n";
             }
         }
 
         // Set Content-Length from actual body length
-        $headerStr .= sprintf("Content-Length: %d\r\n", $bodyLength);
+        $headerStr .= 'Content-Length: ' . $bodyLength . "\r\n";
 
         // Inject Connection: close if closing
         if ($closeConnection) {
@@ -92,7 +94,7 @@ final class HttpResponseSerializer
 
         // Add Date header if enabled and not already present
         if ($addDateHeader && !$hasDate) {
-            $headerStr .= sprintf("Date: %s GMT\r\n", gmdate('D, d M Y H:i:s'));
+            $headerStr .= 'Date: ' . $this->currentDate() . "\r\n";
         }
 
         // HEAD responses: include Content-Length but omit body
@@ -115,15 +117,30 @@ final class HttpResponseSerializer
         }
 
         $bodyLength = strlen($body);
-        $date = $addDateHeader ? sprintf("Date: %s GMT\r\n", gmdate('D, d M Y H:i:s')) : '';
+        $date = $addDateHeader ? 'Date: ' . gmdate('D, d M Y H:i:s') . " GMT\r\n" : '';
 
-        return sprintf(
-            "HTTP/1.1 %d %s\r\n%sContent-Length: %d\r\nConnection: close\r\nContent-Type: text/plain\r\n\r\n%s",
-            $statusCode,
-            $reasonPhrase,
-            $date,
-            $bodyLength,
-            $body,
-        );
+        return 'HTTP/1.1 ' . $statusCode . ' ' . $reasonPhrase . "\r\n"
+            . $date
+            . 'Content-Length: ' . $bodyLength . "\r\n"
+            . "Connection: close\r\nContent-Type: text/plain\r\n\r\n"
+            . $body;
+    }
+
+    /**
+     * Get the current RFC 7231 formatted date, cached per second.
+     *
+     * In persistent runtimes this avoids calling gmdate() on every
+     * response when multiple requests are handled within the same second.
+     */
+    private function currentDate(): string
+    {
+        $now = time();
+
+        if ($now !== $this->cachedDateTimestamp) {
+            $this->cachedDateTimestamp = $now;
+            $this->cachedDate = gmdate('D, d M Y H:i:s') . ' GMT';
+        }
+
+        return $this->cachedDate;
     }
 }

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Fail-fast validation at construction time ensures no invalid identifiers
  * leak into compiled SQL.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Identifier

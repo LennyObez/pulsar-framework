@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Saga\Step;
+
+use Pulsar\Api\Api;
+
+/**
+ * Execution status of an individual saga step.
+ * @api
+ */
+#[Api(since: '1.0.0')]
+enum SagaStepStatus: string
+{
+    case Pending = 'pending';
+    case Running = 'running';
+    case Completed = 'completed';
+    case Failed = 'failed';
+    case Skipped = 'skipped';
+}

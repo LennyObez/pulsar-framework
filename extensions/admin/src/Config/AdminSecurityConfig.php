@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Security configuration for the admin panel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdminSecurityConfig
@@ -21,25 +22,21 @@ final readonly class AdminSecurityConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     required_role?: string,
+     *     require_2fa?: bool,
+     *     csrf_rotation?: bool,
+     *     csp_nonce?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $requiredRole */
-        $requiredRole = $data['required_role'] ?? 'admin';
-        /** @var bool $require2fa */
-        $require2fa = $data['require_2fa'] ?? true;
-        /** @var bool $csrfRotation */
-        $csrfRotation = $data['csrf_rotation'] ?? true;
-        /** @var bool $cspNonce */
-        $cspNonce = $data['csp_nonce'] ?? true;
-
         return new self(
-            requiredRole: $requiredRole,
-            require2fa: $require2fa,
-            csrfRotation: $csrfRotation,
-            cspNonce: $cspNonce,
+            requiredRole: $data['required_role'] ?? 'admin',
+            require2fa: $data['require_2fa'] ?? true,
+            csrfRotation: $data['csrf_rotation'] ?? true,
+            cspNonce: $data['csp_nonce'] ?? true,
         );
     }
 }

@@ -6,8 +6,16 @@ namespace Pulsar\Extension\Cms\Plugins;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+use function is_scalar;
+use function is_string;
+
 /**
  * Parsed plugin manifest (plugin.json) with all declared metadata.
+ *
+ * @psalm-api Public DTO produced from plugin.json parsing; consumed by
+ *            CmsPluginManager and PluginManifestValidator.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PluginManifest
@@ -44,24 +52,130 @@ final readonly class PluginManifest
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     slug?: string,
+     *     display_name?: string,
+     *     name?: string,
+     *     version?: string,
+     *     description?: string|null,
+     *     author_name?: string|null,
+     *     author_url?: string|null,
+     *     license?: string|null,
+     *     pulsar_version?: string|null,
+     *     capabilities?: list<string>,
+     *     dependencies?: array<string, string>,
+     *     entry_point?: string|null,
+     *     settings?: array<string, mixed>,
+     *     autoload?: array<string, array<string, string>>|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            slug: (string) ($data['slug'] ?? ''),
-            displayName: (string) ($data['display_name'] ?? $data['name'] ?? ''),
-            version: (string) ($data['version'] ?? '0.0.0'),
-            description: isset($data['description']) ? (string) $data['description'] : null,
-            authorName: isset($data['author_name']) ? (string) $data['author_name'] : null,
-            authorUrl: isset($data['author_url']) ? (string) $data['author_url'] : null,
-            license: isset($data['license']) ? (string) $data['license'] : null,
-            pulsarVersionConstraint: isset($data['pulsar_version']) ? (string) $data['pulsar_version'] : null,
-            capabilities: (array) ($data['capabilities'] ?? []),
-            dependencies: (array) ($data['dependencies'] ?? []),
-            entryPoint: isset($data['entry_point']) ? (string) $data['entry_point'] : null,
-            settings: (array) ($data['settings'] ?? []),
-            autoload: isset($data['autoload']) ? (array) $data['autoload'] : null,
+            slug: $data['slug'] ?? '',
+            displayName: $data['display_name'] ?? $data['name'] ?? '',
+            version: $data['version'] ?? '0.0.0',
+            description: $data['description'] ?? null,
+            authorName: $data['author_name'] ?? null,
+            authorUrl: $data['author_url'] ?? null,
+            license: $data['license'] ?? null,
+            pulsarVersionConstraint: $data['pulsar_version'] ?? null,
+            capabilities: self::toStringList($data['capabilities'] ?? []),
+            dependencies: self::toStringMap($data['dependencies'] ?? []),
+            entryPoint: $data['entry_point'] ?? null,
+            settings: self::toStringKeyedArray($data['settings'] ?? []),
+            autoload: isset($data['autoload']) ? self::toStringKeyedStringMap($data['autoload']) : null,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function toStringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $item) {
+            $result[] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function toStringMap(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            $strKey = is_string($key) ? $key : (string) $key;
+            $result[$strKey] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function toStringKeyedArray(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            $strKey = is_string($key) ? $key : (string) $key;
+            $result = [...$result, $strKey => $item];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private static function toStringKeyedStringMap(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $inner = [];
+
+            /** @var mixed $v */
+            foreach ($item as $k => $v) {
+                $innerKey = is_string($k) ? $k : (string) $k;
+                $inner[$innerKey] = is_string($v) ? $v : (is_scalar($v) ? (string) $v : '');
+            }
+
+            $outerKey = is_string($key) ? $key : (string) $key;
+            $result[$outerKey] = $inner;
+        }
+
+        return $result;
     }
 }

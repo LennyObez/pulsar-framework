@@ -10,6 +10,10 @@ use Pulsar\Api\Api;
  * Publishing lifecycle status for content items.
  *
  * Encodes valid state transitions for both standard and editorial workflow modes.
+ *
+ * @psalm-api Public enum referenced by Content::status; consumed by content
+ *            services, admin views, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PublishingStatus: string

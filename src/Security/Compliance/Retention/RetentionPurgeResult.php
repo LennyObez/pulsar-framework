@@ -13,9 +13,10 @@ use Pulsar\Api\Api;
  *
  * Contains the policy applied, affected date range, record count,
  * operator identity, and whether this was a dry-run.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionPurgeResult
+final readonly class RetentionPurgeResult
 {
     public function __construct(
         public string $policyId,

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when all jobs in a batch have completed (successfully or with allowed failures).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BatchCompleted

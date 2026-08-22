@@ -10,7 +10,7 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 
 /**
- * Benchmark profile event payload — one per profile per benchmark run.
+ * Benchmark profile event payload: one per profile per benchmark run.
  */
 #[Internal]
 final readonly class BenchmarkProfilePayload implements ConsoleEvent

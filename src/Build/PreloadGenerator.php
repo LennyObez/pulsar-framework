@@ -6,11 +6,16 @@ namespace Pulsar\Build;
 
 use Pulsar\Api\Internal;
 use Pulsar\Runtime\RuntimeType;
+use ReflectionClass;
+use ReflectionException;
 
 use function array_unique;
 use function array_values;
+use function class_exists;
 use function implode;
+use function interface_exists;
 use function is_file;
+use function is_string;
 use function preg_match_all;
 use function sort;
 use function sprintf;
@@ -34,14 +39,17 @@ final class PreloadGenerator
     /**
      * Generate the preload file content.
      *
+     * Takes no project base path: every entry is resolved through the autoloader
+     * (or read from the compiled container in the build cache), so the generator
+     * makes no assumption about the project's directory layout.
+     *
      * @param RuntimeType $runtime Target runtime
-     * @param string $basePath Application base path
      * @param string $cacheDir Build cache directory
      * @return string PHP source code for the preload file
      */
-    public function generate(RuntimeType $runtime, string $basePath, string $cacheDir): string
+    public function generate(RuntimeType $runtime, string $cacheDir): string
     {
-        $classes = $this->resolvePreloadClasses($runtime, $basePath, $cacheDir);
+        $classes = $this->resolvePreloadClasses($runtime, $cacheDir);
         sort($classes, SORT_STRING);
         $classes = array_values(array_unique($classes));
 
@@ -94,73 +102,53 @@ final class PreloadGenerator
      *
      * @return list<string> Absolute file paths
      */
-    private function resolvePreloadClasses(RuntimeType $runtime, string $basePath, string $cacheDir): array
+    private function resolvePreloadClasses(RuntimeType $runtime, string $cacheDir): array
     {
         $classes = [];
 
-        // Core classes always preloaded
-        $corePatterns = [
-            'src/Core/Kernel.php',
-            'src/Core/Version.php',
-            'src/Container/Container.php',
-            'src/Container/ContainerInterface.php',
-            'src/Routing/Router.php',
-            'src/Routing/Route.php',
-            'src/Routing/MatchedRoute.php',
-            'src/Http/Middleware/MiddlewarePipeline.php',
-            'src/Config/ConfigRepository.php',
-        ];
-
-        foreach ($corePatterns as $pattern) {
-            $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
-
-            if (is_file($filePath)) {
-                $classes[] = $filePath;
-            }
-        }
+        // Core classes always preloaded. Resolved by class name through the
+        // autoloader rather than by `src/…` path patterns rooted at the project
+        // base: the framework lives at <project>/src only in its own repo, and
+        // under vendor/pulsar/framework/src in an installed application — where
+        // the old patterns silently matched nothing and preloaded no core class.
+        $this->collectClassFiles($classes, [
+            'Pulsar\\Core\\Kernel',
+            'Pulsar\\Core\\Version',
+            'Pulsar\\Container\\Container',
+            'Pulsar\\Container\\ContainerInterface',
+            'Pulsar\\Routing\\Router',
+            'Pulsar\\Routing\\Route',
+            'Pulsar\\Routing\\MatchedRoute',
+            'Pulsar\\Http\\Middleware\\MiddlewarePipeline',
+            'Pulsar\\Config\\ConfigRepository',
+        ]);
 
         // For FPM: add more classes since every request is cold
         if ($runtime === RuntimeType::Fpm) {
-            $fpmPatterns = [
-                'src/Http/Message/ServerRequest.php',
-                'src/Http/Message/Response.php',
-                'src/Http/ResponseEmitter.php',
-                'src/Console/Command.php',
-                'src/Config/ConfigManager.php',
-                'src/ErrorHandling/ExceptionHandler.php',
-            ];
-
-            foreach ($fpmPatterns as $pattern) {
-                $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
-
-                if (is_file($filePath)) {
-                    $classes[] = $filePath;
-                }
-            }
+            $this->collectClassFiles($classes, [
+                'Pulsar\\Http\\Message\\ServerRequest',
+                'Pulsar\\Http\\Message\\Response',
+                'Pulsar\\Http\\ResponseEmitter',
+                'Pulsar\\Console\\Command',
+                'Pulsar\\Config\\ConfigManager',
+                'Pulsar\\ErrorHandling\\ExceptionHandler',
+            ]);
         }
 
         // For persistent runtimes: focus on container/routing (warm container reuse)
         if ($runtime !== RuntimeType::Fpm) {
-            $persistentPatterns = [
-                'src/Runtime/PersistentRuntime.php',
-                'src/Runtime/Hygiene/PersistentRuntimeHygiene.php',
-                'src/Container/Compiled/CompiledContainer.php',
-            ];
-
-            foreach ($persistentPatterns as $pattern) {
-                $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
-
-                if (is_file($filePath)) {
-                    $classes[] = $filePath;
-                }
-            }
+            $this->collectClassFiles($classes, [
+                'Pulsar\\Runtime\\PersistentRuntime',
+                'Pulsar\\Runtime\\Hygiene\\PersistentRuntimeHygiene',
+                'Pulsar\\Container\\Compiled\\CompiledContainer',
+            ]);
         }
 
         // Also preload any classes referenced in the compiled container
         $containerPath = $cacheDir . DIRECTORY_SEPARATOR . 'container.compiled.php';
 
         if (is_file($containerPath)) {
-            $containerClasses = $this->extractClassesFromCompiledContainer($containerPath, $basePath);
+            $containerClasses = $this->extractClassesFromCompiledContainer($containerPath);
             $classes = [...$classes, ...$containerClasses];
         }
 
@@ -197,13 +185,43 @@ final class PreloadGenerator
     }
 
     /**
+     * Resolve each class to its file through the autoloader and collect the ones
+     * that exist.
+     *
+     * Layout-independent by construction: it works whether the framework is the
+     * project itself or a vendored dependency, and whatever the project's PSR-4
+     * root is named. A class that is not installed is skipped, never fatal.
+     *
+     * @param list<string> $target Collected file paths (modified in-place)
+     * @param list<string> $classNames Fully-qualified class or interface names
+     */
+    private function collectClassFiles(array &$target, array $classNames): void
+    {
+        foreach ($classNames as $className) {
+            if (!class_exists($className) && !interface_exists($className)) {
+                continue;
+            }
+
+            try {
+                $file = new ReflectionClass($className)->getFileName();
+            } catch (ReflectionException) {
+                continue;
+            }
+
+            if (is_string($file) && is_file($file)) {
+                $target[] = $file;
+            }
+        }
+    }
+
+    /**
      * Extract class file paths referenced in the compiled container.
      *
      * Parses `new \Fully\Qualified\ClassName(...)` patterns from the generated code.
      *
      * @return list<string>
      */
-    private function extractClassesFromCompiledContainer(string $containerPath, string $basePath): array
+    private function extractClassesFromCompiledContainer(string $containerPath): array
     {
         $content = file_get_contents($containerPath);
 
@@ -221,14 +239,26 @@ final class PreloadGenerator
         $files = [];
 
         foreach ($matches[1] as $fqcn) {
-            // Convert FQCN to file path (PSR-4: Pulsar\ -> src/)
-            if (str_starts_with($fqcn, 'Pulsar\\')) {
-                $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($fqcn, 7));
-                $filePath = $basePath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . $relative . '.php';
+            if (!str_starts_with($fqcn, 'Pulsar\\')) {
+                continue;
+            }
 
-                if (is_file($filePath)) {
-                    $files[] = $filePath;
-                }
+            // Resolve the file through the autoloader instead of assuming a
+            // `src/` layout: the framework sits at <project>/src in its own repo
+            // but under vendor/pulsar/framework/src in an installed application,
+            // and a project's PSR-4 root may not be `src/` at all.
+            if (!class_exists($fqcn) && !interface_exists($fqcn)) {
+                continue;
+            }
+
+            try {
+                $file = new ReflectionClass($fqcn)->getFileName();
+            } catch (ReflectionException) {
+                continue;
+            }
+
+            if (is_string($file) && is_file($file)) {
+                $files[] = $file;
             }
         }
 

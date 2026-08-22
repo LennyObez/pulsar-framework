@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable snapshot of a queued job's state.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class JobRecord
+final readonly class JobRecord
 {
     public function __construct(
         public string $id,

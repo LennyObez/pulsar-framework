@@ -380,10 +380,15 @@ When provided, authorization denials are logged as `AuditEvent::Authorization` w
 
 The Kernel registers these middleware aliases:
 
-| Alias  | Middleware                | Purpose                            |
-| ------ | ------------------------- | ---------------------------------- |
-| `auth` | `AuthorizationMiddleware` | Authentication + permission checks |
-| `2fa`  | `TwoFactorMiddleware`     | Blocks pending 2FA status          |
+| Alias       | Middleware                | Purpose                                     |
+| ----------- | ------------------------- | ------------------------------------------- |
+| `auth`      | `AuthorizationMiddleware` | Authentication + permission checks          |
+| `2fa`       | `TwoFactorMiddleware`     | Blocks pending 2FA status                   |
+| `zerotrust` | `ZeroTrustMiddleware`     | Deny-by-default signal/policy gate (opt-in) |
+
+The `zerotrust` alias is registered only when `security.zero_trust.enabled` is
+true (see [Zero-trust access control](#zero-trust-access-control)); it is never
+piped globally.
 
 ### Common route patterns
 
@@ -406,3 +411,64 @@ new Route([Method::GET], '/admin/settings', $handler,
     middleware: ['auth', '2fa'],
 );
 ```
+
+## Zero-trust access control
+
+The Gate (RBAC + ABAC) answers "may this identity perform this action?". The
+zero-trust subsystem answers a different question — "do we still trust this
+session _right now_?" — by scoring runtime signals (device, location, network,
+time, behaviour) against a policy on every request. It is **opt-in** and
+**deny-by-default**: a route guarded by `zerotrust` with no matching rule is
+denied, so you enable it and grant access explicitly, never the reverse.
+
+### Enabling it
+
+Zero-trust is off unless configured. Wiring requires the event dispatcher and
+audit logger (so every decision is announced and recorded); the crypto key ring
+is used, when present, to pseudonymise retained signals.
+
+```php
+// config/security.php
+return [
+    // ...
+    'zero_trust' => [
+        'enabled' => true,
+        'rules' => [
+            [
+                'name' => 'read-reports',
+                'resource_pattern' => '/reports/*',
+                'action' => 'read',
+                'on_match' => 'grant',
+                'on_no_match' => 'deny',
+                'priority' => 10,
+                'requirements' => [
+                    ['claim' => 'device.registered', 'min_confidence' => 0.8],
+                    ['claim' => 'network.trusted', 'min_confidence' => 0.6, 'allowed_sources' => ['network']],
+                ],
+            ],
+        ],
+    ],
+];
+```
+
+Each rule maps a glob `resource_pattern` + `action` to a set of claim
+`requirements`; `on_match` / `on_no_match` default to `grant` / `deny`, and
+higher-`priority` rules are evaluated first. A requirement names a `claim`, a
+`min_confidence` (0.0–1.0), and optionally the `allowed_sources` that may supply
+it.
+
+### Applying it to routes
+
+Attach the `zerotrust` alias only to the routes it should guard. Because the
+policy engine is deny-by-default, piping it globally would reject every
+unmatched route the moment the feature is enabled.
+
+```php
+new Route([Method::GET], '/reports/{id}', $handler,
+    middleware: ['auth', 'zerotrust'],
+);
+```
+
+See [zero-trust threat model](security/zero-trust-threat-model.md) and
+[compliance mapping](security/zero-trust-compliance-mapping.md) for the signal
+model and the regulatory controls it satisfies.

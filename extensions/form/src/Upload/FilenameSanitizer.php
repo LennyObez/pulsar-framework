@@ -9,6 +9,7 @@ use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function chr;
+use function in_array;
 use function ord;
 use function pathinfo;
 use function preg_replace;
@@ -23,11 +24,55 @@ use const PATHINFO_EXTENSION;
  * Sanitizes uploaded file names for secure storage.
  *
  * Strips path traversal sequences, control characters, and null bytes.
- * Generates UUID-based storage filenames to prevent enumeration.
+ * Generates UUID-based storage filenames to prevent enumeration, and derives
+ * the stored extension from the *detected* content type rather than the
+ * client-supplied name — never writing a server-executable extension — so a
+ * content/extension polyglot cannot be stored as `.php` and executed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FilenameSanitizer
 {
+    /**
+     * Canonical extension per detected MIME type (the trustworthy source for
+     * the stored extension; the magic-byte sniffer determines the MIME).
+     *
+     * @var array<string, string>
+     */
+    private const array MIME_EXTENSIONS = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+        'image/x-icon' => 'ico',
+        'application/pdf' => 'pdf',
+        'application/zip' => 'zip',
+        'application/msword' => 'doc',
+        'application/gzip' => 'gz',
+        'application/x-bzip2' => 'bz2',
+        'application/x-xz' => 'xz',
+        'application/x-rar-compressed' => 'rar',
+        'audio/mpeg' => 'mp3',
+        'audio/flac' => 'flac',
+        'video/webm' => 'webm',
+        'application/xml' => 'xml',
+        'application/json' => 'json',
+        'text/plain' => 'txt',
+    ];
+
+    /**
+     * Extensions that must never be written to disk, regardless of content:
+     * server-executable or interpreter handlers that could yield RCE if the
+     * upload directory is web-served.
+     *
+     * @var list<string>
+     */
+    private const array DANGEROUS_EXTENSIONS = [
+        'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'pht', 'phps', 'phpt', 'phar',
+        'cgi', 'pl', 'py', 'rb', 'sh', 'bash', 'asp', 'aspx', 'jsp', 'jspx',
+        'exe', 'bat', 'cmd', 'com', 'htaccess', 'shtml',
+    ];
+
     /**
      * Sanitize an original filename by removing dangerous characters.
      */
@@ -47,18 +92,42 @@ final class FilenameSanitizer
     }
 
     /**
-     * Generate a UUID-based storage filename preserving the original extension.
+     * Generate a UUID-based storage filename with a safe extension.
+     *
+     * When the detected MIME type is known, its canonical extension is used so
+     * the stored extension always matches the real content. Otherwise the
+     * client extension is used only if it is not a server-executable one.
      */
-    public function generateStorageName(string $originalFilename): string
+    public function generateStorageName(string $originalFilename, ?string $detectedMime = null): string
     {
-        $extension = strtolower(pathinfo($this->sanitize($originalFilename), PATHINFO_EXTENSION));
         $uuid = $this->generateUuid();
+        $extension = $this->safeExtension($originalFilename, $detectedMime);
 
         if ($extension !== '') {
             return $uuid . '.' . $extension;
         }
 
         return $uuid;
+    }
+
+    /**
+     * Resolve a safe storage extension: prefer the detected content type's
+     * canonical extension; fall back to the sanitized client extension unless
+     * it is a server-executable one, in which case no extension is written.
+     */
+    private function safeExtension(string $originalFilename, ?string $detectedMime): string
+    {
+        if ($detectedMime !== null && isset(self::MIME_EXTENSIONS[$detectedMime])) {
+            return self::MIME_EXTENSIONS[$detectedMime];
+        }
+
+        $extension = strtolower(pathinfo($this->sanitize($originalFilename), PATHINFO_EXTENSION));
+
+        if ($extension === '' || in_array($extension, self::DANGEROUS_EXTENSIONS, true)) {
+            return '';
+        }
+
+        return $extension;
     }
 
     private function generateUuid(): string

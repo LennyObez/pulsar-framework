@@ -17,6 +17,7 @@ use function is_array;
  *
  * Allows dynamic add/remove of repeated field groups
  * (e.g., multiple addresses, phone numbers).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CollectionField implements FieldInterface
@@ -33,8 +34,8 @@ final class CollectionField implements FieldInterface
         private readonly string $name,
         private readonly string $label,
         private readonly Closure $prototype,
-        private readonly int $minEntries = 0,
-        private readonly ?int $maxEntries = null,
+        public readonly int $minEntries = 0,
+        public readonly ?int $maxEntries = null,
     ) {}
 
     #[Override]
@@ -69,6 +70,7 @@ final class CollectionField implements FieldInterface
         if (is_array($value)) {
             $this->entries = [];
 
+            /** @var mixed $entryValue */
             foreach ($value as $entryValue) {
                 $entry = ($this->prototype)();
                 $entry->setValue($entryValue);
@@ -142,15 +144,6 @@ final class CollectionField implements FieldInterface
         return $this->entries;
     }
 
-    public function getMinEntries(): int
-    {
-        return $this->minEntries;
-    }
-
-    public function getMaxEntries(): ?int
-    {
-        return $this->maxEntries;
-    }
 
     public function getId(): string
     {

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for notification delivery channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NotificationChannelInterface

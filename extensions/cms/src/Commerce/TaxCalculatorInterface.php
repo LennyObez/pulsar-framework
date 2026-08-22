@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tax calculation contract supporting per-item rates, VAT reverse charge, and multi-country rules.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TaxCalculatorInterface

@@ -40,10 +40,23 @@ use function str_contains;
  * Runs after authentication and routing, before the controller.
  * Resolves bound models, enforces authorization based on the
  * configured preset, and attaches resolved models to the request.
+ *
+ * The per-handler `#[PublicRoute]` attribute lookup is cached in a
+ * static map: route handlers are immutable once registered, so the
+ * cache is safe for the entire process lifetime and eliminates the
+ * per-request `new ReflectionMethod()` + `new ReflectionClass()`
+ * cost (M-2 audit response).
  */
-#[Internal(reason: 'Middleware wiring — registered in the middleware pipeline by the composition root')]
-final readonly class ModelBindingMiddleware implements MiddlewareInterface
+#[Internal(reason: 'Middleware wiring; registered in the middleware pipeline by the composition root')]
+final class ModelBindingMiddleware implements MiddlewareInterface
 {
+    /**
+     * Per-handler `#[PublicRoute]` lookup cache keyed by `"Class::method"`.
+     *
+     * @var array<string, bool>
+     */
+    private static array $publicRouteCache = [];
+
     /**
      * @param (Closure(ServerRequestInterface): ?IdentityInterface)|null $identityResolver
      *        Resolves the authenticated identity from the request. Provided by
@@ -51,13 +64,13 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
      *        no identity resolution is available.
      */
     public function __construct(
-        private ModelBinder $binder,
-        private ModelBindingConfig $config,
-        private AuthorizationHookInterface $authHook,
-        private ?TenantContext $tenantContext = null,
-        private ?Closure $identityResolver = null,
-        private ?LoggerInterface $logger = null,
-        private ?AuditLoggerInterface $auditLogger = null,
+        private readonly ModelBinder $binder,
+        private readonly ModelBindingConfig $config,
+        private readonly AuthorizationHookInterface $authHook,
+        private readonly ?TenantContext $tenantContext = null,
+        private readonly ?Closure $identityResolver = null,
+        private readonly ?LoggerInterface $logger = null,
+        private readonly ?AuditLoggerInterface $auditLogger = null,
     ) {}
 
     #[Override]
@@ -74,17 +87,19 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
         $context = $this->buildResolutionContext($identity);
 
         try {
-            $models = $this->binder->bind($matchedRoute, $request, $context);
+            $resolved = $this->binder->bindWithMeta($matchedRoute, $request, $context);
         } catch (ModelBindingException $e) {
             return $this->handleBindingException($e, $request);
         }
+
+        $models = $resolved->models;
 
         if ($models === []) {
             return $handler->handle($request);
         }
 
         // Authorization enforcement
-        $authResult = $this->enforceAuthorization($request, $matchedRoute, $models, $identity);
+        $authResult = $this->enforceAuthorization($request, $matchedRoute, $models, $resolved->metas, $identity);
         if ($authResult !== null) {
             return $authResult;
         }
@@ -137,12 +152,14 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
     /**
      * Enforce authorization on resolved models according to the configured preset.
      *
-     * @param array<string, object> $models
+     * @param array<string, object>      $models
+     * @param array<string, BindingMeta> $metas  Binding metadata keyed by parameter name
      */
     private function enforceAuthorization(
         ServerRequestInterface $request,
         MatchedRoute $matchedRoute,
         array $models,
+        array $metas,
         ?IdentityInterface $identity,
     ): ?ResponseInterface {
         $withoutAuthz = ($matchedRoute->getAttributes()['_without_authorization'] ?? false) === true;
@@ -152,19 +169,14 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
         foreach ($models as $paramName => $model) {
             $modelClass = $model::class;
 
-            // Regulated preset: authorization bypass forbidden unless #[PublicRoute]
-            if ($isRegulated && $withoutAuthz && !$isPublicRoute) {
-                $routeName = $matchedRoute->getName() ?? $matchedRoute->route->path;
-                return $this->forbiddenResponse($request, ModelBindingException::authBypassForbidden($routeName));
-            }
+            // Authorization opt-out (#[WithoutAuthorization]): a regulated preset
+            // forbids bypassing authorization on a non-public route; otherwise the
+            // opt-out is honored (public route, or a permissive preset).
+            if ($withoutAuthz) {
+                if ($isRegulated && !$isPublicRoute) {
+                    return $this->forbiddenResponse($request);
+                }
 
-            // Skip authorization if explicitly opted out on a public route
-            if ($withoutAuthz && $isPublicRoute) {
-                continue;
-            }
-
-            // Skip authorization if opted out on a permissive preset
-            if ($withoutAuthz && !$isRegulated) {
                 continue;
             }
 
@@ -181,15 +193,16 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
                 continue;
             }
 
-            $meta = new BindingMeta(class: $modelClass);
+            // Use the metadata that actually produced this binding so the
+            // hook enforces the declared authorization policy. Falling back to
+            // a bare meta would silently downgrade every binding to the hook's
+            // default permission ('view'), under-authorizing edit/delete routes.
+            $meta = $metas[$paramName] ?? new BindingMeta(class: $modelClass);
 
             if (!$this->authHook->authorize($identity, $model, $meta)) {
                 $this->auditAuthzDenied($request, $identity->id(), $modelClass);
 
-                return $this->forbiddenResponse(
-                    $request,
-                    ModelBindingException::authorizationFailed($modelClass, $paramName),
-                );
+                return $this->forbiddenResponse($request);
             }
         }
 
@@ -201,6 +214,7 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
      */
     private function isPublicRoute(MatchedRoute $matchedRoute): bool
     {
+        /** @var mixed $handler */
         $handler = $matchedRoute->getHandler();
         $handlerInfo = $this->resolveHandlerInfo($handler);
 
@@ -209,29 +223,34 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
         }
 
         [$class, $method] = $handlerInfo;
+        $cacheKey = $class . '::' . $method;
+
+        if (isset(self::$publicRouteCache[$cacheKey])) {
+            return self::$publicRouteCache[$cacheKey];
+        }
 
         try {
             // Check method-level attribute first
             $reflectionMethod = new ReflectionMethod($class, $method);
             if ($reflectionMethod->getAttributes(PublicRoute::class) !== []) {
-                return true;
+                return self::$publicRouteCache[$cacheKey] = true;
             }
 
             // Check class-level attribute
             $reflectionClass = new ReflectionClass($class);
-            return $reflectionClass->getAttributes(PublicRoute::class) !== [];
+
+            return self::$publicRouteCache[$cacheKey] = $reflectionClass->getAttributes(PublicRoute::class) !== [];
         } catch (ReflectionException) {
-            return false;
+            return self::$publicRouteCache[$cacheKey] = false;
         }
     }
 
     /**
      * Extract controller class and method from a route handler.
      *
-     * @param array{0: class-string, 1: string}|callable|class-string $handler
      * @return array{0: class-string, 1: string}|null
      */
-    private function resolveHandlerInfo(array|string|callable $handler): ?array
+    private function resolveHandlerInfo(mixed $handler): ?array
     {
         if (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1])) {
             /** @var class-string $class */
@@ -282,7 +301,7 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
         return $this->errorResponse($request, ResponseStatus::Unauthorized, 'Unauthorized');
     }
 
-    private function forbiddenResponse(ServerRequestInterface $request, ModelBindingException $e): ResponseInterface
+    private function forbiddenResponse(ServerRequestInterface $request): ResponseInterface
     {
         return $this->errorResponse($request, ResponseStatus::Forbidden, 'Forbidden');
     }

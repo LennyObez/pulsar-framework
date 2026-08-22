@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each directive compiles its expression to PHP code. The compiled output
  * replaces the directive in the template source during the compilation phase.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DirectiveInterface

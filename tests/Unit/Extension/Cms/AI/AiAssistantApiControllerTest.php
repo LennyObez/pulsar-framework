@@ -10,14 +10,15 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
+use Pulsar\AI\AiClientInterface;
+use Pulsar\AI\AiResponse;
+use Pulsar\AI\Config\AiRequestOptions;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
-use Pulsar\Extension\Cms\AI\LlmOptions;
-use Pulsar\Extension\Cms\AI\LlmProviderInterface;
-use Pulsar\Extension\Cms\AI\LlmResponse;
 use Pulsar\Extension\Cms\Config\AiConfig;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Http\Controller\Api\AiAssistantApiController;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
+use RuntimeException;
 
 use function json_decode;
 
@@ -56,7 +57,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function generate_draft_returns_200_with_content(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Draft content', 50, 100, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Draft content', 50, 100, 'stop'));
 
         $request = $this->createRequest(['topic' => 'PHP testing']);
         $response = $controller->generateDraft($request);
@@ -86,7 +87,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function summarize_returns_200_with_content(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Summary text', 30, 15, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Summary text', 30, 15, 'stop'));
 
         $request = $this->createRequest(['content' => 'Long article text']);
         $response = $controller->summarize($request);
@@ -100,7 +101,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function suggest_titles_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse("Title 1\nTitle 2", 20, 10, 'stop'));
+        $controller = $this->createController($config, new AiResponse("Title 1\nTitle 2", 20, 10, 'stop'));
 
         $request = $this->createRequest(['content' => 'Article content']);
         $response = $controller->suggestTitles($request);
@@ -112,7 +113,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function suggest_meta_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Meta description', 20, 10, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Meta description', 20, 10, 'stop'));
 
         $request = $this->createRequest(['content' => 'Article content']);
         $response = $controller->suggestMeta($request);
@@ -138,7 +139,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function translate_returns_200_with_all_fields(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Bonjour', 10, 5, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Bonjour', 10, 5, 'stop'));
 
         $request = $this->createRequest([
             'content' => 'Hello',
@@ -156,7 +157,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function improve_readability_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Improved text', 30, 25, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Improved text', 30, 25, 'stop'));
 
         $request = $this->createRequest(['content' => 'Complex text']);
         $response = $controller->improveReadability($request);
@@ -168,7 +169,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function error_response_returns_502(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('API error', 0, 0, 'error'));
+        $controller = $this->createController($config, new AiResponse('API error', 0, 0, 'error'));
 
         $request = $this->createRequest(['topic' => 'test']);
         $response = $controller->generateDraft($request);
@@ -182,7 +183,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function generate_outline_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Outline content', 30, 40, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Outline content', 30, 40, 'stop'));
 
         $request = $this->createRequest(['topic' => 'PHP design patterns', 'keywords' => ['SOLID', 'DI'], 'targetAudience' => 'developers']);
         $response = $controller->generateOutline($request);
@@ -196,7 +197,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function expand_content_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Expanded text', 20, 80, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Expanded text', 20, 80, 'stop'));
 
         $request = $this->createRequest(['content' => 'Short text']);
         $response = $controller->expandContent($request);
@@ -210,7 +211,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function condense_content_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Condensed text', 40, 15, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Condensed text', 40, 15, 'stop'));
 
         $request = $this->createRequest(['content' => 'Long verbose text']);
         $response = $controller->condenseContent($request);
@@ -238,7 +239,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function adjust_tone_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Humorous text', 20, 25, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Humorous text', 20, 25, 'stop'));
 
         $request = $this->createRequest(['content' => 'Some text', 'targetTone' => 'humorous']);
         $response = $controller->adjustTone($request);
@@ -252,7 +253,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function generate_faq_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Q: What?\nA: This.', 20, 30, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Q: What?\nA: This.', 20, 30, 'stop'));
 
         $request = $this->createRequest(['content' => 'Article content', 'count' => 3]);
         $response = $controller->generateFaq($request);
@@ -278,7 +279,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function generate_product_description_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Product desc', 15, 30, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Product desc', 15, 30, 'stop'));
 
         $request = $this->createRequest(['productName' => 'Widget Pro', 'features' => ['fast', 'durable']]);
         $response = $controller->generateProductDescription($request);
@@ -292,7 +293,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function extract_keywords_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse("keyword1\nkeyword2", 10, 5, 'stop'));
+        $controller = $this->createController($config, new AiResponse("keyword1\nkeyword2", 10, 5, 'stop'));
 
         $request = $this->createRequest(['content' => 'SEO article content']);
         $response = $controller->extractKeywords($request);
@@ -319,7 +320,7 @@ final class AiAssistantApiControllerTest extends TestCase
     {
         $jsonContent = '{"score":85,"keyword_density":"2.5%","title_optimization":"good","meta_description_quality":"fair","heading_structure":"good","readability":"good","suggestions":["Add more internal links"]}';
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse($jsonContent, 40, 60, 'stop'));
+        $controller = $this->createController($config, new AiResponse($jsonContent, 40, 60, 'stop'));
 
         $request = $this->createRequest(['content' => 'Content about PHP', 'targetKeyword' => 'PHP']);
         $response = $controller->analyzeSeoScore($request);
@@ -337,7 +338,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function analyze_seo_score_falls_back_on_invalid_json(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Not valid JSON', 10, 20, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Not valid JSON', 10, 20, 'stop'));
 
         $request = $this->createRequest(['content' => 'Content about PHP', 'targetKeyword' => 'PHP']);
         $response = $controller->analyzeSeoScore($request);
@@ -366,7 +367,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function suggest_slug_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('my-great-article', 5, 3, 'stop'));
+        $controller = $this->createController($config, new AiResponse('my-great-article', 5, 3, 'stop'));
 
         $request = $this->createRequest(['title' => 'My Great Article']);
         $response = $controller->suggestSlug($request);
@@ -394,7 +395,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function generate_alt_text_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('A fluffy orange cat', 10, 8, 'stop'));
+        $controller = $this->createController($config, new AiResponse('A fluffy orange cat', 10, 8, 'stop'));
 
         $request = $this->createRequest(['imageContext' => 'Photo of a cat', 'surroundingContent' => 'Article about pets']);
         $response = $controller->generateAltText($request);
@@ -408,7 +409,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function optimize_headings_returns_200(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('Optimized headings', 20, 25, 'stop'));
+        $controller = $this->createController($config, new AiResponse('Optimized headings', 20, 25, 'stop'));
 
         $request = $this->createRequest(['content' => 'Content with headings']);
         $response = $controller->optimizeHeadings($request);
@@ -455,7 +456,7 @@ final class AiAssistantApiControllerTest extends TestCase
     public function analyze_seo_score_returns_502_on_error(): void
     {
         $config = new CmsConfig(ai: new AiConfig(enabled: true, apiKey: 'test'));
-        $controller = $this->createController($config, new LlmResponse('API error', 0, 0, 'error'));
+        $controller = $this->createController($config, new AiResponse('API error', 0, 0, 'error'));
 
         $request = $this->createRequest(['content' => 'Some content', 'targetKeyword' => 'PHP']);
         $response = $controller->analyzeSeoScore($request);
@@ -463,19 +464,34 @@ final class AiAssistantApiControllerTest extends TestCase
         self::assertSame(502, $response->getStatusCode());
     }
 
-    private function createController(CmsConfig $config, ?LlmResponse $response = null): AiAssistantApiController
+    private function createController(CmsConfig $config, ?AiResponse $response = null): AiAssistantApiController
     {
-        $llmResponse = $response ?? new LlmResponse('', 0, 0, 'stop');
+        $aiResponse = $response ?? new AiResponse('', 0, 0, 'stop');
 
-        $provider = new class ($llmResponse) implements LlmProviderInterface {
-            public function __construct(private readonly LlmResponse $response) {}
+        $provider = new class ($aiResponse) implements AiClientInterface {
+            public function __construct(private readonly AiResponse $response) {}
 
-            public function complete(string $prompt, LlmOptions $options = new LlmOptions()): LlmResponse
+            public function chat(array $messages, AiRequestOptions $options = new AiRequestOptions()): AiResponse
             {
                 return $this->response;
             }
 
-            public function name(): string
+            public function complete(string $prompt, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return $this->response;
+            }
+
+            public function embed(array $inputs, AiRequestOptions $options = new AiRequestOptions()): \Pulsar\AI\Embedding\EmbeddingResult
+            {
+                throw new RuntimeException('Not implemented');
+            }
+
+            public function structuredOutput(string $prompt, array $schema, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return $this->response;
+            }
+
+            public function providerName(): string
             {
                 return 'test';
             }

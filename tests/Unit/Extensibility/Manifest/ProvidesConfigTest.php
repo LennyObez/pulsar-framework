@@ -22,6 +22,7 @@ final class ProvidesConfigTest extends TestCase
         self::assertSame([], $config->commands);
         self::assertFalse($config->routes);
         self::assertSame([], $config->middleware);
+        self::assertSame([], $config->migrations);
     }
 
     #[Test]
@@ -49,13 +50,14 @@ final class ProvidesConfigTest extends TestCase
         self::assertSame([], $config->commands);
         self::assertFalse($config->routes);
         self::assertSame([], $config->middleware);
+        self::assertSame([], $config->migrations);
     }
 
     #[Test]
     public function fromArrayThrowsOnAssociativeServices(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.services');
+        $this->expectExceptionMessageIsOrContains('provides.services');
 
         $_ = ProvidesConfig::fromArray([
             'services' => ['key' => 'value'],
@@ -66,7 +68,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnAssociativeCommands(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.commands');
+        $this->expectExceptionMessageIsOrContains('provides.commands');
 
         $_ = ProvidesConfig::fromArray([
             'commands' => ['key' => 'value'],
@@ -77,7 +79,7 @@ final class ProvidesConfigTest extends TestCase
     public function fromArrayThrowsOnAssociativeMiddleware(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.middleware');
+        $this->expectExceptionMessageIsOrContains('provides.middleware');
 
         $_ = ProvidesConfig::fromArray([
             'middleware' => ['key' => 'value'],
@@ -154,5 +156,73 @@ final class ProvidesConfigTest extends TestCase
         $config = new ProvidesConfig();
 
         self::assertFalse($config->providesAnything());
+    }
+
+    // =========================================================================
+    // Migrations field tests
+    // =========================================================================
+
+    #[Test]
+    public function fromArrayParsesMigrationsField(): void
+    {
+        $config = ProvidesConfig::fromArray([
+            'migrations' => ['database/migrations'],
+        ]);
+
+        self::assertSame(['database/migrations'], $config->migrations);
+    }
+
+    #[Test]
+    public function fromArrayDefaultsToEmptyMigrations(): void
+    {
+        $config = ProvidesConfig::fromArray([]);
+
+        self::assertSame([], $config->migrations);
+    }
+
+    #[Test]
+    public function hasMigrationsReturnsTrueWhenPresent(): void
+    {
+        $config = new ProvidesConfig(migrations: ['src/Migration']);
+
+        self::assertTrue($config->hasMigrations());
+    }
+
+    #[Test]
+    public function hasMigrationsReturnsFalseWhenEmpty(): void
+    {
+        $config = new ProvidesConfig();
+
+        self::assertFalse($config->hasMigrations());
+    }
+
+    #[Test]
+    public function providesAnythingReturnsTrueWithMigrationsOnly(): void
+    {
+        $config = new ProvidesConfig(migrations: ['database/migrations']);
+
+        self::assertTrue($config->providesAnything());
+    }
+
+    #[Test]
+    public function fromArrayThrowsOnNonArrayMigrations(): void
+    {
+        $this->expectException(ManifestException::class);
+        $this->expectExceptionMessageIsOrContains('provides.migrations');
+
+        $_ = ProvidesConfig::fromArray([
+            'migrations' => 'not-an-array',
+        ]);
+    }
+
+    #[Test]
+    public function fromArrayThrowsOnAssociativeMigrations(): void
+    {
+        $this->expectException(ManifestException::class);
+        $this->expectExceptionMessageIsOrContains('provides.migrations');
+
+        $_ = ProvidesConfig::fromArray([
+            'migrations' => ['key' => 'value'],
+        ]);
     }
 }

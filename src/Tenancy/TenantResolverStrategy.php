@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Strategy for resolving the current tenant from an HTTP request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TenantResolverStrategy: string

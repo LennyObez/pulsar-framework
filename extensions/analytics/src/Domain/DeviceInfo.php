@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Parsed device information from user agent string.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DeviceInfo

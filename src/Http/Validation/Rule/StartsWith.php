@@ -15,9 +15,10 @@ use function str_starts_with;
 
 /**
  * Value must start with the given prefix. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class StartsWith implements RuleInterface
+final readonly class StartsWith implements RuleInterface
 {
     public function __construct(
         private string $prefix,

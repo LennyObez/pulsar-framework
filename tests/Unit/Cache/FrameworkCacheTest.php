@@ -12,6 +12,7 @@ use Pulsar\Cache\ContainerCache;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteCache;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
@@ -99,6 +100,40 @@ final class FrameworkCacheTest extends TestCase
     }
 
     #[Test]
+    public function it_incorporates_environment_resolved_values_in_invalidation_key(): void
+    {
+        // Regression: the env fingerprint must read structural keys through the
+        // injected Environment (OS env + .env), not bare getenv(). A key present
+        // only in .env (not the OS process env) must still change the fingerprint.
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $envFileA = $this->basePath . DIRECTORY_SEPARATOR . '.env.a';
+        $envFileB = $this->basePath . DIRECTORY_SEPARATOR . '.env.b';
+        file_put_contents($envFileA, 'PULSAR_MASTER_KEY=' . str_repeat('aa', 32) . "\n");
+        file_put_contents($envFileB, 'PULSAR_MASTER_KEY=' . str_repeat('bb', 32) . "\n");
+
+        // Ensure the OS env does not shadow the .env value (OS wins in Environment).
+        $original = getenv('PULSAR_MASTER_KEY');
+        putenv('PULSAR_MASTER_KEY');
+
+        try {
+            $cacheA = new FrameworkCache($this->basePath, $this->masterKey, new HmacService(), false, null, Environment::load($envFileA));
+            $cacheB = new FrameworkCache($this->basePath, $this->masterKey, new HmacService(), false, null, Environment::load($envFileB));
+
+            self::assertNotSame(
+                $cacheA->computeInvalidationKey($configPath),
+                $cacheB->computeInvalidationKey($configPath),
+                'A master key provided only in .env must participate in cache invalidation',
+            );
+        } finally {
+            if ($original === false) {
+                putenv('PULSAR_MASTER_KEY');
+            } else {
+                putenv('PULSAR_MASTER_KEY=' . $original);
+            }
+        }
+    }
+
+    #[Test]
     public function it_clears_cache_files(): void
     {
         $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
@@ -153,6 +188,47 @@ final class FrameworkCacheTest extends TestCase
     }
 
     #[Test]
+    public function it_warms_a_project_whose_psr4_root_is_not_src(): void
+    {
+        // A project mapping "App\\": "app/" has no src/ directory at all. The warm
+        // previously died inside the allowlist scan with RecursiveDirectoryIterator
+        // "Failed to open directory: .../src", making `pulsar optimize` unusable
+        // outside the scaffolder's exact layout. Source roots now come from the
+        // composer PSR-4 map, and a missing root is skipped rather than fatal.
+        $projectRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_app_layout_' . bin2hex(random_bytes(8));
+        mkdir($projectRoot . DIRECTORY_SEPARATOR . 'config', 0o750, true);
+        mkdir($projectRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'composer', 0o750, true);
+        mkdir($projectRoot . DIRECTORY_SEPARATOR . 'app', 0o750, true);
+        $this->writeConfigStubs($projectRoot . DIRECTORY_SEPARATOR . 'config');
+        file_put_contents(
+            $projectRoot . DIRECTORY_SEPARATOR . 'composer.json',
+            '{"autoload": {"psr-4": {"App\\\\": "app/"}}}',
+        );
+
+        try {
+            self::assertDirectoryDoesNotExist($projectRoot . DIRECTORY_SEPARATOR . 'src');
+
+            $cache = new FrameworkCache($projectRoot, $this->masterKey, new HmacService());
+            $configManager = new ConfigManager($projectRoot . DIRECTORY_SEPARATOR . 'config');
+            $configManager->load();
+
+            $result = $cache->warm(
+                $configManager->repository(),
+                [Route::get('/p11', self::class, 'p11.index')],
+                [],
+                'testing',
+                false,
+            );
+
+            self::assertTrue($result['configCached']);
+            self::assertSame(1, $result['routesCached']);
+            self::assertTrue($cache->isWarm());
+        } finally {
+            $this->removeDirectory($projectRoot);
+        }
+    }
+
+    #[Test]
     public function it_warms_with_container_hints(): void
     {
         $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
@@ -201,6 +277,158 @@ final class FrameworkCacheTest extends TestCase
         $key2 = $cache->computeInvalidationKey($configPath);
 
         self::assertNotSame($key1, $key2);
+    }
+
+    #[Test]
+    public function loadReturnsNullWhenManifestIsInvalid(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $cachePath = $cache->cachePath();
+        mkdir($cachePath, 0o750, true);
+
+        file_put_contents($cachePath . DIRECTORY_SEPARATOR . 'manifest.json', '{"invalid": true}');
+
+        $result = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function warmAndLoadRoundTrip(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $routes = [
+            Route::get('/test', self::class, 'test.index'),
+            Route::get('/users', self::class, 'users.index'),
+        ];
+
+        $cache->warm($repository, $routes, [], 'testing', false);
+
+        self::assertTrue($cache->isWarm());
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNotNull($loaded);
+        self::assertArrayHasKey('manifest', $loaded);
+        self::assertArrayHasKey('config', $loaded);
+        self::assertArrayHasKey('routes', $loaded);
+        self::assertArrayHasKey('containerHints', $loaded);
+    }
+
+    #[Test]
+    public function loadReturnsNullWhenInvalidationKeyDoesNotMatch(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [], [], 'testing', false);
+
+        file_put_contents(
+            $this->basePath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'app.php',
+            "<?php\nreturn ['name' => 'CHANGED', 'env' => 'production', 'debug' => false, 'timezone' => 'UTC', 'locale' => 'en'];\n",
+        );
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($loaded);
+    }
+
+    #[Test]
+    public function invalidationKeyChangesWithEnvFile(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+
+        $key1 = $cache->computeInvalidationKey($configPath);
+
+        file_put_contents(
+            $this->basePath . DIRECTORY_SEPARATOR . '.env',
+            "APP_KEY=test-key\nDB_HOST=localhost\n",
+        );
+
+        $key2 = $cache->computeInvalidationKey($configPath);
+
+        self::assertNotSame($key1, $key2);
+    }
+
+    #[Test]
+    public function warmWithStrictMode(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $routes = [
+            Route::get('/api', self::class, 'api.index'),
+        ];
+
+        $result = $cache->warm($repository, $routes, [], 'production', true);
+
+        self::assertTrue($result['configCached']);
+        self::assertSame(1, $result['routesCached']);
+        self::assertTrue($result['containerCached']);
+        self::assertTrue($cache->isWarm());
+    }
+
+    #[Test]
+    public function loadRejectsTamperedConfigCacheFileWithIntactManifest(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [], [], 'testing', false);
+        self::assertTrue($cache->isWarm());
+
+        // Replace the config cache binary while leaving the manifest (and its
+        // own HMAC) untouched. The manifest HMAC still validates because it
+        // only signs the recorded per-file signatures, not the files. load()
+        // must still reject because the per-file signature no longer matches.
+        $configFile = $cache->cachePath() . DIRECTORY_SEPARATOR . ConfigCache::FILENAME;
+        file_put_contents($configFile, 'tampered-cache-payload');
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($loaded);
+    }
+
+    #[Test]
+    public function loadRejectsTamperedRouteCacheFileWithIntactManifest(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [Route::get('/x', self::class, 'x.index')], [], 'testing', false);
+        self::assertTrue($cache->isWarm());
+
+        $routeFile = $cache->cachePath() . DIRECTORY_SEPARATOR . RouteCache::FILENAME;
+        file_put_contents($routeFile, 'tampered-route-payload');
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($loaded);
+    }
+
+    #[Test]
+    public function clearOnEmptyDirectoryDoesNotThrow(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $cachePath = $cache->cachePath();
+        mkdir($cachePath, 0o750, true);
+
+        $cache->clear();
+
+        self::assertFalse($cache->isWarm());
     }
 
     private function writeConfigStubs(string $configPath): void

@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\AI;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Immutable DTO representing a response from an LLM provider.
+ *
+ * @psalm-api Public DTO returned from LLM clients; consumed by user-land code
+ *            and admin templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LlmResponse
@@ -25,10 +30,10 @@ final readonly class LlmResponse
     public static function fromArray(array $data): self
     {
         return new self(
-            content: (string) ($data['content'] ?? ''),
-            inputTokens: (int) ($data['input_tokens'] ?? 0),
-            outputTokens: (int) ($data['output_tokens'] ?? 0),
-            finishReason: (string) ($data['finish_reason'] ?? 'stop'),
+            content: Coerce::string($data['content'] ?? null),
+            inputTokens: Coerce::int($data['input_tokens'] ?? null, 0),
+            outputTokens: Coerce::int($data['output_tokens'] ?? null, 0),
+            finishReason: Coerce::string($data['finish_reason'] ?? null, 'stop'),
         );
     }
 }

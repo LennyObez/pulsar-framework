@@ -12,8 +12,8 @@ use Pulsar\Api\Internal;
  * Registered via Router::model() and takes precedence over implicit
  * type-hint resolution during model binding.
  */
-#[Internal(reason: 'Wiring detail — use Router::model() to register bindings')]
-readonly class ExplicitBinding
+#[Internal(reason: 'Wiring detail; use Router::model() to register bindings')]
+final readonly class ExplicitBinding
 {
     /**
      * @param class-string $modelClass

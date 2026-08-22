@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * This is a Finding E invariant: no arbitrary SQL/expression injection
  * is possible via filter parameters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FilterOperator: string

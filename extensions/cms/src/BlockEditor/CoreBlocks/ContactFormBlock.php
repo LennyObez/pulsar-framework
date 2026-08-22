@@ -7,12 +7,14 @@ namespace Pulsar\Extension\Cms\BlockEditor\CoreBlocks;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
 use function htmlspecialchars;
 use function in_array;
 use function is_array;
 use function is_string;
+use function time;
 
 use const ENT_QUOTES;
 
@@ -23,6 +25,7 @@ final readonly class ContactFormBlock implements BlockTypeInterface
 
     public function __construct(
         private CsrfTokenManagerInterface $csrfTokenManager,
+        private ?ManagedChallengeRenderer $challengeRenderer = null,
     ) {}
 
     #[Override]
@@ -59,39 +62,70 @@ final readonly class ContactFormBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{name: string, type: string, label: string}> $fields */
+        /** @var list<mixed> $fields */
         $fields = $data['fields'] ?? [];
-        $submitText = htmlspecialchars((string) ($data['submitText'] ?? 'Submit'), ENT_QUOTES, 'UTF-8');
-        $action = htmlspecialchars((string) ($data['action'] ?? ''), ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawSubmitText */
+        $rawSubmitText = $data['submitText'] ?? null;
+        /** @var mixed $rawAction */
+        $rawAction = $data['action'] ?? null;
+        $submitText = htmlspecialchars(is_string($rawSubmitText) ? $rawSubmitText : 'Submit', ENT_QUOTES, 'UTF-8');
+        $action = htmlspecialchars(is_string($rawAction) ? $rawAction : '', ENT_QUOTES, 'UTF-8');
 
-        $html = "<form class=\"contact-form\" method=\"post\" action=\"{$action}\">";
+        $html = "<form class=\"contact-form\" method=\"post\" action=\"$action\">";
 
         // CSRF protection
         $csrfToken = htmlspecialchars($this->csrfTokenManager->getToken(), ENT_QUOTES, 'UTF-8');
-        $html .= "<input type=\"hidden\" name=\"_csrf_token\" value=\"{$csrfToken}\">";
+        $html .= "<input type=\"hidden\" name=\"_csrf_token\" value=\"$csrfToken\">";
+
+        // Timing token: spam detector rejects submissions under 3 seconds
+        $html .= '<input type="hidden" name="_form_rendered_at" value="' . htmlspecialchars((string) time(), ENT_QUOTES, 'UTF-8') . '">';
+
+        // Honeypot: hidden field that bots fill; legitimate users never see it
+        $html .= '<div style="position:absolute;left:-9999px;top:-9999px" aria-hidden="true">';
+        $html .= '<input type="text" name="_hp_field" tabindex="-1" autocomplete="off">';
+        $html .= '</div>';
+
+        // Self-hosted managed challenge (signed, single-use, TTL-bound proof of
+        // work). Renders the hidden token field + same-origin widget when the
+        // 'managed' captcha provider is configured; otherwise emits nothing and
+        // the form degrades to the remaining honeypot/timing/content checks.
+        // The widget's <script> is same-origin (CSP `script-src 'self'` clean),
+        // but the request CSP nonce is stamped when the renderer supplies one via
+        // the `_csp_nonce` render-context key, so the form also works under a
+        // strict nonce-based policy (parity with the @shield directive).
+        /** @var mixed $rawNonce */
+        $rawNonce = $data['_csp_nonce'] ?? null;
+        $cspNonce = is_string($rawNonce) && $rawNonce !== '' ? $rawNonce : null;
+        $html .= $this->challengeRenderer?->render($cspNonce) ?? '';
 
         foreach ($fields as $field) {
             if (!is_array($field)) {
                 continue;
             }
 
-            $name = htmlspecialchars((string) ($field['name'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $type = htmlspecialchars((string) ($field['type'] ?? 'text'), ENT_QUOTES, 'UTF-8');
-            $label = htmlspecialchars((string) ($field['label'] ?? ''), ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawName */
+            $rawName = $field['name'] ?? null;
+            /** @var mixed $rawType */
+            $rawType = $field['type'] ?? null;
+            /** @var mixed $rawLabel */
+            $rawLabel = $field['label'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $type = htmlspecialchars(is_string($rawType) ? $rawType : 'text', ENT_QUOTES, 'UTF-8');
+            $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
 
             $html .= '<div class="contact-form__field">';
-            $html .= "<label for=\"field-{$name}\">{$label}</label>";
+            $html .= "<label for=\"field-$name\">$label</label>";
 
             if (($field['type'] ?? '') === 'textarea') {
-                $html .= "<textarea id=\"field-{$name}\" name=\"{$name}\"></textarea>";
+                $html .= "<textarea id=\"field-$name\" name=\"$name\"></textarea>";
             } else {
-                $html .= "<input type=\"{$type}\" id=\"field-{$name}\" name=\"{$name}\">";
+                $html .= "<input type=\"$type\" id=\"field-$name\" name=\"$name\">";
             }
 
             $html .= '</div>';
         }
 
-        $html .= "<button type=\"submit\" class=\"contact-form__submit\">{$submitText}</button>";
+        $html .= "<button type=\"submit\" class=\"contact-form__submit\">$submitText</button>";
 
         return $html . '</form>';
     }
@@ -109,23 +143,23 @@ final readonly class ContactFormBlock implements BlockTypeInterface
 
         foreach ($data['fields'] as $index => $field) {
             if (!is_array($field)) {
-                $errors[] = "fields[{$index}] must be an object";
+                $errors[] = "fields[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($field['name']) || !is_string($field['name'])) {
-                $errors[] = "fields[{$index}].name is required and must be a string";
+                $errors[] = "fields[$index].name is required and must be a string";
             }
 
             if (!isset($field['type']) || !is_string($field['type'])) {
-                $errors[] = "fields[{$index}].type is required and must be a string";
+                $errors[] = "fields[$index].type is required and must be a string";
             } elseif (!in_array($field['type'], self::VALID_FIELD_TYPES, true)) {
-                $errors[] = "fields[{$index}].type '{$field['type']}' is not a valid field type";
+                $errors[] = "fields[$index].type '{$field['type']}' is not a valid field type";
             }
 
             if (!isset($field['label']) || !is_string($field['label'])) {
-                $errors[] = "fields[{$index}].label is required and must be a string";
+                $errors[] = "fields[$index].label is required and must be a string";
             }
         }
 

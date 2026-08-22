@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Http\Controller;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Commerce\DigitalDeliveryServiceInterface;
 use Pulsar\Extension\Cms\Media\MediaDiskInterface;
@@ -23,7 +22,7 @@ use const PATHINFO_EXTENSION;
  * Validates download tokens, decrements remaining download counts,
  * and streams the file with proper Content-Disposition and Content-Type headers.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class DigitalDownloadController
 {
     private const array MIME_TYPES = [
@@ -46,7 +45,7 @@ final readonly class DigitalDownloadController
         private MediaDiskInterface $disk,
     ) {}
 
-    public function download(ServerRequestInterface $request, string $token): Response
+    public function download(string $token): Response
     {
         $result = $this->delivery->processDownload($token);
 
@@ -66,7 +65,7 @@ final readonly class DigitalDownloadController
         return new Response(
             headers: [
                 'Content-Type' => $contentType,
-                'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+                'Content-Disposition' => "attachment; filename=\"$fileName\"",
                 'Content-Length' => (string) strlen($content),
                 'Cache-Control' => 'no-store',
                 'X-Downloads-Remaining' => (string) ($result->downloadsRemaining ?? 0),

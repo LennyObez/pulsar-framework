@@ -114,7 +114,7 @@ final class EnvelopeSerializerTest extends TestCase
         assert(is_string($json));
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('missing required field');
+        $this->expectExceptionMessageIsOrContains('missing required field');
 
         $this->serializer->deserialize($json);
     }
@@ -126,7 +126,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data['retryBackoffStrategy'] = 'invalid_strategy';
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('unknown backoff strategy');
+        $this->expectExceptionMessageIsOrContains('unknown backoff strategy');
 
         $this->serializer->deserialize(self::jsonEncode($data));
     }
@@ -135,7 +135,7 @@ final class EnvelopeSerializerTest extends TestCase
     public function deserializeThrowsForNonObjectJson(): void
     {
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not an object');
+        $this->expectExceptionMessageIsOrContains('not an object');
 
         $this->serializer->deserialize('"just a string"');
     }
@@ -147,7 +147,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data['id'] = 12345;
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('must be a string');
+        $this->expectExceptionMessageIsOrContains('must be a string');
 
         $this->serializer->deserialize(self::jsonEncode($data));
     }
@@ -159,7 +159,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data['schemaVersion'] = 'not-an-int';
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('must be an integer');
+        $this->expectExceptionMessageIsOrContains('must be an integer');
 
         $this->serializer->deserialize(self::jsonEncode($data));
     }
@@ -171,7 +171,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data['encrypted'] = 'not-a-bool';
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('must be a boolean');
+        $this->expectExceptionMessageIsOrContains('must be a boolean');
 
         $this->serializer->deserialize(self::jsonEncode($data));
     }
@@ -205,7 +205,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data['traceId'] = 12345;
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('must be a string or null');
+        $this->expectExceptionMessageIsOrContains('must be a string or null');
 
         $this->serializer->deserialize(self::jsonEncode($data));
     }
@@ -217,7 +217,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data['chainIndex'] = 'not-an-int';
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('must be an integer or null');
+        $this->expectExceptionMessageIsOrContains('must be an integer or null');
 
         $this->serializer->deserialize(self::jsonEncode($data));
     }

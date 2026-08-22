@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Delegates metrics to {@see MetricsCollector} and health checks to
  * {@see QueueHealthCheck}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueueMonitor implements QueueMonitorInterface
@@ -25,7 +26,7 @@ final readonly class QueueMonitor implements QueueMonitorInterface
         return $this->metricsCollector;
     }
 
-    public function healthCheck(string $queue): HealthStatus
+    public function healthCheck(string $queue): QueueHealthStatus
     {
         return $this->healthCheck->check($queue);
     }

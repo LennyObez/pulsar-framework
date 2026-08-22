@@ -18,20 +18,20 @@ use function is_string;
  *
  * Allows viewing and editing the robots.txt content stored in CMS settings.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class RobotsController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class RobotsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const string SETTINGS_GROUP = 'seo';
     private const string SETTINGS_KEY = 'robots_txt';
     private const string DEFAULT_ROBOTS = "User-agent: *\nAllow: /\n";
 
     public function __construct(
         private SettingsServiceInterface $settings,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Show the current robots.txt content.
@@ -41,6 +41,7 @@ final readonly class RobotsController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.seo.view');
 
+        /** @var mixed $content */
         $content = $this->settings->get(self::SETTINGS_GROUP, self::SETTINGS_KEY);
 
         $data = [
@@ -60,7 +61,9 @@ final readonly class RobotsController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $content = is_string($body['content'] ?? null) ? $body['content'] : '';
+        /** @var mixed $rawContent */
+        $rawContent = $body['content'] ?? null;
+        $content = is_string($rawContent) ? $rawContent : '';
 
         if ($content === '') {
             return Response::json(['error' => 'Content is required'], 400);

@@ -13,6 +13,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Pagination\PaginationResult;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Cms\Config\MediaConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
@@ -213,7 +214,7 @@ final class MediaUploadIntegrationTest extends TestCase
         $file = new StubUploadedFile($pngContent, 'photo.jpg', 'image/jpeg');
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('does not match');
+        $this->expectExceptionMessageIsOrContains('does not match');
 
         $this->service->upload($file, 'uploader-001', null, MediaVisibility::Public);
     }
@@ -243,7 +244,7 @@ final class MediaUploadIntegrationTest extends TestCase
         $file = new StubUploadedFile($jpegContent, 'big.jpg', 'image/jpeg');
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
 
         $service->upload($file, 'uploader-001', null, MediaVisibility::Public);
     }
@@ -275,7 +276,7 @@ final class MediaUploadIntegrationTest extends TestCase
         $file = new StubUploadedFile($jpegContent, 'bomb.jpg', 'image/jpeg');
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('pixel count');
+        $this->expectExceptionMessageIsOrContains('pixel count');
 
         $service->upload($file, 'uploader-001', null, MediaVisibility::Public);
     }
@@ -428,7 +429,7 @@ final class MediaUploadIntegrationTest extends TestCase
         $file = new StubUploadedFile($content, 'malware.exe', 'application/octet-stream');
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not allowed');
+        $this->expectExceptionMessageIsOrContains('not allowed');
 
         $this->service->upload($file, 'uploader-001', null, MediaVisibility::Public);
     }
@@ -508,7 +509,7 @@ final class MediaUploadIntegrationTest extends TestCase
     public function deleteNonexistentAssetThrows(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Media asset not found');
+        $this->expectExceptionMessageIsOrContains('Media asset not found');
 
         $this->service->delete('nonexistent-id', 'cleanup');
     }
@@ -916,15 +917,20 @@ final class MediaUploadStubAuditLogger implements AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
+        $resolved = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === null || $actor === '' => '',
+            default => $actor,
+        };
         $this->entries[] = [
             'event' => $event,
             'outcome' => $outcome,
-            'actor' => $actor,
+            'actor' => $resolved,
             'action' => $action,
             'resource' => $resource,
             'metadata' => $metadata,
@@ -934,7 +940,7 @@ final class MediaUploadStubAuditLogger implements AuditLoggerInterface
             id: 'audit-' . count($this->entries),
             event: $event,
             outcome: $outcome,
-            actor: $actor ?? '',
+            actor: $resolved,
             action: $action,
             resource: $resource,
             timestamp: new DateTimeImmutable(),

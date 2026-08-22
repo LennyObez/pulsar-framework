@@ -13,6 +13,7 @@ use SodiumException;
  * Provides forward and reverse mapping between real subject identifiers
  * and their pseudonyms. This contract supports controls for GDPR
  * Article 4(5) pseudonymization and HIPAA de-identification requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PseudonymizationServiceInterface

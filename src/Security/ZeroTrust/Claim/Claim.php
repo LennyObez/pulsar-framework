@@ -16,13 +16,14 @@ use function sprintf;
  * Claims are immutable assertions about a request's context (e.g., "device is registered",
  * "IP is in known range"). Each claim carries a confidence score (0.0 = no confidence,
  * 1.0 = full confidence) and is tagged with the source that produced it.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Claim
+final readonly class Claim
 {
     /**
      * @param string $name Claim identifier (e.g., "device.registered", "ip.in_range")
-     * @param mixed $value Claim payload — type depends on the claim
+     * @param mixed $value Claim payload: type depends on the claim
      * @param ClaimSource $source Signal provider that produced this claim
      * @param float $confidence Confidence level, must be between 0.0 and 1.0 inclusive
      * @param DateTimeImmutable $timestamp When the claim was produced

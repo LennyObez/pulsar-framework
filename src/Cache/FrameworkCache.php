@@ -7,11 +7,13 @@ namespace Pulsar\Cache;
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\Environment;
 use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Support\ProjectSourceRoots;
 use Random\RandomException;
 use ReflectionException;
 use SodiumException;
@@ -23,6 +25,7 @@ use function hash_equals;
 use function implode;
 use function is_dir;
 use function is_file;
+use function serialize;
 use function sort;
 
 use const DIRECTORY_SEPARATOR;
@@ -42,8 +45,8 @@ final class FrameworkCache implements FrameworkCacheInterface
     /** MasterKey KDF context for cache HMAC. */
     private const string HMAC_CONTEXT = 'fw_cache';
 
-    /** Manifest schema version. */
-    private const int SCHEMA_VERSION = 1;
+    /** Manifest schema version (single source of truth: CacheManifest). */
+    private const int SCHEMA_VERSION = CacheManifest::SCHEMA_VERSION;
 
     /** Environment variables that participate in cache invalidation. */
     private const array ENV_INVALIDATION_KEYS = [
@@ -63,6 +66,7 @@ final class FrameworkCache implements FrameworkCacheInterface
 
     private readonly string $cachePath;
     private readonly HmacInterface $hmac;
+    private readonly string $hmacKey;
     private readonly CacheIntegrity $integrity;
     private readonly ConfigCache $configCache;
     private readonly RouteCache $routeCache;
@@ -71,17 +75,18 @@ final class FrameworkCache implements FrameworkCacheInterface
     /** @throws SodiumException */
     public function __construct(
         private readonly string $basePath,
-        private readonly KeyProviderInterface $masterKey,
+        KeyProviderInterface $masterKey,
         HmacInterface $hmac,
         private readonly bool $encrypt = false,
         ?EncryptorInterface $encryptor = null,
+        private readonly ?Environment $environment = null,
     ) {
         $this->hmac = $hmac;
         $this->cachePath = $basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
 
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
+        $this->hmacKey = $masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
 
-        $this->integrity = new CacheIntegrity($this->hmac, $hmacKey, $this->encrypt ? $encryptor : null);
+        $this->integrity = new CacheIntegrity($this->hmac, $this->hmacKey, $this->encrypt ? $encryptor : null);
         $this->configCache = new ConfigCache($this->integrity);
         $this->routeCache = new RouteCache($this->integrity);
         $this->containerCache = new ContainerCache($this->integrity);
@@ -154,9 +159,7 @@ final class FrameworkCache implements FrameworkCacheInterface
      */
     public function isWarm(): bool
     {
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-
-        return CacheManifest::load($this->hmac, $this->cachePath, $hmacKey) !== null;
+        return CacheManifest::load($this->hmac, $this->cachePath, $this->hmacKey) !== null;
     }
 
     /**
@@ -180,8 +183,7 @@ final class FrameworkCache implements FrameworkCacheInterface
             return null;
         }
 
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $hmacKey);
+        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $this->hmacKey);
 
         if ($manifest === null) {
             return null;
@@ -211,6 +213,36 @@ final class FrameworkCache implements FrameworkCacheInterface
 
         if (!hash_equals($manifest->allowedClassesHash, $classesHash)) {
             return null;
+        }
+
+        // Verify each cache file against the per-file SHA-256 + HMAC recorded
+        // in the manifest. The manifest HMAC only proves the manifest text is
+        // authentic — it does NOT prove the cache binaries themselves are
+        // intact. Re-reading and verifying each file here closes the
+        // file-replacement gap (an attacker swapping config.cache.bin while
+        // leaving the manifest untouched).
+        $cacheFiles = [
+            'config' => $this->cachePath . DIRECTORY_SEPARATOR . ConfigCache::FILENAME,
+            'routes' => $this->cachePath . DIRECTORY_SEPARATOR . RouteCache::FILENAME,
+            'container' => $this->cachePath . DIRECTORY_SEPARATOR . ContainerCache::FILENAME,
+        ];
+
+        foreach ($cacheFiles as $name => $file) {
+            $signature = $manifest->caches[$name] ?? null;
+
+            if ($signature === null) {
+                return null;
+            }
+
+            $content = file_get_contents($file);
+
+            if ($content === false) {
+                return null;
+            }
+
+            if (!$this->integrity->verify($content, $signature['sha256'], $signature['hmac'])) {
+                return null;
+            }
         }
 
         // Load individual caches
@@ -263,11 +295,19 @@ final class FrameworkCache implements FrameworkCacheInterface
             }
         }
 
-        // Hash structural env vars
+        // Hash structural env vars. Resolve through the Environment repository
+        // (OS env + .env) when available so a key provided only in .env still
+        // participates in invalidation; fall back to getenv() only when no
+        // Environment was injected (e.g. the dev bootstrap).
         $envParts = [];
         foreach (self::ENV_INVALIDATION_KEYS as $key) {
-            $value = getenv($key);
-            $envParts[] = $key . '=' . ($value !== false ? $value : '');
+            if ($this->environment !== null) {
+                $value = $this->environment->get($key);
+            } else {
+                $osValue = getenv($key);
+                $value = $osValue === false ? null : $osValue;
+            }
+            $envParts[] = $key . '=' . ($value ?? '');
         }
         $parts[] = hash('sha256', implode(':', $envParts));
 
@@ -301,10 +341,19 @@ final class FrameworkCache implements FrameworkCacheInterface
         string $appEnv,
         bool $strict,
     ): array {
-        // Scan allowed classes
+        // Build the deserialization allowlist. The namespace scan cannot see
+        // config value objects in feature namespaces (Api, Database, Mail,
+        // Tenancy, View, ...), so derive the exact config-graph classes from the
+        // repository being cached and union them in; routes and container hints
+        // stay covered by the scan's Routing/Cache scope. serialize($repository)
+        // here matches exactly what ConfigCache::write() serializes.
         $vendorPath = $this->basePath . DIRECTORY_SEPARATOR . 'vendor';
-        $srcPath = $this->basePath . DIRECTORY_SEPARATOR . 'src';
-        $allowedClasses = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        // Source roots come from the project's composer PSR-4 map, never an
+        // assumed `src/`: a project mapping "App\\": "app/" has no src/ directory,
+        // which previously failed the warm with a directory-open error. The
+        // framework's own src/ is resolved by CacheAllowedClasses itself.
+        $srcPaths = ProjectSourceRoots::discover($this->basePath);
+        $allowedClasses = CacheAllowedClasses::forCache($vendorPath, $srcPaths, serialize($repository));
         CacheAllowedClasses::save($this->cachePath, $allowedClasses);
 
         // Compute allowed classes hash
@@ -334,11 +383,10 @@ final class FrameworkCache implements FrameworkCacheInterface
         $invalidationKey = $this->computeInvalidationKey($configPath);
 
         // Write manifest
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
         CacheManifest::write(
             hmac: $this->hmac,
             cachePath: $this->cachePath,
-            hmacKey: $hmacKey,
+            hmacKey: $this->hmacKey,
             schemaVersion: self::SCHEMA_VERSION,
             frameworkVersion: Version::full(),
             appEnv: $appEnv,

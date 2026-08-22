@@ -20,7 +20,11 @@ use function count;
  * Provides data export and PII erasure for CMS-managed user data.
  * All operations are logged to the audit trail.
  */
-#[Internal(reason: 'GDPR tools implementation — use ToolsServiceInterface')]
+/**
+ * @psalm-api Bound to ToolsServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'GDPR tools implementation; use ToolsServiceInterface')]
 final readonly class ToolsService implements ToolsServiceInterface
 {
     public function __construct(
@@ -55,10 +59,45 @@ final readonly class ToolsService implements ToolsServiceInterface
 
         // Media uploaded by user
         $mediaResult = $this->connection->query(
-            'SELECT id, filename, mime_type, file_size, visibility, created_at FROM cms_media WHERE uploader_id = :user_id AND deleted_at IS NULL',
+            'SELECT id, filename, mime_type, file_size, visibility, created_at FROM cms_media_assets WHERE uploader_id = :user_id AND deleted_at IS NULL',
             ['user_id' => $userId],
         );
         $data['media'] = $mediaResult->map(static fn(Row $row): array => $row->toArray());
+
+        // Customer profiles
+        $customerResult = $this->connection->query(
+            'SELECT id, email, display_name, billing_address, shipping_address, created_at, updated_at FROM cms_customers WHERE user_id = :user_id',
+            ['user_id' => $userId],
+        );
+        $data['customers'] = $customerResult->map(static fn(Row $row): array => $row->toArray());
+
+        // Orders placed by user's customer accounts
+        $orderResult = $this->connection->query(
+            'SELECT o.id, o.order_number, o.customer_email, o.status, o.subtotal, o.total, o.currency, o.billing_address, o.shipping_address, o.created_at FROM cms_orders o WHERE o.customer_id IN (SELECT id FROM cms_customers WHERE user_id = :user_id) ORDER BY o.created_at DESC',
+            ['user_id' => $userId],
+        );
+        $data['orders'] = $orderResult->map(static fn(Row $row): array => $row->toArray());
+
+        // Editorial reviews authored by user
+        $reviewResult = $this->connection->query(
+            'SELECT id, content_id, status, decision, reviewer_notes, created_at FROM cms_editorial_reviews WHERE reviewer_id = :user_id ORDER BY created_at DESC',
+            ['user_id' => $userId],
+        );
+        $data['editorial_reviews'] = $reviewResult->map(static fn(Row $row): array => $row->toArray());
+
+        // Content revisions authored by user
+        $revisionResult = $this->connection->query(
+            'SELECT id, content_id, created_at FROM cms_content_revisions WHERE author_id = :user_id',
+            ['user_id' => $userId],
+        );
+        $data['content_revisions'] = $revisionResult->map(static fn(Row $row): array => $row->toArray());
+
+        // API keys owned by user
+        $apiKeyResult = $this->connection->query(
+            'SELECT id, name, created_at FROM cms_api_keys WHERE tenant_id = :user_id',
+            ['user_id' => $userId],
+        );
+        $data['api_keys'] = $apiKeyResult->map(static fn(Row $row): array => $row->toArray());
 
         // Settings changes by user (from audit log)
         $settingsResult = $this->connection->query(
@@ -72,7 +111,7 @@ final readonly class ToolsService implements ToolsServiceInterface
             AuditOutcome::Success,
             $userId,
             'cms.gdpr.data_exported',
-            "user:{$userId}",
+            "user:$userId",
             [
                 'content_count' => count($data['content']),
                 'comment_count' => count($data['comments']),
@@ -83,19 +122,77 @@ final readonly class ToolsService implements ToolsServiceInterface
         return $data;
     }
 
+    /**
+     * @return array{comments_anonymized: int, content_anonymized: int, reviews_anonymized: int, media_anonymized: int, customers_redacted: int, orders_redacted: int, revisions_anonymized: int, api_keys_anonymized: int, settings_history_anonymized: int, form_submissions_deleted: int, newsletter_subscribers_deleted: int}
+     */
     public function eraseUserData(string $userId, string $reason): array
     {
         return $this->connection->transaction(function (ConnectionInterface $conn) use ($userId, $reason): array {
-            // Anonymize comments: zero ip_hash, user_agent_hash; redact guest_email
-            $commentsAnonymized = $conn->execute(
+            $result = [];
+
+            // Anonymize comments: zero PII hashes and redact guest_email
+            $result['comments_anonymized'] = $conn->execute(
                 "UPDATE cms_comments SET ip_hash = '', user_agent_hash = '', guest_email = CASE WHEN guest_email IS NOT NULL THEN '[redacted]' ELSE NULL END WHERE author_id = :user_id AND deleted_at IS NULL",
                 ['user_id' => $userId],
             );
 
-            // Anonymize content: replace author display in any denormalized fields
-            // We don't delete content — only PII fields
-            $contentAnonymized = $conn->execute(
+            // Anonymize content authorship (keep content itself; only PII fields)
+            $result['content_anonymized'] = $conn->execute(
                 "UPDATE cms_contents SET author_id = '[anonymized]' WHERE author_id = :user_id AND deleted_at IS NULL",
+                ['user_id' => $userId],
+            );
+
+            // Anonymize editorial reviews
+            $result['reviews_anonymized'] = $conn->execute(
+                "UPDATE cms_editorial_reviews SET reviewer_id = '[anonymized]' WHERE reviewer_id = :user_id",
+                ['user_id' => $userId],
+            );
+
+            // Anonymize media uploads (keep files, remove uploader link)
+            $result['media_anonymized'] = $conn->execute(
+                "UPDATE cms_media_assets SET uploader_id = '[anonymized]' WHERE uploader_id = :user_id AND deleted_at IS NULL",
+                ['user_id' => $userId],
+            );
+
+            // Redact customer PII (email, addresses, display name)
+            $result['customers_redacted'] = $conn->execute(
+                "UPDATE cms_customers SET email = '[redacted]', display_name = NULL, billing_address = NULL, shipping_address = NULL WHERE user_id = :user_id",
+                ['user_id' => $userId],
+            );
+
+            // Redact order PII (customer_email, billing/shipping addresses, notes)
+            $result['orders_redacted'] = $conn->execute(
+                "UPDATE cms_orders SET customer_email = '[redacted]', billing_address = '{}', shipping_address = NULL, notes = NULL WHERE customer_id IN (SELECT id FROM cms_customers WHERE user_id = :user_id)",
+                ['user_id' => $userId],
+            );
+
+            // Anonymize content revisions
+            $result['revisions_anonymized'] = $conn->execute(
+                'UPDATE cms_content_revisions SET author_id = :anon WHERE author_id = :user_id',
+                ['anon' => '[anonymized]', 'user_id' => $userId],
+            );
+
+            // Deactivate and anonymize API keys
+            $result['api_keys_anonymized'] = $conn->execute(
+                'UPDATE cms_api_keys SET name = :anon, is_active = 0 WHERE tenant_id = :user_id',
+                ['anon' => '[anonymized]', 'user_id' => $userId],
+            );
+
+            // Anonymize settings change history
+            $result['settings_history_anonymized'] = $conn->execute(
+                "UPDATE cms_settings_history SET changed_by = '[anonymized]' WHERE changed_by = :user_id",
+                ['user_id' => $userId],
+            );
+
+            // Delete form submissions by submitter email or IP hash (PII)
+            $result['form_submissions_deleted'] = $conn->execute(
+                'DELETE FROM cms_form_submissions WHERE submitter_email = (SELECT email FROM cms_customers WHERE user_id = :user_id LIMIT 1) OR submitter_ip_hash IN (SELECT ip_hash FROM cms_comments WHERE author_id = :user_id2 AND ip_hash != \'\')',
+                ['user_id' => $userId, 'user_id2' => $userId],
+            );
+
+            // Delete newsletter subscriber records by email
+            $result['newsletter_subscribers_deleted'] = $conn->execute(
+                'DELETE FROM cms_newsletter_subscribers WHERE email = (SELECT email FROM cms_customers WHERE user_id = :user_id LIMIT 1)',
                 ['user_id' => $userId],
             );
 
@@ -104,18 +201,11 @@ final readonly class ToolsService implements ToolsServiceInterface
                 AuditOutcome::Success,
                 $userId,
                 'cms.gdpr.data_erased',
-                "user:{$userId}",
-                [
-                    'reason' => $reason,
-                    'comments_anonymized' => $commentsAnonymized,
-                    'content_anonymized' => $contentAnonymized,
-                ],
+                "user:$userId",
+                ['reason' => $reason, ...$result],
             );
 
-            return [
-                'comments_anonymized' => $commentsAnonymized,
-                'content_anonymized' => $contentAnonymized,
-            ];
+            return $result;
         });
     }
 }

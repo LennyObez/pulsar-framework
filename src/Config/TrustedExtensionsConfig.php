@@ -18,11 +18,12 @@ use function is_string;
  * Host-side allow-list mapping extension names to allowed trust tiers.
  *
  * Loaded from config/extensions.php. Controls the effective trust tier
- * for each extension — the extension's requested tier is capped by
+ * for each extension: the extension's requested tier is capped by
  * the host's allowed tier.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class TrustedExtensionsConfig
+final readonly class TrustedExtensionsConfig
 {
     /**
      * @param array<string, array{tier: TrustTier, additional_capabilities: list<ExtensionCapability>}> $extensions
@@ -100,9 +101,12 @@ readonly class TrustedExtensionsConfig
             return null;
         }
 
-        return array_find(
+        /** @var ExtensionCapability|null $found */
+        $found = array_find(
             ExtensionCapability::cases(),
             static fn(ExtensionCapability $case): bool => $case->name === $name,
         );
+
+        return $found;
     }
 }

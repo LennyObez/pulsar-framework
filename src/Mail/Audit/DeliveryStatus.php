@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Delivery status of an audited mail message.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DeliveryStatus: string

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for log output destinations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LogSinkInterface

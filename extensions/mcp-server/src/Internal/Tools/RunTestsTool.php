@@ -73,6 +73,7 @@ final readonly class RunTestsTool implements McpToolInterface
             $command = [$this->phpunitBinary, '-c', 'tools/php/phpunit.xml', '--no-interaction'];
 
             // Validate and append filter
+            /** @var mixed $filter */
             $filter = $params['filter'] ?? null;
             if (is_string($filter) && $filter !== '') {
                 $filter = ParamValidator::validateFilter($filter);
@@ -81,6 +82,7 @@ final readonly class RunTestsTool implements McpToolInterface
             }
 
             // Validate and append path
+            /** @var mixed $path */
             $path = $params['path'] ?? null;
             if (is_string($path) && $path !== '') {
                 $validated = ParamValidator::validatePath($path, $this->projectRoot);
@@ -91,6 +93,7 @@ final readonly class RunTestsTool implements McpToolInterface
                 }
             }
 
+            /** @var list<string> $command */
             return $this->runner->run($command);
         } finally {
             $this->accessGate->releaseConcurrencySlot();

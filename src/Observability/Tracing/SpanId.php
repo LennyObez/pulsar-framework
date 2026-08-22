@@ -18,6 +18,7 @@ use function strtolower;
 
 /**
  * 64-bit span identifier represented as 16 lowercase hex characters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SpanId

@@ -16,27 +16,53 @@ use function strlen;
 final class StepUpAuthRequiredTest extends TestCase
 {
     #[Test]
-    public function constructionSetsAllProperties(): void
+    public function fromArrayDefaultsMissingFieldsToEmptyValues(): void
     {
-        $now = new DateTimeImmutable();
+        $event = StepUpAuthRequired::fromArray([]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->permission);
+        self::assertSame(0.0, $event->trustScore);
+        self::assertSame('', $event->requiredLevel);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function fromArrayHandlesNonNumericTrustScore(): void
+    {
+        $event = StepUpAuthRequired::fromArray([
+            'identity_id' => 'user-1',
+            'permission' => 'test',
+            'trust_score' => 'not-a-number',
+            'required_level' => 'mfa',
+            'correlation_id' => 'c-1',
+            'nonce' => 'n-1',
+            'occurred_at' => '2025-06-15T10:30:00.000000+00:00',
+        ]);
+
+        self::assertSame(0.0, $event->trustScore);
+    }
+
+    #[Test]
+    public function toArrayIncludesSchemaVersion(): void
+    {
+        $now = new DateTimeImmutable('2025-06-15T10:30:00.000000+00:00');
 
         $event = new StepUpAuthRequired(
             identityId: 'user-1',
             permission: 'financial.transfer',
-            trustScore: 0.45,
+            trustScore: 0.75,
             requiredLevel: 'mfa',
-            correlationId: 'corr-1',
-            nonce: 'nonce101',
+            correlationId: 'c-1',
+            nonce: 'n-1',
             occurredAt: $now,
         );
 
-        self::assertSame('user-1', $event->identityId);
-        self::assertSame('financial.transfer', $event->permission);
-        self::assertSame(0.45, $event->trustScore);
-        self::assertSame('mfa', $event->requiredLevel);
-        self::assertSame('corr-1', $event->correlationId);
-        self::assertSame('nonce101', $event->nonce);
-        self::assertSame($now, $event->occurredAt);
+        $array = $event->toArray();
+
+        self::assertSame(1, $array['schema_version']);
+        self::assertSame(0.75, $array['trust_score']);
     }
 
     #[Test]

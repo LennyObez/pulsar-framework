@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single field within a GraphQL object type.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldDefinition

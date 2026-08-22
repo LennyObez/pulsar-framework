@@ -178,7 +178,7 @@ final class OptimizeCommand extends Command
             $cacheDir = $configPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache';
 
             if (!is_dir($cacheDir)) {
-                mkdir($cacheDir, 0o755, true);
+                mkdir($cacheDir, 0o750, true);
             }
 
             $written = file_put_contents($cacheDir . DIRECTORY_SEPARATOR . 'events_map.php', $mapCode);
@@ -252,7 +252,7 @@ final class OptimizeCommand extends Command
                 }
 
                 $typeName = $type->getName();
-                /** @psalm-suppress TypeDoesNotContainType — getName() returns class-string but can be 'self'/'static'/'parent' at runtime */
+                /** @psalm-suppress TypeDoesNotContainType: getName() returns class-string but can be 'self'/'static'/'parent' at runtime */
                 if ($typeName === 'self' || $typeName === 'static' || $typeName === 'parent') {
                     $skip = true;
                     break;

@@ -56,7 +56,7 @@ final readonly class EffectClassifier
 
         if (count($classifications) > 1) {
             throw QueueException::missingEffectClassification(
-                sprintf('%s (multiple effect attributes found — exactly one required)', $jobClass),
+                sprintf('%s (multiple effect attributes found: exactly one required)', $jobClass),
             );
         }
 

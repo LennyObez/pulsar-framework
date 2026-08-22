@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Webhook processing exceptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WebhookException extends RuntimeException
@@ -54,6 +55,24 @@ final class WebhookException extends RuntimeException
             'Webhook handler failed for event "%s": %s',
             $eventId,
             $reason,
+        ));
+    }
+
+    #[NoDiscard]
+    public static function emptySecret(): self
+    {
+        return new self(
+            'Webhook secret cannot be empty: refusing to construct a processor that would accept any signature',
+        );
+    }
+
+    #[NoDiscard]
+    public static function invalidConfiguration(string $parameter, string $constraint): self
+    {
+        return new self(sprintf(
+            'Webhook processor "%s" must be %s',
+            $parameter,
+            $constraint,
         ));
     }
 }

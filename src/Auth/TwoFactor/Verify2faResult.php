@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a TOTP code verification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Verify2faResult

@@ -16,9 +16,10 @@ use function sprintf;
 
 /**
  * Validates ISO 4217 currency codes. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class CurrencyCode implements RuleInterface
+final readonly class CurrencyCode implements RuleInterface
 {
     /** @var list<string> */
     private const array CODES = [

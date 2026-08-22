@@ -22,11 +22,12 @@ use function sprintf;
  * Checks numeric values (interpreted as age) and date/date-of-birth strings
  * against a configurable minimum consent age. Defaults to 13 (COPPA).
  *
- * Advisory only — not a compliance gate. Results should be reviewed by
+ * Advisory only: not a compliance gate. Results should be reviewed by
  * qualified compliance or legal personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ConsentAgeAnalyzer implements PolicyAnalyzerInterface
+final readonly class ConsentAgeAnalyzer implements PolicyAnalyzerInterface
 {
     public function __construct(
         private int $minimumAge = 13,

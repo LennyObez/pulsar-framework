@@ -16,7 +16,6 @@ use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 
 #[CoversClass(Dispute::class)]
-#[CoversClass(DisputeStatus::class)]
 final class DisputeTest extends TestCase
 {
     #[Test]
@@ -65,7 +64,7 @@ final class DisputeTest extends TestCase
         $dispute = $this->createDispute(DisputeStatus::Won);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Invalid Dispute transition');
+        $this->expectExceptionMessageIsOrContains('Invalid Dispute transition');
 
         (void) $dispute->transitionTo(DisputeStatus::Open);
     }

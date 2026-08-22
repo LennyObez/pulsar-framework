@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Runtime lifecycle status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RuntimeStatus: string

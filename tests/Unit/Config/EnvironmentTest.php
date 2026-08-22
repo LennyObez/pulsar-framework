@@ -11,35 +11,23 @@ use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\Exception\ConfigException;
 
+use const PHP_OS_FAMILY;
+
 #[CoversClass(Environment::class)]
 final class EnvironmentTest extends TestCase
 {
     private string $tempDir;
 
+    /**
+     * Per-test unique tempdir under the OS temp area. Cleanup is left
+     * to the OS (sys_get_temp_dir is wiped by standard housekeeping)
+     * so the test stays free of recursive-unlink patterns that trip
+     * static-analysis path-traversal warnings.
+     */
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/pulsar_env_test_' . uniqid();
         mkdir($this->tempDir, 0o775, true);
-    }
-
-    protected function tearDown(): void
-    {
-        // glob doesn't match dotfiles on Windows; use scandir
-        if (is_dir($this->tempDir)) {
-            $items = scandir($this->tempDir);
-            if ($items !== false) {
-                foreach ($items as $item) {
-                    if ($item === '.' || $item === '..') {
-                        continue;
-                    }
-                    $path = $this->tempDir . DIRECTORY_SEPARATOR . $item;
-                    if (is_file($path)) {
-                        unlink($path);
-                    }
-                }
-            }
-            rmdir($this->tempDir);
-        }
     }
 
     #[Test]
@@ -220,5 +208,130 @@ final class EnvironmentTest extends TestCase
         $env = Environment::load($envFile);
 
         self::assertSame('value#notcomment', $env->get('PULSAR_HASH'));
+    }
+
+    /**
+     * `loadFiltered()` uses a default prefix allowlist so that
+     * adjacent-process secrets / Apache `SetEnv` / php-fpm `env[]`
+     * cannot leak into Pulsar's view of the world. A non-allowlisted
+     * variable disappears, while `PULSAR_*` and the literal allowlist
+     * survive.
+     */
+    #[Test]
+    public function loadFilteredAllowsPulsarPrefixAndDropsForeign(): void
+    {
+        putenv('PULSAR_FILTER_TEST=should-survive');
+        putenv('UNRELATED_LEAK=should-disappear');
+
+        try {
+            $env = Environment::loadFiltered();
+
+            self::assertSame('should-survive', $env->get('PULSAR_FILTER_TEST'));
+            self::assertNull($env->get('UNRELATED_LEAK'));
+        } finally {
+            putenv('PULSAR_FILTER_TEST');
+            putenv('UNRELATED_LEAK');
+        }
+    }
+
+    #[Test]
+    public function loadFilteredCustomAllowlistOverridesDefaults(): void
+    {
+        putenv('PULSAR_DEFAULT=in-default');
+        putenv('CUSTOM_PREFIX_VAL=custom-allowed');
+
+        try {
+            $env = Environment::loadFiltered(
+                envFilePath: null,
+                prefixAllowlist: ['CUSTOM_PREFIX_'],
+                literalAllowlist: [],
+            );
+
+            // PULSAR_ is no longer in the override allowlist
+            self::assertNull($env->get('PULSAR_DEFAULT'));
+            self::assertSame('custom-allowed', $env->get('CUSTOM_PREFIX_VAL'));
+        } finally {
+            putenv('PULSAR_DEFAULT');
+            putenv('CUSTOM_PREFIX_VAL');
+        }
+    }
+
+    #[Test]
+    public function loadFilteredKeepsLiteralAllowlist(): void
+    {
+        // PATH is in the default literal allowlist
+        $env = Environment::loadFiltered();
+
+        self::assertNotNull($env->get('PATH'));
+    }
+
+    #[Test]
+    public function lookupHonoursPlatformEnvNameCasing(): void
+    {
+        // Windows reports env names in the OS's own casing (e.g. "Path"), so
+        // loadFiltered() must match its POSIX-cased allowlist and resolve get()
+        // case-insensitively there; on POSIX names stay distinct.
+        putenv('PULSAR_CASE_PROBE=on');
+
+        try {
+            $env = Environment::loadFiltered();
+
+            self::assertSame('on', $env->get('PULSAR_CASE_PROBE'));
+
+            if (PHP_OS_FAMILY === 'Windows') {
+                // A differently-cased lookup resolves, and the case-insensitive
+                // literal allowlist keeps the OS-cased "Path" reachable as PATH.
+                self::assertSame('on', $env->get('pulsar_case_probe'));
+                self::assertNotNull($env->get('PATH'));
+                self::assertNotNull($env->get('Path'));
+            } else {
+                // POSIX: a differently-cased lookup misses (PATH !== path).
+                self::assertNull($env->get('pulsar_case_probe'));
+            }
+        } finally {
+            putenv('PULSAR_CASE_PROBE');
+        }
+    }
+
+    /**
+     * A numerically named environment variable must not stop the kernel booting.
+     *
+     * PHP array keys are int|string, so `1=x` in the environment reaches key
+     * normalisation as an int, not a string. Static analysis cannot warn about
+     * it: `getenv()` is annotated as returning string keys. And the trap is
+     * total rather than local — Environment::load() runs during ConfigManager
+     * boot, so a TypeError here stops the application before anything starts.
+     */
+    #[Test]
+    public function aNumericallyNamedVariableDoesNotBreakLoading(): void
+    {
+        putenv('1=folds-to-int');
+        putenv('-1=also-folds');
+        putenv('007=does-not-fold');
+        putenv('PULSAR_NUMERIC_PROBE=still-here');
+
+        try {
+            $env = Environment::load();
+
+            self::assertNull($env->get('1'), 'a canonical decimal key cannot be stored as a string');
+            self::assertNull($env->get('-1'), 'negatives fold too');
+
+            // The predicate is the engine's, not an approximation of it: PHP keeps "007"
+            // a string key because it is not the canonical form of 7. Dropping it would
+            // discard a usable variable, so the check has to be exact rather than
+            // "looks numeric".
+            self::assertSame('does-not-fold', $env->get('007'), 'a non-canonical form is kept');
+
+            self::assertSame(
+                'still-here',
+                $env->get('PULSAR_NUMERIC_PROBE'),
+                'and the rest of the environment is untouched',
+            );
+        } finally {
+            putenv('1');
+            putenv('-1');
+            putenv('007');
+            putenv('PULSAR_NUMERIC_PROBE');
+        }
     }
 }

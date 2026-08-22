@@ -8,33 +8,58 @@ use DateTimeImmutable;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Extension\Analytics\Contracts\EventRepositoryInterface;
+use Pulsar\Extension\Analytics\Contracts\GoalServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\TrackingServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\VisitorSaltStoreInterface;
 use Pulsar\Extension\Analytics\Domain\CustomEvent;
 use Pulsar\Extension\Analytics\Domain\GeoInfo;
 use Pulsar\Extension\Analytics\Domain\PageView;
 use Pulsar\Extension\Analytics\Domain\Site;
 use Pulsar\Extension\Analytics\Domain\VisitorId;
 use Pulsar\Extension\Analytics\Internal\Bot\BotDetector;
+use Pulsar\Extension\Analytics\Internal\Queue\ProcessPageViewJob;
 use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
+use Pulsar\Queue\QueueManager;
 use Pulsar\Security\ZeroTrust\Signal\GeoLocationResolverInterface;
 use Throwable;
 
-use function in_array;
 use function is_array;
+use function is_float;
+use function is_int;
 use function is_string;
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Core tracking pipeline: validate → enrich → persist page views and events.
  */
-#[Internal(reason: 'Tracking pipeline — use TrackingServiceInterface')]
+#[Internal(reason: 'Tracking pipeline; use TrackingServiceInterface')]
 final readonly class TrackingService implements TrackingServiceInterface
 {
+    /**
+     * The consent purpose identifier used when requireConsent is enabled.
+     */
+    private const string CONSENT_PURPOSE = 'analytics';
+
+    /**
+     * The consent subject derivation, shared with the grant endpoint and the
+     * banner middleware so all three agree on a visitor's identifier. Defaults
+     * to one built from this service's own key manager and config when not
+     * injected, so a caller that omits it still derives the *same* subject
+     * rather than silently diverging.
+     */
+    private readonly VisitorConsentIdentity $consentIdentity;
+
     public function __construct(
         private AnalyticsKeyManager $keyManager,
+        private VisitorSaltStoreInterface $saltStore,
         private BotDetector $botDetector,
         private ReferrerParser $referrerParser,
         private UserAgentParser $userAgentParser,
@@ -44,12 +69,44 @@ final readonly class TrackingService implements TrackingServiceInterface
         private EventRepositoryInterface $eventRepository,
         private SiteRepositoryInterface $siteRepository,
         private AnalyticsConfig $config,
-    ) {}
+        private ?GoalServiceInterface $goalService = null,
+        private ?ConsentManagerInterface $consentManager = null,
+        private ?QueueManager $queueManager = null,
+        ?VisitorConsentIdentity $consentIdentity = null,
+    ) {
+        $this->consentIdentity = $consentIdentity ?? new VisitorConsentIdentity($keyManager, $config);
+    }
+
+    /**
+     * Resolve today's visitor id, yesterday's (only if its salt still exists),
+     * and today's salt — all keyed by disposable per-day salts rather than a
+     * stable master-derived key, so a purged day's hashes cannot be recomputed.
+     *
+     * Yesterday is null once its salt has been purged: the midnight session
+     * grace then simply does not apply. It never fabricates a salt for a day
+     * whose salt was deliberately destroyed.
+     *
+     * @return array{VisitorId, ?VisitorId, string} [today, yesterdayOrNull, todaySalt]
+     */
+    private function resolveVisitorIds(string $ip, string $userAgent): array
+    {
+        $todayDay = $this->keyManager->utcDayNumber();
+        $todaySalt = $this->saltStore->saltForDay($todayDay);
+        $visitorId = VisitorId::generate($ip, $userAgent, $todaySalt, $todayDay);
+
+        $yesterdayDay = $this->keyManager->utcDayNumber(1);
+        $yesterdaySalt = $this->saltStore->existingSaltForDay($yesterdayDay);
+        $yesterdayVisitorId = $yesterdaySalt !== null
+            ? VisitorId::generate($ip, $userAgent, $yesterdaySalt, $yesterdayDay)
+            : null;
+
+        return [$visitorId, $yesterdayVisitorId, $todaySalt];
+    }
 
     #[Override]
     public function trackPageView(ServerRequestInterface $request, array $payload): void
     {
-        $url = (string) ($payload['url'] ?? '');
+        $url = self::str($payload, 'url');
 
         if ($url === '') {
             return;
@@ -73,25 +130,26 @@ final readonly class TrackingService implements TrackingServiceInterface
         }
 
         $ip = $this->getClientIp($request);
+
+        if (!$this->hasConsentIfRequired($request)) {
+            return;
+        }
+
         $now = new DateTimeImmutable();
 
-        $key = $this->keyManager->visitorKey();
-        $todayDay = $this->keyManager->utcDayNumber();
-        $visitorId = VisitorId::generate($ip, $userAgent, $key, $todayDay);
-
-        $yesterdayDay = $this->keyManager->utcDayNumber(1);
-        $yesterdayVisitorId = VisitorId::generate($ip, $userAgent, $key, $yesterdayDay);
+        [$visitorId, $yesterdayVisitorId, $todaySalt] = $this->resolveVisitorIds($ip, $userAgent);
 
         $session = $this->sessionResolver->resolve(
             $visitorId,
             $now,
             $this->extractPathname($url),
             $site->id,
-            $key,
+            $todaySalt,
             $yesterdayVisitorId,
         );
 
-        $referrerUrl = (string) ($payload['referrer'] ?? '');
+        $referrerUrl = self::str($payload, 'referrer');
+        $referrerUrl = $this->anonymizeReferrerUrl($referrerUrl);
         $referrer = $this->referrerParser->parse($referrerUrl, $site->domain);
         $device = $this->userAgentParser->parse($userAgent);
         $geo = $this->resolveGeo($ip);
@@ -103,27 +161,56 @@ final readonly class TrackingService implements TrackingServiceInterface
             sessionId: $session->sessionId,
             pathname: $this->extractPathname($url),
             referrerSource: $referrer->source,
-            utmSource: (string) ($payload['utm_source'] ?? $referrer->source),
-            utmMedium: (string) ($payload['utm_medium'] ?? $referrer->medium),
-            utmCampaign: (string) ($payload['utm_campaign'] ?? $referrer->campaign),
-            utmTerm: (string) ($payload['utm_term'] ?? ''),
-            utmContent: (string) ($payload['utm_content'] ?? ''),
+            utmSource: self::str($payload, 'utm_source', $referrer->source),
+            utmMedium: self::str($payload, 'utm_medium', $referrer->medium),
+            utmCampaign: self::str($payload, 'utm_campaign', $referrer->campaign),
+            utmTerm: self::str($payload, 'utm_term'),
+            utmContent: self::str($payload, 'utm_content'),
             countryCode: $geo->countryCode,
             deviceType: $device->deviceType,
             browser: $device->browser,
             os: $device->os,
-            screenWidth: (int) ($payload['screen_width'] ?? 0),
+            screenWidth: self::intVal($payload, 'screen_width'),
             isBounce: $session->pageCount <= 1,
             createdAt: $now,
         );
 
-        $this->pageViewRepository->insert($pageView);
+        if ($this->config->collectionDriver === 'queue' && $this->queueManager !== null) {
+            $this->queueManager->dispatch(
+                ProcessPageViewJob::class,
+                json_encode([
+                    'id' => $pageView->id,
+                    'site_id' => $pageView->siteId,
+                    'visitor_id' => $pageView->visitorId,
+                    'session_id' => $pageView->sessionId,
+                    'pathname' => $pageView->pathname,
+                    'referrer_source' => $pageView->referrerSource,
+                    'utm_source' => $pageView->utmSource,
+                    'utm_medium' => $pageView->utmMedium,
+                    'utm_campaign' => $pageView->utmCampaign,
+                    'utm_term' => $pageView->utmTerm,
+                    'utm_content' => $pageView->utmContent,
+                    'country_code' => $pageView->countryCode,
+                    'device_type' => $pageView->deviceType->value,
+                    'browser' => $pageView->browser,
+                    'os' => $pageView->os,
+                    'screen_width' => $pageView->screenWidth,
+                    'is_bounce' => $pageView->isBounce,
+                    'created_at' => $pageView->createdAt->format('Y-m-d H:i:s'),
+                ], JSON_THROW_ON_ERROR),
+                'analytics',
+            );
+        } else {
+            $this->pageViewRepository->insert($pageView);
+        }
+
+        $this->goalService?->checkPageViewConversions($pageView);
     }
 
     #[Override]
     public function trackEvent(ServerRequestInterface $request, array $payload): void
     {
-        $eventName = (string) ($payload['event_name'] ?? '');
+        $eventName = self::str($payload, 'event_name');
 
         if ($eventName === '') {
             return;
@@ -147,27 +234,32 @@ final readonly class TrackingService implements TrackingServiceInterface
         }
 
         $ip = $this->getClientIp($request);
+
+        if (!$this->hasConsentIfRequired($request)) {
+            return;
+        }
+
         $now = new DateTimeImmutable();
 
-        $key = $this->keyManager->visitorKey();
-        $todayDay = $this->keyManager->utcDayNumber();
-        $visitorId = VisitorId::generate($ip, $userAgent, $key, $todayDay);
-        $url = (string) ($payload['url'] ?? '');
-
-        $yesterdayDay = $this->keyManager->utcDayNumber(1);
-        $yesterdayVisitorId = VisitorId::generate($ip, $userAgent, $key, $yesterdayDay);
+        [$visitorId, $yesterdayVisitorId, $todaySalt] = $this->resolveVisitorIds($ip, $userAgent);
+        $url = self::str($payload, 'url');
 
         $session = $this->sessionResolver->resolve(
             $visitorId,
             $now,
             $this->extractPathname($url),
             $site->id,
-            $key,
+            $todaySalt,
             $yesterdayVisitorId,
         );
 
-        $eventProps = is_array($payload['event_props'] ?? null) ? $payload['event_props'] : [];
-        $revenueValue = isset($payload['revenue_value']) ? (float) $payload['revenue_value'] : null;
+        /** @var mixed $rawEventProps */
+        $rawEventProps = $payload['event_props'] ?? null;
+        /** @var array<string, mixed> $eventProps */
+        $eventProps = is_array($rawEventProps) ? $rawEventProps : [];
+        /** @var mixed $rawRevenue */
+        $rawRevenue = $payload['revenue_value'] ?? null;
+        $revenueValue = is_float($rawRevenue) || is_int($rawRevenue) ? (float) $rawRevenue : null;
 
         $event = new CustomEvent(
             id: $this->generateId(),
@@ -182,6 +274,7 @@ final readonly class TrackingService implements TrackingServiceInterface
         );
 
         $this->eventRepository->insert($event);
+        $this->goalService?->checkEventConversions($event);
     }
 
     /**
@@ -189,9 +282,12 @@ final readonly class TrackingService implements TrackingServiceInterface
      *
      * The CollectionController validates the origin and attaches the Site object
      * to the request attribute 'analytics.site' to avoid a duplicate DB lookup.
+     *
+     * @param array<string, mixed> $payload
      */
     private function resolveSite(ServerRequestInterface $request, array $payload): ?Site
     {
+        /** @var mixed $site */
         $site = $request->getAttribute('analytics.site');
 
         if ($site instanceof Site) {
@@ -199,7 +295,7 @@ final readonly class TrackingService implements TrackingServiceInterface
         }
 
         // Fallback for direct TrackingServiceInterface usage outside CollectionController
-        $trackingId = (string) ($payload['site'] ?? '');
+        $trackingId = self::str($payload, 'site');
 
         if ($trackingId === '') {
             return null;
@@ -216,27 +312,7 @@ final readonly class TrackingService implements TrackingServiceInterface
      */
     private function getClientIp(ServerRequestInterface $request): string
     {
-        $serverParams = $request->getServerParams();
-        $remoteAddr = (string) ($serverParams['REMOTE_ADDR'] ?? '127.0.0.1');
-
-        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
-
-        if ($forwardedFor !== '' && $this->isTrustedProxy($remoteAddr)) {
-            $ips = explode(',', $forwardedFor);
-
-            return trim($ips[0]);
-        }
-
-        return $remoteAddr;
-    }
-
-    private function isTrustedProxy(string $remoteAddr): bool
-    {
-        if ($this->config->trustedProxies === []) {
-            return false;
-        }
-
-        return in_array($remoteAddr, $this->config->trustedProxies, true);
+        return $this->consentIdentity->clientIp($request);
     }
 
     /**
@@ -247,10 +323,65 @@ final readonly class TrackingService implements TrackingServiceInterface
         $headers = [];
 
         foreach ($request->getHeaders() as $name => $values) {
-            $headers[strtolower($name)] = $values[0] ?? '';
+            $headers[strtolower((string) $name)] = $values[0] ?? '';
         }
 
         return $headers;
+    }
+
+    /**
+     * Strip query strings and fragments from referrer URLs when anonymization is enabled.
+     *
+     * Preserves scheme, host, and path: removes query parameters and fragments
+     * that could contain PII (e.g., search terms, email addresses, session tokens).
+     */
+    private function anonymizeReferrerUrl(string $referrerUrl): string
+    {
+        if (!$this->config->privacy->anonymizeReferrer || $referrerUrl === '') {
+            return $referrerUrl;
+        }
+
+        $parsed = parse_url($referrerUrl);
+
+        if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+            return $referrerUrl;
+        }
+
+        $anonymized = $parsed['scheme'] . '://' . $parsed['host'];
+
+        if (isset($parsed['port'])) {
+            $anonymized .= ':' . $parsed['port'];
+        }
+
+        if (isset($parsed['path'])) {
+            $anonymized .= $parsed['path'];
+        }
+
+        return $anonymized;
+    }
+
+    /**
+     * Check whether consent is granted when requireConsent is enabled.
+     *
+     * The subject is the shared consent identifier — the same value the consent
+     * grant endpoint and the banner middleware record under — so a visitor who
+     * granted consent is actually recognised here. Keying this off anything else
+     * (e.g. the raw IP) would make every check miss and silently drop all hits.
+     */
+    private function hasConsentIfRequired(ServerRequestInterface $request): bool
+    {
+        if (!$this->config->privacy->requireConsent) {
+            return true;
+        }
+
+        if ($this->consentManager === null) {
+            return false;
+        }
+
+        return $this->consentManager->hasConsent(
+            $this->consentIdentity->forRequest($request),
+            self::CONSENT_PURPOSE,
+        );
     }
 
     private function extractPathname(string $url): string
@@ -280,5 +411,27 @@ final readonly class TrackingService implements TrackingServiceInterface
     private function generateId(): string
     {
         return bin2hex(random_bytes(18));
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function str(array $data, string $key, string $default = ''): string
+    {
+        /** @var mixed $value */
+        $value = $data[$key] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function intVal(array $data, string $key, int $default = 0): int
+    {
+        /** @var mixed $value */
+        $value = $data[$key] ?? null;
+
+        return is_int($value) ? $value : $default;
     }
 }

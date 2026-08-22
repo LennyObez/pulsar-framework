@@ -50,6 +50,12 @@ final readonly class TemplateRegistry
         return [
             'public/index.php' => $this->indexPhp($appName, $preset),
             'config/app.php' => $this->appConfig($appName),
+            'config/database.php' => $this->databaseConfig(),
+            'config/observability.php' => $this->observabilityConfig(),
+            'config/i18n.php' => $this->i18nConfig(),
+            'config/view.php' => $this->viewConfig(),
+            'config/cache.php' => $this->cacheConfig(),
+            'config/mail.php' => $this->mailConfig(),
             '.gitignore' => $this->gitignore(),
             'composer.json' => $this->composerGenerator->generate($appName, $preset),
         ];
@@ -89,7 +95,7 @@ final readonly class TemplateRegistry
     {
         return match ($preset) {
             ProjectPreset::Minimal => $this->indexPhpMinimal(),
-            ProjectPreset::Web => $this->indexPhpWeb($appName),
+            ProjectPreset::Web => $this->indexPhpWeb(),
             ProjectPreset::Api => $this->indexPhpApi(),
         };
     }
@@ -101,7 +107,14 @@ final readonly class TemplateRegistry
 
             declare(strict_types=1);
 
-            require __DIR__ . '/../vendor/autoload.php';
+            $basePath = dirname(__DIR__);
+
+            // Only when unset, so an FPM pool env / systemd Environment= wins.
+            if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+                putenv('PULSAR_BASE_PATH=' . $basePath);
+            }
+
+            require $basePath . '/vendor/autoload.php';
 
             use Pulsar\Core\Kernel;
             use Pulsar\Http\Message\Response;
@@ -116,31 +129,69 @@ final readonly class TemplateRegistry
             PHP;
     }
 
-    private function indexPhpWeb(string $appName): string
+    private function indexPhpWeb(): string
     {
         return <<<PHP
             <?php
 
             declare(strict_types=1);
 
-            require __DIR__ . '/../vendor/autoload.php';
+            \$basePath = dirname(__DIR__);
+
+            // Only when unset, so an FPM pool env / systemd Environment= wins.
+            if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+                putenv('PULSAR_BASE_PATH=' . \$basePath);
+            }
+
+            require \$basePath . '/vendor/autoload.php';
 
             use Pulsar\\Config\\ConfigManager;
             use Pulsar\\Core\\Kernel;
+            use Pulsar\\Extensibility\\ExtensionBootstrap;
             use Pulsar\\Http\\Message\\Response;
 
-            \$configManager = new ConfigManager(__DIR__ . '/../config');
-            \$kernel = new Kernel(configManager: \$configManager);
+            \$configManager = new ConfigManager(
+                configPath: \$basePath . '/config',
+                envFilePath: \$basePath . '/.env',
+            );
 
-            \$kernel->router()->get('/', static function () use (\$kernel): Response {
-                \$viewPath = dirname(__DIR__) . '/resources/views/welcome.php';
+            \$extensions = ExtensionBootstrap::create();
 
-                ob_start();
-                require \$viewPath;
-                \$html = ob_get_clean();
+            // Discover extensions: framework bundled + project-local
+            \$extensionPaths = [];
+            \$fwExt = \$basePath . '/vendor/pulsar/framework/extensions';
+            if (is_dir(\$fwExt)) {
+                \$extensionPaths[] = \$fwExt;
+            }
+            \$projExt = \$basePath . '/extensions';
+            if (is_dir(\$projExt)) {
+                \$extensionPaths[] = \$projExt;
+            }
 
-                return Response::html(\$html !== false ? \$html : '');
-            }, 'home');
+            // Apply the extension enable posture from config/app.php: the
+            // optional exclusive allowlist (extensions.enabled) and the additive
+            // product opt-in (extensions.enabled_products). With neither set,
+            // bundled products stay off by default while infrastructure and your
+            // own extensions load.
+            \$appCfg = \$basePath . '/config/app.php';
+            if (is_file(\$appCfg)) {
+                \$cfg = require \$appCfg;
+                if (is_array(\$cfg) && isset(\$cfg['extensions']) && is_array(\$cfg['extensions'])) {
+                    if (isset(\$cfg['extensions']['enabled']) && is_array(\$cfg['extensions']['enabled'])) {
+                        \$extensions->setEnabledFilter(\$cfg['extensions']['enabled']);
+                    }
+                    if (isset(\$cfg['extensions']['enabled_products']) && is_array(\$cfg['extensions']['enabled_products'])) {
+                        \$extensions->setEnabledProducts(\$cfg['extensions']['enabled_products']);
+                    }
+                }
+            }
+
+            \$extensions->loadFromPaths(\$extensionPaths);
+
+            \$kernel = new Kernel(
+                extensionBootstrap: \$extensions,
+                configManager: \$configManager,
+            );
 
             \$kernel->run();
             PHP;
@@ -153,15 +204,57 @@ final readonly class TemplateRegistry
 
             declare(strict_types=1);
 
-            require __DIR__ . '/../vendor/autoload.php';
+            $basePath = dirname(__DIR__);
+
+            // Only when unset, so an FPM pool env / systemd Environment= wins.
+            if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+                putenv('PULSAR_BASE_PATH=' . $basePath);
+            }
+
+            require $basePath . '/vendor/autoload.php';
 
             use App\Http\Controller\HealthController;
             use Pulsar\Config\ConfigManager;
             use Pulsar\Core\Kernel;
+            use Pulsar\Extensibility\ExtensionBootstrap;
             use Pulsar\Http\Message\Response;
 
-            $configManager = new ConfigManager(__DIR__ . '/../config');
-            $kernel = new Kernel(configManager: $configManager);
+            $configManager = new ConfigManager(
+                configPath: $basePath . '/config',
+                envFilePath: $basePath . '/.env',
+            );
+
+            $extensions = ExtensionBootstrap::create();
+
+            $extensionPaths = [];
+            $fwExt = $basePath . '/vendor/pulsar/framework/extensions';
+            if (is_dir($fwExt)) {
+                $extensionPaths[] = $fwExt;
+            }
+            $projExt = $basePath . '/extensions';
+            if (is_dir($projExt)) {
+                $extensionPaths[] = $projExt;
+            }
+
+            $appCfg = $basePath . '/config/app.php';
+            if (is_file($appCfg)) {
+                $cfg = require $appCfg;
+                if (is_array($cfg) && isset($cfg['extensions']) && is_array($cfg['extensions'])) {
+                    if (isset($cfg['extensions']['enabled']) && is_array($cfg['extensions']['enabled'])) {
+                        $extensions->setEnabledFilter($cfg['extensions']['enabled']);
+                    }
+                    if (isset($cfg['extensions']['enabled_products']) && is_array($cfg['extensions']['enabled_products'])) {
+                        $extensions->setEnabledProducts($cfg['extensions']['enabled_products']);
+                    }
+                }
+            }
+
+            $extensions->loadFromPaths($extensionPaths);
+
+            $kernel = new Kernel(
+                extensionBootstrap: $extensions,
+                configManager: $configManager,
+            );
 
             $kernel->router()->get('/', static function (): Response {
                 return Response::json(['message' => 'Pulsar API is running']);
@@ -184,6 +277,15 @@ final readonly class TemplateRegistry
                 'name' => '$appName',
                 'debug' => (bool) (\$_ENV['APP_DEBUG'] ?? true),
 
+                // Bundled application/product extensions (forum, cms, payments,
+                // tickets, messaging, booking, analytics, feedback, devices,
+                // subscriptions, releases, ai-governance, health-status) are OFF
+                // by default — they declare "kind": "product" in pulsar.json.
+                // Framework infrastructure and any extensions you author load
+                // automatically. Turn a product on additively:
+                //   'enabled_products' => ['pulsar/forum'],
+                // Or take full manual control with an exclusive allowlist:
+                //   'enabled' => ['pulsar/auth', 'pulsar/orm', 'pulsar/forum'],
                 'extensions' => [
                     'paths' => [
                         __DIR__ . '/../extensions',
@@ -198,8 +300,8 @@ final readonly class TemplateRegistry
         return <<<'TEXT'
             /vendor/
             /node_modules/
-            /var/cache/
-            /var/log/
+            /var/
+            /storage/
             /.idea/
             /.vscode/
             .env
@@ -271,24 +373,24 @@ final readonly class TemplateRegistry
 
             return [
                 'session' => [
-                    'enabled' => true,
+                    'handler' => 'file',
                     'lifetime' => 7200,
-                    'cookie_name' => 'pulsar_session',
+                    'cookie_name' => 'PULSAR_SESSION',
                     'cookie_secure' => false,
-                    'cookie_http_only' => true,
-                    'cookie_same_site' => 'Lax',
+                    'cookie_httponly' => true,
+                    'cookie_samesite' => 'Lax',
                 ],
 
                 'csrf' => [
                     'enabled' => true,
-                    'token_name' => '_token',
-                    'header_name' => 'X-CSRF-TOKEN',
+                    'form_field_name' => '_csrf_token',
+                    'header_name' => 'X-CSRF-Token',
                 ],
 
                 'headers' => [
-                    'x_content_type_options' => 'nosniff',
-                    'x_frame_options' => 'DENY',
-                    'referrer_policy' => 'strict-origin-when-cross-origin',
+                    'X-Content-Type-Options' => 'nosniff',
+                    'X-Frame-Options' => 'DENY',
+                    'Referrer-Policy' => 'strict-origin-when-cross-origin',
                 ],
             ];
             PHP;
@@ -303,7 +405,8 @@ final readonly class TemplateRegistry
 
             return [
                 'session' => [
-                    'enabled' => false,
+                    'handler' => 'file',
+                    'lifetime' => 0,
                 ],
 
                 'csrf' => [
@@ -311,9 +414,9 @@ final readonly class TemplateRegistry
                 ],
 
                 'headers' => [
-                    'x_content_type_options' => 'nosniff',
-                    'x_frame_options' => 'DENY',
-                    'referrer_policy' => 'strict-origin-when-cross-origin',
+                    'X-Content-Type-Options' => 'nosniff',
+                    'X-Frame-Options' => 'DENY',
+                    'Referrer-Policy' => 'strict-origin-when-cross-origin',
                 ],
             ];
             PHP;
@@ -341,6 +444,137 @@ final readonly class TemplateRegistry
                     ]);
                 }
             }
+            PHP;
+    }
+
+    private function databaseConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default' => $_ENV['DB_CONNECTION'] ?? 'sqlite',
+
+                'connections' => [
+                    'sqlite' => [
+                        'driver' => 'sqlite',
+                        'database' => __DIR__ . '/../var/database.sqlite',
+                    ],
+                ],
+
+                'migrations' => [
+                    'path' => __DIR__ . '/../database/migrations',
+                    'table' => 'migrations',
+                ],
+            ];
+            PHP;
+    }
+
+    private function observabilityConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'logging' => [
+                    'default_channel' => 'file',
+                    'channels' => [
+                        'file' => [
+                            'driver' => 'file',
+                            'path' => __DIR__ . '/../var/logs/app.log',
+                            'level' => $_ENV['LOG_LEVEL'] ?? 'debug',
+                        ],
+                    ],
+                ],
+
+                'metrics' => [
+                    'enabled' => false,
+                ],
+
+                'tracing' => [
+                    'enabled' => false,
+                ],
+            ];
+            PHP;
+    }
+
+    private function i18nConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default_locale' => 'en',
+                'supported_locales' => ['en'],
+                'fallback_locale' => 'en',
+            ];
+            PHP;
+    }
+
+    private function viewConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'paths' => [
+                    __DIR__ . '/../resources/views',
+                ],
+
+                'compiled_path' => __DIR__ . '/../var/cache/views',
+            ];
+            PHP;
+    }
+
+    private function cacheConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default' => 'file',
+
+                'stores' => [
+                    'file' => [
+                        'driver' => 'file',
+                        'path' => __DIR__ . '/../var/cache/data',
+                    ],
+                ],
+            ];
+            PHP;
+    }
+
+    private function mailConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default' => 'log',
+
+                'mailers' => [
+                    'log' => [
+                        'driver' => 'log',
+                    ],
+                ],
+
+                'from' => [
+                    'address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@example.com',
+                    'name' => $_ENV['MAIL_FROM_NAME'] ?? 'Pulsar App',
+                ],
+            ];
             PHP;
     }
 }

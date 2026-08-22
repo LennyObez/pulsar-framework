@@ -9,9 +9,11 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\RawExpression;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
+use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use ReflectionClass;
 
+use function is_scalar;
 use function sprintf;
 
 /**
@@ -62,19 +64,26 @@ final readonly class WithCountLoader
      */
     private function countRelation(array $entities, RelationMetadata $relation, string $pkProperty): array
     {
+        $entityClass = $entities[0]::class;
         $parentIds = [];
         foreach ($entities as $entity) {
             $ref = new ReflectionClass($entity);
-            $parentIds[] = $ref->getProperty($pkProperty)->getValue($entity);
+            /** @var mixed $pkValue */
+            $pkValue = $ref->getProperty($pkProperty)->getValue($entity);
+            $parentIds = [...$parentIds, $pkValue];
         }
 
         if ($parentIds === []) {
             return [];
         }
 
+        if ($relation->type === RelationType::MorphMany) {
+            return $this->countMorphManyRelation($parentIds, $relation, $entityClass);
+        }
+
         $targetMetadata = $this->metadataRegistry->get($relation->targetEntity);
         $builder = new SelectBuilder($this->connection);
-        $builder->from($targetMetadata->tableName);
+        $builder->from($targetMetadata->qualifiedTableName());
         $builder->select([
             RawExpression::of(sprintf(
                 '%s, COUNT(*) AS cnt',
@@ -87,7 +96,47 @@ final readonly class WithCountLoader
         $result = $builder->get();
         $countMap = [];
         foreach ($result->rows as $row) {
-            $key = (string) $row->get($relation->foreignKey);
+            /** @var mixed $rawForeignKey */
+            $rawForeignKey = $row->get($relation->foreignKey);
+            $key = is_scalar($rawForeignKey) ? (string) $rawForeignKey : '';
+            $countMap[$key] = $row->getInt('cnt');
+        }
+
+        return $countMap;
+    }
+
+    /**
+     * Count MorphMany relations with type discrimination.
+     *
+     * @param list<mixed> $parentIds
+     * @param class-string $parentClass
+     * @return array<string, int>
+     */
+    private function countMorphManyRelation(array $parentIds, RelationMetadata $relation, string $parentClass): array
+    {
+        if ($relation->morphTypeColumn === null || $relation->morphIdColumn === null) {
+            return [];
+        }
+
+        $targetMetadata = $this->metadataRegistry->get($relation->targetEntity);
+        $builder = new SelectBuilder($this->connection);
+        $builder->from($targetMetadata->qualifiedTableName());
+        $builder->select([
+            RawExpression::of(sprintf(
+                '%s, COUNT(*) AS cnt',
+                $relation->morphIdColumn,
+            )),
+        ]);
+        $builder->where($relation->morphTypeColumn, $parentClass);
+        $builder->whereIn($relation->morphIdColumn, $parentIds);
+        $builder->groupBy($relation->morphIdColumn);
+
+        $result = $builder->get();
+        $countMap = [];
+        foreach ($result->rows as $row) {
+            /** @var mixed $rawKey */
+            $rawKey = $row->get($relation->morphIdColumn);
+            $key = is_scalar($rawKey) ? (string) $rawKey : '';
             $countMap[$key] = $row->getInt('cnt');
         }
 

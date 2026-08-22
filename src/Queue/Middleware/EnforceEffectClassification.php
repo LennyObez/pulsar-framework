@@ -19,7 +19,7 @@ use Pulsar\Queue\Exception\QueueException;
  *
  * Enforcement rules applied:
  * 1. Every job MUST have exactly one effect attribute (#[Idempotent], #[SideEffectFree],
- *    or #[NonIdempotent]) — throws if missing.
+ *    or #[NonIdempotent]); throws if missing.
  * 2. #[NonIdempotent] jobs are rejected unless #[AllowNonIdempotent] is also present.
  *    When allowed, an audit event is emitted.
  * 3. Subject ID is mandatory unless #[SystemJob] is present on the job class.
@@ -59,8 +59,7 @@ final readonly class EnforceEffectClassification implements JobMiddlewareInterfa
      *
      * When the allowance is present, dispatches an audit event recording the
      * reason and reviewer for compliance traceability.
-     */
-    /**
+     *
      * @param class-string $jobClass
      */
     private function enforceNonIdempotentAllowance(string $jobClass): void

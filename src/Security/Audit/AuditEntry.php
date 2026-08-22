@@ -15,6 +15,7 @@ use function hash_equals;
 use function json_encode;
 use function sodium_bin2hex;
 use function sodium_crypto_generichash;
+use function sprintf;
 use function strlen;
 use function substr;
 
@@ -24,13 +25,14 @@ use function substr;
  * Each entry's HMAC covers all fields plus the previous entry's HMAC,
  * creating a chain where modifying or deleting any entry invalidates all
  * subsequent HMACs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 readonly class AuditEntry
 {
     /**
      * @param array<string, mixed> $metadata
-     * @param string $kid Key identifier — empty for legacy entries created before kid tracking
+     * @param string $kid Key identifier: empty for legacy entries created before kid tracking
      */
     public function __construct(
         public string $id,
@@ -47,14 +49,34 @@ readonly class AuditEntry
     ) {}
 
     /**
+     * Sentinel key replacing `metadata` when the supplied bag contains
+     * non-encodable values (resources, closures, recursive structures).
+     *
+     * Letting `JsonException` escape `create()` would poison the audit
+     * chain: the caller's mutex is released without a chain advance,
+     * the operator loses the audit trail for that operation, and
+     * downstream logic continues with no marker. Instead a synthesised
+     * entry is written whose metadata carries only a serialisation-error
+     * indicator, so the chain still advances and the incident is itself
+     * auditable.
+     */
+    public const string SERIALIZATION_ERROR_KEY = 'serialization_error';
+
+    /**
      * Create a new audit entry and compute its HMAC.
      *
-     * The kid is always derived from the actual key bytes — callers cannot
+     * The kid is always derived from the actual key bytes; callers cannot
      * accidentally omit or forge it.
+     *
+     * When `$metadata` contains values `json_encode` cannot handle
+     * (resources, closures, recursive structures), `JsonException` is
+     * not propagated. The entry is built instead with a `metadata` bag
+     * that records the serialisation failure, preserving the audit
+     * chain. Callers that need to flag this to operators can detect it
+     * via the {@see SERIALIZATION_ERROR_KEY} sentinel.
      *
      * @param array<string, mixed> $metadata
      *
-     * @throws JsonException
      * @throws SodiumException
      */
     #[NoDiscard]
@@ -70,11 +92,46 @@ readonly class AuditEntry
         string $previousHmac,
         string $auditKey,
     ): self {
-        // Compute kid from the actual key bytes — 16 hex chars (64 bits)
+        // Compute kid from the actual key bytes: 16 hex chars (64 bits)
         // Uses minimum generichash output (16 bytes) then takes first 16 hex chars
         $kid = substr(sodium_bin2hex(sodium_crypto_generichash($auditKey, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MIN)), 0, 16);
 
-        $metadataJson = json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        try {
+            $metadataJson = json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } catch (JsonException $e) {
+            // Replace the metadata with a sentinel describing the
+            // failure so the entry can still be written. The HMAC is
+            // computed over the sentinel, so verification on a future
+            // read sees a self-consistent entry.
+            //
+            // Swallowing the JsonException would leave the operator with
+            // no signal that an entry was written with degraded metadata.
+            // The user-warning gives log scrapers, set_error_handler
+            // hooks and observability sinks a measurable event each time
+            // metadata is dropped. This is observability, not failure —
+            // the chain stays self-consistent because the HMAC covers
+            // the sentinel.
+            @trigger_error(
+                sprintf(
+                    'AuditEntry::create() metadata serialization failed for action "%s" (event=%s): %s',
+                    $action,
+                    $event->value,
+                    $e->getMessage(),
+                ),
+                E_USER_WARNING,
+            );
+
+            $metadata = [self::SERIALIZATION_ERROR_KEY => $e->getMessage()];
+            $metadataJson = json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            // The sentinel only contains a string + key, so encoding it
+            // again must succeed. If it somehow returned false (out of
+            // memory, etc.), fall back to the most-conservative form.
+            if ($metadataJson === false) {
+                $metadataJson = '{"' . self::SERIALIZATION_ERROR_KEY . '":"unrenderable"}';
+                $metadata = [self::SERIALIZATION_ERROR_KEY => 'unrenderable'];
+            }
+        }
 
         $message = self::buildMessage(
             $id,

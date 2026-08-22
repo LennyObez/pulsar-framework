@@ -64,7 +64,7 @@ final class PathNormalizationTest extends TestCase
         $this->createFile($cacheDir . '/container.compiled.php', '<?php return [];');
 
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $basePath, $cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $cacheDir);
 
         // Extract path strings from require_once and opcache_compile_file lines
         $lines = explode("\n", $output);
@@ -123,7 +123,7 @@ final class PathNormalizationTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/test-ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Test\\Extension',
             ], $extPath),
         ];

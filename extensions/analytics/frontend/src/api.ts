@@ -1,14 +1,30 @@
 import type {
   AggregateStats,
+  AttributionEntry,
   BreakdownItem,
   DateRange,
+  EcommerceSummary,
+  EventNameEntry,
+  EventProperty,
+  FlowStep,
+  FunnelDefinition,
+  FunnelResult,
   Goal,
   RealtimeData,
+  RevenuePoint,
+  SearchOverview,
+  SearchQueryEntry,
+  SegmentDefinition,
   Site,
   TimeseriesPoint,
+  TopProduct,
 } from './types';
 
 const BASE = '/plsr/api/v1';
+
+function getCsrfToken(): string {
+  return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+}
 
 async function get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(path, window.location.origin);
@@ -23,7 +39,10 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
 async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const res = await fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': getCsrfToken(),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -33,7 +52,10 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
 async function put<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const res = await fetch(path, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': getCsrfToken(),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -41,7 +63,12 @@ async function put<T>(path: string, body: Record<string, unknown>): Promise<T> {
 }
 
 async function del(path: string): Promise<void> {
-  const res = await fetch(path, { method: 'DELETE' });
+  const res = await fetch(path, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRF-Token': getCsrfToken(),
+    },
+  });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
 }
 
@@ -125,4 +152,205 @@ export function updateGoal(
 
 export function deleteGoal(id: string): Promise<void> {
   return del(`${BASE}/goals/${id}`);
+}
+
+// Flow / Behavior Flow
+export function fetchFlow(
+  siteId: string,
+  range: DateRange,
+  entryPage = '/',
+  depth = 3,
+): Promise<{ data: FlowStep[] }> {
+  return get(`${BASE}/flow`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+    entry_page: entryPage,
+    depth: String(depth),
+  });
+}
+
+export function fetchExitPages(
+  siteId: string,
+  range: DateRange,
+): Promise<{ data: Array<{ pathname: string; exits: number; exit_rate: number }> }> {
+  return get(`${BASE}/flow/exits`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+// Funnels
+export function fetchFunnels(siteId: string): Promise<{ data: FunnelDefinition[] }> {
+  return get(`${BASE}/funnels`, { site_id: siteId });
+}
+
+export function createFunnel(
+  data: Omit<FunnelDefinition, 'id' | 'created_at'>,
+): Promise<FunnelDefinition> {
+  return post(`${BASE}/funnels`, data as Record<string, unknown>);
+}
+
+export function evaluateFunnel(id: string, range: DateRange): Promise<FunnelResult> {
+  return get(`${BASE}/funnels/${id}/evaluate`, {
+    from: range.from,
+    to: range.to,
+  });
+}
+
+export function deleteFunnel(id: string): Promise<void> {
+  return del(`${BASE}/funnels/${id}`);
+}
+
+// E-commerce
+export function fetchEcommerceSummary(siteId: string, range: DateRange): Promise<EcommerceSummary> {
+  return get(`${BASE}/ecommerce/summary`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+export function fetchTopProducts(
+  siteId: string,
+  range: DateRange,
+  limit = 10,
+): Promise<{ data: TopProduct[] }> {
+  return get(`${BASE}/ecommerce/products`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+    limit: String(limit),
+  });
+}
+
+export function fetchRevenueTimeseries(
+  siteId: string,
+  range: DateRange,
+): Promise<{ data: RevenuePoint[] }> {
+  return get(`${BASE}/ecommerce/revenue`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+// Custom Events
+export function fetchEventNames(
+  siteId: string,
+  range: DateRange,
+): Promise<{ data: EventNameEntry[] }> {
+  return get(`${BASE}/events/names`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+export function fetchEventProperties(
+  siteId: string,
+  range: DateRange,
+  eventName: string,
+): Promise<{ data: EventProperty[] }> {
+  return get(`${BASE}/events/properties`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+    event_name: eventName,
+  });
+}
+
+export function fetchEventTimeseries(
+  siteId: string,
+  range: DateRange,
+  eventName: string,
+): Promise<{ data: Array<{ date: string; count: number }> }> {
+  return get(`${BASE}/events/timeseries`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+    event_name: eventName,
+  });
+}
+
+// Segments
+export function fetchSegments(siteId: string): Promise<{ data: SegmentDefinition[] }> {
+  return get(`${BASE}/segments`, { site_id: siteId });
+}
+
+export function createSegment(
+  data: Omit<SegmentDefinition, 'id' | 'created_at'>,
+): Promise<SegmentDefinition> {
+  return post(`${BASE}/segments`, data as Record<string, unknown>);
+}
+
+export function countSegmentVisitors(
+  id: string,
+  range: DateRange,
+): Promise<{ segment_id: string; visitors: number }> {
+  return get(`${BASE}/segments/${id}/count`, {
+    from: range.from,
+    to: range.to,
+  });
+}
+
+export function deleteSegment(id: string): Promise<void> {
+  return del(`${BASE}/segments/${id}`);
+}
+
+// Attribution
+export function fetchAttribution(
+  siteId: string,
+  range: DateRange,
+  model = 'last_touch',
+): Promise<{ model: string; data: AttributionEntry[] }> {
+  return get(`${BASE}/attribution`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+    model,
+  });
+}
+
+export function fetchAttributionComparison(
+  siteId: string,
+  range: DateRange,
+): Promise<{ data: Record<string, AttributionEntry[]> }> {
+  return get(`${BASE}/attribution/compare`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+// Search Analytics
+export function fetchSearchOverview(siteId: string, range: DateRange): Promise<SearchOverview> {
+  return get(`${BASE}/search/overview`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+export function fetchTopSearchQueries(
+  siteId: string,
+  range: DateRange,
+): Promise<{ data: SearchQueryEntry[] }> {
+  return get(`${BASE}/search/queries`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
+}
+
+export function fetchZeroResultQueries(
+  siteId: string,
+  range: DateRange,
+): Promise<{ data: SearchQueryEntry[] }> {
+  return get(`${BASE}/search/zero-results`, {
+    site_id: siteId,
+    from: range.from,
+    to: range.to,
+  });
 }

@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * General exception for mail operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MailException extends RuntimeException
@@ -61,7 +62,7 @@ final class MailException extends RuntimeException
     {
         return new self(
             sprintf(
-                'TLS encryption fallback for recipient "%s" under policy "%s" — sent without encryption',
+                'TLS encryption fallback for recipient "%s" under policy "%s": sent without encryption',
                 $recipient,
                 $policy->value,
             ),

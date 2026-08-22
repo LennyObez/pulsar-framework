@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheIntegrity;
 use Pulsar\Cache\ConfigCache;
 use Pulsar\Config\AppConfig;
+use Pulsar\Config\AppSignature;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Security\Crypto\Encryptor;
@@ -65,6 +66,7 @@ final class ConfigCacheTest extends TestCase
         $loaded = $this->configCache->load($this->tempDir, [
             ConfigRepository::class,
             AppConfig::class,
+            AppSignature::class,
             EnvironmentMode::class,
         ]);
 
@@ -101,6 +103,7 @@ final class ConfigCacheTest extends TestCase
         $loaded = $cache->load($this->tempDir, [
             ConfigRepository::class,
             AppConfig::class,
+            AppSignature::class,
             EnvironmentMode::class,
         ]);
 
@@ -151,6 +154,7 @@ final class ConfigCacheTest extends TestCase
         $loaded = $this->configCache->load($this->tempDir, [
             ConfigRepository::class,
             AppConfig::class,
+            AppSignature::class,
             EnvironmentMode::class,
         ]);
 

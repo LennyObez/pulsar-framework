@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace Pulsar\Idempotency;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Idempotency\Exception\IdempotencyException;
+
+use function sprintf;
 
 /**
  * In-memory idempotency store with Fiber-safe mutex.
  *
  * Uses an internal in-flight map to prevent interleaved Fiber execution
  * from double-processing the same key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryIdempotencyStore implements IdempotencyStoreInterface
@@ -32,6 +36,16 @@ final class InMemoryIdempotencyStore implements IdempotencyStoreInterface
         DateTimeImmutable $now,
         int $ttlSeconds,
     ): IdempotencyClaim {
+        // A non-positive TTL yields expiresAt <= createdAt, so the record
+        // is born already expired and idempotency protection silently
+        // vanishes. Reject it as a caller contract violation rather than
+        // store a record that can never replay.
+        if ($ttlSeconds <= 0) {
+            throw new InvalidArgumentException(
+                sprintf('Idempotency TTL must be a positive number of seconds, got %d.', $ttlSeconds),
+            );
+        }
+
         // Check for concurrent in-flight claim
         if (isset($this->inFlight[$key])) {
             throw IdempotencyException::concurrentClaim($key);
@@ -50,12 +64,12 @@ final class InMemoryIdempotencyStore implements IdempotencyStoreInterface
                     return IdempotencyClaim::mismatch();
                 }
 
-                // Replay — return cached result if committed
+                // Replay; return cached result if committed
                 if ($record->resultPayload !== null) {
                     return IdempotencyClaim::replay($record->resultPayload);
                 }
 
-                // Record exists but not committed — concurrent processing
+                // Record exists but not committed: concurrent processing
                 throw IdempotencyException::concurrentClaim($key);
             }
         }
@@ -104,7 +118,12 @@ final class InMemoryIdempotencyStore implements IdempotencyStoreInterface
 
         foreach ($this->records as $key => $record) {
             if ($record->expiresAt <= $before) {
-                unset($this->records[$key]);
+                // Clear the in-flight mutex alongside the record. A record
+                // pruned while still claimed (very short TTL, or a $before
+                // ahead of the claim window) would otherwise orphan its
+                // $inFlight entry, causing the next claim() to throw a
+                // spurious ConcurrentClaim and lock the key until restart.
+                unset($this->records[$key], $this->inFlight[$key]);
                 $pruned++;
             }
         }

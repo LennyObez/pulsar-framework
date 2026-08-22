@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * General exception for notification operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class NotificationException extends RuntimeException

@@ -148,7 +148,7 @@ final class UploadHandlerTest extends TestCase
 
         try {
             $this->expectException(UploadException::class);
-            $this->expectExceptionMessage('exceeds maximum size');
+            $this->expectExceptionMessageIsOrContains('exceeds maximum size');
             $handler->handle($tmpFile, 'big.txt', 'file');
         } finally {
             @unlink($tmpFile);
@@ -167,7 +167,7 @@ final class UploadHandlerTest extends TestCase
 
         try {
             $this->expectException(UploadException::class);
-            $this->expectExceptionMessage('MIME type');
+            $this->expectExceptionMessageIsOrContains('MIME type');
             $handler->handle($tmpFile, 'fake.jpg', 'avatar', ['image/jpeg']);
         } finally {
             @unlink($tmpFile);
@@ -198,7 +198,7 @@ final class UploadHandlerTest extends TestCase
 
         try {
             $this->expectException(UploadException::class);
-            $this->expectExceptionMessage('Antivirus scan failed');
+            $this->expectExceptionMessageIsOrContains('Antivirus scan failed');
             $handler->handle($tmpFile, 'file.txt', 'file');
         } finally {
             @unlink($tmpFile);

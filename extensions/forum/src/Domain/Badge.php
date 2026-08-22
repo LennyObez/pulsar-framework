@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Achievement badges that can be awarded to forum users.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Badge: string

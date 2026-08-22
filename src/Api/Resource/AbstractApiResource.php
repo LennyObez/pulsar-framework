@@ -23,6 +23,7 @@ use function is_string;
  * Subclasses define public properties with `#[Expose]` to declare the API shape.
  * The `toArray()` method only includes exposed fields, respecting authorization
  * and classification clearance from the {@see ClearanceSnapshot}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class AbstractApiResource
@@ -41,7 +42,7 @@ abstract class AbstractApiResource
      * @param array<string, RedactionRule> $redactionRules Field name => redaction rule
      * @param bool $includeRedactionMeta Whether to include `_meta.redactions` in the output.
      *     Only enable for callers with debug/audit privileges. Regular API consumers
-     *     must never see which fields were omitted — that leaks hidden field names.
+     *     must never see which fields were omitted: that leaks hidden field names.
      *
      * @return array<string, mixed>
      */
@@ -63,7 +64,7 @@ abstract class AbstractApiResource
             $policy = $metadata->fieldPolicies[$fieldName] ?? null;
 
             if ($policy === null) {
-                // Field not in the policy map — skip silently
+                // Field not in the policy map: skip silently
                 continue;
             }
 
@@ -74,6 +75,7 @@ abstract class AbstractApiResource
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $this->{$propertyName};
 
             // Handle conditional fields
@@ -82,6 +84,7 @@ abstract class AbstractApiResource
                     continue;
                 }
 
+                /** @var mixed $value */
                 $value = $value->value;
             }
 
@@ -144,11 +147,11 @@ abstract class AbstractApiResource
                 continue;
             }
 
-            $output[$fieldName] = $value;
+            $output = [...$output, $fieldName => $value];
         }
 
         // Attach redaction metadata only when the debug/audit flag is enabled.
-        // Regular API consumers must never see this — it leaks hidden field names.
+        // Regular API consumers must never see this: it leaks hidden field names.
         if ($includeRedactionMeta && $redactions !== []) {
             $output['_meta'] = ['redactions' => $redactions];
         }
@@ -196,14 +199,13 @@ abstract class AbstractApiResource
     ): array {
         $output = [];
 
+        /** @var mixed $item */
         foreach ($items as $key => $item) {
-            if ($item instanceof self) {
-                $output[$key] = $item->toArray($clearance, null, $redactionRules, $includeRedactionMeta);
-            } elseif (is_array($item)) {
-                $output[$key] = self::serializeArray($item, $clearance, $redactionRules, $includeRedactionMeta);
-            } else {
-                $output[$key] = $item;
-            }
+            $output = match (true) {
+                $item instanceof self => [...$output, $key => $item->toArray($clearance, null, $redactionRules, $includeRedactionMeta)],
+                is_array($item) => [...$output, $key => self::serializeArray($item, $clearance, $redactionRules, $includeRedactionMeta)],
+                default => [...$output, $key => $item],
+            };
         }
 
         return $output;

@@ -11,6 +11,11 @@ use Pulsar\Api\Api;
  *
  * Supports structured bundle export/import (selective entity types)
  * and full-site definition import (N.3 schema).
+ *
+ * @psalm-api Public binding contract; implemented by ImportExportService and
+ *            consumed by admin import/export controllers and the framework
+ *            ImportExportProvider adapter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ImportExportServiceInterface
@@ -40,4 +45,22 @@ interface ImportExportServiceInterface
      * downloaded via the SSRF-safe HTTP client.
      */
     public function importSiteDefinition(string $jsonContent, bool $dryRun = true): ImportResult;
+
+    /**
+     * Import a unified JSON file with auto-detection of content type.
+     *
+     * Inspects the root keys of the JSON document to determine what sections
+     * are present, then routes each section to the appropriate handler:
+     *   - `site` key → full SiteDefinition import
+     *   - `content` key → import pages/articles via bundle importer
+     *   - `taxonomies` key → import taxonomies via bundle importer
+     *   - `menus` key → import menus via bundle importer
+     *   - `forum` key → delegate to ForumImportExportProvider via registry
+     *   - `booking` key → delegate to BookingImportExportProvider via registry
+     *   - `analytics` key → delegate to AnalyticsImportExportProvider via registry
+     *   - `providers` key → ImportExportProvider format (multi-provider bundle)
+     *
+     * Used by both CLI (`pulsar cms:import`) and the admin GUI import endpoint.
+     */
+    public function importUnifiedFile(string $jsonContent, bool $dryRun = true): ImportResult;
 }

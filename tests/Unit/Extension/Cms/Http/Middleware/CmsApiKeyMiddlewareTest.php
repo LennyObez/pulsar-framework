@@ -18,15 +18,18 @@ use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Http\Middleware\CmsApiKeyMiddleware;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Security\Crypto\HmacService;
 
-use function hash;
 use function json_decode;
+use function str_repeat;
 
 #[CoversClass(CmsApiKeyMiddleware::class)]
 final class CmsApiKeyMiddlewareTest extends TestCase
 {
     private ApiKeyRepositoryInterface&Stub $repository;
     private RequestHandlerInterface&Stub $handler;
+    private HmacService $hmac;
+    private string $hmacKey;
 
     protected function setUp(): void
     {
@@ -34,13 +37,19 @@ final class CmsApiKeyMiddlewareTest extends TestCase
 
         $this->handler = $this->createStub(RequestHandlerInterface::class);
         $this->handler->method('handle')->willReturn(Response::json(['ok' => true]));
+
+        // BLAKE2b keyed-hash via the real production service. 32 bytes of
+        // deterministic key material is enough to cover the (Hmac, key)
+        // pair the middleware expects.
+        $this->hmac = new HmacService();
+        $this->hmacKey = str_repeat("\x42", 32);
     }
 
     #[Test]
     public function no_key_and_not_required_passes_through(): void
     {
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(method: 'GET', uri: '/api/content');
 
@@ -54,7 +63,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
     public function no_key_and_required_returns_401(): void
     {
         $config = new CmsConfig(apiKeyRequired: true);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(method: 'GET', uri: '/api/content');
 
@@ -70,7 +79,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
     public function valid_key_via_header_passes_through_with_attribute(): void
     {
         $rawKey = 'test-api-key-secret-value';
-        $keyHash = hash('sha256', $rawKey);
+        $keyHash = $this->hmac->computeHex($rawKey, $this->hmacKey);
 
         $storedKey = new ApiKey(
             id: '019577a0-0000-7000-8000-000000000001',
@@ -96,7 +105,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
         );
 
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -115,7 +124,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
     public function valid_key_via_query_param_passes_through(): void
     {
         $rawKey = 'query-param-key';
-        $keyHash = hash('sha256', $rawKey);
+        $keyHash = $this->hmac->computeHex($rawKey, $this->hmacKey);
 
         $storedKey = new ApiKey(
             id: '019577a0-0000-7000-8000-000000000002',
@@ -131,7 +140,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
         $this->repository->method('findByKeyHash')->willReturn($storedKey);
 
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -150,7 +159,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
         $this->repository->method('findByKeyHash')->willReturn(null);
 
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -170,7 +179,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
     public function inactive_key_returns_401(): void
     {
         $rawKey = 'inactive-key';
-        $keyHash = hash('sha256', $rawKey);
+        $keyHash = $this->hmac->computeHex($rawKey, $this->hmacKey);
 
         $inactiveKey = new ApiKey(
             id: '019577a0-0000-7000-8000-000000000003',
@@ -186,7 +195,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
         $this->repository->method('findByKeyHash')->willReturn($inactiveKey);
 
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -203,7 +212,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
     public function expired_key_returns_401(): void
     {
         $rawKey = 'expired-key';
-        $keyHash = hash('sha256', $rawKey);
+        $keyHash = $this->hmac->computeHex($rawKey, $this->hmacKey);
 
         $expiredKey = new ApiKey(
             id: '019577a0-0000-7000-8000-000000000004',
@@ -219,7 +228,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
         $this->repository->method('findByKeyHash')->willReturn($expiredKey);
 
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -236,7 +245,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
     public function header_takes_precedence_over_query_param(): void
     {
         $headerKey = 'header-key-value';
-        $headerHash = hash('sha256', $headerKey);
+        $headerHash = $this->hmac->computeHex($headerKey, $this->hmacKey);
 
         $storedKey = new ApiKey(
             id: '019577a0-0000-7000-8000-000000000005',
@@ -256,7 +265,7 @@ final class CmsApiKeyMiddlewareTest extends TestCase
         );
 
         $config = new CmsConfig(apiKeyRequired: false);
-        $middleware = new CmsApiKeyMiddleware($this->repository, $config);
+        $middleware = new CmsApiKeyMiddleware($this->repository, $config, $this->hmac, $this->hmacKey);
 
         $request = new ServerRequest(
             method: 'GET',

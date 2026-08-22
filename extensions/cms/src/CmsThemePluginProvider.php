@@ -12,12 +12,15 @@ use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Event\EventDispatcherInterface;
+use Pulsar\Extension\Cms\Command\ThemeActivateCommand;
+use Pulsar\Extension\Cms\Command\ThemeInstallCommand;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Internal\LiveCss\CspHashComputer;
 use Pulsar\Extension\Cms\Internal\LiveCss\CssValidator;
 use Pulsar\Extension\Cms\Internal\LiveCss\LiveCssService;
 use Pulsar\Extension\Cms\Internal\LiveCss\ThemeTokenResolver;
 use Pulsar\Extension\Cms\Internal\Persistence\CachePreviewSessionRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\InMemoryPreviewSessionRepository;
 use Pulsar\Extension\Cms\Internal\Plugins\CmsPluginManager;
 use Pulsar\Extension\Cms\Internal\Plugins\HookExecutionEngine;
 use Pulsar\Extension\Cms\Internal\Plugins\PluginManifestValidator;
@@ -50,8 +53,11 @@ use function rtrim;
 
 /**
  * Binds theme manager, plugin manager, hook engine, and live CSS services.
+ *
+ * @psalm-api Instantiated by name from CmsServiceProvider::register() to wire
+ *            the theme/plugin service bindings into the DI container.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsThemePluginProvider
 {
     public function register(ContainerInterface $container): void
@@ -100,38 +106,67 @@ final readonly class CmsThemePluginProvider
             new ThemeAssetResolver($themeRepository, $logger),
         );
 
-        // Preview session repository (cache-backed when TaggedCacheInterface is available)
+        // Preview session repository: prefer cache-backed when TaggedCacheInterface
+        // is available (Redis/Memcached), fall back to in-memory for dev/single-process.
         if ($container->has(TaggedCacheInterface::class)) {
             /** @var TaggedCacheInterface $taggedCache */
             $taggedCache = $container->get(TaggedCacheInterface::class);
             $previewSessionRepository = new CachePreviewSessionRepository($taggedCache);
-            $container->instance(PreviewSessionRepositoryInterface::class, $previewSessionRepository);
-
-            if ($eventDispatcher !== null) {
-                /** @var string $basePath */
-                $basePath = $container->has('app.base_path')
-                    ? $container->get('app.base_path')
-                    : (getcwd() ?: '.');
-
-                $publicPath = rtrim($basePath, '/') . '/public';
-
-                $container->instance(
-                    ThemeManagerInterface::class,
-                    new ThemeManager(
-                        $themeRepository,
-                        $manifestValidator,
-                        $provenanceVerifier,
-                        $archiveExtractor,
-                        $themesConfig,
-                        $eventDispatcher,
-                        $auditLogger,
-                        $logger,
-                        $previewSessionRepository,
-                        $publicPath,
-                    ),
-                );
-            }
+        } else {
+            $previewSessionRepository = new InMemoryPreviewSessionRepository();
         }
+
+        $container->instance(PreviewSessionRepositoryInterface::class, $previewSessionRepository);
+
+        // ThemeManager: register unconditionally when an event dispatcher is available.
+        // No longer gated on TaggedCacheInterface since the preview session repository
+        // has an in-memory fallback.
+        if ($eventDispatcher !== null) {
+            /** @var string $basePath */
+            $basePath = $container->has('app.base_path')
+                ? $container->get('app.base_path')
+                : (getcwd() ?: '.');
+
+            $publicPath = rtrim($basePath, '/') . '/public';
+
+            $container->instance(
+                ThemeManagerInterface::class,
+                new ThemeManager(
+                    $themeRepository,
+                    $manifestValidator,
+                    $provenanceVerifier,
+                    $archiveExtractor,
+                    $themesConfig,
+                    $eventDispatcher,
+                    $auditLogger,
+                    $logger,
+                    $previewSessionRepository,
+                    $publicPath,
+                ),
+            );
+        }
+
+        // Console theme commands: activate + install. Bound over the theme
+        // repository (and, for install, the resolved absolute themes storage
+        // directory) so the console application resolves them from the
+        // manifest's provides.commands list.
+        /** @var string $themesCommandBasePath */
+        $themesCommandBasePath = $container->has('app.base_path')
+            ? $container->get('app.base_path')
+            : (getcwd() ?: '.');
+        $configuredThemesPath = $themesConfig->storagePath;
+        $themesStoragePath = str_starts_with($configuredThemesPath, '/')
+            ? $configuredThemesPath
+            : rtrim($themesCommandBasePath, '/') . '/' . $configuredThemesPath;
+
+        $container->instance(
+            ThemeActivateCommand::class,
+            new ThemeActivateCommand($themeRepository),
+        );
+        $container->instance(
+            ThemeInstallCommand::class,
+            new ThemeInstallCommand($themeRepository, $themesStoragePath),
+        );
 
         // Plugin stack
         $securityConfig = $config->security;

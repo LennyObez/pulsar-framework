@@ -13,9 +13,10 @@ use Pulsar\Api\Api;
  * The envelope wraps the serialized payload with tracing context,
  * retry policy, encryption metadata, and tenant/subject identification
  * required for regulated job processing.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class JobEnvelope
+final readonly class JobEnvelope
 {
     /**
      * @param string               $id                 Unique job identifier.
@@ -67,7 +68,6 @@ readonly class JobEnvelope
     /**
      * Create a new envelope with an incremented attempt number.
      */
-    /** @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement */
     #[NoDiscard]
     public function withNextAttempt(): self
     {
@@ -79,7 +79,6 @@ readonly class JobEnvelope
      *
      * @param array<string, mixed> $metadata
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withMetadata(array $metadata): self

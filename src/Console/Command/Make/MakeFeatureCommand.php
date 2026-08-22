@@ -15,7 +15,6 @@ use Pulsar\Console\OutputInterface;
 use function is_dir;
 use function is_file;
 use function is_int;
-use function is_string;
 use function sprintf;
 
 /**
@@ -54,10 +53,7 @@ final class MakeFeatureCommand extends Command
 
         [$name, $module, $modulePath, $namespace] = $context;
 
-        $method = $input->getOption('method', 'POST');
-        if (!is_string($method)) {
-            $method = 'POST';
-        }
+        $method = $input->getStringOption('method', 'POST');
 
         $featurePath = $modulePath . DIRECTORY_SEPARATOR . 'Features' . DIRECTORY_SEPARATOR . $name;
 
@@ -88,7 +84,7 @@ final class MakeFeatureCommand extends Command
             $routeContent = file_get_contents($routesFile);
             if ($routeContent !== false) {
                 // Insert before the closing of the closure
-                $entry = $this->templates->routeEntry($name, $namespace, $method);
+                $entry = $this->templates->routeEntry($name, $method);
                 $routeContent = str_replace('};', $entry . "\n};", $routeContent);
                 file_put_contents($routesFile, $routeContent);
                 $output->writeln('  Updated routes.php');

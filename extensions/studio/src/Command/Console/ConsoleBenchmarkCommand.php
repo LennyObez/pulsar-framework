@@ -20,17 +20,14 @@ use Random\RandomException;
 use Throwable;
 
 use function array_keys;
-use function array_map;
 use function bin2hex;
 use function count;
 use function dirname;
-use function escapeshellarg;
-use function exec;
 use function file_exists;
 use function file_get_contents;
 use function hrtime;
-use function implode;
 use function is_dir;
+use function is_resource;
 use function json_decode;
 use function ksort;
 use function mkdir;
@@ -50,7 +47,7 @@ use const PHP_SAPI;
 use const PHP_VERSION;
 
 /**
- * Studio benchmark command — runs the profile matrix and emits events.
+ * Studio benchmark command: runs the profile matrix and emits events.
  */
 #[Internal]
 final class ConsoleBenchmarkCommand extends Command
@@ -107,7 +104,7 @@ final class ConsoleBenchmarkCommand extends Command
         }
 
         /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles */
-        $profiles = json_decode($profilesContent, true, 512, JSON_THROW_ON_ERROR);
+        $profiles = json_decode($profilesContent, true, flags: JSON_THROW_ON_ERROR);
 
         if ($singleProfile !== null) {
             if (!isset($profiles[$singleProfile])) {
@@ -142,7 +139,7 @@ final class ConsoleBenchmarkCommand extends Command
         $phpBinary = PHP_BINARY;
         $workerScript = $this->basePath . '/tools/bench/worker.php';
         $allProfiles = $unoptimized + $optimized;
-        $tempPreloadFile = $this->generatePreloadIfNeeded($allProfiles, $phpBinary, $output);
+        $tempPreloadFile = $this->generatePreloadIfNeeded($allProfiles, $phpBinary);
 
         $runStart = hrtime(true);
         $results = [];
@@ -215,7 +212,7 @@ final class ConsoleBenchmarkCommand extends Command
                     $results[$name] = ['error' => 'optimize command failed'];
 
                     if (!$isJson) {
-                        $output->writeln(sprintf('  [skip] %s — optimize command failed', $name));
+                        $output->writeln(sprintf('  [skip] %s: optimize command failed', $name));
                     }
 
                     continue;
@@ -296,9 +293,11 @@ final class ConsoleBenchmarkCommand extends Command
             }
         }
 
-        // Clean up temp preload file
-        if ($tempPreloadFile !== null && file_exists($tempPreloadFile)) {
-            @unlink($tempPreloadFile);
+        // Clean up temp preload file (best effort: a race with another process
+        // touching the file is acceptable here, but we no longer suppress
+        // warnings on the unlink itself).
+        if ($tempPreloadFile !== null && is_file($tempPreloadFile)) {
+            unlink($tempPreloadFile);
         }
 
         if ($isJson) {
@@ -352,7 +351,7 @@ final class ConsoleBenchmarkCommand extends Command
             $results[$name] = ['error' => 'preload not supported on this platform'];
 
             if (!$isJson) {
-                $output->writeln(sprintf('  [skip] %s — preloading requires Linux/macOS', $name));
+                $output->writeln(sprintf('  [skip] %s: preloading requires Linux/macOS', $name));
             }
 
             return;
@@ -427,7 +426,7 @@ final class ConsoleBenchmarkCommand extends Command
      *
      * @throws RandomException If random_bytes() fails for temp file naming
      */
-    private function generatePreloadIfNeeded(array $profiles, string $phpBinary, OutputInterface $output): ?string
+    private function generatePreloadIfNeeded(array $profiles, string $phpBinary): ?string
     {
         $needsPreload = false;
 
@@ -449,22 +448,61 @@ final class ConsoleBenchmarkCommand extends Command
 
         $tempPreloadFile = sys_get_temp_dir() . '/pulsar_bench_preload_' . bin2hex(random_bytes(4)) . '.php';
 
-        $preloadCmd = sprintf(
-            '%s %s/bin/pulsar preload:dump --output=%s --no-meta 2>&1',
-            escapeshellarg($phpBinary),
-            escapeshellarg($this->basePath),
-            escapeshellarg($tempPreloadFile),
-        );
+        // Use proc_open with argv array (no shell), avoiding any command
+        // injection regardless of how $phpBinary or $tempPreloadFile are
+        // constructed.
+        $result = $this->runProcess([
+            $phpBinary,
+            $this->basePath . '/bin/pulsar',
+            'preload:dump',
+            '--output=' . $tempPreloadFile,
+            '--no-meta',
+        ]);
 
-        $preloadOutput = [];
-        $preloadExitCode = 0;
-        exec($preloadCmd, $preloadOutput, $preloadExitCode);
-
-        if ($preloadExitCode !== 0) {
+        if ($result['exit'] !== 0) {
             return null;
         }
 
         return $tempPreloadFile;
+    }
+
+    /**
+     * Run a child process via proc_open with an argv array.
+     *
+     * Using proc_open with an array of arguments bypasses the shell
+     * entirely. No shell metacharacters can be interpreted, no escaping
+     * is required, and command injection is structurally impossible.
+     *
+     * @param list<string> $argv
+     *
+     * @return array{exit: int, output: list<string>}
+     */
+    private function runProcess(array $argv): array
+    {
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $proc = proc_open($argv, $descriptors, $pipes);
+
+        if (!is_resource($proc)) {
+            return ['exit' => -1, 'output' => []];
+        }
+
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]) ?: '';
+        $stderr = stream_get_contents($pipes[2]) ?: '';
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $exit = proc_close($proc);
+
+        $combined = $stdout . $stderr;
+        $lines = $combined === '' ? [] : explode("\n", rtrim($combined, "\n"));
+
+        return ['exit' => $exit, 'output' => $lines];
     }
 
     /**
@@ -498,26 +536,20 @@ final class ConsoleBenchmarkCommand extends Command
             $iniFlags[] = sprintf('opcache.preload=%s', $tempPreloadFile);
         }
 
-        $cmd = sprintf(
-            '%s %s %s 2>&1',
-            escapeshellarg($phpBinary),
-            implode(' ', array_map('escapeshellarg', $iniFlags)),
-            escapeshellarg($workerScript),
-        );
+        // Build argv: [phpBinary, -d key=val, -d key=val, ..., workerScript]
+        $argv = array_merge([$phpBinary], $iniFlags, [$workerScript]);
 
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
+        $result = $this->runProcess($argv);
 
-        if ($exitCode !== 0 || $output === []) {
+        if ($result['exit'] !== 0 || $result['output'] === []) {
             return null;
         }
 
-        $jsonLine = end($output);
+        $jsonLine = end($result['output']);
 
         try {
             /** @var array{boot_us: int, warm_boot_us: int, iterations: int, memory_usage_kb: int, opcache_memory_kb: ?int, p50_us: int, p95_us: int, peak_rss_kb: int, rps: int} $metrics */
-            $metrics = json_decode($jsonLine, true, 512, JSON_THROW_ON_ERROR);
+            $metrics = json_decode($jsonLine, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;
         }
@@ -527,31 +559,23 @@ final class ConsoleBenchmarkCommand extends Command
 
     private function runOptimize(string $phpBinary): bool
     {
-        $cmd = sprintf(
-            '%s %s/bin/pulsar optimize 2>&1',
-            escapeshellarg($phpBinary),
-            escapeshellarg($this->basePath),
-        );
+        $result = $this->runProcess([
+            $phpBinary,
+            $this->basePath . '/bin/pulsar',
+            'optimize',
+        ]);
 
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
-
-        return $exitCode === 0;
+        return $result['exit'] === 0;
     }
 
     private function runOptimizeClear(string $phpBinary): bool
     {
-        $cmd = sprintf(
-            '%s %s/bin/pulsar optimize:clear 2>&1',
-            escapeshellarg($phpBinary),
-            escapeshellarg($this->basePath),
-        );
+        $result = $this->runProcess([
+            $phpBinary,
+            $this->basePath . '/bin/pulsar',
+            'optimize:clear',
+        ]);
 
-        $output = [];
-        $exitCode = 0;
-        exec($cmd, $output, $exitCode);
-
-        return $exitCode === 0;
+        return $result['exit'] === 0;
     }
 }

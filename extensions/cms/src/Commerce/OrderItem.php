@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single line item within an order.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OrderItem

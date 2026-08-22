@@ -38,7 +38,7 @@ return [
     // ... logging config ...
     'audit' => [
         'enabled'  => true,
-        'log_path' => 'storage/audit/audit.jsonl',
+        'log_path' => 'var/logs/audit.jsonl',
         'events'   => ['*'],  // Log all event types, or specify: ['authentication', 'authorization']
     ],
 ];

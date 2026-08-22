@@ -9,7 +9,7 @@ use Pulsar\Api\Internal;
 /**
  * Known bot user-agent regex patterns for bot detection.
  */
-#[Internal(reason: 'Bot detection internals — use BotDetector')]
+#[Internal(reason: 'Bot detection internals; use BotDetector')]
 final class BotPatterns
 {
     /**
@@ -42,5 +42,4 @@ final class BotPatterns
         'httpclient',
     ];
 
-    private function __construct() {}
 }

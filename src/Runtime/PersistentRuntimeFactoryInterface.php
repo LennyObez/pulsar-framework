@@ -15,6 +15,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  *
  * Encapsulates the assembly of runtime dependencies (sandbox, leak detector,
  * reset registry) so that console commands don't import internal Runtime types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PersistentRuntimeFactoryInterface
@@ -23,6 +24,18 @@ interface PersistentRuntimeFactoryInterface
      * Create a configured persistent runtime ready to start.
      */
     public function create(
+        KernelInterface $kernel,
+        RuntimeConfig $config,
+        ?LoggerInterface $logger = null,
+        ?RuntimeCollectorInterface $collector = null,
+        ?UpgradeContext $upgradeContext = null,
+    ): RuntimeInterface;
+
+    /**
+     * Create a runtime instance for the given type (fpm, persistent, FrankenPHP, RoadRunner).
+     */
+    public function createForType(
+        RuntimeType $type,
         KernelInterface $kernel,
         RuntimeConfig $config,
         ?LoggerInterface $logger = null,

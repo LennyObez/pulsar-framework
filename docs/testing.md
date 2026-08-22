@@ -38,7 +38,7 @@ composer qa                  # Full quality gate (cs:check + phpstan + psalm + b
 composer fuzz                # Run fuzz tests only
 composer chaos               # Run chaos engineering tests only
 composer property            # Run property-based tests only
-composer mutation            # Run mutation testing with Infection (targets Auth, Security, OAuth2, WebAuthn)
+composer mutation            # Run mutation testing with Infection (targets Auth, Security, Audit)
 composer bench               # Run PHPBench benchmarks
 composer bench:ci            # Run benchmarks in CI mode (no progress bar)
 ```
@@ -63,13 +63,34 @@ vendor/bin/phpunit -c tools/php/phpunit.xml --testsuite E2E
 
 ```bash
 # Generate coverage with PCOV (requires ext-pcov)
-XDEBUG_MODE=coverage composer test:coverage
+composer test:coverage
 
-# Or directly with the pcov.directory flag
-php -d memory_limit=512M -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html
+# Or directly, scoping instrumentation to first-party source
+php -d memory_limit=-1 -d pcov.enabled=1 -d pcov.directory=. -d pcov.exclude='~/(vendor|tests)/~'     vendor/bin/phpunit -c tools/php/phpunit.xml     --coverage-clover coverage/clover.xml --coverage-html coverage/html
 ```
 
-CI enforces a **70% statement coverage** threshold. The threshold is checked by parsing `coverage/clover.xml` after the test run.
+> **Both of those run the whole suite in one process, which needs more than 40 GB.**
+> php-code-coverage appends the id of every test to every line it covers, with no way
+> to switch that off, so memory grows at roughly 1.1 MB per test across 44,544 tests.
+> On a machine that cannot hold that the process is killed part-way with no error
+> message. CI does not run it this way: the `PHP Coverage` job recycles its process
+> every ~4,450 tests and merges the reports. See
+> [ADR-0042](adr/0042-coverage-and-mutation-are-bounded-by-memory.md).
+>
+> To reproduce CI locally:
+>
+> ```bash
+> mkdir -p build/coverage
+> vendor/bin/phpunit -c tools/php/phpunit.xml --no-coverage >     --list-tests-xml build/coverage/tests.xml
+> php tools/ci/partition-tests.php build/coverage/tests.xml 10 build/coverage/part
+> # then one run per part, and:
+> php tools/ci/merge-clover.php coverage/clover.xml build/coverage/clover-*.xml
+> ```
+
+CI enforces an **80% threshold on statements and methods**. Conditions are reported as
+not measured: branch data comes from Xdebug alone, and Xdebug costs 0.87 s per test on
+the CI runner — 10.6 hours for this suite, past GitHub's six-hour ceiling for a job. The
+threshold is checked by parsing `coverage/clover.xml` after the test run.
 
 ## Test structure
 
@@ -315,7 +336,7 @@ final class FullRequestLifecycleTest extends TestCase
 
 Key patterns:
 
-- No mocks -- real kernel, real router, real container
+- No mocks: real kernel, real router, real container
 - Full HTTP lifecycle: kernel boot, route registration, request handling, response verification
 - Tests cover status codes, response bodies, and headers
 
@@ -568,7 +589,10 @@ Key settings in `tools/php/phpunit.xml`:
 
 Mutation testing verifies that your tests actually catch bugs, not just that code runs without errors. Infection makes small changes (mutations) to source code, like flipping `>` to `>=` or changing `true` to `false`, and re-runs the test suite against each mutated version. If a test still passes despite the mutation, it means the test is too weak.
 
-Configuration is in `infection.json5`. It targets the most security-critical modules: Auth, Security, OAuth2, and WebAuthn.
+Configuration is in `infection.json5`. It targets the security-critical core: `src/Auth`, `src/Security` and
+`src/Audit`, paired with the tests that cover them. The scope is bounded by memory, not by preference —
+Infection needs per-test coverage, php-code-coverage holds roughly 1.1 MB of it per test, and an initial run
+over the full 42,588-test Unit suite is killed on a 16 GB runner. `infection.json5` carries the measurement.
 
 ```bash
 composer mutation    # Run mutation testing (requires infection/infection)
@@ -631,3 +655,216 @@ A scheduled CI workflow (`.github/workflows/dependency-audit.yml`) runs `compose
 - Use `allowWeakParameters: true` for password hashing in tests (avoids 100ms+ Argon2id per hash)
 - Use in-memory drivers (`SyncDriver`, `InMemoryDriver`, `:memory:` SQLite) over real databases
 - Keep benchmark setup lightweight; measure only the hot path
+
+## Pulsar Testing Utilities
+
+The `Pulsar\Testing` module provides framework-specific test helpers: fakes, assertions, HTTP testing, model factories, database testing, and deterministic time control. All utilities live in `src/Testing/` and integrate with PHPUnit.
+
+### TestCase base class
+
+Extend `Pulsar\Testing\TestCase` instead of PHPUnit's `TestCase` for automatic fake management:
+
+```php
+use Pulsar\Testing\TestCase;
+
+class OrderServiceTest extends TestCase
+{
+    public function testOrderCreation(): void
+    {
+        $events = $this->fakeEvents();
+        $mail = $this->fakeMail();
+
+        // ... trigger order creation ...
+
+        $events->assertDispatched(OrderCreated::class);
+        $mail->assertSentTo('customer@example.com', OrderConfirmation::class);
+    }
+}
+```
+
+Fakes are automatically reset after each test: no manual cleanup needed. All fakes are scoped to the test instance (no shared static state), making them parallel-safe.
+
+### Fakes
+
+Fakes replace framework services with in-memory test doubles that record operations for assertion. Each fake provides domain-specific assertion methods with detailed failure messages showing expected vs actual state.
+
+**Event fake** (`EventFake` implements `EventDispatcherInterface`):
+
+```php
+$events = $this->fakeEvents();
+$events->assertDispatched(OrderCreated::class);
+$events->assertDispatched(OrderCreated::class, 2); // exact count
+$events->assertNotDispatched(OrderCancelled::class);
+$events->assertNothingDispatched();
+$events->assertDispatchedWith(OrderCreated::class, fn($e) => $e->orderId === '123');
+$events->assertEnvelopeDispatched('order.created');
+```
+
+**Queue fake** (`QueueFake` implements `QueueDriverInterface`):
+
+```php
+$queue = $this->fakeQueue();
+$queue->assertPushed('App\Jobs\SendEmail');
+$queue->assertPushedOn('notifications', 'App\Jobs\Notify');
+$queue->assertNotPushed('App\Jobs\ProcessReport');
+$queue->assertNothingPushed();
+```
+
+**Mail fake** (`MailFake` implements `MailManagerInterface`):
+
+```php
+$mail = $this->fakeMail();
+$mail->assertSent(WelcomeEmail::class);
+$mail->assertSentTo('user@example.com', WelcomeEmail::class);
+$mail->assertNotSent(PasswordReset::class);
+$mail->assertNothingSent();
+```
+
+**Notification fake** (`NotificationFake` implements `NotificationManagerInterface`):
+
+```php
+$notifications = $this->fakeNotifications();
+$notifications->assertSent(InvoicePaid::class);
+$notifications->assertSentTo($user, InvoicePaid::class);
+$notifications->assertNothingSent();
+```
+
+**Cache fake** (`CacheFake` implements `CacheDriverInterface`):
+
+```php
+$cache = $this->fakeCache();
+$cache->assertHas('user:1:profile');
+$cache->assertMissing('deleted-key');
+$cache->assertValue('config:theme', 'dark');
+$cache->assertOperation('set', 'user:1:profile');
+$cache->assertEmpty();
+```
+
+**Storage fake** (`StorageFake` implements `StorageAdapterInterface`):
+
+```php
+$storage = $this->fakeStorage();
+$storage->assertExists('uploads/photo.jpg');
+$storage->assertMissing('deleted.txt');
+$storage->assertContent('config.json', '{"key":"value"}');
+$storage->assertCount(3, 'uploads/');
+$storage->assertEmpty();
+```
+
+### TestClock
+
+Freeze or advance time deterministically. Inject `ClockInterface` into services that need time awareness:
+
+```php
+use Pulsar\Testing\Clock\TestClock;
+
+$clock = TestClock::frozen();                    // freeze at current time
+$clock = TestClock::at('2024-01-15 10:00:00');   // freeze at specific time
+$clock->advance(seconds: 30);
+$clock->advance(minutes: 5, hours: 1);
+$clock->rewind(days: 1);
+$clock->setTo(new DateTimeImmutable('2025-06-01'));
+```
+
+### HTTP testing
+
+Build PSR-7 server requests and assert on responses:
+
+```php
+use Pulsar\Testing\Http\TestRequestBuilder;
+use Pulsar\Testing\Http\TestResponse;
+
+// Build requests
+$request = TestRequestBuilder::post('/api/users')
+    ->withJson(['name' => 'John'])
+    ->withToken('bearer-token')
+    ->build();
+
+// Assert responses
+$response = new TestResponse($psr7Response);
+$response->assertOk()
+    ->assertJson()
+    ->assertJsonFragment(['status' => 'ok'])
+    ->assertJsonPath('data.user.name', 'Alice')
+    ->assertHeader('Content-Type', 'application/json; charset=utf-8');
+```
+
+### Model factories
+
+```php
+use Pulsar\Testing\Factory\Factory;
+use Pulsar\Testing\Factory\Sequence;
+
+class UserFactory extends Factory
+{
+    protected function definition(): array
+    {
+        return ['name' => 'John', 'email' => 'john@test.com', 'role' => 'user'];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(['role' => 'admin']);
+    }
+}
+
+$user = UserFactory::new()->admin()->make();
+$users = UserFactory::new()
+    ->sequence('email', new Sequence(fn(int $i) => "user-{$i}@test.com"))
+    ->count(5)
+    ->make();
+```
+
+### Database testing
+
+```php
+use Pulsar\Testing\Database\DatabaseTransactions;
+use Pulsar\Testing\Database\DatabaseAssertions;
+
+class OrderTest extends TestCase
+{
+    use DatabaseTransactions, DatabaseAssertions;
+
+    protected function getConnection(): PDO { /* ... */ }
+    protected function getDatabaseConnection(): PDO { return $this->getConnection(); }
+
+    public function testOrderIsPersisted(): void
+    {
+        $this->assertDatabaseHas('orders', ['customer_id' => '123', 'status' => 'pending']);
+        $this->assertDatabaseMissing('orders', ['status' => 'cancelled']);
+        $this->assertDatabaseCount('orders', 5);
+    }
+}
+```
+
+### Module architecture
+
+```
+src/Testing/
+├── TestCase.php              # Base test case with fake management
+├── Concern/
+│   └── ResetsTestState.php   # Auto-reset trait for fakes
+├── Clock/
+│   ├── ClockInterface.php    # Injectable clock contract
+│   └── TestClock.php         # Deterministic time control
+├── Fake/
+│   ├── EventFake.php         # Event dispatcher fake
+│   ├── QueueFake.php         # Queue driver fake
+│   ├── MailFake.php          # Mail manager fake
+│   ├── NotificationFake.php  # Notification manager fake
+│   ├── CacheFake.php         # Cache driver fake
+│   └── StorageFake.php       # Storage adapter fake
+├── Http/
+│   ├── TestResponse.php      # Response wrapper with assertions
+│   └── TestRequestBuilder.php # Fluent request builder
+├── Factory/
+│   ├── Factory.php           # Base factory class
+│   ├── Sequence.php          # Sequential value generator
+│   └── FactoryMap.php        # Entity-to-factory map
+├── Database/
+│   ├── RefreshDatabase.php   # Migrate + rollback trait
+│   ├── DatabaseTransactions.php # Transaction wrapping trait
+│   └── DatabaseAssertions.php # DB assertion methods
+└── Browser/
+    └── BrowserTestCase.php   # Browser testing scaffold
+```

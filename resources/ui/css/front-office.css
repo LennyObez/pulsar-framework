@@ -1,0 +1,475 @@
+/* Pulsar UI — Front-Office Layout v1.0.0
+ * Charter §8.1.1: Front-office pages (CMS public, Forum public).
+ * Horizontal nav with mega-menu, hero sections, editorial spacing.
+ * Light theme default. More expressive than back-office.
+ *
+ * Import after pulsar-ui.css:
+ *   @import 'pulsar-ui.css';
+ *   @import 'front-office.css';
+ */
+
+/* ===========================================================================
+ * 1. Front-Office Shell
+ * =========================================================================== */
+
+.pui-fo {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+/* ===========================================================================
+ * 2. Horizontal Navigation
+ * =========================================================================== */
+
+.pui-fo-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-8);
+  background-color: var(--color-bg);
+  border-block-end: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.pui-fo-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.pui-fo-nav__brand:hover {
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.pui-fo-nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+}
+
+.pui-fo-nav__item {
+  position: relative;
+}
+
+.pui-fo-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.pui-fo-nav__link:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+  text-decoration: none;
+}
+
+.pui-fo-nav__link:visited {
+  color: var(--color-text-secondary);
+}
+
+.pui-fo-nav__link--active {
+  color: var(--color-primary-600);
+  font-weight: var(--font-semibold);
+}
+
+.pui-fo-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Hamburger for mobile */
+.pui-fo-nav__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.pui-fo-nav__toggle:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.pui-fo-nav__toggle:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ===========================================================================
+ * 3. Mega-Menu
+ * =========================================================================== */
+
+.pui-mega-menu {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  min-width: 40rem;
+  padding: var(--space-6);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--transition-normal),
+    visibility var(--transition-normal);
+  z-index: var(--z-dropdown);
+}
+
+.pui-fo-nav__item:hover > .pui-mega-menu,
+.pui-fo-nav__item:focus-within > .pui-mega-menu,
+.pui-mega-menu--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pui-mega-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-6);
+}
+
+.pui-mega-menu__section-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-text-muted);
+  margin-block-end: var(--space-3);
+}
+
+.pui-mega-menu__link {
+  display: block;
+  padding: var(--space-1-5) 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.pui-mega-menu__link:hover {
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.pui-mega-menu__link:visited {
+  color: var(--color-text-secondary);
+}
+
+.pui-mega-menu__featured {
+  padding: var(--space-4);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+/* ===========================================================================
+ * 4. Hero Section
+ * =========================================================================== */
+
+.pui-hero {
+  padding: var(--space-20) var(--space-8);
+  text-align: center;
+}
+
+.pui-hero--glow {
+  box-shadow: var(--shadow-glow);
+}
+
+.pui-hero__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  line-height: var(--text-4xl-leading);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+  max-width: 50ch;
+  margin-inline: auto;
+}
+
+.pui-hero__subtitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  color: var(--color-text-secondary);
+  line-height: var(--text-xl-leading);
+  max-width: 60ch;
+  margin-inline: auto;
+  margin-block-start: var(--space-4);
+}
+
+.pui-hero__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+  .pui-hero__title {
+    font-size: var(--text-5xl);
+    line-height: var(--leading-none);
+  }
+}
+
+/* ===========================================================================
+ * 5. Front-Office Content Sections
+ * =========================================================================== */
+
+.pui-fo-section {
+  padding: var(--space-16) var(--space-8);
+}
+
+.pui-fo-section__inner {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.pui-fo-section__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin-block-end: var(--space-4);
+}
+
+.pui-fo-section__subtitle {
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  max-width: 60ch;
+}
+
+/* Alternating section backgrounds */
+.pui-fo-section--alt {
+  background-color: var(--color-bg-secondary);
+}
+
+/* ===========================================================================
+ * 6. Front-Office Footer
+ * =========================================================================== */
+
+.pui-fo-footer {
+  padding: var(--space-12) var(--space-8) var(--space-8);
+  background-color: var(--color-bg-secondary);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.pui-fo-footer__inner {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.pui-fo-footer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-8);
+  margin-block-end: var(--space-8);
+}
+
+.pui-fo-footer__heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin-block-end: var(--space-3);
+}
+
+.pui-fo-footer__link {
+  display: block;
+  padding-block: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.pui-fo-footer__link:hover {
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.pui-fo-footer__link:visited {
+  color: var(--color-text-secondary);
+}
+
+.pui-fo-footer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.pui-fo-footer__social {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.pui-fo-footer__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.pui-fo-footer__social-link:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ===========================================================================
+ * 7. Prose / Editorial Content
+ * =========================================================================== */
+
+.pui-fo-prose {
+  max-width: 65ch;
+  margin-inline: auto;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text);
+}
+
+.pui-fo-prose h1,
+.pui-fo-prose h2,
+.pui-fo-prose h3,
+.pui-fo-prose h4 {
+  margin-block-start: var(--space-10);
+  margin-block-end: var(--space-4);
+}
+
+.pui-fo-prose p {
+  margin-block-end: var(--space-4);
+}
+
+.pui-fo-prose ul,
+.pui-fo-prose ol {
+  margin-block-end: var(--space-4);
+  padding-inline-start: var(--space-6);
+  list-style: revert;
+}
+
+.pui-fo-prose li {
+  margin-block-end: var(--space-1);
+}
+
+.pui-fo-prose img {
+  border-radius: var(--radius-lg);
+  margin-block: var(--space-6);
+}
+
+.pui-fo-prose blockquote {
+  margin-block: var(--space-6);
+}
+
+/* ===========================================================================
+ * 8. Mobile Responsive
+ * =========================================================================== */
+
+@media (max-width: 767px) {
+  .pui-fo-nav {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .pui-fo-nav__toggle {
+    display: inline-flex;
+  }
+
+  .pui-fo-nav__links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    inset-inline: 0;
+    flex-direction: column;
+    padding: var(--space-4);
+    background-color: var(--color-bg);
+    border-block-end: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+  }
+
+  .pui-fo-nav__links--open {
+    display: flex;
+  }
+
+  .pui-mega-menu {
+    position: static;
+    transform: none;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: var(--space-3);
+    padding-inline-start: var(--space-4);
+  }
+
+  .pui-hero {
+    padding: var(--space-12) var(--space-4);
+  }
+
+  .pui-hero__title {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl-leading);
+  }
+
+  .pui-hero__subtitle {
+    font-size: var(--text-base);
+  }
+
+  .pui-hero__actions {
+    flex-direction: column;
+  }
+
+  .pui-fo-section {
+    padding: var(--space-10) var(--space-4);
+  }
+
+  .pui-fo-footer {
+    padding: var(--space-8) var(--space-4) var(--space-6);
+  }
+
+  .pui-fo-footer__bottom {
+    flex-direction: column;
+    gap: var(--space-3);
+    text-align: center;
+  }
+}

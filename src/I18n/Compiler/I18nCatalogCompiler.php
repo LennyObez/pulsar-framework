@@ -229,7 +229,7 @@ final class I18nCatalogCompiler
         }
 
         /** @var array<string, mixed>|null $data */
-        $data = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
 
         if ($data === null) {
             return [];
@@ -251,7 +251,6 @@ final class I18nCatalogCompiler
      */
     private function extractKeysFromPhp(string $path): array
     {
-        /** @psalm-suppress UnresolvableInclude — dynamic translation file path resolved at build time */
         $data = require $path;
 
         if (!is_array($data)) {

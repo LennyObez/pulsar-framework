@@ -8,18 +8,26 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\LiveCss\LiveCssConfig;
 use Pulsar\Extension\Cms\Tools\ImportConfig;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Top-level CMS configuration DTO.
  *
+ * @psalm-api Public top-level configuration loaded from config/cms.php during
+ *            preBoot; consumed throughout the CMS by services and controllers.
+ *
  * Loaded from config/cms.php during the preBoot phase. All values have
  * sensible defaults for non-regulated environments; regulated deployments
  * should enable editorialWorkflow, eventSourcing, and atomicSnapshots.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsConfig
 {
     /**
+     * @param string $siteName Human-readable site name used in Open Graph and feed titles
      * @param string $defaultLocale BCP 47 default locale code
      * @param list<string> $supportedLocales All locale codes the CMS serves
      * @param bool $defaultLocaleInUrl When false, default locale at /{path}; when true, /{locale}/{path}
@@ -27,6 +35,7 @@ final readonly class CmsConfig
      * @param bool $eventSourcing Enable append-only event log for content mutations
      * @param bool $atomicSnapshots Enable all-locale atomic content snapshots on publish
      * @param int $maxHierarchyDepth Maximum page nesting depth (cycle detection)
+     * @param string|null $homepageContentId Content ID to serve at GET /. When null, falls back to path='' lookup
      * @param CmsCacheConfig $cache Caching configuration
      * @param MediaConfig $media Media upload and processing configuration
      * @param CommentsConfig $comments Comments system configuration
@@ -43,8 +52,10 @@ final readonly class CmsConfig
      * @param NotificationConfig $notifications Workflow notification configuration
      * @param AiConfig $ai AI content assistant configuration
      * @param PublishingConfig $publishing Multi-channel publishing configuration
+     * @param FormsConfig $forms Form submission pipeline configuration
      */
     public function __construct(
+        public string $siteName = 'Pulsar CMS',
         public string $defaultLocale = 'en',
         public array $supportedLocales = ['en'],
         public bool $defaultLocaleInUrl = false,
@@ -52,6 +63,7 @@ final readonly class CmsConfig
         public bool $eventSourcing = false,
         public bool $atomicSnapshots = false,
         public int $maxHierarchyDepth = 10,
+        public ?string $homepageContentId = null,
         public CmsCacheConfig $cache = new CmsCacheConfig(),
         public MediaConfig $media = new MediaConfig(),
         public CommentsConfig $comments = new CommentsConfig(),
@@ -68,37 +80,76 @@ final readonly class CmsConfig
         public NotificationConfig $notifications = new NotificationConfig(),
         public AiConfig $ai = new AiConfig(),
         public PublishingConfig $publishing = new PublishingConfig(),
+        public FormsConfig $forms = new FormsConfig(),
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     site_name?: string,
+     *     default_locale?: string,
+     *     supported_locales?: list<string>,
+     *     default_locale_in_url?: bool,
+     *     editorial_workflow?: bool,
+     *     event_sourcing?: bool,
+     *     atomic_snapshots?: bool,
+     *     max_hierarchy_depth?: int,
+     *     homepage_content_id?: string|null,
+     *     cache?: array<string, mixed>,
+     *     media?: array<string, mixed>,
+     *     comments?: array<string, mixed>,
+     *     seo?: array<string, mixed>,
+     *     themes?: array<string, mixed>,
+     *     security?: array<string, mixed>,
+     *     commerce?: array<string, mixed>|null,
+     *     live_css?: array<string, mixed>,
+     *     import?: array<string, mixed>,
+     *     http_cache_ttl_seconds?: int,
+     *     public_rate_limit_content?: int,
+     *     public_rate_limit_checkout?: int,
+     *     api_key_required?: bool,
+     *     notifications?: array<string, mixed>,
+     *     ai?: array<string, mixed>,
+     *     publishing?: array<string, mixed>,
+     *     forms?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
+        $sub = static function (string $k) use ($data): array {
+            $value = $data[$k] ?? null;
+
+            /** @var array<string, mixed> */
+            return is_array($value) ? $value : [];
+        };
+        $commerceData = $data['commerce'] ?? null;
+
         return new self(
-            defaultLocale: (string) ($data['default_locale'] ?? 'en'),
-            supportedLocales: (array) ($data['supported_locales'] ?? ['en']),
-            defaultLocaleInUrl: (bool) ($data['default_locale_in_url'] ?? false),
-            editorialWorkflow: (bool) ($data['editorial_workflow'] ?? false),
-            eventSourcing: (bool) ($data['event_sourcing'] ?? false),
-            atomicSnapshots: (bool) ($data['atomic_snapshots'] ?? false),
-            maxHierarchyDepth: (int) ($data['max_hierarchy_depth'] ?? 10),
-            cache: CmsCacheConfig::fromArray((array) ($data['cache'] ?? [])),
-            media: MediaConfig::fromArray((array) ($data['media'] ?? [])),
-            comments: CommentsConfig::fromArray((array) ($data['comments'] ?? [])),
-            seo: SeoConfig::fromArray((array) ($data['seo'] ?? [])),
-            themes: ThemesConfig::fromArray((array) ($data['themes'] ?? [])),
-            security: CmsSecurityConfig::fromArray((array) ($data['security'] ?? [])),
-            commerce: isset($data['commerce']) ? CommerceConfig::fromArray((array) $data['commerce']) : null,
-            liveCss: LiveCssConfig::fromArray((array) ($data['live_css'] ?? [])),
-            import: ImportConfig::fromArray((array) ($data['import'] ?? [])),
-            httpCacheTtlSeconds: (int) ($data['http_cache_ttl_seconds'] ?? 300),
-            publicRateLimitContent: (int) ($data['public_rate_limit_content'] ?? 120),
-            publicRateLimitCheckout: (int) ($data['public_rate_limit_checkout'] ?? 30),
-            apiKeyRequired: (bool) ($data['api_key_required'] ?? false),
-            notifications: NotificationConfig::fromArray((array) ($data['notifications'] ?? [])),
-            ai: AiConfig::fromArray((array) ($data['ai'] ?? [])),
-            publishing: PublishingConfig::fromArray((array) ($data['publishing'] ?? [])),
+            siteName: Coerce::string($data['site_name'] ?? null, 'Pulsar CMS'),
+            defaultLocale: Coerce::string($data['default_locale'] ?? null, 'en'),
+            supportedLocales: Coerce::listOfString($data['supported_locales'] ?? null, ['en']),
+            defaultLocaleInUrl: Coerce::strictBool($data['default_locale_in_url'] ?? null),
+            editorialWorkflow: Coerce::strictBool($data['editorial_workflow'] ?? null),
+            eventSourcing: Coerce::strictBool($data['event_sourcing'] ?? null),
+            atomicSnapshots: Coerce::strictBool($data['atomic_snapshots'] ?? null),
+            maxHierarchyDepth: Coerce::int($data['max_hierarchy_depth'] ?? null, 10),
+            homepageContentId: Coerce::nullableString($data['homepage_content_id'] ?? null),
+            cache: CmsCacheConfig::fromArray($sub('cache')),
+            media: MediaConfig::fromArray($sub('media')),
+            comments: CommentsConfig::fromArray($sub('comments')),
+            seo: SeoConfig::fromArray($sub('seo')),
+            themes: ThemesConfig::fromArray($sub('themes')),
+            security: CmsSecurityConfig::fromArray($sub('security')),
+            commerce: is_array($commerceData) ? CommerceConfig::fromArray($commerceData) : null,
+            liveCss: LiveCssConfig::fromArray($sub('live_css')),
+            import: ImportConfig::fromArray($sub('import')),
+            httpCacheTtlSeconds: Coerce::int($data['http_cache_ttl_seconds'] ?? null, 300),
+            publicRateLimitContent: Coerce::int($data['public_rate_limit_content'] ?? null, 120),
+            publicRateLimitCheckout: Coerce::int($data['public_rate_limit_checkout'] ?? null, 30),
+            apiKeyRequired: Coerce::strictBool($data['api_key_required'] ?? null),
+            notifications: NotificationConfig::fromArray($sub('notifications')),
+            ai: AiConfig::fromArray($sub('ai')),
+            publishing: PublishingConfig::fromArray($sub('publishing')),
+            forms: FormsConfig::fromArray($sub('forms')),
         );
     }
 }

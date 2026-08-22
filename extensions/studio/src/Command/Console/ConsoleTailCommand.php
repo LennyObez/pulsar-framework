@@ -13,8 +13,10 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 use function explode;
-use function is_string;
+use function function_exists;
 use function json_encode;
+use function pcntl_async_signals;
+use function pcntl_signal;
 use function sprintf;
 use function usleep;
 
@@ -44,19 +46,18 @@ final class ConsoleTailCommand extends Command
         $this->addOption('lines', 'Number of past events to show', 'n', '20');
     }
 
-    /** @psalm-suppress InvalidReturnType Infinite poll loop — exits only via SIGINT */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $rawTypeOption = $input->hasOption('type') ? $input->getOption('type') : null;
-        $typeFilter = is_string($rawTypeOption) ? explode(',', $rawTypeOption) : [];
+        $typeOption = $input->hasOption('type') ? $input->getStringOption('type') : '';
+        $typeFilter = $typeOption !== '' ? explode(',', $typeOption) : [];
 
-        $rawFilterOption = $input->hasOption('filter') ? $input->getOption('filter') : null;
-        $correlationFilter = is_string($rawFilterOption) ? $rawFilterOption : null;
+        $correlationFilter = $input->hasOption('filter')
+            ? $input->getNullableStringOption('filter')
+            : null;
 
         $isJson = $input->hasOption('json');
-        $rawLines = $input->getOption('lines', '20') ?? '20';
-        $lines = is_numeric($rawLines) ? (int) $rawLines : 20;
+        $lines = $input->getIntOption('lines', 20);
 
         // Build initial query filters
         $filters = [];
@@ -81,8 +82,27 @@ final class ConsoleTailCommand extends Command
             $output->writeln('--- Watching for new events (Ctrl+C to stop) ---');
         }
 
-        // Poll for new events (intentional infinite loop — exits via Ctrl+C / signal)
-        for (;;) {
+        // A tail is long-running, not unstoppable. The loop used to be an
+        // unconditional for(;;) carrying a @psalm-suppress InvalidReturnType, which
+        // is an accurate description of a method that can only be ended by killing
+        // the process: no exit code reaches the shell, no `finally` runs, and any
+        // test of it hangs the suite. Ctrl+C now unwinds it normally where the
+        // platform can tell us about signals.
+        $stop = false;
+
+        if (function_exists('pcntl_async_signals') && function_exists('pcntl_signal')) {
+            pcntl_async_signals(true);
+            $interrupt = static function () use (&$stop): void {
+                $stop = true;
+            };
+
+            // Only evaluated behind the function_exists() guard above, so the
+            // constants are never touched on a build without ext-pcntl.
+            pcntl_signal(SIGINT, $interrupt);
+            pcntl_signal(SIGTERM, $interrupt);
+        }
+
+        while (!$stop) {
             $pollFilters = $filters;
             if ($lastId > 0) {
                 $pollFilters['since_id'] = $lastId;
@@ -101,6 +121,12 @@ final class ConsoleTailCommand extends Command
 
             usleep(500_000); // 500ms polling interval
         }
+
+        if (!$isJson) {
+            $output->writeln('--- Stopped ---');
+        }
+
+        return 0;
     }
 
     /**

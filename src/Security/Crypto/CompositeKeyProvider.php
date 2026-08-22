@@ -7,6 +7,7 @@ namespace Pulsar\Security\Crypto;
 use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameter;
 use SodiumException;
 
 use function count;
@@ -24,6 +25,7 @@ use function strlen;
  *
  * When no override exists for a context, derivation delegates to the primary MasterKey,
  * preserving full backward compatibility.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CompositeKeyProvider implements KeyProviderInterface
@@ -34,6 +36,7 @@ final class CompositeKeyProvider implements KeyProviderInterface
      */
     public function __construct(
         private readonly MasterKey $primary,
+        #[SensitiveParameter]
         private array $overrides = [],
     ) {
         foreach ($overrides as $context => $keyBytes) {
@@ -72,6 +75,7 @@ final class CompositeKeyProvider implements KeyProviderInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('CompositeKeyProvider');
     }
 
@@ -128,8 +132,11 @@ final class CompositeKeyProvider implements KeyProviderInterface
     /**
      * Validate that an override key is non-empty and context is a valid string.
      */
-    private static function validateOverride(string $context, string $keyBytes): void
-    {
+    private static function validateOverride(
+        string $context,
+        #[SensitiveParameter]
+        string $keyBytes,
+    ): void {
         if ($context === '') {
             throw new InvalidArgumentException('Override context must not be empty');
         }

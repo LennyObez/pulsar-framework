@@ -73,6 +73,7 @@ final readonly class UpdateResourceHandler
             if (!$field->editable || !array_key_exists($field->name, $data)) {
                 continue;
             }
+            /** @var mixed $value */
             $value = $data[$field->name];
             foreach ($field->rules as $rule) {
                 $error = $rule->validate($value, $field->label);

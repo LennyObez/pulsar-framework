@@ -10,7 +10,7 @@ use Pulsar\Event\EventEnvelope;
 /**
  * Serializes and deserializes event envelopes for transport/storage.
  */
-#[Internal(reason: 'Unimplemented port — will be promoted to #[Api] when an adapter ships')]
+#[Internal(reason: 'Unimplemented port; will be promoted to #[Api] when an adapter ships')]
 interface EventSerializer
 {
     /**

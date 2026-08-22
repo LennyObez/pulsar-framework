@@ -6,6 +6,8 @@
  * state snapshot; actual merging happens client-side in Yjs.
  */
 
+import { cmsApi } from '../utils/api.js';
+
 /** CRDT document state returned from the server. */
 interface CrdtDocumentState {
   content_id: string;
@@ -68,9 +70,8 @@ export class YjsAdapter {
   async connect(contentId: string, userId: string, userName: string): Promise<string> {
     this.contentId = contentId;
 
-    const response = await fetch(`${this.baseUrl}/${contentId}/join`, {
+    const response = await cmsApi(`${this.baseUrl}/${contentId}/join`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, user_name: userName }),
     });
 
@@ -94,9 +95,8 @@ export class YjsAdapter {
     }
 
     if (this.contentId !== null && this.sessionId !== null) {
-      await fetch(`${this.baseUrl}/${this.contentId}/leave`, {
+      await cmsApi(`${this.baseUrl}/${this.contentId}/leave`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: this.sessionId }),
       });
     }
@@ -115,9 +115,8 @@ export class YjsAdapter {
       throw new Error('Not connected to a collaboration session');
     }
 
-    const response = await fetch(`${this.baseUrl}/${this.contentId}/update`, {
+    const response = await cmsApi(`${this.baseUrl}/${this.contentId}/update`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ update, user_id: userId }),
     });
 

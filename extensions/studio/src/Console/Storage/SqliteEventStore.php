@@ -131,13 +131,20 @@ final class SqliteEventStore implements EventStoreInterface
         string $payloadJson,
         ?string $tenantHash,
         ?string $chainMacKey,
+        ?string $ciphertextHash = null,
     ): void {
-        $this->ingestWithRetry(function () use ($envelope, $payloadJson, $tenantHash, $chainMacKey): void {
+        $this->ingestWithRetry(function () use ($envelope, $payloadJson, $tenantHash, $chainMacKey, $ciphertextHash): void {
             $this->pdo->exec('BEGIN IMMEDIATE');
 
             try {
                 // Store the event
                 $this->store($envelope, $payloadJson, $tenantHash);
+
+                // Set ciphertext_hash atomically if provided (from EncryptedEventStore)
+                if ($ciphertextHash !== null) {
+                    $hashStmt = $this->pdo->prepare('UPDATE studio_events SET ciphertext_hash = :hash WHERE event_id = :id');
+                    $hashStmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
+                }
 
                 // Read current chain tip
                 $tipStmt = $this->pdo->query(
@@ -194,6 +201,7 @@ final class SqliteEventStore implements EventStoreInterface
 
         $stmt = $this->pdo->prepare($sql);
 
+        /** @var mixed $value */
         foreach ($bindings as $key => $value) {
             $stmt->bindValue(':' . $key, $value);
         }
@@ -212,6 +220,7 @@ final class SqliteEventStore implements EventStoreInterface
         $sql = sprintf('SELECT COUNT(*) FROM studio_events %s', $whereClause);
 
         $stmt = $this->pdo->prepare($sql);
+        /** @var mixed $value */
         foreach ($bindings as $key => $value) {
             $stmt->bindValue(':' . $key, $value);
         }
@@ -232,6 +241,7 @@ final class SqliteEventStore implements EventStoreInterface
         $bindings = [];
 
         if (isset($filters['event_type'])) {
+            /** @var mixed $eventTypeFilter */
             $eventTypeFilter = $filters['event_type'];
             if (is_array($eventTypeFilter)) {
                 $placeholders = [];
@@ -492,6 +502,7 @@ final class SqliteEventStore implements EventStoreInterface
      */
     private static function isSqliteBusy(PDOException $e): bool
     {
+        /** @var mixed $errorCode */
         $errorCode = (is_array($e->errorInfo) && isset($e->errorInfo[1])) ? $e->errorInfo[1] : 0;
         $sqliteCode = is_int($errorCode) ? $errorCode : (int) (is_string($errorCode) ? $errorCode : 0);
 

@@ -16,7 +16,6 @@ use Throwable;
 
 use function json_encode;
 use function min;
-use function pow;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -26,8 +25,11 @@ use const JSON_THROW_ON_ERROR;
  *
  * Delay formula: min(2^retryCount * 60, 3600) seconds.
  * After maxRetries is exceeded, the event is logged and discarded.
+ *
+ * @psalm-api Instantiated by the queue worker after deserializing job payloads;
+ *            entry point invoked by the QueueableInterface contract.
  */
-#[Internal(reason: 'Internal webhook retry mechanism — not part of public API')]
+#[Internal(reason: 'Internal webhook retry mechanism; not part of public API')]
 final readonly class WebhookRetryJob implements QueueableInterface
 {
     private const string QUEUE_NAME = 'cms-webhooks';
@@ -115,7 +117,7 @@ final readonly class WebhookRetryJob implements QueueableInterface
      */
     public static function calculateDelay(int $retryCount): int
     {
-        return min((int) pow(2, $retryCount) * self::BASE_DELAY_SECONDS, self::MAX_BACKOFF_SECONDS);
+        return min((1 << $retryCount) * self::BASE_DELAY_SECONDS, self::MAX_BACKOFF_SECONDS);
     }
 
     /**

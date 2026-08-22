@@ -86,9 +86,9 @@ final class DirectiveRegistry
         $this->register(new SimpleDirective('else', '<?php else: ?>'));
         $this->register(new SimpleDirective('endif', '<?php endif; ?>'));
 
-        // Foreach
-        $this->register(new ControlFlowDirective('foreach', 'foreach'));
-        $this->register(new SimpleDirective('endforeach', '<?php endforeach; ?>'));
+        // Foreach (with $loop variable)
+        $this->register(new ForeachDirective());
+        $this->register(new EndForeachDirective());
 
         // For
         $this->register(new ControlFlowDirective('for', 'for'));
@@ -128,9 +128,75 @@ final class DirectiveRegistry
         // Forms
         $this->register(new CsrfDirective());
         $this->register(new MethodDirective());
+        $this->register(new ShieldDirective());
+        $this->register(new TimeTrapDirective());
+
+        // Anti-scraping contact links
+        $this->register(new CloakMailDirective());
+        $this->register(new CloakTelDirective());
+
+        // Notifications bell (degrades to empty when no repository is shared)
+        $this->register(new NotificationsDirective());
 
         // i18n
         $this->register(new I18nDirective());
+        $this->register(new TranslateDirective());
+        $this->register(new TranslateRawDirective());
+        $this->register(new RouteDirective());
+
+        // Type safety
+        $this->register(new TypedDirective());
+
+        // Security
+        $this->register(new CspNonceDirective());
+        $this->register(new SanitizeDirective());
+        $this->register(new EscapeJsDirective());
+
+        // Error boundaries
+        $this->register(new TryDirective());
+        $this->register(new CatchDirective());
+
+        // Fragment caching
+        $this->register(new CacheDirective());
+        $this->register(new EndCacheDirective());
+
+        // Progressive rendering
+        $this->register(new DeferDirective());
+        $this->register(new EndDeferDirective());
+
+        // Form binding
+        $this->register(new FormDirective());
+        $this->register(new EndFormDirective());
+
+        // Islands (partial hydration)
+        $this->register(new IslandDirective());
+
+        // Environment checks
+        $this->register(new EnvDirective());
+        $this->register(new SimpleDirective('endenv', '<?php endif; ?>'));
+
+        // One-time rendering
+        $this->register(new OnceDirective());
+        $this->register(new SimpleDirective('endonce', '<?php endif; ?>'));
+
+        // Content stacks
+        $this->register(new PushDirective());
+        $this->register(new EndPushDirective());
+        $this->register(new StackDirective());
+
+        // Pagination
+        $this->register(new PaginationDirective());
+
+        // Media players
+        $this->register(new VideoDirective());
+        $this->register(new AudioDirective());
+        $this->register(new PdfDirective());
+
+        // Region/language selector
+        $this->register(new RegionSelectorDirective());
+
+        // Dev tools
+        $this->register(new DevReloadDirective());
 
         // PHP blocks (policy-controlled)
         $this->register(new PhpDirective($this->config));

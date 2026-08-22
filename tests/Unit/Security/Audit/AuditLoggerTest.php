@@ -7,10 +7,14 @@ namespace Pulsar\Tests\Unit\Security\Audit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
+use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Security\Audit\AuditChainState;
+use Pulsar\Security\Audit\AuditChainStateAware;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
@@ -18,6 +22,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Audit\AuditSinkInterface;
 use Pulsar\Security\Audit\ChainableAuditSinkInterface;
 use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Exception\SecurityException;
 
 #[CoversClass(AuditLogger::class)]
 final class AuditLoggerTest extends TestCase
@@ -254,7 +259,24 @@ final class AuditLoggerTest extends TestCase
     }
 
     #[Test]
-    public function logUsesSystemActorWhenNoContextAndNoActor(): void
+    public function logThrowsWhenNoContextAndNoActor(): void
+    {
+        $sink = $this->createStub(AuditSinkInterface::class);
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        $this->expectException(AuditActorMissingException::class);
+        $this->expectExceptionMessageIsOrContains('"startup"');
+
+        $logger->log(
+            event: AuditEvent::SystemEvent,
+            outcome: AuditOutcome::Success,
+            actor: null,
+            action: 'startup',
+        );
+    }
+
+    #[Test]
+    public function logAcceptsAuditActorValueObject(): void
     {
         $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
@@ -262,11 +284,11 @@ final class AuditLoggerTest extends TestCase
         $entry = $logger->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('background.startup'),
             action: 'startup',
         );
 
-        self::assertSame('system', $entry->actor);
+        self::assertSame('system:background.startup', $entry->actor);
     }
 
     #[Test]
@@ -296,7 +318,26 @@ final class AuditLoggerTest extends TestCase
     }
 
     #[Test]
-    public function logWithEmptyContextHolderDoesNotEnrich(): void
+    public function logWithEmptyContextHolderThrowsWhenActorMissing(): void
+    {
+        $sink = $this->createStub(AuditSinkInterface::class);
+        $contextHolder = new RequestContextHolder();
+        // No context set
+
+        $logger = new AuditLogger($sink, $this->auditKey, contextHolder: $contextHolder);
+
+        $this->expectException(AuditActorMissingException::class);
+
+        $logger->log(
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: null,
+            action: 'read',
+        );
+    }
+
+    #[Test]
+    public function logWithEmptyContextHolderAcceptsExplicitActor(): void
     {
         $sink = $this->createStub(AuditSinkInterface::class);
         $contextHolder = new RequestContextHolder();
@@ -307,11 +348,51 @@ final class AuditLoggerTest extends TestCase
         $entry = $logger->log(
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('test'),
             action: 'read',
         );
 
-        self::assertSame('system', $entry->actor);
+        self::assertSame('system:test', $entry->actor);
         self::assertArrayNotHasKey('correlation_id', $entry->metadata);
+    }
+
+    #[Test]
+    public function resumesFromStateAwareSinkWhenHealthy(): void
+    {
+        $resumedHmac = 'abc123resumed';
+        $sink = $this->createStub(AuditChainStateAware::class);
+        $sink->method('chainState')->willReturn(AuditChainState::Healthy);
+        $sink->method('lastHmac')->willReturn($resumedHmac);
+
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        self::assertSame($resumedHmac, $logger->previousHmac());
+    }
+
+    #[Test]
+    public function usesSeedFromStateAwareSinkWhenEmpty(): void
+    {
+        $sink = $this->createStub(AuditChainStateAware::class);
+        $sink->method('chainState')->willReturn(AuditChainState::Empty);
+
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        $expected = Hmac::computeHex('PULSAR_AUDIT_SEED', $this->auditKey);
+        self::assertSame($expected, $logger->previousHmac());
+    }
+
+    #[Test]
+    public function throwsWhenStateAwareSinkReportsCorrupted(): void
+    {
+        // A sink that detects an unreadable last entry must not
+        // be silently re-seeded — refuse to construct the logger so
+        // operators investigate before more entries pile up.
+        $sink = $this->createStub(AuditChainStateAware::class);
+        $sink->method('chainState')->willReturn(AuditChainState::Corrupted);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessageIsOrContains('Audit chain integrity check failed');
+
+        new AuditLogger($sink, $this->auditKey);
     }
 }

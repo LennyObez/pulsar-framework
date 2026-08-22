@@ -10,9 +10,10 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a single health check.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class HealthCheckResult
+final readonly class HealthCheckResult
 {
     public function __construct(
         public string $name,

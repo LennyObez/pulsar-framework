@@ -92,4 +92,57 @@ final class AttributeColumnEncryptorTest extends TestCase
 
         self::assertNotSame($result1, $result2);
     }
+
+    #[Test]
+    public function blindIndexIsKeyedByTheMasterKeyNotAPublicConstant(): void
+    {
+        // C10 (known-answer): two deployments with different master keys must
+        // produce different blind indexes for the same plaintext. With the old
+        // public-constant key they were identical, so a DB-dump attacker could
+        // precompute/confirm the indexed PII offline.
+        $a = $this->encryptorWith(str_repeat("\x01", SODIUM_CRYPTO_KDF_KEYBYTES));
+        $b = $this->encryptorWith(str_repeat("\x02", SODIUM_CRYPTO_KDF_KEYBYTES));
+
+        self::assertNotSame(
+            $a->blindIndex('test@example.com'),
+            $b->blindIndex('test@example.com'),
+            'blind index must be keyed by the master key, not a public constant',
+        );
+    }
+
+    #[Test]
+    public function blindIndexIsDomainSeparatedByContext(): void
+    {
+        $key = str_repeat("\x01", SODIUM_CRYPTO_KDF_KEYBYTES);
+        $a = $this->encryptorWith($key, str_repeat("\x00", 32));
+        $b = $this->encryptorWith($key, str_repeat("\x0f", 32));
+
+        self::assertNotSame(
+            $a->blindIndex('test@example.com'),
+            $b->blindIndex('test@example.com'),
+            'a different blind-index context must derive a different key',
+        );
+    }
+
+    private function encryptorWith(string $rawMasterKey, string $blindIndexContext = ''): AttributeColumnEncryptor
+    {
+        if ($blindIndexContext === '') {
+            $blindIndexContext = str_repeat("\x00", 32);
+        }
+
+        /** @var EncryptorInterface&Stub $baseEncryptor */
+        $baseEncryptor = $this->createStub(EncryptorInterface::class);
+        $baseEncryptor->method('withDerivedKey')->willReturn($this->createStub(EncryptorInterface::class));
+
+        $keyProvider = MasterKey::fromHex(sodium_bin2hex($rawMasterKey));
+
+        $config = new EncryptionConfig(
+            enabled: true,
+            subKeyId: 5,
+            context: 'orm__enc',
+            blindIndexContext: $blindIndexContext,
+        );
+
+        return new AttributeColumnEncryptor($baseEncryptor, $keyProvider, $config);
+    }
 }

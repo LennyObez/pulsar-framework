@@ -113,11 +113,11 @@ final class DeployConfigTest extends TestCase
     }
 
     #[Test]
-    public function defaultChecksIncludeAllThirteenEntries(): void
+    public function defaultChecksIncludeAllFourteenEntries(): void
     {
         $config = new DeployConfig();
 
-        self::assertCount(13, $config->checks);
+        self::assertCount(14, $config->checks);
         self::assertArrayHasKey('debug-mode', $config->checks);
         self::assertArrayHasKey('opcache', $config->checks);
         self::assertArrayHasKey('jit', $config->checks);
@@ -131,6 +131,7 @@ final class DeployConfigTest extends TestCase
         self::assertArrayHasKey('request-size-limits', $config->checks);
         self::assertArrayHasKey('trusted-proxies', $config->checks);
         self::assertArrayHasKey('integrity', $config->checks);
+        self::assertArrayHasKey('audit-logger', $config->checks);
     }
 
     #[Test]
@@ -194,7 +195,103 @@ final class DeployConfigTest extends TestCase
     {
         $config = DeployConfig::fromArray([], $this->environment);
 
-        self::assertCount(13, $config->checks);
+        self::assertCount(14, $config->checks);
+        self::assertSame('fail', $config->checkConfig('debug-mode')['severity']);
+    }
+
+    /**
+     * An env-supplied `severity=off` is ignored in production.
+     * The file-configured (or default) severity
+     * stays in force, so an attacker who controls the
+     * orchestration env cannot silently neutralise a deploy gate.
+     */
+    #[Test]
+    public function envSeverityOffIsIgnoredInProduction(): void
+    {
+        putenv('APP_ENV=production');
+        putenv('DEPLOY_CHECK_DEBUG_MODE_SEVERITY=off');
+
+        try {
+            $config = DeployConfig::fromArray([], Environment::load());
+
+            $debug = $config->checkConfig('debug-mode');
+            self::assertSame('fail', $debug['severity']);
+            self::assertTrue($debug['enabled']);
+        } finally {
+            putenv('APP_ENV');
+            putenv('DEPLOY_CHECK_DEBUG_MODE_SEVERITY');
+        }
+    }
+
+    /**
+     * The production guard does NOT affect non-`off`
+     * overrides — `fail` and `warn` can still be set via env so
+     * operators can tighten or maintain a check's severity.
+     */
+    #[Test]
+    public function envSeverityFailIsHonoredInProduction(): void
+    {
+        putenv('APP_ENV=production');
+        putenv('DEPLOY_CHECK_JIT_SEVERITY=fail');
+
+        try {
+            $config = DeployConfig::fromArray([], Environment::load());
+
+            self::assertSame('fail', $config->checkConfig('jit')['severity']);
+        } finally {
+            putenv('APP_ENV');
+            putenv('DEPLOY_CHECK_JIT_SEVERITY');
+        }
+    }
+
+    /**
+     * Outside production (local/staging), `severity=off`
+     * remains a valid env override so developers can silence
+     * checks while iterating.
+     */
+    #[Test]
+    public function envSeverityOffIsHonoredInLocal(): void
+    {
+        putenv('APP_ENV=local');
+        putenv('DEPLOY_CHECK_DEBUG_MODE_SEVERITY=off');
+
+        try {
+            $config = DeployConfig::fromArray([], Environment::load());
+
+            $debug = $config->checkConfig('debug-mode');
+            self::assertSame('off', $debug['severity']);
+            self::assertFalse($debug['enabled']);
+        } finally {
+            putenv('APP_ENV');
+            putenv('DEPLOY_CHECK_DEBUG_MODE_SEVERITY');
+        }
+    }
+
+    /**
+     * Extensions and custom org gates can register a deploy
+     * check under any name they choose; their config
+     * entry must survive `parseChecks()` instead of being silently
+     * dropped because it isn't in `DEFAULT_CHECKS`.
+     */
+    #[Test]
+    public function userDefinedCheckNamesArePreserved(): void
+    {
+        $config = DeployConfig::fromArray([
+            'checks' => [
+                'my-custom-check' => ['enabled' => true, 'severity' => 'fail'],
+                'org-payments-webhook-secret' => ['enabled' => false, 'severity' => 'warn'],
+            ],
+        ], $this->environment);
+
+        $custom = $config->checkConfig('my-custom-check');
+        self::assertTrue($custom['enabled']);
+        self::assertSame('fail', $custom['severity']);
+
+        $org = $config->checkConfig('org-payments-webhook-secret');
+        self::assertFalse($org['enabled']);
+        self::assertSame('warn', $org['severity']);
+
+        // Defaults still present alongside the custom entries.
         self::assertSame('fail', $config->checkConfig('debug-mode')['severity']);
     }
 }

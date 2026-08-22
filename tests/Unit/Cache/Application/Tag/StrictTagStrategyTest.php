@@ -28,45 +28,63 @@ final class StrictTagStrategyTest extends TestCase
     {
         $versions = $this->strategy->getTagVersions(['tag-a', 'tag-b']);
 
-        self::assertSame('1', $versions['tag-a']);
-        self::assertSame('1', $versions['tag-b']);
+        // A missing tag is initialized to a fresh, non-empty version (no longer a
+        // shared constant — see evictedTagVersionDoesNotCollideAfterReinitialization).
+        self::assertArrayHasKey('tag-a', $versions);
+        self::assertArrayHasKey('tag-b', $versions);
+        self::assertNotSame('', $versions['tag-a']);
+        self::assertNotSame('', $versions['tag-b']);
     }
 
     #[Test]
     public function getTagVersionsReturnsExistingVersions(): void
     {
-        // Initialize tags
-        $this->strategy->getTagVersions(['tag-a']);
+        // Initialize tags, then fetch again — the persisted version is returned.
+        $initial = $this->strategy->getTagVersions(['tag-a']);
+        $again = $this->strategy->getTagVersions(['tag-a']);
 
-        // Fetch again — should return the same version
-        $versions = $this->strategy->getTagVersions(['tag-a']);
-
-        self::assertSame('1', $versions['tag-a']);
+        self::assertSame($initial['tag-a'], $again['tag-a']);
     }
 
     #[Test]
     public function invalidateTagBumpsVersion(): void
     {
-        $this->strategy->getTagVersions(['tag-a']);
+        $before = $this->strategy->getTagVersions(['tag-a'])['tag-a'];
 
         $this->strategy->invalidateTag('tag-a');
 
-        $versions = $this->strategy->getTagVersions(['tag-a']);
+        $after = $this->strategy->getTagVersions(['tag-a'])['tag-a'];
 
-        self::assertSame('2', $versions['tag-a']);
+        self::assertNotSame($before, $after);
     }
 
     #[Test]
     public function invalidateTagsBumpsMultipleVersions(): void
     {
-        $this->strategy->getTagVersions(['tag-a', 'tag-b']);
+        $before = $this->strategy->getTagVersions(['tag-a', 'tag-b']);
 
         $this->strategy->invalidateTags(['tag-a', 'tag-b']);
 
-        $versions = $this->strategy->getTagVersions(['tag-a', 'tag-b']);
+        $after = $this->strategy->getTagVersions(['tag-a', 'tag-b']);
 
-        self::assertSame('2', $versions['tag-a']);
-        self::assertSame('2', $versions['tag-b']);
+        self::assertNotSame($before['tag-a'], $after['tag-a']);
+        self::assertNotSame($before['tag-b'], $after['tag-b']);
+    }
+
+    #[Test]
+    public function evictedTagVersionDoesNotCollideAfterReinitialization(): void
+    {
+        // When a version key is evicted (LRU) and later reinitialized, the
+        // new version must not equal the one a prior snapshot was taken against —
+        // a constant reset value collides and surfaces stale data as a cache hit
+        // despite an intervening invalidateTag().
+        $first = $this->strategy->getTagVersions(['tag-a'])['tag-a'];
+
+        // Evict the version key, then reinitialize it.
+        $this->driver->delete('_tag:tag-a:ver');
+        $reinitialized = $this->strategy->getTagVersions(['tag-a'])['tag-a'];
+
+        self::assertNotSame($first, $reinitialized);
     }
 
     #[Test]

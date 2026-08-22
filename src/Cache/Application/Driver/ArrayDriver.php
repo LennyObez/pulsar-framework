@@ -7,6 +7,8 @@ namespace Pulsar\Cache\Application\Driver;
 use Pulsar\Api\Internal;
 
 use function array_key_exists;
+use function array_keys;
+use function str_starts_with;
 use function time;
 
 /**
@@ -16,7 +18,7 @@ use function time;
  * single-request caching where persistence is not required.
  */
 #[Internal]
-final class ArrayDriver extends AbstractCacheDriver
+final class ArrayDriver extends AbstractCacheDriver implements PrefixClearableInterface
 {
     /** @var array<string, array{value: string, expiresAt: ?int}> */
     private array $store = [];
@@ -71,6 +73,17 @@ final class ArrayDriver extends AbstractCacheDriver
     public function clear(): bool
     {
         $this->store = [];
+
+        return true;
+    }
+
+    public function clearByPrefix(string $prefix): bool
+    {
+        foreach (array_keys($this->store) as $key) {
+            if (str_starts_with($key, $prefix)) {
+                unset($this->store[$key]);
+            }
+        }
 
         return true;
     }

@@ -45,8 +45,8 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->pattern = '/users/{id}';
-                $this->routeContext->name = 'users.show';
+                $this->routeContext->setPattern('/users/{id}');
+                $this->routeContext->setName('users.show');
 
                 return Response::text('OK');
             }
@@ -66,8 +66,15 @@ final class MetricsMiddlewareTest extends TestCase
         self::assertSame(0.0, $rawPathValue);
     }
 
+    /**
+     * When no `RouteContext` is wired the middleware MUST NOT
+     * use the raw URI as the metric label — that produces
+     * unbounded series (one per dynamic id / uuid path), the
+     * Prometheus failure mode #1. The label binds to the bounded
+     * sentinel `unmatched` instead.
+     */
     #[Test]
-    public function fallsBackToRawPathWhenRouteContextIsNull(): void
+    public function fallsBackToUnmatchedSentinelWhenRouteContextIsNull(): void
     {
         $registry = new MetricRegistry();
 
@@ -81,8 +88,12 @@ final class MetricsMiddlewareTest extends TestCase
         $middleware->process($request, $handler);
 
         $counter = $registry->counter('pulsar_http_requests_total', '');
-        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']));
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']));
         self::assertSame(1.0, $value);
+
+        // Raw path MUST NOT be used as label.
+        $rawValue = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']));
+        self::assertSame(0.0, $rawValue);
     }
 
     #[Test]
@@ -125,7 +136,7 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->name = 'error.route';
+                $this->routeContext->setName('error.route');
 
                 return new Response(statusCode: 503);
             }
@@ -154,7 +165,7 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->name = 'notfound.route';
+                $this->routeContext->setName('notfound.route');
 
                 return new Response(statusCode: 404);
             }
@@ -187,9 +198,10 @@ final class MetricsMiddlewareTest extends TestCase
 
         $middleware->process($request, $handler);
 
-        // Verify histogram was recorded
+        // With no RouteContext wired, the histogram label binds to
+        // the bounded `unmatched` sentinel, never the raw path.
         $histogram = $registry->histogram('pulsar_http_request_duration_seconds', '');
-        $count = $histogram->count(new LabelSet(['method' => 'GET', 'route' => '/timed']));
+        $count = $histogram->count(new LabelSet(['method' => 'GET', 'route' => 'unmatched']));
         self::assertSame(1, $count);
     }
 
@@ -198,8 +210,8 @@ final class MetricsMiddlewareTest extends TestCase
     {
         $registry = new MetricRegistry();
         $routeContext = new RouteContext();
-        $routeContext->name = 'stale.route';
-        $routeContext->pattern = '/stale/{id}';
+        $routeContext->setName('stale.route');
+        $routeContext->setPattern('/stale/{id}');
 
         $middleware = new MetricsMiddleware($registry, $routeContext);
 
@@ -212,7 +224,7 @@ final class MetricsMiddlewareTest extends TestCase
             {
                 // Verify context was reset before handler runs
                 // We set a new route after reset
-                $this->routeContext->name = 'fresh.route';
+                $this->routeContext->setName('fresh.route');
 
                 return Response::text('OK');
             }
@@ -240,7 +252,7 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->pattern = '/users/{id}';
+                $this->routeContext->setPattern('/users/{id}');
                 // Name stays null
 
                 return Response::text('OK');
@@ -252,5 +264,52 @@ final class MetricsMiddlewareTest extends TestCase
         $counter = $registry->counter('pulsar_http_requests_total', '');
         $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/users/{id}', 'status' => '200']));
         self::assertSame(1.0, $value);
+    }
+
+    /**
+     * The metrics scrape endpoint must not auto-monitor itself.
+     * If a Prometheus server scrapes `/metrics` every 15s, every scrape
+     * would otherwise emit a `pulsar_http_requests_total{route="/metrics"}`
+     * sample, dwarfing the real request signal and rebuilding the
+     * histogram on every cycle. The middleware short-circuits before
+     * recording.
+     */
+    #[Test]
+    public function metricsEndpointIsExcludedFromRecording(): void
+    {
+        $registry = new MetricRegistry();
+
+        $middleware = new MetricsMiddleware($registry, null);
+
+        $request = $this->createRequest('/metrics');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('# HELP ...'));
+
+        $middleware->process($request, $handler);
+
+        $counter = $registry->counter('pulsar_http_requests_total', '');
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/metrics', 'status' => '200']));
+        self::assertSame(0.0, $value, 'Metrics endpoint must not record itself');
+    }
+
+    #[Test]
+    public function diagnosticsAndHealthEndpointsAreExcludedFromRecording(): void
+    {
+        $registry = new MetricRegistry();
+
+        $middleware = new MetricsMiddleware($registry, null);
+
+        foreach (['/_pulsar/metrics', '/_pulsar/diagnostics', '/_pulsar/health'] as $path) {
+            $request = $this->createRequest($path);
+            $handler = $this->createStub(RequestHandlerInterface::class);
+            $handler->method('handle')->willReturn(Response::text('OK'));
+
+            $middleware->process($request, $handler);
+
+            $counter = $registry->counter('pulsar_http_requests_total', '');
+            $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => $path, 'status' => '200']));
+            self::assertSame(0.0, $value, "Path {$path} must not record");
+        }
     }
 }

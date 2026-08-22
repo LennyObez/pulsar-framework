@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable log entry value object.
+ * @api
  */
 #[Api(since: '1.0.0')]
 readonly class LogEntry

@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Cms\Http\Controller\Admin;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
-use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
@@ -27,11 +26,9 @@ use function is_string;
  * Supports bulk publish, unpublish, archive, delete, tag, and untag
  * actions on multiple content items in a single request.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class BulkOperationsController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class BulkOperationsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int MAX_IDS_PER_REQUEST = 100;
 
     private const array VALID_ACTIONS = ['publish', 'unpublish', 'archive', 'delete', 'tag', 'untag'];
@@ -39,10 +36,11 @@ final readonly class BulkOperationsController
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private TaxonomyServiceInterface $taxonomyService,
-        private GateInterface $gate,
-        private CmsConfig $config,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function execute(ServerRequestInterface $request): Response
     {

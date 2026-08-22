@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Keys are HMAC-hashed when a key hasher is configured via CacheEventEmitter,
  * passed as-is otherwise.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract readonly class CacheEvent

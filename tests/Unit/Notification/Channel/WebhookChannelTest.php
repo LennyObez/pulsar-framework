@@ -69,7 +69,7 @@ final class WebhookChannelTest extends TestCase
         $channel = new WebhookChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         $channel->send($notifiable, $notification);
     }
@@ -88,7 +88,7 @@ final class WebhookChannelTest extends TestCase
         $channel = new WebhookChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }
@@ -107,7 +107,7 @@ final class WebhookChannelTest extends TestCase
         $channel = new WebhookChannel($httpClient);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }

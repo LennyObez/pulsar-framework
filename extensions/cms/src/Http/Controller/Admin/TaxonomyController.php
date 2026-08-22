@@ -18,17 +18,17 @@ use function is_string;
 /**
  * Admin controller for taxonomy and term management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class TaxonomyController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class TaxonomyController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private TaxonomyRepositoryInterface $taxonomyRepository,
-        private ?GateInterface $gate = null,
+        ?GateInterface $gate = null,
         private ?CmsConfig $config = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -36,10 +36,8 @@ final readonly class TaxonomyController
         $this->authorize($identity, 'cms.taxonomy.view');
 
         $locale = $this->resolveLocale($request);
-        /** @var string|null $tenantId */
-        $tenantId = $request->getAttribute('tenant_id');
 
-        // List known taxonomy slugs — the repository API works per-slug
+        // List known taxonomy slugs: the repository API works per-slug
         $data = [
             'taxonomies' => [],
             'locale' => $locale,
@@ -52,9 +50,6 @@ final readonly class TaxonomyController
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.taxonomy.manage');
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         return Response::json(['status' => 'created'], 201);
     }
@@ -107,9 +102,6 @@ final readonly class TaxonomyController
             return Response::json(['error' => 'Taxonomy not found'], 404);
         }
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-
         return Response::json(['id' => $taxonomy->id, 'status' => 'updated']);
     }
 
@@ -131,8 +123,9 @@ final readonly class TaxonomyController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
-        return is_string($locale) ? $locale : ($this->config?->defaultLocale ?? 'en');
+        return is_string($locale) ? $locale : ($this->config !== null ? $this->config->defaultLocale : 'en');
     }
 }

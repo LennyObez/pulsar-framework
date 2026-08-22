@@ -12,9 +12,10 @@ use function array_values;
 
 /**
  * Immutable collection of validation violations.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ValidationResult
+final readonly class ValidationResult
 {
     /** @var list<Violation> */
     public array $violations;

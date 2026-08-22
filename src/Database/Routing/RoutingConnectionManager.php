@@ -6,6 +6,7 @@ namespace Pulsar\Database\Routing;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
@@ -21,6 +22,7 @@ use function count;
  * using the ReadWriteRouter. Supports single-query overrides, automatic
  * primary stickiness after writes, and audit logging of replica overrides
  * for regulated environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RoutingConnectionManager implements ConnectionManagerInterface
@@ -107,7 +109,7 @@ final class RoutingConnectionManager implements ConnectionManagerInterface
         $this->auditLogger?->log(
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('db.routing'),
             action: 'database.replica_override',
             resource: 'connection',
             metadata: ['reason' => 'manual_override'],

@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable result of sanitization, preserving original values in memory.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class SanitizationResult
+final readonly class SanitizationResult
 {
     /**
      * @param array<string, mixed> $sanitized The sanitized field values

@@ -15,6 +15,7 @@ use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Exception\SecurityException;
 
 use function hash;
 use function json_decode;
@@ -333,7 +334,7 @@ final class EncryptedEventStoreTest extends TestCase
         self::assertNotNull($innerRow);
         self::assertIsString($innerRow['payload_json']);
 
-        $this->expectException(\Pulsar\Security\Exception\SecurityException::class);
+        $this->expectException(SecurityException::class);
         $differentEncryptor->decrypt($innerRow['payload_json']);
     }
 

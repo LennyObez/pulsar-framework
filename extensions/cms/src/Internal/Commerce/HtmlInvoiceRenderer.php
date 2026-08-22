@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Internal\Commerce;
 
 use Pulsar\Api\Internal;
+use Pulsar\Config\BusinessProfileProviderInterface;
 use Pulsar\Extension\Cms\Commerce\Invoice;
 use Pulsar\Extension\Cms\Commerce\InvoiceRendererInterface;
 use Pulsar\Extension\Cms\Commerce\Order;
 use Pulsar\Extension\Cms\Commerce\OrderItem;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
-use function htmlspecialchars;
+use function is_scalar;
+use function is_string;
 use function number_format;
 use function sprintf;
 
@@ -19,19 +21,26 @@ use const ENT_QUOTES;
 
 /**
  * Renders invoices as styled HTML with print-optimized CSS.
+ *
+ * Seller information is sourced from the centralized BusinessProfile when available,
+ * with fallback to CMS SettingsService for backward compatibility.
+ *
+ * @psalm-api Bound to InvoiceRendererInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use InvoiceRendererInterface for public API')]
 final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
 {
     public function __construct(
         private ?SettingsServiceInterface $settings = null,
+        private ?BusinessProfileProviderInterface $businessProfileProvider = null,
     ) {}
 
     public function render(Invoice $invoice, Order $order, array $items): string
     {
-        $siteName = $this->getSetting('general', 'site_name') ?? 'Store';
-        $sellerAddress = $this->getSetting('commerce', 'seller_address') ?? '';
-        $sellerVatNumber = $this->getSetting('commerce', 'seller_vat_number') ?? '';
+        $siteName = $this->resolveSellerName();
+        $sellerAddress = $this->resolveSellerAddress();
+        $sellerVatNumber = $this->resolveSellerVatNumber();
 
         $e = htmlspecialchars(...);
 
@@ -121,7 +130,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
                     <section>
                         <h2>Bill To</h2>
                         <p>{$e($order->customerEmail, ENT_QUOTES, 'UTF-8')}</p>
-                        {$buyerAddress}
+                        $buyerAddress
                     </section>
                 </div>
 
@@ -136,7 +145,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
                         </tr>
                     </thead>
                     <tbody>
-                        {$itemRows}
+                        $itemRows
                     </tbody>
                 </table>
 
@@ -166,6 +175,16 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
         return $currency . ' ' . $major;
     }
 
+    /**
+     * @param array{
+     *     line1?: string,
+     *     line2?: string,
+     *     city?: string,
+     *     region?: string,
+     *     postalCode?: string,
+     *     country?: string,
+     * } $address
+     */
     private function formatAddress(array $address): string
     {
         $e = htmlspecialchars(...);
@@ -173,18 +192,23 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
 
         $lines[] = $e($address['line1'] ?? '', ENT_QUOTES, 'UTF-8');
 
-        if (($address['line2'] ?? '') !== '') {
-            $lines[] = $e($address['line2'], ENT_QUOTES, 'UTF-8');
+        $line2 = $address['line2'] ?? '';
+
+        if ($line2 !== '') {
+            $lines[] = $e($line2, ENT_QUOTES, 'UTF-8');
         }
 
         $cityLine = $e($address['city'] ?? '', ENT_QUOTES, 'UTF-8');
 
-        if (($address['region'] ?? '') !== '') {
-            $cityLine .= ', ' . $e($address['region'], ENT_QUOTES, 'UTF-8');
+        $region = $address['region'] ?? '';
+
+        if ($region !== '') {
+            $cityLine .= ', ' . $e($region, ENT_QUOTES, 'UTF-8');
         }
 
         $cityLine .= ' ' . $e($address['postalCode'] ?? '', ENT_QUOTES, 'UTF-8');
         $lines[] = $cityLine;
+
         $lines[] = $e($address['country'] ?? '', ENT_QUOTES, 'UTF-8');
 
         return '<p>' . implode('<br>', $lines) . '</p>';
@@ -192,7 +216,10 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
 
     private function extractProductName(OrderItem $item): string
     {
-        return (string) ($item->productSnapshot['sku'] ?? 'Product ' . $item->productId);
+        /** @var mixed $sku */
+        $sku = $item->productSnapshot['sku'] ?? null;
+
+        return is_string($sku) ? $sku : 'Product ' . $item->productId;
     }
 
     private function renderVatNumber(string $vatNumber): string
@@ -221,8 +248,57 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
             return null;
         }
 
+        /** @var mixed $value */
         $value = $this->settings->get($group, $key);
 
-        return $value !== null ? (string) $value : null;
+        return is_string($value) ? $value : (is_scalar($value) ? (string) $value : null);
+    }
+
+    /**
+     * Resolve seller name from BusinessProfile, falling back to CMS settings.
+     */
+    private function resolveSellerName(): string
+    {
+        if ($this->businessProfileProvider !== null) {
+            $profile = $this->businessProfileProvider->getProfile();
+
+            if ($profile->companyName !== '') {
+                return $profile->displayName();
+            }
+        }
+
+        return $this->getSetting('general', 'site_name') ?? 'Store';
+    }
+
+    /**
+     * Resolve seller address from BusinessProfile, falling back to CMS settings.
+     */
+    private function resolveSellerAddress(): string
+    {
+        if ($this->businessProfileProvider !== null) {
+            $profile = $this->businessProfileProvider->getProfile();
+
+            if ($profile->addressLine1 !== null) {
+                return $profile->formattedAddress();
+            }
+        }
+
+        return $this->getSetting('commerce', 'seller_address') ?? '';
+    }
+
+    /**
+     * Resolve seller VAT number from BusinessProfile, falling back to CMS settings.
+     */
+    private function resolveSellerVatNumber(): string
+    {
+        if ($this->businessProfileProvider !== null) {
+            $profile = $this->businessProfileProvider->getProfile();
+
+            if ($profile->vatNumber !== null) {
+                return $profile->vatNumber;
+            }
+        }
+
+        return $this->getSetting('commerce', 'seller_vat_number') ?? '';
     }
 }

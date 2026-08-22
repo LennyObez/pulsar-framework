@@ -16,9 +16,10 @@ use function sprintf;
 
 /**
  * Value must be divisible by the given divisor. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Divisible implements RuleInterface
+final readonly class Divisible implements RuleInterface
 {
     public function __construct(
         private int|float $divisor,

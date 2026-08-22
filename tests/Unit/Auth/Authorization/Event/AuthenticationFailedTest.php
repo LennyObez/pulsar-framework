@@ -16,25 +16,53 @@ use function strlen;
 final class AuthenticationFailedTest extends TestCase
 {
     #[Test]
-    public function constructionSetsAllProperties(): void
+    public function fromArrayDefaultsMissingFieldsToEmptyStrings(): void
     {
-        $now = new DateTimeImmutable();
+        $event = AuthenticationFailed::fromArray([]);
+
+        self::assertSame('', $event->attemptedIdentity);
+        self::assertSame('', $event->guardName);
+        self::assertSame('', $event->failureReason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function fromArrayIgnoresNonStringValues(): void
+    {
+        $event = AuthenticationFailed::fromArray([
+            'attempted_identity' => 42,
+            'guard_name' => true,
+            'failure_reason' => ['array'],
+            'correlation_id' => null,
+            'nonce' => 3.14,
+        ]);
+
+        self::assertSame('', $event->attemptedIdentity);
+        self::assertSame('', $event->guardName);
+        self::assertSame('', $event->failureReason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function toArrayIncludesSchemaVersion(): void
+    {
+        $now = new DateTimeImmutable('2025-06-15T10:30:00.000000+00:00');
 
         $event = new AuthenticationFailed(
-            attemptedIdentity: 'unknown@example.com',
+            attemptedIdentity: 'user@test.com',
             guardName: 'session',
-            failureReason: 'invalid_credentials',
-            correlationId: 'corr-1',
-            nonce: 'nonce456',
+            failureReason: 'locked',
+            correlationId: 'c-1',
+            nonce: 'n-1',
             occurredAt: $now,
         );
 
-        self::assertSame('unknown@example.com', $event->attemptedIdentity);
-        self::assertSame('session', $event->guardName);
-        self::assertSame('invalid_credentials', $event->failureReason);
-        self::assertSame('corr-1', $event->correlationId);
-        self::assertSame('nonce456', $event->nonce);
-        self::assertSame($now, $event->occurredAt);
+        $array = $event->toArray();
+
+        self::assertSame(1, $array['schema_version']);
+        self::assertSame('2025-06-15T10:30:00.000000+00:00', $array['occurred_at']);
     }
 
     #[Test]

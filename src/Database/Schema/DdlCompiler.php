@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Database\Schema;
 
 use Pulsar\Api\Api;
+use Pulsar\Database\Dialect\Dialects;
 use Pulsar\Database\Driver;
+use Pulsar\Database\SqlIdentifier;
 
+use function array_any;
 use function array_map;
 use function count;
 use function implode;
-use function in_array;
 use function is_bool;
 use function is_float;
 use function is_int;
@@ -25,6 +27,7 @@ use function str_starts_with;
  *
  * Driver-aware: uses appropriate quoting, type mapping, and syntax
  * for MySQL/MariaDB, PostgreSQL, and SQLite.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DdlCompiler
@@ -156,22 +159,20 @@ final readonly class DdlCompiler
     }
 
     /**
+     * Delegated rather than matched on the driver.
+     *
+     * The arm this replaced emitted `DROP INDEX IF EXISTS <name> ON <table>` for MySQL,
+     * which MySQL rejects outright — error 1064, a parse failure, not a tolerated
+     * no-op — so every drop through this compiler failed on that engine. The dialect
+     * has spelled it correctly all along; two implementations of one statement is what
+     * let them disagree, so now there is one.
+     *
      * @return list<string>
      */
     public function compileDropIndex(string $table, string $indexName): array
     {
-        return match ($this->driver) {
-            Driver::MySQL => [
-                sprintf(
-                    'DROP INDEX IF EXISTS %s ON %s',
-                    $this->quoteIdentifier($indexName),
-                    $this->quoteIdentifier($table),
-                ),
-            ],
-            Driver::PostgreSQL, Driver::SQLite => [
-                sprintf('DROP INDEX IF EXISTS %s', $this->quoteIdentifier($indexName)),
-            ],
-        };
+        return [Dialects::for($this->driver, $this->capabilities->driverVariant())
+            ->compileDropIndex($indexName, $table)];
     }
 
     /**
@@ -202,6 +203,22 @@ final readonly class DdlCompiler
                     $this->quoteIdentifier($to),
                 ),
             ],
+        };
+    }
+
+    /**
+     * Get a driver-appropriate default expression for UUID generation.
+     *
+     * PostgreSQL: gen_random_uuid()
+     * MySQL 8.0+: (UUID())
+     * SQLite: no native UUID: returns null (application must provide UUIDs)
+     */
+    public function uuidDefaultExpression(): ?SchemaDefaultExpression
+    {
+        return match ($this->driver) {
+            Driver::PostgreSQL => SchemaDefaultExpression::PostgresUuid,
+            Driver::MySQL => SchemaDefaultExpression::MysqlUuid,
+            Driver::SQLite => null,
         };
     }
 
@@ -275,6 +292,15 @@ final readonly class DdlCompiler
             SchemaColumnType::SmallInt => 'SMALLINT',
             SchemaColumnType::BigInt => match ($this->driver) {
                 Driver::PostgreSQL => $column->autoIncrement ? 'BIGSERIAL' : 'BIGINT',
+                // SQLite accepts AUTOINCREMENT only on a column declared exactly
+                // `INTEGER PRIMARY KEY`: that spelling, and no other, makes the column an
+                // alias of the rowid, and AUTOINCREMENT is a modifier on the rowid
+                // counter. `BIGINT PRIMARY KEY AUTOINCREMENT` is rejected outright.
+                // Nothing is lost by the substitution — SQLite's INTEGER is already a
+                // 64-bit signed value, so the range is the one BigInt asked for.
+                Driver::SQLite => $column->autoIncrement && $column->primaryKey
+                    ? 'INTEGER'
+                    : 'BIGINT',
                 default => 'BIGINT',
             },
             SchemaColumnType::Float => match ($this->driver) {
@@ -289,7 +315,8 @@ final readonly class DdlCompiler
             },
             SchemaColumnType::DateTime => match ($this->driver) {
                 Driver::PostgreSQL => 'TIMESTAMP',
-                default => 'DATETIME',
+                Driver::MySQL => 'DATETIME(6)',
+                Driver::SQLite => 'DATETIME',
             },
             SchemaColumnType::Date => 'DATE',
             SchemaColumnType::Time => 'TIME',
@@ -350,12 +377,20 @@ final readonly class DdlCompiler
         );
     }
 
+    /**
+     * Delimit an identifier for the target engine.
+     *
+     * Delegates to {@see SqlIdentifier}, which validates rather than escapes. The two are
+     * not equivalent postures: escaping accepts any name and relies on doubling the
+     * delimiter correctly, while validation refuses any name that could carry a
+     * delimiter, a comment introducer or a statement separator in the first place. The
+     * second is the stronger guarantee, and it matters most on the path where a name
+     * arrives from a user — the admin schema editor — rather than from a migration
+     * written by hand.
+     */
     private function quoteIdentifier(string $identifier): string
     {
-        return match ($this->driver) {
-            Driver::MySQL => '`' . str_replace('`', '``', $identifier) . '`',
-            Driver::PostgreSQL, Driver::SQLite => '"' . str_replace('"', '""', $identifier) . '"',
-        };
+        return SqlIdentifier::quote($identifier, $this->driver);
     }
 
     private function quoteDefaultValue(int|float|string|bool|null $value): string
@@ -400,9 +435,9 @@ final readonly class DdlCompiler
             }
         }
 
-        return $autoIncrementPks === 1 && in_array(true, array_map(
-            static fn(SchemaColumn $c): bool => $c->primaryKey,
+        return $autoIncrementPks === 1 && array_any(
             $def->columns,
-        ), true);
+            static fn(SchemaColumn $c): bool => $c->primaryKey,
+        );
     }
 }

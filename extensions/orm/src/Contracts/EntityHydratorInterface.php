@@ -9,6 +9,7 @@ use Pulsar\Database\Row;
 
 /**
  * Hydrates entity objects from database rows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EntityHydratorInterface

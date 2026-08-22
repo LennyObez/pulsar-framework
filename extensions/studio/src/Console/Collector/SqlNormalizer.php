@@ -40,8 +40,6 @@ final class SqlNormalizer
         'VIEW', 'TRIGGER', 'ALL', 'ANY', 'SOME', 'TRUE', 'FALSE',
     ];
 
-    private function __construct() {}
-
     /**
      * Normalize an SQL query: strip literals, collapse whitespace, lowercase keywords.
      */

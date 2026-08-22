@@ -10,9 +10,15 @@ use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\CacheManager;
 use Pulsar\Cache\Application\CacheManagerInterface;
+use Pulsar\Cache\Application\Exception\CacheException;
+use Pulsar\Cache\Application\Exception\UnsupportedCapabilityException;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CacheConfig;
+use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Contract\DescribesWiring;
+use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -20,9 +26,28 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function sprintf;
+
 #[Internal]
-final readonly class CacheWiring implements ServiceWiringInterface
+final readonly class CacheWiring implements ServiceWiringInterface, DescribesWiring
 {
+    public function describeWiring(): WiringContract
+    {
+        return new WiringContract(
+            component: 'cache',
+            configClass: CacheConfig::class,
+            configFile: 'cache.php',
+            provides: [
+                CacheConfig::class,
+                CacheManager::class,
+                CacheManagerInterface::class,
+                CacheItemPoolInterface::class,
+                CacheInterface::class,
+                TaggedCacheInterface::class,
+            ],
+        );
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -65,6 +90,33 @@ final readonly class CacheWiring implements ServiceWiringInterface
             : null;
 
         /** @var LoggerInterface|null $logger */
+
+        // Unknown cache-config keys are surfaced centrally at boot by
+        // ConfigManager's unknown-key audit (CacheConfig implements
+        // ReportsUnknownKeys). Do not warn about them again here — a per-wiring
+        // warning would report every unknown key twice.
+
+        // Redis and Memcached store keys raw and pools share connections per
+        // host:port, so without a prefix a pool's clear() is FLUSHDB / flush —
+        // it wipes every pool AND every co-hosted application on that backend.
+        if ($logger !== null) {
+            foreach ($cacheConfig->pools as $poolName => $poolConfig) {
+                $shared = $poolConfig->driver === CacheDriverType::Redis
+                    || $poolConfig->driver === CacheDriverType::Memcached;
+
+                if ($shared && $poolConfig->prefix === '') {
+                    $logger->warning(sprintf(
+                        'Cache pool "%s" uses the shared %s backend without a key prefix: '
+                        . 'clear() will flush the ENTIRE database/server, including other pools '
+                        . 'and applications. Set pools.%s.prefix to scope it.',
+                        $poolName,
+                        $poolConfig->driver->value,
+                        $poolName,
+                    ));
+                }
+            }
+        }
+
         $cacheManager = new CacheManager($cacheConfig, $connection, $masterKey, $metrics, $logger);
         $container->instance(CacheManager::class, $cacheManager);
         $container->instance(CacheManagerInterface::class, $cacheManager);
@@ -74,5 +126,21 @@ final readonly class CacheWiring implements ServiceWiringInterface
 
         // Bind default PSR-16 simple cache
         $container->instance(CacheInterface::class, $cacheManager->simple());
+
+        // Bind the tagged cache so tag-aware consumers wired later (anti-spam
+        // single-use replay protection, duplicate detection, reputation
+        // cooldowns) can resolve it. Without this binding those features detect
+        // no TaggedCacheInterface and silently disable themselves. When the
+        // default pool's driver cannot support tags we degrade with a loud log
+        // rather than aborting boot.
+        try {
+            $container->instance(TaggedCacheInterface::class, $cacheManager->tagged());
+        } catch (CacheException | UnsupportedCapabilityException $e) {
+            $logger?->warning(
+                'Tagged cache is unavailable for the default pool; tag-aware features '
+                . '(anti-spam single-use, duplicate detection, reputation cooldowns) are disabled.',
+                ['error' => $e->getMessage()],
+            );
+        }
     }
 }

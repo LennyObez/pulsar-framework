@@ -21,6 +21,7 @@ use function array_map;
  *
  * Exposes thread management operations including lock, unlock, pin,
  * unpin, and bulk delete through the admin panel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumThreadResource implements DataResourceInterface

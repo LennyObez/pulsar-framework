@@ -8,29 +8,33 @@ Pulsar Analytics is designed from the ground up for privacy compliance. It uses 
 
 The tracker script does not set, read, or require any cookies. No data is stored on the visitor's device (no cookies, no localStorage, no IndexedDB, no fingerprinting).
 
-### Pseudonymized visitor identification
+### Forward-secure visitor identification
 
-Visitor identification uses a keyed BLAKE2b hash that cannot be reversed to recover the original IP address or user agent:
+Visitor identification uses a keyed BLAKE2b hash whose key is a **disposable per-day salt** — 32 fresh random bytes generated for each UTC day, stored durably, and destroyed after a short retention window:
 
 ```
+salt_day   = 32 random bytes, generated once per UTC day, stored in
+             analytics_visitor_salts, deleted by VisitorSaltPurgeJob after retention
 visitor_id = keyed BLAKE2b(
-    key: KDF(master_key, subkey_id=20, context="anal_vis"),
-    data: ip + "|" + user_agent + "|" + utc_day_number
-)
+                 key:  salt_day,
+                 data: ip + "|" + user_agent + "|" + utc_day_number
+             )
 ```
 
 The raw IP address and user agent are never stored. Only the irreversible hash is persisted.
 
-**GDPR classification:** Visitor IDs constitute pseudonymized data under GDPR Article 4(5), not anonymous data. An operator who possesses both the `PULSAR_MASTER_KEY` and access to web server logs (which contain raw IP addresses and user agents) could recompute the keyed BLAKE2b hash for known IP/UA combinations and correlate them to stored visitor IDs. This re-identification risk means GDPR obligations (lawful basis, data subject rights, retention limits) still apply. The daily rotation and per-site isolation reduce but do not eliminate this risk.
+**Forward secrecy — the key property.** Within the retention window, an operator holding that day's salt _and_ server logs (raw IP/UA) could recompute the day's hashes, so live data is _pseudonymized_ under GDPR Art. 4(5). But once a day's salt is purged, that day's hashes can never be recomputed — from any inputs, even with the `PULSAR_MASTER_KEY` — so the historical data becomes genuinely _anonymous_ under GDPR Recital 26 and falls out of scope for data-subject rights. This is a deliberate improvement over the previous design, in which a stable master-key-derived key left every past hash brute-forceable forever from low-entropy IP/UA inputs.
 
-### Daily key rotation
+### Per-day disposable salt
 
-Visitor hashes include the UTC day number (`timestamp / 86400`), which means:
+Each UTC day is keyed by its own random salt, which means:
 
-- Visitor IDs change every day at UTC midnight
+- Visitor IDs change every day at UTC midnight (a new salt ⇒ unrelated hashes)
 - It is impossible to track a visitor across days
-- Historical data cannot be correlated to identify returning visitors
-- The same visitor generates different IDs on different days
+- Once a past day's salt is purged, that day's IDs are irreversible — not merely unlinked, but unrecomputable
+- The same visitor generates different, uncorrelatable IDs on different days
+
+A short midnight grace window keeps the previous day's salt briefly so a session spanning midnight is stitched correctly; see _Salt lifecycle_ below.
 
 ### No cross-site tracking
 
@@ -38,16 +42,24 @@ Each site has its own tracking ID and domain validation. There is no mechanism t
 
 ## Cryptographic architecture
 
-### Key derivation
+### Visitor salts (tracking)
 
-All cryptographic keys are derived from the application's master key using libsodium's KDF:
+Visitor tracking is keyed by disposable per-day salts, **not** by a key derived from the master key:
+
+- Each UTC day: `salt_day = random_bytes(32)`, hex-encoded, stored once via an atomic get-or-create in `analytics_visitor_salts`, so all requests that day observe a single salt and one visitor hashes to one ID.
+- The salt is stored as plaintext random bytes on purpose — encrypting it with the master key would re-couple old data to that long-lived key and defeat forward secrecy, which comes from _deleting_ the salt, not from encrypting it.
+- `VisitorSaltPurgeJob` (daily) deletes salts older than the retention window, which is what makes past days unrecomputable.
+
+### Consent key (stable)
+
+The one place that still derives a stable key from the master key is the **consent hash**: a visitor's recorded consent choice must remain re-identifiable across days to be honored, so it deliberately does not rotate.
 
 ```
 master_key (PULSAR_MASTER_KEY env var)
     |
     +-- sodium_crypto_kdf_derive_from_key(subkey_id=20, context="anal_vis")
          |
-         +-- visitor_key (used for HMAC computation)
+         +-- consent_key  (stable; consent hash ONLY — not visitor tracking)
 ```
 
 - **Master key**: 256-bit, stored in `PULSAR_MASTER_KEY` environment variable
@@ -56,13 +68,24 @@ master_key (PULSAR_MASTER_KEY env var)
 
 ### Key properties
 
-| Property          | Value                                    |
-| ----------------- | ---------------------------------------- |
-| Master key size   | 256 bits                                 |
-| Subkey ID         | 20                                       |
-| KDF context       | `anal_vis` (8 bytes, per libsodium spec) |
-| Hash algorithm    | BLAKE2b (via HMAC)                       |
-| Visitor ID format | 64-character hex string                  |
+| Property            | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| Visitor salt        | 32 random bytes/day, hex, in `analytics_visitor_salts` |
+| Salt retention      | `privacy.visitor_salt_retention_days` (default 2)      |
+| Consent subkey ID   | 20                                                     |
+| Consent KDF context | `anal_vis` (8 bytes, per libsodium spec)               |
+| Hash algorithm      | BLAKE2b (via HMAC)                                     |
+| Visitor ID format   | 64-character hex string                                |
+
+### Salt lifecycle and the forward-secrecy boundary
+
+- A day's salt is created on the first tracked request of that UTC day and reused for the rest of the day.
+- `VisitorSaltPurgeJob` runs daily and deletes salts older than `privacy.visitor_salt_retention_days` (default **2**, floored at 2). Two days — today and yesterday — are retained so the midnight session-grace lookup (which briefly consults yesterday's salt) is robust against purge timing and server timezone. The practical consequence is that yesterday's IDs stay recomputable, by someone holding the salt _and_ logs, for up to ~2 days rather than only the ~30-minute grace window. Lowering the setting toward 1 tightens that window at the cost of the robustness margin; the default keeps it wide for correctness.
+- Once a salt row is deleted, the corresponding day's data is anonymous and unrecomputable.
+
+### Migration boundary
+
+Forward secrecy applies **from this version forward only.** Rows written before the disposable-salt change were hashed with the previous stable, master-key-derived key and remain recomputable (given the master key + server logs) until they age out through normal raw-data retention (`retention.raw_days`, default 90 days). Operators upgrading from an earlier version should treat pre-upgrade analytics rows as pseudonymized-but-recomputable until that window elapses, and may shorten `retention.raw_days` to expire the legacy rows sooner.
 
 ## Authentication and authorization
 
@@ -128,6 +151,12 @@ Data is automatically purged by the `RetentionCleanupJob` (runs daily at 02:00 U
 | Daily stats      | 730 days (2 years) | `retention.aggregated_days` |
 | Breakdown tables | 730 days (2 years) | `retention.aggregated_days` |
 
+Visitor salts are purged separately by `VisitorSaltPurgeJob` (daily at 03:00 UTC):
+
+| Data Type     | Default Retention     | Configurable Key                      |
+| ------------- | --------------------- | ------------------------------------- |
+| Visitor salts | 2 days (floored at 2) | `privacy.visitor_salt_retention_days` |
+
 ## CSV export security
 
 The export endpoint includes CSV formula injection protection. Values starting with `=`, `+`, `-`, `@`, tab, or carriage return are prefixed with a tab character to prevent spreadsheet formula interpretation when opened in Excel or Google Sheets.
@@ -155,17 +184,17 @@ Preflight responses include `Access-Control-Max-Age: 86400` (24 hours).
 
 ## GDPR / ePrivacy compliance
 
-| Requirement                | How Analytics Complies                                                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Lawful basis               | Legitimate interest (Art. 6(1)(f)) for pseudonymized web analytics; consent may be required per DPA guidance     |
-| No cookies without consent | No cookies used at all                                                                                           |
-| Purpose limitation         | Data used only for aggregate analytics                                                                           |
-| Data minimization          | Only page URL, referrer, screen width, UA collected; raw IP/UA never stored                                      |
-| Storage limitation         | Automatic retention cleanup (configurable)                                                                       |
-| Pseudonymization           | Visitor IDs are pseudonymized per Art. 4(5); keyed BLAKE2b with daily rotation prevents casual re-identification |
-| Right to erasure           | Pseudonymized data can be purged via retention cleanup; re-identification requires master key + server logs      |
-| DNT respect                | Configurable via `privacy.respect_dnt`                                                                           |
-| Cross-site tracking        | Impossible by design (daily rotation + per-site keys)                                                            |
+| Requirement                | How Analytics Complies                                                                                                                                                  |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lawful basis               | Legitimate interest (Art. 6(1)(f)) for pseudonymized web analytics; consent may be required per DPA guidance                                                            |
+| No cookies without consent | No cookies used at all                                                                                                                                                  |
+| Purpose limitation         | Data used only for aggregate analytics                                                                                                                                  |
+| Data minimization          | Only page URL, referrer, screen width, UA collected; raw IP/UA never stored                                                                                             |
+| Storage limitation         | Automatic retention cleanup (configurable)                                                                                                                              |
+| Pseudonymization           | Visitor IDs are pseudonymized per Art. 4(5) while the day's salt lives; once purged, the day's data is anonymous (Recital 26) — unrecomputable even with the master key |
+| Right to erasure           | Live-window data is purgeable via retention cleanup; data whose salt is purged is already anonymous and outside erasure scope                                           |
+| DNT respect                | On by default (`privacy.respect_dnt`), honored before any processing                                                                                                    |
+| Cross-site tracking        | Impossible by design (per-day disposable salt + per-site isolation)                                                                                                     |
 
 ## Related documentation
 

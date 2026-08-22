@@ -38,7 +38,7 @@ final class CounterTest extends TestCase
         $counter = new Counter('test');
 
         $this->expectException(MetricsException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         $counter->increment(value: -1.0);
     }

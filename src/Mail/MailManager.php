@@ -6,6 +6,7 @@ namespace Pulsar\Mail;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\MailConfig;
 use Pulsar\Config\MailDriverType;
@@ -38,6 +39,7 @@ use function time;
 
 /**
  * Application mail manager with lazy transport resolution and observability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MailManager implements MailManagerInterface
@@ -96,19 +98,6 @@ final class MailManager implements MailManagerInterface
 
         try {
             $messageId = $transport->send($message);
-
-            $recipientCount = count($message->to) + count($message->cc) + count($message->bcc);
-
-            $this->emitSentEvent($messageId, $recipientCount, $driverName);
-            $this->logAudit($messageId, $message, $driverName, true);
-
-            $this->logger?->info('Mail sent successfully', [
-                'message_id' => $messageId,
-                'driver' => $driverName,
-                'recipient_count' => $recipientCount,
-            ]);
-
-            return $messageId;
         } catch (Throwable $e) {
             $this->metrics?->counter('mail_send_errors_total', 'Total mail send errors')
                 ->increment(new LabelSet(['driver' => $driverName]));
@@ -127,6 +116,22 @@ final class MailManager implements MailManagerInterface
 
             throw MailException::sendFailed($e->getMessage(), $e);
         }
+
+        // The send succeeded: observability for the success path runs outside the
+        // failure-handling try so that a throwing dispatcher/audit logger cannot
+        // turn a delivered message into a false MailFailed signal.
+        $recipientCount = count($message->to) + count($message->cc) + count($message->bcc);
+
+        $this->emitSentEvent($messageId, $recipientCount, $driverName);
+        $this->logAudit($messageId, $message, $driverName, true);
+
+        $this->logger?->info('Mail sent successfully', [
+            'message_id' => $messageId,
+            'driver' => $driverName,
+            'recipient_count' => $recipientCount,
+        ]);
+
+        return $messageId;
     }
 
     private function resolveTransport(MailDriverType $driverType): TransportInterface
@@ -206,7 +211,7 @@ final class MailManager implements MailManagerInterface
         $this->auditLogger->log(
             event: AuditEvent::Communication,
             outcome: $success ? AuditOutcome::Success : AuditOutcome::Error,
-            actor: null,
+            actor: AuditActor::system('mail.manager'),
             action: 'mail.send',
             resource: $messageId,
             metadata: [

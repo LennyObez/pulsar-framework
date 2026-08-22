@@ -10,9 +10,18 @@ use Pulsar\Security\Crypto\Hmac;
 /**
  * Privacy-preserving visitor identifier.
  *
- * Generated via keyed BLAKE2b hash of IP + user agent + UTC day number using
- * a KDF-derived key. Cannot be reversed even if inputs are known, and changes
- * daily to prevent long-term tracking.
+ * Generated via a keyed BLAKE2b hash of IP + user agent + UTC day number,
+ * keyed by that day's disposable random salt (see VisitorSaltStoreInterface).
+ *
+ * The privacy guarantee is forward secrecy, not one-wayness of the live hash:
+ * within the retention window an attacker holding the day's salt could, in
+ * principle, enumerate the low-entropy IP + user-agent space and re-identify a
+ * hash. That is precisely why the salt is destroyed after the window — once it
+ * is gone the day's hashes can never be recomputed, from any inputs, even with
+ * the application master key, so the historical data is genuinely anonymous.
+ * A stable, key-derived salt (the previous design) would have left every past
+ * hash brute-forceable forever.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VisitorId

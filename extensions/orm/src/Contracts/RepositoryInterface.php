@@ -17,6 +17,7 @@ use Pulsar\Extension\Orm\Exception\OrmException;
  * All write operations require a MutationContext for audit trail.
  *
  * @template T of object
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RepositoryInterface
@@ -81,6 +82,23 @@ interface RepositoryInterface
      * @throws OrmException
      */
     public function delete(object $entity, MutationContext $context): void;
+
+    /**
+     * Insert multiple entities in a single batch.
+     *
+     * @param list<T> $entities
+     * @throws OrmException
+     */
+    public function bulkInsert(array $entities, MutationContext $context): void;
+
+    /**
+     * Update multiple entities in a single batch.
+     *
+     * @param list<T> $entities
+     * @throws OrmException
+     * @throws OptimisticLockException
+     */
+    public function bulkUpdate(array $entities, MutationContext $context): void;
 
     /**
      * Count entities matching optional criteria.

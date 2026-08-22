@@ -1,0 +1,17 @@
+{
+  "name": "pulsar/subscriptions",
+  "version": "1.0.0",
+  "description": "Server-side subscription verification for Google Play and App Store",
+  "trust_tier": "core",
+  "kind": "product",
+  "type": "extension_class",
+  "namespace": "Pulsar\\Extension\\Subscriptions",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "extension_class": "Pulsar\\Extension\\Subscriptions\\SubscriptionsExtension",
+  "providers": ["Pulsar\\Extension\\Subscriptions\\SubscriptionsServiceProvider"],
+  "provides": {
+    "migrations": ["src/Migration"]
+  }
+}

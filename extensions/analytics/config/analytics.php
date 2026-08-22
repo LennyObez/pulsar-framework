@@ -15,8 +15,20 @@ return [
     ],
 
     'privacy' => [
-        'respect_dnt' => false,
-        'anonymize_referrer' => false,
+        // Privacy-by-default: honor Do-Not-Track and strip referrer query
+        // strings out of the box. The extension advertises GDPR / ePrivacy
+        // compliance, so a fresh install must not silently track DNT users or
+        // retain referrer query parameters. Opt out explicitly if you have a
+        // legal basis to.
+        'respect_dnt' => true,
+        'anonymize_referrer' => true,
+
+        // Days of per-day visitor salts to retain before they are destroyed.
+        // Once a day's salt is purged its visitor hashes become irreversible
+        // (forward secrecy). Floored at 2 so midnight session grace keeps
+        // working. Lower is more private; higher lengthens the window in which
+        // a data-subject-access request can still reconstruct a visitor's id.
+        'visitor_salt_retention_days' => 2,
     ],
 
     'tracking' => [

@@ -7,11 +7,11 @@ namespace Pulsar\Container\Internal;
 use NoDiscard;
 use Override;
 use Psr\Log\LoggerInterface;
+use Pulsar\Api\CompositionRoots;
 use Pulsar\Container\BindingType;
 use Pulsar\Container\ContainerInterface;
 use RuntimeException;
 
-use function array_any;
 use function debug_backtrace;
 use function preg_match;
 use function str_contains;
@@ -34,15 +34,6 @@ use const DEBUG_BACKTRACE_IGNORE_ARGS;
  */
 final readonly class BoundaryGuard implements ContainerInterface
 {
-    /** Namespace prefixes for composition roots (exempt from boundary checks). */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\\Core\\Kernel',
-        'Pulsar\\Console\\Application',
-        'Pulsar\\Core\\Wiring\\',
-        'Pulsar\\Console\\Command\\OptimizeCommand',
-        'Pulsar\\Console\\Command\\BuildCommand',
-    ];
-
     public function __construct(
         private ContainerInterface $inner,
         private LoggerInterface $logger,
@@ -68,6 +59,18 @@ final readonly class BoundaryGuard implements ContainerInterface
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
         $this->inner->bind($id, $concrete, $type);
+    }
+
+    #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->inner->singleton($id, $concrete);
+    }
+
+    #[Override]
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void
+    {
+        $this->inner->decorate($id, $decorator, $priority);
     }
 
     #[Override]
@@ -102,6 +105,12 @@ final readonly class BoundaryGuard implements ContainerInterface
         return $this->inner->getInstances();
     }
 
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $this->inner->call($callable, $params);
+    }
+
     private function checkBoundary(string $serviceId): void
     {
         // Only check Pulsar namespace services
@@ -133,11 +142,7 @@ final readonly class BoundaryGuard implements ContainerInterface
 
         // Cross-module access to \Internal\ namespace is a violation
         if (str_contains($serviceId, '\\Internal\\')) {
-            $this->reportViolation(
-                $callerClass,
-                $serviceId,
-                'Cross-module resolution of \\Internal\\ service',
-            );
+            $this->reportViolation($callerClass, $serviceId);
         }
     }
 
@@ -162,10 +167,12 @@ final readonly class BoundaryGuard implements ContainerInterface
 
     private function isCompositionRoot(string $fqcn): bool
     {
-        return array_any(
-            self::COMPOSITION_ROOTS,
-            static fn(string $root): bool => $fqcn === $root || str_starts_with($fqcn, $root),
-        );
+        // Delegated, never restated. A second copy of the composition-root list would
+        // drift from the static boundary checker's, and the two disagreeing means a
+        // class can pass the static gate and then be refused at runtime. Membership is
+        // exact and never a prefix match: prefix-matching `Pulsar\Core\Kernel` would
+        // silently exempt every class whose name merely starts with it.
+        return CompositionRoots::contains($fqcn);
     }
 
     /**
@@ -200,9 +207,9 @@ final readonly class BoundaryGuard implements ContainerInterface
         return null;
     }
 
-    private function reportViolation(string $caller, string $serviceId, string $message): void
+    private function reportViolation(string $caller, string $serviceId): void
     {
-        $logMessage = "Boundary violation: {$message} — {$caller} resolved {$serviceId}";
+        $logMessage = "Boundary violation: Cross-module resolution of \\Internal\\ service: $caller resolved $serviceId";
 
         $this->logger->warning($logMessage, [
             'caller' => $caller,

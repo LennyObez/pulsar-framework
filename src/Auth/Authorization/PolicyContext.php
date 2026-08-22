@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Context object passed to ABAC policies during evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class PolicyContext
+final readonly class PolicyContext
 {
     /**
      * @param array<string, mixed> $attributes Additional context attributes

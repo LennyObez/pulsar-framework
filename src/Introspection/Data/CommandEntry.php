@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Describes a single CLI command and its signature (arguments + options).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommandEntry

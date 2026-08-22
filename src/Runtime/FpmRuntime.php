@@ -12,11 +12,12 @@ use Pulsar\Core\KernelInterface;
 use Throwable;
 
 /**
- * Default FPM runtime — zero behavioral change from Kernel::run().
+ * Default FPM runtime: zero behavioral change from Kernel::run().
  *
  * Wraps the standard request lifecycle for PHP-FPM and CLI server.
  * beforeRequest/afterRequest are no-ops since FPM isolates requests
  * at the process level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FpmRuntime implements RuntimeInterface
@@ -51,14 +52,14 @@ final class FpmRuntime implements RuntimeInterface
     #[Override]
     public function beforeRequest(ServerRequestInterface $request): ServerRequestInterface
     {
-        // FPM provides process-level isolation — no sandbox needed
+        // FPM provides process-level isolation: no sandbox needed
         return $request;
     }
 
     #[Override]
     public function afterRequest(ServerRequestInterface $request, ResponseInterface $response): void
     {
-        // FPM provides process-level isolation — no cleanup needed
+        // FPM provides process-level isolation: no cleanup needed
     }
 
     public function status(): RuntimeStatus

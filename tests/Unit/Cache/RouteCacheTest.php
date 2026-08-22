@@ -19,7 +19,6 @@ use Pulsar\Security\Crypto\HmacService;
 
 #[CoversClass(RouteCache::class)]
 #[CoversClass(RouteHandler::class)]
-#[CoversClass(RouteHandlerType::class)]
 final class RouteCacheTest extends TestCase
 {
     private string $hmacKey;
@@ -44,7 +43,6 @@ final class RouteCacheTest extends TestCase
     #[Test]
     public function stringHandlerNormalizedToInvokable(): void
     {
-        /** @phpstan-ignore argument.type */
         $route = Route::get('/test', 'App\\Controllers\\HomeController', 'home');
 
         $result = $this->routeCache->write($this->tempDir, [$route], false);
@@ -72,7 +70,7 @@ final class RouteCacheTest extends TestCase
         $route = new Route(
             methods: [Method::POST],
             path: '/users',
-            handler: ['App\\Controllers\\UserController', 'store'], // @phpstan-ignore argument.type
+            handler: ['App\\Controllers\\UserController', 'store'],
             name: 'users.store',
         );
 
@@ -113,14 +111,14 @@ final class RouteCacheTest extends TestCase
     public function writeAndLoadRoundTripForClassBasedRoutes(): void
     {
         $routes = [
-            Route::get('/home', 'App\\Controllers\\HomeController', 'home'), // @phpstan-ignore argument.type
+            Route::get('/home', 'App\\Controllers\\HomeController', 'home'),
             new Route(
                 methods: [Method::GET, Method::HEAD],
                 path: '/users/{id}',
-                handler: ['App\\Controllers\\UserController', 'show'], // @phpstan-ignore argument.type
+                handler: ['App\\Controllers\\UserController', 'show'],
                 name: 'users.show',
             ),
-            Route::post('/api/data', 'App\\Handlers\\DataHandler', 'api.data'), // @phpstan-ignore argument.type
+            Route::post('/api/data', 'App\\Handlers\\DataHandler', 'api.data'),
         ];
 
         $result = $this->routeCache->write($this->tempDir, $routes, false);
@@ -162,7 +160,7 @@ final class RouteCacheTest extends TestCase
         $route = new Route(
             methods: [Method::GET, Method::HEAD],
             path: '/products/{id}/{slug}',
-            handler: ['App\\Controllers\\ProductController', 'show'], // @phpstan-ignore argument.type
+            handler: ['App\\Controllers\\ProductController', 'show'],
             name: 'products.show',
             attributes: ['version' => 2, 'deprecated' => false],
             middleware: ['App\\Middleware\\AuthMiddleware', 'App\\Middleware\\CacheMiddleware'],
@@ -230,9 +228,9 @@ final class RouteCacheTest extends TestCase
     public function mixedClosureAndClassRoutesPartiallyCache(): void
     {
         $routes = [
-            Route::get('/home', 'App\\Controllers\\HomeController', 'home'), // @phpstan-ignore argument.type
+            Route::get('/home', 'App\\Controllers\\HomeController', 'home'),
             Route::get('/closure', static fn(): string => 'closure'),
-            Route::post('/submit', 'App\\Controllers\\FormController', 'form.submit'), // @phpstan-ignore argument.type
+            Route::post('/submit', 'App\\Controllers\\FormController', 'form.submit'),
             Route::get('/another-closure', Closure::fromCallable(static fn(): string => 'another')),
         ];
 

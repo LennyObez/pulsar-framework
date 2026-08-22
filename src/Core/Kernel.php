@@ -6,16 +6,15 @@ namespace Pulsar\Core;
 
 use Error;
 use JsonException;
+use LogicException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Build\BuildArtifactLoader;
-use Pulsar\Build\BuildException;
-use Pulsar\Build\VerificationStatus;
-use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
-use Pulsar\Cache\RouteHandlerType;
+use Pulsar\Cache\FrameworkCacheInterface;
+use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\AdvancedContainerInterface;
@@ -27,66 +26,64 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
-use Pulsar\Core\Wiring\ApiWiring;
-use Pulsar\Core\Wiring\AuthWiring;
-use Pulsar\Core\Wiring\CacheWiring;
-use Pulsar\Core\Wiring\ConfigWiring;
-use Pulsar\Core\Wiring\DatabaseWiring;
-use Pulsar\Core\Wiring\DeployWiring;
-use Pulsar\Core\Wiring\DiagnosticsWiring;
-use Pulsar\Core\Wiring\ErrorTrackingWiring;
-use Pulsar\Core\Wiring\EventWiring;
-use Pulsar\Core\Wiring\ExceptionHandlerWiring;
-use Pulsar\Core\Wiring\FeatureFlagWiring;
-use Pulsar\Core\Wiring\I18nWiring;
-use Pulsar\Core\Wiring\IntegrityWiring;
-use Pulsar\Core\Wiring\IntrospectionWiring;
-use Pulsar\Core\Wiring\LoggingWiring;
-use Pulsar\Core\Wiring\MailWiring;
-use Pulsar\Core\Wiring\MetricsWiring;
-use Pulsar\Core\Wiring\NotificationWiring;
-use Pulsar\Core\Wiring\QueueWiring;
-use Pulsar\Core\Wiring\RequestContextWiring;
-use Pulsar\Core\Wiring\ResilienceWiring;
-use Pulsar\Core\Wiring\RuntimeWiring;
-use Pulsar\Core\Wiring\SchedulerWiring;
-use Pulsar\Core\Wiring\SecurityWiring;
-use Pulsar\Core\Wiring\SupervisorWiring;
-use Pulsar\Core\Wiring\TenancyWiring;
-use Pulsar\Core\Wiring\TracingWiring;
-use Pulsar\Core\Wiring\ViewWiring;
+use Pulsar\Core\Boot\BuildArtifactVerifier;
+use Pulsar\Core\Boot\CachedRouteReconstructor;
+use Pulsar\Core\Boot\ConfigDiagnosticsReporter;
+use Pulsar\Core\Boot\ExtensionConfigPublisher;
+use Pulsar\Core\Boot\ExtensionDiscovery;
+use Pulsar\Core\Boot\ExtensionSandbox;
+use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
+use Pulsar\Core\Boot\ProjectRouteLoader;
+use Pulsar\Core\Controller\ControllerResolverInterface;
+use Pulsar\Core\Controller\ReflectionControllerResolver;
+use Pulsar\Core\Event\TerminateEvent;
+use Pulsar\Core\Wiring\AssetWiring;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
+use Pulsar\Core\Wiring\WiringList;
 use Pulsar\ErrorHandling\ExceptionHandler;
+use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
+use Pulsar\Http\Message\BodyTooLargeException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
+use Pulsar\Http\Middleware\CallableRequestHandler;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Routing\Binding\ExplicitBinding;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
+use Pulsar\Routing\RouteCollisionReporter;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
-use Pulsar\Security\Crypto\HmacInterface;
-use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Crypto\MasterKey;
 use Random\Engine\Secure;
 use Random\Randomizer;
-use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
 use ReflectionNamedType;
 use SodiumException;
 use Throwable;
 
+use function dirname;
+use function error_log;
+use function getenv;
 use function is_array;
 use function is_callable;
 use function is_string;
+use function is_subclass_of;
+use function sprintf;
 
 /**
  * Pulsar Kernel
@@ -95,10 +92,11 @@ use function is_string;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> RequestContext -> ErrorTracker
- * -> ExceptionHandler -> Security -> Auth -> Database -> Tenancy -> FeatureFlags
- * -> Scheduler -> Resilience -> Queue -> Supervisor -> Integrity -> Deploy
- * -> DiagnosticsRoute -> Extensions (register -> preBoot -> boot -> postBoot)
+ * Config -> Logger -> Tracer -> Security -> Metrics -> RequestContext -> ErrorTracker
+ * -> ExceptionHandler -> I18n -> Auth -> Database -> Tenancy -> FeatureFlags
+ * -> Scheduler -> Resilience -> Queue -> Supervisor -> ServiceDiscovery
+ * -> Integrity -> Deploy -> DiagnosticsRoute
+ * -> Extensions (register -> preBoot -> boot -> postBoot)
  */
 #[Internal]
 final class Kernel implements KernelInterface
@@ -114,20 +112,43 @@ final class Kernel implements KernelInterface
     private ?RouteContext $routeContext = null;
     private ?BootProfile $bootProfile = null;
     private ?MetricRegistry $metricsRegistry = null;
+    private bool $dispatchHandlerSet = false;
+
+    /**
+     * Router state captured at boot() entry, restored on shutdown() so a re-boot
+     * does not accumulate duplicate routes/bindings. Null until first boot().
+     *
+     * @var array{routes: list<Route>, namedRoutes: array<string, Route>, staticRoutes: array<string, array<string, Route>>, dynamicRouteBuckets: array<string, array<string, array<int, Route>>>, registeredRouteKeys: array<string, array<string, array<string, Route>>>, collisions: list<\Pulsar\Routing\RouteCollision>, explicitBindings: list<ExplicitBinding>, locked: bool, hasHostConstrainedRoutes: bool}|null
+     */
+    private ?array $routerSnapshot = null;
+
+    /**
+     * Middleware-pipeline stack captured at boot() entry, restored on shutdown().
+     *
+     * @var list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>>|null
+     */
+    private ?array $middlewareSnapshot = null;
 
     /** @var array<string, bool> */
     private array $handlerUsesArrayParams = [];
 
+    /** @var array<string, bool> */
+    private array $handlerWantsRequest = [];
+
     /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
     private array $handlerParamMap = [];
+
+    private readonly ControllerResolverInterface $controllerResolver;
 
     public function __construct(
         ?ContainerInterface $container = null,
         ?Router $router = null,
         ?ExtensionBootstrap $extensionBootstrap = null,
         ?ConfigManager $configManager = null,
+        ?ControllerResolverInterface $controllerResolver = null,
     ) {
         $this->container = $container ?? new Container();
+        $this->controllerResolver = $controllerResolver ?? new ReflectionControllerResolver($this->container);
         $this->router = $router ?? new Router();
         $this->middleware = new MiddlewarePipeline($this->container);
         $this->middlewareRegistry = new MiddlewareRegistry();
@@ -157,11 +178,12 @@ final class Kernel implements KernelInterface
      * 1. Config loading (if ConfigManager provided)
      * 2. Logger creation
      * 3. Tracer creation (TracingMiddleware as outermost global middleware)
-     * 4. Metrics creation (MetricsMiddleware as inner global middleware)
-     * 4b. RequestContext creation (RequestContextMiddleware after metrics)
-     * 5. Error tracker creation
-     * 6. Exception handler creation
-     * 7. Security services creation
+     * 4. Security services creation (SecurityHeaders + CORS middleware)
+     * 5. Metrics creation (MetricsMiddleware as inner global middleware)
+     * 5b. RequestContext creation (RequestContextMiddleware after metrics)
+     * 6. Error tracker creation
+     * 7. Exception handler creation
+     * 7b. I18n services creation (LocaleMiddleware)
      * 8. Auth services creation
      * 9. Database services creation (if config/database.php exists)
      * 10. Tenancy services creation (if config/tenancy.php exists)
@@ -189,13 +211,40 @@ final class Kernel implements KernelInterface
             return;
         }
 
+        // Anchor path helpers to the real project root before ANY config file or
+        // wiring can call var_path()/base_path(). base_path() otherwise falls
+        // back to getcwd(), which under PHP-FPM is the public/ document root — so
+        // a relative default like 'var/cache' would resolve INTO the webroot.
+        $this->anchorBasePath();
+
+        // Capture the pre-boot router/middleware baseline so shutdown() can
+        // restore it. A re-boot (handle() after shutdown()) re-runs the wirings,
+        // route loading, and extension boot, which would otherwise stack
+        // duplicate middleware and routes onto the already-populated instances.
+        $this->routerSnapshot = $this->router->snapshot();
+        $this->middlewareSnapshot = $this->middleware->snapshot();
+
         $bootStart = hrtime(true);
 
         // Cache-aware boot: attempt to load config from FrameworkCache
         $cacheLoaded = false;
         $routesCached = false;
 
+        // When a strict route cache is loaded, the cached routes are
+        // authoritative: boot-time route registration (e.g. AssetWiring) is
+        // skipped so it cannot duplicate cached routes or hit the locked router.
+        $strictRouteCache = false;
+
         $cacheStart = hrtime(true);
+
+        // Bind FrameworkCache BEFORE the gate below. It is otherwise bound by
+        // SecurityWiring, which runs ~60 lines later with the rest of the
+        // wirings — so on a cold boot the gate's has() check was always false,
+        // the cache was never loaded, and config/routes/container were rebuilt
+        // on every request no matter what `optimize` wrote. This is the single
+        // pre-boot construction for every entry point (the dev server no longer
+        // does its own).
+        $this->preBindFrameworkCache();
 
         if ($this->configManager !== null && $this->container->has(FrameworkCache::class)) {
             /** @var FrameworkCache $frameworkCache */
@@ -213,12 +262,16 @@ final class Kernel implements KernelInterface
                     $this->container->setResolutionHints($cached['containerHints']);
                 }
 
+                if ($cached !== null && $cached['manifest']->strict) {
+                    $strictRouteCache = true;
+                }
+
                 // Apply cached routes to the router
                 if ($cached !== null && $cached['routes'] !== null && $cached['routes'] !== []) {
-                    $this->router->loadRoutes($this->reconstructCachedRoutes($cached['routes']));
+                    $this->router->loadRoutes(CachedRouteReconstructor::reconstruct($cached['routes']));
                     $routesCached = true;
 
-                    if ($cached['manifest']->strict) {
+                    if ($strictRouteCache) {
                         $this->router->lock();
                     }
                 }
@@ -227,8 +280,11 @@ final class Kernel implements KernelInterface
 
         $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
 
-        // Build artifact verification (production mode)
-        $this->verifyBuildArtifacts($cacheLoaded);
+        // Build artifact verification (production mode). The verifier bootstraps
+        // the crypto it needs to authenticate a signed manifest from the master
+        // key itself, so it does not depend on SecurityWiring (wired below) and a
+        // signed manifest is verified fail-closed wherever this runs.
+        BuildArtifactVerifier::verify($this->container, $this->configManager);
 
         // Register shared Randomizer (CSPRNG) singleton
         $randomizer = new Randomizer(new Secure());
@@ -238,40 +294,26 @@ final class Kernel implements KernelInterface
         $configStart = hrtime(true);
 
         if ($this->configManager !== null) {
-            if (!$cacheLoaded) {
-                $this->configManager->load();
+            // Canonical, order-significant boot wiring list (single source of
+            // truth shared with the wiring-contract harness). Built BEFORE config
+            // load so a wiring that owns a config section can register its loader:
+            // its DTO is then constructed into the ConfigRepository during load()
+            // — the single source of truth — instead of being read ad-hoc from the
+            // file inside wire(). ConfigManager never imports the DTO
+            // (ProvidesConfigLoaders inverts the dependency).
+            $wirings = WiringList::default();
+
+            // Asset routes are registered at boot only when not running from a
+            // strict route cache; otherwise they are already in the cache and
+            // re-registering them would duplicate routes or hit the locked router.
+            if (!$strictRouteCache) {
+                $wirings[] = new AssetWiring();
             }
 
-            $wirings = [
-                new ConfigWiring(),
-                new I18nWiring(),
-                new LoggingWiring(),
-                new TracingWiring(),
-                new MetricsWiring(),
-                new RequestContextWiring(),
-                new EventWiring(),
-                new ErrorTrackingWiring(),
-                new ExceptionHandlerWiring(),
-                new SecurityWiring(),
-                new AuthWiring(),
-                new DatabaseWiring(),
-                new TenancyWiring(),
-                new FeatureFlagWiring(),
-                new SchedulerWiring(),
-                new ResilienceWiring(),
-                new QueueWiring(),
-                new CacheWiring(),
-                new MailWiring(),
-                new NotificationWiring(),
-                new ApiWiring(),
-                new SupervisorWiring(),
-                new IntegrityWiring(),
-                new DeployWiring(),
-                new RuntimeWiring(),
-                new DiagnosticsWiring(),
-                new IntrospectionWiring(),
-                new ViewWiring(),
-            ];
+            if (!$cacheLoaded) {
+                ConfigLoaderRegistrar::register($this->configManager, $wirings);
+                $this->configManager->load();
+            }
 
             foreach ($wirings as $wiring) {
                 $wiring->wire($this->container, $this->configManager, $this->middleware, $this->middlewareRegistry, $this->router);
@@ -294,12 +336,49 @@ final class Kernel implements KernelInterface
 
         $configUs = (int) ((hrtime(true) - $configStart) / 1000);
 
+        // Load project route files (routes/web.php, routes/api.php)
+        if (!$routesCached) {
+            ProjectRouteLoader::load($this->configManager, $this->router, $this->container);
+        }
+
+        // Auto-discover extensions when no bootstrap was provided but a
+        // config manager exists (indicating a real project context, not a
+        // bare kernel in tests). Scans getcwd()/extensions for pulsar.json
+        // manifests so HTTP entry points work without explicit bootstrap.
+        if ($this->extensionBootstrap === null && $this->configManager !== null) {
+            $bootstrap = ExtensionDiscovery::discover($this->configManager);
+
+            if ($bootstrap !== null) {
+                $this->extensionBootstrap = $bootstrap;
+                $this->container->instance(ExtensionBootstrap::class, $bootstrap);
+            }
+        }
+
+        // Engage the extension capability sandbox before any extension registers
+        // or boots. Without a policy the scoping proxies are bypassed and every
+        // extension runs with full host privileges. Deny-by-default:
+        // extensions not listed in config/extensions.php are capped at Community
+        // regardless of the tier their manifest requests. A no-op when a policy
+        // was already configured explicitly.
+        if ($this->extensionBootstrap !== null) {
+            ExtensionSandbox::harden($this->extensionBootstrap, $this->configManager?->configPath());
+
+            // Publish the configuration each extension ships. Without this the
+            // registry is absent, and eleven providers fall back to hard-coded
+            // defaults while the config file they ship goes unread.
+            ExtensionConfigPublisher::publish(
+                $this->extensionBootstrap,
+                $this->configManager?->configPath(),
+                $this->container,
+            );
+        }
+
         // Extension register phase (all extensions)
         $extRegisterStart = hrtime(true);
         $this->extensionBootstrap?->register($this->container);
         $extensionRegisterUs = (int) ((hrtime(true) - $extRegisterStart) / 1000);
 
-        // Compiler pass phase (skip when cache is loaded — definitions are already processed)
+        // Compiler pass phase (skip when cache is loaded; definitions are already processed)
         $compilerPassStart = hrtime(true);
 
         if (!$cacheLoaded && $this->container instanceof AdvancedContainerInterface) {
@@ -312,10 +391,39 @@ final class Kernel implements KernelInterface
 
         $compilerPassUs = (int) ((hrtime(true) - $compilerPassStart) / 1000);
 
-        // Extension boot phase (all extensions — includes preBoot, boot, postBoot)
+        // Import/export registry: singleton available for extension postBoot registration
+        $importExportRegistry = new \Pulsar\ImportExport\ImportExportRegistry();
+        $this->container->instance(\Pulsar\ImportExport\ImportExportRegistry::class, $importExportRegistry);
+
+        // Extension boot phase (all extensions; includes preBoot, boot, postBoot)
         $extBootStart = hrtime(true);
         $this->extensionBootstrap?->boot($this->container, $this->router);
         $extensionBootUs = (int) ((hrtime(true) - $extBootStart) / 1000);
+
+        // After extensions boot, add their view paths to the template engine.
+        // Extensions may provide Pulse templates under resources/views/ (e.g., cms::public.pages.page).
+        ExtensionViewPathRegistrar::register($this->container, $this->extensionBootstrap);
+
+        // All routes (framework wirings, project, extensions) are now registered.
+        // Surface any collision where a later route shadowed an earlier one for the
+        // same method+path: warn in production, fail closed in debug so a silent
+        // wrong-page bug (e.g. an extension shadowing a project route) cannot ship.
+        $debug = false;
+        if ($this->container->has(AppConfig::class)) {
+            /** @var AppConfig $appConfig */
+            $appConfig = $this->container->get(AppConfig::class);
+            $debug = $appConfig->debug;
+        }
+        /** @var LoggerInterface|null $collisionLogger */
+        $collisionLogger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+        RouteCollisionReporter::report($this->router, $collisionLogger, $debug);
+
+        // Surface config diagnostics (extension load warnings that went to a
+        // NullLogger, and config files for extensions disabled via
+        // extensions.enabled) now that the real logger is wired.
+        ConfigDiagnosticsReporter::report($this->configManager, $this->extensionBootstrap, $collisionLogger);
 
         $this->booted = true;
 
@@ -344,6 +452,119 @@ final class Kernel implements KernelInterface
             'pulsar_boot_duration_us',
             'Total kernel boot duration in microseconds',
         )->set((float) $totalUs);
+    }
+
+    /**
+     * Export PULSAR_BASE_PATH from the config directory's parent (the project
+     * root) when it is not already set, so every path helper resolves against
+     * the real root regardless of the process CWD.
+     *
+     * `dirname($configPath)` is the same CWD-independent root the framework
+     * already trusts for the framework cache, the secrets vault, the database
+     * path and extension discovery. Set-once and only-when-unset: an explicit
+     * PULSAR_BASE_PATH from an FPM pool, a systemd unit, or the scaffolded front
+     * controller always wins, and this only repairs the entry points that never
+     * exported it (a non-scaffolded FPM deployment, the CLI, the dev server).
+     */
+    private function anchorBasePath(): void
+    {
+        $existing = getenv('PULSAR_BASE_PATH');
+
+        if ($existing !== false && $existing !== '') {
+            return;
+        }
+
+        $configPath = $this->configManager?->configPath();
+
+        if ($configPath !== null) {
+            putenv('PULSAR_BASE_PATH=' . dirname($configPath));
+        }
+    }
+
+    /**
+     * Construct and bind {@see FrameworkCache} early enough for the cache-load
+     * gate in boot() to see it — before the wirings that consume config run.
+     *
+     * Uses only what is available this early: the config path, PULSAR_MASTER_KEY
+     * (and its optional previous key) and the CACHE_ENCRYPT flag, all resolved
+     * through the Environment so a value set only in .env is honoured here too —
+     * consistently with the runtime SecurityWiring, not a bare getenv() that
+     * would silently miss .env-only values. Binds both the class and the interface so downstream
+     * consumers (e.g. the optimize command's FrameworkCacheInterface injection)
+     * still resolve. Degrades to no cache — never a fatal — when the key is
+     * absent or invalid: caching is an optimization, not a boot requirement.
+     *
+     * Respects an existing binding, so a caller that pre-registered its own
+     * cache (or a test) is not overridden. The base path matches SecurityWiring
+     * (`dirname($configPath)` = the project root), so both resolve to the same
+     * `var/cache/framework` directory, and SecurityWiring's later bind is a
+     * harmless no-op once this has run.
+     */
+    private function preBindFrameworkCache(): void
+    {
+        if ($this->configManager === null || $this->container->has(FrameworkCache::class)) {
+            return;
+        }
+
+        $masterKeyHex = $this->earlyEnv('PULSAR_MASTER_KEY');
+
+        if ($masterKeyHex === null) {
+            return;
+        }
+
+        $configPath = $this->configManager->configPath();
+
+        if ($configPath === null) {
+            return;
+        }
+
+        try {
+            $previousKeyHex = $this->earlyEnv('PULSAR_MASTER_KEY_PREVIOUS');
+            $masterKey = MasterKey::fromHex($masterKeyHex, $previousKeyHex);
+
+            $encryptFlag = $this->earlyEnv('CACHE_ENCRYPT');
+            $encrypt = $encryptFlag === 'true' || $encryptFlag === '1';
+            // A default-suite encryptor suffices: the encryption key is derived
+            // from the master key (suite-independent) and decrypt auto-detects
+            // the stored suite, so this loads a cache written under any suite.
+            $encryptor = $encrypt ? Encryptor::fromMasterKey($masterKey) : null;
+
+            $frameworkCache = new FrameworkCache(
+                dirname($configPath),
+                $masterKey,
+                new HmacService(),
+                $encrypt,
+                $encryptor,
+            );
+
+            $this->container->instance(FrameworkCache::class, $frameworkCache);
+            $this->container->instance(FrameworkCacheInterface::class, $frameworkCache);
+        } catch (Throwable) {
+            // Invalid key or a sodium failure: skip the cache, boot normally.
+        }
+    }
+
+    /**
+     * Resolve an env value this early in boot, preferring the {@see Environment}
+     * (which honours .env) once config has loaded, and falling back to the
+     * process environment when it has not — the cache pre-bind can run before
+     * config load. Returns null for absent or empty values.
+     */
+    private function earlyEnv(string $key): ?string
+    {
+        try {
+            $value = $this->configManager?->environment()->get($key);
+
+            if ($value !== null && $value !== '') {
+                return $value;
+            }
+        } catch (Throwable) {
+            // Environment not loaded this early; fall back to the process env.
+        }
+
+        $raw = getenv($key);
+
+        return ($raw === false || $raw === '') ? null : $raw;
     }
 
     /**
@@ -397,10 +618,31 @@ final class Kernel implements KernelInterface
     /**
      * Add global middleware.
      *
+     * Refuses to mutate the middleware pipeline after the
+     * kernel has booted. The pipeline is cached after the first
+     * `handle()` call so a post-boot `addMiddleware()` would
+     * silently take effect only on a few requests (those that
+     * happen to invalidate the cache for unrelated reasons) and
+     * stay invisible on the rest — a near-impossible bug to
+     * diagnose under load. Throw early instead.
+     *
      * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
+     *
+     * @throws LogicException When called after `boot()` has run.
      */
     public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
+        if ($this->booted) {
+            // A programming error, not a runtime
+            // condition — caller registered middleware in the
+            // wrong phase of the lifecycle. LogicException
+            // is the right base class.
+            throw new LogicException(
+                'addMiddleware() cannot be called after the kernel has booted; '
+                . 'register all middleware before the first handle() invocation.',
+            );
+        }
+
         $this->middleware->pipe($middleware);
         return $this;
     }
@@ -408,41 +650,201 @@ final class Kernel implements KernelInterface
     /**
      * Handle an HTTP request and return a response.
      *
-     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
+     * Returns a response for every input. Nothing escapes to the caller — and
+     * therefore to the SAPI, which would print the class, the message, the
+     * absolute source path and the stack trace with `display_errors` on.
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $this->boot();
-
-        // Reset route context for this request (worker reuse safety)
-        $this->routeContext?->reset();
-
         try {
-            return $this->middleware->dispatch(
-                $request,
-                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchRoute($req),
-            );
-        } catch (Throwable $e) {
-            if ($this->exceptionHandler !== null) {
-                return $this->exceptionHandler->handle($e, $request);
+            // boot() used to sit outside this guard, so a poisoned config, a
+            // failing wiring or an extension that threw during registration
+            // escaped handle() entirely and reached the SAPI as an uncaught
+            // fatal. Inside the guard it becomes a rendered error response like
+            // any other failure.
+            $this->boot();
+
+            // Set the dispatch handler once (cached by the pipeline for subsequent requests)
+            if ($this->middleware->count() > 0 && !$this->dispatchHandlerSet) {
+                $this->middleware->setHandler(new CallableRequestHandler(
+                    fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchWithErrorHandling($req),
+                ));
+                $this->dispatchHandlerSet = true;
             }
 
-            throw $e;
+            // Reset route context for this request (worker reuse safety)
+            $this->routeContext?->reset();
+
+            if ($this->dispatchHandlerSet) {
+                return $this->middleware->handle($request);
+            }
+
+            // No global middleware: dispatch directly (still error-guarded).
+            return $this->dispatchWithErrorHandling($request);
+        } catch (Throwable $e) {
+            // Last-resort safety net: reached when boot() fails, or when a
+            // global middleware throws. The route-dispatch path is already
+            // guarded inside dispatchWithErrorHandling(), so its errors are
+            // converted to a Response at the innermost handler and flow back
+            // out through the pipeline, picking up security headers like any 200.
+            return $this->handleException($e, $request);
         }
+    }
+
+    /**
+     * Dispatch the route, converting any thrown error into a Response at the
+     * innermost pipeline handler so the error response flows back out through
+     * every global middleware — SecurityHeadersMiddleware in particular — and
+     * receives the same header set (CSP, HSTS, framing, COOP/COEP/CORP, etc.)
+     * as a 200. Without this, 404/405/500 responses were produced outside the
+     * pipeline and shipped with none of the application security headers.
+     */
+    private function dispatchWithErrorHandling(ServerRequestInterface $request): ResponseInterface
+    {
+        try {
+            return $this->dispatchRoute($request);
+        } catch (Throwable $e) {
+            return $this->handleException($e, $request);
+        }
+    }
+
+    /**
+     * Convert a Throwable into an error Response via the registered exception
+     * handler, falling back to the minimum-leak ProductionRenderer when none is
+     * wired. Never re-throw to the SAPI: that would leak file paths and a
+     * stack trace.
+     */
+    private function handleException(Throwable $e, ServerRequestInterface $request): ResponseInterface
+    {
+        if ($this->exceptionHandler !== null) {
+            try {
+                return $this->exceptionHandler->handle($e, $request);
+            } catch (Throwable $handlerFailure) {
+                // A handler wired against a half-booted container can throw
+                // while rendering. Letting that escape would replace a generic
+                // page with a SAPI stack trace — exactly what the handler
+                // exists to prevent.
+                error_log(sprintf(
+                    '[Pulsar] Exception handler failed while rendering %s: %s',
+                    $e::class,
+                    $handlerFailure->getMessage(),
+                ));
+            }
+        }
+
+        return $this->renderFallbackError($e, $request);
+    }
+
+    /**
+     * Minimum-leak fallback when no `ExceptionHandler` is
+     * registered. ProductionRenderer emits a generic 5xx page with
+     * neither stack trace nor request internals. The caller is
+     * expected to wire a real handler in normal app boot — this
+     * branch only protects pre-bootstrap and misconfigured paths.
+     */
+    private function renderFallbackError(Throwable $e, ServerRequestInterface $request): ResponseInterface
+    {
+        $renderer = new ProductionRenderer();
+        $status = match (true) {
+            $e instanceof RoutingException && $e->isNotFound() => ResponseStatus::NotFound,
+            $e instanceof RoutingException && $e->isMethodNotAllowed() => ResponseStatus::MethodNotAllowed,
+            $e instanceof RoutingException && $e->isNotImplemented() => ResponseStatus::NotImplemented,
+            default => ResponseStatus::InternalServerError,
+        };
+
+        // This branch runs when no logger reached the client's error either —
+        // the exception handler is absent or itself failed. Without this line
+        // a boot failure would be invisible everywhere: generic page to the
+        // client, nothing in any log.
+        if ($status->isServerError()) {
+            error_log(sprintf('[Pulsar] Unhandled %s: %s', $e::class, $e->getMessage()));
+        }
+
+        $response = Response::html(
+            $renderer->render($e, $request, $status),
+            $status->value,
+        );
+
+        // RFC 9110 §15.5.6: a 405 response must advertise the permitted methods.
+        if ($e instanceof RoutingException && $e->isMethodNotAllowed()) {
+            $response = $response->withHeader('Allow', $e->getAllowHeader());
+        }
+
+        return $response;
     }
 
     /**
      * Handle a request from PHP superglobals and emit the response.
      *
-     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
+     * Every phase is guarded. Nothing throws past this method: it is the outermost
+     * frame the framework controls, and whatever escapes it is rendered by the SAPI
+     * with `display_errors` deciding whether the client sees a stack trace.
      */
     public function run(): void
     {
-        $request = ServerRequest::fromGlobals();
+        try {
+            $request = ServerRequest::fromGlobals();
+        } catch (Throwable $e) {
+            // fromGlobals() builds the request that the pipeline needs, so a
+            // failure here has no request to hand to handle() and no pipeline
+            // to travel back out through. A body over the 10 MiB cap used to
+            // land in the SAPI as an uncaught BodyTooLargeException: HTTP 200
+            // with the class, the message, the absolute path and the trace.
+            $this->emitPreRequestFailure($e);
+
+            return;
+        }
+
         $response = $this->handle($request);
 
-        $emitter = new ResponseEmitter();
-        $emitter->emit($response);
+        try {
+            new ResponseEmitter()->emit($response, $request->getMethod());
+        } catch (Throwable $e) {
+            error_log('[Pulsar] Response emission failed: ' . $e->getMessage());
+
+            return;
+        }
+
+        try {
+            $this->terminate($request, $response);
+        } catch (Throwable $e) {
+            // The response is already on the wire. A throw here would append a
+            // trace to the body the client is part-way through reading.
+            error_log('[Pulsar] terminate() failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Emit a response for a failure that happened before a request object existed.
+     *
+     * No pipeline can run without a request, so the page carries its own
+     * security headers ({@see ProductionRenderer::response()}). The request
+     * method is unknown — parsing is what failed — so the emitter is not told
+     * one, and writes a body.
+     */
+    private function emitPreRequestFailure(Throwable $e): void
+    {
+        error_log(sprintf('[Pulsar] Request construction failed (%s): %s', $e::class, $e->getMessage()));
+
+        try {
+            new ResponseEmitter()->emit($this->preRequestFailureResponse($e));
+        } catch (Throwable $emitFailure) {
+            error_log('[Pulsar] Pre-request error emission failed: ' . $emitFailure->getMessage());
+        }
+    }
+
+    /**
+     * A body over the cap is the one pre-request failure with an answer the
+     * client can act on, and the ceiling is server policy rather than a secret.
+     * Anything else that stops a request being parsed is a malformed request.
+     */
+    private function preRequestFailureResponse(Throwable $e): ResponseInterface
+    {
+        $status = $e instanceof BodyTooLargeException
+            ? ResponseStatus::PayloadTooLarge
+            : ResponseStatus::BadRequest;
+
+        return new ProductionRenderer()->response($status);
     }
 
     /**
@@ -459,7 +861,10 @@ final class Kernel implements KernelInterface
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
-        $methodEnum = Method::from($method);
+        // An unrecognized verb (PROPFIND, garbage) must not surface as a 500.
+        // tryFrom yields null instead of throwing, mapped to 501 Not
+        // Implemented via the routing exception handler — RFC 9110 §15.6.2.
+        $methodEnum = Method::tryFrom($method) ?? throw RoutingException::notImplemented($method);
 
         if ($this->metricsRegistry !== null) {
             $matchStart = hrtime(true);
@@ -477,8 +882,8 @@ final class Kernel implements KernelInterface
 
         // Populate RouteContext for observability middleware (metrics/tracing)
         if ($this->routeContext !== null) {
-            $this->routeContext->pattern = $matched->route->path;
-            $this->routeContext->name = $matched->getName();
+            $this->routeContext->setPattern($matched->route->path);
+            $this->routeContext->setName($matched->getName());
         }
 
         // Add route parameters to request attributes
@@ -490,8 +895,8 @@ final class Kernel implements KernelInterface
             foreach ($matched->getMiddleware() as $middleware) {
                 if (is_string($middleware)) {
                     $resolved = $this->middlewareRegistry->resolve($middleware);
-                    foreach ($resolved as $m) {
-                        $pipeline->pipe($m);
+                    foreach ($resolved as $resolvedMiddleware) {
+                        $pipeline->pipe($resolvedMiddleware);
                     }
                 } else {
                     /** @var PsrMiddlewareInterface $middleware */
@@ -509,15 +914,26 @@ final class Kernel implements KernelInterface
 
     /**
      * Add matched route information to the request.
+     *
+     * Uses bulk withAttributes() to avoid multiple clone operations
+     * when route parameters are present.
      */
     private function addRouteAttributesToRequest(
         ServerRequestInterface $request,
         MatchedRoute $matched,
     ): ServerRequestInterface {
-        $request = $request->withAttribute('_route', $matched);
-        $request = $request->withAttribute('_route_name', $matched->getName());
+        $attrs = [
+            '_route' => $matched,
+            '_route_name' => $matched->getName(),
+            ...$matched->parameters,
+        ];
 
-        foreach ($matched->parameters as $key => $value) {
+        if ($request instanceof ServerRequest) {
+            return $request->withAttributes($attrs);
+        }
+
+        // PSR-7 fallback: individual withAttribute calls
+        foreach ($attrs as $key => $value) {
             $request = $request->withAttribute($key, $value);
         }
 
@@ -534,19 +950,24 @@ final class Kernel implements KernelInterface
      */
     private function invokeHandler(ServerRequestInterface $request, MatchedRoute $matched): ResponseInterface
     {
+        /** @var mixed $handler */
         $handler = $matched->getHandler();
 
         if (is_callable($handler)) {
+            /** @var mixed $response */
             $response = $handler($request, $matched->parameters);
-        } elseif (is_array($handler)) {
-            [$class, $method] = $handler;
+        } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1]) && class_exists($handler[0])) {
+            $class = $handler[0];
+            $method = $handler[1];
             $controller = $this->resolveController($class);
             $args = $this->resolveHandlerArguments($class, $method, $request, $matched->parameters);
+            /** @var mixed $response */
             $response = $controller->$method(...$args);
         } elseif (is_string($handler) && class_exists($handler)) {
             $controller = $this->resolveController($handler);
             if (method_exists($controller, '__invoke')) {
                 $args = $this->resolveHandlerArguments($handler, '__invoke', $request, $matched->parameters);
+                /** @var mixed $response */
                 $response = $controller(...$args);
             } else {
                 throw RoutingException::invalidHandler($handler);
@@ -586,32 +1007,46 @@ final class Kernel implements KernelInterface
     ): array {
         $cacheKey = $class . '::' . $method;
 
-        if (!isset($this->handlerUsesArrayParams[$cacheKey])) {
+        if (!isset($this->handlerWantsRequest[$cacheKey])) {
             try {
                 $reflection = new ReflectionMethod($class, $method);
                 $params = $reflection->getParameters();
 
-                // Check if the second parameter (index 1) is typed as `array`
-                $usesArray = false;
+                $wantsRequest = false;
+                if (isset($params[0])) {
+                    $firstType = $params[0]->getType();
+                    if ($firstType instanceof ReflectionNamedType && !$firstType->isBuiltin()) {
+                        $typeName = $firstType->getName();
+                        $wantsRequest = $typeName === ServerRequestInterface::class
+                            || is_subclass_of($typeName, ServerRequestInterface::class);
+                    }
+                }
 
-                if (isset($params[1])) {
-                    $type = $params[1]->getType();
+                // Legacy array-passing: if the param right after $request (or the very first
+                // when there is no $request) is typed `array`, hand over the raw $routeParams.
+                $arrayParamIndex = $wantsRequest ? 1 : 0;
+                $usesArray = false;
+                if (isset($params[$arrayParamIndex])) {
+                    $type = $params[$arrayParamIndex]->getType();
                     $usesArray = $type instanceof ReflectionNamedType && $type->getName() === 'array';
                 }
 
+                $this->handlerWantsRequest[$cacheKey] = $wantsRequest;
                 $this->handlerUsesArrayParams[$cacheKey] = $usesArray;
             } catch (ReflectionException) {
-                // Reflection failed — fall back to legacy array-passing
+                // Reflection failed; fall back to legacy array-passing with $request
+                $this->handlerWantsRequest[$cacheKey] = true;
                 $this->handlerUsesArrayParams[$cacheKey] = true;
             }
         }
 
+        $wantsRequest = $this->handlerWantsRequest[$cacheKey];
+
         if ($this->handlerUsesArrayParams[$cacheKey]) {
-            return [$request, $routeParams];
+            return $wantsRequest ? [$request, $routeParams] : [$routeParams];
         }
 
-        // Spread named route params into positional args after $request
-        $args = [$request];
+        $args = $wantsRequest ? [$request] : [];
 
         if (!isset($this->handlerParamMap[$cacheKey])) {
             try {
@@ -619,7 +1054,7 @@ final class Kernel implements KernelInterface
                 $paramMap = [];
 
                 foreach ($reflection->getParameters() as $i => $param) {
-                    if ($i === 0) {
+                    if ($wantsRequest && $i === 0) {
                         continue; // Skip $request
                     }
 
@@ -633,24 +1068,29 @@ final class Kernel implements KernelInterface
                 $this->handlerParamMap[$cacheKey] = $paramMap;
             } catch (ReflectionException) {
                 // Fall back to passing the array
-                return [$request, $routeParams];
+                return $wantsRequest ? [$request, $routeParams] : [$routeParams];
             }
         }
 
         foreach ($this->handlerParamMap[$cacheKey] as $entry) {
             if (isset($routeParams[$entry['name']])) {
-                $args[] = $routeParams[$entry['name']];
+                $args = [...$args, $routeParams[$entry['name']]];
             } elseif ($entry['hasDefault']) {
-                $args[] = $entry['default'];
+                $args = [...$args, $entry['default']];
             }
-            // If no route param and no default, skip — PHP will throw a clear error
+            // If no route param and no default, skip: PHP will throw a clear error
         }
 
         return $args;
     }
 
     /**
-     * Resolve a controller instance from the container or instantiate directly.
+     * Resolve a controller instance from the container or autowire it.
+     *
+     * Resolution order:
+     * 1. Container binding (registered classes, deferred providers)
+     * 2. Autowiring: reflect the constructor, resolve each type-hinted
+     *    parameter from the container, and instantiate the controller
      *
      * Attempts container resolution first (supports registered bindings, deferred
      * providers, and autowiring). Falls back to direct instantiation only if the
@@ -658,155 +1098,30 @@ final class Kernel implements KernelInterface
      *
      * @param class-string $class
      *
-     * @throws ContainerException If a container error occurs during resolution
-     * @throws NotFoundException If the resolved binding is not found
-     * @throws ReflectionException If class reflection fails during autowiring
-     * @throws Error If the class cannot be instantiated
+     * @throws RoutingException If the class is missing, not instantiable, or
+     *         cannot be resolved (see {@see ControllerResolverInterface::resolve()})
      */
     private function resolveController(string $class): object
     {
-        if ($this->container->has($class)) {
-            /** @var object */
-            return $this->container->get($class);
-        }
-
-        // Attempt direct instantiation only for controllers with no constructor dependencies
-        try {
-            $reflection = new ReflectionClass($class);
-            $constructor = $reflection->getConstructor();
-
-            if ($constructor === null || $constructor->getNumberOfRequiredParameters() === 0) {
-                return new $class();
-            }
-        } catch (ReflectionException) {
-            // Fall through to error
-        }
-
-        throw RoutingException::invalidHandler(
-            $class . ' (not registered in the container — required dependencies are unavailable)',
-        );
+        return $this->controllerResolver->resolve($class);
     }
 
     /**
-     * Reconstruct Route objects from cached route DTOs.
+     * Perform post-response cleanup and dispatch the terminate event.
      *
-     * This conversion lives in the composition root so that Router
-     * never imports Cache-internal types (CachedRoute, RouteHandlerType).
-     *
-     * @param list<CachedRoute> $cachedRoutes
-     * @return list<Route>
+     * Must be called after the response has been sent to the client.
+     * Dispatches KernelEvents::TERMINATE via the event dispatcher and
+     * runs terminable middleware. Critical for persistent runtimes.
      */
-    private function reconstructCachedRoutes(array $cachedRoutes): array
+    public function terminate(ServerRequestInterface $request, ResponseInterface $response): void
     {
-        $routes = [];
+        $event = new TerminateEvent($request, $response);
 
-        foreach ($cachedRoutes as $cached) {
-            /** @var class-string $resolvable */
-            $resolvable = $cached->handler->resolvable;
-            $handler = match ($cached->handler->type) {
-                RouteHandlerType::Invokable => $resolvable,
-                RouteHandlerType::Method => [$resolvable, $cached->handler->method ?? '__invoke'],
-            };
-
-            $routes[] = new Route(
-                methods: $cached->methods,
-                path: $cached->path,
-                handler: $handler,
-                name: $cached->name,
-                attributes: $cached->attributes,
-                middleware: $cached->middleware,
-                constraints: $cached->constraints,
-                host: $cached->host,
-            );
-        }
-
-        return $routes;
-    }
-
-    /**
-     * Verify build artifacts in production mode.
-     *
-     * In production: fail fast if artifacts are missing, optionally verify integrity.
-     * In development: skip verification (artifacts may not exist).
-     *
-     * @throws BuildException If required artifacts are missing or integrity check fails
-     */
-    private function verifyBuildArtifacts(bool $cacheLoaded): void
-    {
-        $configPath = $this->configManager?->configPath();
-
-        if ($configPath === null) {
-            return;
-        }
-
-        $isProduction = $this->isProductionMode();
-
-        // Only enforce in production mode
-        if (!$isProduction) {
-            return;
-        }
-
-        $cacheDir = $configPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache';
-        $loader = new BuildArtifactLoader($cacheDir);
-
-        // Production mode: require build artifacts
-        if (!$loader->hasArtifacts()) {
-            throw BuildException::missingArtifacts(['build-manifest.json']);
-        }
-
-        // Optional integrity verification
-        if (BuildArtifactLoader::isVerificationEnabled()) {
-            $manifest = $loader->loadManifest();
-
-            if ($manifest === null) {
-                throw BuildException::missingArtifact('build-manifest.json');
-            }
-
-            // Verify signature FIRST (if present and crypto services available)
-            // This ensures the manifest itself is authentic before trusting its hashes
-            if ($manifest->signature !== null
-                && $this->container->has(HmacInterface::class)
-                && $this->container->has(KeyProviderInterface::class)
-            ) {
-                /** @var HmacInterface $hmac */
-                $hmac = $this->container->get(HmacInterface::class);
-                /** @var KeyProviderInterface $keyProvider */
-                $keyProvider = $this->container->get(KeyProviderInterface::class);
-
-                if (!$loader->verifySignature($manifest, $hmac, $keyProvider)) {
-                    throw BuildException::signatureVerificationFailed();
-                }
-            }
-
-            // Then verify artifact hashes against the (now-authenticated) manifest
-            $result = $loader->verifyIntegrity($manifest);
-
-            if ($result !== null && !$result->passed) {
-                $failed = [];
-
-                foreach ($result->entries as $key => $status) {
-                    if ($status !== VerificationStatus::Ok) {
-                        $failed[] = $key;
-                    }
-                }
-
-                throw BuildException::integrityCheckFailedMultiple($failed);
-            }
-        }
-    }
-
-    /**
-     * Determine if the application is running in production mode.
-     */
-    private function isProductionMode(): bool
-    {
-        try {
-            $env = $this->configManager?->environment();
-            $appEnv = $env?->get('APP_ENV') ?? 'production';
-
-            return $appEnv === 'production';
-        } catch (Throwable) {
-            return false;
+        // Dispatch the terminate event if the event dispatcher is available
+        if ($this->container->has(EventDispatcherInterface::class)) {
+            /** @var EventDispatcherInterface $dispatcher */
+            $dispatcher = $this->container->get(EventDispatcherInterface::class);
+            $dispatcher->dispatch($event);
         }
     }
 
@@ -814,9 +1129,65 @@ final class Kernel implements KernelInterface
      * Shutdown the kernel.
      *
      * Performs cleanup and releases resources.
+     *
+     * Every loaded extension that implements
+     * `ShutdownAwareExtensionInterface` gets a `shutdown()`
+     * call before the kernel marks itself unbooted. Required
+     * for long-running SAPIs (RoadRunner, FrankenPHP, Swoole,
+     * queue worker, supervised process) that recycle workers
+     * without tearing the process down — without the hook
+     * extensions cannot release database / redis / grpc
+     * connections, log buffers, or in-flight worker pools.
+     * Errors during an extension shutdown are caught and
+     * logged but never block the shutdown of the rest:
+     * leaving one extension stuck would prevent the others
+     * from cleaning up at all.
      */
     public function shutdown(): void
     {
+        if ($this->extensionBootstrap !== null) {
+            foreach ($this->extensionBootstrap->registry->all() as $extension) {
+                if (!$extension instanceof \Pulsar\Extensibility\ShutdownAwareExtensionInterface) {
+                    continue;
+                }
+                try {
+                    $extension->shutdown($this->container);
+                } catch (Throwable $e) {
+                    error_log(sprintf(
+                        '[Pulsar] Extension shutdown failed for "%s": %s',
+                        $extension->name(),
+                        $e->getMessage(),
+                    ));
+                }
+            }
+
+            // Reset the boot phase so a re-boot re-runs extension boot (without
+            // re-registering — see ExtensionBootstrap::resetLifecycle()).
+            $this->extensionBootstrap->resetLifecycle();
+        }
+
+        // Restore the pre-boot router/middleware baseline so a re-boot rebuilds
+        // from a clean slate instead of stacking duplicates. Routes/middleware
+        // registered before the first boot() are part of the snapshot and thus
+        // survive; wiring-, extension-, and route-file-registered ones are
+        // re-added by the next boot().
+        if ($this->routerSnapshot !== null) {
+            $this->router->restoreFromSnapshot($this->routerSnapshot);
+            $this->routerSnapshot = null;
+        }
+
+        if ($this->middlewareSnapshot !== null) {
+            $this->middleware->restoreFromSnapshot($this->middlewareSnapshot);
+            $this->middlewareSnapshot = null;
+        }
+
+        // Reset boot-derived per-process state so the next boot() rebuilds it.
+        $this->dispatchHandlerSet = false;
+        $this->exceptionHandler = null;
+        $this->routeContext = null;
+        $this->metricsRegistry = null;
+        $this->bootProfile = null;
+
         $this->booted = false;
     }
 }

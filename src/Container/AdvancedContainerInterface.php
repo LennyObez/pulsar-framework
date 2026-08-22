@@ -16,6 +16,7 @@ use Pulsar\Container\Scope\ScopeWideningException;
  * they need tags, scopes, decoration, contextual bindings, or compilation.
  * Extension authors can continue depending on the stable minimal
  * {@see ContainerInterface} unless they opt in.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AdvancedContainerInterface extends ContainerInterface
@@ -48,14 +49,8 @@ interface AdvancedContainerInterface extends ContainerInterface
      */
     public function getTaggedServiceIds(string $tag): array;
 
-    /**
-     * Register a decorator for a service.
-     *
-     * @param string $id Service identifier to decorate
-     * @param class-string|callable $decorator Decorator class or factory
-     * @param int $priority Application order (higher = outermost wrapper)
-     */
-    public function decorate(string $id, string|callable $decorator, int $priority = 0): void;
+    // decorate() moved to the base ContainerInterface so extensions (which
+    // receive the base contract) can decorate a service; it is inherited here.
 
     /**
      * Begin a contextual binding definition.
@@ -76,12 +71,12 @@ interface AdvancedContainerInterface extends ContainerInterface
     public function addContextualBinding(string $consumer, string $abstract, callable|string $concrete): void;
 
     /**
-     * Begin request scope — enables RequestScope lifetime resolution.
+     * Begin request scope: enables RequestScope lifetime resolution.
      */
     public function beginRequestScope(): void;
 
     /**
-     * End request scope — evicts all RequestScope instances.
+     * End request scope: evicts all RequestScope instances.
      */
     public function endRequestScope(): void;
 
@@ -93,7 +88,7 @@ interface AdvancedContainerInterface extends ContainerInterface
     public function beginTenantScope(string $tenantId): void;
 
     /**
-     * End tenant scope — evicts all TenantScope instances.
+     * End tenant scope: evicts all TenantScope instances.
      */
     public function endTenantScope(): void;
 

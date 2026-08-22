@@ -64,7 +64,7 @@ final class AnalyzerFindingTest extends TestCase
     public function rejectsConfidenceBelowZero(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Confidence must be between 0.0 and 1.0');
+        $this->expectExceptionMessageIsOrContains('Confidence must be between 0.0 and 1.0');
 
         new AnalyzerFinding(
             severity: FindingSeverity::Info,
@@ -79,7 +79,7 @@ final class AnalyzerFindingTest extends TestCase
     public function rejectsConfidenceAboveOne(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Confidence must be between 0.0 and 1.0');
+        $this->expectExceptionMessageIsOrContains('Confidence must be between 0.0 and 1.0');
 
         new AnalyzerFinding(
             severity: FindingSeverity::Info,

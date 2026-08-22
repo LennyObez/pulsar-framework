@@ -12,9 +12,16 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 
-use function is_int;
-use function is_string;
+use function file_exists;
+use function is_resource;
+use function proc_close;
+use function proc_open;
 use function sprintf;
+
+use const PHP_BINARY;
+use const STDERR;
+use const STDIN;
+use const STDOUT;
 
 /**
  * Starts the Admin panel development server.
@@ -50,15 +57,8 @@ final class AdminServeCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $hostOption = $input->getOption('host');
-        $host = $input->hasOption('host') && is_string($hostOption)
-            ? $hostOption
-            : '127.0.0.1';
-
-        $portOption = $input->getOption('port');
-        $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
-            ? (int) $portOption
-            : 8686;
+        $host = $input->getStringOption('host', '127.0.0.1');
+        $port = $input->getIntOption('port', 8686);
 
         $routerScript = $this->basePath . '/extensions/admin/dev/router.php';
         if (!file_exists($routerScript)) {
@@ -75,15 +75,22 @@ final class AdminServeCommand extends Command
         $output->writeln('Press Ctrl+C to stop.');
         $output->newLine();
 
-        $command = sprintf(
-            'php -S %s:%d -t %s %s',
-            $host,
-            $port,
-            escapeshellarg($documentRoot),
-            escapeshellarg($routerScript),
+        $address = sprintf('%s:%d', $host, $port);
+
+        // nosemgrep: php.lang.security.exec-use.exec-use: array form bypasses the shell entirely
+        $process = proc_open(
+            [PHP_BINARY, '-S', $address, '-t', $documentRoot, $routerScript],
+            [STDIN, STDOUT, STDERR],
+            $pipes,
         );
 
-        passthru($command, $exitCode);
+        if (!is_resource($process)) {
+            $output->errorln('Failed to start PHP built-in server');
+
+            return ExitCode::Error->value;
+        }
+
+        $exitCode = proc_close($process);
 
         return $exitCode === 0 ? ExitCode::Success->value : ExitCode::Error->value;
     }

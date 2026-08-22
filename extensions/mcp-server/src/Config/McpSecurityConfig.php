@@ -6,6 +6,9 @@ namespace Pulsar\Extension\McpServer\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Security sub-configuration for MCP access control.
@@ -32,21 +35,16 @@ final readonly class McpSecurityConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $pathAllowlist */
-        $pathAllowlist = (array) ($data['path_allowlist'] ?? []);
-
-        $rateLimitPerMinute = (int) ($data['rate_limit_per_minute'] ?? 60);
-
-        /** @var array<string, int> $toolRateLimits */
-        $toolRateLimits = (array) ($data['tool_rate_limits'] ?? []);
-
-        $maxConcurrentActions = (int) ($data['max_concurrent_actions'] ?? 1);
+        /** @var mixed $toolRateLimits */
+        $toolRateLimits = $data['tool_rate_limits'] ?? null;
+        /** @var array<string, int> $toolRateLimitsMap */
+        $toolRateLimitsMap = is_array($toolRateLimits) ? $toolRateLimits : [];
 
         return new self(
-            pathAllowlist: $pathAllowlist,
-            rateLimitPerMinute: $rateLimitPerMinute,
-            toolRateLimits: $toolRateLimits,
-            maxConcurrentActions: $maxConcurrentActions,
+            pathAllowlist: Coerce::listOfString($data['path_allowlist'] ?? null),
+            rateLimitPerMinute: Coerce::strictInt($data['rate_limit_per_minute'] ?? null, 60),
+            toolRateLimits: $toolRateLimitsMap,
+            maxConcurrentActions: Coerce::strictInt($data['max_concurrent_actions'] ?? null, 1),
         );
     }
 }

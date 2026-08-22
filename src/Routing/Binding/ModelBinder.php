@@ -22,6 +22,7 @@ use function ltrim;
  * Orchestrates the binding pipeline: determines which parameters need
  * model resolution, validates key types, delegates to the appropriate
  * resolver, and supports scoped (parent/child) binding chains.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class ModelBinder
@@ -45,11 +46,32 @@ final readonly class ModelBinder
         ServerRequestInterface $request,
         ResolutionContext $context,
     ): array {
+        return $this->bindWithMeta($matchedRoute, $request, $context)->models;
+    }
+
+    /**
+     * Resolve all model bindings for a matched route, returning both the
+     * resolved models and the {@see BindingMeta} that produced each one.
+     *
+     * Authorization enforcement needs the per-parameter binding metadata —
+     * in particular the declared `authzPolicy` — which {@see bind()} discards.
+     * Resolving once and returning both keeps the (uncached) reflection /
+     * compiled-map lookup off the request hot path for a second pass.
+     *
+     * @throws ModelBindingException When a model cannot be found or key validation fails
+     */
+    #[NoDiscard]
+    public function bindWithMeta(
+        MatchedRoute $matchedRoute,
+        ServerRequestInterface $request,
+        ResolutionContext $context,
+    ): ResolvedBindings {
+        /** @var mixed $handler */
         $handler = $matchedRoute->getHandler();
         $handlerInfo = $this->resolveHandlerInfo($handler);
 
         if ($handlerInfo === null) {
-            return [];
+            return new ResolvedBindings([], []);
         }
 
         [$controllerClass, $controllerMethod] = $handlerInfo;
@@ -61,10 +83,11 @@ final readonly class ModelBinder
         );
 
         if ($bindingMetas === []) {
-            return [];
+            return new ResolvedBindings([], []);
         }
 
         $resolved = [];
+        $resolvedMetas = [];
         $previousModel = null;
 
         foreach ($bindingMetas as $paramName => $meta) {
@@ -99,10 +122,11 @@ final readonly class ModelBinder
             }
 
             $resolved[$paramName] = $model;
+            $resolvedMetas[$paramName] = $meta;
             $previousModel = $model;
         }
 
-        return $resolved;
+        return new ResolvedBindings($resolved, $resolvedMetas);
     }
 
     /**
@@ -143,10 +167,9 @@ final readonly class ModelBinder
     /**
      * Extract controller class and method from a route handler.
      *
-     * @param array{0: class-string, 1: string}|callable|class-string $handler
      * @return array{0: class-string, 1: string}|null
      */
-    private function resolveHandlerInfo(array|string|callable $handler): ?array
+    private function resolveHandlerInfo(mixed $handler): ?array
     {
         // Array handler: [ControllerClass::class, 'method']
         if (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1])) {

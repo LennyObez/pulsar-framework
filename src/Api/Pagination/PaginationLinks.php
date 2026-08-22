@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * HATEOAS pagination links (first, last, next, prev).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginationLinks

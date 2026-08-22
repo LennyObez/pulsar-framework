@@ -15,24 +15,24 @@ For interoperability with PSR-7/PSR-15 libraries, Pulsar ships a first-party bri
 
 ## Request
 
-`Pulsar\Http\Request` is a `readonly class` representing an incoming HTTP request.
+Controllers should type-hint `Pulsar\Http\Message\ServerRequest` (the concrete class), **not** the PSR-7 `Psr\Http\Message\ServerRequestInterface`. The concrete class provides Pulsar-specific convenience methods (`json()`, `query()`, `post()`, `input()`, `all()`, `wantsJson()`, etc.) that are not part of the PSR-7 interface.
 
-### Properties
+```php
+use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Message\Response;
 
-| Property          | Type                   | Description               |
-| ----------------- | ---------------------- | ------------------------- |
-| `method`          | `Method`               | HTTP method enum          |
-| `uri`             | `string`               | Full request URI          |
-| `path`            | `string`               | URL path component        |
-| `queryString`     | `string`               | Raw query string          |
-| `headers`         | `HeaderBag`            | Case-insensitive headers  |
-| `body`            | `string`               | Raw request body          |
-| `query`           | `array<string, mixed>` | Parsed GET parameters     |
-| `post`            | `array<string, mixed>` | Parsed POST parameters    |
-| `cookies`         | `array<string, mixed>` | Cookie data               |
-| `server`          | `array<string, mixed>` | Server variables          |
-| `attributes`      | `array<string, mixed>` | Custom request attributes |
-| `protocolVersion` | `string`               | HTTP protocol version     |
+class UserController
+{
+    public function show(ServerRequest $request, string $id): Response
+    {
+        $page = $request->query('page', '1');
+        $data = $request->json();
+        // ...
+    }
+}
+```
+
+If you type-hint `ServerRequestInterface`, you lose access to Pulsar helpers and must use PSR-7 methods (`getQueryParams()`, `getParsedBody()`, etc.) directly.
 
 ### Parameter access
 
@@ -79,6 +79,35 @@ $request->isAjax();               // X-Requested-With: XMLHttpRequest
 $request->isSecure();             // Request over HTTPS
 ```
 
+### Response compression
+
+`CompressionMiddleware` negotiates `Accept-Encoding` (honouring q-values, and `q=0` as an RFC 9110 refusal) and offers only codecs it can actually produce: `br` and `zstd` appear when their extensions are loaded, `gzip`/`deflate` always. Responses under 256 bytes, already-encoded responses, and already-compressed content types (images, video, fonts, archives) are passed through untouched, as is any result that failed to shrink.
+
+Server preference is `br > zstd > gzip > deflate`. Brotli leads because it carries a built-in dictionary of common web strings, which is worth the most on exactly what a dynamic response is — small text — and because every browser supports it, while zstd is absent from Safari.
+
+The codec levels are the load-bearing part, and the defaults are deliberate:
+
+| Setting         | Default | Why                                                                        |
+| --------------- | ------- | -------------------------------------------------------------------------- |
+| `gzipLevel`     | 5       | Level 9 costs ~2x the CPU for ~1% fewer bytes.                             |
+| `brotliQuality` | 5       | **Not** the extension's default of 11. See below.                          |
+| `zstdLevel`     | 3       | The extension's default, restated explicitly so it is visible and tunable. |
+
+`brotli_compress()` defaults to quality 11, which exists to compress a static asset once at build time and serve it a million times. On a request path it is unusable: measured on PHP 8.5 with libbrotli, q11 costs **105 ms of CPU on a 51 KB page** and 21 ms on a 9 KB page — roughly 86x gzip-5 — to save 16-20% of bytes. Since `br` leads server preference and every browser offers it, omitting the quality argument silently opts every dynamic response into that.
+
+Quality 5 is the measured optimum for dynamic text: better ratio than gzip-5 (-7.8% on a 9 KB page) at comparable cost, and it dominates its neighbours — q4 is both slower and larger, q6 is 1.8x slower for 0.2% fewer bytes. Raise `brotliQuality` only for pre-compressed static assets served from disk, never for rendered responses.
+
+```php
+$middleware = new CompressionMiddleware(
+    minimumBytes: 256,
+    gzipLevel: 5,
+    brotliQuality: 5,
+    zstdLevel: 3,
+);
+```
+
+Both optional codecs are installed and asserted in CI (`tools/ci/assert-extensions.php`), so these paths are exercised against real extensions rather than self-skipping into a false green.
+
 ### Immutability
 
 Requests are readonly. Use `with*` methods to derive new instances:
@@ -108,6 +137,23 @@ Response::redirect($url, $status);           // Location header redirect
 Response::noContent();                        // 204 No Content
 Response::validationError($violations);       // 422 JSON validation error
 ```
+
+### Template rendering
+
+`Response::view()` renders a Pulse template into an HTML response. It accepts either an explicit `TemplateEngineInterface` instance or uses the static engine configured during kernel boot (via `ViewWiring`).
+
+```php
+// Using the static engine (most common in controllers)
+return Response::view('pages.about', ['title' => 'About Us']);
+
+// With a custom status code
+return Response::view('errors.not-found', ['message' => 'Page missing'], 404);
+
+// Explicit engine injection (for tests or non-standard setups)
+return Response::view($engine, 'pages.about', ['title' => 'About Us'], 200);
+```
+
+If no template engine has been configured and you call `Response::view()` with a string template name, a `RuntimeException` is thrown. Register `ViewWiring` during bootstrap or call `Response::setTemplateEngine()` manually.
 
 ### Validation error response
 
@@ -203,6 +249,72 @@ $router->add(new Route(
     handler: ShowUserBySlugHandler::class,
 ));
 ```
+
+## Route precedence and collisions
+
+Routes are registered in a fixed order: framework wirings first, then the
+project's `routes/web.php` and `routes/api.php`, then enabled extensions.
+Registration is first-registered-wins for both static and dynamic routes, keyed
+by method, path, and host. The effective precedence is therefore framework >
+project > extension, so an application route always wins over an extension route
+that declares the same method and path.
+
+When a later route claims an already-registered key with a different handler, it
+is recorded as a collision and excluded from matching rather than silently
+overriding the winner. At boot the framework logs a warning for each collision
+in production and fails closed (throws) when `app.debug` is true, so a shadowed
+route cannot ship unnoticed. Re-registering the exact same route (identical
+handler and name), which happens when a non-strict route cache is replayed, is a
+benign duplicate and is ignored. The recorded collisions are available on
+`Router::$collisions` for diagnostics, and both routes remain visible to
+`route:list`.
+
+See [ADR-0034](adr/0034-route-registration-precedence.md) for the full rationale.
+
+## Path canonicalization
+
+`Route::matchesPath()` trims leading and trailing slashes before comparing, so a
+single registered route also answers an unbounded family of spellings — `/x`,
+`/x/`, `//x`, and `///x///` all match and return `200`. That is convenient but
+produces duplicate content: every crawlable URL exists under infinitely many
+addresses, splitting crawl budget and link equity across them, and it compounds
+with locale prefixes (`/nl//coaching` leaks a stray `//coaching` downstream).
+
+Enable canonicalization to collapse those spellings to one. In
+`config/routing.php`:
+
+```php
+return [
+    'redirect_to_canonical_path' => true,
+];
+```
+
+or set `PULSAR_ROUTING_REDIRECT_TO_CANONICAL_PATH=true`. When on, a request
+whose path is not already canonical (repeated slashes collapsed, trailing slash
+dropped) is redirected to the canonical spelling **before** routing runs:
+
+- **`GET`/`HEAD`** redirect with `301 Moved Permanently` — cacheable, the signal
+  crawlers honour.
+- **Other methods** redirect with `308 Permanent Redirect`, which preserves the
+  method and body, so a `POST` to a non-canonical path is not silently
+  downgraded to a `GET`.
+- The **query string is carried over** unchanged.
+- The **root `/` is exempt** (it is canonical by definition, so there is no
+  redirect loop).
+- The middleware runs **outermost**, before the locale-prefix strip, so
+  `/nl//coaching` redirects to `/nl/coaching` — the locale prefix is preserved
+  and the double slash never reaches the downstream stack.
+
+**Default: off.** Leaving it off preserves the historical forgiving behaviour,
+so turning it on is an opt-in, backwards-compatible tightening. The trade-off is
+one extra redirect round-trip for non-canonical requests (typically only bots
+and mistyped links) in exchange for a single canonical URL per route.
+
+Redirect targets are always origin-form — a path beginning with exactly one
+`/`. Collapsing every run of slashes to one makes a protocol-relative
+`//evil.com` spelling impossible to emit, and
+[`SafeRedirect`](../src/Http/SafeRedirect.php) rejects it as a second line of
+defence, so a slash variant can never be turned into an open redirect.
 
 ## Host-based routing
 

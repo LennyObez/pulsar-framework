@@ -13,24 +13,39 @@ use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extension\Forum\Badge\BadgeServiceInterface;
 use Pulsar\Extension\Forum\Badge\UserBadgeRepositoryInterface;
 use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
+use Pulsar\Extension\Forum\Command\ForumServeCommand;
 use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRenderer;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Internal\AntiAbuse\ForumAntiAbuseMiddleware;
+use Pulsar\Extension\Forum\Internal\Notification\BadgeEvaluator;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
+use Pulsar\Extension\Forum\Internal\Service\AutoModerationService;
 use Pulsar\Extension\Forum\Internal\Service\BadgeService;
+use Pulsar\Extension\Forum\Internal\Service\BanService;
+use Pulsar\Extension\Forum\Internal\Service\ForumSearchService;
 use Pulsar\Extension\Forum\Internal\Service\ForumService;
+use Pulsar\Extension\Forum\Internal\Service\LeaderboardService;
 use Pulsar\Extension\Forum\Internal\Service\ModerationService;
+use Pulsar\Extension\Forum\Internal\Service\PrivilegeChecker;
 use Pulsar\Extension\Forum\Internal\Service\ReputationService;
 use Pulsar\Extension\Forum\Internal\Service\TagService;
 use Pulsar\Extension\Forum\Internal\Service\VoteService;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Realtime\RealtimeBroadcasterInterface;
+use Pulsar\Extension\Forum\Realtime\SseRealtimeBroadcaster;
+use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
+use Pulsar\Extension\Forum\Report\UserBanRepositoryInterface;
+use Pulsar\Extension\Forum\Service\BanServiceInterface;
+use Pulsar\Extension\Forum\Service\ForumSearchServiceInterface;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
+use Pulsar\Extension\Forum\Service\LeaderboardServiceInterface;
 use Pulsar\Extension\Forum\Service\ModerationServiceInterface;
+use Pulsar\Extension\Forum\Service\PrivilegeCheckerInterface;
 use Pulsar\Extension\Forum\Service\ReputationServiceInterface;
 use Pulsar\Extension\Forum\Service\TagServiceInterface;
 use Pulsar\Extension\Forum\Service\VoteServiceInterface;
@@ -39,12 +54,13 @@ use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Extension\Forum\Vote\PostVoteRepositoryInterface;
 use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
+use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
 
 /**
  * Binds forum core services: reputation, badges, voting, moderation, forum
  * service, tag service, content rendering, anti-abuse, and notifications.
  */
-#[Internal(reason: 'Forum service wiring — use interfaces for public API')]
+#[Internal(reason: 'Forum service wiring; use interfaces for public API')]
 final readonly class ForumCoreServiceProvider
 {
     public function register(ContainerInterface $container): void
@@ -74,10 +90,35 @@ final readonly class ForumCoreServiceProvider
         $bodyPolicy = new ForumBodyPolicy();
         $container->instance(ForumBodyPolicy::class, $bodyPolicy);
 
-        // Anti-abuse middleware (uses defaults — thresholds baked into the class)
+        // Real-time broadcaster: the in-memory SSE implementation is a working
+        // single-server default (it buffers recent events and tracks presence
+        // per channel). Multi-server deployments scale out by binding a
+        // Redis-backed RealtimeBroadcasterInterface (RedisRealtimeBroadcaster)
+        // before this provider runs; an app-provided binding is preserved.
+        if (!$container->has(RealtimeBroadcasterInterface::class)) {
+            $container->instance(RealtimeBroadcasterInterface::class, new SseRealtimeBroadcaster());
+        }
+
+        // Console command: the standalone Forum development server (forum:serve).
+        // Bound over the resolved ForumConfig + project base path so the console
+        // application resolves it from the manifest's provides.commands list.
+        // `serve` runs PHP's built-in server for the whole app; forum:serve boots
+        // the framework kernel with all Forum routes for standalone development.
+        /** @var string $forumServeBasePath */
+        $forumServeBasePath = $container->has('app.base_path')
+            ? $container->get('app.base_path')
+            : (getcwd() ?: '.');
+        $container->instance(
+            ForumServeCommand::class,
+            new ForumServeCommand($config, $forumServeBasePath),
+        );
+
+        // Anti-abuse middleware (delegates to the shared anti-spam pipeline)
+        /** @var AntiSpamPipelineInterface $antiSpamPipeline */
+        $antiSpamPipeline = $container->get(AntiSpamPipelineInterface::class);
         $container->instance(
             ForumAntiAbuseMiddleware::class,
-            new ForumAntiAbuseMiddleware(),
+            new ForumAntiAbuseMiddleware($antiSpamPipeline),
         );
 
         // Reputation service
@@ -182,6 +223,53 @@ final readonly class ForumCoreServiceProvider
                 $posts,
                 $logger,
             ),
+        );
+
+        // Privilege checker
+        $privilegeChecker = new PrivilegeChecker();
+        $container->instance(PrivilegeCheckerInterface::class, $privilegeChecker);
+
+        // Ban service
+        /** @var UserBanRepositoryInterface $userBans */
+        $userBans = $container->get(UserBanRepositoryInterface::class);
+
+        /** @var ForumModerationLogRepositoryInterface $moderationLogs */
+        $moderationLogs = $container->get(ForumModerationLogRepositoryInterface::class);
+
+        $banService = new BanService($userBans, $profiles, $moderationLogs, $events);
+        $container->instance(BanServiceInterface::class, $banService);
+
+        // Auto-moderation service
+        $container->instance(
+            AutoModerationService::class,
+            new AutoModerationService($posts, $threadReports, $postReports),
+        );
+
+        // Badge evaluator
+        $container->instance(
+            BadgeEvaluator::class,
+            new BadgeEvaluator(
+                $badgeService,
+                $posts,
+                $threads,
+                $profiles,
+                $config->badges,
+            ),
+        );
+
+        // Forum search service
+        /** @var ConnectionInterface $connection */
+        $connection = $container->get(ConnectionInterface::class);
+
+        $container->instance(
+            ForumSearchServiceInterface::class,
+            new ForumSearchService($connection),
+        );
+
+        // Leaderboard service
+        $container->instance(
+            LeaderboardServiceInterface::class,
+            new LeaderboardService($profiles, $connection),
         );
     }
 }

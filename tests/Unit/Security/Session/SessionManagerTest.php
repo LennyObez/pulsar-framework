@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\Handler\DatabaseHandler;
@@ -37,6 +38,33 @@ final class SessionManagerTest extends TestCase
             handler: 'array',
             encryption: false,
         );
+    }
+
+    #[Test]
+    public function resetRequestStateClearsStateSoSessionsDoNotBleedOnPersistentWorkers(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+        self::assertInstanceOf(ResettableInterface::class, $manager);
+
+        $manager->start();
+        $manager->set('user_id', 42);
+        $originalId = $manager->id();
+
+        self::assertTrue($manager->isStarted());
+        self::assertTrue($manager->has('user_id'));
+
+        // The persistent-worker request boundary: the singleton is reused, so
+        // its state must be wiped or the next user inherits this session.
+        $manager->resetRequestState();
+
+        self::assertFalse($manager->isStarted(), 'the session must no longer be started after reset');
+
+        // A fresh start (as the next request would do) must yield an empty
+        // session with a new id — the previous user's data must not survive.
+        $manager->start();
+        self::assertNotSame($originalId, $manager->id(), 'the new request must not reuse the prior id');
+        self::assertFalse($manager->has('user_id'), "the previous user's data must not survive");
+        self::assertSame([], $manager->all());
     }
 
     #[Test]
@@ -100,7 +128,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $_ = $manager->get('key');
     }
@@ -111,7 +139,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->set('key', 'value');
     }
@@ -122,7 +150,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->has('key');
     }
@@ -133,7 +161,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->remove('key');
     }
@@ -144,7 +172,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->all();
     }
@@ -155,7 +183,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not been started');
+        $this->expectExceptionMessageIsOrContains('not been started');
 
         $manager->regenerate();
     }
@@ -294,10 +322,15 @@ final class SessionManagerTest extends TestCase
         );
 
         $manager->startWithRequest($request1);
+        // Authenticated session (identity in session data, the gate's source of
+        // truth): a validator failure must force re-authentication (PCI-DSS 8.2.8),
+        // so it still throws rather than silently regenerating (the anonymous
+        // regeneration path is covered in SessionAdversarialTest).
+        $manager->set('_pulsar_identity', ['id' => 'user-42']);
         $manager->save();
         $sessionId = $manager->id();
 
-        // Second request: different UA should fail
+        // Second request: a different UA on the authenticated session must fail
         $manager2 = new SessionManager($this->handler, $this->config, [$validator]);
         $request2 = new ServerRequest(
             method: 'GET',
@@ -308,7 +341,7 @@ final class SessionManagerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Session validation failed');
+        $this->expectExceptionMessageIsOrContains('Session validation failed');
 
         $manager2->startWithRequest($request2);
     }
@@ -346,15 +379,15 @@ final class SessionManagerTest extends TestCase
         $dbHandler = new DatabaseHandler($pdo, 'sessions', 3600);
 
         // Insert 2 active sessions for user-1
-        $dbHandler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Agent');
+        $dbHandler->setSessionContext('user-1', '10.0.0.1', 'Agent');
         $dbHandler->write('s1', 'data1');
-        $dbHandler->setSessionContext('s2', 'user-1', '10.0.0.2', 'Agent');
+        $dbHandler->setSessionContext('user-1', '10.0.0.2', 'Agent');
         $dbHandler->write('s2', 'data2');
 
         $manager = new SessionManager($dbHandler, $config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Concurrent session limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Concurrent session limit exceeded');
 
         $manager->enforceConcurrencyLimit('user-1');
     }
@@ -389,7 +422,7 @@ final class SessionManagerTest extends TestCase
         );
 
         $dbHandler = new DatabaseHandler($pdo, 'sessions', 3600);
-        $dbHandler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Agent');
+        $dbHandler->setSessionContext('user-1', '10.0.0.1', 'Agent');
         $dbHandler->write('s1', 'data1');
 
         $manager = new SessionManager($dbHandler, $config);
@@ -475,5 +508,181 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
 
         self::assertSame($this->config, $manager->getConfig());
+    }
+
+    #[Test]
+    public function saveWhenNotStartedIsNoOp(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // Should not throw — just returns early
+        $manager->save();
+
+        self::assertFalse($manager->isStarted());
+    }
+
+    #[Test]
+    public function closeWhenNotStartedIsNoOp(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // Should not throw
+        $manager->close();
+
+        self::assertFalse($manager->isStarted());
+    }
+
+    #[Test]
+    public function startWithRequestWithInvalidCookieIdGeneratesNew(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => 'invalid-not-64-hex-chars'],
+        );
+
+        $manager->startWithRequest($request);
+
+        // Should have generated a new valid session ID (64 hex chars)
+        self::assertTrue($manager->isStarted());
+        self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $manager->id());
+    }
+
+    #[Test]
+    public function startWithRequestWithEmptyCookieGeneratesNew(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+
+        $manager->startWithRequest($request);
+
+        self::assertTrue($manager->isStarted());
+        self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $manager->id());
+    }
+
+    #[Test]
+    public function startWithRequestIsIdempotent(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+
+        $manager->startWithRequest($request);
+        $id = $manager->id();
+
+        // Second call should be a no-op
+        $manager->startWithRequest($request);
+
+        self::assertSame($id, $manager->id());
+    }
+
+    #[Test]
+    public function enforceConcurrencyLimitSkipsNonSupportingHandler(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // ArrayHandler does not support concurrency control
+        // Should return without throwing
+        $manager->enforceConcurrencyLimit('user-1');
+
+        self::assertFalse($this->handler->supportsConcurrencyControl());
+    }
+
+    #[Test]
+    public function regenerateWithoutDeletingOldSession(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+        $manager->start();
+
+        $manager->set('data', 'preserved');
+        $manager->save();
+        $oldId = $manager->id();
+
+        $manager->regenerate(deleteOldSession: false);
+
+        $newId = $manager->id();
+
+        self::assertNotSame($oldId, $newId);
+        self::assertSame('preserved', $manager->get('data'));
+
+        // Old session data should still exist in the handler
+        $oldData = $this->handler->read($oldId);
+        self::assertNotEmpty($oldData);
+    }
+
+    #[Test]
+    public function startWithRequestMetadataCapture(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'Mozilla/5.0'],
+            serverParams: ['REMOTE_ADDR' => '192.168.1.100'],
+        );
+
+        $manager->startWithRequest($request);
+
+        $metadata = $manager->metadata;
+        self::assertNotNull($metadata);
+        self::assertSame('192.168.1.100', $metadata->ipAddress);
+        self::assertSame('Mozilla/5.0', $metadata->userAgent);
+    }
+
+    #[Test]
+    public function setUserIdWhenNotStartedThrows(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessageIsOrContains('not been started');
+
+        $manager->setUserId('user-1');
+    }
+
+    #[Test]
+    public function destroyWithEmptySessionIdIsNoOp(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // Destroy without ever starting — sessionId is empty
+        $manager->destroy();
+
+        self::assertFalse($manager->isStarted());
+    }
+
+    #[Test]
+    public function startWithRequestNonStringRemoteAddr(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: [],
+        );
+
+        $manager->startWithRequest($request);
+
+        $metadata = $manager->metadata;
+        self::assertNotNull($metadata);
+        self::assertSame('', $metadata->ipAddress);
     }
 }

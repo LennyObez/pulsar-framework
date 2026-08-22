@@ -9,6 +9,10 @@ use Pulsar\Api\Api;
 
 /**
  * Notification dispatched when content is published.
+ *
+ * @psalm-api Constructed by CmsNotificationDispatcher and dispatched through
+ *            the framework notification manager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentPublishedNotification implements CmsNotificationInterface
@@ -37,12 +41,12 @@ final readonly class ContentPublishedNotification implements CmsNotificationInte
 
     public function subject(): string
     {
-        return "Content published: {$this->contentTitle}";
+        return "Content published: $this->contentTitle";
     }
 
     public function body(): string
     {
-        return "The content \"{$this->contentTitle}\" has been published and is now live at {$this->url}.";
+        return "The content \"$this->contentTitle\" has been published and is now live at $this->url.";
     }
 
     public function metadata(): array

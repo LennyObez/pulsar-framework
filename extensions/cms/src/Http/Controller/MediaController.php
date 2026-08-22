@@ -20,7 +20,7 @@ use Pulsar\Http\Message\Response;
  * cache headers based on visibility. Public assets get long-lived immutable
  * caching; private assets require authentication and get no-store.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class MediaController
 {
     private const string CACHE_DERIVATIVE = 'public, max-age=2592000, immutable';
@@ -41,7 +41,6 @@ final readonly class MediaController
         ServerRequestInterface $request,
         string $variant,
         string $hash,
-        string $filename,
         string $format,
     ): Response {
         $asset = $this->mediaRepository->findByHash($hash);
@@ -88,7 +87,6 @@ final readonly class MediaController
     public function serveOriginal(
         ServerRequestInterface $request,
         string $hash,
-        string $filename,
     ): Response {
         $asset = $this->mediaRepository->findByHash($hash);
 

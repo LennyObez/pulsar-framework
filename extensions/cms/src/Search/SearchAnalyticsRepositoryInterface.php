@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for search analytics persistence.
+ *
+ * @psalm-api Public binding contract; implemented by DbSearchAnalyticsRepository
+ *            and consumed by SearchService implementations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SearchAnalyticsRepositoryInterface

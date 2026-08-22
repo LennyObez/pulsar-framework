@@ -13,6 +13,9 @@ const NAV_LINKS: NavLink[] = [
   { href: '/studio/console/logs', label: 'Logs', id: 'logs' },
   { href: '/studio/console/exceptions', label: 'Exceptions', id: 'exceptions' },
   { href: '/studio/console/benchmarks', label: 'Benchmarks', id: 'benchmarks' },
+  { href: '/studio/console/activity', label: 'Activity', id: 'activity' },
+  { href: '/studio/console/health', label: 'Health', id: 'health' },
+  { href: '/studio/console/deployments', label: 'Deploys', id: 'deployments' },
 ];
 
 export function renderStudioNav(activePage: string): string {

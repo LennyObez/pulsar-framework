@@ -14,6 +14,7 @@ use function intdiv;
  * Verifies TOTP codes with a configurable time window to account for clock drift.
  *
  * Returns the accepted time step on success for replay guard keying and diagnostics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TotpVerifier
@@ -27,8 +28,8 @@ final readonly class TotpVerifier
      * Verify a TOTP code against the given secret.
      *
      * Checks the code against the current time step and ±window adjacent steps.
-     * When a replay guard, identity ID, and purpose are provided, ensures the same
-     * time step cannot be accepted twice within the window.
+     * When a replay guard and identity ID are provided, ensures the same time step
+     * cannot be accepted twice, for any purpose, anywhere in the acceptance envelope.
      *
      * Returns the accepted time step on match (for replay guard keying), or null on failure.
      *
@@ -37,7 +38,6 @@ final readonly class TotpVerifier
      * @param int|null $timestamp Unix timestamp (defaults to current time)
      * @param TotpReplayGuardInterface|null $replayGuard Replay protection (recommended for production)
      * @param string|null $identityId Identity submitting the code (required with replay guard)
-     * @param TwoFactorPurpose $purpose The verification purpose
      */
     public function verify(
         #[SensitiveParameter]
@@ -47,7 +47,6 @@ final readonly class TotpVerifier
         ?int $timestamp = null,
         ?TotpReplayGuardInterface $replayGuard = null,
         ?string $identityId = null,
-        TwoFactorPurpose $purpose = TwoFactorPurpose::Login,
     ): ?int {
         $timestamp ??= time();
         $period = $this->generator->period();
@@ -59,8 +58,19 @@ final readonly class TotpVerifier
             if (hash_equals($expected, $code)) {
                 $timeStep = intdiv($checkTime, $period);
 
-                if ($replayGuard !== null && $identityId !== null) {
-                    if (!$replayGuard->markUsed($identityId, $purpose, $timeStep, $timestamp)) {
+                // Fail-closed on replay protection. When the caller
+                // identifies the identity, a replay guard MUST be provided —
+                // otherwise the same TOTP code can be replayed within the time
+                // window. Pass `null` for `identityId` to bypass replay checks
+                // for non-identity-bound flows (one-shot bootstrap secrets),
+                // which is explicit and visible in code instead of masked by a
+                // null guard.
+                if ($identityId !== null) {
+                    if ($replayGuard === null) {
+                        return null;
+                    }
+
+                    if (!$replayGuard->markUsed($identityId, $timeStep, $timestamp)) {
                         return null;
                     }
                 }

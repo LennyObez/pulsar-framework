@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameter;
 use SodiumException;
 
 use function sodium_bin2hex;
@@ -29,10 +30,9 @@ use function substr;
  * Supports an optional previous key for key rotation. The previous key enables
  * fallback decryption and audit verification during rotation windows.
  *
- * Sub-key IDs:
- * - 1 = encryption (used by Encryptor)
- * - 2 = audit HMAC chain
- * - 3 = pseudonymization (used by PseudonymizationService)
+ * Sub-key ids are listed in {@see SubKeyId}; that enum, not this docblock, is
+ * the registry. Callers must not reuse an (id, context) pair across subsystems.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MasterKey implements KeyProviderInterface
@@ -50,8 +50,12 @@ final class MasterKey implements KeyProviderInterface
     private string $rawKey;
     private ?string $previousRawKey;
 
-    private function __construct(string $rawKey, ?string $previousRawKey = null)
-    {
+    private function __construct(
+        #[SensitiveParameter]
+        string $rawKey,
+        #[SensitiveParameter]
+        ?string $previousRawKey = null,
+    ) {
         $this->rawKey = $rawKey;
         $this->previousRawKey = $previousRawKey;
     }
@@ -67,7 +71,7 @@ final class MasterKey implements KeyProviderInterface
         try {
             sodium_memzero($key);
         } catch (SodiumException) {
-            // Best-effort zeroing — nothing to do if it fails
+            // Best-effort zeroing: nothing to do if it fails
         }
 
         if ($this->previousRawKey !== null) {
@@ -97,6 +101,7 @@ final class MasterKey implements KeyProviderInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('MasterKey');
     }
 
@@ -107,8 +112,12 @@ final class MasterKey implements KeyProviderInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromHex(string $hex, ?string $previousHex = null): self
-    {
+    public static function fromHex(
+        #[SensitiveParameter]
+        string $hex,
+        #[SensitiveParameter]
+        ?string $previousHex = null,
+    ): self {
         $raw = sodium_hex2bin($hex);
 
         if (strlen($raw) !== self::KEY_LENGTH) {
@@ -134,12 +143,26 @@ final class MasterKey implements KeyProviderInterface
      * Load master key from the PULSAR_MASTER_KEY environment variable.
      * Optionally reads PULSAR_MASTER_KEY_PREVIOUS for key rotation support.
      *
+     * WARNING: In persistent worker processes (RoadRunner, FrankenPHP, Swoole)
+     * and long-running PHP-FPM pools, `getenv()` reads from the process-level
+     * environment which persists across requests. Pass the key explicitly via
+     * `$envValue` parameter or use `fromHex()` with a secrets manager instead
+     * of relying on `getenv()` in these contexts.
+     *
+     * This method calls `getenv()` directly, bypassing
+     * {@see Environment::loadFiltered()}'s allowlist. Production
+     * deployments that harden the environment loader should use
+     * {@see fromConfigEnvironment()} instead so master-key access
+     * goes through the same allowlist as every other secret.
+     *
      * @throws SecurityException If the variable is missing or invalid
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromEnvironment(?string $envValue = null): self
-    {
+    public static function fromEnvironment(
+        #[SensitiveParameter]
+        ?string $envValue = null,
+    ): self {
         $hex = $envValue ?? getenv('PULSAR_MASTER_KEY');
 
         if ($hex === false || $hex === '') {
@@ -148,6 +171,33 @@ final class MasterKey implements KeyProviderInterface
 
         $previousHex = getenv('PULSAR_MASTER_KEY_PREVIOUS');
         if ($previousHex === false || $previousHex === '') {
+            $previousHex = null;
+        }
+
+        return self::fromHex($hex, $previousHex);
+    }
+
+    /**
+     * Load the master key through a {@see Environment} instance so the
+     * access goes through the same allowlist (and any other filtering)
+     * the operator has wired. Preferred over {@see fromEnvironment()} in
+     * production deployments because the `getenv()` global pollution
+     * path is bypassed entirely.
+     *
+     * @throws SecurityException If the variable is missing or invalid
+     * @throws SodiumException
+     */
+    #[NoDiscard]
+    public static function fromConfigEnvironment(\Pulsar\Config\Environment $env): self
+    {
+        $hex = $env->get('PULSAR_MASTER_KEY');
+
+        if ($hex === null || $hex === '') {
+            throw SecurityException::masterKeyMissing();
+        }
+
+        $previousHex = $env->get('PULSAR_MASTER_KEY_PREVIOUS');
+        if ($previousHex === '') {
             $previousHex = null;
         }
 

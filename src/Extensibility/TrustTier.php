@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * not the extension's own declaration.
  *
  * Tier ordering (highest to lowest): Core > Verified > Community > Untrusted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TrustTier: string

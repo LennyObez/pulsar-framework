@@ -155,6 +155,11 @@ final class ImportParserTest extends TestCase
             {
                 return $this->importBundle($jsonContent, $dryRun);
             }
+
+            public function importUnifiedFile(string $jsonContent, bool $dryRun = true): ImportResult
+            {
+                return $this->importBundle($jsonContent, $dryRun);
+            }
         };
     }
 }

@@ -1,0 +1,13 @@
+# Exceptions live here, not as `# zizmor: ignore` comments: inline suppressions
+# are invisible to anyone reviewing the security posture as a whole.
+
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        '*': hash-pin
+
+        # slsa-verifier reads this ref to prove the builder is unmodified, so a
+        # digest pin breaks the attestation. Keyed by full workflow path — the
+        # `owner/repo` form silently does not match a reusable workflow.
+        slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml: ref-pin

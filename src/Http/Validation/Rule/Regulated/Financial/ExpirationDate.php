@@ -17,14 +17,15 @@ use function sprintf;
  * Validates card expiration date format.
  *
  * Accepts MM/YY or MM/YYYY format with valid month (01-12).
- * This is a FORMAT validator only — it does NOT check whether
+ * This is a FORMAT validator only; it does NOT check whether
  * the card has expired. Expiry checking is a business-logic
  * concern that should be handled separately.
  *
  * @see https://www.pcisecuritystandards.org/
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ExpirationDate implements RuleInterface
+final readonly class ExpirationDate implements RuleInterface
 {
     public function __construct(
         private string $message = '',

@@ -51,7 +51,7 @@ final class RateLimitTest extends TestCase
         $envelope = $this->createEnvelope(queue: 'high-volume');
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Rate limit exceeded');
 
         $middleware->handle($envelope, static fn(JobEnvelope $e): string => 'never');
     }

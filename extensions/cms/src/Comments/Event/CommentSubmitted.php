@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a new comment is submitted.
+ *
+ * @psalm-api Event class — instantiated by the comment submission
+ *            controller and dispatched through the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentSubmitted

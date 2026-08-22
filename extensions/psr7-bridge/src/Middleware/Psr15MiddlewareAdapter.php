@@ -17,6 +17,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface as PulsarMiddlewareInterface;
  *
  * @deprecated Since 1.0.0-rc.11. Pulsar's middleware pipeline is now PSR-15 native.
  *             PSR-15 middleware can be used directly without this adapter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Psr15MiddlewareAdapter implements PulsarMiddlewareInterface

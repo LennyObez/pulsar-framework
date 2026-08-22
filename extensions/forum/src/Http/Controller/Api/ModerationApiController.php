@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Forum\Http\Controller\Api;
 use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Forum\Domain\ReportStatus;
 use Pulsar\Extension\Forum\Exception\ForumException;
@@ -20,6 +21,8 @@ use Pulsar\Http\Message\Response;
 use function array_map;
 use function in_array;
 use function is_array;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function min;
@@ -27,26 +30,33 @@ use function min;
 /**
  * API controller for moderation operations (requires moderator permissions).
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ModerationApiController
 {
     public function __construct(
         private ThreadReportRepositoryInterface $threadReportRepository,
         private PostReportRepositoryInterface $postReportRepository,
         private ModerationServiceInterface $moderationService,
+        private GateInterface $gate,
     ) {}
 
     /**
-     * GET /api/v1/forum/moderation/reports — List reports by status.
+     * GET /api/v1/forum/moderation/reports: List reports by status.
      */
     public function reports(ServerRequestInterface $request): Response
     {
-        $identity = $this->requireIdentity($request);
+        $this->requireModerator($request);
 
         $params = $request->getQueryParams();
-        $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : 20));
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $statusFilter = is_string($rawStatus) ? $rawStatus : 'pending';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, (is_int($rawPage) || is_string($rawPage)) && is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, (is_int($rawPerPage) || is_string($rawPerPage)) && is_numeric($rawPerPage) ? (int) $rawPerPage : 20));
 
         $status = ReportStatus::tryFrom($statusFilter) ?? ReportStatus::Pending;
 
@@ -86,11 +96,11 @@ final readonly class ModerationApiController
     }
 
     /**
-     * POST /api/v1/forum/moderation/reports/{id}/review — Review a report.
+     * POST /api/v1/forum/moderation/reports/{id}/review: Review a report.
      */
     public function reviewReport(ServerRequestInterface $request, string $id): Response
     {
-        $identity = $this->requireIdentity($request);
+        $identity = $this->requireModerator($request);
 
         $parsed = $request->getParsedBody();
 
@@ -101,9 +111,15 @@ final readonly class ModerationApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $action = is_string($body['action'] ?? null) ? $body['action'] : '';
-        $note = is_string($body['note'] ?? null) ? $body['note'] : '';
-        $type = is_string($body['type'] ?? null) ? $body['type'] : 'thread';
+        /** @var mixed $rawAction */
+        $rawAction = $body['action'] ?? null;
+        $action = is_string($rawAction) ? $rawAction : '';
+        /** @var mixed $rawNote */
+        $rawNote = $body['note'] ?? null;
+        $note = is_string($rawNote) ? $rawNote : '';
+        /** @var mixed $rawType */
+        $rawType = $body['type'] ?? null;
+        $type = is_string($rawType) ? $rawType : 'thread';
 
         if (!in_array($action, ['action', 'dismiss'], true)) {
             return Response::json([
@@ -143,11 +159,11 @@ final readonly class ModerationApiController
     }
 
     /**
-     * POST /api/v1/forum/moderation/ban/{userId} — Ban a user.
+     * POST /api/v1/forum/moderation/ban/{userId}: Ban a user.
      */
     public function ban(ServerRequestInterface $request, string $userId): Response
     {
-        $identity = $this->requireIdentity($request);
+        $identity = $this->requireModerator($request);
 
         $parsed = $request->getParsedBody();
 
@@ -158,7 +174,9 @@ final readonly class ModerationApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($reason === '') {
             return Response::json([
@@ -168,8 +186,10 @@ final readonly class ModerationApiController
             ], 422);
         }
 
-        $expiresAt = is_string($body['expires_at'] ?? null) && $body['expires_at'] !== ''
-            ? new DateTimeImmutable($body['expires_at'])
+        /** @var mixed $rawExpiresAt */
+        $rawExpiresAt = $body['expires_at'] ?? null;
+        $expiresAt = is_string($rawExpiresAt) && $rawExpiresAt !== ''
+            ? new DateTimeImmutable($rawExpiresAt)
             : null;
 
         try {
@@ -190,11 +210,11 @@ final readonly class ModerationApiController
     }
 
     /**
-     * POST /api/v1/forum/moderation/unban/{userId} — Unban a user.
+     * POST /api/v1/forum/moderation/unban/{userId}: Unban a user.
      */
     public function unban(ServerRequestInterface $request, string $userId): Response
     {
-        $identity = $this->requireIdentity($request);
+        $identity = $this->requireModerator($request);
 
         try {
             $profile = $this->moderationService->unbanUser($userId, $identity->id());
@@ -210,6 +230,11 @@ final readonly class ModerationApiController
         }
     }
 
+    /**
+     * Require an authenticated identity from the request.
+     *
+     * @throws ForumException If no authenticated identity is present
+     */
     private function requireIdentity(ServerRequestInterface $request): IdentityInterface
     {
         /** @var IdentityInterface|null $identity */
@@ -217,6 +242,22 @@ final readonly class ModerationApiController
 
         if ($identity === null || !$identity->isAuthenticated()) {
             throw ForumException::unauthorized('authentication_required');
+        }
+
+        return $identity;
+    }
+
+    /**
+     * Require the authenticated identity to have moderator permissions.
+     *
+     * @throws ForumException If no authenticated identity is present
+     */
+    private function requireModerator(ServerRequestInterface $request): IdentityInterface
+    {
+        $identity = $this->requireIdentity($request);
+
+        if (!$this->gate->allows($identity, 'forum.moderate')) {
+            throw ForumException::unauthorized('forum.moderate');
         }
 
         return $identity;

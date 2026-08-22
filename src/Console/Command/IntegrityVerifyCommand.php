@@ -90,6 +90,7 @@ final class IntegrityVerifyCommand extends Command
 
         try {
             $manifest = ManifestFormat::fromJson($json);
+            $result = $this->verifier->verify($manifest);
         } catch (IntegrityException $e) {
             if ($jsonOutput) {
                 $this->writeJsonEnvelope($output, false, [
@@ -101,8 +102,6 @@ final class IntegrityVerifyCommand extends Command
 
             return ExitCode::Error->value;
         }
-
-        $result = $this->verifier->verify($manifest);
 
         if ($jsonOutput) {
             $files = [];

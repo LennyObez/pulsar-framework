@@ -14,17 +14,21 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_array;
+use function is_float;
+use function is_int;
+use function is_string;
 
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ExperimentController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ExperimentController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ExperimentService $experimentService,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -57,9 +61,15 @@ final readonly class ExperimentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = (string) ($body['name'] ?? '');
-        $contentId = (string) ($body['content_id'] ?? '');
-        $trafficPercentage = (float) ($body['traffic_percentage'] ?? 1.0);
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawContentId */
+        $rawContentId = $body['content_id'] ?? null;
+        $contentId = is_string($rawContentId) ? $rawContentId : '';
+        /** @var mixed $rawTrafficPercentage */
+        $rawTrafficPercentage = $body['traffic_percentage'] ?? null;
+        $trafficPercentage = is_float($rawTrafficPercentage) ? $rawTrafficPercentage : 1.0;
 
         if ($name === '' || $contentId === '') {
             return Response::json(['error' => 'Name and content_id are required'], 400);
@@ -69,14 +79,17 @@ final readonly class ExperimentController
 
         // Add variants if provided
         /** @var list<array{name?: string, content_id?: string, weight?: int}> $variants */
-        $variants = (array) ($body['variants'] ?? []);
+        $variants = is_array($body['variants'] ?? null) ? $body['variants'] : [];
 
         $createdVariants = [];
 
         foreach ($variants as $variantData) {
-            $variantName = (string) ($variantData['name'] ?? '');
-            $variantContentId = (string) ($variantData['content_id'] ?? '');
-            $weight = (int) ($variantData['weight'] ?? 1);
+            $rawVariantName = $variantData['name'] ?? null;
+            $variantName = is_string($rawVariantName) ? $rawVariantName : '';
+            $rawVariantContentId = $variantData['content_id'] ?? null;
+            $variantContentId = is_string($rawVariantContentId) ? $rawVariantContentId : '';
+            $rawWeight = $variantData['weight'] ?? null;
+            $weight = is_int($rawWeight) ? $rawWeight : 1;
 
             if ($variantName !== '' && $variantContentId !== '') {
                 $createdVariants[] = $this->experimentService->addVariant(

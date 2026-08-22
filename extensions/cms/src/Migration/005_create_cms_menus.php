@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_menus (
@@ -70,10 +72,11 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_menu_item_menu_sort
-                ON cms_menu_items (menu_id, parent_id, sort_order)
-            SQL);
+        $indexes->ensure(
+            'cms_menu_items',
+            'idx_menu_item_menu_sort',
+            ['menu_id', 'parent_id', 'sort_order'],
+        );
 
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_menu_item_translations (

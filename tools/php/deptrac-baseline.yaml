@@ -1,0 +1,41 @@
+deptrac:
+  skip_violations:
+    Pulsar\Extension\Devices\DevicesServiceProvider:
+      - Pulsar\Extension\Devices\Internal\DeviceService
+      - Pulsar\Extension\Devices\Internal\Persistence\DbUserDeviceRepository
+    Pulsar\Extension\Devices\Http\Controller\DeviceController:
+      - Pulsar\Extension\Devices\Internal\DeviceService
+    Pulsar\Extension\Devices\Http\Middleware\DeviceTokenGuard:
+      - Pulsar\Extension\Devices\Internal\DeviceService
+    Pulsar\Extension\Feedback\FeedbackServiceProvider:
+      - Pulsar\Extension\Feedback\Internal\FeedbackService
+      - Pulsar\Extension\Feedback\Internal\Persistence\DbFeedbackRepository
+    Pulsar\Extension\Feedback\Http\Controller\Admin\FeedbackController:
+      - Pulsar\Extension\Feedback\Internal\FeedbackService
+    Pulsar\Extension\Feedback\Http\Controller\Api\FeedbackApiController:
+      - Pulsar\Extension\Feedback\Internal\FeedbackService
+    Pulsar\Extension\Releases\Http\Controller\Admin\ReleaseController:
+      - Pulsar\Extension\Releases\Internal\ReleaseService
+    Pulsar\Extension\Releases\Http\Controller\Api\BetaSignupController:
+      - Pulsar\Extension\Releases\Internal\ReleaseService
+    Pulsar\Extension\Releases\Http\Controller\Api\ReleaseApiController:
+      - Pulsar\Extension\Releases\Internal\ReleaseService
+    Pulsar\Extension\Releases\ReleasesServiceProvider:
+      - Pulsar\Extension\Releases\Internal\Persistence\DbBetaSignupRepository
+      - Pulsar\Extension\Releases\Internal\Persistence\DbReleaseRepository
+      - Pulsar\Extension\Releases\Internal\ReleaseService
+    Pulsar\Extension\Subscriptions\Http\Controller\SubscriptionController:
+      - Pulsar\Extension\Subscriptions\Internal\SubscriptionService
+    Pulsar\Extension\Subscriptions\Http\Controller\WebhookController:
+      - Pulsar\Extension\Subscriptions\Internal\SubscriptionService
+    Pulsar\Extension\Subscriptions\Job\ProcessAppleWebhookJob:
+      - Pulsar\Extension\Subscriptions\Internal\SubscriptionService
+    Pulsar\Extension\Subscriptions\Job\ProcessGoogleWebhookJob:
+      - Pulsar\Extension\Subscriptions\Internal\SubscriptionService
+    Pulsar\Extension\Subscriptions\SubscriptionsServiceProvider:
+      - Pulsar\Extension\Subscriptions\Internal\AppStoreVerifier
+      - Pulsar\Extension\Subscriptions\Internal\CompositeVerifier
+      - Pulsar\Extension\Subscriptions\Internal\GooglePlayVerifier
+      - Pulsar\Extension\Subscriptions\Internal\Persistence\DbSubscriptionRepository
+      - Pulsar\Extension\Subscriptions\Internal\Persistence\DbWebhookEventRepository
+      - Pulsar\Extension\Subscriptions\Internal\SubscriptionService

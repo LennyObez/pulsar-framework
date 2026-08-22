@@ -10,11 +10,13 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DeployConfig;
-use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Deploy\Check\AuditLoggerReadinessCheck;
 use Pulsar\Deploy\Check\CacheSettingsCheck;
 use Pulsar\Deploy\Check\DebugModeCheck;
+use Pulsar\Deploy\Check\DependencyIntegrityCheck;
+use Pulsar\Deploy\Check\EnvironmentValidationCheck;
 use Pulsar\Deploy\Check\FilesystemScanCheck;
 use Pulsar\Deploy\Check\HealthEndpointCheck;
 use Pulsar\Deploy\Check\Http3ReadinessCheck;
@@ -28,16 +30,26 @@ use Pulsar\Deploy\Check\SecurityHeadersReadinessCheck;
 use Pulsar\Deploy\Check\SeverityOverrideCheck;
 use Pulsar\Deploy\Check\SkippedCheck;
 use Pulsar\Deploy\Check\TrustedProxyCheck;
+use Pulsar\Deploy\Check\TwoFactorRateLimiterReadinessCheck;
 use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\DeployCheckInterface;
 use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeploySeverity;
+use Pulsar\Deploy\MaintenanceMode;
+use Pulsar\Deploy\Middleware\MaintenanceModeMiddleware;
+use Pulsar\Deploy\Runtime\FilesystemReader;
 use Pulsar\Deploy\Runtime\PhpRuntime;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
+use Pulsar\Http\Factory\ResponseFactory;
+use Pulsar\Http\Factory\StreamFactory;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+
+use function dirname;
+use function is_dir;
+use function mkdir;
 
 #[Internal]
 final readonly class DeployWiring implements ServiceWiringInterface
@@ -59,6 +71,25 @@ final readonly class DeployWiring implements ServiceWiringInterface
         $deployConfig = $repository->get(DeployConfig::class);
         $container->instance(DeployConfig::class, $deployConfig);
 
+        // Maintenance mode (@api MaintenanceMode + its 503 middleware). The flag
+        // file lives under the single writable root (var/framework); the
+        // maintenance:enable / :disable commands toggle it, and the middleware
+        // short-circuits every request with a 503 while it is active. Binding
+        // MaintenanceMode is also what lets bin/pulsar register those commands.
+        // Skip gracefully when the storage directory cannot be created so a
+        // read-only or misconfigured filesystem never blocks boot.
+        $maintenanceStorage = var_path('framework');
+
+        if (is_dir($maintenanceStorage) || @mkdir($maintenanceStorage, 0o750, true) || is_dir($maintenanceStorage)) {
+            $maintenanceMode = new MaintenanceMode($maintenanceStorage);
+            $container->instance(MaintenanceMode::class, $maintenanceMode);
+            $middleware->pipe(new MaintenanceModeMiddleware(
+                $maintenanceMode,
+                new ResponseFactory(),
+                new StreamFactory(),
+            ));
+        }
+
         $phpRuntime = new PhpRuntime();
         $container->instance(PhpRuntimeInterface::class, $phpRuntime);
 
@@ -68,11 +99,15 @@ final readonly class DeployWiring implements ServiceWiringInterface
         /** @var SecurityConfig $securityConfig */
         $securityConfig = $repository->get(SecurityConfig::class);
 
+        $environment = $configManager->environment();
+
         $deployCheck = new DeployCheck();
 
         $this->registerCheckOrSkip($deployCheck, 'debug-mode', $deployConfig, static fn(): DeployCheckInterface => new DebugModeCheck($appConfig));
 
-        $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime));
+        $this->registerCheckOrSkip($deployCheck, 'environment-values', $deployConfig, static fn(): DeployCheckInterface => new EnvironmentValidationCheck($environment));
+
+        $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime, new FilesystemReader()));
 
         $this->registerCheckOrSkip($deployCheck, 'jit', $deployConfig, static fn(): DeployCheckInterface => new JitCheck($phpRuntime));
 
@@ -110,15 +145,24 @@ final readonly class DeployWiring implements ServiceWiringInterface
 
         $this->registerCheckOrSkip($deployCheck, 'trusted-proxies', $deployConfig, static fn(): DeployCheckInterface => new TrustedProxyCheck($deployConfig));
 
+        // Composed by IntegrityWiring, which owns the verifier, the signer and
+        // the base path the manifest is resolved against.
         $this->registerCheckOrSkip($deployCheck, 'integrity', $deployConfig, static function () use ($container): ?DeployCheckInterface {
-            if (!$container->has(IntegrityConfig::class)) {
+            if (!$container->has(IntegrityCheck::class)) {
                 return null;
             }
-            /** @var IntegrityConfig $integrityConfig */
-            $integrityConfig = $container->get(IntegrityConfig::class);
+            /** @var IntegrityCheck $integrityCheck */
+            $integrityCheck = $container->get(IntegrityCheck::class);
 
-            return new IntegrityCheck($integrityConfig);
+            return $integrityCheck;
         });
+
+        $this->registerCheckOrSkip($deployCheck, 'audit-logger', $deployConfig, static fn(): DeployCheckInterface => new AuditLoggerReadinessCheck($container));
+
+        $this->registerCheckOrSkip($deployCheck, 'two-factor-rate-limiter', $deployConfig, static fn(): DeployCheckInterface => new TwoFactorRateLimiterReadinessCheck($container));
+
+        $projectRoot = $configManager->configPath() !== null ? dirname($configManager->configPath()) : '.';
+        $this->registerCheckOrSkip($deployCheck, 'dependency-integrity', $deployConfig, static fn(): DeployCheckInterface => new DependencyIntegrityCheck($projectRoot));
 
         $container->instance(DeployCheck::class, $deployCheck);
         $container->instance(DeployCheckRunnerInterface::class, $deployCheck);

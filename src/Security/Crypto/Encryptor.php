@@ -10,6 +10,7 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use SensitiveParameter;
 use SodiumException;
 
 use function sodium_crypto_secretbox;
@@ -24,6 +25,7 @@ use function strlen;
  *
  * Supports an optional previous key for transparent fallback decryption
  * during key rotation windows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Encryptor implements EncryptorInterface
@@ -46,7 +48,9 @@ final class Encryptor implements EncryptorInterface
     private readonly Randomizer $randomizer;
 
     private function __construct(
+        #[SensitiveParameter]
         private string $key,
+        #[SensitiveParameter]
         private ?string $previousKey = null,
         private readonly ?CipherSuiteInterface $cipherSuite = null,
     ) {
@@ -94,6 +98,7 @@ final class Encryptor implements EncryptorInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('Encryptor');
     }
 
@@ -148,7 +153,7 @@ final class Encryptor implements EncryptorInterface
      * @throws RandomException
      * @throws SodiumException
      */
-    public function encrypt(string $plaintext): string
+    public function encrypt(#[SensitiveParameter] string $plaintext): string
     {
         if ($this->cipherSuite !== null) {
             $raw = $this->cipherSuite->encrypt($plaintext, $this->key);

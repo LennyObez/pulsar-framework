@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Describes a single editable CSS custom property (design token) exposed by a theme.
+ *
+ * @psalm-api Public DTO returned from ThemeTokenResolverInterface; consumed
+ *            by the admin token editor UI.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThemeToken

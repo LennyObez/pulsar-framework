@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Api\OpenApi;
 
 use Pulsar\Api\Api;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\Message\Response;
 
 use function file_exists;
 use function file_get_contents;
@@ -22,6 +19,7 @@ use const ENT_QUOTES;
  * This controller does NOT generate the spec at runtime. It reads the
  * pre-built JSON artifact from disk and serves it alongside an embedded
  * Swagger UI HTML page.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SwaggerUiController
@@ -34,7 +32,7 @@ final readonly class SwaggerUiController
     /**
      * Serve the Swagger UI HTML page.
      */
-    public function ui(Request $request): Response
+    public function ui(): Response
     {
         $specUrl = htmlspecialchars($this->specRoute, ENT_QUOTES, 'UTF-8');
 
@@ -77,32 +75,30 @@ final readonly class SwaggerUiController
     /**
      * Serve the pre-built OpenAPI JSON spec.
      */
-    public function spec(Request $request): Response
+    public function spec(): Response
     {
         if (!file_exists($this->specPath)) {
-            return new Response(
-                body: '{"error":"OpenAPI spec not found. Run the api:spec command to generate it."}',
-                status: ResponseStatus::NotFound,
-                headers: new HeaderBag(['Content-Type' => 'application/json; charset=utf-8']),
+            return Response::json(
+                ['error' => 'OpenAPI spec not found. Run the api:spec command to generate it.'],
+                404,
             );
         }
 
         $content = file_get_contents($this->specPath);
         if ($content === false) {
-            return new Response(
-                body: '{"error":"Failed to read OpenAPI spec file."}',
-                status: ResponseStatus::InternalServerError,
-                headers: new HeaderBag(['Content-Type' => 'application/json; charset=utf-8']),
+            return Response::json(
+                ['error' => 'Failed to read OpenAPI spec file.'],
+                500,
             );
         }
 
-        return new Response(
-            body: $content,
-            status: ResponseStatus::OK,
-            headers: new HeaderBag([
+        return (new Response(
+            statusCode: 200,
+            headers: [
                 'Content-Type' => 'application/json; charset=utf-8',
                 'Cache-Control' => 'public, max-age=3600',
-            ]),
-        );
+            ],
+            body: $content,
+        ));
     }
 }

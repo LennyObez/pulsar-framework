@@ -6,6 +6,7 @@ namespace Pulsar\Cache\Application\Lock;
 
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Pulsar\Runtime\Fiber\CooperativeSleep;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
@@ -21,13 +22,12 @@ use function fwrite;
 use function hash;
 use function hash_equals;
 use function is_dir;
-use function is_file;
+use function is_link;
 use function json_decode;
 use function json_encode;
 use function microtime;
 use function mkdir;
 use function unlink;
-use function usleep;
 
 use const JSON_THROW_ON_ERROR;
 use const LOCK_EX;
@@ -48,8 +48,9 @@ final class FilesystemLock implements LockInterface
 
     public function __construct(
         private readonly string $directory,
+        ?Randomizer $randomizer = null,
     ) {
-        $this->randomizer = new Randomizer(new Secure());
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
 
         if (!is_dir($this->directory)) {
             mkdir($this->directory, 0o700, true);
@@ -62,6 +63,14 @@ final class FilesystemLock implements LockInterface
         $deadlineNs = hrtime(true) + ($timeoutMs * 1_000_000);
 
         do {
+            // Reject a pre-planted symlink at the lock path before opening:
+            // 'c+' follows symlinks, so an attacker who can predict the path
+            // could otherwise redirect the lock-metadata write to an arbitrary
+            // target. Mirrors CacheIntegrity::validateFile()'s symlink guard.
+            if (is_link($path)) {
+                throw LockAcquisitionException::unavailable($resource, 'Lock path is a symlink');
+            }
+
             $handle = fopen($path, 'c+');
 
             if ($handle === false) {
@@ -95,7 +104,9 @@ final class FilesystemLock implements LockInterface
                 throw LockAcquisitionException::timeout($resource, $timeoutMs);
             }
 
-            usleep(10_000);
+            // Yield the worker to other connections while waiting, instead of
+            // freezing every fiber (and the lock holder) in a blocking usleep.
+            CooperativeSleep::forMilliseconds(10);
         } while (hrtime(true) < $deadlineNs);
 
         throw LockAcquisitionException::timeout($resource, $timeoutMs);
@@ -103,8 +114,6 @@ final class FilesystemLock implements LockInterface
 
     public function release(LockHandle $handle): bool
     {
-        $path = $this->lockPath($handle->resource);
-
         if (!isset($this->handles[$handle->resource])) {
             return false;
         }
@@ -116,13 +125,16 @@ final class FilesystemLock implements LockInterface
             return false;
         }
 
+        // The lock file is intentionally NOT unlinked. Deleting it here opens a
+        // race: between LOCK_UN and unlink a second process can acquire LOCK_EX
+        // on the same inode, and once it is unlinked a third process opens a new
+        // inode at the now-vacant path and locks that — two holders, mutual
+        // exclusion broken. Keeping a persistent lock file (as CacheLock does)
+        // pins the inode; acquire() reuses it via 'c+' and overwrites stale
+        // metadata. The file count is bounded by the number of lock resources.
         flock($fileHandle, LOCK_UN);
         fclose($fileHandle);
         unset($this->handles[$handle->resource]);
-
-        if (is_file($path)) {
-            @unlink($path);
-        }
 
         return true;
     }

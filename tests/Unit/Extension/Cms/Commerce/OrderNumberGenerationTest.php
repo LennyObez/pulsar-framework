@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Event\EventDispatcherInterface;
@@ -38,6 +39,7 @@ final class OrderNumberGenerationTest extends TestCase
         $queriedSql = [];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('transaction')->willReturnCallback(
             static function (callable $callback) use ($db): mixed {
                 return $callback($db);
@@ -72,11 +74,11 @@ final class OrderNumberGenerationTest extends TestCase
 
         self::assertSame('ORD-000001', $order->orderNumber);
 
-        // Verify the upsert SQL was executed (INSERT ... ON CONFLICT)
+        // Verify the upsert SQL was executed (INSERT ... ON DUPLICATE KEY UPDATE for MySQL)
         $upsertExecuted = false;
 
         foreach ($executedSql as $sql) {
-            if (str_contains($sql, 'cms_order_sequences') && str_contains($sql, 'ON CONFLICT')) {
+            if (str_contains($sql, 'cms_order_sequences') && (str_contains($sql, 'ON CONFLICT') || str_contains($sql, 'ON DUPLICATE KEY UPDATE'))) {
                 $upsertExecuted = true;
 
                 break;
@@ -105,6 +107,7 @@ final class OrderNumberGenerationTest extends TestCase
         $capturedBindings = [];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('transaction')->willReturnCallback(
             static function (callable $callback) use ($db): mixed {
                 return $callback($db);
@@ -151,6 +154,7 @@ final class OrderNumberGenerationTest extends TestCase
         $capturedBindings = [];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('transaction')->willReturnCallback(
             static function (callable $callback) use ($db): mixed {
                 return $callback($db);
@@ -194,6 +198,7 @@ final class OrderNumberGenerationTest extends TestCase
         $sequenceCounter = 0;
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('transaction')->willReturnCallback(
             static function (callable $callback) use ($db): mixed {
                 return $callback($db);
@@ -201,7 +206,7 @@ final class OrderNumberGenerationTest extends TestCase
         );
         $db->method('execute')->willReturnCallback(
             static function (string $sql) use (&$sequenceCounter): int {
-                if (str_contains($sql, 'cms_order_sequences') && str_contains($sql, 'ON CONFLICT')) {
+                if (str_contains($sql, 'cms_order_sequences') && (str_contains($sql, 'ON CONFLICT') || str_contains($sql, 'ON DUPLICATE KEY'))) {
                     $sequenceCounter++;
                 }
 
@@ -250,6 +255,7 @@ final class OrderNumberGenerationTest extends TestCase
         $queriedSql = [];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('transaction')->willReturnCallback(
             static function (callable $callback) use ($db): mixed {
                 return $callback($db);

@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Prevents simultaneous edits by maintaining exclusive locks
  * with automatic expiration and heartbeat renewal.
+ *
+ * @psalm-api Public binding contract; implemented by ContentLockService and
+ *            consumed by editor middleware and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentLockServiceInterface

@@ -54,32 +54,38 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{text: string, url: string}> $buttons */
+        /** @var list<mixed> $buttons */
         $buttons = $data['buttons'] ?? [];
 
+        /** @var mixed $alignment */
         $alignment = $data['alignment'] ?? null;
 
         if (!is_string($alignment) || !in_array($alignment, self::VALID_ALIGNMENTS, true)) {
             $alignment = 'center';
         }
 
+        /** @var mixed $layout */
         $layout = $data['layout'] ?? null;
 
         if (!is_string($layout) || !in_array($layout, self::VALID_LAYOUTS, true)) {
             $layout = 'horizontal';
         }
 
-        $html = "<div class=\"button-group button-group--{$alignment} button-group--{$layout}\">";
+        $html = "<div class=\"button-group button-group--$alignment button-group--$layout\">";
 
         foreach ($buttons as $button) {
             if (!is_array($button)) {
                 continue;
             }
 
-            $text = htmlspecialchars((string) ($button['text'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars((string) ($button['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawText */
+            $rawText = $button['text'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $button['url'] ?? null;
+            $text = htmlspecialchars(is_string($rawText) ? $rawText : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');
 
-            $html .= "<a href=\"{$url}\" class=\"button-group__button\">{$text}</a>";
+            $html .= "<a href=\"$url\" class=\"button-group__button\">$text</a>";
         }
 
         return $html . '</div>';
@@ -98,17 +104,17 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
 
         foreach ($data['buttons'] as $index => $button) {
             if (!is_array($button)) {
-                $errors[] = "buttons[{$index}] must be an object";
+                $errors[] = "buttons[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($button['text']) || !is_string($button['text'])) {
-                $errors[] = "buttons[{$index}].text is required and must be a string";
+                $errors[] = "buttons[$index].text is required and must be a string";
             }
 
             if (!isset($button['url']) || !is_string($button['url'])) {
-                $errors[] = "buttons[{$index}].url is required and must be a string";
+                $errors[] = "buttons[$index].url is required and must be a string";
             }
         }
 

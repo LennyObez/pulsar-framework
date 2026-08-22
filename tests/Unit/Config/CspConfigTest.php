@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\CspConfig;
+use Pulsar\Config\Exception\ConfigException;
 
 #[CoversClass(CspConfig::class)]
 final class CspConfigTest extends TestCase
@@ -195,5 +196,48 @@ final class CspConfigTest extends TestCase
         self::assertTrue($config->enabled);
         self::assertFalse($config->reportOnly);
         self::assertSame("'self'", $config->defaultSrc);
+    }
+
+    #[Test]
+    public function fromArrayRejectsReportUriWithDirectiveSeparator(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('report_uri');
+
+        (void) CspConfig::fromArray([
+            'report_uri' => 'https://a.example; default-src *',
+        ]);
+    }
+
+    #[Test]
+    public function fromArrayRejectsCustomDirectiveValueWithSeparator(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('custom_directives');
+
+        (void) CspConfig::fromArray([
+            'custom_directives' => ['worker-src' => "'self'; default-src *"],
+        ]);
+    }
+
+    #[Test]
+    public function fromArrayRejectsCustomDirectiveNameWithSeparator(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('custom_directives');
+
+        (void) CspConfig::fromArray([
+            'custom_directives' => ["worker-src 'self'; default-src" => '*'],
+        ]);
+    }
+
+    #[Test]
+    public function fromArrayAcceptsRelativeReportUri(): void
+    {
+        $config = CspConfig::fromArray([
+            'report_uri' => '/csp-report',
+        ]);
+
+        self::assertSame('/csp-report', $config->reportUri);
     }
 }

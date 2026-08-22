@@ -6,15 +6,26 @@ namespace Pulsar\Routing;
 
 use InvalidArgumentException;
 use Pulsar\Api\Api;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Binding\ExplicitBinding;
 
+use function array_values;
 use function count;
-use function in_array;
+use function ksort;
 use function sprintf;
+use function strstr;
+use function trim;
 
 /**
  * HTTP router for route registration and matching.
+ *
+ * Registration, indexing, and matching are one cohesive responsibility (the
+ * route table) and stay here — splitting them out adds a call frame on the
+ * matching hot path for marginal benefit. The genuinely separable, non-hot
+ * concerns are delegated: {@see RouteUrlGenerator} builds URLs and
+ * {@see ResourceRegistrar} scaffolds RESTful resource route sets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Router implements RouterInterface
@@ -32,23 +43,63 @@ final class Router implements RouterInterface
     /**
      * Method-indexed lookup table for fast matching.
      *
-     * Maps each HTTP method value to the list of routes that accept it.
-     * Built incrementally at registration time so that `match()` only
-     * scans routes for the requested method on the hot path.
-     *
-     * @var array<string, list<Route>>
-     */
-    private array $routesByMethod = [];
-
-    /**
-     * O(1) hash map for static routes (no dynamic segments).
-     *
-     * Indexed by HTTP method then normalized path, enabling constant-time
-     * lookups for routes without parameters — the most common case.
+     * O(1) hash map for static routes (no dynamic segments), indexed by HTTP
+     * method then normalized path — the most common case.
      *
      * @var array<string, array<string, Route>>
      */
     private array $staticRoutes = [];
+
+    /**
+     * First-segment bucket index for dynamic routes.
+     *
+     * Maps `method => firstStaticSegment => registrationSequence => Route` so the
+     * dynamic-route scan for `/users/{id}` requests only walks routes whose
+     * pattern begins with the `users` segment. The catch-all bucket `''` holds
+     * routes whose pattern starts with a dynamic segment (e.g. `/{lang}/posts`).
+     *
+     * Bucket entries are keyed by the route's global registration sequence so the
+     * first-segment and catch-all buckets can be merged back into registration
+     * order at match time (first-registered-wins).
+     *
+     * @var array<string, array<string, array<int, Route>>>
+     */
+    private array $dynamicRouteBuckets = [];
+
+    /**
+     * Whether any registered route carries a host constraint.
+     *
+     * When no route is host-constrained, the request `Host` header cannot change
+     * which route matches, so the O(1) static-route fast path stays safe even with
+     * a Host header present (the common case). When at least one host-constrained
+     * route exists, matching falls back to the host-aware candidate scan.
+     */
+    private bool $hasHostConstrainedRoutes = false;
+
+    /**
+     * Diagnostic records of routes shadowed by an earlier registration of the
+     * same (method, path, host) key.
+     *
+     * Registration is first-registered-wins (framework > project > extension), so
+     * a later route claiming an already-registered key is recorded here and
+     * excluded from the match tables rather than silently overriding the winner.
+     * Read by the boot-time {@see \Pulsar\Routing\RouteCollisionReporter}, which
+     * warns in production and fails closed in debug mode.
+     *
+     * @var list<RouteCollision>
+     */
+    public private(set) array $collisions = [];
+
+    /**
+     * Registration-key index backing collision detection.
+     *
+     * Maps `method => normalizedPath => hostKey => winner Route`. The first route
+     * registered for a key becomes the winner; any later route with a different
+     * handler is a collision.
+     *
+     * @var array<string, array<string, array<string, Route>>>
+     */
+    private array $registeredRouteKeys = [];
 
     /**
      * Explicit parameter-to-model bindings registered via model().
@@ -80,27 +131,92 @@ final class Router implements RouterInterface
             $this->namedRoutes[$route->name] = $route;
         }
 
-        $this->indexRouteByMethod($route);
+        // The route's index in $this->routes is its global registration sequence.
+        $this->indexRouteByMethod($route, count($this->routes) - 1);
 
         return $this;
     }
 
     /**
      * Add a route to the method-indexed and static lookup tables.
+     *
+     * @param int $sequence The route's global registration order (its index in
+     *                      {@see $routes}), used to key dynamic-route buckets.
      */
-    private function indexRouteByMethod(Route $route): void
+    private function indexRouteByMethod(Route $route, int $sequence): void
     {
-        foreach ($route->methods as $method) {
-            $this->routesByMethod[$method->value][] = $route;
+        if ($route->host !== null) {
+            $this->hasHostConstrainedRoutes = true;
         }
 
-        // Index static routes (no dynamic segments) for O(1) lookup
-        if ($route->compiledPattern === null && $route->host === null) {
-            $normalizedPath = '/' . trim($route->path, '/');
-            foreach ($route->methods as $method) {
+        // A static route has no dynamic segments and no host constraint, so it can
+        // live in the O(1) static table; everything else is bucketed by its first
+        // static segment: `/users/{id}` buckets under `users`, `/{lang}/x`
+        // under `''` (catch-all), keyed by registration sequence.
+        $isStatic = $route->compiledPattern === null && $route->host === null;
+        $normalizedPath = '/' . trim($route->path, '/');
+        $hostKey = $route->host ?? '';
+        $firstSegment = $isStatic ? '' : $this->firstStaticSegment($route->path);
+
+        foreach ($route->methods as $method) {
+            $existing = $this->registeredRouteKeys[$method->value][$normalizedPath][$hostKey] ?? null;
+
+            if ($existing !== null) {
+                // Benign duplicate: the SAME route re-registered. A non-strict route
+                // cache replays every route (including extension routes) and the
+                // extension then boots again and re-registers identical routes;
+                // matching handler + name means it is the same route, not a
+                // conflict, so ignore it silently.
+                if ($existing->handler == $route->handler && $existing->name === $route->name) {
+                    continue;
+                }
+
+                // Genuine conflict: a different handler claims an already-registered
+                // key. First-registered wins (framework > project > extension), so
+                // the earlier route stays in the match tables and the later one is
+                // recorded for the boot-time reporter rather than silently shadowing.
+                $this->collisions[] = new RouteCollision(
+                    $method->value,
+                    $normalizedPath,
+                    $route->host,
+                    $existing,
+                    $route,
+                );
+                continue;
+            }
+
+            $this->registeredRouteKeys[$method->value][$normalizedPath][$hostKey] = $route;
+
+            if ($isStatic) {
                 $this->staticRoutes[$method->value][$normalizedPath] = $route;
+            } else {
+                $this->dynamicRouteBuckets[$method->value][$firstSegment][$sequence] = $route;
             }
         }
+    }
+
+    /**
+     * Extract the first static (non-`{...}`) path segment of a route
+     * pattern. `/users/{id}` → `users`, `/api/v1/users/{id}` → `api`,
+     * `/{lang}/posts` → `''`, `/` → `''`.
+     */
+    private function firstStaticSegment(string $path): string
+    {
+        $normalized = trim($path, '/');
+        if ($normalized === '') {
+            return '';
+        }
+
+        $first = strstr($normalized, '/', true);
+        $first = $first === false ? $normalized : $first;
+
+        // A `{...}` first segment can't be pre-partitioned; the route lives in
+        // the catch-all bucket.
+        if ($first === '' || $first[0] === '{') {
+            return '';
+        }
+
+        return $first;
     }
 
     /**
@@ -120,8 +236,6 @@ final class Router implements RouterInterface
     /**
      * Register a GET route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
-     *
      * @throws RoutingException If the router is locked in strict cache mode
      */
     public function get(string $path, mixed $handler, ?string $name = null): self
@@ -131,8 +245,6 @@ final class Router implements RouterInterface
 
     /**
      * Register a POST route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      *
      * @throws RoutingException If the router is locked in strict cache mode
      */
@@ -144,8 +256,6 @@ final class Router implements RouterInterface
     /**
      * Register a PUT route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
-     *
      * @throws RoutingException If the router is locked in strict cache mode
      */
     public function put(string $path, mixed $handler, ?string $name = null): self
@@ -155,8 +265,6 @@ final class Router implements RouterInterface
 
     /**
      * Register a PATCH route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      *
      * @throws RoutingException If the router is locked in strict cache mode
      */
@@ -168,8 +276,6 @@ final class Router implements RouterInterface
     /**
      * Register a DELETE route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
-     *
      * @throws RoutingException If the router is locked in strict cache mode
      */
     public function delete(string $path, mixed $handler, ?string $name = null): self
@@ -179,8 +285,6 @@ final class Router implements RouterInterface
 
     /**
      * Register a route matching any method.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      *
      * @throws RoutingException If the router is locked in strict cache mode
      */
@@ -242,13 +346,43 @@ final class Router implements RouterInterface
     {
         $normalizedPath = '/' . trim($path, '/');
 
-        // Fast path: O(1) lookup for static routes without host constraints
-        if ($host === null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
+        // Strip the port (and IPv6 brackets' port) so a `Host: api.example.com:8000`
+        // header matches a route declared against `api.example.com`.
+        $host = $host === null ? null : HostNormalizer::stripPort($host);
+
+        // Fast path: O(1) lookup for static routes. Safe when the request carries
+        // no host, OR when no route is host-constrained (a Host header then cannot
+        // change which route matches) — so real traffic still hits the hash map.
+        if (
+            ($host === null || !$this->hasHostConstrainedRoutes)
+            && isset($this->staticRoutes[$method->value][$normalizedPath])
+        ) {
             return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
         }
 
-        // Hot path: only scan routes that accept the requested method
-        $candidates = $this->routesByMethod[$method->value] ?? [];
+        // Narrow the dynamic-route scan to the first-segment bucket of the
+        // request path + the catch-all bucket (patterns starting with `{...}`),
+        // merged back into registration order via their sequence keys so an
+        // earlier catch-all wins over a later static-first-segment overlap.
+        $requestFirstSegment = $this->firstStaticSegment($normalizedPath);
+        $methodBuckets = $this->dynamicRouteBuckets[$method->value] ?? [];
+
+        $candidates = $methodBuckets[$requestFirstSegment] ?? [];
+        if ($requestFirstSegment !== '' && isset($methodBuckets[''])) {
+            $candidates += $methodBuckets[''];
+            ksort($candidates);
+        }
+
+        /** @var list<Route> $candidates */
+        $candidates = array_values($candidates);
+
+        // When the request carries a host header, the static-route fast
+        // path may have been skipped above — but a host-less static route can
+        // still be a legitimate fallback. Append it (lowest precedence) so the
+        // host-aware scan finds it after any host-constrained candidate.
+        if ($host !== null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
+            $candidates[] = $this->staticRoutes[$method->value][$normalizedPath];
+        }
 
         foreach ($candidates as $route) {
             $matchResult = $this->matchRouteAgainstHostAndPath($route, $path, $host);
@@ -257,7 +391,7 @@ final class Router implements RouterInterface
             }
         }
 
-        // Cold path: no match found — scan all routes for 405 detection
+        // Cold path: no match found: scan all routes for 405 detection
         $pathMatches = [];
 
         foreach ($this->routes as $route) {
@@ -268,16 +402,15 @@ final class Router implements RouterInterface
         }
 
         if ($pathMatches !== []) {
-            $allowedMethods = [];
+            $allowedMethodsMap = [];
+
             foreach ($pathMatches as $route) {
                 foreach ($route->methods as $m) {
-                    if (!in_array($m, $allowedMethods, true)) {
-                        $allowedMethods[] = $m;
-                    }
+                    $allowedMethodsMap[$m->value] = $m;
                 }
             }
 
-            throw RoutingException::methodNotAllowed($path, $method, $allowedMethods);
+            throw RoutingException::methodNotAllowed($path, $method, array_values($allowedMethodsMap));
         }
 
         throw RoutingException::notFound($path);
@@ -323,30 +456,21 @@ final class Router implements RouterInterface
     /**
      * Generate a URL for a named route.
      *
+     * When a DomainConfig is provided and the route's attributes include
+     * a 'scope' that is mapped to a subdomain, generates a fully-qualified
+     * URL with the correct subdomain (e.g., 'https://forum.example.com/threads/1').
+     *
+     * Without domain config, returns a relative path as before.
+     *
      * @param array<string, string> $parameters
      * @throws InvalidArgumentException If route not found
      */
-    public function url(string $name, array $parameters = []): string
+    public function url(string $name, array $parameters = [], ?DomainConfig $domainConfig = null): string
     {
         $route = $this->getByName($name)
             ?? throw new InvalidArgumentException(sprintf('Route "%s" not found', $name));
 
-        $path = $route->path;
-
-        foreach ($parameters as $key => $value) {
-            $path = str_replace('{' . $key . '}', $value, $path);
-            $path = str_replace('{' . $key . '?}', $value, $path);
-        }
-
-        // Remove unfilled optional parameters
-        $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?}#', '', $path);
-        $path = $replaced ?? $path;
-
-        // Clean up double slashes
-        $replaced = preg_replace('#//+#', '/', $path);
-        $path = $replaced ?? $path;
-
-        return '/' . trim($path, '/');
+        return RouteUrlGenerator::generate($route, $parameters, $domainConfig);
     }
 
     /**
@@ -378,6 +502,71 @@ final class Router implements RouterInterface
     }
 
     /**
+     * Capture the full router state for the kernel boot/shutdown lifecycle.
+     *
+     * @internal Intended for {@see \Pulsar\Core\Kernel} reboot handling only:
+     *           the kernel snapshots state at boot() entry and restores it on
+     *           shutdown() so a subsequent boot does not accumulate duplicate
+     *           routes/bindings. Not for application use.
+     *
+     * @return array{
+     *     routes: list<Route>,
+     *     namedRoutes: array<string, Route>,
+     *     staticRoutes: array<string, array<string, Route>>,
+     *     dynamicRouteBuckets: array<string, array<string, array<int, Route>>>,
+     *     registeredRouteKeys: array<string, array<string, array<string, Route>>>,
+     *     collisions: list<RouteCollision>,
+     *     explicitBindings: list<ExplicitBinding>,
+     *     locked: bool,
+     *     hasHostConstrainedRoutes: bool,
+     * }
+     */
+    public function snapshot(): array
+    {
+        return [
+            'routes' => $this->routes,
+            'namedRoutes' => $this->namedRoutes,
+            'staticRoutes' => $this->staticRoutes,
+            'dynamicRouteBuckets' => $this->dynamicRouteBuckets,
+            'registeredRouteKeys' => $this->registeredRouteKeys,
+            'collisions' => $this->collisions,
+            'explicitBindings' => $this->explicitBindings,
+            'locked' => $this->locked,
+            'hasHostConstrainedRoutes' => $this->hasHostConstrainedRoutes,
+        ];
+    }
+
+    /**
+     * Restore router state from a {@see snapshot()}.
+     *
+     * @internal Intended for {@see \Pulsar\Core\Kernel} reboot handling only.
+     *
+     * @param array{
+     *     routes: list<Route>,
+     *     namedRoutes: array<string, Route>,
+     *     staticRoutes: array<string, array<string, Route>>,
+     *     dynamicRouteBuckets: array<string, array<string, array<int, Route>>>,
+     *     registeredRouteKeys: array<string, array<string, array<string, Route>>>,
+     *     collisions: list<RouteCollision>,
+     *     explicitBindings: list<ExplicitBinding>,
+     *     locked: bool,
+     *     hasHostConstrainedRoutes: bool,
+     * } $snapshot
+     */
+    public function restoreFromSnapshot(array $snapshot): void
+    {
+        $this->routes = $snapshot['routes'];
+        $this->namedRoutes = $snapshot['namedRoutes'];
+        $this->staticRoutes = $snapshot['staticRoutes'];
+        $this->dynamicRouteBuckets = $snapshot['dynamicRouteBuckets'];
+        $this->registeredRouteKeys = $snapshot['registeredRouteKeys'];
+        $this->collisions = $snapshot['collisions'];
+        $this->explicitBindings = $snapshot['explicitBindings'];
+        $this->locked = $snapshot['locked'];
+        $this->hasHostConstrainedRoutes = $snapshot['hasHostConstrainedRoutes'];
+    }
+
+    /**
      * Register an explicit parameter-to-model binding.
      *
      * When the model binding middleware resolves route parameters, explicit
@@ -389,6 +578,46 @@ final class Router implements RouterInterface
     public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self
     {
         $this->explicitBindings[] = new ExplicitBinding($parameter, $modelClass, $resolverClass);
+
+        return $this;
+    }
+
+    /**
+     * Register a full resource route set (7 routes).
+     *
+     * Generates: index, create, store, show, edit, update, destroy.
+     *
+     * @param string $name Resource name (e.g. 'photos'): used for URL prefix and route names
+     * @param string $controller Controller class or handler prefix (e.g. 'App\Controller\PhotoController')
+     * @param list<string> $middleware Middleware applied to all resource routes
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function resource(string $name, string $controller, array $middleware = []): self
+    {
+        foreach (ResourceRegistrar::resourceRoutes($name, $controller, $middleware) as $route) {
+            $this->add($route);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Register an API resource route set (5 routes, no create/edit forms).
+     *
+     * Generates: index, store, show, update, destroy.
+     *
+     * @param string $name Resource name (e.g. 'photos'): used for URL prefix and route names
+     * @param string $controller Controller class or handler prefix
+     * @param list<string> $middleware Middleware applied to all resource routes
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function apiResource(string $name, string $controller, array $middleware = []): self
+    {
+        foreach (ResourceRegistrar::apiResourceRoutes($name, $controller, $middleware) as $route) {
+            $this->add($route);
+        }
 
         return $this;
     }
@@ -407,7 +636,7 @@ final class Router implements RouterInterface
                 $this->namedRoutes[$route->name] = $route;
             }
 
-            $this->indexRouteByMethod($route);
+            $this->indexRouteByMethod($route, count($this->routes) - 1);
         }
     }
 }

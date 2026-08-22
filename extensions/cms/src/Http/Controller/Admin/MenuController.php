@@ -17,17 +17,17 @@ use function is_string;
 /**
  * Admin controller for menu and menu item management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class MenuController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class MenuController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private MenuRepositoryInterface $menuRepository,
-        private GateInterface $gate,
         private CmsConfig $config,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -43,9 +43,6 @@ final readonly class MenuController
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.menus.manage');
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         return Response::json(['status' => 'created'], 201);
     }
@@ -91,9 +88,6 @@ final readonly class MenuController
             return Response::json(['error' => 'Menu not found'], 404);
         }
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-
         return Response::json(['id' => $menu->id, 'status' => 'updated']);
     }
 
@@ -117,6 +111,7 @@ final readonly class MenuController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : $this->config->defaultLocale;

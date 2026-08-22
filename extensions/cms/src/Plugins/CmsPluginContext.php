@@ -13,21 +13,25 @@ use Pulsar\Extension\Cms\FieldRegistry\ContentTypeDefinition;
  *
  * Provides methods for registering content types, admin pages, hooks,
  * shortcodes, and block types. All registrations are namespaced by plugin slug.
+ *
+ * @psalm-api Public extension API constructed by CmsPluginManager and passed
+ *            to plugin register() / boot() entry points.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CmsPluginContext
 {
     /** @var list<ContentTypeDefinition> */
-    private array $contentTypes = [];
+    public private(set) array $contentTypes = [];
 
     /** @var list<array{route: string, label: string, handler: Closure}> */
-    private array $adminPages = [];
+    public private(set) array $adminPages = [];
 
     /** @var list<array{name: string, handler: Closure}> */
-    private array $shortcodes = [];
+    public private(set) array $shortcodes = [];
 
     /** @var list<array{name: string, renderer: Closure}> */
-    private array $blockTypes = [];
+    public private(set) array $blockTypes = [];
 
     public function __construct(
         private readonly string $pluginSlug,
@@ -101,43 +105,4 @@ final class CmsPluginContext
         return $this->pluginSlug;
     }
 
-    /**
-     * Get all registered content types.
-     *
-     * @return list<ContentTypeDefinition>
-     */
-    public function getContentTypes(): array
-    {
-        return $this->contentTypes;
-    }
-
-    /**
-     * Get all registered admin pages.
-     *
-     * @return list<array{route: string, label: string, handler: Closure}>
-     */
-    public function getAdminPages(): array
-    {
-        return $this->adminPages;
-    }
-
-    /**
-     * Get all registered shortcodes.
-     *
-     * @return list<array{name: string, handler: Closure}>
-     */
-    public function getShortcodes(): array
-    {
-        return $this->shortcodes;
-    }
-
-    /**
-     * Get all registered block types.
-     *
-     * @return list<array{name: string, renderer: Closure}>
-     */
-    public function getBlockTypes(): array
-    {
-        return $this->blockTypes;
-    }
 }

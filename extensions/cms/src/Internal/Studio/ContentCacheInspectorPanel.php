@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\Internal\Studio;
 
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Extension\Cms\Internal\Studio\Dto\CacheInspectorEntry;
 use Pulsar\Extension\Cms\Internal\Studio\Dto\CacheInspectorReport;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -13,16 +14,20 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 /**
  * Studio panel data provider for content cache inspection.
  *
- * Allows viewing cached pages (keys matching "cms_page:*"),
- * displays cache hit rates from metrics, and provides manual
- * invalidation by content ID, by tag, or full flush.
+ * Inspects the CONTENT cache entries (cms_content_id.*) — page-cache entries
+ * are keyed by URL identity (tenant, locale, host/path digest) and are not
+ * addressable by content ID, so per-content page inspection is impossible by
+ * construction; page invalidation goes through tags instead. Also displays
+ * cache hit rates from metrics and provides manual invalidation by content ID
+ * (tag-based, reaching both the content entry and every page that rendered
+ * it), by tag, or full flush.
+ *
+ * @psalm-api Resolved from the DI container by CmsStudioModule; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class ContentCacheInspectorPanel
 {
-    /** Cache key prefix for CMS page cache entries. */
-    private const string CACHE_KEY_PREFIX = 'cms_page:';
-
     /** Metric name for cache hits. */
     private const string METRIC_CACHE_HITS = 'cms_page_cache_hits_total';
 
@@ -35,10 +40,7 @@ final readonly class ContentCacheInspectorPanel
     ) {}
 
     /**
-     * Inspect cached pages for the given content IDs.
-     *
-     * Checks each content ID's cache key against the tagged cache
-     * and returns entries indicating hit/miss status.
+     * Inspect the content cache entries for the given content IDs.
      *
      * @param list<string> $contentIds Content IDs to inspect
      */
@@ -49,7 +51,7 @@ final readonly class ContentCacheInspectorPanel
         $misses = 0;
 
         foreach ($contentIds as $contentId) {
-            $cacheKey = self::CACHE_KEY_PREFIX . $contentId;
+            $cacheKey = CmsCacheKeys::contentId($contentId);
             $isHit = $this->taggedCache->get($cacheKey) !== null;
 
             $entries[] = new CacheInspectorEntry(
@@ -100,11 +102,13 @@ final readonly class ContentCacheInspectorPanel
     }
 
     /**
-     * Invalidate cached page for a specific content ID.
+     * Invalidate everything a content ID touched: its cached content entry and
+     * every page entry tagged as having rendered it. The previous direct
+     * delete targeted a key format that never existed, so it deleted nothing.
      */
     public function invalidateByContentId(string $contentId): void
     {
-        $this->taggedCache->delete(self::CACHE_KEY_PREFIX . $contentId);
+        $this->taggedCache->invalidateTag(CmsCacheKeys::contentTag($contentId));
     }
 
     /**
@@ -116,10 +120,12 @@ final readonly class ContentCacheInspectorPanel
     }
 
     /**
-     * Flush all CMS page cache entries by invalidating the root tag.
+     * Flush all CMS page and content cache entries via their coarse tags.
+     * (The previous 'cms_page' tag was attached to nothing, so this was a
+     * no-op.)
      */
     public function flushAll(): void
     {
-        $this->taggedCache->invalidateTag('cms_page');
+        $this->taggedCache->invalidateTags([CmsCacheKeys::TAG_ALL_PAGES, CmsCacheKeys::TAG_ALL_CONTENT]);
     }
 }

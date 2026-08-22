@@ -9,7 +9,7 @@ use Pulsar\Api\Internal;
 /**
  * Represents a node in the template AST for untrusted template execution.
  *
- * The AST is walked by the interpreter — never compiled to PHP.
+ * The AST is walked by the interpreter: never compiled to PHP.
  */
 #[Internal(reason: 'AST internals are an engine implementation detail')]
 final readonly class AstNode

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\View\Engine;
 
+use Error;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -127,6 +128,27 @@ final class TemplateEngineTest extends TestCase
     }
 
     #[Test]
+    public function renderChainsOriginalThrowableAsPrevious(): void
+    {
+        // Regression: a runtime failure inside a template was previously
+        // reduced to a single-line message with no cause, discarding the
+        // original exception type and stack trace. The thrown ViewException
+        // must chain the underlying Throwable as its previous.
+        $this->writeTemplate('boom', '{{ $value->method() }}');
+
+        try {
+            $this->engine->render('boom', ['value' => null]);
+            self::fail('Expected ViewException was not thrown.');
+        } catch (ViewException $exception) {
+            $previous = $exception->getPrevious();
+
+            self::assertNotNull($previous);
+            self::assertInstanceOf(Error::class, $previous);
+            self::assertStringContainsString('execution failed', $exception->getMessage());
+        }
+    }
+
+    #[Test]
     public function compileReturnsCompiledTemplate(): void
     {
         $this->writeTemplate('compilable', '<p>{{ $x }}</p>');
@@ -179,12 +201,13 @@ final class TemplateEngineTest extends TestCase
         self::assertStringContainsString('&quot;quotes&quot;', $result);
         self::assertStringContainsString('&amp;', $result);
         self::assertStringContainsString('&lt;tags&gt;', $result);
-        self::assertStringContainsString('&#039;apostrophes&#039;', $result);
+        // ContextEscaper::html() uses ENT_HTML5 which produces &apos; (modern HTML5 entity)
+        self::assertStringContainsString('&apos;apostrophes&apos;', $result);
     }
 
     private function writeTemplate(string $name, string $content): void
     {
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulsar.php';
+        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulse.php';
         $fullPath = $this->templateDir . DIRECTORY_SEPARATOR . $relativePath;
         $dir = dirname($fullPath);
 

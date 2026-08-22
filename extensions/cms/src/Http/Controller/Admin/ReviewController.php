@@ -21,24 +21,25 @@ use function is_string;
 /**
  * Admin controller for editorial review workflow.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ReviewController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ReviewController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private EditorialWorkflowServiceInterface $workflowService,
         private ContentRepositoryInterface $contentRepository,
         private PublishingStateMachine $publishingStateMachine,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.content.approve');
 
+        /** @var mixed $reviewerId */
         $reviewerId = $request->getQueryParams()['reviewer_id'] ?? null;
         $reviews = $this->workflowService->getPendingReviews(
             is_string($reviewerId) ? $reviewerId : null,
@@ -66,7 +67,9 @@ final readonly class ReviewController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = (string) ($body['reason'] ?? 'Approved');
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Approved';
 
         $review = $this->workflowService->approve($reviewId, $reason);
 
@@ -78,8 +81,6 @@ final readonly class ReviewController
                 $updated = $this->publishingStateMachine->transition(
                     $content,
                     PublishingStatus::Approved,
-                    $identity->id(),
-                    $reason,
                 );
 
                 $this->contentRepository->save($updated);
@@ -103,8 +104,12 @@ final readonly class ReviewController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = (string) ($body['reason'] ?? 'Rejected');
-        $comment = is_string($body['comment'] ?? null) ? $body['comment'] : null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Rejected';
+        /** @var mixed $rawComment */
+        $rawComment = $body['comment'] ?? null;
+        $comment = is_string($rawComment) ? $rawComment : null;
 
         $review = $this->workflowService->reject($reviewId, $reason, $comment);
 
@@ -116,8 +121,6 @@ final readonly class ReviewController
                 $updated = $this->publishingStateMachine->transition(
                     $content,
                     PublishingStatus::Draft,
-                    $identity->id(),
-                    $reason,
                 );
 
                 $this->contentRepository->save($updated);

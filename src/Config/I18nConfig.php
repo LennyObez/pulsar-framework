@@ -7,22 +7,47 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\I18n\Locale\LocaleUrlStrategy;
+use Pulsar\Support\Coerce;
 
 use function is_array;
-use function is_int;
 use function is_string;
 
 /**
  * Typed configuration DTO for `config/i18n.php`.
  *
  * Environment variables `APP_LOCALE` and `I18N_REGULATED` override file values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class I18nConfig
+final readonly class I18nConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/i18n.php. */
+    private const array KNOWN_KEYS = [
+        'default_locale', 'supported_locales', 'fallback_locales', 'url_strategy', 'catalog_path',
+        'strict_mode', 'regulated', 'localized_slugs', 'default_locale_in_url', 'canonical_redirect',
+        'courtesy_redirect', 'courtesy_fallback_locale', 'negotiate_unprefixed_locale',
+        'max_supported_locales', 'locale_cookie_enabled', 'locale_cookie_name',
+    ];
+
     /**
      * @param list<string> $supportedLocales
      * @param list<string> $fallbackLocales
+     * @param array<string, array<string, string>> $localizedSlugs Route key => (locale => translated slug).
+     * @param bool $negotiateUnprefixedLocale When true (default), an unprefixed URL's active locale is chosen by
+     *        Accept-Language negotiation; when false, it is always the default locale, so unprefixed (default-locale)
+     *        URLs stay canonical and are never redirected to a negotiated translation. The negotiated preference is
+     *        still exposed via the `_negotiated_locale` request attribute for courtesy redirects.
+     * @param bool $courtesyRedirect Opt-in (default false). When true, an unprefixed GET/HEAD request is 302-redirected
+     *        to the visitor's negotiated locale prefix (e.g. `/about` → `/en/about`) — except when the negotiated locale
+     *        is the default locale, whose canonical URL is the unprefixed one (avoids a redirect loop with the canonical
+     *        301). Pairs with `courtesy_fallback_locale` for visitors with no detectable preference.
+     * @param string $courtesyFallbackLocale Locale a courtesy redirect targets when negotiation finds no supported match
+     *        (e.g. the browser language is unsupported). Empty (default) falls back to {@see $defaultLocale}; set to
+     *        e.g. `'en'` to send undetected visitors to English while keeping the default locale canonical.
+     * @param bool $localeCookieEnabled Opt-in (default false). When true, the cookie-aware negotiator is wired (cookie
+     *        and session take precedence over Accept-Language) and prefixed pages emit a `Set-Cookie` remembering the
+     *        chosen locale, so a visitor's footer selection sticks across visits.
+     * @param string $localeCookieName Name of the locale-preference cookie ({@see $localeCookieEnabled}).
      */
     public function __construct(
         public string $defaultLocale,
@@ -35,99 +60,88 @@ readonly class I18nConfig
         public LocaleUrlStrategy $urlStrategy = LocaleUrlStrategy::None,
         public bool $defaultLocaleInUrl = false,
         public bool $canonicalRedirect = true,
+        public array $localizedSlugs = [],
+        public bool $negotiateUnprefixedLocale = true,
+        public bool $courtesyRedirect = false,
+        public string $courtesyFallbackLocale = '',
+        public bool $localeCookieEnabled = false,
+        public string $localeCookieName = 'pulsar_locale',
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build an I18nConfig from a raw config array and environment.
      *
-     * @param array<string, mixed> $data Raw array from config/i18n.php
+     * @param array{
+     *     default_locale?: string,
+     *     supported_locales?: list<string>,
+     *     fallback_locales?: list<string>,
+     *     catalog_path?: string|null,
+     *     regulated?: bool|int|string,
+     *     max_supported_locales?: int,
+     *     strict_mode?: bool|int|string,
+     *     url_strategy?: string,
+     *     default_locale_in_url?: bool|int|string,
+     *     canonical_redirect?: bool|int|string,
+     *     localized_slugs?: array<string, array<string, string>>,
+     *     negotiate_unprefixed_locale?: bool|int|string,
+     *     courtesy_redirect?: bool|int|string,
+     *     courtesy_fallback_locale?: string,
+     *     locale_cookie_enabled?: bool|int|string,
+     *     locale_cookie_name?: string,
+     * } $data Raw array from config/i18n.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        // Resolve default locale: env var overrides file value
-        $rawDefaultLocale = $data['default_locale'] ?? 'en';
-        $defaultLocale = $environment->get('APP_LOCALE') ?? (is_string($rawDefaultLocale) ? $rawDefaultLocale : 'en');
+        $localeEnv = $environment->get('APP_LOCALE');
+        $defaultLocale = $localeEnv ?? Coerce::string($data['default_locale'] ?? null, 'en');
 
-        // Resolve supported locales
-        $rawSupported = $data['supported_locales'] ?? ['en'];
-        $supportedLocales = is_array($rawSupported) ? self::filterStringList($rawSupported) : ['en'];
-
+        $supportedLocales = Coerce::listOfString($data['supported_locales'] ?? null, ['en']);
         if ($supportedLocales === []) {
             $supportedLocales = ['en'];
         }
 
-        // Resolve fallback locales
-        $rawFallback = $data['fallback_locales'] ?? ['en'];
-        $fallbackLocales = is_array($rawFallback) ? self::filterStringList($rawFallback) : ['en'];
-
+        $fallbackLocales = Coerce::listOfString($data['fallback_locales'] ?? null, ['en']);
         if ($fallbackLocales === []) {
             $fallbackLocales = ['en'];
         }
 
-        // Resolve catalog path
-        $rawCatalogPath = $data['catalog_path'] ?? null;
-        $catalogPath = is_string($rawCatalogPath) ? $rawCatalogPath : null;
-
-        // Resolve regulated: env var overrides file value
         $regulatedEnv = $environment->get('I18N_REGULATED');
+        $regulated = $regulatedEnv !== null
+            ? self::parseBool($regulatedEnv)
+            : (bool) ($data['regulated'] ?? false);
 
-        if ($regulatedEnv !== null) {
-            $regulated = self::parseBool($regulatedEnv);
-        } else {
-            $regulated = (bool) ($data['regulated'] ?? false);
-        }
-
-        // Resolve max supported locales
-        $rawMax = $data['max_supported_locales'] ?? 50;
-        $maxSupportedLocales = is_int($rawMax) ? $rawMax : 50;
-
-        // Resolve strict mode
-        $strictMode = (bool) ($data['strict_mode'] ?? false);
-
-        // Resolve URL strategy
-        $rawUrlStrategy = $data['url_strategy'] ?? 'none';
-        $urlStrategy = is_string($rawUrlStrategy)
-            ? (LocaleUrlStrategy::tryFrom($rawUrlStrategy) ?? LocaleUrlStrategy::None)
-            : LocaleUrlStrategy::None;
-
-        // Resolve default locale in URL
-        $defaultLocaleInUrl = (bool) ($data['default_locale_in_url'] ?? false);
-
-        // Resolve canonical redirect
-        $canonicalRedirect = (bool) ($data['canonical_redirect'] ?? true);
+        $urlStrategy = LocaleUrlStrategy::tryFrom(Coerce::string($data['url_strategy'] ?? null, 'none')) ?? LocaleUrlStrategy::None;
 
         return new self(
             defaultLocale: $defaultLocale,
             supportedLocales: $supportedLocales,
             fallbackLocales: $fallbackLocales,
-            catalogPath: $catalogPath,
+            catalogPath: Coerce::nullableString($data['catalog_path'] ?? null),
             regulated: $regulated,
-            maxSupportedLocales: $maxSupportedLocales,
-            strictMode: $strictMode,
+            maxSupportedLocales: Coerce::int($data['max_supported_locales'] ?? null, 50),
+            strictMode: (bool) ($data['strict_mode'] ?? false),
             urlStrategy: $urlStrategy,
-            defaultLocaleInUrl: $defaultLocaleInUrl,
-            canonicalRedirect: $canonicalRedirect,
+            defaultLocaleInUrl: (bool) ($data['default_locale_in_url'] ?? false),
+            canonicalRedirect: (bool) ($data['canonical_redirect'] ?? true),
+            localizedSlugs: self::parseLocalizedSlugs($data['localized_slugs'] ?? null),
+            negotiateUnprefixedLocale: (bool) ($data['negotiate_unprefixed_locale'] ?? true),
+            courtesyRedirect: (bool) ($data['courtesy_redirect'] ?? false),
+            courtesyFallbackLocale: Coerce::string($data['courtesy_fallback_locale'] ?? null),
+            localeCookieEnabled: (bool) ($data['locale_cookie_enabled'] ?? false),
+            localeCookieName: Coerce::string($data['locale_cookie_name'] ?? null, 'pulsar_locale'),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
-    }
-
-    /**
-     * Filter an array down to string values only, re-indexed as a list.
-     *
-     * @param array<array-key, mixed> $items
-     * @return list<string>
-     */
-    private static function filterStringList(array $items): array
-    {
-        $strings = [];
-
-        foreach ($items as $item) {
-            if (is_string($item)) {
-                $strings[] = $item;
-            }
-        }
-
-        return $strings;
     }
 
     private static function parseBool(string $value): bool
@@ -136,5 +150,46 @@ readonly class I18nConfig
             '1', 'true', 'yes', 'on' => true,
             default => false,
         };
+    }
+
+    /**
+     * Coerce the raw `localized_slugs` config into a typed `key => (locale => slug)` map.
+     *
+     * Non-string keys/values and non-array entries are dropped rather than
+     * throwing: a malformed slug entry must never take down the whole boot.
+     * The {@see \Pulsar\I18n\Locale\SlugRegistry} and the `i18n:slugs:lint`
+     * command surface configuration mistakes explicitly.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private static function parseLocalizedSlugs(mixed $raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $slugMap */
+        foreach ($raw as $key => $slugMap) {
+            if (!is_string($key) || !is_array($slugMap)) {
+                continue;
+            }
+
+            $perLocale = [];
+
+            /** @var mixed $slug */
+            foreach ($slugMap as $locale => $slug) {
+                if (is_string($locale) && is_string($slug) && $slug !== '') {
+                    $perLocale[$locale] = $slug;
+                }
+            }
+
+            if ($perLocale !== []) {
+                $result[$key] = $perLocale;
+            }
+        }
+
+        return $result;
     }
 }

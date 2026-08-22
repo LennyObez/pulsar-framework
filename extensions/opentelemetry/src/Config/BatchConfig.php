@@ -6,11 +6,11 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function is_int;
+use Pulsar\Support\Coerce;
 
 /**
  * Batch exporter configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BatchConfig
@@ -26,12 +26,9 @@ final readonly class BatchConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxBatchSize = $data['max_batch_size'] ?? 512;
-        $rawMaxQueueSize = $data['max_queue_size'] ?? 2048;
-
         return new self(
-            maxBatchSize: is_int($rawMaxBatchSize) ? $rawMaxBatchSize : 512,
-            maxQueueSize: is_int($rawMaxQueueSize) ? $rawMaxQueueSize : 2048,
+            maxBatchSize: Coerce::int($data['max_batch_size'] ?? null, 512),
+            maxQueueSize: Coerce::int($data['max_queue_size'] ?? null, 2048),
         );
     }
 }

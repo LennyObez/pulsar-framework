@@ -6,17 +6,24 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Mail\Webhook\MailWebhookConfig;
+use Pulsar\Support\Coerce;
 
 use function is_array;
-use function is_bool;
-use function is_string;
 
 /**
  * Typed configuration DTO for `config/mail.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class MailConfig
+final readonly class MailConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/mail.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'default_driver', 'default_from_address', 'default_from_name', 'default_reply_to',
+        'driver_options', 'encryption_policy', 'hipaa_mode', 'audit_hash_enabled', 'webhooks',
+    ];
+
     /**
      * @param array<string, mixed> $driverOptions Driver-specific configuration (host, port, credentials, etc.)
      */
@@ -30,56 +37,81 @@ final readonly class MailConfig
         public bool $hipaaMode = false,
         public bool $auditHashEnabled = false,
         public array $driverOptions = [],
+        public MailWebhookConfig $webhooks = new MailWebhookConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/mail.php
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     default_driver?: string,
+     *     default_from_address?: string,
+     *     default_from_name?: string,
+     *     default_reply_to?: string,
+     *     encryption_policy?: string,
+     *     hipaa_mode?: bool|int|string,
+     *     audit_hash_enabled?: bool|int|string,
+     *     driver_options?: array<string, mixed>,
+     *     webhooks?: array<string, mixed>,
+     * } $data Raw array from config/mail.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
+        $webhooks = $data['webhooks'] ?? null;
         $enabled = $environment->get('MAIL_ENABLED') !== null
             ? $environment->get('MAIL_ENABLED') === 'true'
-            : (bool) ($data['enabled'] ?? false);
+            : Coerce::strictBool($data['enabled'] ?? null);
 
-        $driverValue = $environment->get('MAIL_DRIVER') ?? ($data['default_driver'] ?? 'smtp');
-        $defaultDriver = MailDriverType::tryFrom(is_string($driverValue) ? $driverValue : 'smtp')
-            ?? MailDriverType::Smtp;
+        $driverEnv = $environment->get('MAIL_DRIVER');
+        $driverValue = $driverEnv ?? Coerce::string($data['default_driver'] ?? null, 'smtp');
+        $defaultDriver = MailDriverType::tryFrom($driverValue) ?? MailDriverType::Smtp;
 
-        $defaultFromAddress = $environment->get('MAIL_FROM_ADDRESS')
-            ?? (is_string($data['default_from_address'] ?? null) ? $data['default_from_address'] : '');
-
-        $defaultFromName = $environment->get('MAIL_FROM_NAME')
-            ?? (is_string($data['default_from_name'] ?? null) ? $data['default_from_name'] : '');
-
-        $defaultReplyTo = $environment->get('MAIL_REPLY_TO')
-            ?? (is_string($data['default_reply_to'] ?? null) ? $data['default_reply_to'] : '');
-
-        $encryptionValue = $environment->get('MAIL_ENCRYPTION_POLICY') ?? ($data['encryption_policy'] ?? 'none');
-        $encryptionPolicy = MailEncryptionPolicy::tryFrom(is_string($encryptionValue) ? $encryptionValue : 'none')
-            ?? MailEncryptionPolicy::None;
+        $encryptionEnv = $environment->get('MAIL_ENCRYPTION_POLICY');
+        $encryptionValue = $encryptionEnv ?? Coerce::string($data['encryption_policy'] ?? null, 'none');
+        $encryptionPolicy = MailEncryptionPolicy::tryFrom($encryptionValue) ?? MailEncryptionPolicy::None;
 
         $hipaaMode = $environment->get('MAIL_HIPAA_MODE') !== null
             ? $environment->get('MAIL_HIPAA_MODE') === 'true'
-            : (is_bool($data['hipaa_mode'] ?? null) ? $data['hipaa_mode'] : false);
+            : Coerce::strictBool($data['hipaa_mode'] ?? null);
 
         $auditHashEnabled = $environment->get('MAIL_AUDIT_HASH') !== null
             ? $environment->get('MAIL_AUDIT_HASH') === 'true'
-            : (is_bool($data['audit_hash_enabled'] ?? null) ? $data['audit_hash_enabled'] : false);
+            : Coerce::strictBool($data['audit_hash_enabled'] ?? null);
 
-        /** @var array<string, mixed> $driverOptions */
-        $driverOptions = is_array($data['driver_options'] ?? null) ? $data['driver_options'] : [];
+        $fromAddressEnv = $environment->get('MAIL_FROM_ADDRESS');
+        $fromNameEnv = $environment->get('MAIL_FROM_NAME');
+        $replyToEnv = $environment->get('MAIL_REPLY_TO');
+        $driverOptions = $data['driver_options'] ?? null;
+        $webhookConfig = MailWebhookConfig::fromArray(is_array($webhooks) ? $webhooks : []);
 
         return new self(
             enabled: $enabled,
             defaultDriver: $defaultDriver,
-            defaultFromAddress: $defaultFromAddress,
-            defaultFromName: $defaultFromName,
-            defaultReplyTo: $defaultReplyTo,
+            defaultFromAddress: $fromAddressEnv ?? Coerce::string($data['default_from_address'] ?? null),
+            defaultFromName: $fromNameEnv ?? Coerce::string($data['default_from_name'] ?? null),
+            defaultReplyTo: $replyToEnv ?? Coerce::string($data['default_reply_to'] ?? null),
             encryptionPolicy: $encryptionPolicy,
             hipaaMode: $hipaaMode,
             auditHashEnabled: $auditHashEnabled,
-            driverOptions: $driverOptions,
+            driverOptions: is_array($driverOptions) ? $driverOptions : [],
+            webhooks: $webhookConfig,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('webhooks', $webhookConfig),
+                // `driver_options` is deliberately NOT collected: it is an open map of
+                // driver-specific settings (host, port, credentials), so every key in
+                // it is legitimate and auditing it would warn on correct config.
+            ],
         );
     }
 }

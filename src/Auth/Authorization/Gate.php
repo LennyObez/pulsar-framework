@@ -22,9 +22,9 @@ use function in_array;
  *
  * Evaluation order:
  * 1. Super-role bypass (configurable roles that skip all checks)
- * 2. ABAC policies — explicit deny short-circuits immediately
- * 3. RBAC — role→permission check via RoleRegistry
- * 4. ABAC policies — explicit allow can grant access without RBAC match
+ * 2. ABAC policies: explicit deny short-circuits immediately
+ * 3. RBAC: role→permission check via RoleRegistry
+ * 4. ABAC policies: explicit allow can grant access without RBAC match
  * 5. Default: deny
  *
  * When an EventDispatcherInterface is provided, dispatches AuthorizationGranted
@@ -63,13 +63,23 @@ final class Gate implements GateInterface
 
         $context ??= new PolicyContext(permission: $permission);
 
-        // 2. ABAC: check for explicit deny
+        // Walk the policy list exactly once and capture every verdict:
+        // evaluating N policies separately for explicit-deny and for
+        // explicit-allow would cost 2N evaluations. An explicit deny
+        // short-circuits immediately, but an explicit allow is only
+        // remembered until after the RBAC check runs, so RBAC stays
+        // the primary grant path.
+        $explicitAllow = false;
         foreach ($this->policies as $policy) {
             $result = $policy->evaluate($identity, $context);
 
             if ($result === false) {
                 $this->dispatchDenied($identity, $permission, $context->resource, 'ABAC-deny');
                 return false;
+            }
+
+            if ($result === true) {
+                $explicitAllow = true;
             }
         }
 
@@ -86,14 +96,10 @@ final class Gate implements GateInterface
             return true;
         }
 
-        // 4. ABAC: check for explicit allow (can grant without RBAC)
-        foreach ($this->policies as $policy) {
-            $result = $policy->evaluate($identity, $context);
-
-            if ($result === true) {
-                $this->dispatchGranted($identity, $permission, $context->resource, 'ABAC');
-                return true;
-            }
+        // 4. ABAC explicit allow (granted without RBAC match).
+        if ($explicitAllow) {
+            $this->dispatchGranted($identity, $permission, $context->resource, 'ABAC');
+            return true;
         }
 
         // 5. Default: deny

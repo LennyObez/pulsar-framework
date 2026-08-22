@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Cms\Content;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 
-#[CoversClass(PublishingStatus::class)]
+#[CoversNothing]
 final class PublishingStatusTest extends TestCase
 {
     // ── Standard mode transitions ────────────────────────────────────

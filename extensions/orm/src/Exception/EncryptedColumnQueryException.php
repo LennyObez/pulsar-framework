@@ -12,6 +12,7 @@ use function sprintf;
 /**
  * Thrown when attempting to use an encrypted column in WHERE/ORDER BY
  * without a blind index.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EncryptedColumnQueryException extends OrmException

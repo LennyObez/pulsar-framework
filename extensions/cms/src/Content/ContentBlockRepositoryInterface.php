@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for content blocks.
+ *
+ * @psalm-api Public binding contract; implemented by DbContentBlockRepository
+ *            and consumed by content services and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentBlockRepositoryInterface

@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Forum\Tag;
 use Pulsar\Api\Api;
 
 /**
- * Forum tag — a label that can be applied to threads for topic classification.
+ * Forum tag: a label that can be applied to threads for topic classification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Tag
@@ -48,7 +49,6 @@ final readonly class Tag
     /**
      * Rename the tag.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function rename(string $name, string $slug): self
     {
@@ -61,7 +61,6 @@ final readonly class Tag
     /**
      * Update the description.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function describe(string $description): self
     {
@@ -73,7 +72,6 @@ final readonly class Tag
     /**
      * Increment the usage count.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementUsage(): self
     {
@@ -85,7 +83,6 @@ final readonly class Tag
     /**
      * Decrement the usage count (floor at 0).
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function decrementUsage(): self
     {

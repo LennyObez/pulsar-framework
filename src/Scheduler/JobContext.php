@@ -12,9 +12,10 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 
 /**
  * Context passed to a job during execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class JobContext
+final readonly class JobContext
 {
     public function __construct(
         public DateTimeImmutable $scheduledAt,

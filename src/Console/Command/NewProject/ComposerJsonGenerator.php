@@ -22,6 +22,14 @@ use const JSON_UNESCAPED_SLASHES;
 final class ComposerJsonGenerator
 {
     /**
+     * The Composer package name for the Pulsar framework.
+     *
+     * Single source of truth: update here when the package migrates
+     * from `lennyobez/pulsar` to `pulsar/framework`.
+     */
+    public const string FRAMEWORK_PACKAGE = 'lennyobez/pulsar';
+
+    /**
      * Generate `composer.json` content.
      *
      * @throws JsonException If JSON encoding fails
@@ -37,7 +45,7 @@ final class ComposerJsonGenerator
             'license' => 'proprietary',
             'require' => [
                 'php' => '>=8.5',
-                'pulsar/framework' => '^1.0',
+                self::FRAMEWORK_PACKAGE => '^1.0',
             ],
             'autoload' => [
                 'psr-4' => [

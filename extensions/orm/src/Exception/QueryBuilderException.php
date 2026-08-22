@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Thrown when query builder operations are invalid.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class QueryBuilderException extends OrmException
@@ -45,6 +46,15 @@ final class QueryBuilderException extends OrmException
         return new self(sprintf(
             'Table alias "%s" is already in use',
             $alias,
+        ));
+    }
+
+    #[NoDiscard]
+    public static function invalidOperator(string $operator): self
+    {
+        return new self(sprintf(
+            'Invalid SQL operator: "%s". Allowed operators: =, !=, <>, <, >, <=, >=, LIKE, NOT LIKE, IN, NOT IN, IS, IS NOT, BETWEEN',
+            $operator,
         ));
     }
 

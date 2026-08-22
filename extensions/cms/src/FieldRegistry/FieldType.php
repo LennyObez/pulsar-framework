@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Each type maps to a specific database value column for proper indexing
  * and type-safe queries.
+ *
+ * @psalm-api Public enum referenced by ContentTypeField and consumed by user
+ *            extension code defining custom content types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FieldType: string

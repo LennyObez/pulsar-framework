@@ -79,15 +79,38 @@ final class BotDetectorTest extends TestCase
     }
 
     #[Test]
-    public function missingAcceptLanguageTriggersBotDetection(): void
+    public function browserUaWithoutAcceptLanguageIsNotBotInDefaultMode(): void
     {
         $normalBrowserUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-        // No Accept-Language header → bot
-        self::assertTrue($this->detector->isBot($normalBrowserUa, []));
+        // Default mode: browser UA without Accept-Language is NOT flagged
+        self::assertFalse($this->detector->isBot($normalBrowserUa, []));
+        self::assertFalse($this->detector->isBot($normalBrowserUa, ['accept-language' => '']));
+    }
 
-        // Empty Accept-Language header → bot
-        self::assertTrue($this->detector->isBot($normalBrowserUa, ['accept-language' => '']));
+    #[Test]
+    public function strictModeFlagsBrowserUaWithoutAcceptLanguage(): void
+    {
+        $strictDetector = new BotDetector(strictMode: true);
+        $normalBrowserUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+        // Strict mode: missing Accept-Language alone flags as bot
+        self::assertTrue($strictDetector->isBot($normalBrowserUa, []));
+        self::assertTrue($strictDetector->isBot($normalBrowserUa, ['accept-language' => '']));
+    }
+
+    #[Test]
+    public function nonBrowserUaWithoutAcceptLanguageIsBotInDefaultMode(): void
+    {
+        // Custom API client without browser tokens and without Accept-Language
+        self::assertTrue($this->detector->isBot('MyCustomApp/1.0', []));
+    }
+
+    #[Test]
+    public function nonBrowserUaWithAcceptLanguageIsNotBot(): void
+    {
+        // Custom API client with Accept-Language is fine
+        self::assertFalse($this->detector->isBot('MyCustomApp/1.0', ['accept-language' => 'en']));
     }
 
     #[Test]

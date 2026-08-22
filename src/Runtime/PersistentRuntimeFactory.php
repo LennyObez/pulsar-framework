@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
+use Pulsar\Runtime\Exception\RuntimeException;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 
 /**
@@ -59,5 +60,23 @@ final readonly class PersistentRuntimeFactory implements PersistentRuntimeFactor
             collector: $collector,
             upgradeContext: $upgradeContext,
         );
+    }
+
+    public function createForType(
+        RuntimeType $type,
+        KernelInterface $kernel,
+        RuntimeConfig $config,
+        ?LoggerInterface $logger = null,
+        ?RuntimeCollectorInterface $collector = null,
+        ?UpgradeContext $upgradeContext = null,
+    ): RuntimeInterface {
+        if ($type !== RuntimeType::Persistent) {
+            throw RuntimeException::unsupportedType(
+                'PersistentRuntimeFactory only supports the Persistent runtime type; '
+                . 'use RuntimeFactory for fpm, FrankenPHP, or RoadRunner.',
+            );
+        }
+
+        return $this->create($kernel, $config, $logger, $collector, $upgradeContext);
     }
 }

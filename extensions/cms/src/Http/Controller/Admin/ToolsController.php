@@ -18,18 +18,18 @@ use function strlen;
  * Admin controller for CMS administrative tools.
  *
  * Provides GDPR data export and PII erasure endpoints.
- * Both operations require step-up authentication and the cms.tools.export permission.
+ * Export requires cms.tools.export; erasure requires cms.tools.gdpr.erase.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ToolsController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ToolsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ToolsServiceInterface $toolsService,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Export all CMS data for a given user (GDPR data portability).
@@ -44,7 +44,9 @@ final readonly class ToolsController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
 
         if ($userId === '') {
             return Response::json(['error' => 'user_id is required'], 400);
@@ -66,13 +68,17 @@ final readonly class ToolsController
     public function eraseUserData(ServerRequestInterface $request): Response
     {
         $identity = $this->requireIdentity($request);
-        $this->authorize($identity, 'cms.tools.export');
+        $this->authorize($identity, 'cms.tools.gdpr.erase');
         $this->requireStepUp($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($userId === '') {
             return Response::json(['error' => 'user_id is required'], 400);
@@ -91,6 +97,8 @@ final readonly class ToolsController
             'status' => 'erased',
             'comments_anonymized' => $result['comments_anonymized'],
             'content_anonymized' => $result['content_anonymized'],
+            'form_submissions_deleted' => $result['form_submissions_deleted'],
+            'newsletter_subscribers_deleted' => $result['newsletter_subscribers_deleted'],
         ]);
     }
 }

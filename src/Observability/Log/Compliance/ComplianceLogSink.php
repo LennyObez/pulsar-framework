@@ -11,7 +11,9 @@ use Pulsar\Observability\Log\LogSinkInterface;
 use Pulsar\Security\Crypto\EncryptorInterface;
 
 use function array_values;
+use function error_log;
 use function json_encode;
+use function json_last_error_msg;
 
 /**
  * Compliance-aware log sink that routes entries through regulation-specific
@@ -56,6 +58,16 @@ final readonly class ComplianceLogSink implements LogSinkInterface
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
             if ($serialized === false) {
+                // A non-UTF-8 byte sequence in a context value makes the entry
+                // unencodable. Falling back to '{}' keeps logging crash-free,
+                // but for a banking/healthcare audit trail a silently dropped
+                // record is undetectable — surface the loss on PHP's
+                // bottom-of-stack diagnostic channel so operators can act.
+                error_log(
+                    '[Pulsar ComplianceLogSink] json_encode failed (' . json_last_error_msg()
+                    . ') — entry may contain non-UTF-8 context; logging empty record',
+                );
+
                 $serialized = '{}';
             }
 

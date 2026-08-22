@@ -1,0 +1,257 @@
+/* Pulsar Payments — Component Styles */
+
+/* ===== Checkout Form ===== */
+.pulsar-checkout-form {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+#pulsar-payment-element {
+  margin-bottom: var(--space-4);
+  min-height: 44px;
+}
+
+.pulsar-checkout-submit {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.pulsar-checkout-error {
+  display: none;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger-600);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+/* ===== Pricing Table ===== */
+.pulsar-pricing-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+}
+
+.pulsar-pricing-plan {
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  position: relative;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pulsar-pricing-plan:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.pulsar-pricing-highlighted {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 1px var(--color-primary-500);
+}
+
+.pulsar-pricing-name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.pulsar-pricing-price {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-primary-500);
+  margin-bottom: var(--space-4);
+}
+
+.pulsar-pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  text-align: left;
+}
+
+.pulsar-pricing-features li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+
+.pulsar-pricing-features li::before {
+  content: '\2713';
+  color: var(--color-success-500);
+  margin-right: var(--space-2);
+  font-weight: 700;
+}
+
+.pulsar-pricing-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.pulsar-pricing-toggle-label {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+}
+
+.pulsar-pricing-toggle-label.active {
+  color: var(--color-primary-500);
+  font-weight: 600;
+}
+
+/* ===== Subscription Manager ===== */
+.pulsar-subscription-manager {
+  max-width: 640px;
+}
+
+.pulsar-subscription-card {
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+}
+
+.pulsar-subscription-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.pulsar-subscription-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.pulsar-subscription-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.pulsar-subscription-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ===== Donate Block ===== */
+.pulsar-donate-block {
+  max-width: 400px;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.pulsar-donate-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.pulsar-donate-amount {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.pulsar-donate-amount:hover,
+.pulsar-donate-amount.active {
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+}
+
+.pulsar-donate-custom {
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+/* ===== Product Card ===== */
+.pulsar-product-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pulsar-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.pulsar-product-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.pulsar-product-info {
+  padding: var(--space-5);
+}
+
+.pulsar-product-name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.pulsar-product-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-3);
+}
+
+.pulsar-product-price {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-primary-500);
+  margin-bottom: var(--space-4);
+}
+
+/* ===== Invoice ===== */
+.pulsar-invoice-list {
+  width: 100%;
+}
+
+.pulsar-invoice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+  font-size: var(--text-sm);
+}
+
+.pulsar-invoice-row:first-child {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}

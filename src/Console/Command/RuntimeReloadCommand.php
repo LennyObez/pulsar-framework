@@ -46,8 +46,7 @@ final class RuntimeReloadCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $pidOption = $input->getOption('pid');
-        /** @var string|null $pidOption */
+        $pidOption = $input->getNullableStringOption('pid');
         $pid = $pidOption !== null ? (int) $pidOption : $this->detectPid();
 
         if ($pid === null || $pid <= 0) {
@@ -56,8 +55,8 @@ final class RuntimeReloadCommand extends Command
             return ExitCode::Error->value;
         }
 
-        /** @psalm-suppress UndefinedConstant */
-        $sent = posix_kill($pid, SIGUSR1);
+        $sigusr1 = SIGUSR1;
+        $sent = posix_kill($pid, $sigusr1);
 
         if (!$sent) {
             $output->error(sprintf('Failed to send reload signal to PID %d', $pid));
@@ -72,7 +71,7 @@ final class RuntimeReloadCommand extends Command
 
     private function detectPid(): ?int
     {
-        $pidFile = 'storage/runtime.pid';
+        $pidFile = var_path('run/runtime.pid');
 
         if (file_exists($pidFile)) {
             $content = file_get_contents($pidFile);

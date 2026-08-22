@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
-
-use function is_int;
+use Pulsar\Support\Coerce;
 
 /**
  * Moderation thresholds configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ModerationConfig
@@ -25,20 +25,15 @@ final readonly class ModerationConfig
         public int $dismissedReportRetentionDays = 90,
     ) {}
 
-    private static function int(mixed $value, int $default): int
-    {
-        return is_int($value) ? $value : $default;
-    }
-
     /**
      * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            autoHideThreshold: self::int($data['auto_hide_threshold'] ?? null, 5),
-            notifyThreshold: self::int($data['notify_threshold'] ?? null, 3),
-            dismissedReportRetentionDays: self::int($data['dismissed_report_retention_days'] ?? null, 90),
+            autoHideThreshold: Coerce::int($data['auto_hide_threshold'] ?? null, 5),
+            notifyThreshold: Coerce::int($data['notify_threshold'] ?? null, 3),
+            dismissedReportRetentionDays: Coerce::int($data['dismissed_report_retention_days'] ?? null, 90),
         );
     }
 }

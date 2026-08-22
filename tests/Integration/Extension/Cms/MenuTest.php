@@ -18,10 +18,12 @@ use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\LinkTarget;
 use Pulsar\Extension\Cms\Navigation\Menu;
 use Pulsar\Extension\Cms\Navigation\MenuItem;
+use Pulsar\Extension\Cms\Navigation\MenuItemResolved;
 use Pulsar\Extension\Cms\Navigation\MenuItemTranslation;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 use Pulsar\Extension\Cms\Navigation\MenuTranslation;
 
+use function array_map;
 use function assert;
 use function is_string;
 
@@ -316,6 +318,16 @@ final class InMemoryMenuRepository implements MenuRepositoryInterface
     /** @var array<string, MenuItem> */
     private array $items = [];
 
+    public function findByImportId(string $importId): ?Menu
+    {
+        return null;
+    }
+
+    public function findItemByImportId(string $importId): ?MenuItem
+    {
+        return null;
+    }
+
     public function findByLocation(string $location, string $locale, ?string $tenantId = null): ?Menu
     {
         foreach ($this->menus as $menu) {
@@ -349,5 +361,38 @@ final class InMemoryMenuRepository implements MenuRepositoryInterface
         usort($matching, static fn(MenuItem $a, MenuItem $b) => $a->sortOrder <=> $b->sortOrder);
 
         return $matching;
+    }
+
+    /**
+     * Resolve menu items into MenuItemResolved projections for the given locale.
+     *
+     * The in-memory fake does not store translations, so it synthesises a
+     * label from the item id. Tests that need real label resolution should
+     * extend this fake or use the production repository against a fixture
+     * database.
+     *
+     * @return list<MenuItemResolved>
+     */
+    public function findItemsByMenu(string $menuId, string $locale): array
+    {
+        $items = $this->getItems($menuId);
+
+        return array_map(
+            static fn(MenuItem $item): MenuItemResolved => new MenuItemResolved(
+                id: $item->id,
+                menuId: $item->menuId,
+                parentId: $item->parentId,
+                contentId: $item->contentId,
+                url: $item->url,
+                label: $item->id,
+                titleAttr: null,
+                target: $item->target,
+                cssClass: $item->cssClass,
+                icon: $item->icon,
+                sortOrder: $item->sortOrder,
+                visible: $item->visible,
+            ),
+            $items,
+        );
     }
 }

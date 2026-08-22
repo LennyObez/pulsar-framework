@@ -7,7 +7,9 @@ namespace Pulsar\Console\Repl;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\DriverVariant;
 use Pulsar\Database\Result;
 use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
@@ -46,7 +48,7 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — execute is blocked in safe mode
+     * @throws ReplSafeModeException Always: execute is blocked in safe mode
      */
     #[Override]
     public function execute(string $sql, array $bindings = []): int
@@ -70,7 +72,7 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — transactions are blocked in safe mode
+     * @throws ReplSafeModeException Always: transactions are blocked in safe mode
      */
     #[Override]
     public function beginTransaction(): Transaction
@@ -79,7 +81,7 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — transactions are blocked in safe mode
+     * @throws ReplSafeModeException Always: transactions are blocked in safe mode
      */
     #[Override]
     public function transaction(callable $callback): mixed
@@ -97,6 +99,18 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
     public function driver(): Driver
     {
         return $this->inner->driver();
+    }
+
+    #[Override]
+    public function variant(): DriverVariant
+    {
+        return $this->inner->variant();
+    }
+
+    #[Override]
+    public function dialect(): DialectInterface
+    {
+        return $this->inner->dialect();
     }
 
     #[Override]
@@ -162,7 +176,7 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
             return;
         }
 
-        // WITH CTEs require deeper validation — the final statement must be read-only
+        // WITH CTEs require deeper validation: the final statement must be read-only
         if (str_starts_with($upper, 'WITH') && $this->isWithQueryReadOnly($normalized)) {
             return;
         }
@@ -218,11 +232,11 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
                     $after = ltrim(substr($sql, $i + 1));
 
                     if ($after === '' || $after[0] === ',') {
-                        // End of SQL or another CTE definition — continue scanning
+                        // End of SQL or another CTE definition: continue scanning
                         continue;
                     }
 
-                    // This is the main statement — validate it's read-only
+                    // This is the main statement; validate it's read-only
                     $afterUpper = strtoupper($after);
 
                     return str_starts_with($afterUpper, 'SELECT')
@@ -234,7 +248,7 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
             }
         }
 
-        // No valid CTE structure found — deny by default
+        // No valid CTE structure found; deny by default
         return false;
     }
 }

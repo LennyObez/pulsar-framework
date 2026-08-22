@@ -13,6 +13,7 @@ use Pulsar\Http\Message\Stream;
 
 /**
  * PSR-17 stream factory.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class StreamFactory implements StreamFactoryInterface

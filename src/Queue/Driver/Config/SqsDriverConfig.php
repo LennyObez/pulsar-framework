@@ -6,14 +6,13 @@ namespace Pulsar\Queue\Driver\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
-
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration DTO for the Amazon SQS queue driver.
  */
-#[Internal(reason: 'Driver configuration — use QueueConfig for public access')]
-readonly class SqsDriverConfig
+#[Internal(reason: 'Driver configuration; use QueueConfig for public access')]
+final readonly class SqsDriverConfig
 {
     public function __construct(
         public string $region = 'us-east-1',
@@ -23,21 +22,36 @@ readonly class SqsDriverConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array
+     * @param array{
+     *     region?: string,
+     *     key?: string,
+     *     secret?: string,
+     *     prefix?: string,
+     * } $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawRegion = $data['region'] ?? 'us-east-1';
-        $rawKey = $data['key'] ?? '';
-        $rawSecret = $data['secret'] ?? '';
-        $rawPrefix = $data['prefix'] ?? '';
-
         return new self(
-            region: is_string($rawRegion) ? $rawRegion : 'us-east-1',
-            key: is_string($rawKey) ? $rawKey : '',
-            secret: is_string($rawSecret) ? $rawSecret : '',
-            prefix: is_string($rawPrefix) ? $rawPrefix : '',
+            region: Coerce::string($data['region'] ?? null, 'us-east-1'),
+            key: Coerce::string($data['key'] ?? null),
+            secret: Coerce::string($data['secret'] ?? null),
+            prefix: Coerce::string($data['prefix'] ?? null),
         );
+    }
+
+    /**
+     * Prevent credentials from leaking in debug output.
+     *
+     * @return array<string, string>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'region' => $this->region,
+            'key' => $this->key !== '' ? '[REDACTED]' : '',
+            'secret' => $this->secret !== '' ? '[REDACTED]' : '',
+            'prefix' => $this->prefix,
+        ];
     }
 }

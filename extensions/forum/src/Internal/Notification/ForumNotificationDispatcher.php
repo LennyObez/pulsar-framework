@@ -18,6 +18,7 @@ use Pulsar\Extension\Forum\Notification\SolutionAcceptedNotification;
 use Pulsar\Extension\Forum\Notification\ThreadReplyNotification;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
+use Pulsar\Extension\Forum\Thread\Thread;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 
 /**
@@ -26,7 +27,7 @@ use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
  * Actual delivery is delegated to the framework's notification infrastructure.
  * This dispatcher creates the appropriate forum notification DTO and logs it.
  */
-#[Internal(reason: 'Forum notification wiring — use ForumNotificationInterface for public API')]
+#[Internal(reason: 'Forum notification wiring; use ForumNotificationInterface for public API')]
 final readonly class ForumNotificationDispatcher
 {
     public function __construct(
@@ -153,7 +154,7 @@ final readonly class ForumNotificationDispatcher
         ]);
     }
 
-    private function findThreadForTarget(string $targetType, string $targetId): ?\Pulsar\Extension\Forum\Thread\Thread
+    private function findThreadForTarget(string $targetType, string $targetId): ?Thread
     {
         if ($targetType === 'thread') {
             return $this->threadRepository->findById($targetId);

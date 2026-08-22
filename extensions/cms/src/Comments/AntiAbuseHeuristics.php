@@ -6,17 +6,21 @@ namespace Pulsar\Extension\Cms\Comments;
 
 use Pulsar\Api\Api;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 
 use function hash;
 use function mb_strlen;
 use function preg_match_all;
-use function sprintf;
 
 /**
  * Testable anti-abuse heuristics for comment submissions.
  *
  * Extracted from middleware to allow unit testing of each heuristic
  * independently from the HTTP layer.
+ *
+ * @psalm-api Resolved from the DI container by the comment submission
+ *            middleware; not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AntiAbuseHeuristics
@@ -33,7 +37,7 @@ final readonly class AntiAbuseHeuristics
      */
     public function isDuplicate(string $bodyHash, string $ipHash): bool
     {
-        $key = sprintf('cms_comment_dedup:%s:%s', $ipHash, $bodyHash);
+        $key = CmsCacheKeys::commentDedup($ipHash, $bodyHash);
 
         return $this->cache->get($key) !== null;
     }
@@ -43,9 +47,9 @@ final readonly class AntiAbuseHeuristics
      */
     public function recordSubmission(string $bodyHash, string $ipHash): void
     {
-        $key = sprintf('cms_comment_dedup:%s:%s', $ipHash, $bodyHash);
+        $key = CmsCacheKeys::commentDedup($ipHash, $bodyHash);
 
-        $this->cache->set($key, '1', ['cms_comment_dedup'], self::DUPLICATE_WINDOW_SECONDS);
+        $this->cache->set($key, '1', [CmsCacheKeys::TAG_COMMENT_DEDUP], self::DUPLICATE_WINDOW_SECONDS);
     }
 
     /**

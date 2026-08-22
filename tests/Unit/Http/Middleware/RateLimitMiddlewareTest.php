@@ -12,6 +12,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\RateLimitMiddleware;
 use Pulsar\Http\RateLimit\RateLimiter;
+use Pulsar\Http\RateLimit\RateLimitKeyStrategy;
 use Pulsar\Http\RateLimit\RateLimitResult;
 use Pulsar\Http\ResponseStatus;
 
@@ -90,21 +91,101 @@ final class RateLimitMiddlewareTest extends TestCase
         self::assertArrayHasKey('retry_after', $body);
     }
 
+    /**
+     * A request without REMOTE_ADDR must not land in one shared
+     * bucket. A single `'unknown'` bucket is fail-open: it disables
+     * the rate limit precisely when the identifying information is
+     * scarce. The fallback hashes the User-Agent instead, so
+     * distinct clients keep distinct buckets under partial info.
+     */
     #[Test]
-    public function usesUnknownKeyWhenNoRemoteAddr(): void
+    public function distinctUserAgentsGetDistinctBucketsWithoutRemoteAddr(): void
     {
         $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
         $middleware = new RateLimitMiddleware($limiter);
 
-        $request = new ServerRequest(
+        $alice = new ServerRequest(
             method: 'GET',
             uri: '/',
+            headers: ['User-Agent' => 'AliceBrowser/1.0'],
+        );
+        $bob = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'BobBrowser/2.0'],
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn(Response::text('OK'));
-        $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        $aliceResponse = $middleware->process($alice, $handler);
+        $bobResponse = $middleware->process($bob, $handler);
+
+        // Both clients pass on their first request — distinct buckets.
+        self::assertSame(ResponseStatus::OK->value, $aliceResponse->getStatusCode());
+        self::assertSame(ResponseStatus::OK->value, $bobResponse->getStatusCode());
+
+        // A second hit on Alice's UA exceeds her limit; Bob remains
+        // unaffected (proves the buckets do not collide).
+        $aliceSecondResponse = $middleware->process($alice, $handler);
+        self::assertSame(ResponseStatus::TooManyRequests->value, $aliceSecondResponse->getStatusCode());
+    }
+
+    #[Test]
+    public function routeStrategyBucketsAllClientsTogetherPerRoute(): void
+    {
+        // The Route strategy caps total load on an endpoint: distinct clients
+        // share one bucket per route.
+        $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
+        $middleware = new RateLimitMiddleware($limiter, null, RateLimitKeyStrategy::Route);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $clientA = new ServerRequest(method: 'GET', uri: '/search', serverParams: ['REMOTE_ADDR' => '1.1.1.1']);
+        $clientB = new ServerRequest(method: 'GET', uri: '/search', serverParams: ['REMOTE_ADDR' => '2.2.2.2']);
+
+        self::assertSame(ResponseStatus::OK->value, $middleware->process($clientA, $handler)->getStatusCode());
+        // Different client, same route → shared bucket is already spent.
+        self::assertSame(ResponseStatus::TooManyRequests->value, $middleware->process($clientB, $handler)->getStatusCode());
+    }
+
+    #[Test]
+    public function ipAndRouteStrategyIsolatesPerClientPerRoute(): void
+    {
+        $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
+        $middleware = new RateLimitMiddleware($limiter, null, RateLimitKeyStrategy::IpAndRoute);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $routeA = new ServerRequest(method: 'GET', uri: '/a', serverParams: ['REMOTE_ADDR' => '1.1.1.1']);
+        $routeB = new ServerRequest(method: 'GET', uri: '/b', serverParams: ['REMOTE_ADDR' => '1.1.1.1']);
+
+        // Same client, different routes → independent budgets.
+        self::assertSame(ResponseStatus::OK->value, $middleware->process($routeA, $handler)->getStatusCode());
+        self::assertSame(ResponseStatus::OK->value, $middleware->process($routeB, $handler)->getStatusCode());
+
+        // Same client, same route again → that route's budget is spent.
+        self::assertSame(ResponseStatus::TooManyRequests->value, $middleware->process($routeA, $handler)->getStatusCode());
+    }
+
+    #[Test]
+    public function fallsBackToMethodUriHashWhenNoIpNoUa(): void
+    {
+        $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
+        $middleware = new RateLimitMiddleware($limiter);
+
+        $request = new ServerRequest(method: 'GET', uri: '/');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $first = $middleware->process($request, $handler);
+        self::assertSame(ResponseStatus::OK->value, $first->getStatusCode());
+
+        // Same method + URI lands in the same bucket → second is rejected.
+        $second = $middleware->process($request, $handler);
+        self::assertSame(ResponseStatus::TooManyRequests->value, $second->getStatusCode());
     }
 }

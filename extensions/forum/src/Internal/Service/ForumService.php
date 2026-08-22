@@ -218,12 +218,24 @@ final readonly class ForumService implements ForumServiceInterface
         return $post;
     }
 
-    public function deletePost(string $postId): void
+    public function deletePost(string $postId, string $deletedBy, bool $isModerator = false): void
     {
         $post = $this->posts->findById($postId);
 
         if ($post === null) {
             throw ForumException::notFound('Post', $postId);
+        }
+
+        // MED-4 (2026-04-09): only the original author or a moderator
+        // may delete a post. The previous default-empty $deletedBy
+        // signature let any caller delete any post by omitting the
+        // argument, which masked privilege escalation in HTTP handlers.
+        if ($deletedBy === '') {
+            throw ForumException::unauthorized('delete post without identifying actor');
+        }
+
+        if ($deletedBy !== $post->authorId && !$isModerator) {
+            throw ForumException::unauthorized('delete post by non-author');
         }
 
         $this->posts->delete($post);
@@ -237,17 +249,26 @@ final readonly class ForumService implements ForumServiceInterface
         $this->events->dispatch(new PostDeleted(
             postId: $post->id,
             threadId: $post->threadId,
-            deletedBy: $post->authorId,
+            deletedBy: $deletedBy,
             tenantId: $post->tenantId,
         ));
     }
 
-    public function deleteThread(string $threadId): void
+    public function deleteThread(string $threadId, string $deletedBy, bool $isModerator = false): void
     {
         $thread = $this->threads->findById($threadId);
 
         if ($thread === null) {
             throw ForumException::notFound('Thread', $threadId);
+        }
+
+        // MED-4 sister fix: same author/moderator gate as deletePost.
+        if ($deletedBy === '') {
+            throw ForumException::unauthorized('delete thread without identifying actor');
+        }
+
+        if ($deletedBy !== $thread->authorId && !$isModerator) {
+            throw ForumException::unauthorized('delete thread by non-author');
         }
 
         $this->threads->delete($thread);
@@ -257,7 +278,7 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadDeleted(
             threadId: $thread->id,
-            deletedBy: $thread->authorId,
+            deletedBy: $deletedBy,
             tenantId: $thread->tenantId,
         ));
     }
@@ -305,7 +326,7 @@ final readonly class ForumService implements ForumServiceInterface
         return $thread;
     }
 
-    public function lockThread(string $threadId): Thread
+    public function lockThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -318,14 +339,14 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadLocked(
             threadId: $thread->id,
-            lockedBy: $thread->authorId,
+            lockedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 
         return $thread;
     }
 
-    public function unlockThread(string $threadId): Thread
+    public function unlockThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -338,14 +359,14 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadUnlocked(
             threadId: $thread->id,
-            unlockedBy: $thread->authorId,
+            unlockedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 
         return $thread;
     }
 
-    public function pinThread(string $threadId): Thread
+    public function pinThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -358,14 +379,14 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadPinned(
             threadId: $thread->id,
-            pinnedBy: $thread->authorId,
+            pinnedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 
         return $thread;
     }
 
-    public function unpinThread(string $threadId): Thread
+    public function unpinThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -378,7 +399,7 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadUnpinned(
             threadId: $thread->id,
-            unpinnedBy: $thread->authorId,
+            unpinnedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 

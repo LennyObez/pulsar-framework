@@ -49,7 +49,7 @@ final readonly class SesTransport implements TransportInterface
             }
 
             /** @var array{MessageId?: string} $decoded */
-            $decoded = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
 
             return $decoded['MessageId'] ?? '';
         } catch (MailException $e) {
@@ -126,6 +126,7 @@ final readonly class SesTransport implements TransportInterface
         /** @var array<string, string> $tags */
         $tags = [];
 
+        /** @var mixed $value */
         foreach ($message->metadata as $key => $value) {
             $tags[] = ['Name' => $key, 'Value' => is_string($value) ? $value : (string) json_encode($value)];
         }
@@ -166,7 +167,7 @@ final readonly class SesTransport implements TransportInterface
     {
         // AWS Signature V4 would be computed here by the HTTP client or a signing middleware.
         // We provide the access key and region so the HTTP client layer can sign the request.
-        // The secret key is NOT passed in headers — it must be resolved by the signing middleware
+        // The secret key is NOT passed in headers; it must be resolved by the signing middleware
         // via the config object or a credential provider to avoid leaking secrets in transit.
         return [
             'X-Pulsar-Ses-Region' => $this->config->region,

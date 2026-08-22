@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakeEventIngestionCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(MakeEventIngestionCommand::class)]
@@ -39,8 +39,7 @@ final class MakeEventIngestionCommandTest extends TestCase
     {
         $command = new MakeEventIngestionCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -56,12 +55,10 @@ final class MakeEventIngestionCommandTest extends TestCase
         $originalDir = getcwd();
         chdir($this->tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('GitHub');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Integrations'],
-            ['path', 'app/Modules', 'app/Modules'],
-            ['events', '', 'push,pull_request,issue'],
+        $input = new ArrayInput(null, ['GitHub'], [
+            'module' => 'Integrations',
+            'path' => 'app/Modules',
+            'events' => 'push,pull_request,issue',
         ]);
 
         $output = $this->createStub(OutputInterface::class);

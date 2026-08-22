@@ -11,6 +11,7 @@ use function preg_match;
 
 /**
  * Validates SQL identifiers (table names, column names, aliases) at method-call time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentifierValidator
@@ -39,7 +40,10 @@ final readonly class IdentifierValidator
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier, 2);
             self::validate($parts[0]);
-            self::validate($parts[1]);
+
+            if (isset($parts[1])) {
+                self::validate($parts[1]);
+            }
 
             return;
         }

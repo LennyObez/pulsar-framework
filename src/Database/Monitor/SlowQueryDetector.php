@@ -11,6 +11,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 
 /**
  * Detects queries exceeding the configured duration threshold.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SlowQueryDetector implements SlowQueryDetectorInterface

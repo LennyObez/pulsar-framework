@@ -178,4 +178,40 @@ final class DatabaseExceptionTest extends TestCase
             $exception->getMessage(),
         );
     }
+
+    #[Test]
+    public function seederFailedIncludesOriginalMessage(): void
+    {
+        $cause = new RuntimeException('Table "doc_versions" does not exist');
+        $exception = DatabaseException::seederFailed('DocVersionSeeder', $cause);
+
+        self::assertStringContainsString('DocVersionSeeder', $exception->getMessage());
+        self::assertStringContainsString('Table "doc_versions" does not exist', $exception->getMessage());
+        self::assertSame($cause, $exception->getPrevious());
+    }
+
+    #[Test]
+    public function seederFailedWithoutPreviousOmitsCause(): void
+    {
+        $exception = DatabaseException::seederFailed('SomeSeeder');
+
+        self::assertSame('Seeder "SomeSeeder" failed', $exception->getMessage());
+        self::assertNull($exception->getPrevious());
+    }
+
+    #[Test]
+    public function seederNotFoundContainsName(): void
+    {
+        $exception = DatabaseException::seederNotFound('MissingSeeder');
+
+        self::assertSame('Seeder "MissingSeeder" not found', $exception->getMessage());
+    }
+
+    #[Test]
+    public function seederInvalidContainsReason(): void
+    {
+        $exception = DatabaseException::seederInvalid('File must return SeederInterface');
+
+        self::assertSame('Invalid seeder: File must return SeederInterface', $exception->getMessage());
+    }
 }

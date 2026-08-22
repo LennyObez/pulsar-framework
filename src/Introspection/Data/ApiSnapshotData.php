@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Snapshot of the public API surface for the current application.
  *
  * Each class entry includes its API version, exposed methods, and constants.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ApiSnapshotData

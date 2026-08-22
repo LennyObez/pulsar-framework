@@ -12,9 +12,12 @@ use function count;
 
 /**
  * Registry for managing loaded extensions and their lifecycle states.
+ *
+ * Stays internal because it writes: add() and setState() belong to boot. Callers
+ * that only read depend on {@see ExtensionCatalogInterface} instead.
  */
 #[Internal]
-final class ExtensionRegistry
+final class ExtensionRegistry implements ExtensionCatalogInterface
 {
     /**
      * @var array<string, ExtensionInterface>

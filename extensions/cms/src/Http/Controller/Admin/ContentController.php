@@ -30,7 +30,11 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function in_array;
+use function is_int;
+use function is_numeric;
 use function is_string;
+use function max;
+use function min;
 use function strlen;
 
 /**
@@ -39,11 +43,9 @@ use function strlen;
  * All actions require appropriate CMS permissions checked via GateInterface.
  * State-changing operations require CSRF token validation.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ContentController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ContentController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
@@ -53,10 +55,12 @@ final readonly class ContentController
         private ContentLockServiceInterface $lockService,
         private EditorialWorkflowServiceInterface $workflowService,
         private SafeHtmlPolicy $safeHtmlPolicy,
-        private GateInterface $gate,
         private CmsConfig $config,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -64,9 +68,15 @@ final readonly class ContentController
         $this->authorize($identity, 'cms.content.view');
 
         $locale = $this->resolveLocale($request);
-        $contentType = $request->getQueryParams()['type'] ?? null;
-        $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($request->getQueryParams()['per_page'] ?? 20)));
+        $queryParams = $request->getQueryParams();
+        /** @var mixed $contentType */
+        $contentType = $queryParams['type'] ?? null;
+        /** @var mixed $pageParam */
+        $pageParam = $queryParams['page'] ?? 1;
+        $page = max(1, (is_string($pageParam) || is_int($pageParam)) && is_numeric($pageParam) ? (int) $pageParam : 1);
+        /** @var mixed $perPageParam */
+        $perPageParam = $queryParams['per_page'] ?? 20;
+        $perPage = min(100, max(1, (is_string($perPageParam) || is_int($perPageParam)) && is_numeric($perPageParam) ? (int) $perPageParam : 20));
 
         $tenantId = $this->validateTenantAccess($request);
 
@@ -106,16 +116,27 @@ final readonly class ContentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $contentType = ContentType::tryFrom((string) ($body['content_type'] ?? 'page'));
+        /** @var mixed $rawContentTypeValue */
+        $rawContentTypeValue = $body['content_type'] ?? null;
+        $contentTypeStr = is_string($rawContentTypeValue) ? $rawContentTypeValue : 'page';
+        $contentType = ContentType::tryFrom($contentTypeStr);
 
         if ($contentType === null) {
             return Response::json(['error' => 'Invalid content type'], 400);
         }
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
-        $title = (string) ($body['title'] ?? '');
-        $slugSegment = (string) ($body['slug'] ?? '');
-        $rawBody = (string) ($body['body'] ?? '');
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
         if ($title === '' || $slugSegment === '') {
             return Response::json(['error' => 'Title and slug are required'], 400);
@@ -124,16 +145,24 @@ final readonly class ContentController
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
         $tenantId = $this->validateTenantAccess($request);
 
+        /** @var mixed $rawTemplate */
+        $rawTemplate = $body['template'] ?? null;
+        /** @var mixed $rawParentId */
+        $rawParentId = $body['parent_id'] ?? null;
+        /** @var mixed $rawCommentPolicy */
+        $rawCommentPolicy = $body['comment_policy'] ?? null;
+        /** @var mixed $rawDataClassification */
+        $rawDataClassification = $body['data_classification'] ?? null;
         $contentId = UuidGenerator::v7();
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
             authorId: $identity->id(),
             tenantId: $tenantId,
-            template: is_string($body['template'] ?? null) ? $body['template'] : null,
-            parentId: is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null,
-            commentPolicy: CommentPolicy::tryFrom((string) ($body['comment_policy'] ?? '')) ?? CommentPolicy::Inherit,
-            dataClassification: DataClassification::tryFrom((string) ($body['data_classification'] ?? '')) ?? DataClassification::Public,
+            template: is_string($rawTemplate) ? $rawTemplate : null,
+            parentId: is_string($rawParentId) ? $rawParentId : null,
+            commentPolicy: CommentPolicy::tryFrom(is_string($rawCommentPolicy) ? $rawCommentPolicy : '') ?? CommentPolicy::Inherit,
+            dataClassification: DataClassification::tryFrom(is_string($rawDataClassification) ? $rawDataClassification : '') ?? DataClassification::Public,
         );
 
         $this->contentRepository->save($content);
@@ -148,6 +177,12 @@ final readonly class ContentController
             }
         }
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
         $translationId = UuidGenerator::v7();
         $translation = ContentTranslation::create(
             id: $translationId,
@@ -157,9 +192,9 @@ final readonly class ContentController
             slugSegment: $slugSegment,
             path: $path,
             body: $sanitizedBody,
-            excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : null,
-            metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : null,
-            metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : null,
+            excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+            metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+            metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
         );
 
         $this->translationRepository->save($translation);
@@ -258,17 +293,25 @@ final readonly class ContentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
         if ($translation === null) {
             return Response::json(['error' => 'Translation not found for locale'], 404);
         }
 
-        $title = (string) ($body['title'] ?? $translation->title);
-        $rawBody = (string) ($body['body'] ?? $translation->body);
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : $translation->title;
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : $translation->body;
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
-        $slugSegment = (string) ($body['slug'] ?? $translation->slugSegment);
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : $translation->slugSegment;
 
         $path = $translation->path;
 
@@ -284,6 +327,12 @@ final readonly class ContentController
             }
         }
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
         $updatedTranslation = ContentTranslation::create(
             id: $translation->id,
             contentId: $id,
@@ -292,9 +341,9 @@ final readonly class ContentController
             slugSegment: $slugSegment,
             path: $path,
             body: $sanitizedBody,
-            excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : $translation->excerpt,
-            metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : $translation->metaTitle,
-            metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : $translation->metaDescription,
+            excerpt: is_string($rawExcerpt) ? $rawExcerpt : $translation->excerpt,
+            metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : $translation->metaTitle,
+            metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : $translation->metaDescription,
         );
 
         $this->translationRepository->save($updatedTranslation);
@@ -322,7 +371,9 @@ final readonly class ContentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = (string) ($body['locale'] ?? '');
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : '';
 
         if ($locale === '' || !in_array($locale, $this->config->supportedLocales, true)) {
             return Response::json(['error' => 'Invalid or unsupported locale'], 400);
@@ -335,9 +386,15 @@ final readonly class ContentController
             return Response::json(['error' => 'Translation already exists for this locale'], 409);
         }
 
-        $title = (string) ($body['title'] ?? '');
-        $slugSegment = (string) ($body['slug'] ?? '');
-        $rawBody = (string) ($body['body'] ?? '');
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
         if ($title === '' || $slugSegment === '') {
             return Response::json(['error' => 'Title and slug are required'], 400);
@@ -357,6 +414,13 @@ final readonly class ContentController
 
         $translationId = UuidGenerator::v7();
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
+
         try {
             $translation = ContentTranslation::create(
                 id: $translationId,
@@ -366,9 +430,9 @@ final readonly class ContentController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $sanitizedBody,
-                excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : null,
-                metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : null,
-                metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : null,
+                excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+                metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+                metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
             );
         } catch (CmsException $e) {
             return Response::json(['error' => $e->getMessage()], 400);
@@ -398,7 +462,9 @@ final readonly class ContentController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
@@ -422,16 +488,10 @@ final readonly class ContentController
             return Response::json(['error' => 'Content not found'], 404);
         }
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
-
         try {
             $updated = $this->publishingStateMachine->transition(
                 $content,
                 PublishingStatus::Published,
-                $identity->id(),
-                $reason,
             );
 
             $this->contentRepository->save($updated);
@@ -453,16 +513,10 @@ final readonly class ContentController
             return Response::json(['error' => 'Content not found'], 404);
         }
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
-
         try {
             $updated = $this->publishingStateMachine->transition(
                 $content,
                 PublishingStatus::Archived,
-                $identity->id(),
-                $reason,
             );
 
             $this->contentRepository->save($updated);
@@ -486,7 +540,9 @@ final readonly class ContentController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $publishAtStr = (string) ($body['publish_at'] ?? '');
+        /** @var mixed $rawPublishAt */
+        $rawPublishAt = $body['publish_at'] ?? null;
+        $publishAtStr = is_string($rawPublishAt) ? $rawPublishAt : '';
 
         if ($publishAtStr === '') {
             return Response::json(['error' => 'publish_at is required'], 400);
@@ -529,8 +585,12 @@ final readonly class ContentController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
-        $reviewerId = is_string($body['reviewer_id'] ?? null) ? $body['reviewer_id'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
+        /** @var mixed $rawReviewerId */
+        $rawReviewerId = $body['reviewer_id'] ?? null;
+        $reviewerId = is_string($rawReviewerId) ? $rawReviewerId : null;
 
         $review = $this->workflowService->submitForReview(
             $id,
@@ -543,13 +603,11 @@ final readonly class ContentController
             $updated = $this->publishingStateMachine->transition(
                 $content,
                 PublishingStatus::InReview,
-                $identity->id(),
-                'Submitted for editorial review',
             );
 
             $this->contentRepository->save($updated);
         } catch (CmsException) {
-            // Content may already be in review — the review record still stands
+            // Content may already be in review: the review record still stands
         }
 
         return Response::json([
@@ -566,7 +624,9 @@ final readonly class ContentController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
 
         $lock = $this->lockService->acquire($id, $identity->id(), $locale);
 
@@ -609,6 +669,7 @@ final readonly class ContentController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : $this->config->defaultLocale;

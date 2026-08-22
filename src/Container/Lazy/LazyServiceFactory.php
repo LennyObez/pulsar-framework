@@ -47,7 +47,7 @@ final class LazyServiceFactory
                 /** @var class-string $className */
                 $className = $id;
             } else {
-                // Cannot create a lazy proxy without a known class — resolve eagerly
+                // Cannot create a lazy proxy without a known class: resolve eagerly
                 /** @var object */
                 return $concrete($container);
             }
@@ -61,7 +61,7 @@ final class LazyServiceFactory
                 return $concrete($container);
             }
 
-            // Class-string path — resolve via container autowiring
+            // Class-string path: resolve via container autowiring
             /** @var class-string $concrete */
             if (!class_exists($concrete)) {
                 throw new RuntimeException("Class $concrete does not exist");

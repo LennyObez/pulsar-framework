@@ -5,19 +5,50 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use PDO;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\FrameworkCacheInterface;
+use Pulsar\Config\AppConfig;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\DeployConfig;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\RateLimitConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Core\Wiring\Contract\DescribesWiring;
+use Pulsar\Core\Wiring\Contract\WiringContract;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\DataProtection\AuditLogPurge;
+use Pulsar\DataProtection\ConsentManagerInterface;
+use Pulsar\DataProtection\DataProtectionConfig;
+use Pulsar\DataProtection\DataPurgeInterface;
+use Pulsar\DataProtection\DataPurgeOrchestrator;
+use Pulsar\DataProtection\DefaultRetentionPolicy;
+use Pulsar\DataProtection\InMemoryConsentManager;
+use Pulsar\DataProtection\RetentionPolicyInterface;
+use Pulsar\DataProtection\SessionPurge;
+use Pulsar\ErrorHandling\ExceptionRendererInterface;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\Middleware\RateLimitMiddleware;
+use Pulsar\Http\RateLimit\CacheRateLimiter;
+use Pulsar\Http\RateLimit\RateLimiter;
+use Pulsar\Http\RateLimit\RateLimiterInterface;
+use Pulsar\Http\RateLimit\RateLimitKeyStrategy;
+use Pulsar\Http\TrustedProxy;
+use Pulsar\Routing\DomainResolverInterface;
+use Pulsar\Routing\Internal\ConfigDomainResolver;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\SubdomainRoutingMiddleware;
+use Pulsar\Security\Assertion\SecurityAssertionRunner;
 use Pulsar\Security\Audit\AuditChainVerifier;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
@@ -25,20 +56,28 @@ use Pulsar\Security\Audit\AuditSinkInterface;
 use Pulsar\Security\Crypto\AesGcmCipherSuite;
 use Pulsar\Security\Crypto\CipherSuiteInterface;
 use Pulsar\Security\Crypto\CompositeKeyProvider;
+use Pulsar\Security\Crypto\DatabaseTokenStore;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\EnvKeyRing;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Crypto\InMemoryTokenStore;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Crypto\SodiumCipherSuite;
+use Pulsar\Security\Crypto\TokenizationService;
+use Pulsar\Security\Crypto\TokenizationServiceInterface;
+use Pulsar\Security\Crypto\TokenStoreInterface;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Security\Incident\IncidentReporterInterface;
+use Pulsar\Security\Incident\InMemoryIncidentReporter;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
+use Pulsar\Security\Posture\SecurityPostureConfig;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\Handler\CookieHandler;
@@ -46,7 +85,6 @@ use Pulsar\Security\Session\Handler\DatabaseHandler;
 use Pulsar\Security\Session\Handler\FileHandler;
 use Pulsar\Security\Session\Handler\RedisHandler;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
-use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionEncryption;
 use Pulsar\Security\Session\SessionInterface;
 use Pulsar\Security\Session\SessionManager;
@@ -55,6 +93,7 @@ use Pulsar\Security\Session\Validator\FingerprintValidator;
 use Pulsar\Security\Session\Validator\RemoteAddressValidator;
 use Pulsar\Security\Session\Validator\SessionValidatorInterface;
 use Pulsar\Security\Session\Validator\UserAgentValidator;
+use Pulsar\Security\Vault\SecretVault;
 use Random\Randomizer;
 use Redis;
 use SodiumException;
@@ -62,10 +101,63 @@ use SodiumException;
 use function dirname;
 use function is_array;
 use function sodium_hex2bin;
+use function sprintf;
+
+use const DIRECTORY_SEPARATOR;
 
 #[Internal]
-final readonly class SecurityWiring implements ServiceWiringInterface
+final readonly class SecurityWiring implements ServiceWiringInterface, DescribesWiring, ProvidesConfigLoaders
 {
+    /**
+     * Owns config/data_protection.php and config/domains.php: their loaders build
+     * the DTOs into the ConfigRepository during config load (the single source of
+     * truth), so wire() resolves them from the repository and unknown keys surface
+     * once, centrally, through ConfigManager's post-load sweep.
+     */
+    public function configLoaders(): array
+    {
+        return [
+            'data_protection' => new CallableConfigLoader(
+                DataProtectionConfig::class,
+                static fn(array $data): object => DataProtectionConfig::fromArray($data),
+            ),
+            'domains' => new CallableConfigLoader(
+                DomainConfig::class,
+                static fn(array $data, Environment $environment): object => DomainConfig::fromArray($data, $environment),
+            ),
+        ];
+    }
+
+    /**
+     * The security controls this wiring binds unconditionally on every boot.
+     * Declaring them puts them under the wiring-contract gate, which asserts
+     * each actually resolves from the booted container — so a control that is
+     * built and documented but silently loses its binding fails the build
+     * (the audit's dominant "built-but-never-wired" failure mode). Master-key-
+     * gated bindings (crypto, tokenization, audit chain) are deliberately not
+     * listed here: they are conditional on PULSAR_MASTER_KEY, not always-on.
+     */
+    public function describeWiring(): WiringContract
+    {
+        return new WiringContract(
+            component: 'security',
+            configClass: SecurityConfig::class,
+            configFile: 'security.php',
+            provides: [
+                HmacInterface::class,
+                SessionInterface::class,
+                SessionManager::class,
+                SessionHandlerInterface::class,
+                SessionMiddleware::class,
+                FlashBag::class,
+                CsrfTokenManager::class,
+                CsrfTokenManagerInterface::class,
+                CsrfMiddleware::class,
+                SecurityHeadersMiddleware::class,
+            ],
+        );
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -78,7 +170,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         /** @var SecurityConfig $securityConfig */
         $securityConfig = $configManager->repository()->get(SecurityConfig::class);
 
-        // HmacService adapter — always available (no key required, delegates to static Hmac methods)
+        // HmacService adapter: always available (no key required, delegates to static Hmac methods)
         $hmacService = new HmacService();
         $container->instance(HmacInterface::class, $hmacService);
 
@@ -96,7 +188,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 );
                 $container->instance(MasterKey::class, $masterKey);
 
-                // Build key provider — use CompositeKeyProvider if overrides are present
+                // Build key provider: use CompositeKeyProvider if overrides are present
                 $keyProvider = $this->buildKeyProvider($masterKey, $environment);
                 $container->instance(KeyProviderInterface::class, $keyProvider);
                 if ($keyProvider instanceof CompositeKeyProvider) {
@@ -111,6 +203,45 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 $container->instance(Encryptor::class, $encryptor);
                 $container->instance(EncryptorInterface::class, $encryptor);
 
+                // Tokenization service (PCI-DSS Req 3.4).
+                //
+                // Bound lazily, and that is the whole point. This wiring runs eighth in
+                // WiringList and DatabaseWiring runs seventeenth, so no connection exists
+                // yet at this line. The previous code resolved the store here and fell
+                // back to InMemoryTokenStore — a fallback nothing could ever avoid, since
+                // nothing binds TokenStoreInterface earlier. Every deployment therefore
+                // held PAN tokens in process memory and lost them on restart, while
+                // PciDssMapping reported Req 3.4 Implemented and named DatabaseTokenStore
+                // as the production store. Deferring resolution to first use lets the
+                // database be there by the time the answer is needed.
+                $container->singleton(TokenStoreInterface::class, static function () use ($container): TokenStoreInterface {
+                    if (!$container->has(ConnectionInterface::class)) {
+                        // No database configured at all: memory is the only honest
+                        // answer, and ComplianceVerificationWiring reports the control
+                        // unmet rather than this pretending otherwise.
+                        return new InMemoryTokenStore();
+                    }
+
+                    /** @var ConnectionInterface $connection */
+                    $connection = $container->get(ConnectionInterface::class);
+
+                    return new DatabaseTokenStore($connection);
+                });
+
+                $container->singleton(TokenizationServiceInterface::class, static function () use ($container, $masterKey, $cipherSuite): TokenizationServiceInterface {
+                    /** @var TokenStoreInterface $store */
+                    $store = $container->get(TokenStoreInterface::class);
+
+                    return new TokenizationService($masterKey, $store, $cipherSuite);
+                });
+
+                $container->singleton(TokenizationService::class, static function () use ($container): TokenizationService {
+                    /** @var TokenizationService $service */
+                    $service = $container->get(TokenizationServiceInterface::class);
+
+                    return $service;
+                });
+
                 // Session encryption via Keyring (Finding B)
                 if ($securityConfig->session->encryption) {
                     $sessionEncryption = SessionEncryption::fromMasterKey($masterKey);
@@ -123,7 +254,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                         || $environment->get('CACHE_ENCRYPT') === '1';
                     $configPath = $configManager->configPath();
                     if ($configPath !== null) {
-                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $hmacService, $encrypt, $encrypt ? $encryptor : null);
+                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $hmacService, $encrypt, $encrypt ? $encryptor : null, $environment);
                         $container->instance(FrameworkCache::class, $frameworkCache);
                         $container->instance(FrameworkCacheInterface::class, $frameworkCache);
                     }
@@ -138,7 +269,24 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
                 if ($obsConfig->audit->enabled) {
                     $auditKey = $masterKey->deriveSubKey(2, 'audit___');
-                    $auditSink = new AuditFileSink($obsConfig->audit->logPath);
+
+                    // Route AuditFileSink corruption diagnostics
+                    // through the application logger when one is wired,
+                    // so operators see them in the same structured
+                    // pipeline as other security warnings. Falls back to
+                    // NullLogger when no logger is registered yet —
+                    // SecurityException::auditChainCorrupted() still
+                    // surfaces the failure synchronously regardless.
+                    $auditSinkLogger = $container->has(LoggerInterface::class)
+                        ? $container->get(LoggerInterface::class)
+                        : null;
+
+                    /** @var LoggerInterface|null $auditSinkLogger */
+                    $auditSink = new AuditFileSink(
+                        WritablePathGuard::resolveState($obsConfig->audit->logPath, 'observability.audit.log_path'),
+                        false,
+                        $auditSinkLogger,
+                    );
                     $container->instance(AuditSinkInterface::class, $auditSink);
                     $container->instance(AuditFileSink::class, $auditSink);
 
@@ -159,39 +307,124 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                     $chainVerifier = new AuditChainVerifier($auditKeyRing);
                     $container->instance(AuditChainVerifier::class, $chainVerifier);
                 }
+                // Secret vault: encrypted config secrets (API keys, credentials, DSN strings)
+                $configPath = $configManager->configPath();
+                if ($configPath !== null) {
+                    $vaultPath = dirname($configPath) . DIRECTORY_SEPARATOR . 'secrets.encrypted.php';
+                    $vault = SecretVault::create($masterKey, $vaultPath);
+                    $container->instance(SecretVault::class, $vault);
+                }
             } catch (SecurityException | SodiumException) {
-                // Master key is invalid or sodium operation failed — skip crypto/audit registration.
+                // Master key is invalid or sodium operation failed: skip crypto/audit registration.
                 // Session, CSRF, and headers still work without it.
                 $masterKey = null;
                 $sessionEncryption = null;
             }
         }
 
-        // Session — build handler, validators, and manager
+        // Security assertions: verify security posture in production mode
+        $appEnv = $environment->get('APP_ENV') ?? 'local';
+        if ($appEnv === 'production') {
+            $repository = $configManager->repository();
+            $debugMode = $repository->has(AppConfig::class)
+                && $repository->get(AppConfig::class)->debug;
+
+            $assertionRunner = new SecurityAssertionRunner(
+                debugMode: $debugMode,
+                hstsEnabled: $securityConfig->headers->hsts->enabled,
+                // Same Environment-resolved value the crypto stack uses (OS env +
+                // .env), so a key provided only in .env is not falsely reported
+                // missing — see $masterKeyHex resolved at the top of wire().
+                masterKeyHex: $masterKeyHex,
+                hstsConfig: $securityConfig->headers->hsts,
+                sessionConfig: $securityConfig->session,
+            );
+            $container->instance(SecurityAssertionRunner::class, $assertionRunner);
+
+            // Advisory boot log of each violation. Security posture is a config
+            // invariant, so under PHP-FPM (boot==request) logging it every boot
+            // floods the log with an unchanging state -- gated by logAtBoot (off
+            // in production by default; /health + `security:check` are the prod
+            // channels, and callers use assertAll() for strict enforcement).
+            // The runner stays bound above regardless, for CLI/on-demand use.
+            if (SecurityPostureConfig::fromEnvironment($environment)->logAtBoot) {
+                $violations = $assertionRunner->check();
+
+                if ($violations !== [] && $container->has(LoggerInterface::class)) {
+                    /** @var LoggerInterface $logger */
+                    $logger = $container->get(LoggerInterface::class);
+
+                    foreach ($violations as $violation) {
+                        $logger->warning(
+                            sprintf('%s: %s', $violation->assertion, $violation->message),
+                            [
+                                'assertion' => $violation->assertion,
+                                'severity' => $violation->severity->value,
+                                'category' => 'security',
+                            ],
+                        );
+                    }
+                }
+            }
+        }
+
+        // Trusted-proxy-aware client-IP resolution, shared by session capture,
+        // the session validators, and (via the container) hijack/account-takeover
+        // detection — so all of them resolve the same client IP behind a proxy
+        // and never disagree (which would cause false-positive session/hijack
+        // alerts). Constructed only when proxies are configured; otherwise null,
+        // which preserves the raw-REMOTE_ADDR behaviour.
+        $repository = $configManager->repository();
+        /** @var list<string> $trustedProxies */
+        $trustedProxies = $repository->has(DeployConfig::class)
+            ? $repository->get(DeployConfig::class)->trustedProxies
+            : [];
+        $trustedProxy = $trustedProxies !== [] ? new TrustedProxy($trustedProxies) : null;
+        if ($trustedProxy !== null) {
+            $container->instance(TrustedProxy::class, $trustedProxy);
+        }
+
+        // Session: build handler, validators, and manager
         $sessionHandler = $this->buildSessionHandler($securityConfig, $container, $sessionEncryption);
         $container->instance(SessionHandlerInterface::class, $sessionHandler);
 
-        $validators = $this->buildValidators($securityConfig, $hmacService, $masterKey);
+        $validators = $this->buildValidators($securityConfig, $hmacService, $masterKey, $trustedProxy);
 
         $sessionManager = new SessionManager(
             $sessionHandler,
             $securityConfig->session,
             $validators,
             $sessionEncryption,
+            $trustedProxy,
         );
         $container->instance(SessionManager::class, $sessionManager);
         $container->instance(SessionInterface::class, $sessionManager);
-
-        // Legacy Session alias for backward compatibility with existing SessionGuard
-        $legacySession = new Session($securityConfig->session);
-        $container->instance(Session::class, $legacySession);
 
         // Flash messages
         $flashBag = new FlashBag($sessionManager);
         $container->instance(FlashBag::class, $flashBag);
 
+        // Lazy resolver: the error-page renderer is wired by ExceptionHandlerWiring,
+        // which runs after this wiring, so the session and CSRF middleware resolve it
+        // at request time to theme their 4xx pages (mirrors ExceptionHandlerWiring's
+        // own templateEngineResolver pattern).
+        $errorRendererResolver = static function () use ($container): ?ExceptionRendererInterface {
+            if (!$container->has(ExceptionRendererInterface::class)) {
+                return null;
+            }
+
+            /** @var ExceptionRendererInterface $renderer */
+            $renderer = $container->get(ExceptionRendererInterface::class);
+
+            return $renderer;
+        };
+
         // Session middleware
-        $sessionMiddleware = new SessionMiddleware($sessionManager, $flashBag);
+        /** @var LoggerInterface|null $sessionLogger */
+        $sessionLogger = $container->has(LoggerInterface::class)
+            ? $container->get(LoggerInterface::class)
+            : null;
+        $sessionMiddleware = new SessionMiddleware($sessionManager, $flashBag, $sessionLogger, $errorRendererResolver);
         $container->instance(SessionMiddleware::class, $sessionMiddleware);
 
         // CSRF (uses SessionManager which implements SessionInterface)
@@ -205,12 +438,206 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $container->instance(CsrfTokenManager::class, $csrfTokenManager);
         $container->instance(CsrfTokenManagerInterface::class, $csrfTokenManager);
 
-        $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf);
+        $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf, $errorRendererResolver);
         $container->instance(CsrfMiddleware::class, $csrfMiddleware);
 
-        // Security Headers
-        $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers);
+        // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs.
+        // Reuses the $trustedProxies resolved above for the session/IP stack.
+        $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
+
+        // Warn at boot when a literal header in `headers` shadows an active
+        // structured sub-config with a different value (e.g. a literal
+        // Strict-Transport-Security overriding the typed `hsts` block, or a
+        // literal Permissions-Policy overriding `permissions_policy`). The literal
+        // is authoritative ("what you write is what's emitted"); surfacing the
+        // override keeps it from being silent in either direction.
+        //
+        // Like the posture advisory above, this is a CONFIG invariant — it cannot
+        // change between requests — so under a per-request SAPI (PHP-FPM:
+        // boot==request) an unconditional warning would flood the log with an
+        // unchanging state. Gate it behind the same logAtBoot flag (on outside
+        // production, off in production) so the override is surfaced during
+        // development without repeating on every production request.
+        $shadowedHeaders = $securityConfig->headers->shadowedStructuredHeaders();
+        if ($shadowedHeaders !== [] && SecurityPostureConfig::fromEnvironment($environment)->logAtBoot) {
+            /** @var LoggerInterface|null $headersLogger */
+            $headersLogger = $container->has(LoggerInterface::class)
+                ? $container->get(LoggerInterface::class)
+                : null;
+
+            foreach ($shadowedHeaders as $conflict) {
+                $headersLogger?->warning($conflict, ['component' => 'security.headers']);
+            }
+        }
+
+        // Pipe globally: every response — including routes
+        // that do not opt into the `web` / `api` middleware groups — must
+        // carry the X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
+        // CSP, and Cross-Origin baseline. Per-route opt-in would leave
+        // diagnostics endpoints, JSON APIs declared outside groups, error
+        // pages, and ad-hoc routes with no headers at all. The
+        // middleware is idempotent for header VALUES (it sets `withHeader`,
+        // which replaces existing values) so groups that include it again
+        // produce the same result — but it must be piped exactly once into
+        // the global pipeline: a second global pipe would run the CSP
+        // builder, frame setter, and HSTS injector twice on every response.
+        //
+        // CSRF stays group-only because POST-only API endpoints legitimately
+        // need to opt out, and an auto-pipe would break stateless
+        // bearer-token flows.
+        $middleware->pipe($headersMiddleware);
+
+        // Incident Reporter: default to in-memory, override with FileIncidentReporter via config
+        if (!$container->has(IncidentReporterInterface::class)) {
+            $incidentReporter = new InMemoryIncidentReporter();
+            $container->instance(IncidentReporterInterface::class, $incidentReporter);
+            $container->instance(InMemoryIncidentReporter::class, $incidentReporter);
+        }
+
+        // Consent Manager: default to in-memory, override with database-backed via config
+        if (!$container->has(ConsentManagerInterface::class)) {
+            $consentManager = new InMemoryConsentManager();
+            $container->instance(ConsentManagerInterface::class, $consentManager);
+            $container->instance(InMemoryConsentManager::class, $consentManager);
+        }
+
+        // Data Purge Orchestrator: wire up reference purge implementations
+        if (!$container->has(DataPurgeOrchestrator::class)) {
+            /** @var LoggerInterface|null $purgeLogger */
+            $purgeLogger = $container->has(LoggerInterface::class)
+                ? $container->get(LoggerInterface::class)
+                : null;
+
+            /** @var array<string, DataPurgeInterface> $purgers */
+            $purgers = [];
+
+            // Audit log purge: uses the same log path from observability config
+            if ($repository->has(ObservabilityConfig::class)) {
+                /** @var ObservabilityConfig $obsConfigForPurge */
+                $obsConfigForPurge = $repository->get(ObservabilityConfig::class);
+
+                if ($obsConfigForPurge->audit->enabled) {
+                    $purgers['audit_logs'] = new AuditLogPurge(
+                        WritablePathGuard::resolveState($obsConfigForPurge->audit->logPath, 'observability.audit.log_path'),
+                        $purgeLogger,
+                    );
+                }
+            }
+
+            // Session purge: uses the active session handler. The key must
+            // match the retention policy category ('user_sessions' in
+            // config/data_protection.php) or the orchestrator skips it.
+            if ($container->has(SessionHandlerInterface::class)) {
+                $purgers['user_sessions'] = new SessionPurge($container->get(SessionHandlerInterface::class));
+            }
+
+            // Build purge policies from DataProtectionConfig, resolved from the
+            // repository (its loader builds it at config load; see
+            // configLoaders()). A default is used when config/data_protection.php
+            // is absent so the orchestrator still wires with empty policies.
+            $repository = $configManager->repository();
+            $dpConfig = $repository->has(DataProtectionConfig::class)
+                ? $repository->get(DataProtectionConfig::class)
+                : new DataProtectionConfig();
+            $container->instance(DataProtectionConfig::class, $dpConfig);
+
+            /** @var array<string, RetentionPolicyInterface> $policies */
+            $policies = [];
+
+            foreach ($dpConfig->retention as $retentionPolicy) {
+                $policies[$retentionPolicy->category] = new DefaultRetentionPolicy(
+                    category: $retentionPolicy->category,
+                    retentionDays: max(0, $retentionPolicy->retentionDays),
+                    legalBasis: $retentionPolicy->legalBasis,
+                );
+            }
+
+            $auditLogger = $container->has(AuditLoggerInterface::class)
+                ? $container->get(AuditLoggerInterface::class)
+                : null;
+
+            $orchestrator = new DataPurgeOrchestrator(
+                purgers: $purgers,
+                policies: $policies,
+                config: $dpConfig,
+                auditLogger: $auditLogger,
+                logger: $purgeLogger,
+            );
+            $container->instance(DataPurgeOrchestrator::class, $orchestrator);
+        }
+
+        // Multi-domain / subdomain routing: zero-cost when no mappings configured.
+        // DomainConfig is resolved from the repository (its loader builds it at
+        // config load; see configLoaders()), defaulting when config/domains.php
+        // is absent.
+        $domainRepository = $configManager->repository();
+        $domainConfig = $domainRepository->has(DomainConfig::class)
+            ? $domainRepository->get(DomainConfig::class)
+            : new DomainConfig();
+        $container->instance(DomainConfig::class, $domainConfig);
+
+        $domainResolver = new ConfigDomainResolver($domainConfig);
+        $container->instance(DomainResolverInterface::class, $domainResolver);
+        $container->instance(ConfigDomainResolver::class, $domainResolver);
+
+        $subdomainMiddleware = new SubdomainRoutingMiddleware($domainResolver);
+        $container->instance(SubdomainRoutingMiddleware::class, $subdomainMiddleware);
+
+        // Add subdomain middleware to the global pipeline (resolves domain context for routing)
+        $middleware->pipe($subdomainMiddleware);
+
+        // Named middleware aliases: allow routes to use string references
+        $middlewareRegistry->alias('session', SessionMiddleware::class);
+        $middlewareRegistry->alias('csrf', CsrfMiddleware::class);
+        $middlewareRegistry->alias('headers', SecurityHeadersMiddleware::class);
+        $middlewareRegistry->alias('subdomain', SubdomainRoutingMiddleware::class);
+
+        // HTTP rate limiting: bind a shared-store limiter (cache-backed when a
+        // cache is available, so counts persist across FPM workers; in-memory
+        // otherwise) and expose the middleware as a `throttle` alias routes and
+        // groups opt into. Not piped globally — throttling is per route/group by
+        // design. Only wired when enabled in config/security.php.
+        if ($securityConfig->rateLimit->enabled) {
+            $rateLimiter = $this->buildRateLimiter($container, $securityConfig->rateLimit);
+            $container->instance(RateLimiterInterface::class, $rateLimiter);
+
+            $rateLimitMiddleware = new RateLimitMiddleware(
+                $rateLimiter,
+                $trustedProxy,
+                RateLimitKeyStrategy::fromString($securityConfig->rateLimit->keyStrategy),
+            );
+            $container->instance(RateLimitMiddleware::class, $rateLimitMiddleware);
+            $middlewareRegistry->alias('throttle', RateLimitMiddleware::class);
+        }
+
+        // Middleware groups: composable sets for common route profiles.
+        //
+        // The limiter is added only when it was bound above. A group naming a class
+        // the container cannot resolve does not fail at boot — it fails at dispatch,
+        // on the first request to any route in the group, as a 500 for an operator
+        // whose only action was to turn rate limiting off.
+        $webGroup = [
+            SecurityHeadersMiddleware::class,
+            SessionMiddleware::class,
+        ];
+
+        $apiGroup = [
+            SecurityHeadersMiddleware::class,
+        ];
+
+        if ($securityConfig->rateLimit->enabled) {
+            // After the session, because a composite key strategy reads the
+            // authenticated user; before CSRF, so a flood is refused without
+            // spending a token comparison on it.
+            $webGroup[] = RateLimitMiddleware::class;
+            $apiGroup[] = RateLimitMiddleware::class;
+        }
+
+        $webGroup[] = CsrfMiddleware::class;
+
+        $middlewareRegistry->group('web', $webGroup);
+        $middlewareRegistry->group('api', $apiGroup);
     }
 
     private function buildSessionHandler(
@@ -220,6 +647,14 @@ final readonly class SecurityWiring implements ServiceWiringInterface
     ): SessionHandlerInterface {
         $sessionConfig = $securityConfig->session;
 
+        // Honour SessionConfig::$savePath (config key `save_path`), resolved to
+        // an absolute path so file sessions land in the same place under CLI,
+        // PHP-FPM and long-running SAPIs. Empty config lets FileHandler fall back
+        // to its built-in `var/sessions` default.
+        $fileSavePath = $sessionConfig->savePath !== ''
+            ? WritablePathGuard::resolveState($sessionConfig->savePath, 'security.session.save_path')
+            : '';
+
         return match ($sessionConfig->handler) {
             'database' => $container->has(PDO::class)
                 ? new DatabaseHandler(
@@ -227,18 +662,18 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                     'sessions',
                     $sessionConfig->lifetime,
                 )
-                : new FileHandler(),
+                : new FileHandler($fileSavePath),
             'redis' => $container->has(Redis::class)
                 ? new RedisHandler(
                     $container->get(Redis::class),
                     $sessionConfig->lifetime,
                 )
-                : new FileHandler(),
+                : new FileHandler($fileSavePath),
             'cookie' => $sessionEncryption !== null
                 ? new CookieHandler($sessionEncryption, $sessionConfig)
-                : new FileHandler(),
+                : new FileHandler($fileSavePath),
             'array' => new ArrayHandler(),
-            default => new FileHandler(),
+            default => new FileHandler($fileSavePath),
         };
     }
 
@@ -249,6 +684,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         SecurityConfig $securityConfig,
         HmacInterface $hmacService,
         ?MasterKey $masterKey,
+        ?TrustedProxy $trustedProxy = null,
     ): array {
         $validatorConfigs = $securityConfig->session->validators;
         $validators = [];
@@ -264,7 +700,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             $mode = isset($ipConfig['mode']) && $ipConfig['mode'] === 'strict' ? 'strict' : 'subnet';
             $ipv4Mask = $ipConfig['ipv4_mask'] ?? 24;
             $ipv6Mask = $ipConfig['ipv6_mask'] ?? 48;
-            $validators[] = new RemoteAddressValidator($mode, $ipv4Mask, $ipv6Mask);
+            $validators[] = new RemoteAddressValidator($mode, $ipv4Mask, $ipv6Mask, $trustedProxy);
         }
 
         $fpConfig = $validatorConfigs['fingerprint'] ?? [];
@@ -287,6 +723,26 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             'aes-gcm' => new AesGcmCipherSuite(),
             default => new SodiumCipherSuite(),
         };
+    }
+
+    /**
+     * Prefer the PSR-16 cache-backed limiter so counts persist across FPM
+     * workers; fall back to the in-memory limiter when no cache is bound.
+     */
+    private function buildRateLimiter(ContainerInterface $container, RateLimitConfig $config): RateLimiterInterface
+    {
+        if ($container->has(CacheManagerInterface::class)) {
+            /** @var CacheManagerInterface $cacheManager */
+            $cacheManager = $container->get(CacheManagerInterface::class);
+
+            return new CacheRateLimiter(
+                $cacheManager->simple(),
+                $config->defaultLimit,
+                $config->defaultWindow,
+            );
+        }
+
+        return new RateLimiter($config->defaultLimit, $config->defaultWindow);
     }
 
     /**

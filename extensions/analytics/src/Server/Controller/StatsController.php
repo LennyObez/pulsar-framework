@@ -10,6 +10,9 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Contracts\StatsServiceInterface;
 use Pulsar\Http\Message\Response;
 
+use function is_array;
+use function is_string;
+
 /**
  * Aggregate statistics API endpoint.
  */
@@ -23,15 +26,22 @@ final readonly class StatsController
     public function aggregate(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $siteId = (string) ($params['site_id'] ?? '');
+        /** @var mixed $rawSiteId */
+        $rawSiteId = $params['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
         if ($siteId === '') {
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
-        $from = new DateTimeImmutable((string) ($params['from'] ?? '-30 days'));
-        $to = new DateTimeImmutable((string) ($params['to'] ?? 'now'));
-        $filters = (array) ($params['filters'] ?? []);
+        /** @var mixed $rawFrom */
+        $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
+        $rawTo = $params['to'] ?? null;
+        $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
+        $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
+        /** @var array<string, string> $filters */
+        $filters = is_array($params['filters'] ?? null) ? $params['filters'] : [];
 
         $data = $this->statsService->getAggregate($siteId, $from, $to, $filters);
 

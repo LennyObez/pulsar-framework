@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Returns findings that are structurally distinct from validation
  * violations. Findings carry severity, confidence, and recommendations
  * rather than pass/fail outcomes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PolicyAnalyzerInterface

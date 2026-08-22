@@ -9,10 +9,11 @@ use Pulsar\Api\Api;
 /**
  * Immutable record of a consent action.
  *
- * IP addresses are stored as hashes — never raw values.
+ * IP addresses are stored as hashes: never raw values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ConsentRecord
+final readonly class ConsentRecord
 {
     public function __construct(
         public int $timestamp,

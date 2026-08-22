@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a content translation is updated.
+ *
+ * @psalm-api Event class — dispatched by the content service through
+ *            the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentUpdated

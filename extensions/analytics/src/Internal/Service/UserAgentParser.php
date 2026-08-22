@@ -19,7 +19,7 @@ use function str_replace;
  * external dependencies. Covers the major browsers and platforms that
  * represent 95%+ of real-world traffic.
  */
-#[Internal(reason: 'UA parsing internals — use via service binding')]
+#[Internal(reason: 'UA parsing internals; use via service binding')]
 final readonly class UserAgentParser
 {
     /**
@@ -77,7 +77,7 @@ final readonly class UserAgentParser
             return ['Firefox', $m[1]];
         }
 
-        // Chrome must be before Safari — Chrome includes "Safari" in its UA
+        // Chrome must be before Safari: Chrome includes "Safari" in its UA
         if (preg_match('/(?:Chrome|CriOS)\/(\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Chrome', $m[1]];
         }
@@ -101,7 +101,7 @@ final readonly class UserAgentParser
      */
     private function detectOs(string $ua): array
     {
-        // iOS detection (must be before macOS — iPad can spoof desktop Safari)
+        // iOS detection (must be before macOS; iPad can spoof desktop Safari)
         if (preg_match('/(?:iPhone|iPod).*OS (\d+[_.\d]*)/', $ua, $m) === 1) {
             return ['iOS', str_replace('_', '.', $m[1])];
         }
@@ -138,7 +138,7 @@ final readonly class UserAgentParser
      */
     private function detectDeviceType(string $ua): DeviceType
     {
-        // Tablet detection (must be before mobile — tablets may also match mobile patterns)
+        // Tablet detection (must be before mobile; tablets may also match mobile patterns)
         if (preg_match('/iPad|Android(?!.*Mobile)|Tablet/i', $ua) === 1) {
             return DeviceType::Tablet;
         }

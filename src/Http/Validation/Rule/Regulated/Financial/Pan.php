@@ -20,7 +20,7 @@ use function strlen;
  * Validates Primary Account Number (PAN) format.
  *
  * Strips spaces and dashes, validates 13-19 digits with Luhn checksum.
- * This is a FORMAT validator only — it does not verify that the card
+ * This is a FORMAT validator only; it does not verify that the card
  * number has been issued or is currently active.
  *
  * WARNING: PCI DSS Requirement 3 prohibits storage of full PAN unless
@@ -29,9 +29,10 @@ use function strlen;
  *
  * @see https://www.iso.org/standard/66011.html ISO/IEC 7812
  * @see https://www.pcisecuritystandards.org/ PCI DSS
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Pan implements RuleInterface
+final readonly class Pan implements RuleInterface
 {
     public function __construct(
         private string $message = '',

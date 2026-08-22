@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_threads (
@@ -41,25 +44,31 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
+        // Keyed on an expression, which IndexOperations has no way to express — its columns
+        // are quoted as identifiers. Still unrunnable on MySQL, which rejects `IF NOT EXISTS`
+        // here and wants a functional key part in parentheses of its own besides.
         $connection->execute(<<<'SQL'
             CREATE UNIQUE INDEX IF NOT EXISTS uq_thread_slug_tenant
                 ON forum_threads (slug, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'))
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_thread_category_activity
-                ON forum_threads (category_id, is_pinned DESC, last_activity_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_threads',
+            'idx_thread_category_activity',
+            ['category_id', IndexColumn::desc('is_pinned'), IndexColumn::desc('last_activity_at')],
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_thread_author
-                ON forum_threads (author_id, created_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_threads',
+            'idx_thread_author',
+            ['author_id', IndexColumn::desc('created_at')],
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_thread_tenant_activity
-                ON forum_threads (tenant_id, is_pinned DESC, last_activity_at DESC)
-            SQL);
+        $indexes->ensure(
+            'forum_threads',
+            'idx_thread_tenant_activity',
+            ['tenant_id', IndexColumn::desc('is_pinned'), IndexColumn::desc('last_activity_at')],
+        );
     }
 
     public function down(ConnectionInterface $connection): void

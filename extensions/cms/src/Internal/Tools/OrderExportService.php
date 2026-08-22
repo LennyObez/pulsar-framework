@@ -14,6 +14,7 @@ use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\OrderStatus;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+use RuntimeException;
 
 use function array_map;
 use function bin2hex;
@@ -36,7 +37,11 @@ use const JSON_THROW_ON_ERROR;
  * Filters by date range, status, and tenant. PII redaction
  * is applied by default in JSON exports unless explicitly included.
  */
-#[Internal(reason: 'Order export internals — use OrderExportServiceInterface')]
+/**
+ * @psalm-api Bound to OrderExportServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Order export internals; use OrderExportServiceInterface')]
 final readonly class OrderExportService implements OrderExportServiceInterface
 {
     public function __construct(
@@ -50,6 +55,10 @@ final readonly class OrderExportService implements OrderExportServiceInterface
         $orders = $this->fetchOrders($filters);
 
         $stream = fopen('php://temp', 'r+');
+
+        if ($stream === false) {
+            throw new RuntimeException('Failed to open temporary stream for CSV export');
+        }
 
         // CSV header
         fputcsv($stream, [
@@ -87,7 +96,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
         }
 
         rewind($stream);
-        $csv = stream_get_contents($stream);
+        $csv = (string) stream_get_contents($stream);
         fclose($stream);
 
         $this->auditLogger?->log(
@@ -113,7 +122,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
         $exportData = array_map(function (Order $order) use ($includePii): array {
             $items = $this->orderItemRepository->findByOrder($order->id);
 
-            $orderData = [
+            return [
                 'order_number' => $order->orderNumber,
                 'status' => $order->status->value,
                 'customer_id' => $order->customerId,
@@ -141,8 +150,6 @@ final readonly class OrderExportService implements OrderExportServiceInterface
                     'product_snapshot' => $item->productSnapshot,
                 ], $items),
             ];
-
-            return $orderData;
         }, $orders);
 
         $json = json_encode([
@@ -157,8 +164,6 @@ final readonly class OrderExportService implements OrderExportServiceInterface
             'orders' => $exportData,
         ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
 
-        $evidenceHash = bin2hex(sodium_crypto_generichash($json));
-
         $this->auditLogger?->log(
             AuditEvent::DataAccess,
             AuditOutcome::Success,
@@ -169,7 +174,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
                 'format' => 'json',
                 'order_count' => count($exportData),
                 'pii_included' => $includePii,
-                'evidence_hash' => $evidenceHash,
+                'evidence_hash' => bin2hex(sodium_crypto_generichash($json)),
                 'filters' => $this->sanitizeFiltersForLog($filters),
             ],
         );
@@ -180,10 +185,15 @@ final readonly class OrderExportService implements OrderExportServiceInterface
     /**
      * Fetch orders from the repository using the given filters.
      *
-     * Supports filters: dateFrom (string), dateTo (string), status (string),
-     * tenantId (string), page (int), perPage (int).
-     *
-     * @param array<string, mixed> $filters
+     * @param array{
+     *     status?: string,
+     *     tenantId?: string,
+     *     dateFrom?: string,
+     *     dateTo?: string,
+     *     customerId?: string,
+     *     page?: int,
+     *     perPage?: int,
+     * } $filters
      *
      * @return list<Order>
      */
@@ -191,8 +201,9 @@ final readonly class OrderExportService implements OrderExportServiceInterface
     {
         $repoFilters = [];
 
-        if (isset($filters['status']) && $filters['status'] !== '') {
-            $status = OrderStatus::tryFrom($filters['status']);
+        $statusFilter = $filters['status'] ?? '';
+        if ($statusFilter !== '') {
+            $status = OrderStatus::tryFrom($statusFilter);
 
             if ($status !== null) {
                 $repoFilters['status'] = $status;
@@ -215,8 +226,8 @@ final readonly class OrderExportService implements OrderExportServiceInterface
             $repoFilters['customerId'] = $filters['customerId'];
         }
 
-        $page = (int) ($filters['page'] ?? 1);
-        $perPage = (int) ($filters['perPage'] ?? 10000);
+        $page = $filters['page'] ?? 1;
+        $perPage = $filters['perPage'] ?? 10000;
 
         return $this->orderRepository->listOrders($repoFilters, $page, $perPage);
     }
@@ -226,7 +237,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
      */
     private function formatMinorUnits(int $amount): string
     {
-        return number_format($amount / 100, 2, '.', '');
+        return number_format((float) $amount / 100.0, 2, '.', '');
     }
 
     /**
@@ -238,13 +249,15 @@ final readonly class OrderExportService implements OrderExportServiceInterface
      */
     private function sanitizeFiltersForLog(array $filters): array
     {
+        /** @var array<string, mixed> $safe */
         $safe = [];
 
+        /** @var mixed $value */
         foreach ($filters as $key => $value) {
             if ($key === 'customerId' || $key === 'tenantId') {
-                $safe[$key] = '[present]';
+                $safe = [...$safe, $key => '[present]'];
             } else {
-                $safe[$key] = $value;
+                $safe = [...$safe, $key => $value];
             }
         }
 

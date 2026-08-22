@@ -1,11 +1,20 @@
 {
   "name": "pulsar/framework",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.12",
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Lenny Obez",
+      "email": "github@lennyobez.com",
+      "role": "Creator"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
-    "php": "^8.5",
+    "php": ">=8.5.1",
     "ext-ctype": "*",
     "ext-curl": "*",
     "ext-dom": "*",
@@ -19,10 +28,13 @@
     "ext-simplexml": "*",
     "ext-sodium": "*",
     "ext-zip": "*",
-    "league/commonmark": "^2.6",
+    "ext-zlib": "*",
+    "league/commonmark": "^2.8.2",
     "psr/cache": "^3.0",
+    "psr/clock": "^1.0",
     "psr/container": "^2.0",
     "psr/event-dispatcher": "^1.0",
+    "psr/http-client": "^1.0",
     "psr/http-factory": "^1.0",
     "psr/http-message": "^2.0",
     "psr/http-server-handler": "^1.0",
@@ -31,73 +43,91 @@
     "psr/simple-cache": "^3.0"
   },
   "require-dev": {
+    "bamarni/composer-bin-plugin": "^1.9",
+    "brianium/paratest": "^7.23",
     "deptrac/deptrac": "^4.6",
     "friendsofphp/php-cs-fixer": "^3.0",
-    "infection/infection": "^0.32.5",
+    "giorgiosironi/eris": "^1.0",
+    "infection/infection": "^0.34.0",
+    "jetbrains/phpstorm-stubs": "^2026.1",
     "nyholm/psr7": "^1.8",
     "phpbench/phpbench": "^1.3",
     "phpstan/phpstan": "^2.0",
-    "phpunit/phpunit": "^13",
+    "phpstan/phpstan-deprecation-rules": "^2.0",
+    "phpunit/phpunit": "^13.2",
     "rector/rector": "^2.0",
-    "roave/security-advisories": "dev-latest",
-    "vimeo/psalm": "^6.15"
+    "roave/security-advisories": "dev-latest"
   },
   "suggest": {
     "ext-apcu": "Required for APCu cache driver",
+    "ext-brotli": "Required for Content-Encoding: br — the best ratio for dynamic text responses and the only modern codec every browser supports",
     "ext-iconv": "Required for optimized slug generation",
+    "ext-igbinary": "Required for the igbinary cache serializer (compact binary, data-only)",
     "ext-intl": "Required for ICU MessageFormat, number/date/currency formatting",
     "ext-memcached": "Required for Memcached cache driver",
     "ext-pcntl": "Required for queue worker signal handling (Unix only)",
     "ext-amqp": "Required for AMQP queue driver (RabbitMQ)",
     "ext-redis": "Required for Redis cache and queue drivers",
     "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
-    "aws/aws-sdk-php": "Required for Amazon SQS queue driver",
-    "google/cloud-pubsub": "Required for Google Cloud Pub/Sub queue driver",
+    "ext-zstd": "Required for Content-Encoding: zstd and the zstd cache-value compression codec",
+    "aws/aws-sdk-php": "Optional, only when wiring an opt-in extension that uses Amazon SQS — never imported by core (ADR-0006 isolation, ARCHITECTURE_RULES.md vendor allowlist)",
+    "google/cloud-pubsub": "Optional, only when wiring an opt-in extension that uses Google Cloud Pub/Sub — never imported by core (ADR-0006 isolation, ARCHITECTURE_RULES.md vendor allowlist)",
     "nyholm/psr7": "Required for differential testing against PSR-7 reference implementation",
     "psy/psysh": "Required for the interactive REPL (pulsar shell)"
   },
   "autoload": {
     "files": [
-      "src/I18n/helpers.php"
+      "src/I18n/helpers.php",
+      "src/Support/functions.php"
     ],
     "psr-4": {
-      "Pulsar\\": "src/",
-      "Pulsar\\Extension\\Example\\": "extensions/example/src/",
-      "Pulsar\\Extension\\Payments\\": "extensions/payments/src/",
-      "Pulsar\\Extension\\Psr7Bridge\\": "extensions/psr7-bridge/src/",
-      "Pulsar\\Extension\\ObservabilityExport\\": "extensions/observability-export/src/",
-      "Pulsar\\Extension\\SocialSso\\": "extensions/social-sso/src/",
-      "Pulsar\\Extension\\Studio\\": "extensions/studio/src/",
-      "Pulsar\\Extension\\McpServer\\": "extensions/mcp-server/src/",
-      "Pulsar\\Extension\\Orm\\": "extensions/orm/src/",
-      "Pulsar\\Extension\\Admin\\": "extensions/admin/src/",
-      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/",
-      "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
-      "Pulsar\\Extension\\Form\\": "extensions/form/src/",
-      "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/",
-      "Pulsar\\Extension\\Analytics\\": "extensions/analytics/src/",
-      "Pulsar\\Extension\\Cms\\": "extensions/cms/src/",
-      "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/",
-      "Pulsar\\Extension\\Forum\\": "extensions/forum/src/"
+      "Pulsar\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
       "Pulsar\\Tests\\": "tests/",
-      "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/"
+      "Pulsar\\Extension\\Admin\\Tests\\": "extensions/admin/tests/",
+      "Pulsar\\Extension\\Tickets\\Tests\\": "extensions/tickets/tests/",
+      "Pulsar\\Extension\\Booking\\Tests\\": "extensions/booking/tests/",
+      "Pulsar\\Extension\\Messaging\\Tests\\": "extensions/messaging/tests/",
+      "Pulsar\\PHPStan\\": "tools/php/phpstan/",
+      "Pulsar\\Tooling\\Api\\": "tools/api/src/",
+      "Pulsar\\Tooling\\Support\\": "tools/support/src/",
+      "Pulsar\\Tooling\\PsalmPlugin\\": "tools/php/psalm-plugin/",
+      "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
+      "Pulsar\\Extension\\Observability\\Tests\\": "extensions/observability/tests/",
+      "Pulsar\\Extension\\ObservabilityExportTests\\": "extensions/observability-export/tests/",
+      "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/",
+      "Pulsar\\Extension\\Accessibility\\Tests\\": "extensions/accessibility/tests/",
+      "Pulsar\\Extension\\AiGovernance\\Tests\\": "extensions/ai-governance/tests/",
+      "Pulsar\\Extension\\Auth\\Tests\\": "extensions/auth/tests/",
+      "Pulsar\\Extension\\Payments\\Tests\\": "extensions/payments/tests/",
+      "Pulsar\\Extension\\Orm\\Tests\\": "extensions/orm/tests/",
+      "Pulsar\\Extension\\Dsa\\Tests\\": "extensions/compliance/dsa/tests/",
+      "Pulsar\\Extension\\DataAct\\Tests\\": "extensions/compliance/data-act/tests/",
+      "Pulsar\\Benchmark\\": "benchmarks/",
+      "Pulsar\\Extension\\HealthStatus\\Tests\\": "extensions/health-status/tests/",
+      "Pulsar\\Extension\\McpServer\\Tests\\": "extensions/mcp-server/tests/",
+      "Pulsar\\Extension\\Devices\\Tests\\": "extensions/devices/tests/",
+      "Pulsar\\Extension\\Releases\\Tests\\": "extensions/releases/tests/"
     }
   },
   "bin": [
     "bin/pulsar"
   ],
   "scripts": {
-    "test": "phpunit -c tools/php/phpunit.xml",
-    "test:coverage": "phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
+    "test": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml",
+    "test:parallel": "php -d memory_limit=2G vendor/bin/paratest -c tools/php/phpunit.xml --runner=WrapperRunner -p6",
+    "test:all": "php -d memory_limit=2G vendor/bin/paratest -c tools/php/phpunit.xml --runner=WrapperRunner -p6 --testsuite Unit",
+    "test:coverage": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
     "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
     "psalm": "psalm -c tools/php/psalm.xml",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
     "api:snapshot": "php tools/api/generate-snapshot.php",
+    "version:sync": "php tools/version/sync-version.php",
+    "version:check": "php tools/version/sync-version.php --check",
     "bench": "phpbench run --config=tools/php/phpbench.json --report=default",
     "bench:ci": "phpbench run --config=tools/php/phpbench.json --report=default --progress=none",
     "bench:profiles": "php tools/bench/run.php",
@@ -109,23 +139,52 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
+    "autoload:check": "php tools/ci/assert-psr4-compliance.php",
+    "coverage:floor": "php tools/ci/assert-coverage-threshold.php",
+    "security:audit": "php tools/ci/assert-no-advisories.php",
+    "security:audit:js": "php tools/ci/assert-no-advisories.php --ecosystem=pnpm",
+    "security:malicious": "php tools/security/assert-no-malicious-code.php",
+    "class-shape": "php -d memory_limit=2G tools/ci/assert-substitutability-and-immutability.php",
+    "class-shape:baseline": "php -d memory_limit=2G tools/ci/assert-substitutability-and-immutability.php --generate-baseline",
+    "extension:coverage": "php scripts/check_extension_coverage.php",
+    "compliance:check": "php scripts/check_compliance_claims.php",
     "wiring:check": "php scripts/wiring_check.php",
-    "mutation": "infection --threads=4 --min-msi=80 --min-covered-msi=90",
-    "fuzz": "phpunit -c tools/php/phpunit.xml --group fuzz",
-    "chaos": "phpunit -c tools/php/phpunit.xml --group chaos",
-    "property": "phpunit -c tools/php/phpunit.xml --group property",
+    "slugs:lint": "php bin/pulsar i18n:slugs:lint",
+    "security:lint": "semgrep --config=tools/security/semgrep-pulsar-rules.yml src/ extensions/",
+    "mutation": "php -d memory_limit=2G vendor/bin/infection --threads=4 --only-covering-test-cases",
+    "mutation:diff": "php -d memory_limit=2G vendor/bin/infection --threads=4 --only-covering-test-cases --git-diff-lines --git-diff-base=origin/main",
+    "fuzz": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --group fuzz",
+    "chaos": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --group chaos",
+    "property": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --group property",
     "qa": [
+      "@version:check",
+      "@autoload:check",
       "@cs:check",
       "@phpstan",
       "@psalm",
       "@boundary:check",
-      "@test"
+      "@class-shape",
+      "@security:malicious",
+      "@test",
+      "@security:lint"
+    ],
+    "qa:full": [
+      "@qa",
+      "@mutation",
+      "@test:coverage"
     ]
   },
   "config": {
     "sort-packages": true,
     "allow-plugins": {
-      "infection/extension-installer": true
+      "infection/extension-installer": true,
+      "bamarni/composer-bin-plugin": true
+    }
+  },
+  "extra": {
+    "bamarni-bin": {
+      "bin-links": true,
+      "forward-command": true
     }
   }
 }

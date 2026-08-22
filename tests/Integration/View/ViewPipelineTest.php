@@ -283,7 +283,7 @@ final class ViewPipelineTest extends TestCase
 
     private function writeTemplate(string $name, string $content): void
     {
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulsar.php';
+        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulse.php';
         $fullPath = $this->templateDir . DIRECTORY_SEPARATOR . $relativePath;
         $dir = dirname($fullPath);
 

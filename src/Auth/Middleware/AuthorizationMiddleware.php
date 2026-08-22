@@ -81,9 +81,30 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             /** @var list<string> $permissions */
             $permissions = $attributes['permissions'] ?? [];
 
+            // Default-deny: a route guarded by the `auth` middleware alias
+            // but declaring no permissions is a configuration mistake, not
+            // a grant. Falling through to allow here would let every
+            // authenticated user past with no authorization check at all.
+            // Operators who genuinely mean "any authenticated user" opt in
+            // with the explicit `_authenticated` sentinel below.
+            if ($permissions === []) {
+                try {
+                    $this->auditAuthzDenied($request, $identity->id(), 'no_permissions_declared');
+                } catch (RandomException | JsonException | SodiumException) {
+                    // Audit logging failure must not disrupt authorization flow
+                }
+                return $this->forbiddenResponse($request);
+            }
+
             $path = $request->getUri()->getPath();
 
             foreach ($permissions as $permission) {
+                // `_authenticated` is the explicit "any authenticated
+                // user" marker — the caller opted in to the RBAC bypass.
+                if ($permission === '_authenticated') {
+                    continue;
+                }
+
                 $context = new PolicyContext(
                     permission: $permission,
                     resource: $path,
@@ -98,6 +119,16 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
                     return $this->forbiddenResponse($request);
                 }
             }
+        } else {
+            // Fail closed: without route context the required permissions are
+            // unknown, so an authenticated request must not pass unchecked.
+            try {
+                $this->auditAuthzDenied($request, $identity->id(), 'no_route_context');
+            } catch (RandomException | JsonException | SodiumException) {
+                // Audit logging failure must not disrupt authorization flow
+            }
+
+            return $this->forbiddenResponse($request);
         }
 
         return $handler->handle($request);

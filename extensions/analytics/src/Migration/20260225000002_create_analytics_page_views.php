@@ -5,11 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Analytics\Migration\AnalyticsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $driver = $connection->driver();
 
         $connection->execute(AnalyticsDdl::adapt(<<<'SQL'
@@ -37,13 +40,9 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_pv_site_created ON analytics_page_views (site_id, created_at)
-            SQL);
+        $indexes->ensure('analytics_page_views', 'idx_pv_site_created', ['site_id', 'created_at']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_pv_site_visitor_created ON analytics_page_views (site_id, visitor_id, created_at)
-            SQL);
+        $indexes->ensure('analytics_page_views', 'idx_pv_site_visitor_created', ['site_id', 'visitor_id', 'created_at']);
 
         // pathname prefix index: MySQL uses KEY(col(N)), others index full column
         if ($driver === Driver::MySQL) {
@@ -51,9 +50,7 @@ return new class implements MigrationInterface {
                 CREATE INDEX idx_pv_site_pathname_created ON analytics_page_views (site_id, pathname(255), created_at)
                 SQL);
         } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_pv_site_pathname_created ON analytics_page_views (site_id, pathname, created_at)
-                SQL);
+            $indexes->ensure('analytics_page_views', 'idx_pv_site_pathname_created', ['site_id', 'pathname', 'created_at']);
         }
     }
 

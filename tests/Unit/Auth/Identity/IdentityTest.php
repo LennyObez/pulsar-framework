@@ -15,21 +15,24 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
 final class IdentityTest extends TestCase
 {
     #[Test]
-    public function constructorSetsAllPropertiesCorrectly(): void
+    public function defaultsApplyWhenOptionalParametersOmitted(): void
     {
-        $identity = new Identity(
-            id: 'user-42',
-            displayName: 'Jane Doe',
-            roles: ['admin', 'editor'],
-            twoFactorStatus: TwoFactorStatus::Verified,
-            attributes: ['email' => 'jane@example.com', 'locale' => 'en'],
-        );
+        $identity = new Identity(id: 'user-1', displayName: 'Test');
 
-        self::assertSame('user-42', $identity->id());
-        self::assertSame('Jane Doe', $identity->displayName());
-        self::assertSame(['admin', 'editor'], $identity->roles());
-        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
-        self::assertSame(['email' => 'jane@example.com', 'locale' => 'en'], $identity->attributes());
+        self::assertSame([], $identity->roles());
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+        self::assertSame([], $identity->attributes());
+    }
+
+    #[Test]
+    public function fromArrayDefaultsTwoFactorStatusToDisabled(): void
+    {
+        $identity = Identity::fromArray([
+            'id' => 'user-1',
+            'display_name' => 'Test',
+        ]);
+
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
     }
 
     #[Test]
@@ -165,7 +168,7 @@ final class IdentityTest extends TestCase
     public function fromArrayRejectsEmptyId(): void
     {
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('id must be a non-empty string');
+        $this->expectExceptionMessageIsOrContains('id must be a non-empty string');
 
         (void) Identity::fromArray(['id' => '', 'display_name' => 'Test']);
     }
@@ -174,7 +177,7 @@ final class IdentityTest extends TestCase
     public function fromArrayRejectsNonStringId(): void
     {
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('id must be a non-empty string');
+        $this->expectExceptionMessageIsOrContains('id must be a non-empty string');
 
         (void) Identity::fromArray(['id' => 123, 'display_name' => 'Test']);
     }
@@ -183,7 +186,7 @@ final class IdentityTest extends TestCase
     public function fromArrayRejectsNonStringDisplayName(): void
     {
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('display_name must be a string');
+        $this->expectExceptionMessageIsOrContains('display_name must be a string');
 
         (void) Identity::fromArray(['id' => 'user-1', 'display_name' => 42]);
     }
@@ -192,7 +195,7 @@ final class IdentityTest extends TestCase
     public function fromArrayRejectsNonStringRoles(): void
     {
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('roles must be a list of strings');
+        $this->expectExceptionMessageIsOrContains('roles must be a list of strings');
 
         (void) Identity::fromArray(['id' => 'user-1', 'display_name' => 'Test', 'roles' => [1, 2]]);
     }
@@ -201,7 +204,7 @@ final class IdentityTest extends TestCase
     public function fromArrayRejectsNonArrayAttributes(): void
     {
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('attributes must be an array');
+        $this->expectExceptionMessageIsOrContains('attributes must be an array');
 
         (void) Identity::fromArray(['id' => 'user-1', 'display_name' => 'Test', 'attributes' => 'bad']);
     }

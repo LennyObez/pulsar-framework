@@ -16,7 +16,10 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
 final readonly class HttpRequestPayload implements ConsoleEvent
 {
     /**
-     * @param array<string, string> $headers
+     * @param array<string, string> $headers Request headers
+     * @param array<string, mixed> $session Session data snapshot (redacted)
+     * @param list<string> $middleware Middleware stack that handled this request
+     * @param array<string, string> $routeParams Matched route parameters
      */
     public function __construct(
         public string $method,
@@ -30,6 +33,11 @@ final readonly class HttpRequestPayload implements ConsoleEvent
         public ?string $routeName,
         public ?string $queryString = null,
         public ?string $bodyPreview = null,
+        public ?string $controllerClass = null,
+        public ?string $controllerMethod = null,
+        public array $session = [],
+        public array $middleware = [],
+        public array $routeParams = [],
     ) {}
 
     public function eventType(): EventType
@@ -56,6 +64,11 @@ final readonly class HttpRequestPayload implements ConsoleEvent
             'route_name' => $this->routeName,
             'query_string' => $this->queryString,
             'body_preview' => $this->bodyPreview,
+            'controller_class' => $this->controllerClass,
+            'controller_method' => $this->controllerMethod,
+            'session' => $this->session,
+            'middleware' => $this->middleware,
+            'route_params' => $this->routeParams,
         ];
     }
 }

@@ -56,7 +56,7 @@ final readonly class SendgridTransport implements TransportInterface
             // but since we only have the body, we extract from response if available.
             if ($response->body !== '') {
                 /** @var array{x-message-id?: string} $decoded */
-                $decoded = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+                $decoded = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
 
                 return $decoded['x-message-id'] ?? '';
             }

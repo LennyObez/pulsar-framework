@@ -13,7 +13,7 @@ use function is_array;
 /**
  * Optimization-hint cache for constructor parameter type maps.
  *
- * This is strictly a hint — the container uses it to skip reflection
+ * This is strictly a hint: the container uses it to skip reflection
  * when possible, but falls back to reflection for any class not found
  * in the cache or where the cached entry causes a resolution failure.
  *
@@ -24,7 +24,7 @@ final class ContainerCache
 {
     public const string FILENAME = 'container.cache.bin';
 
-    /** Schema version — incremented when resolution rules change. */
+    /** Schema version: incremented when resolution rules change. */
     public const int SCHEMA_VERSION = 1;
 
     public function __construct(

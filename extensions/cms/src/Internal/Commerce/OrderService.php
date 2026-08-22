@@ -24,8 +24,11 @@ use function sprintf;
 
 /**
  * Order lifecycle management: payment confirmation, failure, refunds, and fulfillment.
+ *
+ * @psalm-api Resolved from the DI container by admin controllers and webhook
+ *            handlers; not instantiated by name.
  */
-#[Internal(reason: 'Order lifecycle service — not part of public API')]
+#[Internal(reason: 'Order lifecycle service; not part of public API')]
 final readonly class OrderService
 {
     public function __construct(
@@ -39,7 +42,7 @@ final readonly class OrderService
     ) {}
 
     /**
-     * Confirm payment for an order (idempotent — skips if already Confirmed).
+     * Confirm payment for an order (idempotent; skips if already Confirmed).
      */
     public function confirmPayment(string $orderId, string $paymentIntentId): void
     {
@@ -83,7 +86,7 @@ final readonly class OrderService
             AuditOutcome::Success,
             null,
             'cms.commerce.payment.confirmed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['paymentIntentId' => $paymentIntentId],
         );
     }
@@ -122,7 +125,7 @@ final readonly class OrderService
             AuditOutcome::Failure,
             null,
             'cms.commerce.payment.failed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['reason' => $reason],
         );
     }
@@ -205,7 +208,7 @@ final readonly class OrderService
             AuditOutcome::Success,
             $actorId,
             'cms.commerce.refund.processed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['amount' => $amount, 'reason' => $reason, 'full' => $isFullRefund],
         );
     }
@@ -231,7 +234,7 @@ final readonly class OrderService
             AuditOutcome::Success,
             $actorId,
             'cms.commerce.order.fulfilled',
-            "order:{$orderId}",
+            "order:$orderId",
             ['orderNumber' => $order->orderNumber],
         );
     }

@@ -46,9 +46,11 @@ use function file_get_contents;
 use function hash;
 use function hash_file;
 use function implode;
+use function is_a;
 use function is_dir;
 use function json_decode;
 use function random_bytes;
+use function realpath;
 use function rmdir;
 use function rtrim;
 use function spl_autoload_register;
@@ -68,6 +70,9 @@ use const JSON_THROW_ON_ERROR;
  *
  * Reuses SafeArchiveExtractor for Zip Slip protection. Tracks plugin failures
  * with a circuit breaker that auto-disables after 10 failures in 5 minutes.
+ *
+ * @psalm-api Bound to CmsPluginManagerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CmsPluginManagerInterface for public API')]
 final readonly class CmsPluginManager implements CmsPluginManagerInterface
@@ -130,7 +135,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             }
 
             /** @var array<string, mixed> $manifestData */
-            $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+            $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
             $manifest = PluginManifest::fromArray($manifestData);
 
             $validation = $this->manifestValidator->validate($manifest);
@@ -144,7 +149,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
 
             if ($existing !== null) {
                 throw CmsException::pluginManifestInvalid(
-                    "Plugin with slug '{$manifest->slug}' is already installed",
+                    "Plugin with slug '$manifest->slug' is already installed",
                 );
             }
 
@@ -164,7 +169,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                     AuditOutcome::Success,
                     $installedBy,
                     'cms.plugin.security_warnings',
-                    "plugin:{$manifest->slug}",
+                    "plugin:$manifest->slug",
                     ['warnings' => $securityWarnings],
                 );
             }
@@ -219,7 +224,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                 AuditOutcome::Success,
                 $installedBy,
                 'cms.plugin.installed',
-                "plugin:{$pluginId}",
+                "plugin:$pluginId",
                 ['slug' => $manifest->slug, 'version' => $manifest->version],
             );
 
@@ -266,7 +271,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             AuditOutcome::Success,
             $enabledBy,
             'cms.plugin.enabled',
-            "plugin:{$pluginId}",
+            "plugin:$pluginId",
             ['slug' => $plugin->slug],
         );
 
@@ -304,7 +309,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             AuditOutcome::Success,
             $disabledBy,
             'cms.plugin.disabled',
-            "plugin:{$pluginId}",
+            "plugin:$pluginId",
             ['slug' => $plugin->slug],
         );
 
@@ -347,7 +352,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             AuditOutcome::Success,
             $deletedBy,
             'cms.plugin.deleted',
-            "plugin:{$pluginId}",
+            "plugin:$pluginId",
             ['slug' => $plugin->slug, 'reason' => $reason],
         );
 
@@ -405,7 +410,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                     AuditOutcome::Error,
                     null,
                     'cms.plugin.register_failed',
-                    "plugin:{$plugin->id}",
+                    "plugin:$plugin->id",
                     ['slug' => $plugin->slug, 'error' => $e->getMessage()],
                 );
             }
@@ -430,7 +435,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                     AuditOutcome::Error,
                     null,
                     'cms.plugin.boot_failed',
-                    "plugin:{$slug}",
+                    "plugin:$slug",
                     ['error' => $e->getMessage()],
                 );
             }
@@ -455,9 +460,33 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
      * 2. Already-autoloadable class (installed via Composer require)
      * 3. PSR-4 autoload mappings from plugin manifest
      * 4. Fallback: direct file require from src/ directory
+     *
+     * When `cms.security.require_signed_plugins` is enabled, this method
+     * refuses to load a plugin whose signature was not verified at
+     * install time. The verifier ({@see PluginProvenanceVerifier})
+     * computes the SHA-256 archive digest and validates an Ed25519
+     * detached signature against the `trusted_public_keys` allowlist; if
+     * either step fails, the install marks `signatureVerified=false` and
+     * the load path here REFUSES to boot the entry point. Without this
+     * gate the verifier's verdict is advisory only and a tampered plugin
+     * still loads.
      */
     private function loadPluginInstance(InstalledCmsPlugin $plugin): ?CmsPluginInterface
     {
+        // Fail closed when signature enforcement is on.
+        if ($this->config->requireSignedPlugins && !$plugin->signatureVerified) {
+            $this->logger->error('Plugin refused to load: signature verification failed or not performed', [
+                'slug' => $plugin->slug,
+                'version' => $plugin->version,
+                'tenant_id' => $plugin->tenantId,
+                'provenance_verified' => $plugin->provenanceVerified,
+                'signature_verified' => $plugin->signatureVerified,
+                'reason' => 'cms.security.require_signed_plugins=true but plugin signature not verified',
+            ]);
+
+            return null;
+        }
+
         // Read manifest to get entry point
         $manifestPath = $plugin->storagePath . '/plugin.json';
 
@@ -477,7 +506,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
         }
 
         /** @var array<string, mixed> $manifestData */
-        $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+        $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
         $manifest = PluginManifest::fromArray($manifestData);
 
         if ($manifest->entryPoint === null) {
@@ -498,9 +527,11 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                 $this->registerPsr4Autoloader($plugin->storagePath, $manifest->autoload['psr-4']);
             }
 
-            // 4. Fallback: direct file require
-            if (!class_exists($manifest->entryPoint)) {
-                $classFile = $plugin->storagePath . '/src/' . str_replace('\\', '/', $manifest->entryPoint) . '.php';
+            // 4. Fallback: direct file require (class_exists re-checked after autoloader registration)
+            $entryPointClass = $manifest->entryPoint;
+
+            if (!class_exists($entryPointClass)) {
+                $classFile = $plugin->storagePath . '/src/' . str_replace('\\', '/', $entryPointClass) . '.php';
 
                 if (file_exists($classFile)) {
                     require_once $classFile;
@@ -508,27 +539,19 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             }
         }
 
-        if (!class_exists($manifest->entryPoint)) {
-            $this->logger->error('Plugin entry point class not found', [
+        $entryPoint = $manifest->entryPoint;
+
+        if (!class_exists($entryPoint) || !is_a($entryPoint, CmsPluginInterface::class, true)) {
+            $this->logger->error('Plugin entry point class missing or does not implement CmsPluginInterface', [
                 'slug' => $plugin->slug,
-                'entry_point' => $manifest->entryPoint,
+                'entry_point' => $entryPoint,
             ]);
 
             return null;
         }
 
-        $instance = new ($manifest->entryPoint)();
-
-        if (!$instance instanceof CmsPluginInterface) {
-            $this->logger->error('Plugin entry point does not implement CmsPluginInterface', [
-                'slug' => $plugin->slug,
-                'entry_point' => $manifest->entryPoint,
-            ]);
-
-            return null;
-        }
-
-        return $instance;
+        /** @var class-string<CmsPluginInterface> $entryPoint */
+        return new $entryPoint();
     }
 
     /**
@@ -580,8 +603,8 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             new RecursiveDirectoryIterator($srcDir, FilesystemIterator::SKIP_DOTS),
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             if ($item->getExtension() !== 'php') {
                 continue;
             }
@@ -632,7 +655,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
 
     private function removeDirectory(string $path): void
     {
-        if (!is_dir($path)) {
+        if (!is_dir($path) || !$this->isInsideAllowedRoot($path)) {
             return;
         }
 
@@ -641,15 +664,53 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             RecursiveIteratorIterator::CHILD_FIRST,
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             if ($item->isDir()) {
+                // Path comes from RecursiveDirectoryIterator iterating $path,
+                // which was guarded by isInsideAllowedRoot() above — recursion
+                // stays inside the resolved allowed root.
+                // nosemgrep: php.lang.security.unlink-use.unlink-use
                 rmdir($item->getPathname());
             } else {
+                // Same root-guard as above; no user input flows into unlink
+                // outside the validated subtree.
+                // nosemgrep: php.lang.security.unlink-use.unlink-use
                 unlink($item->getPathname());
             }
         }
 
+        // nosemgrep: php.lang.security.unlink-use.unlink-use
         rmdir($path);
+    }
+
+    /**
+     * Defence-in-depth: confirm the directory to remove resolves inside either
+     * the configured plugin storage path or the system temp dir. Guards
+     * against any future regression in slug validation or DB tampering.
+     */
+    private function isInsideAllowedRoot(string $path): bool
+    {
+        $resolved = realpath($path);
+
+        if ($resolved === false) {
+            return false;
+        }
+
+        foreach ([$this->storagePath, sys_get_temp_dir()] as $root) {
+            $rootReal = realpath($root);
+
+            if ($rootReal === false) {
+                continue;
+            }
+
+            $rootWithSep = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;
+
+            if (str_starts_with($resolved, $rootWithSep)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

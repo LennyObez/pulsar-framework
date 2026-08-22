@@ -21,6 +21,7 @@ use const JSON_THROW_ON_ERROR;
  * Keys are built from a hash of the normalized SQL, sorted bindings,
  * tenant ID, connection role, and schema version to ensure correctness
  * across tenants and schema migrations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryCacheKey
@@ -48,6 +49,6 @@ final readonly class QueryCacheKey
             'schema' => $schemaVersion,
         ], JSON_THROW_ON_ERROR);
 
-        return sprintf('qc:%s', hash('xxh128', $payload));
+        return sprintf('qc.%s', hash('xxh128', $payload));
     }
 }

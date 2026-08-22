@@ -8,10 +8,13 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
+use function count;
+use function implode;
 use function sprintf;
 
 /**
  * Exception thrown for configuration errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConfigException extends RuntimeException
@@ -41,5 +44,71 @@ final class ConfigException extends RuntimeException
     public static function missingRequired(string $key, string $context): self
     {
         return new self(sprintf('Missing required configuration key "%s" in %s', $key, $context));
+    }
+
+    /**
+     * One or more config files carry keys the framework does not recognize,
+     * and strict key checking is enabled. Aggregated so the operator sees every
+     * typo at once rather than one boot failure at a time.
+     *
+     * @param list<string> $descriptions Per-section lines already rendered with
+     *                                   any "did you mean" suggestions.
+     */
+    #[NoDiscard]
+    public static function unknownKeys(array $descriptions): self
+    {
+        return new self(sprintf(
+            "Unknown configuration key(s) detected with strict key checking enabled:\n  - %s\n"
+            . 'Fix the key names, or set config.strict_keys = false (or PULSAR_CONFIG_STRICT=false) '
+            . 'to downgrade this to a warning.',
+            implode("\n  - ", $descriptions),
+        ));
+    }
+
+    /**
+     * Boot-time compliance verification found controls that are not actually
+     * satisfied at runtime, while compliance strict mode is on. Unlike
+     * {@see self::complianceViolation()} — which reports a config value that could
+     * have been tightened — these are controls no configuration change can fix
+     * from here (a missing master key, an inactive audit chain), so the boot is
+     * refused with the verifier's own findings.
+     *
+     * @param list<string> $failures One rendered line per failed check.
+     */
+    #[NoDiscard]
+    public static function complianceVerificationFailed(array $failures): self
+    {
+        return new self(sprintf(
+            "Compliance strict mode: boot-time verification failed for %d control(s):\n  - %s\n"
+            . 'Resolve the findings above, or set compliance.verification.strict_mode = false '
+            . 'to downgrade them to boot warnings.',
+            count($failures),
+            implode("\n  - ", $failures),
+        ));
+    }
+
+    /**
+     * A security-relevant setting is looser than an enabled compliance framework
+     * requires while compliance strict mode is on, so the boot is refused rather
+     * than silently tightened. Names the control, the offending and required
+     * values, and the framework(s) that mandate the stricter setting.
+     *
+     * @param non-empty-string $control    Human-readable control, e.g. 'session idle timeout'.
+     * @param string           $actual     The operator's current value, rendered for display.
+     * @param string           $required   The value the strictest framework demands, rendered.
+     * @param list<string>     $frameworks Framework labels that drove the requirement.
+     */
+    #[NoDiscard]
+    public static function complianceViolation(string $control, string $actual, string $required, array $frameworks): self
+    {
+        return new self(sprintf(
+            'Compliance strict mode: %s is %s but the enabled framework(s) [%s] require %s. '
+            . 'Bring the configuration into compliance, or set compliance.verification.strict_mode = false '
+            . 'to have the framework tighten it automatically with a boot warning instead.',
+            $control,
+            $actual,
+            implode(', ', $frameworks),
+            $required,
+        ));
     }
 }

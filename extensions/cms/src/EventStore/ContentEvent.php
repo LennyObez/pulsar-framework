@@ -13,6 +13,10 @@ use Pulsar\Api\Api;
  * Part of the optional event-sourced mode (enabled via CmsConfig.eventSourcing).
  * Events are immutable and never deleted or modified, providing complete
  * causal history of who changed what, when, and why.
+ *
+ * @psalm-api Public DTO returned from ContentEventStoreInterface; consumed
+ *            by audit views and event-replay projections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentEvent

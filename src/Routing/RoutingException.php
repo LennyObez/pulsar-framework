@@ -9,10 +9,12 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
+use function implode;
 use function sprintf;
 
 /**
  * Exception thrown when routing fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RoutingException extends Exception
@@ -59,6 +61,22 @@ final class RoutingException extends Exception
     }
 
     /**
+     * Create a "not implemented" exception for an unrecognized HTTP method.
+     *
+     * RFC 9110 §15.6.2: 501 signals the server does not support the method for
+     * any resource (e.g. a PROPFIND request to a server that only speaks the
+     * standard verbs), distinct from 405 (a known method not allowed on a path).
+     */
+    #[NoDiscard]
+    public static function notImplemented(string $method): self
+    {
+        return new self(
+            sprintf('HTTP method "%s" is not implemented', $method),
+            501,
+        );
+    }
+
+    /**
      * Get the Allow header value.
      */
     public function getAllowHeader(): string
@@ -83,6 +101,14 @@ final class RoutingException extends Exception
     }
 
     /**
+     * Check if this is a "not implemented" exception (unrecognized HTTP method).
+     */
+    public function isNotImplemented(): bool
+    {
+        return $this->getCode() === 501;
+    }
+
+    /**
      * Create a "router locked" exception for strict cache mode.
      */
     #[NoDiscard]
@@ -91,6 +117,22 @@ final class RoutingException extends Exception
         return new self(
             'Router is locked in strict cached mode. Register all routes before `pulsar optimize --strict`, or use non-strict mode.',
             423,
+        );
+    }
+
+    /**
+     * Create a "route collisions detected" exception used to fail closed in debug
+     * mode when a later route (typically an extension) shadows an already
+     * registered route for the same method and path.
+     *
+     * @param list<string> $messages One human-readable description per collision.
+     */
+    #[NoDiscard]
+    public static function routeCollisions(array $messages): self
+    {
+        return new self(
+            "Route collisions detected at boot (debug mode fails closed):\n - " . implode("\n - ", $messages),
+            500,
         );
     }
 

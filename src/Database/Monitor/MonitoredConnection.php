@@ -7,7 +7,9 @@ namespace Pulsar\Database\Monitor;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\DriverVariant;
 use Pulsar\Database\Result;
 use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
@@ -21,6 +23,7 @@ use function hrtime;
  * All connection methods delegate to the wrapped connection while
  * transparently collecting timing data and routing it to the configured
  * monitoring components.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MonitoredConnection implements ConnectionInterface
@@ -88,6 +91,18 @@ final readonly class MonitoredConnection implements ConnectionInterface
     public function driver(): Driver
     {
         return $this->wrapped->driver();
+    }
+
+    #[Override]
+    public function variant(): DriverVariant
+    {
+        return $this->wrapped->variant();
+    }
+
+    #[Override]
+    public function dialect(): DialectInterface
+    {
+        return $this->wrapped->dialect();
     }
 
     #[Override]

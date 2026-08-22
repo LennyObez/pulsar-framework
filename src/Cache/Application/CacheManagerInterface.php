@@ -13,7 +13,8 @@ use Pulsar\Cache\Application\Exception\UnsupportedCapabilityException;
 use Pulsar\Cache\Application\Lock\LockInterface;
 
 /**
- * Application cache manager — public API for pool resolution.
+ * Application cache manager: public API for pool resolution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CacheManagerInterface

@@ -6,13 +6,15 @@ namespace Pulsar\Tests\Unit\Security\Session;
 
 use NoDiscard;
 use Override;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
 
 use function array_key_exists;
+use function is_bool;
+use function is_int;
+use function is_string;
 
 /**
  * Unit tests for session happy-path operations.
@@ -21,7 +23,7 @@ use function array_key_exists;
  * without requiring PHP's native session infrastructure (which cannot run
  * in PHPUnit without headers being sent).
  */
-#[CoversClass(Session::class)]
+#[CoversNothing]
 final class SessionOperationsTest extends TestCase
 {
     /** @psalm-suppress PropertyNotSetInConstructor -- initialized in setUp() */
@@ -295,5 +297,41 @@ class SessionOperationsInMemorySession implements SessionInterface
     public function all(): array
     {
         return $this->data;
+    }
+
+    #[NoDiscard]
+    #[Override]
+    public function getString(string $key, string $default = ''): string
+    {
+        $value = $this->data[$key] ?? $default;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    #[NoDiscard]
+    #[Override]
+    public function getNullableString(string $key): ?string
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    #[NoDiscard]
+    #[Override]
+    public function getInt(string $key, int $default = 0): int
+    {
+        $value = $this->data[$key] ?? $default;
+
+        return is_int($value) ? $value : $default;
+    }
+
+    #[NoDiscard]
+    #[Override]
+    public function getBool(string $key, bool $default = false): bool
+    {
+        $value = $this->data[$key] ?? $default;
+
+        return is_bool($value) ? $value : $default;
     }
 }

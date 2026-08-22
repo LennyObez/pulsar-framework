@@ -27,6 +27,7 @@ use Pulsar\View\Directive\YieldDirective;
 use Pulsar\View\Engine\TemplateCache;
 use Pulsar\View\Engine\TemplateCompiler;
 use Pulsar\View\ViewConfig;
+use Pulsar\View\ViewException;
 
 use function sys_get_temp_dir;
 use function uniqid;
@@ -116,6 +117,7 @@ final class DirectiveRegistryTest extends TestCase
             'auth', 'endauth', 'guest', 'endguest', 'can', 'endcan',
             'csrf', 'method',
             'i18n',
+            'pagination',
             'php', 'endphp',
         ];
 
@@ -337,7 +339,7 @@ final class DirectiveRegistryTest extends TestCase
         $directive = new AuthDirective();
 
         self::assertSame('auth', $directive->name());
-        self::assertSame('<?php if ($__auth->check(null)): ?>', $directive->compile(''));
+        self::assertSame('<?php if ($__auth->authenticated()): ?>', $directive->compile(''));
     }
 
     #[Test]
@@ -345,8 +347,10 @@ final class DirectiveRegistryTest extends TestCase
     {
         $directive = new AuthDirective();
 
+        // The guard argument is accepted but ignored: TemplateAuthHelper has no
+        // guard concept, so @auth('api') compiles the same as @auth.
         self::assertSame(
-            "<?php if (\$__auth->check('api')): ?>",
+            '<?php if ($__auth->authenticated()): ?>',
             $directive->compile("'api'"),
         );
     }
@@ -357,7 +361,7 @@ final class DirectiveRegistryTest extends TestCase
         $directive = new GuestDirective();
 
         self::assertSame('guest', $directive->name());
-        self::assertSame('<?php if (!$__auth->check(null)): ?>', $directive->compile(''));
+        self::assertSame('<?php if ($__auth->guest()): ?>', $directive->compile(''));
     }
 
     #[Test]
@@ -365,8 +369,9 @@ final class DirectiveRegistryTest extends TestCase
     {
         $directive = new GuestDirective();
 
+        // Guard argument accepted but ignored (see authDirectiveCompilesWithGuard).
         self::assertSame(
-            "<?php if (!\$__auth->check('admin')): ?>",
+            '<?php if ($__auth->guest()): ?>',
             $directive->compile("'admin'"),
         );
     }
@@ -453,7 +458,7 @@ final class DirectiveRegistryTest extends TestCase
 
         $directive = new PhpDirective($config);
 
-        $this->expectException(\Pulsar\View\ViewException::class);
+        $this->expectException(ViewException::class);
         $this->expectExceptionMessageMatches('/@php/');
 
         $directive->compile('');

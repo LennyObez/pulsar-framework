@@ -210,12 +210,18 @@ final class ManifestBuilderTest extends TestCase
         $manifest = $builder->build(['src/**/*.php'], []);
         $after = time();
 
-        self::assertSame(1, $manifest->version);
+        self::assertSame(IntegrityManifest::VERSION, $manifest->version);
         self::assertSame('sha256', $manifest->algorithm);
         self::assertGreaterThanOrEqual($before, $manifest->generatedAt);
         self::assertLessThanOrEqual($after, $manifest->generatedAt);
         self::assertSame(Version::full(), $manifest->frameworkVersion);
         self::assertNull($manifest->signature);
+
+        // The patterns travel with the manifest so the verifier scans what was
+        // hashed instead of inferring it from where the entries landed.
+        self::assertNotNull($manifest->scope);
+        self::assertSame(['src/**/*.php'], $manifest->scope->include);
+        self::assertSame([], $manifest->scope->exclude);
     }
 
     #[Test]

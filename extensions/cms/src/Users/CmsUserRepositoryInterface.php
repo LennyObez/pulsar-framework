@@ -11,8 +11,12 @@ use Pulsar\Api\Pagination\PaginationResult;
  * Repository interface for CMS user management.
  *
  * Provides queries over the auth_users table scoped to users
- * who hold CMS roles. This is a read-heavy interface — mutations
+ * who hold CMS roles. This is a read-heavy interface; mutations
  * (role assignment, 2FA reset) go through the Auth module's APIs.
+ *
+ * @psalm-api Public binding contract; implemented by DbCmsUserRepository
+ *            and consumed by admin user-management controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsUserRepositoryInterface

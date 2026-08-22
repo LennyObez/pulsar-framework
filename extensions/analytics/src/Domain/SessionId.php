@@ -11,6 +11,7 @@ use Pulsar\Security\Crypto\Hmac;
  * Session identifier derived from visitor ID and entry timestamp bucket.
  *
  * Uses keyed BLAKE2b to produce a deterministic, privacy-preserving session ID.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SessionId

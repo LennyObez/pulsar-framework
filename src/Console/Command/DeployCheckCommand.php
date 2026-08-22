@@ -17,7 +17,6 @@ use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeployReport;
 use Pulsar\Deploy\Exception\DeployException;
 
-use function is_string;
 use function json_encode;
 use function sprintf;
 
@@ -56,9 +55,9 @@ final class DeployCheckCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $environment = $input->getOption('env', 'production');
+        $environment = $input->getStringOption('env', 'production');
 
-        if (!is_string($environment) || $environment === '') {
+        if ($environment === '') {
             $environment = 'production';
         }
 
@@ -82,7 +81,7 @@ final class DeployCheckCommand extends Command
         DeployReport $report,
         bool $strict,
     ): int {
-        $output->writeln(sprintf('Deploy Readiness Check — %s', $report->environment));
+        $output->writeln(sprintf('Deploy Readiness Check: %s', $report->environment));
         $output->writeln(str_repeat('=', 50));
         $output->newLine();
 

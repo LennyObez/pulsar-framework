@@ -6,6 +6,7 @@ namespace Pulsar\Cache\Application\Lock;
 
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Pulsar\Support\ApcuReply;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
@@ -23,7 +24,7 @@ use function usleep;
  * APCu-backed lock for single-server deployments.
  *
  * Provides best-effort mutual exclusion using APCu's apcu_add() for atomic
- * acquisition. Release and refresh operations are not fully atomic — APCu
+ * acquisition. Release and refresh operations are not fully atomic: APCu
  * does not provide a compare-and-swap (CAS) primitive, so a narrow TOCTOU
  * window exists between the token fetch and the subsequent delete/store.
  * This is acceptable for single-server use where the race window is
@@ -78,7 +79,7 @@ final readonly class ApcuLock implements LockInterface
             return false;
         }
 
-        return apcu_delete($handle->resource);
+        return ApcuReply::deleted(apcu_delete($handle->resource));
     }
 
     public function refresh(LockHandle $handle, int $ttlSeconds = 30): bool
@@ -95,6 +96,6 @@ final readonly class ApcuLock implements LockInterface
         // APCu does not provide a CAS primitive, so a narrow TOCTOU window
         // exists between the fetch above and this store. This is acceptable
         // for single-server deployments where the race is negligibly small.
-        return apcu_store($handle->resource, $handle->token, $ttlSeconds);
+        return ApcuReply::stored(apcu_store($handle->resource, $handle->token, $ttlSeconds));
     }
 }

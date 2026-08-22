@@ -13,6 +13,7 @@ use Pulsar\Security\Session\SessionMetadata;
  *
  * Validators check attributes like user agent, IP address, or fingerprint
  * to detect session hijacking or context changes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SessionValidatorInterface

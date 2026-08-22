@@ -30,18 +30,18 @@ use function unlink;
  *
  * Handles listing, uploading, and deleting downloadable files for digital products.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class DigitalAssetController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class DigitalAssetController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private DigitalAssetRepositoryInterface $assets,
         private ProductRepositoryInterface $products,
         private MediaDiskInterface $disk,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request, string $productId): Response
     {
@@ -114,7 +114,7 @@ final readonly class DigitalAssetController
 
         $assetId = UuidGenerator::v7();
         $fileName = $file->getClientFilename() ?? 'download';
-        $storagePath = "digital-assets/{$productId}/{$assetId}/{$fileName}";
+        $storagePath = "digital-assets/$productId/$assetId/$fileName";
         $fileSize = (int) $file->getSize();
 
         $this->disk->write($storagePath, file_get_contents($tempPath) ?: '');

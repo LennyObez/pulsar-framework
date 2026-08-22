@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\View\ViewException;
 use RuntimeException;
+use TypeError;
 
 #[CoversClass(ViewException::class)]
 final class ViewExceptionTest extends TestCase
@@ -37,6 +38,27 @@ final class ViewExceptionTest extends TestCase
 
         self::assertStringContainsString('home.index', $exception->getMessage());
         self::assertStringContainsString('unexpected end of file', $exception->getMessage());
+    }
+
+    #[Test]
+    public function compilationFailedDefaultsToNoPrevious(): void
+    {
+        $exception = ViewException::compilationFailed('home.index', 'parse error');
+
+        self::assertNull($exception->getPrevious());
+    }
+
+    #[Test]
+    public function compilationFailedPreservesPreviousThrowable(): void
+    {
+        // Regression: the factory dropped the original exception, losing its
+        // type and stack trace when a template threw at runtime. The cause
+        // must be chained so debugging can reach the real failure site.
+        $cause = new TypeError('Argument #1 must be int, string given');
+
+        $exception = ViewException::compilationFailed('home.index', 'execution failed', $cause);
+
+        self::assertSame($cause, $exception->getPrevious());
     }
 
     #[Test]

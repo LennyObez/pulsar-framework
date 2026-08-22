@@ -17,6 +17,7 @@ use function is_string;
  *
  * Used to propagate context through queue job payloads, external HTTP calls,
  * and any other boundary that accepts key-value carriers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContextPropagator
@@ -74,22 +75,35 @@ final readonly class ContextPropagator
             /** @var array<string, mixed> $attributes */
             $attributes = $carrier[self::KEY_ATTRIBUTES] ?? [];
 
-            $actor = $carrier[self::KEY_ACTOR] ?? null;
-            $tenantId = $carrier[self::KEY_TENANT_ID] ?? null;
-            $ip = $carrier[self::KEY_IP] ?? null;
-            $userAgent = $carrier[self::KEY_USER_AGENT] ?? null;
-            $locale = $carrier[self::KEY_LOCALE] ?? null;
-            $timestampRaw = $carrier[self::KEY_TIMESTAMP] ?? null;
+            /** @var mixed $rawActor */
+            $rawActor = $carrier[self::KEY_ACTOR] ?? null;
+            /** @var mixed $rawTenantId */
+            $rawTenantId = $carrier[self::KEY_TENANT_ID] ?? null;
+            /** @var mixed $rawIp */
+            $rawIp = $carrier[self::KEY_IP] ?? null;
+            /** @var mixed $rawUserAgent */
+            $rawUserAgent = $carrier[self::KEY_USER_AGENT] ?? null;
+            /** @var mixed $rawLocale */
+            $rawLocale = $carrier[self::KEY_LOCALE] ?? null;
+            /** @var mixed $rawTimestamp */
+            $rawTimestamp = $carrier[self::KEY_TIMESTAMP] ?? null;
+
+            $actor = is_string($rawActor) ? $rawActor : null;
+            $tenantId = is_string($rawTenantId) ? $rawTenantId : null;
+            $ip = is_string($rawIp) ? $rawIp : null;
+            $userAgent = is_string($rawUserAgent) ? $rawUserAgent : null;
+            $locale = is_string($rawLocale) ? $rawLocale : null;
+            $timestampRaw = is_string($rawTimestamp) ? $rawTimestamp : null;
 
             return new RequestContext(
                 correlationId: CorrelationId::fromString($correlationId),
                 causationId: CausationId::fromString($causationId),
-                actor: is_string($actor) ? $actor : null,
-                tenantId: is_string($tenantId) ? $tenantId : null,
-                ip: is_string($ip) ? $ip : null,
-                userAgent: is_string($userAgent) ? $userAgent : null,
-                locale: is_string($locale) ? $locale : null,
-                timestamp: is_string($timestampRaw) ? new DateTimeImmutable($timestampRaw) : null,
+                actor: $actor,
+                tenantId: $tenantId,
+                ip: $ip,
+                userAgent: $userAgent,
+                locale: $locale,
+                timestamp: $timestampRaw !== null ? new DateTimeImmutable($timestampRaw) : null,
                 attributes: $attributes,
             );
         } catch (Throwable) {

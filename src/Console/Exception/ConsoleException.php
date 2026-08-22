@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Base exception for console-related errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class ConsoleException extends RuntimeException

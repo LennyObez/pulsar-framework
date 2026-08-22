@@ -69,10 +69,9 @@ final class StepUpManager
         ));
 
         // If lockout was triggered by this attempt, emit lockout event
-        if ($newState->isLockedOut($now)) {
-            /** @var DateTimeImmutable $lockedUntil — guaranteed non-null when isLockedOut is true */
-            $lockedUntil = $newState->lockedUntil;
+        $lockedUntil = $newState->lockedUntil;
 
+        if ($newState->isLockedOut($now) && $lockedUntil !== null) {
             $this->eventDispatcher->dispatch(new StepUpLockoutEvent(
                 identityId: $identityId,
                 attemptCount: $newState->attemptCount,

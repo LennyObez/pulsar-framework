@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session\Handler;
 
+use InvalidArgumentException;
 use Override;
 use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
 
+use function is_string;
+use function preg_match;
+use function sprintf;
 use function time;
 
 /**
@@ -41,7 +45,14 @@ final class DatabaseHandler implements SessionHandlerInterface
         private readonly PDO $pdo,
         private readonly string $tableName = 'sessions',
         private readonly int $lifetime = 7200,
-    ) {}
+    ) {
+        if (preg_match('/\A[a-zA-Z_][a-zA-Z0-9_]*\z/', $tableName) !== 1) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid session table name "%s": must be a valid SQL identifier (letters, digits, underscores).',
+                $tableName,
+            ));
+        }
+    }
 
     /**
      * Set session context metadata for the next write() call.
@@ -50,7 +61,6 @@ final class DatabaseHandler implements SessionHandlerInterface
      * the session row. This data is stored alongside session payload.
      */
     public function setSessionContext(
-        string $sessionId,
         ?string $userId,
         string $ipAddress,
         string $userAgent,
@@ -80,13 +90,10 @@ final class DatabaseHandler implements SessionHandlerInterface
         );
         $stmt->execute([$id]);
 
+        /** @var mixed $data */
         $data = $stmt->fetchColumn();
 
-        if ($data === false) {
-            return '';
-        }
-
-        return (string) $data;
+        return is_string($data) ? $data : '';
     }
 
     #[Override]

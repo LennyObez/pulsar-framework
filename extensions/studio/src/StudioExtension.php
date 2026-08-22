@@ -14,6 +14,10 @@ use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\PreBootExtensionInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleExportCommand;
+use Pulsar\Extension\Studio\Command\Console\ConsoleVerifyCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianCheckCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianSupervisorRunOnceCommand;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
@@ -56,6 +60,7 @@ use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Supervisor\SupervisorInterface;
 use Pulsar\Tenancy\TenantContext;
 use Random\Randomizer;
 
@@ -65,13 +70,16 @@ use function is_file;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Studio extension — development console with event collection,
+ * Studio extension: development console with event collection,
  * evidence chain, and diagnostics UI.
  *
  * Uses lifecycle hooks to integrate without privileged Kernel access:
  * - preBoot: loads config, creates storage, redaction, evidence chain
  * - boot: registers Studio web UI routes
  * - postBoot: wires collectors into final service bindings
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class StudioExtension implements ExtensionInterface, PreBootExtensionInterface, PostBootExtensionInterface
 {
@@ -106,7 +114,9 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         }
 
         // Load Studio config
-        /** @psalm-suppress UnresolvableInclude Studio config path is validated by is_file() above */
+        /**
+         * @var mixed $studioData
+         */
         $studioData = require $configPath . DIRECTORY_SEPARATOR . 'studio.php';
 
         if (!is_array($studioData)) {
@@ -174,7 +184,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 
-            // Encryption at rest — dedicated subkey 3 (separate from main Encryptor's subkey 1)
+            // Encryption at rest: dedicated subkey 3 (separate from main Encryptor's subkey 1)
             /** @var EncryptorInterface $baseEncryptor */
             $baseEncryptor = $container->get(EncryptorInterface::class);
             $studioEncryptor = $baseEncryptor->withDerivedKey($masterKey, 3, 'stud_enc');
@@ -183,20 +193,20 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             $isEncrypted = true;
             $container->instance(EncryptedEventStore::class, $encryptedStore);
 
-            // Archive MAC key — subkey 4
+            // Archive MAC key: subkey 4
             $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
 
-            // Chain MAC key — subkey 5
+            // Chain MAC key: subkey 5
             $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
         } elseif ($container->has(KeyProviderInterface::class)) {
             /** @var MasterKey $masterKey */
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 
-            // Archive MAC key — subkey 4
+            // Archive MAC key: subkey 4
             $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
 
-            // Chain MAC key — subkey 5
+            // Chain MAC key: subkey 5
             $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
         }
 
@@ -285,6 +295,33 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         );
         $container->instance(EvidenceExporter::class, $evidenceExporter);
 
+        // Console commands: evidence export/verify and guardian diagnostics.
+        // Bound explicitly here (over the evidence + supervisor services already
+        // composed) so the console application resolves them from the manifest's
+        // provides.commands list. The guardian commands require the core
+        // SupervisorInterface and register only when it is available.
+        $container->instance(
+            ConsoleExportCommand::class,
+            new ConsoleExportCommand($evidenceExporter),
+        );
+        $container->instance(
+            ConsoleVerifyCommand::class,
+            new ConsoleVerifyCommand($evidenceVerifier, archiveMacKey: $archiveMacKey),
+        );
+
+        if ($container->has(SupervisorInterface::class)) {
+            /** @var SupervisorInterface $supervisor */
+            $supervisor = $container->get(SupervisorInterface::class);
+            $container->instance(
+                GuardianCheckCommand::class,
+                new GuardianCheckCommand($supervisor),
+            );
+            $container->instance(
+                GuardianSupervisorRunOnceCommand::class,
+                new GuardianSupervisorRunOnceCommand($supervisor),
+            );
+        }
+
         // Register RuntimeCollectorInterface for PersistentRuntime
         if ($container->has(MetricRegistry::class)) {
             /** @var MetricRegistry $metricRegistry */
@@ -336,7 +373,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         /** @var Randomizer $randomizer */
         $randomizer = $container->get(Randomizer::class);
 
-        // 1. HTTP collector (global middleware — piped last = innermost)
+        // 1. HTTP collector (global middleware; piped last = innermost)
         if ($collectorConfig->http && $container->has(MiddlewarePipelineInterface::class)) {
             $httpCollector = new HttpCollector($contextProvider, $emit, $randomizer);
             $container->instance(HttpCollector::class, $httpCollector);

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Application environment mode.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EnvironmentMode: string

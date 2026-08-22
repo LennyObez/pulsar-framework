@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a badge is awarded to a user.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BadgeAwarded

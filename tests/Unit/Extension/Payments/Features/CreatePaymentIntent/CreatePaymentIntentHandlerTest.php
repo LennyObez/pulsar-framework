@@ -9,8 +9,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Pulsar\Extension\Payments\Config\BancontactConfig;
+use Pulsar\Extension\Payments\Config\IdealConfig;
 use Pulsar\Extension\Payments\Config\IdempotencyConfig;
+use Pulsar\Extension\Payments\Config\KlarnaConfig;
+use Pulsar\Extension\Payments\Config\MobileConfig;
+use Pulsar\Extension\Payments\Config\PayconiqConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
+use Pulsar\Extension\Payments\Config\PayPalConfig;
+use Pulsar\Extension\Payments\Config\SepaConfig;
+use Pulsar\Extension\Payments\Config\StripeConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
@@ -25,11 +33,16 @@ use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
+use Pulsar\Security\Crypto\MasterKey;
+
+use function random_bytes;
+use function sodium_bin2hex;
 
 #[CoversClass(CreatePaymentIntentHandler::class)]
 final class CreatePaymentIntentHandlerTest extends TestCase
@@ -37,12 +50,16 @@ final class CreatePaymentIntentHandlerTest extends TestCase
     private FixedClock $clock;
     private MetricRegistry $metricRegistry;
     private InMemoryIdempotencyStore $idempotencyStore;
+    private SignedIdempotencyEnvelope $envelope;
 
     protected function setUp(): void
     {
         $this->clock = new FixedClock(new DateTimeImmutable('2025-01-01T00:00:00Z'));
         $this->metricRegistry = new MetricRegistry();
         $this->idempotencyStore = new InMemoryIdempotencyStore();
+        $this->envelope = new SignedIdempotencyEnvelope(
+            MasterKey::fromHex(sodium_bin2hex(random_bytes(32))),
+        );
     }
 
     #[Test]
@@ -85,7 +102,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
         $handler->execute(new CreatePaymentIntentRequest(Money::of(5000, Currency::USD), 'idem-key-mismatch'));
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('different parameters');
+        $this->expectExceptionMessageIsOrContains('different parameters');
 
         $handler->execute(new CreatePaymentIntentRequest(Money::of(6000, Currency::USD), 'idem-key-mismatch'));
     }
@@ -96,7 +113,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
         $handler = $this->createHandler();
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('Invalid idempotency key');
+        $this->expectExceptionMessageIsOrContains('Invalid idempotency key');
 
         $handler->execute(new CreatePaymentIntentRequest(Money::of(1000, Currency::USD), ''));
     }
@@ -107,7 +124,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
         $handler = $this->createHandler();
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('invalid characters');
+        $this->expectExceptionMessageIsOrContains('invalid characters');
 
         $handler->execute(new CreatePaymentIntentRequest(Money::of(1000, Currency::USD), 'key with spaces'));
     }
@@ -190,6 +207,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
             logger: new NullLogger(),
             clock: $this->clock,
             config: $this->createConfig(),
+            envelope: $this->envelope,
         );
     }
 
@@ -213,6 +231,29 @@ final class CreatePaymentIntentHandlerTest extends TestCase
                 ttlSeconds: 259200,
                 store: 'memory',
             ),
+            stripe: new StripeConfig(
+                secretKey: '',
+                publishableKey: '',
+                webhookSecret: '',
+                apiVersion: '2024-12-18.acacia',
+                testMode: true,
+            ),
+            paypal: new PayPalConfig(
+                clientId: '',
+                clientSecret: '',
+                webhookId: '',
+                sandbox: true,
+            ),
+            sepa: SepaConfig::fromArray([]),
+            mobile: MobileConfig::fromArray([]),
+            payconiq: PayconiqConfig::fromArray([]),
+            bancontact: BancontactConfig::fromArray([]),
+            ideal: IdealConfig::fromArray([]),
+            klarna: KlarnaConfig::fromArray([]),
+            subscriptionsEnabled: false,
+            invoiceRetentionDays: 3650,
+            dunningMaxRetries: 4,
+            trialMaxDays: 30,
         );
     }
 }

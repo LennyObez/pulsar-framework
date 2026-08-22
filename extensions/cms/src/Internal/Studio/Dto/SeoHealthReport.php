@@ -11,6 +11,9 @@ use Pulsar\Extension\Cms\Seo\LinkHealthCheck;
 
 /**
  * Aggregated SEO health report for the Studio panel.
+ *
+ * @psalm-api Returned by SeoHealthReportPanel::report(); consumed by Studio
+ *            templates.
  */
 #[Internal]
 final readonly class SeoHealthReport

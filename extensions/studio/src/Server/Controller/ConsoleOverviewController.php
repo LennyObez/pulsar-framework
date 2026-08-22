@@ -10,19 +10,19 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Http\Message\Response;
 
-use function htmlspecialchars;
 use function json_encode;
 
-use const ENT_QUOTES;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 /**
- * Handles GET /studio/console — the Console overview dashboard.
+ * Handles GET /studio/console: the Console overview dashboard.
  */
 #[Internal]
 final readonly class ConsoleOverviewController
 {
+    use RendersStudioView;
+
     public function __construct(
         private DashboardAggregator $aggregator,
     ) {}
@@ -42,7 +42,7 @@ final readonly class ConsoleOverviewController
         $slowQueries = $this->aggregator->slowQueries($windowUs);
         $eventCounts = $this->aggregator->eventCountsByType($windowUs);
 
-        $data = json_encode([
+        $dataJson = json_encode([
             'sections' => $sections,
             'throughput' => $throughput,
             'latency' => $latency,
@@ -54,29 +54,16 @@ final readonly class ConsoleOverviewController
             'error_series' => $this->aggregator->errorTimeSeries($windowUs),
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
-        $safePayload = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
-
-        $html = <<<HTML
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Console overview - Pulsar Studio</title>
-                <link rel="stylesheet" href="/studio/assets/studio.css">
-            </head>
-            <body>
-                <div id="app" data-page="console-overview" data-payload="$safePayload"></div>
-                <script type="module" src="/studio/assets/main.js"></script>
-            </body>
-            </html>
-            HTML;
+        $html = $this->renderStudioView('Console overview - Pulsar Studio', 'console/overview', [
+            'dataJson' => $dataJson,
+        ]);
 
         return Response::html($html);
     }
 
     private function parseWindow(ServerRequestInterface $request): int
     {
+        /** @var mixed $window */
         $window = $request->getAttribute('_query_window');
 
         return match ($window) {

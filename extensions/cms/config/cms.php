@@ -33,12 +33,33 @@ return [
     // Maximum page nesting depth for hierarchy cycle detection.
     'max_hierarchy_depth' => 10,
 
-    // Caching configuration
+    // Content ID to serve as the homepage at GET /.
+    // When null, falls back to finding content with path = '' (empty).
+    // Set this to a specific content UUID to designate a homepage explicitly.
+    'homepage_content_id' => null,
+
+    // Full-page cache for public content routes. Active only when the
+    // application cache is enabled (config/cache.php). Anonymous GET/HEAD
+    // pages are cached per tenant + locale + host + path + canonical query;
+    // authenticated users, session-cookie visitors, and responses carrying
+    // per-user material (Set-Cookie, CSRF tokens, CSP nonces, private/no-store)
+    // are never cached.
     'cache' => [
+        // Logical freshness lifetime of a cached page.
         'page_cache_ttl_seconds' => 3600,
+        // Lock-based single-flight + XFetch early recomputation + serving the
+        // stale copy while one request regenerates. Disable to fall back to a
+        // plain get-or-render (a hot page then expires for everyone at once).
         'stampede_protection' => true,
-        'early_recompute_beta' => 10,
+        // XFetch aggressiveness: 1.0 is the canonical optimum; higher values
+        // start regenerating earlier before expiry (more freshness, more
+        // renders).
+        'early_recompute_beta' => 1.0,
+        // How long an expired page may still be served while one request
+        // regenerates it (stale-while-revalidate window).
         'stale_grace_period_seconds' => 300,
+        // How long a cold-miss request waits for the single-flight lock before
+        // rendering without it.
         'lock_timeout_seconds' => 5,
     ],
 
@@ -89,5 +110,80 @@ return [
 
         // Whether imports default to dry-run mode (recommended)
         'dry_run_default' => true,
+    ],
+
+    // Form submission pipeline configuration
+    'forms' => [
+        // Aggregated spam score threshold: submissions scoring above this are classified as spam
+        'spam_threshold' => 5.0,
+
+        // Maximum form submissions per IP per hour
+        'rate_limit_per_hour' => 10,
+
+        // Email addresses that receive submission notifications (empty = no notifications)
+        'notification_recipients' => [],
+
+        // Hidden field name for bot detection (honeypot)
+        'honeypot_field_name' => '_hp_field',
+
+        // Proof-of-work SHA-256 hash prefix difficulty (e.g. '0000' = 4 leading zeros)
+        'pow_difficulty' => '0000',
+    ],
+
+    // Newsletter subsystem configuration
+    'newsletter' => [
+        // Whether the newsletter feature is enabled
+        'enabled' => false,
+
+        // Maximum subscriptions per IP per hour (anti-abuse)
+        'rate_limit_per_hour' => 5,
+
+        // HMAC algorithm for signed unsubscribe/confirm URLs
+        'hmac_algo' => 'sha256',
+
+        // Tracking configuration (disabled by default for GDPR compliance)
+        'tracking' => [
+            'opens' => false,
+            'clicks' => false,
+        ],
+
+        // Maximum bounce count before auto-unsubscribe
+        'max_bounces' => 3,
+
+        // Campaign dispatch batch size
+        'batch_size' => 100,
+    ],
+
+    // RSS/Atom feed configuration
+    'feeds' => [
+        // Whether feeds are enabled globally
+        'enabled' => true,
+
+        // Maximum number of items in a feed
+        'item_limit' => 20,
+
+        // Include full body ('full') or excerpt only ('excerpt')
+        'body_mode' => 'excerpt',
+
+        // Cache TTL for generated feeds in seconds
+        'cache_ttl' => 3600,
+    ],
+
+    // Comments frontend configuration
+    'comments' => [
+        // Maximum nesting depth for threaded comments
+        'max_depth' => 3,
+
+        // Default comments per page
+        'per_page' => 20,
+
+        // Auto-approve comments from authenticated users
+        'auto_approve_authenticated' => false,
+
+        // Enable Gravatar avatars for commenters
+        'gravatar_enabled' => true,
+
+        // Maximum comment body length in characters
+        'max_body_length' => 5000,
     ],
 ];

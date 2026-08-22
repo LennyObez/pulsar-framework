@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_api_keys (
@@ -25,15 +27,9 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_cms_api_keys_key_hash
-                ON cms_api_keys (key_hash)
-            SQL);
+        $indexes->ensure('cms_api_keys', 'uq_cms_api_keys_key_hash', ['key_hash'], unique: true);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_cms_api_keys_tenant
-                ON cms_api_keys (tenant_id)
-            SQL);
+        $indexes->ensure('cms_api_keys', 'idx_cms_api_keys_tenant', ['tenant_id']);
     }
 
     public function down(ConnectionInterface $connection): void

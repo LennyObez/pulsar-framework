@@ -25,8 +25,11 @@ use function substr;
 /**
  * Executes registered hooks with guardrails: output buffering, memory limits,
  * circuit breaker integration, and per-callback error isolation.
+ *
+ * @psalm-api Resolved from the DI container by CmsPluginManager; not
+ *            instantiated by name.
  */
-#[Internal(reason: 'Hook execution internals — not a public API')]
+#[Internal(reason: 'Hook execution internals; not a public API')]
 final class HookExecutionEngine
 {
     /** Maximum memory a single hook callback may consume (32 MB). */
@@ -162,7 +165,7 @@ final class HookExecutionEngine
             AuditOutcome::Error,
             null,
             'cms.plugin.hook_failed',
-            "plugin:{$pluginSlug}",
+            "plugin:$pluginSlug",
             [
                 'hook_point' => $hookPoint,
                 'error' => $error->getMessage(),
@@ -189,7 +192,7 @@ final class HookExecutionEngine
         if (count($this->failureTimestamps[$pluginSlug]) >= self::CIRCUIT_BREAKER_FAILURE_THRESHOLD) {
             $this->circuitBroken[$pluginSlug] = true;
 
-            $this->logger->critical('Plugin circuit breaker tripped — auto-disabling', [
+            $this->logger->critical('Plugin circuit breaker tripped: auto-disabling', [
                 'plugin' => $pluginSlug,
                 'failures_in_window' => count($this->failureTimestamps[$pluginSlug]),
             ]);
@@ -199,7 +202,7 @@ final class HookExecutionEngine
                 AuditOutcome::Failure,
                 null,
                 'cms.plugin.circuit_breaker_tripped',
-                "plugin:{$pluginSlug}",
+                "plugin:$pluginSlug",
                 [
                     'failures_in_window' => count($this->failureTimestamps[$pluginSlug]),
                     'window_seconds' => self::CIRCUIT_BREAKER_WINDOW_SECONDS,
@@ -216,7 +219,7 @@ final class HookExecutionEngine
     {
         $memoryLimit = $this->getMemoryLimitBytes();
         if ($memoryLimit <= 0) {
-            // Unlimited memory (-1 in php.ini) — always allow
+            // Unlimited memory (-1 in php.ini): always allow
             return true;
         }
 

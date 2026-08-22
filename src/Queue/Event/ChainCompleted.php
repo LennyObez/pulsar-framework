@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when all jobs in a chain have completed successfully.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ChainCompleted

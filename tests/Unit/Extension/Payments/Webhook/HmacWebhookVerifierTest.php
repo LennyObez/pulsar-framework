@@ -30,28 +30,44 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function validSignaturePasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $payload = '{"id":"evt_1","type":"payment_intent.created"}';
         $timestamp = 1700000000;
         $signature = $this->computeSignature($payload, $timestamp, self::SECRET);
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
-        // Should not throw
         $this->verifier->verify($payload, $header, self::SECRET, 300);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function invalidSignatureThrows(): void
     {
+        // 64 hex chars (well-formed) but does not match the
+        // computed HMAC — exercises the hash_equals mismatch path.
         $payload = '{"id":"evt_1"}';
+        $timestamp = 1700000000;
+        $header = sprintf('t=%d,v1=%s', $timestamp, str_repeat('0', 64));
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
+
+        $this->verifier->verify($payload, $header, self::SECRET, 300);
+    }
+
+    #[Test]
+    public function nonHexV1SignatureRejected(): void
+    {
+        // The payments-extension verifier mirrors the framework
+        // verifier — reject anything not 64 lowercase hex chars
+        // before hash_equals.
         $timestamp = 1700000000;
         $header = sprintf('t=%d,v1=%s', $timestamp, 'invalid_hex_signature');
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('non-hex v1 signature');
 
-        $this->verifier->verify($payload, $header, self::SECRET, 300);
+        $this->verifier->verify('{}', $header, self::SECRET, 300);
     }
 
     #[Test]
@@ -63,7 +79,7 @@ final class HmacWebhookVerifierTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -72,7 +88,7 @@ final class HmacWebhookVerifierTest extends TestCase
     public function malformedHeaderEmptyThrows(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('empty header');
+        $this->expectExceptionMessageIsOrContains('empty header');
 
         $this->verifier->verify('body', '', self::SECRET, 300);
     }
@@ -81,7 +97,7 @@ final class HmacWebhookVerifierTest extends TestCase
     public function malformedHeaderMissingTimestampThrows(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('missing timestamp');
+        $this->expectExceptionMessageIsOrContains('missing timestamp');
 
         $this->verifier->verify('body', 'v1=abc123', self::SECRET, 300);
     }
@@ -90,7 +106,7 @@ final class HmacWebhookVerifierTest extends TestCase
     public function malformedHeaderNoSignaturesThrows(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('no v1 signatures');
+        $this->expectExceptionMessageIsOrContains('no v1 signatures');
 
         $this->verifier->verify('body', 't=1700000000', self::SECRET, 300);
     }
@@ -98,26 +114,32 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function multipleV1OneValidAccepts(): void
     {
+        // The decoy signature must itself be well-formed 64-hex:
+        // anything else is rejected at parse time and would never
+        // reach the secret-rotation path this test covers.
+        $this->expectNotToPerformAssertions();
+
         $payload = '{"id":"evt_multi"}';
         $timestamp = 1700000000;
         $validSig = $this->computeSignature($payload, $timestamp, self::SECRET);
-        $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, 'old_invalid_sig', $validSig);
+        $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, str_repeat('a', 64), $validSig);
 
         // Should not throw — one valid v1 is enough (secret rotation)
         $this->verifier->verify($payload, $header, self::SECRET, 300);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function allV1InvalidRejects(): void
     {
+        // Both signatures are well-formed, so parse-time validation
+        // passes them through; neither matches the computed HMAC, so
+        // this exercises the hash_equals mismatch path.
         $payload = '{"id":"evt_invalid"}';
         $timestamp = 1700000000;
-        $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, 'bad_sig_1', 'bad_sig_2');
+        $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, str_repeat('0', 64), str_repeat('1', 64));
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -125,14 +147,14 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function withinTolerancePasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $payload = '{"id":"evt_tolerance"}';
         $timestamp = 1700000000 - 299; // Just within 300s tolerance
         $signature = $this->computeSignature($payload, $timestamp, self::SECRET);
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
-
-        $this->addToAssertionCount(1);
     }
 
     private function computeSignature(string $payload, int $timestamp, string $secret): string

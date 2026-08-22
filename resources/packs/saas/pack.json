@@ -1,0 +1,19 @@
+{
+  "name": "saas",
+  "description": "Multi-tenant SaaS starter kit with billing integration and feature flags",
+  "version": "1.0.0",
+  "requiredPulsarVersion": "^1.0",
+  "compliancePresets": ["Tenant-Isolation", "Data-Residency"],
+  "files": {
+    "config/tenancy.php": "config/tenancy.php",
+    "config/billing.php": "config/billing.php",
+    "config/feature-flags.php": "config/feature-flags.php",
+    "src/Tenant.php": "src/Entity/Tenant.php",
+    "src/Subscription.php": "src/Entity/Subscription.php",
+    "src/Plan.php": "src/Entity/Plan.php",
+    "src/Feature.php": "src/Entity/Feature.php",
+    "tests/TenantTest.php": "tests/Unit/Entity/TenantTest.php",
+    "tests/SubscriptionTest.php": "tests/Unit/Entity/SubscriptionTest.php"
+  },
+  "postInstallCommands": []
+}

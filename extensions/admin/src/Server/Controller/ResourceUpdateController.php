@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
@@ -22,17 +21,20 @@ use Pulsar\Http\ResponseStatus;
 #[Internal]
 final readonly class ResourceUpdateController
 {
+    use ExtractsRequestActor;
+    use RendersAdminLayout;
+
     public function __construct(
         private UpdateResourceHandler $handler,
         private ResourceRegistryInterface $registry,
         private AdminConfig $config,
     ) {}
 
-    public function form(ServerRequestInterface $request, string $resource, string $id): Response
+    public function form(string $resource, string $id): Response
     {
         $resourceDef = $this->registry->get($resource);
 
-        return Response::html($this->renderView("Edit {$resourceDef->label()} #$id", [
+        return Response::html($this->renderAdminView("Edit {$resourceDef->label()} #$id", 'resource-form', [
             'resource' => $resourceDef,
             'data' => [],
             'mode' => 'edit',
@@ -43,9 +45,7 @@ final readonly class ResourceUpdateController
 
     public function update(ServerRequestInterface $request, string $resource, string $id): Response
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         $context = new MutationContext(
             actor: $actor,
@@ -72,15 +72,4 @@ final readonly class ResourceUpdateController
         }
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(string $title, array $templateData): string
-    {
-        $content = 'resource-form';
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

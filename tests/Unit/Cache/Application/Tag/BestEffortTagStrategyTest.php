@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Driver\ArrayDriver;
+use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Tag\BestEffortTagStrategy;
 
 #[CoversClass(BestEffortTagStrategy::class)]
@@ -40,6 +41,44 @@ final class BestEffortTagStrategyTest extends TestCase
         $second = $this->strategy->getTagVersions(['tag-a']);
 
         self::assertSame($first['tag-a'], $second['tag-a']);
+    }
+
+    #[Test]
+    public function memoizesTagVersionsToAvoidRepeatedDriverReads(): void
+    {
+        // The driver must be consulted once; the second read for the same tag is
+        // served from the in-instance memo (ADR-0018's local version caching).
+        $driver = $this->createMock(CacheDriverInterface::class);
+        $driver->expects(self::once())->method('getMultiple')->willReturn([]);
+        $driver->method('set')->willReturn(true);
+
+        $strategy = new BestEffortTagStrategy($driver);
+
+        $first = $strategy->getTagVersions(['tag-a']);
+        $second = $strategy->getTagVersions(['tag-a']);
+
+        self::assertSame($first['tag-a'], $second['tag-a']);
+    }
+
+    #[Test]
+    public function resetRequestStateClearsTheMemoSoCrossWorkerInvalidationsAreObserved(): void
+    {
+        // Simulate two workers sharing one driver: worker A memoizes v1, worker
+        // B invalidates the tag on the shared backend. Without the reset, A's
+        // memo would keep answering v1 forever (persistent-runtime staleness);
+        // after resetRequestState() A must re-read the driver and see v2.
+        $sharedDriver = new ArrayDriver();
+        $workerA = new BestEffortTagStrategy($sharedDriver);
+        $workerB = new BestEffortTagStrategy($sharedDriver);
+
+        $before = $workerA->getTagVersions(['tag-a']);
+        $workerB->invalidateTag('tag-a');
+
+        self::assertSame($before, $workerA->getTagVersions(['tag-a']), 'Within one request the memo answers');
+
+        $workerA->resetRequestState();
+
+        self::assertNotSame($before['tag-a'], $workerA->getTagVersions(['tag-a'])['tag-a'], 'After the per-request reset the invalidation must be visible');
     }
 
     #[Test]

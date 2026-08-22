@@ -12,10 +12,15 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Auth\Guard\SessionGuard;
+use Pulsar\Auth\Identity\Identity;
+use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\Handler\CookieHandler;
@@ -24,12 +29,20 @@ use Pulsar\Security\Session\Handler\FileHandler;
 use Pulsar\Security\Session\SessionEncryption;
 use Pulsar\Security\Session\SessionManager;
 use Pulsar\Security\Session\SessionMiddleware;
+use Pulsar\Security\Session\Validator\FingerprintValidator;
 use Pulsar\Security\Session\Validator\RemoteAddressValidator;
 use Pulsar\Security\Session\Validator\UserAgentValidator;
 use ReflectionClass;
 
+use function explode;
+use function json_encode;
 use function random_bytes;
 use function sodium_bin2hex;
+use function str_repeat;
+use function strpos;
+use function substr;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Integration tests verifying session system components working together.
@@ -87,6 +100,162 @@ final class SessionIntegrationTest extends TestCase
         self::assertFalse($handler->supportsConcurrencyControl());
         self::assertFalse($handler->supportsSessionListing());
         self::assertFalse($handler->supportsRevocation());
+    }
+
+    #[Test]
+    public function cookieHandlerPersistsSessionAcrossRequests(): void
+    {
+        // With handler='cookie', the session body travels in the companion payload
+        // cookie, so state set on request N is present on request N+1.
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $config = $this->cookieConfig();
+
+        $manager = new SessionManager(new CookieHandler(SessionEncryption::fromMasterKey($masterKey), $config), $config);
+        $manager->startWithRequest(new ServerRequest(method: 'GET', uri: '/', serverParams: ['REMOTE_ADDR' => '127.0.0.1']));
+        $manager->set('user_id', '42');
+        $manager->save();
+
+        $sessionId = $manager->id();
+        $payloadHeader = $manager->pendingPayloadCookieHeader();
+        self::assertNotNull($payloadHeader, 'cookie handler must emit a payload cookie');
+
+        // Extract the cookie value (split on the FIRST '=' so base64 padding survives).
+        $firstPart = explode(';', $payloadHeader)[0];
+        $eq = strpos($firstPart, '=');
+        self::assertNotFalse($eq);
+        $payloadValue = substr($firstPart, $eq + 1);
+
+        $manager2 = new SessionManager(new CookieHandler(SessionEncryption::fromMasterKey($masterKey), $config), $config);
+        $manager2->startWithRequest(new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST' => $sessionId, 'TEST_data' => $payloadValue],
+        ));
+
+        self::assertSame('42', $manager2->get('user_id'));
+    }
+
+    #[Test]
+    public function fingerprintIsSeededOnCreateAndPreservedOnReload(): void
+    {
+        // The fingerprint is computed and stored when the session is created, and
+        // preserved across reloads. Without both halves the validator has nothing
+        // to compare against and silently accepts every request.
+        $config = $this->arrayConfig();
+        $handler = new ArrayHandler();
+        $validator = new FingerprintValidator(new HmacService(), '0123456789abcdef0123456789abcdef');
+
+        $manager = new SessionManager($handler, $config, [$validator]);
+        $manager->startWithRequest(new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['Accept-Language' => 'en-US,en'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        ));
+
+        $fingerprint = $manager->metadata?->fingerprint;
+        self::assertNotNull($fingerprint, 'fingerprint must be seeded on create');
+        $manager->save();
+        $sessionId = $manager->id();
+
+        $manager2 = new SessionManager($handler, $config, [$validator]);
+        $manager2->startWithRequest(new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['Accept-Language' => 'en-US,en'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => $sessionId],
+        ));
+
+        self::assertSame($fingerprint, $manager2->metadata?->fingerprint, 'fingerprint must round-trip');
+    }
+
+    #[Test]
+    public function fingerprintRejectsADifferentHeaderProfile(): void
+    {
+        // Once seeded, a replay from a different stable-header profile fails
+        // validation. For an AUTHENTICATED session this is
+        // a hard failure (re-authentication required, SecurityException); an anonymous
+        // session is instead silently regenerated — covered in SessionAdversarialTest.
+        $config = $this->arrayConfig();
+        $handler = new ArrayHandler();
+        $validator = new FingerprintValidator(new HmacService(), '0123456789abcdef0123456789abcdef');
+
+        $manager = new SessionManager($handler, $config, [$validator]);
+        $manager->startWithRequest(new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['Accept-Language' => 'en-US'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        ));
+        // Mark the session authenticated so a fingerprint mismatch is a hard reject.
+        $manager->set('_pulsar_identity', ['id' => 'user-1']);
+        $manager->save();
+        $sessionId = $manager->id();
+
+        $manager2 = new SessionManager($handler, $config, [$validator]);
+
+        $this->expectException(SecurityException::class);
+
+        $manager2->startWithRequest(new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['Accept-Language' => 'fr-FR'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => $sessionId],
+        ));
+    }
+
+    #[Test]
+    public function existingSessionWithMissingMetadataIsRotatedNotAdopted(): void
+    {
+        // An existing session record whose metadata is absent is untrusted: it is
+        // rotated to a fresh id and its data discarded, never silently re-homed to
+        // the current IP/UA with no validation.
+        $config = $this->arrayConfig();
+        $handler = new ArrayHandler();
+        $sessionId = str_repeat('a', 64);
+        $handler->write($sessionId, json_encode(['data' => ['secret' => 'value']], JSON_THROW_ON_ERROR));
+
+        $manager = new SessionManager($handler, $config);
+        $manager->startWithRequest(new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => $sessionId],
+        ));
+
+        self::assertNotSame($sessionId, $manager->id(), 'untrusted session must be rotated to a fresh id');
+        self::assertNull($manager->get('secret'), 'untrusted session data must be discarded');
+    }
+
+    private function arrayConfig(): SessionConfig
+    {
+        return new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        );
+    }
+
+    private function cookieConfig(): SessionConfig
+    {
+        return new SessionConfig(
+            cookieName: 'TEST',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'cookie',
+            encryption: false,
+        );
     }
 
     #[Test]
@@ -239,6 +408,85 @@ final class SessionIntegrationTest extends TestCase
 
         $stmt->execute([$sessionId]);
         self::assertFalse($stmt->fetchColumn());
+    }
+
+    /**
+     * ASVS V3.3.1 through the framework's own logout: the authenticated
+     * session must be terminated in the store, not merely forgotten in
+     * memory, and its successor must inherit none of its data. Uses the
+     * SQLite-backed handler so the assertion is against rows, not an array.
+     */
+    #[Test]
+    public function guardLogoutDestroysTheAuthenticatedRowAndCarriesNoDataForward(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec(
+            'CREATE TABLE sessions (
+                id VARCHAR(128) PRIMARY KEY,
+                user_id VARCHAR(255) NULL,
+                data TEXT NOT NULL,
+                ip_address VARCHAR(45) NULL,
+                user_agent TEXT NULL,
+                last_activity INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )',
+        );
+
+        $config = new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'database',
+            encryption: false,
+            maxConcurrentSessions: 5,
+        );
+
+        $manager = new SessionManager(new DatabaseHandler($pdo, 'sessions', 3600), $config);
+        $manager->start();
+
+        $guard = new SessionGuard($manager);
+        $guard->login(new Identity(
+            id: 'user-a',
+            displayName: 'User A',
+            roles: ['admin'],
+            twoFactorStatus: TwoFactorStatus::Verified,
+            attributes: [],
+        ));
+
+        $manager->set('oauth_state', 'state-token');
+        $manager->save();
+
+        $authenticatedId = $manager->id();
+
+        self::assertNotEmpty(self::sessionRow($pdo, $authenticatedId));
+
+        $guard->logout();
+
+        self::assertFalse(
+            self::sessionRow($pdo, $authenticatedId),
+            'the authenticated session row must be gone after logout',
+        );
+
+        $successor = self::sessionRow($pdo, $manager->id());
+        self::assertIsString($successor);
+        self::assertStringNotContainsString('state-token', $successor);
+        self::assertStringNotContainsString('user-a', $successor);
+        self::assertNull($guard->authenticate(new ServerRequest(method: 'GET', uri: '/')));
+    }
+
+    /**
+     * The stored payload of one session row, or false when no such row exists.
+     */
+    private static function sessionRow(PDO $pdo, string $sessionId): mixed
+    {
+        $statement = $pdo->prepare('SELECT data FROM sessions WHERE id = ?');
+        $statement->execute([$sessionId]);
+
+        return $statement->fetchColumn();
     }
 
     #[Test]

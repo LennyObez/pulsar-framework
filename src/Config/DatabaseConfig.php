@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Cache\QueryCacheConfig;
@@ -12,15 +13,28 @@ use Pulsar\Database\Failover\FailoverConfig;
 use Pulsar\Database\Monitor\MonitorConfig;
 use Pulsar\Database\Pool\PoolConfig;
 use Pulsar\Database\Routing\ReadWriteConfig;
+use Pulsar\Database\Schema\SchemaException;
+use Pulsar\Database\Schema\SchemaIdentifier;
+
+use function sprintf;
 
 /**
  * Top-level typed configuration DTO for `config/database.php`.
  *
  * Composes per-connection DTOs and migration settings.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class DatabaseConfig
+final readonly class DatabaseConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/database.php. */
+    private const array KNOWN_KEYS = [
+        'default', 'connections', 'read_write', 'pool', 'query_cache', 'migrations', 'failover', 'monitor',
+    ];
+
+    /** Keys read from the `migrations` sub-array, which has no DTO of its own. */
+    private const array KNOWN_MIGRATIONS_KEYS = ['table', 'path'];
+
     /**
      * @param array<string, ConnectionConfig> $connections Keyed by connection name
      */
@@ -34,58 +48,98 @@ readonly class DatabaseConfig
         public FailoverConfig $failover = new FailoverConfig(),
         public QueryCacheConfig $queryCache = new QueryCacheConfig(),
         public MonitorConfig $monitor = new MonitorConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw database config array and environment.
      *
-     * @param array<string, mixed> $data Raw array from config/database.php
+     * @param array{
+     *     default?: string,
+     *     connections?: array<string, array<string, mixed>>,
+     *     migrations?: array{table?: string, path?: string},
+     *     pool?: array<string, mixed>,
+     *     read_write?: array<string, mixed>,
+     *     failover?: array<string, mixed>,
+     *     query_cache?: array<string, mixed>,
+     *     monitor?: array<string, mixed>,
+     * } $data Raw array from config/database.php
+     * @param string|null $basePath Project root for resolving relative SQLite paths
+     *
+     * @throws InvalidArgumentException If the configured migrations table name is not a valid SQL identifier.
      */
     #[NoDiscard]
-    public static function fromArray(array $data, Environment $environment): self
+    public static function fromArray(array $data, Environment $environment, ?string $basePath = null): self
     {
-        /** @var string $defaultFromConfig */
-        $defaultFromConfig = $data['default'] ?? 'mysql';
-        $defaultConnection = $environment->get('DB_CONNECTION') ?? $defaultFromConfig;
-
-        /** @var array<string, array<string, mixed>> $connectionsData */
-        $connectionsData = $data['connections'] ?? [];
+        $defaultConnection = $environment->get('DB_CONNECTION') ?? $data['default'] ?? 'mysql';
 
         $connections = [];
-        foreach ($connectionsData as $name => $connData) {
-            /** @var array<string, mixed> $connData */
-            $connections[$name] = ConnectionConfig::fromArray($name, $connData, $environment);
+        foreach ($data['connections'] ?? [] as $name => $connData) {
+            $connections[$name] = ConnectionConfig::fromArray($name, $connData, $environment, $basePath);
         }
 
-        /** @var array<string, mixed> $migrationsData */
         $migrationsData = $data['migrations'] ?? [];
-        /** @var string $migrationsTable */
         $migrationsTable = $migrationsData['table'] ?? 'pulsar_migrations';
-
-        /** @var string $migrationsPath */
         $migrationsPath = $migrationsData['path'] ?? 'database/migrations';
 
-        /** @var array<string, mixed> $poolData */
+        // Defense-in-depth: reject a malformed migrations table name at config
+        // parse time, before any MigrationRunner interpolates it into DDL/DML,
+        // MySQL GET_LOCK string literals, or the SQLite flock path.
+        try {
+            SchemaIdentifier::validateTable($migrationsTable);
+        } catch (SchemaException $e) {
+            throw new InvalidArgumentException(
+                sprintf('config/database.php: invalid migrations.table name "%s": %s', $migrationsTable, $e->getMessage()),
+                previous: $e,
+            );
+        }
+
         $poolData = $data['pool'] ?? [];
-        /** @var array<string, mixed> $readWriteData */
         $readWriteData = $data['read_write'] ?? [];
-        /** @var array<string, mixed> $failoverData */
         $failoverData = $data['failover'] ?? [];
-        /** @var array<string, mixed> $queryCacheData */
         $queryCacheData = $data['query_cache'] ?? [];
-        /** @var array<string, mixed> $monitorData */
         $monitorData = $data['monitor'] ?? [];
+
+        $pool = $poolData !== [] ? PoolConfig::fromArray($poolData) : new PoolConfig();
+        $readWrite = $readWriteData !== [] ? ReadWriteConfig::fromArray($readWriteData) : new ReadWriteConfig();
+        $failover = $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig();
+        $queryCache = $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig();
+        $monitor = $monitorData !== [] ? MonitorConfig::fromArray($monitorData) : new MonitorConfig();
 
         return new self(
             defaultConnection: $defaultConnection,
             connections: $connections,
             migrationsTable: $migrationsTable,
             migrationsPath: $migrationsPath,
-            pool: $poolData !== [] ? PoolConfig::fromArray($poolData) : new PoolConfig(),
-            readWrite: $readWriteData !== [] ? ReadWriteConfig::fromArray($readWriteData) : new ReadWriteConfig(),
-            failover: $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig(),
-            queryCache: $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig(),
-            monitor: $monitorData !== [] ? MonitorConfig::fromArray($monitorData) : new MonitorConfig(),
+            pool: $pool,
+            readWrite: $readWrite,
+            failover: $failover,
+            queryCache: $queryCache,
+            monitor: $monitor,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                // Connections are keyed by an operator-chosen name, so the report
+                // echoes it back: connections.mysql.databse names the exact entry.
+                ...UnknownKeys::nestedEach('connections', $connections),
+                ...UnknownKeys::nestedKeys(
+                    'migrations',
+                    UnknownKeys::collect($migrationsData, self::KNOWN_MIGRATIONS_KEYS),
+                ),
+                ...UnknownKeys::nested('pool', $pool),
+                ...UnknownKeys::nested('read_write', $readWrite),
+                ...UnknownKeys::nested('failover', $failover),
+                ...UnknownKeys::nested('query_cache', $queryCache),
+                ...UnknownKeys::nested('monitor', $monitor),
+            ],
         );
     }
 

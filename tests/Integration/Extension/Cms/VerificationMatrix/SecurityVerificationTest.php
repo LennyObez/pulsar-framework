@@ -13,20 +13,33 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Auth\Identity\TwoFactorStatus;
+use Pulsar\Auth\TwoFactor\TotpGenerator;
+use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Auth\TwoFactor\TwoFactorManager;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CsrfConfig;
-use Pulsar\Extension\Cms\Comments\AntiAbuseHeuristics;
+use Pulsar\Extension\Cms\Config\MediaConfig;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Http\Middleware\CommentAntiAbuseMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CommentHoneypotMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CommentRateLimitMiddleware;
+use Pulsar\Extension\Cms\Internal\Security\SafeHttpClient;
+use Pulsar\Extension\Cms\Internal\Themes\SafeArchiveExtractor;
+use Pulsar\Extension\Cms\Media\Security\FileValidator;
 use Pulsar\Extension\Cms\Media\Security\PdfValidator;
 use Pulsar\Extension\Cms\Media\Security\SvgSanitizer;
 use Pulsar\Extension\Cms\Security\ClientFingerprint;
 use Pulsar\Extension\Cms\Themes\ProvenanceResult;
+use Pulsar\Extension\Cms\Users\CmsUser;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\Stream;
+use Pulsar\Security\AntiSpam\AntiSpamPipeline;
+use Pulsar\Security\AntiSpam\DuplicateDetector;
+use Pulsar\Security\AntiSpam\LinkDensityChecker;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -49,7 +62,10 @@ use function unlink;
 /**
  * Security verification matrix: S1-S17.
  *
- * Validates each security control defined in the CMS security plan.
+ * One test per security control the CMS commits to, numbered to match the
+ * method names. Each control is asserted end to end rather than at the class
+ * that implements it, because a control can be present and still unreachable
+ * if it is not wired into the request path.
  */
 #[CoversClass(CsrfMiddleware::class)]
 #[Group('verification-matrix')]
@@ -206,8 +222,9 @@ final class SecurityVerificationTest extends TestCase
     public function s6DuplicateCommentDetection(): void
     {
         $cache = new VerificationTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($cache);
-        $middleware = new CommentAntiAbuseMiddleware($heuristics);
+        $duplicateDetector = new DuplicateDetector($cache);
+        $pipeline = new AntiSpamPipeline(checks: [$duplicateDetector]);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = $this->createCommentRequest('10.0.0.2', ['body' => 'Same exact text']);
         $handler = new VerificationPassThrough();
@@ -224,12 +241,12 @@ final class SecurityVerificationTest extends TestCase
     #[Test]
     public function s7ExcessiveLinksRejected(): void
     {
-        $cache = new VerificationTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($cache);
-        $middleware = new CommentAntiAbuseMiddleware($heuristics, maxLinks: 2);
+        $linkChecker = new LinkDensityChecker(maxDensity: 0.1);
+        $pipeline = new AntiSpamPipeline(checks: [$linkChecker]);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = $this->createCommentRequest('10.0.0.3', [
-            'body' => 'Visit https://a.com https://b.com https://c.com',
+            'body' => 'https://a.com https://b.com https://c.com',
         ]);
         $handler = new VerificationPassThrough();
 
@@ -249,7 +266,7 @@ final class SecurityVerificationTest extends TestCase
     {
         // SafeHttpClient is Internal — verify it exists
         self::assertTrue(
-            class_exists(\Pulsar\Extension\Cms\Internal\Security\SafeHttpClient::class),
+            class_exists(SafeHttpClient::class),
             'SafeHttpClient must exist for SSRF protection',
         );
 
@@ -288,11 +305,11 @@ final class SecurityVerificationTest extends TestCase
         self::assertInstanceOf(CmsException::class, $magicMismatch);
 
         // FileValidator must reject a disallowed extension before inspecting magic bytes
-        $config = new \Pulsar\Extension\Cms\Config\MediaConfig(
+        $config = new MediaConfig(
             allowedExtensions: ['jpg', 'png'],
             allowedMimeTypes: ['image/jpeg', 'image/png'],
         );
-        $validator = new \Pulsar\Extension\Cms\Media\Security\FileValidator($config);
+        $validator = new FileValidator($config);
 
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_s10_');
         self::assertNotFalse($tempFile);
@@ -376,7 +393,7 @@ final class SecurityVerificationTest extends TestCase
     #[Test]
     public function s13ZipSlipProtection(): void
     {
-        self::assertTrue(class_exists(\Pulsar\Extension\Cms\Internal\Themes\SafeArchiveExtractor::class));
+        self::assertTrue(class_exists(SafeArchiveExtractor::class));
 
         // The factory must produce a CmsException referencing the malicious path
         $exception = CmsException::themeZipSlipDetected('../etc/passwd');
@@ -483,7 +500,7 @@ final class SecurityVerificationTest extends TestCase
     #[Test]
     public function s16PrivilegeEscalationPrevented(): void
     {
-        self::assertTrue(class_exists(\Pulsar\Extension\Cms\Users\CmsUser::class));
+        self::assertTrue(class_exists(CmsUser::class));
 
         // CmsException::invalidCmsRole() factory should exist
         $exception = CmsException::invalidCmsRole('superadmin');
@@ -496,10 +513,10 @@ final class SecurityVerificationTest extends TestCase
     #[Test]
     public function s17TwoFactorEnforcement(): void
     {
-        self::assertTrue(class_exists(\Pulsar\Auth\TwoFactor\TwoFactorManager::class));
-        self::assertTrue(class_exists(\Pulsar\Auth\TwoFactor\TotpGenerator::class));
-        self::assertTrue(class_exists(\Pulsar\Auth\TwoFactor\TotpVerifier::class));
-        self::assertTrue(class_exists(\Pulsar\Auth\Identity\TwoFactorStatus::class));
+        self::assertTrue(class_exists(TwoFactorManager::class));
+        self::assertTrue(class_exists(TotpGenerator::class));
+        self::assertTrue(class_exists(TotpVerifier::class));
+        self::assertTrue(class_exists(TwoFactorStatus::class));
 
         // CmsException::twoFactorNotEnabled() factory should exist
         $exception = CmsException::twoFactorNotEnabled('user-001');
@@ -512,16 +529,22 @@ final class SecurityVerificationTest extends TestCase
             public function log(
                 AuditEvent $event,
                 AuditOutcome $outcome,
-                ?string $actor,
+                AuditActor|string|null $actor,
                 string $action,
                 string $resource = '',
                 array $metadata = [],
             ): AuditEntry {
+                $resolved = match (true) {
+                    $actor instanceof AuditActor => $actor->id,
+                    $actor === null || $actor === '' => '',
+                    default => $actor,
+                };
+
                 return new AuditEntry(
                     id: 'audit-' . bin2hex(random_bytes(4)),
                     event: $event,
                     outcome: $outcome,
-                    actor: $actor ?? '',
+                    actor: $resolved,
                     action: $action,
                     resource: $resource,
                     timestamp: new DateTimeImmutable(),
@@ -571,7 +594,7 @@ final class VerificationPassThrough implements RequestHandlerInterface
     }
 }
 
-final class VerificationTaggedCache implements \Pulsar\Cache\Application\TaggedCacheInterface
+final class VerificationTaggedCache implements TaggedCacheInterface
 {
     /** @var array<string, mixed> */
     private array $store = [];

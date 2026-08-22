@@ -7,7 +7,9 @@ namespace Pulsar\Context;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
+use function is_array;
 use function is_string;
 
 /**
@@ -15,6 +17,7 @@ use function is_string;
  *
  * Propagated across HTTP, queue, scheduler, and CLI boundaries via ContextPropagator.
  * Clone-with mutators use PHP 8.5 clone() syntax.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequestContext
@@ -38,31 +41,25 @@ final readonly class RequestContext
         $this->timestamp = $timestamp ?? new DateTimeImmutable();
     }
 
-    /** @psalm-suppress MoreSpecificReturnType */
     #[NoDiscard]
     public function withActor(string $actor): self
     {
-        /** @psalm-suppress LessSpecificReturnStatement */
         return clone($this, ['actor' => $actor]);
     }
 
-    /** @psalm-suppress MoreSpecificReturnType */
     #[NoDiscard]
     public function withTenantId(string $tenantId): self
     {
-        /** @psalm-suppress LessSpecificReturnStatement */
         return clone($this, ['tenantId' => $tenantId]);
     }
 
     /**
      * @param array<string, mixed> $attributes
      *
-     * @psalm-suppress MoreSpecificReturnType
      */
     #[NoDiscard]
     public function withAttributes(array $attributes): self
     {
-        /** @psalm-suppress LessSpecificReturnStatement */
         return clone($this, ['attributes' => $attributes]);
     }
 
@@ -89,33 +86,34 @@ final readonly class RequestContext
     /**
      * Deserialize from array with snake_case keys.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     correlation_id?: string,
+     *     causation_id?: string,
+     *     actor?: string|null,
+     *     tenant_id?: string|null,
+     *     ip?: string|null,
+     *     user_agent?: string|null,
+     *     locale?: string|null,
+     *     timestamp?: string|null,
+     *     attributes?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $attributes */
-        $attributes = $data['attributes'] ?? [];
-
-        $correlationId = $data['correlation_id'] ?? '';
-        $causationId = $data['causation_id'] ?? '';
-        $actor = $data['actor'] ?? null;
-        $tenantId = $data['tenant_id'] ?? null;
-        $ip = $data['ip'] ?? null;
-        $userAgent = $data['user_agent'] ?? null;
-        $locale = $data['locale'] ?? null;
         $timestampRaw = $data['timestamp'] ?? null;
+        $attributes = $data['attributes'] ?? null;
 
         return new self(
-            correlationId: CorrelationId::fromString(is_string($correlationId) ? $correlationId : ''),
-            causationId: CausationId::fromString(is_string($causationId) ? $causationId : ''),
-            actor: is_string($actor) ? $actor : null,
-            tenantId: is_string($tenantId) ? $tenantId : null,
-            ip: is_string($ip) ? $ip : null,
-            userAgent: is_string($userAgent) ? $userAgent : null,
-            locale: is_string($locale) ? $locale : null,
+            correlationId: CorrelationId::fromString(Coerce::string($data['correlation_id'] ?? null)),
+            causationId: CausationId::fromString(Coerce::string($data['causation_id'] ?? null)),
+            actor: Coerce::nullableString($data['actor'] ?? null),
+            tenantId: Coerce::nullableString($data['tenant_id'] ?? null),
+            ip: Coerce::nullableString($data['ip'] ?? null),
+            userAgent: Coerce::nullableString($data['user_agent'] ?? null),
+            locale: Coerce::nullableString($data['locale'] ?? null),
             timestamp: is_string($timestampRaw) ? new DateTimeImmutable($timestampRaw) : null,
-            attributes: $attributes,
+            attributes: is_array($attributes) ? $attributes : [],
         );
     }
 }

@@ -7,11 +7,19 @@ namespace Pulsar\Extension\Cms\Content;
 use DateTimeImmutable;
 use Pulsar\Api\Api;
 
+use function sodium_crypto_generichash;
+
+use const SODIUM_CRYPTO_GENERICHASH_BYTES_MAX;
+
 /**
  * Immutable snapshot of a content translation at a point in time.
  *
  * Every status transition creates a revision. The evidence hash proves
  * the exact state of the translation at the moment of the transition.
+ *
+ * @psalm-api Public DTO returned from ContentRevisionRepositoryInterface;
+ *            consumed by RevisionService and admin revision history views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentRevision
@@ -106,6 +114,6 @@ final readonly class ContentRevision
             $metaDescription ?? '',
         ]);
 
-        return hash('blake2b', $payload);
+        return bin2hex(sodium_crypto_generichash($payload, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MAX));
     }
 }

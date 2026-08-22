@@ -142,14 +142,13 @@ final class DataIntegrityVerificationTest extends TestCase
         $published = $content->publish();
         $repo->save($published);
 
-        // Verify visible before delete
         $result = $repo->findPublished('en');
         self::assertCount(1, $result->items);
 
-        // Soft delete
         $repo->delete($published);
 
-        // No longer found
+        // A soft-deleted row still exists; the contract is that no read path
+        // returns it, so assert both the direct lookup and the listing.
         self::assertNull($repo->findById('sd-001'));
         $afterDelete = $repo->findPublished('en');
         self::assertCount(0, $afterDelete->items);
@@ -225,10 +224,6 @@ final class DataIntegrityVerificationTest extends TestCase
     #[Test]
     public function d9EventStoreMonotonicity(): void
     {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b not available');
-        }
-
         $store = new DataIntegrityEventStore();
 
         $store->append($this->createEvent('content-001', 1, 'Created'));
@@ -254,10 +249,6 @@ final class DataIntegrityVerificationTest extends TestCase
     #[Test]
     public function d10AtomicSnapshot(): void
     {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b not available');
-        }
-
         $event = $this->createEvent('content-001', 1, 'ContentCreated');
 
         // Evidence hash should be deterministic
@@ -321,6 +312,11 @@ final class DataIntegrityContentRepository implements ContentRepositoryInterface
     public function findById(string $id): ?Content
     {
         return isset($this->deleted[$id]) ? null : ($this->contents[$id] ?? null);
+    }
+
+    public function findByImportId(string $importId): ?Content
+    {
+        return null;
     }
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content

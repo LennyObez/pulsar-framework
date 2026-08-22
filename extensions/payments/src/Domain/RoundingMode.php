@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Rounding mode for Money arithmetic.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RoundingMode

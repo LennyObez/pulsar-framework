@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Mail\Audit;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Mail\Audit\DeliveryStatus;
 
-#[CoversClass(DeliveryStatus::class)]
+#[CoversNothing]
 final class DeliveryStatusTest extends TestCase
 {
     #[Test]

@@ -7,11 +7,12 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceHandler;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function is_string;
 
 /**
  * Controller for deleting resource records.
@@ -19,22 +20,22 @@ use Pulsar\Http\ResponseStatus;
 #[Internal]
 final readonly class ResourceDeleteController
 {
+    use ExtractsRequestActor;
+
     public function __construct(
         private DeleteResourceHandler $handler,
     ) {}
 
     public function delete(ServerRequestInterface $request, string $resource, string $id): Response
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
         $context = new MutationContext(
             actor: $actor,
-            reason: (string) ($body['reason'] ?? 'Admin panel delete'),
+            reason: isset($body['reason']) && is_string($body['reason']) ? $body['reason'] : 'Admin panel delete',
         );
 
         $result = $this->handler->execute(new DeleteResourceRequest(

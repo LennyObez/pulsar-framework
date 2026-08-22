@@ -18,6 +18,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -29,17 +30,17 @@ use function strlen;
  * Provides CRUD operations for the media library: listing with filters,
  * file upload via multipart form, asset detail with derivatives, and soft delete.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class MediaController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class MediaController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private MediaRepositoryInterface $mediaRepository,
         private MediaServiceInterface $mediaService,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List media assets with optional filters.
@@ -50,10 +51,18 @@ final readonly class MediaController
         $this->authorize($identity, 'cms.media.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
-        $mimeType = is_string($params['mime'] ?? null) ? $params['mime'] : null;
-        $visibility = is_string($params['visibility'] ?? null) ? $params['visibility'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawMime */
+        $rawMime = $params['mime'] ?? null;
+        $mimeType = is_string($rawMime) ? $rawMime : null;
+        /** @var mixed $rawVisibility */
+        $rawVisibility = $params['visibility'] ?? null;
+        $visibility = is_string($rawVisibility) ? $rawVisibility : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -104,7 +113,9 @@ final readonly class MediaController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $visibilityValue = is_string($body['visibility'] ?? null) ? $body['visibility'] : 'public';
+        /** @var mixed $rawVisibility */
+        $rawVisibility = $body['visibility'] ?? null;
+        $visibilityValue = is_string($rawVisibility) ? $rawVisibility : 'public';
         $visibility = MediaVisibility::tryFrom($visibilityValue) ?? MediaVisibility::Public;
 
         /** @var string|null $tenantId */
@@ -211,7 +222,9 @@ final readonly class MediaController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([

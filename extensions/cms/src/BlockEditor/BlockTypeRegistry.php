@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Block types are registered during the extension boot phase. Plugins and
  * themes may register additional custom block types via the container.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BlockTypeRegistry
@@ -51,5 +52,27 @@ final class BlockTypeRegistry
     public function all(): array
     {
         return $this->blocks;
+    }
+
+    /**
+     * Return all registered block types with their JSON Schemas.
+     *
+     * Produces a map of `{ type: { type, schema } }` for the frontend
+     * BlockRegistry/BlockInspector to consume.
+     *
+     * @return array<string, array{type: string, schema: array<string, mixed>}>
+     */
+    public function toJsonSchema(): array
+    {
+        $result = [];
+
+        foreach ($this->blocks as $type => $blockType) {
+            $result[$type] = [
+                'type' => $type,
+                'schema' => $blockType->schema(),
+            ];
+        }
+
+        return $result;
     }
 }

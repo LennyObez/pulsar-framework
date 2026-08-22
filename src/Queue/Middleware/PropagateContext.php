@@ -39,7 +39,7 @@ final readonly class PropagateContext implements JobMiddlewareInterface
      * Inject current request context fields into the envelope if available.
      *
      * Fields already present on the envelope (from a previous dispatch) are
-     * not overwritten — this allows context to survive re-dispatch scenarios.
+     * not overwritten: this allows context to survive re-dispatch scenarios.
      */
     private function injectContext(JobEnvelope $envelope): JobEnvelope
     {

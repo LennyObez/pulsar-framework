@@ -43,7 +43,7 @@ final class LegalBasisRegistryTest extends TestCase
         $registry = new LegalBasisRegistry();
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage(FakeNotificationA::class);
+        $this->expectExceptionMessageIsOrContains(FakeNotificationA::class);
 
         $registry->get(FakeNotificationA::class);
     }
@@ -71,7 +71,7 @@ final class LegalBasisRegistryTest extends TestCase
         // FakeNotificationB is not registered
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage(FakeNotificationB::class);
+        $this->expectExceptionMessageIsOrContains(FakeNotificationB::class);
 
         $registry->validate();
     }

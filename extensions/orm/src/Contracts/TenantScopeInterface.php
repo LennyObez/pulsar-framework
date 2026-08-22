@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Provides the current tenant ID for tenant-scoped queries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TenantScopeInterface

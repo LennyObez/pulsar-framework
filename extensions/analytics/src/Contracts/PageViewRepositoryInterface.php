@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\PageView;
 
 /**
  * Persistence interface for page view records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PageViewRepositoryInterface
@@ -41,4 +42,18 @@ interface PageViewRepositoryInterface
      * @return int Number of deleted rows
      */
     public function deleteOlderThan(DateTimeImmutable $before): int;
+
+    /**
+     * Find all page views for a specific visitor (GDPR data subject access).
+     *
+     * @return list<PageView>
+     */
+    public function findByVisitorId(string $visitorId, int $limit = 10000): array;
+
+    /**
+     * Delete all page views for a specific visitor (GDPR right to erasure).
+     *
+     * @return int Number of deleted rows
+     */
+    public function deleteByVisitorId(string $visitorId): int;
 }

@@ -10,6 +10,9 @@ use Pulsar\Extension\Cms\AI\PromptTemplateRegistry;
 
 /**
  * Registers the default CMS prompt templates for the AI content assistant.
+ *
+ * @psalm-api Static utility invoked by name (CmsPromptTemplates::registerDefaults)
+ *            from the CMS service provider during boot.
  */
 #[Internal]
 final class CmsPromptTemplates
@@ -21,7 +24,7 @@ final class CmsPromptTemplates
             template: 'Write a {targetWords}-word article about the following topic. '
                 . 'Use a {tone} tone throughout. '
                 . 'Include an introduction, body paragraphs, and a conclusion. '
-                . "Do not include a title — only the body text.\n\n"
+                . "Do not include a title: only the body text.\n\n"
                 . 'Topic: {topic}',
             systemPrompt: 'You are an expert content writer. Produce well-structured, original content.',
             defaultTemperature: 0.7,

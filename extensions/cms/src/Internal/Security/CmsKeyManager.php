@@ -14,8 +14,11 @@ use Pulsar\Security\Crypto\MasterKey;
  * Uses subkey IDs 10-12 to avoid collision with core IDs 1-5.
  *
  * Context strings are exactly 8 bytes per libsodium KDF requirements.
+ *
+ * @psalm-api Resolved from the DI container by services that need to derive
+ *            HMAC keys; not instantiated by name.
  */
-#[Internal(reason: 'CMS security internals — use via service binding')]
+#[Internal(reason: 'CMS security internals; use via service binding')]
 final readonly class CmsKeyManager
 {
     public function __construct(
@@ -70,5 +73,20 @@ final readonly class CmsKeyManager
     public function evidenceKey(): string
     {
         return $this->masterKey->deriveSubKey(14, 'cms_evid');
+    }
+
+    /**
+     * Derive the API-key HMAC pepper.
+     *
+     * Used by CmsApiKeyMiddleware to compute the storage hash of incoming
+     * API keys. Domain-separated from every other CMS subkey via a unique
+     * SubkeyID + 8-byte context, so leaking the API key digest cannot
+     * cross-contaminate preview tokens, media URLs, etc.
+     *
+     * SubkeyID: 15, Context: 'cms_apik'
+     */
+    public function apiKeyHashKey(): string
+    {
+        return $this->masterKey->deriveSubKey(15, 'cms_apik');
     }
 }

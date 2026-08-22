@@ -1,0 +1,14 @@
+{
+  "name": "pulsar/eidas",
+  "description": "eIDAS compliance extension for Pulsar Framework",
+  "type": "pulsar-extension",
+  "license": "Apache-2.0",
+  "require": {
+    "php": "^8.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pulsar\\Extension\\Eidas\\": "src/"
+    }
+  }
+}

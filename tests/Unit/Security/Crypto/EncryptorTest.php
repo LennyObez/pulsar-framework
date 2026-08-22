@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\SodiumCipherSuite;
 use Pulsar\Security\Exception\SecurityException;
 
 use function chr;
 use function ord;
+use function random_bytes;
+use function sodium_bin2hex;
 use function strlen;
 
 #[CoversClass(Encryptor::class)]
@@ -62,7 +65,7 @@ final class EncryptorTest extends TestCase
         $tampered[strlen($tampered) - 1] = chr((ord($tampered[strlen($tampered) - 1]) ^ 0xFF) & 0xFF);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('tampered');
+        $this->expectExceptionMessageIsOrContains('tampered');
 
         $this->encryptor->decrypt(base64_encode($tampered));
     }
@@ -178,7 +181,7 @@ final class EncryptorTest extends TestCase
         $encryptor23 = Encryptor::fromMasterKey($master23);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('tampered');
+        $this->expectExceptionMessageIsOrContains('tampered');
 
         $encryptor23->decrypt($ciphertext);
     }
@@ -187,7 +190,7 @@ final class EncryptorTest extends TestCase
     public function serializationThrows(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization');
+        $this->expectExceptionMessageIsOrContains('Serialization');
 
         serialize($this->encryptor);
     }
@@ -204,5 +207,135 @@ final class EncryptorTest extends TestCase
 
         self::assertSame('[REDACTED]', $debug['key']);
         self::assertSame('[REDACTED]', $debug['previousKey']);
+    }
+
+    #[Test]
+    public function decryptWithCipherSuiteFallsBackToPreviousKey(): void
+    {
+        $oldHex = sodium_bin2hex(random_bytes(32));
+        $newHex = sodium_bin2hex(random_bytes(32));
+
+        $cipherSuite = new SodiumCipherSuite();
+
+        // Encrypt with old key
+        $oldMasterKey = MasterKey::fromHex($oldHex);
+        $oldEncryptor = Encryptor::fromMasterKey($oldMasterKey, $cipherSuite);
+        $encrypted = $oldEncryptor->encrypt('old-data');
+
+        // Decrypt with new key + old key as previous (rotation window)
+        $rotatedMasterKey = MasterKey::fromHex($newHex, $oldHex);
+        $newEncryptor = Encryptor::fromMasterKey($rotatedMasterKey, $cipherSuite);
+        $decrypted = $newEncryptor->decrypt($encrypted);
+
+        self::assertSame('old-data', $decrypted);
+    }
+
+    #[Test]
+    public function decryptWithCipherSuiteFailsBothKeys(): void
+    {
+        $key1 = sodium_bin2hex(random_bytes(32));
+        $key2 = sodium_bin2hex(random_bytes(32));
+        $key3 = sodium_bin2hex(random_bytes(32));
+
+        $cipherSuite = new SodiumCipherSuite();
+
+        // Encrypt with key3 (not known to decryptor)
+        $encMasterKey = MasterKey::fromHex($key3);
+        $encEncryptor = Encryptor::fromMasterKey($encMasterKey, $cipherSuite);
+        $encrypted = $encEncryptor->encrypt('unknown-key-data');
+
+        // Decrypt with key1 + key2 (neither matches key3)
+        $decMasterKey = MasterKey::fromHex($key1, $key2);
+        $decEncryptor = Encryptor::fromMasterKey($decMasterKey, $cipherSuite);
+
+        $this->expectException(SecurityException::class);
+        $decEncryptor->decrypt($encrypted);
+    }
+
+    #[Test]
+    public function fromDerivedKeyCreatesDifferentEncryptor(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+
+        $encryptor1 = Encryptor::fromMasterKey($masterKey);
+        $encryptor2 = Encryptor::fromDerivedKey($masterKey, 5, 'custom__');
+
+        // Encrypt with encryptor1, should not decrypt with encryptor2
+        $encrypted = $encryptor1->encrypt('test-data');
+
+        $this->expectException(SecurityException::class);
+        $encryptor2->decrypt($encrypted);
+    }
+
+    #[Test]
+    public function fromDerivedKeyWithPreviousKey(): void
+    {
+        $oldHex = sodium_bin2hex(random_bytes(32));
+        $newHex = sodium_bin2hex(random_bytes(32));
+
+        // Encrypt with old master key, derived context
+        $oldMasterKey = MasterKey::fromHex($oldHex);
+        $oldEncryptor = Encryptor::fromDerivedKey($oldMasterKey, 5, 'custom__');
+        $encrypted = $oldEncryptor->encrypt('derived-data');
+
+        // Decrypt with rotated master key
+        $rotatedMasterKey = MasterKey::fromHex($newHex, $oldHex);
+        $newEncryptor = Encryptor::fromDerivedKey($rotatedMasterKey, 5, 'custom__');
+        $decrypted = $newEncryptor->decrypt($encrypted);
+
+        self::assertSame('derived-data', $decrypted);
+    }
+
+    #[Test]
+    public function withDerivedKeyCreatesNewEncryptor(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $baseEncryptor = Encryptor::fromMasterKey($masterKey);
+
+        $derivedEncryptor = $baseEncryptor->withDerivedKey($masterKey, 7, 'derivd__');
+
+        // They should use different keys
+        $encrypted = $baseEncryptor->encrypt('base-data');
+
+        $this->expectException(SecurityException::class);
+        $derivedEncryptor->decrypt($encrypted);
+    }
+
+    #[Test]
+    public function cipherSuiteReturnsConfiguredSuite(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+
+        $encryptorWithout = Encryptor::fromMasterKey($masterKey);
+        self::assertNull($encryptorWithout->cipherSuite());
+
+        $suite = new SodiumCipherSuite();
+        $encryptorWith = Encryptor::fromMasterKey($masterKey, $suite);
+        self::assertSame($suite, $encryptorWith->cipherSuite());
+    }
+
+    #[Test]
+    public function unserializationIsForbidden(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $encryptor = Encryptor::fromMasterKey($masterKey);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessageIsOrContains('Serialization of Encryptor is forbidden');
+
+        $encryptor->__unserialize([]);
+    }
+
+    #[Test]
+    public function decryptLegacyRejectsTooShortPayload(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $encryptor = Encryptor::fromMasterKey($masterKey);
+
+        // Valid base64 but too short for nonce + mac
+        $tooShort = base64_encode('short');
+
+        $this->expectException(SecurityException::class);
+        $encryptor->decrypt($tooShort);
     }
 }

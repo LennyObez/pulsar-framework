@@ -16,6 +16,7 @@ use function sprintf;
  * Builder for JOIN ON conditions.
  *
  * All column references must be qualified (alias.column) to avoid ambiguity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class JoinOnBuilder
@@ -33,16 +34,19 @@ final class JoinOnBuilder
 
     /**
      * Add an ON condition comparing two qualified column references.
+     *
+     * @throws \Pulsar\Extension\Orm\Exception\QueryBuilderException If the operator is not in the allowlist.
      */
     public function on(string $left, string $operator, string $right): self
     {
+        $validatedOp = ExpressionCompiler::validateOperator($operator);
         $leftRef = QualifiedRef::parse($left);
         $rightRef = QualifiedRef::parse($right);
 
         $this->conditions[] = sprintf(
             '%s %s %s',
             $this->quoter->quote($leftRef->toString()),
-            $operator,
+            $validatedOp,
             $this->quoter->quote($rightRef->toString()),
         );
 
@@ -51,16 +55,19 @@ final class JoinOnBuilder
 
     /**
      * Add an ON condition comparing a column to a bound value.
+     *
+     * @throws \Pulsar\Extension\Orm\Exception\QueryBuilderException If the operator is not in the allowlist.
      */
     public function where(string $column, string $operator, mixed $value): self
     {
+        $validatedOp = ExpressionCompiler::validateOperator($operator);
         $ref = QualifiedRef::parse($column);
         $binding = $this->bindingCounter->next();
 
         $this->conditions[] = sprintf(
             '%s %s :%s',
             $this->quoter->quote($ref->toString()),
-            $operator,
+            $validatedOp,
             $binding,
         );
         $this->bindings[$binding] = $value;

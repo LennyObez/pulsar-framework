@@ -23,7 +23,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     {
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $taggedCache->method('get')
-            ->willReturnCallback(static fn(string $key): ?string => $key === 'cms_page:abc-123' ? '<html>cached</html>' : null);
+            ->willReturnCallback(static fn(string $key): ?string => $key === 'cms_content_id.abc-123' ? '<html>cached</html>' : null);
 
         $panel = new ContentCacheInspectorPanel($taggedCache, new MetricRegistry());
 
@@ -31,7 +31,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
 
         self::assertCount(1, $report->entries);
         self::assertTrue($report->entries[0]->isHit);
-        self::assertSame('cms_page:abc-123', $report->entries[0]->cacheKey);
+        self::assertSame('cms_content_id.abc-123', $report->entries[0]->cacheKey);
         self::assertSame('abc-123', $report->entries[0]->contentId);
     }
 
@@ -55,7 +55,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $taggedCache->method('get')
             ->willReturnCallback(static fn(string $key): ?string => match ($key) {
-                'cms_page:hit-1', 'cms_page:hit-2' => 'cached',
+                'cms_content_id.hit-1', 'cms_content_id.hit-2' => 'cached',
                 default => null,
             });
 
@@ -109,8 +109,8 @@ final class ContentCacheInspectorPanelTest extends TestCase
     {
         $taggedCache = $this->createMock(TaggedCacheInterface::class);
         $taggedCache->expects(self::once())
-            ->method('delete')
-            ->with('cms_page:content-42');
+            ->method('invalidateTag')
+            ->with('cms_content.content-42');
 
         $panel = new ContentCacheInspectorPanel($taggedCache, new MetricRegistry());
         $panel->invalidateByContentId('content-42');
@@ -133,8 +133,8 @@ final class ContentCacheInspectorPanelTest extends TestCase
     {
         $taggedCache = $this->createMock(TaggedCacheInterface::class);
         $taggedCache->expects(self::once())
-            ->method('invalidateTag')
-            ->with('cms_page');
+            ->method('invalidateTags')
+            ->with(['cms_pages', 'cms_content']);
 
         $panel = new ContentCacheInspectorPanel($taggedCache, new MetricRegistry());
         $panel->flushAll();

@@ -20,7 +20,7 @@ use Pulsar\Extension\Analytics\Internal\Repository\DbGoalRepository;
 /**
  * Goal CRUD and conversion evaluation.
  */
-#[Internal(reason: 'Goal management — use GoalServiceInterface')]
+#[Internal(reason: 'Goal management; use GoalServiceInterface')]
 final readonly class GoalService implements GoalServiceInterface
 {
     public function __construct(

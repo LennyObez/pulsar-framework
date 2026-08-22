@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations may filter or deny access based on the extension's
  * trust tier and granted capabilities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EnvironmentInterface

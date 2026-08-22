@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Security\Audit;
 
 use DateTimeImmutable;
+use Fiber;
+use InvalidArgumentException;
 use JsonException;
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -27,6 +32,7 @@ use function bin2hex;
  *
  * When a RequestContextHolder is available, auto-enriches entries with
  * correlation/causation IDs and auto-fills actor from context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AuditLogger implements AuditLoggerInterface
@@ -38,12 +44,20 @@ final class AuditLogger implements AuditLoggerInterface
 
     private string $previousHmac;
 
-    /**
-     * @throws SodiumException
-     */
+    /** Cooperative fiber mutex for HMAC chain integrity. */
+    private bool $chainLocked = false;
+
     private readonly Randomizer $randomizer;
 
     /**
+     * @throws SecurityException When the sink reports
+     *                           {@see AuditChainState::Corrupted}: the
+     *                           chain cannot be safely resumed, and
+     *                           re-seeding over corrupt state would
+     *                           forge a fresh-looking chain.
+     * @throws InvalidArgumentException When the audit key is shorter than
+     *                                  the libsodium minimum and the seed
+     *                                  HMAC cannot be computed.
      * @throws SodiumException
      */
     public function __construct(
@@ -54,8 +68,32 @@ final class AuditLogger implements AuditLoggerInterface
     ) {
         $this->previousHmac = Hmac::computeHex(self::SEED_MESSAGE, $this->auditKey);
 
-        // Resume chain from the last entry if the sink supports it
-        if ($sink instanceof ChainableAuditSinkInterface) {
+        // State-aware sinks distinguish "empty, fresh chain" from
+        // "non-empty but unreadable" — fail closed on corruption so a
+        // tamper-evident chain cannot restart from the seed after a
+        // truncated or malformed last entry.
+        if ($sink instanceof AuditChainStateAware) {
+            $state = $sink->chainState();
+
+            if ($state === AuditChainState::Corrupted) {
+                throw SecurityException::auditChainCorrupted(
+                    'audit sink reports unreadable last entry — see error_log for diagnostics',
+                );
+            }
+
+            if ($state === AuditChainState::Healthy) {
+                $lastHmac = $sink->lastHmac();
+
+                if ($lastHmac !== null) {
+                    $this->previousHmac = $lastHmac;
+                }
+            }
+            // AuditChainState::Empty -> keep the seed previousHmac.
+        } elseif ($sink instanceof ChainableAuditSinkInterface) {
+            // A sink that doesn't implement AuditChainStateAware cannot
+            // distinguish corruption from emptiness, so a null lastHmac
+            // falls back to the seed — and forfeits the
+            // corruption-detection guarantee.
             $lastHmac = $sink->lastHmac();
 
             if ($lastHmac !== null) {
@@ -70,12 +108,18 @@ final class AuditLogger implements AuditLoggerInterface
      * Log an audit event.
      *
      * Creates an AuditEntry with HMAC chain, writes it to the sink,
-     * and advances the chain state. When actor is null and RequestContext
-     * is available, auto-fills from context. Always enriches metadata
-     * with correlation_id and causation_id when context is available.
+     * and advances the chain state. The actor MUST resolve to a non-empty
+     * identifier — either passed explicitly (as `AuditActor` or string) or
+     * derived from the active `RequestContext`. Falling back to a generic
+     * `'system'` actor is forbidden — it masks a missing actor and makes
+     * the record useless as evidence; an `AuditActorMissingException` is
+     * raised instead.
+     * Always enriches metadata with correlation_id and causation_id when
+     * context is available.
      *
      * @param array<string, mixed> $metadata
      *
+     * @throws AuditActorMissingException when no actor can be resolved.
      * @throws RandomException
      * @throws JsonException
      * @throws SodiumException
@@ -84,12 +128,16 @@ final class AuditLogger implements AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
-        $resolvedActor = $actor;
+        $resolvedActor = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === '' => null,
+            default => $actor,
+        };
         $enrichedMetadata = $metadata;
 
         // Auto-enrich from request context when available
@@ -100,28 +148,47 @@ final class AuditLogger implements AuditLoggerInterface
                 $resolvedActor = $requestContext->actor;
             }
 
-            $enrichedMetadata['correlation_id'] ??= $requestContext->correlationId->value;
-            $enrichedMetadata['causation_id'] ??= $requestContext->causationId->value;
+            if (!isset($enrichedMetadata['correlation_id'])) {
+                $enrichedMetadata['correlation_id'] = $requestContext->correlationId->value;
+            }
+            if (!isset($enrichedMetadata['causation_id'])) {
+                $enrichedMetadata['causation_id'] = $requestContext->causationId->value;
+            }
+        }
+
+        if ($resolvedActor === null || $resolvedActor === '') {
+            throw AuditActorMissingException::notProvidedAndNoContext($action);
         }
 
         $id = bin2hex($this->randomizer->getBytes(16));
         $timestamp = new DateTimeImmutable();
 
-        $entry = AuditEntry::create(
-            id: $id,
-            event: $event,
-            outcome: $outcome,
-            actor: $resolvedActor ?? 'system',
-            action: $action,
-            resource: $resource,
-            timestamp: $timestamp,
-            metadata: $enrichedMetadata,
-            previousHmac: $this->previousHmac,
-            auditKey: $this->auditKey,
-        );
+        // Acquire cooperative mutex: suspend fiber until the chain is unlocked.
+        // Only suspend when running inside a Fiber; main-thread calls are inherently serial.
+        while ($this->chainLocked && Fiber::getCurrent() !== null) {
+            Fiber::suspend();
+        }
+        $this->chainLocked = true;
 
-        $this->sink->write($entry);
-        $this->previousHmac = $entry->hmac;
+        try {
+            $entry = AuditEntry::create(
+                id: $id,
+                event: $event,
+                outcome: $outcome,
+                actor: $resolvedActor,
+                action: $action,
+                resource: $resource,
+                timestamp: $timestamp,
+                metadata: $enrichedMetadata,
+                previousHmac: $this->previousHmac,
+                auditKey: $this->auditKey,
+            );
+
+            $this->sink->write($entry);
+            $this->previousHmac = $entry->hmac;
+        } finally {
+            $this->chainLocked = false;
+        }
 
         return $entry;
     }

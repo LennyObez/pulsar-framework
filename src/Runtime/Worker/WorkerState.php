@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Worker lifecycle state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WorkerState: string

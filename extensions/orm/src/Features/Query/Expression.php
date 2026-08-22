@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Represents a single WHERE condition, HAVING clause, or similar
  * filter expression in compiled form.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Expression
@@ -25,6 +26,9 @@ final readonly class Expression
         public array $bindings = [],
     ) {}
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     #[NoDiscard]
     public static function of(string $sql, array $bindings = []): self
     {

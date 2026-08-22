@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Config\TenantDatabaseConfig;
+use Pulsar\Tenancy\Exception\TenancyException;
 use Pulsar\Tenancy\TenantDatabaseStrategy;
 use Pulsar\Tenancy\TenantResolverStrategy;
 
@@ -92,5 +93,16 @@ final class TenancyConfigTest extends TestCase
         ], $environment);
 
         self::assertTrue($config->enabled);
+    }
+
+    #[Test]
+    public function invalidResolverStrategyThrowsTenancyException(): void
+    {
+        $environment = Environment::load();
+
+        $this->expectException(TenancyException::class);
+        $this->expectExceptionMessageIsOrContains('Unknown resolver strategy "redis"');
+
+        (void) TenancyConfig::fromArray(['resolver' => 'redis'], $environment);
     }
 }

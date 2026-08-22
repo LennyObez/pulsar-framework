@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Mail\Webhook\ConfigurableIpAllowlist;
+use Pulsar\Mail\Webhook\WebhookRequest;
 
 #[CoversClass(ConfigurableIpAllowlist::class)]
 final class ConfigurableIpAllowlistTest extends TestCase
@@ -91,7 +92,7 @@ final class ConfigurableIpAllowlistTest extends TestCase
     #[Test]
     public function webHookRequestProperties(): void
     {
-        $request = new \Pulsar\Mail\Webhook\WebhookRequest(
+        $request = new WebhookRequest(
             payload: '{}',
             headers: ['X-Key' => 'value'],
             sourceIp: '10.0.0.1',

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
+use Pulsar\Http\Middleware\Exception\MiddlewareNotFoundException;
 use RuntimeException;
 
 use function array_key_exists;
+use function class_exists;
 use function is_string;
 use function sprintf;
 
@@ -16,8 +18,9 @@ use function sprintf;
  *
  * Groups map a single name to an ordered list of middleware.
  * Aliases map a short name to a single middleware class-string or instance.
+ * @api
  */
-#[Internal]
+#[Api(since: '1.0.0')]
 final class MiddlewareRegistry
 {
     /** @var array<string, list<MiddlewareInterface|class-string<MiddlewareInterface>>> */
@@ -110,7 +113,14 @@ final class MiddlewareRegistry
                 return $result;
             }
 
-            // Assume it's a class-string and return as-is
+            // Reject any name that is neither a registered alias / group
+            // nor an existing class. Returning `[$name]` tagged as a
+            // class-string would let a typo slip through and crash much
+            // later inside the pipeline.
+            if (!class_exists($name)) {
+                throw MiddlewareNotFoundException::unknownReference($name);
+            }
+
             /** @var class-string<MiddlewareInterface> $name */
             return [$name];
         } finally {

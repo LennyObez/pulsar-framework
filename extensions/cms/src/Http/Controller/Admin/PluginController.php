@@ -19,6 +19,8 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 use function array_map;
 use function count;
 use function file_exists;
+use function is_array;
+use function is_bool;
 use function is_string;
 use function strlen;
 use function sys_get_temp_dir;
@@ -32,20 +34,20 @@ use function unlink;
  * enabling/disabling, reading and updating plugin settings, and deleting.
  * Dangerous operations (install, toggle, delete) require step-up auth.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class PluginController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class PluginController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int INSTALL_RATE_LIMIT_PER_MINUTE = 2;
 
     public function __construct(
         private CmsPluginManagerInterface $pluginManager,
         private SettingsServiceInterface $settingsService,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List all installed plugins.
@@ -149,7 +151,9 @@ final readonly class PluginController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $enabled = (bool) ($body['enabled'] ?? false);
+        /** @var mixed $rawEnabled */
+        $rawEnabled = $body['enabled'] ?? null;
+        $enabled = is_bool($rawEnabled) ? $rawEnabled : false;
 
         try {
             $plugin = $enabled
@@ -174,7 +178,7 @@ final readonly class PluginController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.plugins.manage');
 
-        $settingsGroup = "plugin.{$id}";
+        $settingsGroup = "plugin.$id";
         $locale = $this->resolveLocale($request);
         $settings = $this->settingsService->getGroup($settingsGroup, $locale);
 
@@ -197,13 +201,20 @@ final readonly class PluginController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawSettings */
+        $rawSettings = $body['settings'] ?? null;
         /** @var array<string, mixed> $settings */
-        $settings = (array) ($body['settings'] ?? []);
+        $settings = is_array($rawSettings) ? $rawSettings : [];
 
-        $settingsGroup = "plugin.{$id}";
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
+        $settingsGroup = "plugin.$id";
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
+        $reason = is_string($rawReason) ? $rawReason : null;
 
+        /** @var mixed $value */
         foreach ($settings as $key => $value) {
             $this->settingsService->set($settingsGroup, $key, $value, $locale, $reason);
         }
@@ -228,7 +239,9 @@ final readonly class PluginController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
@@ -247,6 +260,7 @@ final readonly class PluginController
 
     private function resolveLocale(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : null;

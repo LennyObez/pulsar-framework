@@ -35,6 +35,40 @@ final class TranslatorTest extends TestCase
     }
 
     #[Test]
+    public function translateSubstitutesPrefixCollidingPlaceholders(): void
+    {
+        // A shorter :id placeholder must not clobber a longer :identifier that
+        // shares its prefix, whatever the parameter ordering. A plain ordered
+        // str_replace would turn ":identifier" into "7entifier".
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(new TranslationEntry(key: 'audit', message: 'User :id is :identifier'));
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        self::assertSame('User 7 is X', $translator->translate('audit', ['id' => 7, 'identifier' => 'X']));
+    }
+
+    #[Test]
+    public function translateResolvesLiteralDottedKeyOverSiblingDomain(): void
+    {
+        // A literal dotted key ("error.404") must resolve to its own entry
+        // in the requested domain first, never be split into a sibling 'error'
+        // domain that merely shares the prefix.
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturnCallback(
+            static fn(string $key, string $locale, string $domain): ?TranslationEntry => $key === 'error.404' && $domain === 'messages'
+                ? new TranslationEntry(key: 'error.404', message: 'Literal page not found')
+                : ($key === '404' && $domain === 'error'
+                    ? new TranslationEntry(key: '404', message: 'Sibling page not found')
+                    : null),
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        self::assertSame('Literal page not found', $translator->translate('error.404'));
+    }
+
+    #[Test]
     public function translateReturnsKeyWhenNotFoundInNonStrictMode(): void
     {
         $catalog = $this->createStub(CatalogInterface::class);
@@ -193,6 +227,63 @@ final class TranslatorTest extends TestCase
         $translator = new Translator($catalog, $this->makeConfig());
 
         self::assertSame('Error occurred', $translator->translate('error.generic', domain: 'errors'));
+    }
+
+    #[Test]
+    public function translateReplacesColonPlaceholders(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(
+            new TranslationEntry(key: 'copyright', message: '© :year Author'),
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        self::assertSame('© 2026 Author', $translator->translate('copyright', ['year' => 2026]));
+    }
+
+    #[Test]
+    public function translateSplitsDotNotationIntoDomainAndKey(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturnCallback(
+            static function (string $key, string $locale, string $domain): ?TranslationEntry {
+                if ($domain === 'navigation' && $key === 'home') {
+                    return new TranslationEntry(key: 'home', message: 'Home');
+                }
+
+                return null;
+            },
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        // "navigation.home" should split to domain=navigation, key=home
+        self::assertSame('Home', $translator->translate('navigation.home'));
+    }
+
+    #[Test]
+    public function translateDotNotationFallsBackToLiteralKey(): void
+    {
+        $callLog = [];
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturnCallback(
+            static function (string $key, string $locale, string $domain) use (&$callLog): ?TranslationEntry {
+                $callLog[] = "$domain.$key";
+                // Only match the literal key "config.app.name" in default domain
+                if ($domain === 'messages' && $key === 'config.app.name') {
+                    return new TranslationEntry(key: 'config.app.name', message: 'My App');
+                }
+
+                return null;
+            },
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        // "config.app.name" first tries domain=config, key=app.name (miss),
+        // then falls back to literal key "config.app.name" in domain=messages (hit)
+        self::assertSame('My App', $translator->translate('config.app.name'));
     }
 
     /**

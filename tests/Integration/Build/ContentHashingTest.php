@@ -62,7 +62,7 @@ final class ContentHashingTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Ext\\Extension',
             ], $extPath),
         ];
@@ -93,7 +93,7 @@ final class ContentHashingTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Ext\\Extension',
             ], $extPath),
         ];
@@ -126,7 +126,7 @@ final class ContentHashingTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Ext\\Extension',
             ], $extPath),
         ];
@@ -209,7 +209,7 @@ final class ContentHashingTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Ext\\Extension',
             ], $extPath),
         ];

@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Thrown in strict mode when unreleased resources are detected at request end.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResourceLeakException extends RuntimeException
@@ -22,7 +23,7 @@ final class ResourceLeakException extends RuntimeException
     public static function unclosedResource(ResourceEntry $entry): self
     {
         return new self(sprintf(
-            'Unclosed resource detected: [%s] %s — %s (tracked at %.4f)',
+            'Unclosed resource detected: [%s] %s: %s (tracked at %.4f)',
             $entry->type,
             $entry->id,
             $entry->description,
@@ -35,7 +36,7 @@ final class ResourceLeakException extends RuntimeException
     {
         $count = count($entries);
         $details = implode("\n  - ", array_map(
-            static fn(ResourceEntry $e): string => sprintf('[%s] %s — %s', $e->type, $e->id, $e->description),
+            static fn(ResourceEntry $e): string => sprintf('[%s] %s: %s', $e->type, $e->id, $e->description),
             $entries,
         ));
 

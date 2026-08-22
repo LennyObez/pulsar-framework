@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Reason a worker recycle was triggered.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RecycleReason: string

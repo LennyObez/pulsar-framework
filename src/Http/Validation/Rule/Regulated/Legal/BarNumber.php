@@ -22,9 +22,10 @@ use function strlen;
  * Configurable via custom pattern for jurisdiction-specific formats.
  *
  * @see https://www.americanbar.org/
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class BarNumber implements RuleInterface
+final readonly class BarNumber implements RuleInterface
 {
     private const int MAX_PATTERN_LENGTH = 500;
 

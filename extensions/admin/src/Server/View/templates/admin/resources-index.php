@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 /** @var list<array{name: string, label: string, plural_label: string, icon: string, operations: list<string>}> $resources */
 $resources = $templateData['resources'] ?? [];
 ?>
@@ -13,11 +13,9 @@ $resources = $templateData['resources'] ?? [];
     <?php if ($resources === []): ?>
     <div class="admin-empty-state">
         <div class="admin-empty-state__icon">&#128451;</div>
-        <h2 class="admin-empty-state__title">No resources registered</h2>
-        <p class="admin-empty-state__description">
-            Register data resources in your application to manage them here.
-            Implement <code>DataResourceInterface</code> and register it with the
-            <code>ResourceRegistryInterface</code>.
+        <h2 class="admin-empty-state__title" data-t="admin.resources.no_resources"><?= __('admin.resources.no_resources') ?></h2>
+        <p class="admin-empty-state__description" data-t="admin.resources.no_resources_hint">
+            <?= __('admin.resources.no_resources_hint') ?>
         </p>
     </div>
     <?php else: ?>

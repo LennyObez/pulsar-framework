@@ -54,8 +54,8 @@ final class PreloadGeneratorTest extends TestCase
 
         $generator = new PreloadGenerator();
 
-        $fpmOutput = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
-        $persistentOutput = $generator->generate(RuntimeType::Persistent, $this->basePath, $this->cacheDir);
+        $fpmOutput = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
+        $persistentOutput = $generator->generate(RuntimeType::Persistent, $this->cacheDir);
 
         self::assertNotSame($fpmOutput, $persistentOutput);
 
@@ -72,7 +72,7 @@ final class PreloadGeneratorTest extends TestCase
         $this->createSourceFile('src/Core/Kernel.php');
 
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
 
         // Check no backslashes in file paths within require_once/opcache_compile_file
         $lines = explode("\n", $output);
@@ -90,7 +90,7 @@ final class PreloadGeneratorTest extends TestCase
         $this->createSourceFile('src/Core/Kernel.php');
 
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
 
         // Ensure no date/time patterns in output (e.g., 2026-02-18, 12:30:00)
         self::assertDoesNotMatchRegularExpression('/\d{4}-\d{2}-\d{2}/', $output);
@@ -106,22 +106,28 @@ final class PreloadGeneratorTest extends TestCase
 
         $generator = new PreloadGenerator();
 
-        $output1 = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
-        $output2 = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
+        $output1 = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
+        $output2 = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
 
         self::assertSame($output1, $output2);
     }
 
     #[Test]
-    public function emptySourceProducesMinimalOutput(): void
+    public function frameworkClassesArePreloadedRegardlessOfProjectLayout(): void
     {
-        // Do not create any source files
+        // The base path here contains no source files at all. The generator used
+        // to resolve `Pulsar\…` to `<basePath>/src/…`, so any project without a
+        // literal src/ — an installed app (framework under vendor/) or a PSR-4
+        // root named app/ — produced "No classes to preload": preload was a
+        // silent no-op exactly where it mattered. Classes are now resolved
+        // through the autoloader, so the core set is always emitted.
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
 
         self::assertStringContainsString('<?php', $output);
         self::assertStringContainsString('declare(strict_types=1)', $output);
-        self::assertStringContainsString('No classes to preload', $output);
+        self::assertStringNotContainsString('No classes to preload', $output);
+        self::assertStringContainsString('Kernel.php', $output);
     }
 
     #[Test]
@@ -134,7 +140,7 @@ final class PreloadGeneratorTest extends TestCase
         file_put_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'routes.compiled.php', '<?php return [];');
 
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $this->basePath, $this->cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $this->cacheDir);
 
         self::assertStringContainsString('opcache_compile_file(', $output);
         self::assertStringContainsString('container.compiled.php', $output);

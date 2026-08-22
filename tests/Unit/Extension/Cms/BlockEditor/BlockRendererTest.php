@@ -13,6 +13,8 @@ use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeRegistry;
 use Pulsar\Extension\Cms\Content\ContentBlock;
 
+use function is_string;
+
 #[CoversClass(BlockRenderer::class)]
 final class BlockRendererTest extends TestCase
 {
@@ -50,6 +52,27 @@ final class BlockRendererTest extends TestCase
 
         self::assertStringContainsString('<h1>Title</h1>', $html);
         self::assertStringContainsString('<p>Hello</p>', $html);
+    }
+
+    #[Test]
+    public function exposesCspNonceToBlocksOnlyWhenProvided(): void
+    {
+        $probe = $this->createStub(BlockTypeInterface::class);
+        $probe->method('type')->willReturn('probe');
+        $probe->method('validate')->willReturn([]);
+        $probe->method('render')->willReturnCallback(static function (array $data): string {
+            $nonce = $data['_csp_nonce'] ?? null;
+
+            return is_string($nonce) ? "[$nonce]" : '[none]';
+        });
+        $this->registry->register($probe);
+
+        $blocks = [$this->makeContentBlock('probe', 0, ['x' => 1])];
+
+        // The nonce reaches the block via the _csp_nonce render-context key...
+        self::assertSame('[nonce-abc]', $this->renderer->render($blocks, 'nonce-abc'));
+        // ...and is absent (no key injected) when none is supplied.
+        self::assertSame('[none]', $this->renderer->render($blocks));
     }
 
     #[Test]

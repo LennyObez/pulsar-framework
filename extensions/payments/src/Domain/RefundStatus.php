@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Refund status values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RefundStatus: string

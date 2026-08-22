@@ -1,0 +1,211 @@
+/* Pulsar UI — Video Player v1.0.0
+ *
+ * Branded HTML5 video player with HLS adaptive streaming support.
+ * Uses pui-* design tokens. WCAG 2.1 AA keyboard accessible.
+ */
+
+.pui-video-player {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  background: var(--color-gray-950);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  line-height: 0;
+}
+
+.pui-video-player__video {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+}
+
+/* Controls bar */
+.pui-video-player__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.85));
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: opacity var(--transition-normal);
+  line-height: var(--leading-normal);
+  z-index: 2;
+}
+
+.pui-video-player:not(:hover):not(:focus-within) .pui-video-player__controls {
+  opacity: 0;
+}
+
+.pui-video-player:hover .pui-video-player__controls,
+.pui-video-player:focus-within .pui-video-player__controls {
+  opacity: 1;
+}
+
+/* Buttons */
+.pui-video-player__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.pui-video-player__btn:hover {
+  background: rgb(255 255 255 / 0.15);
+}
+
+.pui-video-player__btn:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+
+/* Time display */
+.pui-video-player__time {
+  color: #ffffff;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Seek bar */
+.pui-video-player__seek {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  appearance: none;
+  background: rgb(255 255 255 / 0.25);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  outline: none;
+}
+
+.pui-video-player__seek::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-500);
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgb(0 0 0 / 0.3);
+}
+
+.pui-video-player__seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-500);
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgb(0 0 0 / 0.3);
+}
+
+.pui-video-player__seek:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+
+/* Volume slider */
+.pui-video-player__volume {
+  width: 5rem;
+  height: 4px;
+  appearance: none;
+  background: rgb(255 255 255 / 0.25);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.pui-video-player__volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.pui-video-player__volume::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+}
+
+.pui-video-player__volume:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+
+/* Speed & quality selectors */
+.pui-video-player__speed,
+.pui-video-player__quality {
+  appearance: none;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-0-5) var(--space-1);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pui-video-player__speed option,
+.pui-video-player__quality option {
+  background: var(--color-gray-900);
+  color: #ffffff;
+}
+
+.pui-video-player__speed:focus-visible,
+.pui-video-player__quality:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+
+/* Playing state */
+.pui-video-player--playing .pui-video-player__btn[data-action='play'] span {
+  /* Unicode pause symbol via JS */
+}
+
+/* Fullscreen */
+.pui-video-player:fullscreen {
+  border-radius: 0;
+}
+
+.pui-video-player:fullscreen .pui-video-player__video {
+  height: 100vh;
+  object-fit: contain;
+}
+
+/* Responsive: stack controls on very small screens */
+@media (max-width: 480px) {
+  .pui-video-player__volume {
+    display: none;
+  }
+
+  .pui-video-player__speed {
+    display: none;
+  }
+}

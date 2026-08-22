@@ -10,6 +10,9 @@ use Pulsar\Extension\Analytics\Contracts\SiteServiceInterface;
 use Pulsar\Extension\Analytics\Exception\AnalyticsException;
 use Pulsar\Http\Message\Response;
 
+use function is_array;
+use function is_string;
+
 /**
  * Site CRUD API controller.
  */
@@ -20,7 +23,7 @@ final readonly class SiteController
         private SiteServiceInterface $siteService,
     ) {}
 
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         $sites = $this->siteService->listAll();
 
@@ -41,10 +44,19 @@ final readonly class SiteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $domain = (string) ($body['domain'] ?? '');
-        $name = (string) ($body['name'] ?? '');
-        $timezone = (string) ($body['timezone'] ?? 'UTC');
-        $settings = (array) ($body['settings'] ?? []);
+        /** @var mixed $rawDomain */
+        $rawDomain = $body['domain'] ?? null;
+        $domain = is_string($rawDomain) ? $rawDomain : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawTimezone */
+        $rawTimezone = $body['timezone'] ?? null;
+        $timezone = is_string($rawTimezone) ? $rawTimezone : 'UTC';
+        /** @var mixed $rawSettings */
+        $rawSettings = $body['settings'] ?? null;
+        /** @var array<string, mixed> $settings */
+        $settings = is_array($rawSettings) ? $rawSettings : [];
 
         if ($domain === '' || $name === '') {
             return Response::json(['error' => 'domain and name are required'], 400);
@@ -62,7 +74,7 @@ final readonly class SiteController
         ], 201);
     }
 
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $site = $this->siteService->findById($id);
 
@@ -87,10 +99,19 @@ final readonly class SiteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $domain = (string) ($body['domain'] ?? '');
-        $name = (string) ($body['name'] ?? '');
-        $timezone = (string) ($body['timezone'] ?? 'UTC');
-        $settings = (array) ($body['settings'] ?? []);
+        /** @var mixed $rawDomain */
+        $rawDomain = $body['domain'] ?? null;
+        $domain = is_string($rawDomain) ? $rawDomain : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawTimezone */
+        $rawTimezone = $body['timezone'] ?? null;
+        $timezone = is_string($rawTimezone) ? $rawTimezone : 'UTC';
+        /** @var mixed $rawSettings */
+        $rawSettings = $body['settings'] ?? null;
+        /** @var array<string, mixed> $settings */
+        $settings = is_array($rawSettings) ? $rawSettings : [];
 
         if ($domain === '' || $name === '') {
             return Response::json(['error' => 'domain and name are required'], 400);
@@ -113,7 +134,7 @@ final readonly class SiteController
         ]);
     }
 
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         try {
             $this->siteService->delete($id);

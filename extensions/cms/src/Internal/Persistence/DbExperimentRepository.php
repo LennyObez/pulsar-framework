@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\ABTest\ConversionEvent;
 use Pulsar\Extension\Cms\ABTest\Experiment;
@@ -14,7 +16,11 @@ use Pulsar\Extension\Cms\ABTest\ExperimentRepositoryInterface;
 use Pulsar\Extension\Cms\ABTest\ExperimentStatus;
 use Pulsar\Extension\Cms\ABTest\ExperimentVariant;
 
-#[Internal(reason: 'Raw-DB repository — use ExperimentRepositoryInterface for public API')]
+/**
+ * @psalm-api Bound to ExperimentRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use ExperimentRepositoryInterface for public API')]
 final readonly class DbExperimentRepository implements ExperimentRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -31,25 +37,14 @@ final readonly class DbExperimentRepository implements ExperimentRepositoryInter
         SELECT * FROM cms_experiments WHERE status = 'running'
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_experiments (id, name, content_id, status, traffic_percentage, start_at, end_at, created_at)
-        VALUES (:id, :name, :content_id, :status, :traffic_percentage, :start_at, :end_at, :created_at)
-        ON CONFLICT (id) DO UPDATE SET
-            name = EXCLUDED.name,
-            status = EXCLUDED.status,
-            traffic_percentage = EXCLUDED.traffic_percentage,
-            start_at = EXCLUDED.start_at,
-            end_at = EXCLUDED.end_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'name', 'content_id', 'status', 'traffic_percentage', 'start_at', 'end_at', 'created_at',
+    ];
 
-    private const string SQL_UPSERT_VARIANT = <<<'SQL'
-        INSERT INTO cms_experiment_variants (id, experiment_id, name, content_id, weight)
-        VALUES (:id, :experiment_id, :name, :content_id, :weight)
-        ON CONFLICT (id) DO UPDATE SET
-            name = EXCLUDED.name,
-            content_id = EXCLUDED.content_id,
-            weight = EXCLUDED.weight
-        SQL;
+    private const array UPSERT_UPDATE = ['name', 'status', 'traffic_percentage', 'start_at', 'end_at'];
+
+    private const array UPSERT_VARIANT_COLUMNS = ['id', 'experiment_id', 'name', 'content_id', 'weight'];
+    private const array UPSERT_VARIANT_UPDATE = ['name', 'content_id', 'weight'];
 
     private const string SQL_FIND_VARIANTS = <<<'SQL'
         SELECT * FROM cms_experiment_variants WHERE experiment_id = :experiment_id ORDER BY weight DESC
@@ -115,7 +110,15 @@ final readonly class DbExperimentRepository implements ExperimentRepositoryInter
 
     public function save(Experiment $experiment): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_experiments',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $experiment->id,
             'name' => $experiment->name,
             'content_id' => $experiment->contentId,
@@ -129,7 +132,15 @@ final readonly class DbExperimentRepository implements ExperimentRepositoryInter
 
     public function saveVariant(ExperimentVariant $variant): void
     {
-        $this->connection->execute(self::SQL_UPSERT_VARIANT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_experiment_variants',
+            self::UPSERT_VARIANT_COLUMNS,
+            ['id'],
+            self::UPSERT_VARIANT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $variant->id,
             'experiment_id' => $variant->experimentId,
             'name' => $variant->name,
@@ -160,7 +171,7 @@ final readonly class DbExperimentRepository implements ExperimentRepositoryInter
     public function getConversionCounts(string $experimentId): array
     {
         // Use FILTER syntax for PostgreSQL, fallback to CASE for SQLite/MySQL
-        $sql = $this->connection->driver() === \Pulsar\Database\Driver::PostgreSQL
+        $sql = $this->connection->driver() === Driver::PostgreSQL
             ? self::SQL_COUNT_IMPRESSIONS
             : self::SQL_COUNT_IMPRESSIONS_COMPAT;
 

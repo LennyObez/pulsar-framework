@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Templates are registered during extension boot and can be overridden
  * by plugins for customization or localization.
+ *
+ * @psalm-api Public registry resolved from the DI container by ContentAssistant
+ *            and extension boot code; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PromptTemplateRegistry

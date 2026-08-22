@@ -17,7 +17,7 @@ use function substr;
 
 use const STR_PAD_LEFT;
 
-#[Internal(reason: 'UUID generation utility — implementation detail')]
+#[Internal(reason: 'UUID generation utility; implementation detail')]
 final class UuidGenerator
 {
     public static function v7(): string
@@ -25,14 +25,19 @@ final class UuidGenerator
         $timestamp = microtime(true);
         $time = (int) ($timestamp * 1000.0);
         $hex = str_pad(dechex($time), 12, '0', STR_PAD_LEFT);
-        $random = bin2hex(random_bytes(8));
+        $random = bin2hex(random_bytes(10));
+
+        // Variant byte: set top 2 bits to 10 (RFC 9562)
+        $variantByte = dechex(0x80 | (hexdec(substr($random, 0, 2)) & 0x3F));
+        $variantByte = str_pad($variantByte, 2, '0', STR_PAD_LEFT);
 
         return sprintf(
-            '%s-%s-7%s-%s-%s',
+            '%s-%s-7%s-%s%s-%s',
             substr($hex, 0, 8),
             substr($hex, 8, 4),
-            substr($random, 0, 3),
-            dechex(0x80 | (hexdec(substr($random, 3, 2)) & 0x3F)) . substr($random, 5, 2),
+            substr($random, 2, 3),
+            $variantByte,
+            substr($random, 5, 2),
             substr($random, 7, 12),
         );
     }

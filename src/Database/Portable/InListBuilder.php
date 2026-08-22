@@ -1,0 +1,118 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Database\Portable;
+
+use InvalidArgumentException;
+use Pulsar\Api\Api;
+use Pulsar\Database\Driver;
+
+use function implode;
+use function sprintf;
+use function str_replace;
+
+/**
+ * Builds portable IN-list or ANY() clauses.
+ *
+ * PostgreSQL: "column = ANY(:param)" with array parameter
+ * MySQL/SQLite: "column IN (:param_0, :param_1, ...)" with expanded parameters
+ * @api
+ */
+#[Api(since: '1.0.0')]
+final class InListBuilder
+{
+    /**
+     * Build a portable IN-list or ANY() clause.
+     *
+     * @param Driver $driver    Database driver
+     * @param string $column    Column name to match
+     * @param string $paramName Parameter name (without colon prefix)
+     * @param int    $count     Number of values in the list
+     */
+    public static function compile(Driver $driver, string $column, string $paramName, int $count): string
+    {
+        if ($count <= 0) {
+            // SQL semantics: `column IN ()` is invalid in every supported
+            // backend. The caller asked for an empty IN-list, so this is
+            // an argument-shape error (caller bug), not a database failure;
+            // PHP's `InvalidArgumentException` is the conventional carrier.
+            throw new InvalidArgumentException(
+                'InListBuilder::compile() requires at least one value to bind into the IN clause.',
+            );
+        }
+
+        return match ($driver) {
+            Driver::PostgreSQL => sprintf('%s = ANY(:%s)', $column, $paramName),
+            Driver::MySQL, Driver::SQLite => self::compileInList($column, $paramName, $count),
+        };
+    }
+
+    /**
+     * Expand parameters for the IN-list clause.
+     *
+     * PostgreSQL: returns single parameter with PostgreSQL array literal.
+     * MySQL/SQLite: returns indexed parameters (:param_0, :param_1, ...).
+     *
+     * @param Driver       $driver    Database driver
+     * @param string       $paramName Parameter name (without colon prefix)
+     * @param list<string> $values    Values to bind
+     *
+     * @return array<string, mixed> Bindings keyed by parameter name (without colon)
+     */
+    public static function expandParams(Driver $driver, string $paramName, array $values): array
+    {
+        if ($values === []) {
+            // Same rationale as `compile()`: the caller passed an empty
+            // value list, which is an argument-shape error.
+            throw new InvalidArgumentException(
+                'InListBuilder::expandParams() requires at least one value to bind into the IN clause.',
+            );
+        }
+
+        if ($driver === Driver::PostgreSQL) {
+            return [$paramName => self::toPostgresArrayLiteral($values)];
+        }
+
+        $bindings = [];
+
+        foreach ($values as $i => $value) {
+            $bindings[$paramName . '_' . $i] = $value;
+        }
+
+        return $bindings;
+    }
+
+    private static function compileInList(string $column, string $paramName, int $count): string
+    {
+        $placeholders = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $placeholders[] = ':' . $paramName . '_' . $i;
+        }
+
+        return sprintf('%s IN (%s)', $column, implode(', ', $placeholders));
+    }
+
+    /**
+     * Encode values as a PostgreSQL array literal.
+     *
+     * Every element is double-quoted with `\` and `"` backslash-escaped, which
+     * is always-valid PostgreSQL array-literal syntax. This prevents values
+     * that contain `,`, `{`, `}`, `"`, `\`, or whitespace from being silently
+     * split into multiple elements or corrupting the literal.
+     *
+     * @param list<string> $values
+     */
+    private static function toPostgresArrayLiteral(array $values): string
+    {
+        $quoted = [];
+
+        foreach ($values as $value) {
+            $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+            $quoted[] = '"' . $escaped . '"';
+        }
+
+        return '{' . implode(',', $quoted) . '}';
+    }
+}

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extensibility;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extensibility\ExtensionLifecycle;
 
-#[CoversClass(ExtensionLifecycle::class)]
+#[CoversNothing]
 final class ExtensionLifecycleTest extends TestCase
 {
     #[Test]

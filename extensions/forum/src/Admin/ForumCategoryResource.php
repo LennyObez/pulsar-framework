@@ -17,6 +17,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  *
  * Supports full CRUD operations and bulk lock/unlock for managing
  * the hierarchical category taxonomy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumCategoryResource implements DataResourceInterface

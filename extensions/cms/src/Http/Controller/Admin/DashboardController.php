@@ -22,18 +22,18 @@ use function count;
 /**
  * Admin CMS dashboard controller with widget data.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class DashboardController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class DashboardController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ?DashboardService $dashboardService = null,
         private ?EditorialWorkflowServiceInterface $workflowService = null,
         private ?SettingsServiceInterface $settingsService = null,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

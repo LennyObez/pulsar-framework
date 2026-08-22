@@ -7,14 +7,20 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\InListBuilder;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Seo\LinkHealthCheck;
 use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 
-use function implode;
+use function count;
 use function max;
 
-#[Internal(reason: 'Raw-DB repository — use LinkHealthRepositoryInterface for public API')]
+/**
+ * @psalm-api Bound to LinkHealthRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use LinkHealthRepositoryInterface for public API')]
 final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInterface
 {
     private const string SQL_FIND_BY_CONTENT = <<<'SQL'
@@ -28,26 +34,14 @@ final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInter
         WHERE is_broken = true
         SQL;
 
-    private const string SQL_FIND_BY_CONTENT_IDS = <<<'SQL'
-        SELECT * FROM cms_link_health_checks
-        WHERE source_content_id = ANY(:content_ids) AND source_locale = :locale
-        ORDER BY source_content_id, created_at DESC
-        SQL;
+    // SQL_FIND_BY_CONTENT_IDS built dynamically via InListBuilder for portability
 
-    private const string SQL_INSERT = <<<'SQL'
-        INSERT INTO cms_link_health_checks (
-            id, tenant_id, source_content_id, source_locale, target_url,
-            is_broken, is_redirected, http_status_code, last_checked_at, created_at
-        ) VALUES (
-            :id, :tenant_id, :source_content_id, :source_locale, :target_url,
-            :is_broken, :is_redirected, :http_status_code, :last_checked_at, :created_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            is_broken = EXCLUDED.is_broken,
-            is_redirected = EXCLUDED.is_redirected,
-            http_status_code = EXCLUDED.http_status_code,
-            last_checked_at = EXCLUDED.last_checked_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'source_content_id', 'source_locale', 'target_url',
+        'is_broken', 'is_redirected', 'http_status_code', 'last_checked_at', 'created_at',
+    ];
+
+    private const array UPSERT_UPDATE = ['is_broken', 'is_redirected', 'http_status_code', 'last_checked_at'];
 
     private const string SQL_DELETE_BY_CONTENT = <<<'SQL'
         DELETE FROM cms_link_health_checks
@@ -74,12 +68,12 @@ final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInter
             return [];
         }
 
-        $pgArray = '{' . implode(',', $contentIds) . '}';
+        $inClause = InListBuilder::compile($this->connection->driver(), 'source_content_id', 'content_ids', count($contentIds));
+        $sql = "SELECT * FROM cms_link_health_checks WHERE $inClause AND source_locale = :locale ORDER BY source_content_id, created_at DESC";
+        $bindings = InListBuilder::expandParams($this->connection->driver(), 'content_ids', $contentIds);
+        $bindings['locale'] = $locale;
 
-        $result = $this->connection->query(self::SQL_FIND_BY_CONTENT_IDS, [
-            'content_ids' => $pgArray,
-            'locale' => $locale,
-        ]);
+        $result = $this->connection->query($sql, $bindings);
 
         $grouped = [];
 
@@ -115,7 +109,15 @@ final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInter
 
     public function save(LinkHealthCheck $check): void
     {
-        $this->connection->execute(self::SQL_INSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_link_health_checks',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $check->id,
             'tenant_id' => $check->tenantId,
             'source_content_id' => $check->sourceContentId,

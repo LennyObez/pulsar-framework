@@ -12,9 +12,10 @@ use Pulsar\Api\Api;
  *
  * Indicates whether the device proof (e.g., WebAuthn attestation, client certificate)
  * was successfully verified, along with a confidence score and failure reason if applicable.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class DeviceProofResult
+final readonly class DeviceProofResult
 {
     /**
      * @param bool $verified Whether the device proof passed verification

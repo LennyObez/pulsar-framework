@@ -13,11 +13,11 @@ use PhpBench\Attributes\Warmup;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Pulsar\Extension\Cms\Comments\AntiAbuseHeuristics;
 use Pulsar\Extension\Cms\Http\Middleware\CommentAntiAbuseMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CommentRateLimitMiddleware;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Security\AntiSpam\AntiSpamPipeline;
 use Pulsar\Tests\Benchmark\Cms\Support\InMemoryTaggedCache;
 
 /**
@@ -45,9 +45,9 @@ final class CommentSpamBurstBench
     public function setUp(): void
     {
         $this->cache = new InMemoryTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($this->cache);
+        $pipeline = new AntiSpamPipeline(checks: []);
 
-        $this->antiAbuseMiddleware = new CommentAntiAbuseMiddleware($heuristics);
+        $this->antiAbuseMiddleware = new CommentAntiAbuseMiddleware($pipeline);
         $this->rateLimitMiddleware = new CommentRateLimitMiddleware(
             cache: $this->cache,
             rateLimitPerMinute: 5,

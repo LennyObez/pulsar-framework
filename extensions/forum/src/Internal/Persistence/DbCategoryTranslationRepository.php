@@ -6,11 +6,12 @@ namespace Pulsar\Extension\Forum\Internal\Persistence;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Category\CategoryTranslation;
 use Pulsar\Extension\Forum\Category\CategoryTranslationRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use CategoryTranslationRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CategoryTranslationRepositoryInterface for public API')]
 final readonly class DbCategoryTranslationRepository implements CategoryTranslationRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -32,16 +33,11 @@ final readonly class DbCategoryTranslationRepository implements CategoryTranslat
         ORDER BY t.locale ASC
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_category_translations (
-            id, category_id, locale, name, description
-        ) VALUES (
-            :id, :category_id, :locale, :name, :description
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            name = EXCLUDED.name,
-            description = EXCLUDED.description
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'category_id', 'locale', 'name', 'description',
+    ];
+
+    private const array UPSERT_UPDATE = ['name', 'description'];
 
     private const string SQL_DELETE = <<<'SQL'
         DELETE FROM forum_category_translations WHERE id = :id
@@ -89,7 +85,15 @@ final readonly class DbCategoryTranslationRepository implements CategoryTranslat
 
     public function save(CategoryTranslation $translation): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_category_translations',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $translation->id,
             'category_id' => $translation->categoryId,
             'locale' => $translation->locale,

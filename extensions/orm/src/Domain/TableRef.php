@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Table reference with optional alias.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TableRef
@@ -39,6 +40,9 @@ final readonly class TableRef
         return $this->alias ?? $this->table;
     }
 
+    /**
+     * @param callable(string): string $quoteIdentifier
+     */
     public function toSql(callable $quoteIdentifier): string
     {
         $quoted = $quoteIdentifier($this->table);

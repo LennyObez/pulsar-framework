@@ -7,6 +7,7 @@ namespace Pulsar\Security\Crypto;
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use SensitiveParameter;
 use SodiumException;
 
 use function hash_equals;
@@ -20,6 +21,7 @@ use function strlen;
  *
  * Provides keyed hashing for integrity verification and tamper detection.
  * Supports an optional CipherSuiteInterface for pluggable MAC algorithms.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Hmac
@@ -34,8 +36,6 @@ final class Hmac
      */
     private const int HASH_LENGTH = SODIUM_CRYPTO_GENERICHASH_BYTES;
 
-    private function __construct() {}
-
     /**
      * Compute a keyed BLAKE2b hash and return as hex string.
      *
@@ -44,8 +44,12 @@ final class Hmac
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function computeHex(string $message, string $key, ?CipherSuiteInterface $cipherSuite = null): string
-    {
+    public static function computeHex(
+        string $message,
+        #[SensitiveParameter]
+        string $key,
+        ?CipherSuiteInterface $cipherSuite = null,
+    ): string {
         if ($cipherSuite !== null) {
             return $cipherSuite->hmacHex($message, $key);
         }
@@ -65,8 +69,12 @@ final class Hmac
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function compute(string $message, string $key, ?CipherSuiteInterface $cipherSuite = null): string
-    {
+    public static function compute(
+        string $message,
+        #[SensitiveParameter]
+        string $key,
+        ?CipherSuiteInterface $cipherSuite = null,
+    ): string {
         if ($cipherSuite !== null) {
             return $cipherSuite->hmac($message, $key);
         }
@@ -85,8 +93,13 @@ final class Hmac
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function verifyHex(string $message, string $expectedHex, string $key, ?CipherSuiteInterface $cipherSuite = null): bool
-    {
+    public static function verifyHex(
+        string $message,
+        string $expectedHex,
+        #[SensitiveParameter]
+        string $key,
+        ?CipherSuiteInterface $cipherSuite = null,
+    ): bool {
         $computedHex = self::computeHex($message, $key, $cipherSuite);
 
         return hash_equals($expectedHex, $computedHex);
@@ -101,8 +114,13 @@ final class Hmac
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function verify(string $message, string $expected, string $key, ?CipherSuiteInterface $cipherSuite = null): bool
-    {
+    public static function verify(
+        string $message,
+        string $expected,
+        #[SensitiveParameter]
+        string $key,
+        ?CipherSuiteInterface $cipherSuite = null,
+    ): bool {
         $computed = self::compute($message, $key, $cipherSuite);
 
         return hash_equals($expected, $computed);
@@ -111,8 +129,10 @@ final class Hmac
     /**
      * Validate that the key meets minimum length requirements.
      */
-    private static function validateKey(string $key): void
-    {
+    private static function validateKey(
+        #[SensitiveParameter]
+        string $key,
+    ): void {
         if (strlen($key) < self::MIN_KEY_LENGTH) {
             throw new InvalidArgumentException(
                 sprintf(

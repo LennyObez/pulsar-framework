@@ -6,10 +6,8 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
-
-use function is_int;
-use function is_string;
 
 /**
  * Configuration for the SMTP mail transport.
@@ -25,6 +23,7 @@ final readonly class SmtpTransportConfig
         public ?string $password = null,
         public string $encryption = 'tls',
         public int $timeout = 30,
+        public ?string $ehloHostname = null,
     ) {}
 
     /**
@@ -34,12 +33,13 @@ final readonly class SmtpTransportConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            host: is_string($data['host'] ?? null) ? $data['host'] : 'localhost',
-            port: is_int($data['port'] ?? null) ? $data['port'] : 587,
-            username: is_string($data['username'] ?? null) ? $data['username'] : null,
-            password: is_string($data['password'] ?? null) ? $data['password'] : null,
-            encryption: is_string($data['encryption'] ?? null) ? $data['encryption'] : 'tls',
-            timeout: is_int($data['timeout'] ?? null) ? $data['timeout'] : 30,
+            host: Coerce::string($data['host'] ?? null, 'localhost'),
+            port: Coerce::int($data['port'] ?? null, 587),
+            username: Coerce::nullableString($data['username'] ?? null),
+            password: Coerce::nullableString($data['password'] ?? null),
+            encryption: Coerce::string($data['encryption'] ?? null, 'tls'),
+            timeout: Coerce::int($data['timeout'] ?? null, 30),
+            ehloHostname: Coerce::nullableString($data['ehlo_hostname'] ?? null),
         );
     }
 }

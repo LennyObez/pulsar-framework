@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Throwable;
 
+use function is_int;
 use function is_object;
 use function is_string;
+use function str_replace;
+use function strrpos;
+use function substr;
 
 /**
  * Formats LogEntry instances as JSON lines.
@@ -17,6 +22,13 @@ use function is_string;
  */
 final class LogFormatter
 {
+    private readonly SensitiveDataScrubber $stringScrubber;
+
+    public function __construct(?SensitiveDataScrubber $stringScrubber = null)
+    {
+        $this->stringScrubber = $stringScrubber ?? new SensitiveDataScrubber();
+    }
+
     /**
      * Format a log entry as a JSON line.
      */
@@ -50,6 +62,7 @@ final class LogFormatter
     {
         $replacements = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if (is_string($value) || (is_object($value) && method_exists($value, '__toString'))) {
                 $replacements['{' . $key . '}'] = (string) $value;
@@ -69,11 +82,12 @@ final class LogFormatter
     {
         $normalized = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if ($value instanceof Throwable) {
-                $normalized[$key] = $this->serializeThrowable($value);
+                $normalized = [...$normalized, $key => $this->serializeThrowable($value)];
             } else {
-                $normalized[$key] = $value;
+                $normalized = [...$normalized, $key => $value];
             }
         }
 
@@ -83,17 +97,92 @@ final class LogFormatter
     /**
      * Serialize a Throwable to a structured array.
      *
+     * Uses getTrace() and strips function arguments from each frame to prevent
+     * PII leaks (passwords, tokens, secrets) that getTraceAsString() would include.
+     *
+     * File paths from `getFile()` and trace frames are normalised to
+     * project-relative form so absolute paths (`/var/www/.../src/Foo.php`,
+     * `C:\...\src\Foo.php`) do not leak deployment topology to log aggregators.
+     *
      * @return array<string, mixed>
      */
     private function serializeThrowable(Throwable $throwable): array
     {
         return [
             'class' => $throwable::class,
-            'message' => $throwable->getMessage(),
+            // Throwable messages frequently embed user-supplied
+            // values (record ids, URLs, free text). When that includes
+            // a credit-card number, JWT, or long token, the message
+            // surfaces the secret to log aggregators. The scrubber's
+            // string-pattern pass redacts those before serialisation.
+            'message' => $this->stringScrubber->scrubString($throwable->getMessage()),
             'code' => $throwable->getCode(),
-            'file' => $throwable->getFile(),
+            'file' => self::redactPath($throwable->getFile()),
             'line' => $throwable->getLine(),
-            'trace' => $throwable->getTraceAsString(),
+            'trace' => $this->sanitizeTrace($throwable->getTrace()),
         ];
+    }
+
+    /**
+     * Strip function arguments from each trace frame to prevent PII leaks.
+     *
+     * @param list<array<string, mixed>> $frames
+     * @return list<array{file?: string, line?: int, class?: string, function?: string, type?: string}>
+     */
+    private function sanitizeTrace(array $frames): array
+    {
+        $sanitized = [];
+
+        foreach ($frames as $frame) {
+            $clean = [];
+
+            if (isset($frame['file']) && is_string($frame['file'])) {
+                $clean['file'] = self::redactPath($frame['file']);
+            }
+
+            if (isset($frame['line']) && is_int($frame['line'])) {
+                $clean['line'] = $frame['line'];
+            }
+
+            if (isset($frame['class']) && is_string($frame['class'])) {
+                $clean['class'] = $frame['class'];
+            }
+
+            if (isset($frame['function']) && is_string($frame['function'])) {
+                $clean['function'] = $frame['function'];
+            }
+
+            if (isset($frame['type']) && is_string($frame['type'])) {
+                $clean['type'] = $frame['type'];
+            }
+
+            $sanitized[] = $clean;
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Collapse an absolute path to project-relative form so trace frames
+     * do not advertise the deployment root. Anchors on the standard
+     * repository directories. Must stay in step with
+     * ErrorFingerprint::normaliseFile: both use the same anchors so a
+     * fingerprint and the trace frames beside it name the same file.
+     */
+    private static function redactPath(string $file): string
+    {
+        $unixPath = str_replace('\\', '/', $file);
+
+        $anchors = ['/src/', '/tests/', '/extensions/', '/vendor/'];
+
+        foreach ($anchors as $anchor) {
+            $position = strrpos($unixPath, $anchor);
+
+            if ($position !== false) {
+                return substr($unixPath, $position + 1);
+            }
+        }
+
+        return $unixPath;
     }
 }

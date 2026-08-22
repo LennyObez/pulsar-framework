@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for a single image variant (responsive size).
+ *
+ * @psalm-api Public configuration DTO referenced by MediaConfig; consumed
+ *            by image variant generation jobs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariantConfig
@@ -33,11 +38,11 @@ final readonly class ImageVariantConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            name: (string) ($data['name'] ?? ''),
-            maxWidth: (int) ($data['max_width'] ?? 0),
-            maxHeight: (int) ($data['max_height'] ?? 0),
-            format: (string) ($data['format'] ?? 'original'),
-            quality: (int) ($data['quality'] ?? 80),
+            name: Coerce::string($data['name'] ?? null),
+            maxWidth: Coerce::strictInt($data['max_width'] ?? null, 0),
+            maxHeight: Coerce::strictInt($data['max_height'] ?? null, 0),
+            format: Coerce::string($data['format'] ?? null, 'original'),
+            quality: Coerce::strictInt($data['quality'] ?? null, 80),
         );
     }
 }

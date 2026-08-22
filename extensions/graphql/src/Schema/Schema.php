@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * The full GraphQL schema: query root type and all named types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Schema

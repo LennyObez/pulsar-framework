@@ -12,6 +12,8 @@ use Pulsar\Extension\McpServer\Domain\ToolResult;
 use Pulsar\Extension\McpServer\Internal\Security\ParamValidator;
 use Pulsar\Extension\McpServer\Internal\Subprocess\SubprocessRunner;
 
+use function is_string;
+
 #[Internal]
 final readonly class RunAnalysisTool implements McpToolInterface
 {
@@ -68,7 +70,9 @@ final readonly class RunAnalysisTool implements McpToolInterface
 
     public function execute(array $params): ToolResult
     {
-        $analyzer = ParamValidator::validateAnalyzer((string) ($params['analyzer'] ?? ''));
+        /** @var string $analyzerStr */
+        $analyzerStr = isset($params['analyzer']) && is_string($params['analyzer']) ? $params['analyzer'] : '';
+        $analyzer = ParamValidator::validateAnalyzer($analyzerStr);
 
         $this->accessGate->assertConcurrencyAllowed();
 

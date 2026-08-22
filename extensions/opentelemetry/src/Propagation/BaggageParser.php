@@ -31,6 +31,7 @@ use function trim;
  * - Maximum 8192 bytes total header size
  *
  * @see https://www.w3.org/TR/baggage/
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BaggageParser

@@ -223,6 +223,9 @@ if (class_exists(Redis::class)) {
             return true;
         }
 
+        /**
+         * @param mixed ...$args
+         */
         #[Override]
         public function del(mixed ...$args): int
         {

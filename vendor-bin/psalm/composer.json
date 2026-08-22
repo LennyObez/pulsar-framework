@@ -1,0 +1,11 @@
+{
+  "$schema": "https://getcomposer.org/schema.json",
+  "description": "Static-analysis toolchain, installed in its own dependency tree so it cannot constrain the test toolchain (see the root composer.json comment).",
+  "require": {
+    "vimeo/psalm": "^6.16.1@stable",
+    "psalm/plugin-phpunit": "^0.19.7"
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

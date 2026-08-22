@@ -7,12 +7,15 @@ namespace Pulsar\Extension\Orm\Features\Query;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\LikePattern;
 use Pulsar\Extension\Orm\Domain\RawExpression;
+use Pulsar\Extension\Orm\Exception\QueryBuilderException;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
-use function array_merge;
 use function implode;
+use function in_array;
 use function sprintf;
+use function strtoupper;
+use function trim;
 
 /**
  * Compiles typed filter expressions into SQL fragments with bindings.
@@ -20,20 +23,48 @@ use function sprintf;
 #[Internal]
 final readonly class ExpressionCompiler
 {
+    /** @var list<string> Operators allowed in comparison expressions. */
+    private const array ALLOWED_OPERATORS = [
+        '=', '!=', '<>', '<', '>', '<=', '>=',
+        'LIKE', 'NOT LIKE',
+        'IN', 'NOT IN',
+        'IS', 'IS NOT',
+        'BETWEEN',
+    ];
+
     public function __construct(
         private IdentifierQuoter $quoter,
         private BindingCounter $bindings,
     ) {}
 
     /**
+     * Validate that an operator is in the allowlist.
+     *
+     * @throws QueryBuilderException If the operator is not allowed.
+     */
+    public static function validateOperator(string $operator): string
+    {
+        $normalized = strtoupper(trim($operator));
+
+        if (!in_array($normalized, self::ALLOWED_OPERATORS, true)) {
+            throw QueryBuilderException::invalidOperator($operator);
+        }
+
+        return $normalized;
+    }
+
+    /**
      * Compile a simple comparison (=, !=, <, >, <=, >=).
+     *
+     * @throws QueryBuilderException If the operator is not in the allowlist.
      */
     public function compare(string $column, string $operator, mixed $value): Expression
     {
+        $validatedOp = self::validateOperator($operator);
         $binding = $this->bindings->next();
 
         return new Expression(
-            sprintf('%s %s :%s', $this->quoter->quote($column), $operator, $binding),
+            sprintf('%s %s :%s', $this->quoter->quote($column), $validatedOp, $binding),
             [$binding => $value],
         );
     }
@@ -54,15 +85,26 @@ final readonly class ExpressionCompiler
      * Compile an IN (...) clause.
      *
      * @param list<mixed> $values
+     *
+     * @throws QueryBuilderException If $values is empty (an empty IN list
+     *                               compiles to syntactically invalid SQL).
      */
     public function in(string $column, array $values, bool $not = false): Expression
     {
+        if ($values === []) {
+            throw QueryBuilderException::invalid(sprintf(
+                '%s clause requires at least one value; an empty list compiles to invalid SQL.',
+                $not ? 'NOT IN' : 'IN',
+            ));
+        }
+
         $placeholders = [];
         $bindings = [];
+        /** @var mixed $val */
         foreach ($values as $val) {
             $name = $this->bindings->next();
             $placeholders[] = ':' . $name;
-            $bindings[$name] = $val;
+            $bindings = [...$bindings, $name => $val];
         }
 
         $op = $not ? 'NOT IN' : 'IN';
@@ -120,7 +162,7 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
-            $bindings = array_merge($bindings, $expr->bindings);
+            $bindings = [...$bindings, ...$expr->bindings];
         }
 
         return new Expression(
@@ -140,7 +182,7 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
-            $bindings = array_merge($bindings, $expr->bindings);
+            $bindings = [...$bindings, ...$expr->bindings];
         }
 
         return new Expression(
@@ -149,6 +191,9 @@ final readonly class ExpressionCompiler
         );
     }
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     public function exists(string $subquerySql, array $bindings = []): Expression
     {
         return new Expression(

@@ -11,6 +11,7 @@ use Pulsar\Extension\Orm\Domain\FetchPlan;
  * Query builder extension for entity-aware queries.
  *
  * Adds entity hydration and relation loading on top of RowQueryBuilderInterface.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EntityQueryBuilderInterface extends RowQueryBuilderInterface
@@ -23,16 +24,12 @@ interface EntityQueryBuilderInterface extends RowQueryBuilderInterface
     /**
      * Execute the query and return hydrated entities.
      *
-     * @template T of object
-     * @return list<T>
+     * @return list<object>
      */
     public function getEntities(): array;
 
     /**
      * Execute the query and return the first hydrated entity.
-     *
-     * @template T of object
-     * @return T|null
      */
     public function firstEntity(): ?object;
 

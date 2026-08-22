@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Promotion;
 use Pulsar\Extension\Cms\Commerce\PromotionRepositoryInterface;
@@ -19,6 +20,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed promotion repository with atomic usage counting.
+ *
+ * @psalm-api Bound to PromotionRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use PromotionRepositoryInterface for public API')]
 final readonly class DbPromotionRepository implements PromotionRepositoryInterface
@@ -41,32 +45,19 @@ final readonly class DbPromotionRepository implements PromotionRepositoryInterfa
         LIMIT 1
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_promotions (
-            id, tenant_id, name, type, value, min_order_amount,
-            max_uses, max_uses_per_customer, current_uses,
-            applicable_product_ids, applicable_category_ids,
-            starts_at, expires_at, is_active
-        ) VALUES (
-            :id, :tenant_id, :name, :type, :value, :min_order_amount,
-            :max_uses, :max_uses_per_customer, :current_uses,
-            :applicable_product_ids, :applicable_category_ids,
-            :starts_at, :expires_at, :is_active
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            name = EXCLUDED.name,
-            type = EXCLUDED.type,
-            value = EXCLUDED.value,
-            min_order_amount = EXCLUDED.min_order_amount,
-            max_uses = EXCLUDED.max_uses,
-            max_uses_per_customer = EXCLUDED.max_uses_per_customer,
-            current_uses = EXCLUDED.current_uses,
-            applicable_product_ids = EXCLUDED.applicable_product_ids,
-            applicable_category_ids = EXCLUDED.applicable_category_ids,
-            starts_at = EXCLUDED.starts_at,
-            expires_at = EXCLUDED.expires_at,
-            is_active = EXCLUDED.is_active
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'name', 'type', 'value', 'min_order_amount',
+        'max_uses', 'max_uses_per_customer', 'current_uses',
+        'applicable_product_ids', 'applicable_category_ids',
+        'starts_at', 'expires_at', 'is_active',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'name', 'type', 'value', 'min_order_amount',
+        'max_uses', 'max_uses_per_customer', 'current_uses',
+        'applicable_product_ids', 'applicable_category_ids',
+        'starts_at', 'expires_at', 'is_active',
+    ];
 
     private const string SQL_INCREMENT_USAGE = <<<'SQL'
         UPDATE cms_promotions SET current_uses = current_uses + 1 WHERE id = :id
@@ -107,7 +98,15 @@ final readonly class DbPromotionRepository implements PromotionRepositoryInterfa
 
     public function save(Promotion $promotion): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_promotions',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $promotion->id,
             'tenant_id' => $promotion->tenantId,
             'name' => $promotion->name,

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent when a moderation action is taken on a user's content.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ModerationActionNotification implements ForumNotificationInterface
@@ -37,12 +38,12 @@ final readonly class ModerationActionNotification implements ForumNotificationIn
 
     public function subject(): string
     {
-        return "Moderation action on your {$this->targetType}";
+        return "Moderation action on your $this->targetType";
     }
 
     public function body(): string
     {
-        return "A moderator has taken action on your {$this->targetType}: {$this->action}. Reason: {$this->reason}";
+        return "A moderator has taken action on your $this->targetType: $this->action. Reason: $this->reason";
     }
 
     public function metadata(): array

@@ -16,9 +16,10 @@ use function sprintf;
 /**
  * Apply rules to each element of an array. Returns the first violation found.
  * Skips null values. Fails if value is not an array.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Each implements RuleInterface
+final readonly class Each implements RuleInterface
 {
     /** @var list<RuleInterface> */
     private array $rules;
@@ -44,6 +45,7 @@ readonly class Each implements RuleInterface
             );
         }
 
+        /** @var mixed $element */
         foreach ($value as $index => $element) {
             $elementField = sprintf('%s.%s', $field, $index);
 

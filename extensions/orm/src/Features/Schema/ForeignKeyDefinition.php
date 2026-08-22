@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Schema foreign key constraint definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForeignKeyDefinition

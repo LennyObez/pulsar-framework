@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Webhook;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -33,13 +34,16 @@ final readonly class ComplaintHandler
      */
     public function process(WebhookRequest $request): array
     {
+        /** @var mixed $decoded */
         $decoded = json_decode($request->payload, true);
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 
+        /** @var mixed $rawMessageId */
         $rawMessageId = $data['message_id'] ?? null;
         $messageId = is_string($rawMessageId) ? $rawMessageId : null;
 
+        /** @var mixed $rawComplaintType */
         $rawComplaintType = $data['complaint_type'] ?? null;
         $complaintType = is_string($rawComplaintType) ? $rawComplaintType : 'abuse';
 
@@ -48,7 +52,7 @@ final readonly class ComplaintHandler
         $this->auditLogger?->log(
             event: AuditEvent::Communication,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('mail.webhook.complaint'),
             action: 'mail.complaint',
             resource: $messageId ?? '',
             metadata: [

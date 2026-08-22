@@ -17,6 +17,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  *
  * Provides listing, viewing, and editing of per-user forum metadata
  * including reputation, activity counts, and ban management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumProfileResource implements DataResourceInterface

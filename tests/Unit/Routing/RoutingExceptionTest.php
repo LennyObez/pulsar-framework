@@ -23,6 +23,19 @@ final class RoutingExceptionTest extends TestCase
     }
 
     #[Test]
+    public function notImplementedCreatesException501(): void
+    {
+        // An unrecognized HTTP method yields a 501 routing exception.
+        $exception = RoutingException::notImplemented('PROPFIND');
+
+        self::assertStringContainsString('PROPFIND', $exception->getMessage());
+        self::assertSame(501, $exception->getCode());
+        self::assertTrue($exception->isNotImplemented());
+        self::assertFalse($exception->isNotFound());
+        self::assertFalse($exception->isMethodNotAllowed());
+    }
+
+    #[Test]
     public function isNotFoundReturnsTrueFor404(): void
     {
         $exception = RoutingException::notFound('/test');

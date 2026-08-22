@@ -9,9 +9,10 @@ use Throwable;
 
 /**
  * Result of a repair action.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RepairResult
+final readonly class RepairResult
 {
     /**
      * @param list<string> $actionsPerformed

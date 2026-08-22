@@ -33,11 +33,12 @@ final class TypeRegistryTest extends TestCase
     #[Test]
     public function assertAllowedPassesForRegisteredClass(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $registry = new TypeRegistry();
         $registry->register('App\\Jobs\\Valid');
 
         $registry->assertAllowed('App\\Jobs\\Valid');
-        $this->addToAssertionCount(1); // No exception thrown
     }
 
     #[Test]
@@ -46,7 +47,7 @@ final class TypeRegistryTest extends TestCase
         $registry = new TypeRegistry();
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not registered in the type allowlist');
+        $this->expectExceptionMessageIsOrContains('not registered in the type allowlist');
 
         $registry->assertAllowed('App\\Jobs\\Malicious');
     }

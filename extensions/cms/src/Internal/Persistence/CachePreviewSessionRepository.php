@@ -7,9 +7,11 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Extension\Cms\Themes\PreviewSession;
 use Pulsar\Extension\Cms\Themes\PreviewSessionRepositoryInterface;
 
+use function is_string;
 use function json_decode;
 use function json_encode;
 
@@ -17,12 +19,14 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Cache-backed storage for theme preview sessions with automatic TTL expiry.
+ *
+ * @psalm-api Bound to PreviewSessionRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Cache-backed preview session storage')]
 final readonly class CachePreviewSessionRepository implements PreviewSessionRepositoryInterface
 {
     private const int TTL_SECONDS = 1800; // 30 minutes
-    private const string KEY_PREFIX = 'cms_preview_session:';
     private const string TAG = 'cms_preview_sessions';
 
     public function __construct(
@@ -39,7 +43,7 @@ final readonly class CachePreviewSessionRepository implements PreviewSessionRepo
         ], JSON_THROW_ON_ERROR);
 
         $this->cache->set(
-            self::KEY_PREFIX . $session->token,
+            CmsCacheKeys::previewSession($session->token),
             $data,
             [self::TAG],
             self::TTL_SECONDS,
@@ -48,14 +52,15 @@ final readonly class CachePreviewSessionRepository implements PreviewSessionRepo
 
     public function findByToken(string $token): ?PreviewSession
     {
-        $data = $this->cache->get(self::KEY_PREFIX . $token);
+        /** @var mixed $data */
+        $data = $this->cache->get(CmsCacheKeys::previewSession($token));
 
         if ($data === null) {
             return null;
         }
 
         /** @var array{themeId: string, token: string, userId: string, expiresAt: string} $decoded */
-        $decoded = json_decode((string) $data, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode(is_string($data) ? $data : '', true, 512, JSON_THROW_ON_ERROR);
 
         $session = new PreviewSession(
             themeId: $decoded['themeId'],

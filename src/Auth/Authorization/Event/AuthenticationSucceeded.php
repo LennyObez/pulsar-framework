@@ -9,6 +9,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Event\EnvelopeRequiredEvent;
+use Pulsar\Support\Coerce;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
@@ -19,6 +20,7 @@ use function is_string;
  * Dispatched when authentication succeeds.
  *
  * Supports controls for HIPAA access logging and SOX audit trail requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]
@@ -57,17 +59,16 @@ final readonly class AuthenticationSucceeded implements EnvelopeRequiredEvent
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $occurredAt = is_string($data['occurred_at'] ?? null)
-            ? new DateTimeImmutable($data['occurred_at'])
-            : new DateTimeImmutable();
+        /** @var mixed $occurredAt */
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            identityId: is_string($data['identity_id'] ?? null) ? $data['identity_id'] : '',
-            guardName: is_string($data['guard_name'] ?? null) ? $data['guard_name'] : '',
-            method: is_string($data['method'] ?? null) ? $data['method'] : '',
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            occurredAt: $occurredAt,
+            identityId: Coerce::string($data['identity_id'] ?? null),
+            guardName: Coerce::string($data['guard_name'] ?? null),
+            method: Coerce::string($data['method'] ?? null),
+            correlationId: Coerce::string($data['correlation_id'] ?? null),
+            nonce: Coerce::string($data['nonce'] ?? null),
+            occurredAt: is_string($occurredAt) ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 

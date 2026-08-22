@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_contents (
@@ -42,29 +44,26 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_content_status_tenant ON cms_contents (status, tenant_id)
-            SQL);
+        $indexes->ensure('cms_contents', 'idx_content_status_tenant', ['status', 'tenant_id']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_content_type_status_tenant ON cms_contents (content_type, status, tenant_id)
-            SQL);
+        $indexes->ensure(
+            'cms_contents',
+            'idx_content_type_status_tenant',
+            ['content_type', 'status', 'tenant_id'],
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_content_parent_sort ON cms_contents (parent_id, sort_order)
-            SQL);
+        $indexes->ensure('cms_contents', 'idx_content_parent_sort', ['parent_id', 'sort_order']);
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_content_scheduled_publish ON cms_contents (scheduled_publish_at, status)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_content_scheduled_publish ON cms_contents (scheduled_publish_at)
-                    WHERE status = 'scheduled'
-                SQL);
-        }
+        // An engine without partial indexes cannot filter on `status`, so it has to carry
+        // it in the key instead.
+        $indexes->ensure(
+            'cms_contents',
+            'idx_content_scheduled_publish',
+            $connection->dialect()->supportsPartialIndexes()
+                ? ['scheduled_publish_at']
+                : ['scheduled_publish_at', 'status'],
+            where: "status = 'scheduled'",
+        );
 
         // cms_content_translations: regex CHECK constraints are PostgreSQL-only,
         // TSVECTOR and GIN index are PostgreSQL-only
@@ -165,15 +164,19 @@ return new class implements MigrationInterface {
                 SQL, $driver));
         }
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_translation_locale_tenant_path
-                ON cms_content_translations (locale, tenant_key, path)
-            SQL);
+        $indexes->ensure(
+            'cms_content_translations',
+            'uq_translation_locale_tenant_path',
+            ['locale', 'tenant_key', 'path'],
+            unique: true,
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_translation_content_locale
-                ON cms_content_translations (content_id, locale)
-            SQL);
+        $indexes->ensure(
+            'cms_content_translations',
+            'uq_translation_content_locale',
+            ['content_id', 'locale'],
+            unique: true,
+        );
 
         // GIN index: PostgreSQL only
         if ($driver === Driver::PostgreSQL) {

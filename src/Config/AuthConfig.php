@@ -7,55 +7,92 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
 
 /**
  * Typed configuration DTO for authentication and authorization.
  *
  * Maps from the `auth` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class AuthConfig
+final readonly class AuthConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `auth` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = ['default_guard', 'guards', 'two_factor', 'authorization'];
+
     /**
      * @param list<AuthGuardConfig> $guards
+     * @param list<string> $unknownKeys Keys present in the raw `auth` array that this
+     *     DTO does not read, including those of the nested guards, `two_factor` and
+     *     `authorization` sections.
      */
     public function __construct(
         public string $defaultGuard = 'session',
         public array $guards = [],
         public TwoFactorConfig $twoFactor = new TwoFactorConfig(),
         public AuthorizationConfig $authorization = new AuthorizationConfig(),
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * A copy with a different two-factor config. Used by compliance enforcement to
+     * enable MFA when the active regulatory profile requires it.
+     */
+    #[NoDiscard]
+    public function withTwoFactor(TwoFactorConfig $twoFactor): self
+    {
+        return clone($this, ['twoFactor' => $twoFactor]);
+    }
 
     /**
      * Build from a raw auth config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     default_guard?: string,
+     *     guards?: list<array<string, mixed>>,
+     *     two_factor?: array<string, mixed>,
+     *     authorization?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawDefaultGuard = $data['default_guard'] ?? 'session';
-        $defaultGuard = is_string($rawDefaultGuard) ? $rawDefaultGuard : 'session';
-
-        /** @var list<array<string, mixed>> $guardsData */
-        $guardsData = $data['guards'] ?? [];
         $guards = array_map(
             static fn(array $guardData): AuthGuardConfig => AuthGuardConfig::fromArray($guardData),
-            $guardsData,
+            $data['guards'] ?? [],
         );
 
-        /** @var array<string, mixed> $twoFactorData */
-        $twoFactorData = $data['two_factor'] ?? [];
+        $twoFactor = TwoFactorConfig::fromArray($data['two_factor'] ?? []);
+        $authorization = AuthorizationConfig::fromArray($data['authorization'] ?? []);
 
-        /** @var array<string, mixed> $authorizationData */
-        $authorizationData = $data['authorization'] ?? [];
+        // Label each guard's report by its configured name rather than its position,
+        // so the warning names the guard the operator has to go and fix.
+        $guardsByName = [];
+
+        foreach ($guards as $index => $guard) {
+            $guardsByName[$guard->name !== '' ? $guard->name : (string) $index] = $guard;
+        }
 
         return new self(
-            defaultGuard: $defaultGuard,
+            defaultGuard: $data['default_guard'] ?? 'session',
             guards: $guards,
-            twoFactor: TwoFactorConfig::fromArray($twoFactorData),
-            authorization: AuthorizationConfig::fromArray($authorizationData),
+            twoFactor: $twoFactor,
+            authorization: $authorization,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nestedEach('guards', $guardsByName),
+                ...UnknownKeys::nested('two_factor', $twoFactor),
+                ...UnknownKeys::nested('authorization', $authorization),
+            ],
         );
     }
 }

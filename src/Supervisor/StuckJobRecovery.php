@@ -51,7 +51,7 @@ final readonly class StuckJobRecovery
     public function recover(JobRecord $stuckJob): HealingAction
     {
         $reason = sprintf(
-            'Job "%s" (%s) stuck in processing state — exceeded timeout',
+            'Job "%s" (%s) stuck in processing state: exceeded timeout',
             $stuckJob->id,
             $stuckJob->jobClass,
         );

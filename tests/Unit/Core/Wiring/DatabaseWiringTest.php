@@ -1,0 +1,176 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\Core\Wiring;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\DatabaseConfig;
+use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\DatabaseWiring;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\ConnectionManager;
+use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Database\Monitor\MonitoredConnection;
+use Pulsar\Database\Routing\RoutingConnectionManager;
+use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Observability\Profiler\RequestProfiler;
+use Pulsar\Routing\Router;
+
+#[CoversClass(DatabaseWiring::class)]
+final class DatabaseWiringTest extends TestCase
+{
+    #[Test]
+    public function wireRegistersConnectionManagerWhenConfigPresent(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(withDatabase: true);
+        $configManager->load();
+
+        $wiring = new DatabaseWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($container->has(DatabaseConfig::class));
+        self::assertTrue($container->has(ConnectionManager::class));
+        self::assertTrue($container->has(ConnectionManagerInterface::class));
+    }
+
+    #[Test]
+    public function wireSkipsWhenNoDatabaseConfig(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(withDatabase: false);
+        $configManager->load();
+
+        $wiring = new DatabaseWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertFalse($container->has(DatabaseConfig::class));
+        self::assertFalse($container->has(ConnectionManager::class));
+    }
+
+    #[Test]
+    public function wireDecoratesConnectionWithMonitoringWhenEnabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(withDatabase: true, monitorEnabled: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertInstanceOf(MonitoredConnection::class, $container->get(ConnectionInterface::class));
+    }
+
+    #[Test]
+    public function wireUsesRawConnectionWhenMonitoringDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // Monitoring is off by default.
+        $configManager = $this->createConfigManager(withDatabase: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertNotInstanceOf(MonitoredConnection::class, $container->get(ConnectionInterface::class));
+    }
+
+    #[Test]
+    public function wireFeedsProfilerEvenWhenMonitoringDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // The request profiler is enabled while SQL monitoring stays off: turning
+        // the profiler on alone must be enough to capture query timings.
+        $profiler = new RequestProfiler(enabled: true);
+        $container->instance(RequestProfiler::class, $profiler);
+
+        $configManager = $this->createConfigManager(withDatabase: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        $connection = $container->get(ConnectionInterface::class);
+        self::assertInstanceOf(MonitoredConnection::class, $connection);
+
+        $connection->query('SELECT 1');
+        $profile = $profiler->finish('GET', '/', 200);
+
+        self::assertSame(1, $profile->queryCount);
+    }
+
+    #[Test]
+    public function wireRoutesConnectionsWhenReadWriteEnabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(withDatabase: true, readWriteEnabled: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertInstanceOf(RoutingConnectionManager::class, $container->get(ConnectionManagerInterface::class));
+    }
+
+    #[Test]
+    public function wireUsesPlainManagerWhenReadWriteDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // Read/write routing is off by default.
+        $configManager = $this->createConfigManager(withDatabase: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        $manager = $container->get(ConnectionManagerInterface::class);
+        self::assertNotInstanceOf(RoutingConnectionManager::class, $manager);
+        self::assertInstanceOf(ConnectionManager::class, $manager);
+    }
+
+    private function createConfigManager(bool $withDatabase, bool $monitorEnabled = false, bool $readWriteEnabled = false): ConfigManager
+    {
+        $configPath = sys_get_temp_dir() . '/pulsar_db_wiring_' . bin2hex(random_bytes(4));
+        @mkdir($configPath, 0o755, true);
+
+        file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
+        file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
+        file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
+
+        if ($withDatabase) {
+            $monitor = $monitorEnabled ? ', "monitor" => ["enabled" => true]' : '';
+            $readWrite = $readWriteEnabled ? ', "read_write" => ["enabled" => true]' : '';
+            file_put_contents($configPath . '/database.php', '<?php return ["default" => "sqlite", "connections" => ["sqlite" => ["driver" => "sqlite", "database" => ":memory:"]]' . $monitor . $readWrite . '];');
+        }
+
+        return new ConfigManager($configPath);
+    }
+}

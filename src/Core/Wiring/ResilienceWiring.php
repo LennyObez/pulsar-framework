@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Config\ConfigManager;
@@ -11,15 +12,24 @@ use Pulsar\Config\HealthCheckConfig;
 use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\RetryConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Http\Controller\HealthController;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Resilience\CircuitBreakerRegistry;
+use Pulsar\Resilience\HealthCheck\CacheHealthCheck;
+use Pulsar\Resilience\HealthCheck\DatabaseHealthCheck;
+use Pulsar\Resilience\HealthCheck\DiskHealthCheck;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Crypto\FipsComplianceCheck;
+
+use function in_array;
 
 #[Internal]
 final readonly class ResilienceWiring implements ServiceWiringInterface
@@ -61,9 +71,62 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
         $container->instance(HealthCheckRunner::class, $healthCheckRunner);
         $container->instance(HealthCheckRunnerInterface::class, $healthCheckRunner);
 
+        // Register built-in health checks. The FIPS check is opt-in
+        // (health_check.fips_check): it reports "degraded" on any non-FIPS
+        // host and the health endpoint 503s on non-healthy results -- the
+        // right fail-closed signal for a FIPS-regulated deployment, but it
+        // would eject every ordinary deployment from its LB pool by default.
+        $healthCheckRunner->register(new DiskHealthCheck());
+
+        if ($resilienceConfig->healthCheck->fipsCheck) {
+            $healthCheckRunner->register(new FipsComplianceCheck());
+        }
+
+        // Health endpoint: lazily registers checks that depend on services
+        // wired after ResilienceWiring (e.g. CacheWiring).
+        // Registered at both /_pulsar/health and /health for convenience.
+        $healthHandler = static function () use ($container, $healthCheckRunner): Response {
+            // Register cache health check on first request when PSR-16 cache is available
+            if ($container->has(CacheInterface::class)) {
+                /** @var CacheInterface $cache */
+                $cache = $container->get(CacheInterface::class);
+
+                if (!self::hasCheck($healthCheckRunner, 'cache')) {
+                    $healthCheckRunner->register(new CacheHealthCheck($cache));
+                }
+            }
+
+            // Same lazy pattern for database connectivity: DatabaseWiring runs
+            // before ResilienceWiring, but the connection may be bound by an
+            // extension or replaced at runtime, so resolve it per request.
+            if ($container->has(ConnectionManagerInterface::class)) {
+                /** @var ConnectionManagerInterface $connectionManager */
+                $connectionManager = $container->get(ConnectionManagerInterface::class);
+
+                if (!self::hasCheck($healthCheckRunner, 'database')) {
+                    $healthCheckRunner->register(new DatabaseHealthCheck($connectionManager));
+                }
+            }
+
+            $controller = new HealthController($healthCheckRunner);
+
+            return $controller();
+        };
+
+        $router->get('/_pulsar/health', $healthHandler);
+        $router->get('/health', $healthHandler);
+
         // Repair runner
         $repairRunner = new RepairRunner();
         $container->instance(RepairRunner::class, $repairRunner);
         $container->instance(RepairRunnerInterface::class, $repairRunner);
+    }
+
+    /**
+     * Check whether a health check with the given name is already registered.
+     */
+    private static function hasCheck(HealthCheckRunner $runner, string $name): bool
+    {
+        return in_array($name, $runner->names(), true);
     }
 }

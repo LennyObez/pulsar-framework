@@ -25,6 +25,7 @@ use function is_string;
  *     "meta": { ... },
  *     "links": { ... }
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JsonApiRenderer implements ResponseRendererInterface
@@ -89,17 +90,21 @@ final readonly class JsonApiRenderer implements ResponseRendererInterface
      */
     private function toJsonApiResource(array $data, string $resourceType): array
     {
+        /** @var mixed $rawId */
         $rawId = $data['id'] ?? '';
         $id = is_string($rawId) || is_int($rawId) ? (string) $rawId : '';
+        /** @var mixed $rawType */
         $rawType = $data['type'] ?? $resourceType;
         $type = is_string($rawType) ? $rawType : $resourceType;
 
         $attributes = array_diff_key($data, array_flip(self::RESERVED_FIELDS));
 
         // Remove _meta from attributes if present
+        /** @var mixed $meta */
         $meta = [];
 
         if (isset($attributes['_meta'])) {
+            /** @var mixed $meta */
             $meta = $attributes['_meta'];
             unset($attributes['_meta']);
         }
@@ -111,7 +116,7 @@ final readonly class JsonApiRenderer implements ResponseRendererInterface
         ];
 
         if ($meta !== []) {
-            $resource['meta'] = $meta;
+            $resource = [...$resource, 'meta' => $meta];
         }
 
         return $resource;

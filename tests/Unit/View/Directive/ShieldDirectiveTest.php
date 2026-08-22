@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\View\Directive;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Pulsar\View\Directive\ShieldDirective;
+
+#[CoversClass(ShieldDirective::class)]
+final class ShieldDirectiveTest extends TestCase
+{
+    #[Test]
+    public function nameReturnsShield(): void
+    {
+        self::assertSame('shield', new ShieldDirective()->name());
+    }
+
+    #[Test]
+    public function compileRendersManagedChallengeWithCspNonce(): void
+    {
+        $output = new ShieldDirective()->compile('');
+
+        self::assertStringContainsString('ManagedChallengeRenderer::renderGlobal', $output);
+        self::assertStringContainsString('$__csp_nonce ?? null', $output);
+        self::assertStringStartsWith('<?php echo', $output);
+    }
+
+    #[Test]
+    public function compileAlsoEmitsTheNoJsTimeTrapField(): void
+    {
+        $output = new ShieldDirective()->compile('');
+
+        // @shield is the full form shield: managed challenge + time-trap so a
+        // no-JS client is still covered by the timing check.
+        self::assertStringContainsString('TimeTrap\\TimeTrapRenderer::renderGlobal', $output);
+    }
+
+    #[Test]
+    public function compileAlsoEmitsTheBehaviorCollector(): void
+    {
+        $output = new ShieldDirective()->compile('');
+
+        self::assertStringContainsString('Behavior\\BehaviorCollectorRenderer::renderGlobal', $output);
+    }
+}

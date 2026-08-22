@@ -13,10 +13,13 @@ use Psr\Http\Server\RequestHandlerInterface as PsrRequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use RuntimeException;
+use Throwable;
 
 use function array_reverse;
-use function assert;
+use function array_unshift;
+use function class_exists;
 use function count;
+use function get_debug_type;
 use function sprintf;
 
 /**
@@ -39,6 +42,14 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
     private ?PsrRequestHandlerInterface $fallbackHandler = null;
 
+    /**
+     * Cached middleware chain for the current fallback handler.
+     *
+     * Built on first handle() call and reused for subsequent requests.
+     * Invalidated when middleware stack or fallback handler changes.
+     */
+    private ?PsrRequestHandlerInterface $cachedChain = null;
+
     public function __construct(
         private readonly ?ContainerInterface $container = null,
     ) {}
@@ -54,6 +65,26 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     {
         $this->middleware[] = $middleware;
         $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
+
+        return $this;
+    }
+
+    /**
+     * Add middleware to the front of the pipeline.
+     *
+     * The prepended middleware executes before every middleware added so far
+     * (outermost), so it observes the request before any of them — including a
+     * rewriting middleware that mutates the URI. Derived caches are invalidated
+     * so the change takes effect on the next handle().
+     *
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
+     */
+    public function prepend(PsrMiddlewareInterface|string $middleware): self
+    {
+        array_unshift($this->middleware, $middleware);
+        $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
 
         return $this;
     }
@@ -63,7 +94,10 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
      */
     public function process(ServerRequestInterface $request, PsrRequestHandlerInterface $handler): ResponseInterface
     {
-        $this->fallbackHandler = $handler;
+        if ($this->fallbackHandler !== $handler) {
+            $this->fallbackHandler = $handler;
+            $this->cachedChain = null;
+        }
 
         return $this->handle($request);
     }
@@ -80,9 +114,9 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
             throw new RuntimeException('No fallback handler set. Call process() or setHandler() first.');
         }
 
-        $pipeline = $this->createPipeline($this->fallbackHandler);
+        $chain = $this->cachedChain ??= $this->createPipeline($this->fallbackHandler);
 
-        return $pipeline->handle($request);
+        return $chain->handle($request);
     }
 
     /**
@@ -91,6 +125,7 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     public function setHandler(PsrRequestHandlerInterface $handler): void
     {
         $this->fallbackHandler = $handler;
+        $this->cachedChain = null;
     }
 
     /**
@@ -120,6 +155,34 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     public function isEmpty(): bool
     {
         return $this->middleware === [];
+    }
+
+    /**
+     * Capture the current middleware stack for the kernel boot/shutdown
+     * lifecycle. Intended for kernel use only.
+     *
+     * @return list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>>
+     */
+    public function snapshot(): array
+    {
+        return $this->middleware;
+    }
+
+    /**
+     * Restore the middleware stack from a {@see snapshot()}.
+     *
+     * Clears all derived caches (resolved instances, cached chain, fallback
+     * handler) so the next handle() re-resolves from the restored stack rather
+     * than serving stale pre-shutdown instances. Intended for kernel use only.
+     *
+     * @param list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>> $snapshot
+     */
+    public function restoreFromSnapshot(array $snapshot): void
+    {
+        $this->middleware = $snapshot;
+        $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
+        $this->fallbackHandler = null;
     }
 
     /**
@@ -163,12 +226,38 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
         if ($this->container !== null && $this->container->has($middleware)) {
             $resolved = $this->container->get($middleware);
-            assert($resolved instanceof PsrMiddlewareInterface);
+
+            // An explicit type guard, not `assert()`. With
+            // `zend.assertions=-1` (typical prod) the assertion compiles
+            // out and a non-conforming binding would silently slip into
+            // the pipeline, exploding deeper inside `process()`. A real
+            // throw guarantees the failure surfaces with a precise
+            // diagnostic regardless of assertion mode.
+            if (!$resolved instanceof PsrMiddlewareInterface) {
+                throw new InvalidArgumentException(sprintf(
+                    'Container binding "%s" resolved to %s, expected %s.',
+                    $middleware,
+                    get_debug_type($resolved),
+                    PsrMiddlewareInterface::class,
+                ));
+            }
 
             return $resolved;
         }
 
         if (class_exists($middleware)) {
+            // Try container resolution for classes with constructor dependencies
+            if ($this->container !== null) {
+                try {
+                    $resolved = $this->container->get($middleware);
+                    if ($resolved instanceof PsrMiddlewareInterface) {
+                        return $resolved;
+                    }
+                } catch (Throwable) {
+                    // Container resolution failed; fall through to direct instantiation
+                }
+            }
+
             return new $middleware();
         }
 

@@ -17,6 +17,7 @@ use function file_exists;
 use function file_put_contents;
 use function filesize;
 use function is_dir;
+use function is_string;
 use function mkdir;
 use function realpath;
 use function str_contains;
@@ -32,6 +33,10 @@ use function str_starts_with;
  * - Symlinks
  * - realpath() resolution to ensure the extracted path stays within the target directory
  * - Maximum archive size and file count enforcement from ThemesConfig
+ */
+/**
+ * @psalm-api Bound to ThemeArchiveExtractorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ThemeArchiveExtractorInterface for public API')]
 final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterface
@@ -76,7 +81,7 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
         $result = $zip->open($archivePath);
 
         if ($result !== true) {
-            throw CmsException::themeExtractionFailed('Failed to open archive (error code: ' . $result . ')');
+            throw CmsException::themeExtractionFailed('Failed to open archive (error code: ' . (string) $result . ')');
         }
 
         try {
@@ -92,12 +97,19 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
                 $stat = $zip->statIndex($i);
 
                 if ($stat === false) {
-                    $warnings[] = "Cannot stat entry at index {$i}";
+                    $warnings[] = "Cannot stat entry at index $i";
 
                     continue;
                 }
 
-                $entryName = $stat['name'];
+                /** @var mixed $rawEntryName */
+                $rawEntryName = $stat['name'];
+
+                if (!is_string($rawEntryName)) {
+                    throw CmsException::themeZipSlipDetected('non-string entry');
+                }
+
+                $entryName = $rawEntryName;
 
                 // Security check: null bytes in filename
                 if (str_contains($entryName, "\0")) {
@@ -144,7 +156,7 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
                 $contents = $zip->getFromIndex($i);
 
                 if ($contents === false) {
-                    $warnings[] = "Failed to read entry: {$entryName}";
+                    $warnings[] = "Failed to read entry: $entryName";
 
                     continue;
                 }

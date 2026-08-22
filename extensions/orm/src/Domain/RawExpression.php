@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Use sparingly and never with user input. Primarily for database
  * functions (NOW(), COUNT(*), etc.) and computed expressions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RawExpression
@@ -24,6 +25,9 @@ final readonly class RawExpression
         public array $bindings = [],
     ) {}
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     #[NoDiscard]
     public static function of(string $sql, array $bindings = []): self
     {

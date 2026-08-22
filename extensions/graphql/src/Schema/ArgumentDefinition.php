@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single argument on a GraphQL field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ArgumentDefinition

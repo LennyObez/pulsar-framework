@@ -7,9 +7,9 @@ namespace Pulsar\Api\Resource;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Api\Exception\ApiException;
+use Pulsar\Support\Coerce;
 
 use function count;
-use function is_int;
 
 /**
  * Complexity caps for API requests.
@@ -17,6 +17,7 @@ use function is_int;
  * Enforces limits on the number of fields, nesting depth, and includes
  * per request. All violations produce 400 Bad Request responses with
  * descriptive error messages identifying which limit was exceeded.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplexityLimits
@@ -85,14 +86,10 @@ final readonly class ComplexityLimits
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxFields = $data['max_fields'] ?? 50;
-        $rawMaxNesting = $data['max_nesting_depth'] ?? 3;
-        $rawMaxIncludes = $data['max_includes'] ?? 10;
-
         return new self(
-            maxFields: is_int($rawMaxFields) ? $rawMaxFields : 50,
-            maxNestingDepth: is_int($rawMaxNesting) ? $rawMaxNesting : 3,
-            maxIncludes: is_int($rawMaxIncludes) ? $rawMaxIncludes : 10,
+            maxFields: Coerce::integerLike($data['max_fields'] ?? null, 50),
+            maxNestingDepth: Coerce::integerLike($data['max_nesting_depth'] ?? null, 3),
+            maxIncludes: Coerce::integerLike($data['max_includes'] ?? null, 10),
         );
     }
 }

@@ -9,8 +9,12 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Content\DataClassification;
 
 /**
- * Media asset aggregate root — represents an uploaded file
+ * Media asset aggregate root: represents an uploaded file
  * (image, document, or other media) stored in the CMS.
+ *
+ * @psalm-api Public DTO returned from MediaRepositoryInterface; consumed by
+ *            media services, admin views, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaAsset
@@ -58,6 +62,9 @@ final readonly class MediaAsset
 
     /**
      * Create a new media asset for a fresh upload.
+     */
+    /**
+     * @param array<string, mixed>|null $exifData
      */
     public static function create(
         string $id,

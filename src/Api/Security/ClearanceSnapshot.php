@@ -18,6 +18,7 @@ use function in_array;
  * Computed once at the request boundary from the authenticated identity.
  * Remains immutable for the entire request lifetime to ensure deterministic
  * field exposure: the same request always produces the same fields.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClearanceSnapshot

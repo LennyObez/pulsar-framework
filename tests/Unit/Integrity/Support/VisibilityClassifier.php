@@ -11,7 +11,7 @@ use ReflectionClass;
 /**
  * Classifies class visibility based on #[Api] and #[Internal] attributes.
  *
- * Visibility rules (per CLAUDE.md / PUBLIC_API.md):
+ * Visibility rules (per PUBLIC_API.md):
  * - #[Api]      → PublicApi: safe for cross-module consumption
  * - #[Internal] → ExplicitInternal: forbidden cross-module
  * - Neither     → ImplicitInternal: forbidden cross-module

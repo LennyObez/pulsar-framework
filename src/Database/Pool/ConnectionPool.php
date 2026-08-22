@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Database\Pool;
 
 use Override;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\ConnectionInterface;
@@ -21,6 +22,7 @@ use function time;
  * Manages a set of reusable database connections, enforcing limits on
  * pool size, idle timeouts, maximum connection lifetime, and periodic
  * health checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConnectionPool implements ConnectionPoolInterface
@@ -36,6 +38,7 @@ final class ConnectionPool implements ConnectionPoolInterface
     public function __construct(
         private readonly PoolConfig $config,
         private readonly ConnectionConfig $connectionConfig,
+        private readonly ?LoggerInterface $logger = null,
     ) {}
 
     #[Override]
@@ -72,6 +75,14 @@ final class ConnectionPool implements ConnectionPoolInterface
         }
 
         if ($this->activeCount >= $this->config->maxConnections) {
+            $this->waitCount++;
+
+            $this->logger?->warning('Connection pool exhausted', [
+                'max_connections' => $this->config->maxConnections,
+                'active_count' => $this->activeCount,
+                'wait_count' => $this->waitCount,
+            ]);
+
             throw DatabaseException::poolExhausted($this->config->maxConnections);
         }
 
@@ -86,11 +97,11 @@ final class ConnectionPool implements ConnectionPoolInterface
     {
         $this->activeCount = $this->activeCount > 0 ? $this->activeCount - 1 : 0;
 
-        $createdAt = time();
-
         if ($connection instanceof PooledConnection) {
             $createdAt = $connection->createdAt();
             $connection = $connection->unwrap();
+        } else {
+            $createdAt = time();
         }
 
         $entry = new PooledEntry(
@@ -98,6 +109,25 @@ final class ConnectionPool implements ConnectionPoolInterface
             createdAt: $createdAt,
             lastUsedAt: time(),
         );
+
+        // A connection returned while a transaction is still open carries
+        // uncommitted, caller-private state. Recycling it would leak that
+        // transaction into the next checkout (cross-request bleed in persistent
+        // runtimes). The pool cannot guarantee a clean reset through
+        // ConnectionInterface — a bare ROLLBACK would not clear session temp
+        // tables or variables and would desynchronize the connection's own
+        // transaction-depth tracking — so the connection is destroyed (its
+        // teardown rolls the transaction back) rather than re-idled. The leak
+        // signals a caller bug and is logged.
+        if ($connection->inTransaction()) {
+            $this->logger?->warning('Connection returned to pool with an open transaction; discarding', [
+                'created_at' => $createdAt,
+            ]);
+
+            $this->destroyEntry($entry);
+
+            return;
+        }
 
         if ($this->isExpired($entry)) {
             $this->destroyEntry($entry);
@@ -114,6 +144,31 @@ final class ConnectionPool implements ConnectionPoolInterface
         }
 
         $this->idle[] = $entry;
+    }
+
+    /**
+     * Pre-create connections up to the configured minimum pool size.
+     *
+     * Call during application bootstrap to avoid cold-start latency
+     * on the first batch of requests.
+     */
+    public function warmUp(): void
+    {
+        $needed = $this->config->minConnections - count($this->idle) - $this->activeCount;
+
+        for ($i = 0; $i < $needed; $i++) {
+            try {
+                $connection = $this->createConnection();
+
+                $this->idle[] = new PooledEntry(
+                    connection: $connection,
+                    createdAt: time(),
+                    lastUsedAt: time(),
+                );
+            } catch (DatabaseException $e) {
+                $this->logger?->warning('Connection pool warmup failed for connection ' . $i, ['exception' => $e]);
+            }
+        }
     }
 
     #[Override]

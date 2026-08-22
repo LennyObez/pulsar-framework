@@ -40,6 +40,59 @@ final class TemplateInheritanceTest extends TestCase
     }
 
     #[Test]
+    public function renderOnceReturnsTrueOnlyOnFirstCallPerId(): void
+    {
+        // The once-registry lives on $__env and dedupes by id across the
+        // request, so a @once block in a partial @included N times renders once.
+        self::assertTrue($this->env->renderOnce('app.js'));
+        self::assertFalse($this->env->renderOnce('app.js'));
+        self::assertFalse($this->env->renderOnce('app.js'));
+    }
+
+    #[Test]
+    public function renderOnceTracksDistinctIdsIndependently(): void
+    {
+        self::assertTrue($this->env->renderOnce('a'));
+        self::assertTrue($this->env->renderOnce('b'));
+        self::assertFalse($this->env->renderOnce('a'));
+        self::assertFalse($this->env->renderOnce('b'));
+    }
+
+    #[Test]
+    public function nestedSameNameComponentPreservesOuterSlots(): void
+    {
+        // Slots are keyed by component stack depth, so nesting two
+        // components of the same name does not let the inner instance wipe the
+        // outer instance's already-captured slots.
+        /** @var list<array<string, mixed>> $seen */
+        $seen = [];
+        $this->env->setRenderCallback(static function (string $name, array $data) use (&$seen): string {
+            $seen[] = $data;
+
+            return "<{$name}>";
+        });
+
+        $this->env->startComponent('card');
+        $this->env->startSlot('header');
+        echo 'OUTER-HEADER';
+        $this->env->endSlot();
+
+        $this->env->startComponent('card');
+        $this->env->startSlot('header');
+        echo 'INNER-HEADER';
+        $this->env->endSlot();
+        (void) $this->env->renderComponent(); // inner instance
+
+        (void) $this->env->renderComponent(); // outer instance
+
+        // $seen[0] is the inner instance, $seen[1] the outer.
+        self::assertTrue(isset($seen[0], $seen[1]));
+        self::assertArrayHasKey('header', $seen[1]);
+        self::assertSame('OUTER-HEADER', $seen[1]['header']);
+        self::assertSame('INNER-HEADER', $seen[0]['header']);
+    }
+
+    #[Test]
     public function hasSectionReturnsTrueForDefinedSection(): void
     {
         $this->env->startSection('sidebar');

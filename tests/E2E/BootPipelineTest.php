@@ -93,12 +93,12 @@ final class BootPipelineTest extends TestCase
     #[Test]
     public function kernelVersionReportsCorrectly(): void
     {
-        self::assertSame('1.0.0-rc.10', Version::full());
+        self::assertSame('1.0.0-rc.12', Version::full());
         self::assertSame('1.0.0', Version::short());
         self::assertSame(1, Version::MAJOR);
         self::assertSame(0, Version::MINOR);
         self::assertSame(0, Version::PATCH);
-        self::assertSame('-rc.10', Version::PRERELEASE_SUFFIX);
+        self::assertSame('-rc.12', Version::PRERELEASE_SUFFIX);
     }
 
     #[Test]
@@ -143,6 +143,45 @@ final class BootPipelineTest extends TestCase
 
         self::assertTrue($kernel->booted);
         self::assertSame('rebooted', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function shutdownRestoresRouterToPreBootSnapshotSoRebootDoesNotAccumulate(): void
+    {
+        $kernel = new Kernel();
+        // A route registered before boot is part of the pre-boot baseline.
+        $kernel->router()->get('/home', fn() => Response::text('home'));
+
+        $kernel->boot();
+
+        // Simulate a boot-time/wiring route registration (not in the snapshot
+        // taken at boot() entry).
+        $kernel->router()->get('/added-during-boot', fn() => Response::text('x'));
+        self::assertSame(2, $kernel->router()->count());
+
+        $kernel->shutdown();
+
+        // The router is restored to the pre-boot baseline: the boot-time route
+        // is gone, the pre-boot route remains — so re-boot rebuilds cleanly
+        // instead of stacking duplicates.
+        self::assertSame(1, $kernel->router()->count());
+
+        $kernel->boot();
+        self::assertSame(1, $kernel->router()->count());
+    }
+
+    #[Test]
+    public function rebootKeepsExtensionsRegisteredButReBootsThem(): void
+    {
+        $kernel = new Kernel();
+        $kernel->boot();
+        $kernel->shutdown();
+
+        // After shutdown the boot phase is reset but registration is retained,
+        // so a re-boot re-runs extension boot without re-registering.
+        $kernel->boot();
+
+        self::assertTrue($kernel->booted);
     }
 
     #[Test]

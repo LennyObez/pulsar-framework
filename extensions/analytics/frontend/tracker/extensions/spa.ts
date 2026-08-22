@@ -1,3 +1,17 @@
+/**
+ * SPA navigation tracker extension.
+ *
+ * Detects client-side navigation in single-page applications by wrapping
+ * `history.pushState` and `history.replaceState`. This monkey-patching
+ * approach is necessary because SPAs do not trigger full page loads, so
+ * the standard pageview beacon would only fire once. The wrappers call
+ * through to the original methods (bound via `.bind(history)` to preserve
+ * the correct `this` context) and then emit a synthetic pageview event.
+ *
+ * A 100ms debounce prevents duplicate events when frameworks call both
+ * pushState and replaceState in rapid succession (e.g., Next.js shallow
+ * routing). The `popstate` listener covers browser back/forward buttons.
+ */
 window.plsr.ext((send: PlsrSendFn, site: string) => {
   let prev = location.href;
   let timer: ReturnType<typeof setTimeout> | null = null;

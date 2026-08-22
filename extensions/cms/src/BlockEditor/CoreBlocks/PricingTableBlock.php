@@ -58,8 +58,9 @@ final readonly class PricingTableBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{name: string, price: string, features: list<string>, ctaText: string, ctaUrl: string}> $plans */
+        /** @var list<mixed> $plans */
         $plans = $data['plans'] ?? [];
+        /** @var mixed $highlighted */
         $highlighted = $data['highlighted'] ?? null;
 
         $html = '<div class="pricing-table">';
@@ -75,14 +76,22 @@ final readonly class PricingTableBlock implements BlockTypeInterface
                 $cssClass .= ' pricing-plan--highlighted';
             }
 
-            $name = htmlspecialchars((string) ($plan['name'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $price = htmlspecialchars((string) ($plan['price'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $ctaText = htmlspecialchars((string) ($plan['ctaText'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $ctaUrl = htmlspecialchars((string) ($plan['ctaUrl'] ?? ''), ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawName */
+            $rawName = $plan['name'] ?? null;
+            /** @var mixed $rawPrice */
+            $rawPrice = $plan['price'] ?? null;
+            /** @var mixed $rawCtaText */
+            $rawCtaText = $plan['ctaText'] ?? null;
+            /** @var mixed $rawCtaUrl */
+            $rawCtaUrl = $plan['ctaUrl'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $price = htmlspecialchars(is_string($rawPrice) ? $rawPrice : '', ENT_QUOTES, 'UTF-8');
+            $ctaText = htmlspecialchars(is_string($rawCtaText) ? $rawCtaText : '', ENT_QUOTES, 'UTF-8');
+            $ctaUrl = htmlspecialchars(is_string($rawCtaUrl) ? $rawCtaUrl : '', ENT_QUOTES, 'UTF-8');
 
-            $html .= "<div class=\"{$cssClass}\">";
-            $html .= "<h3 class=\"pricing-plan__name\">{$name}</h3>";
-            $html .= "<div class=\"pricing-plan__price\">{$price}</div>";
+            $html .= "<div class=\"$cssClass\">";
+            $html .= "<h3 class=\"pricing-plan__name\">$name</h3>";
+            $html .= "<div class=\"pricing-plan__price\">$price</div>";
             $html .= '<ul class="pricing-plan__features">';
 
             /** @var list<string> $features */
@@ -95,7 +104,7 @@ final readonly class PricingTableBlock implements BlockTypeInterface
             }
 
             $html .= '</ul>';
-            $html .= "<a href=\"{$ctaUrl}\" class=\"pricing-plan__cta\">{$ctaText}</a>";
+            $html .= "<a href=\"$ctaUrl\" class=\"pricing-plan__cta\">$ctaText</a>";
             $html .= '</div>';
         }
 
@@ -115,35 +124,36 @@ final readonly class PricingTableBlock implements BlockTypeInterface
 
         foreach ($data['plans'] as $index => $plan) {
             if (!is_array($plan)) {
-                $errors[] = "plans[{$index}] must be an object";
+                $errors[] = "plans[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($plan['name']) || !is_string($plan['name'])) {
-                $errors[] = "plans[{$index}].name is required and must be a string";
+                $errors[] = "plans[$index].name is required and must be a string";
             }
 
             if (!isset($plan['price']) || !is_string($plan['price'])) {
-                $errors[] = "plans[{$index}].price is required and must be a string";
+                $errors[] = "plans[$index].price is required and must be a string";
             }
 
             if (!isset($plan['features']) || !is_array($plan['features'])) {
-                $errors[] = "plans[{$index}].features is required and must be an array";
+                $errors[] = "plans[$index].features is required and must be an array";
             } else {
+                /** @var mixed $feature */
                 foreach ($plan['features'] as $featureIndex => $feature) {
                     if (!is_string($feature)) {
-                        $errors[] = "plans[{$index}].features[{$featureIndex}] must be a string";
+                        $errors[] = "plans[$index].features[$featureIndex] must be a string";
                     }
                 }
             }
 
             if (!isset($plan['ctaText']) || !is_string($plan['ctaText'])) {
-                $errors[] = "plans[{$index}].ctaText is required and must be a string";
+                $errors[] = "plans[$index].ctaText is required and must be a string";
             }
 
             if (!isset($plan['ctaUrl']) || !is_string($plan['ctaUrl'])) {
-                $errors[] = "plans[{$index}].ctaUrl is required and must be a string";
+                $errors[] = "plans[$index].ctaUrl is required and must be a string";
             }
         }
 

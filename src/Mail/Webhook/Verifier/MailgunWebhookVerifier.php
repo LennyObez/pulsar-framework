@@ -9,11 +9,13 @@ use Pulsar\Mail\Webhook\WebhookRequest;
 use Pulsar\Mail\Webhook\WebhookVerifierInterface;
 use SensitiveParameter;
 
+use function abs;
 use function hash_equals;
 use function hash_hmac;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function time;
 
 /**
  * Verifies Mailgun webhook signatures using HMAC-SHA256.
@@ -24,6 +26,8 @@ use function json_decode;
 #[Internal]
 final readonly class MailgunWebhookVerifier implements WebhookVerifierInterface
 {
+    private const int MAX_TIMESTAMP_DRIFT_SECONDS = 900;
+
     public function __construct(
         #[SensitiveParameter]
         private string $signingKey,
@@ -49,6 +53,10 @@ final readonly class MailgunWebhookVerifier implements WebhookVerifierInterface
         $signature = $signatureData['signature'] ?? null;
 
         if (!is_string($timestamp) || !is_string($token) || !is_string($signature)) {
+            return false;
+        }
+
+        if (abs(time() - (int) $timestamp) > self::MAX_TIMESTAMP_DRIFT_SECONDS) {
             return false;
         }
 

@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for feature flag errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FeatureFlagException extends RuntimeException

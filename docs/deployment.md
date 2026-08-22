@@ -4,10 +4,21 @@
 
 Before deploying to staging or production:
 
-1. Run `php bin/pulsar optimize` to build framework caches
-2. Run `php bin/pulsar deploy:check --env=production` to validate readiness
-3. Run `php bin/pulsar integrity:build --sign` to create a signed integrity manifest
-4. Verify all health checks pass: `php bin/pulsar health:check`
+1. Run `php bin/pulsar asset:publish --copy` to publish extension assets to `public/assets/`
+2. Run `php bin/pulsar optimize` to build framework caches
+3. Run `php bin/pulsar deploy:check --env=production` to validate readiness
+4. Run `php bin/pulsar integrity:build --sign` to create a signed integrity manifest
+5. Verify all health checks pass: `php bin/pulsar health:check`
+
+### Asset publishing
+
+The `asset:publish` command copies or symlinks extension assets from `resources/` into `public/assets/` so the web server can serve them. In production, always use `--copy` to create real files instead of symlinks:
+
+```bash
+php bin/pulsar asset:publish --copy
+```
+
+Without `--copy`, the command creates symlinks (useful for development). See the [Assets guide](assets.md) for full details.
 
 ## Framework optimization
 
@@ -176,6 +187,44 @@ Retry failed jobs:
 php bin/pulsar queue:retry all
 php bin/pulsar queue:retry job-abc-123
 ```
+
+## WebSocket deployment
+
+PHP-FPM cannot serve WebSocket connections natively because FPM terminates the PHP process after each request. WebSocket connections are long-lived and require a persistent runtime.
+
+### Runtime options
+
+| Option                    | How it works                                                     |
+| ------------------------- | ---------------------------------------------------------------- |
+| Pulsar persistent runtime | Built-in `runtime:serve` with Fiber concurrency handles upgrades |
+| RoadRunner                | Go-based process manager with native WebSocket plugin            |
+| Swoole / OpenSwoole       | C extension providing async I/O and WebSocket server             |
+| Dedicated WebSocket proxy | Separate WebSocket service behind nginx `proxy_pass`             |
+
+The Messaging extension requires a persistent runtime -- it cannot operate under PHP-FPM. Use one of the options above.
+
+### Nginx WebSocket proxy
+
+When running a dedicated WebSocket service (or the persistent runtime on a separate port), configure nginx to proxy WebSocket upgrade requests:
+
+```nginx
+location /ws/ {
+    proxy_pass http://127.0.0.1:9502;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 86400;
+}
+```
+
+Key points:
+
+- `proxy_http_version 1.1` and the `Upgrade`/`Connection` headers are required for the HTTP upgrade handshake
+- `proxy_read_timeout 86400` keeps idle connections open for 24 hours (adjust to your needs)
+- Place this block before the general `location /` block so WebSocket paths match first
+
+For the persistent runtime's built-in WebSocket support, see the nginx config in [Persistent runtime deployment](deployment/persistent.md) which includes a `/ws` location block.
 
 ## Supervisor
 

@@ -14,14 +14,32 @@ use function time;
  * Tracks request counts per key within fixed time windows.
  * Suitable for single-process deployments and testing; for multi-process
  * deployments, use SqliteRateLimiter or a store-backed implementation.
+ *
+ * Long-running workers (Roadrunner / Swoole / FrankenPHP) call
+ * `hit()` once per request, each potentially with a unique key (per-IP
+ * + per-user composite). Without a global GC pass, expired entries
+ * for keys that never call `hit()` again accumulate indefinitely. We
+ * sweep the entire `$hits` map every `GC_INTERVAL_SECONDS` so the
+ * footprint stays bounded by the active-key set rather than the
+ * lifetime-distinct-key set.
  */
 #[Internal]
 final class RateLimiter implements RateLimiterInterface
 {
     /**
+     * How often to sweep expired entries across every key.
+     * 60 seconds keeps the worst-case overshoot at one window-length
+     * worth of dead entries while making the GC pass amortised over
+     * thousands of requests.
+     */
+    private const int GC_INTERVAL_SECONDS = 60;
+
+    /**
      * @var array<string, array{count: int, window_start: int}>
      */
     private array $hits = [];
+
+    private int $lastGcAt = 0;
 
     public function __construct(
         private readonly int $maxAttempts,
@@ -32,6 +50,7 @@ final class RateLimiter implements RateLimiterInterface
     {
         $now = time();
         $this->pruneExpired($key, $now);
+        $this->maybeSweepExpired($now);
 
         if (!isset($this->hits[$key])) {
             $this->hits[$key] = ['count' => 0, 'window_start' => $now];
@@ -81,5 +100,25 @@ final class RateLimiter implements RateLimiterInterface
         if ($now >= $entry['window_start'] + $this->windowSeconds) {
             unset($this->hits[$key]);
         }
+    }
+
+    /**
+     * Drop every expired entry across the whole `$hits` map.
+     * Runs at most once per `GC_INTERVAL_SECONDS` so the cost
+     * amortises over thousands of `hit()` calls.
+     */
+    private function maybeSweepExpired(int $now): void
+    {
+        if ($now - $this->lastGcAt < self::GC_INTERVAL_SECONDS) {
+            return;
+        }
+
+        foreach ($this->hits as $existingKey => $entry) {
+            if ($now >= $entry['window_start'] + $this->windowSeconds) {
+                unset($this->hits[$existingKey]);
+            }
+        }
+
+        $this->lastGcAt = $now;
     }
 }

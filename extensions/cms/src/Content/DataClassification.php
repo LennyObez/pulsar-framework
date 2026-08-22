@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Data classification level for content and media assets.
+ *
+ * @psalm-api Public enum referenced across content, comments, media, and
+ *            commerce DTOs to drive PII handling.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DataClassification: string

@@ -15,6 +15,7 @@ use function sprintf;
  *
  * All arithmetic operations return new instances. Cross-currency
  * operations are rejected at the type level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Money
@@ -54,12 +55,21 @@ final readonly class Money
     /**
      * Add another Money of the same currency.
      *
-     * @throws MoneyException On currency mismatch
+     * @throws MoneyException On currency mismatch or integer overflow.
      */
     #[NoDiscard]
     public function add(self $other): self
     {
         $this->assertSameCurrency($other);
+
+        // Both operands are non-negative ints (`Money::of()`
+        // rejects negative amounts), so the only overflow direction
+        // is upward. Detect via `$a > PHP_INT_MAX - $b` before the
+        // addition rather than after — a post-hoc `< 0` check would
+        // already have suffered the silent 64-bit wrap.
+        if ($this->amount > PHP_INT_MAX - $other->amount) {
+            throw MoneyException::overflow('add', $this->amount, $other->amount);
+        }
 
         return new self($this->amount + $other->amount, $this->currency);
     }
@@ -85,13 +95,21 @@ final readonly class Money
     /**
      * Multiply by a non-negative integer factor.
      *
-     * @throws MoneyException If factor is negative
+     * @throws MoneyException If factor is negative or the product
+     *                       would overflow PHP_INT_MAX.
      */
     #[NoDiscard]
     public function multiply(int $factor): self
     {
         if ($factor < 0) {
             throw MoneyException::negativeMultiplier($factor);
+        }
+
+        // Detect upward overflow before the multiplication.
+        // Special-case `$factor === 0` to avoid division-by-zero in
+        // the bound check.
+        if ($factor !== 0 && $this->amount > intdiv(PHP_INT_MAX, $factor)) {
+            throw MoneyException::overflow('multiply', $this->amount, $factor);
         }
 
         return new self($this->amount * $factor, $this->currency);
@@ -103,13 +121,24 @@ final readonly class Money
      * @param int $basisPoints Percentage in basis points
      * @param RoundingMode $mode Rounding mode for fractional results
      *
-     * @throws MoneyException If basis points is negative
+     * @throws MoneyException If basis points is negative or the
+     *                       intermediate `amount * basisPoints` product
+     *                       would overflow PHP_INT_MAX.
      */
     #[NoDiscard]
     public function percentage(int $basisPoints, RoundingMode $mode = RoundingMode::HalfUp): self
     {
         if ($basisPoints < 0) {
             throw MoneyException::invalidBasisPoints($basisPoints);
+        }
+
+        // The implicit cast through float in
+        // `($amount * $basisPoints) / 10000` masks the overflow only
+        // because the result is truncated to int by `applyRounding()`.
+        // Guard the int product up-front so a 100 % rate (`basisPoints
+        // = 10000`) on `PHP_INT_MAX / 9999` does not silently wrap.
+        if ($basisPoints !== 0 && $this->amount > intdiv(PHP_INT_MAX, $basisPoints)) {
+            throw MoneyException::overflow('multiply', $this->amount, $basisPoints);
         }
 
         $raw = ($this->amount * $basisPoints) / 10000;

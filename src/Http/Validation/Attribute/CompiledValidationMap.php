@@ -17,6 +17,7 @@ use function str_ends_with;
  *
  * At runtime this class loads the artifact without reflection.
  * The artifact is produced by ValidationCompiler at build time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledValidationMap
@@ -43,6 +44,7 @@ final readonly class CompiledValidationMap
             return;
         }
 
+        /** @var mixed $loaded */
         $loaded = require $artifactPath;
 
         /** @var array<class-string, array{rules: array<string, list<array{rule: class-string, parameters: array<string, mixed>, groups: list<string>}>>, filters: array<string, list<array{filter: class-string, parameters: array<string, mixed>}>>}> $validated */

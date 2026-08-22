@@ -100,7 +100,7 @@ final readonly class JitCheck implements DeployCheckInterface
             };
         }
 
-        // JIT is enabled — check buffer size
+        // JIT is enabled; check buffer size
         $bufferSize = $this->runtime->iniGet('opcache.jit_buffer_size');
         $bufferMb = $this->parseBufferMb($bufferSize);
 
@@ -155,7 +155,7 @@ final readonly class JitCheck implements DeployCheckInterface
             return false;
         }
 
-        // Numeric mode: 4-digit like 1205, 1235, 1255 — enabled if last digit > 0
+        // Numeric mode: 4-digit like 1205, 1235, 1255: enabled if last digit > 0
         if (is_numeric($normalized) && $normalized !== '0') {
             return true;
         }

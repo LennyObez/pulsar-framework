@@ -46,7 +46,7 @@ final class ExtensionRegistryTest extends TestCase
         $this->registry->add($extension, $manifest);
 
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('already registered');
+        $this->expectExceptionMessageIsOrContains('already registered');
 
         $this->registry->add($extension, $manifest);
     }
@@ -55,7 +55,7 @@ final class ExtensionRegistryTest extends TestCase
     public function getThrowsOnNotFound(): void
     {
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $_ = $this->registry->get('nonexistent');
     }
@@ -211,6 +211,7 @@ final class ExtensionRegistryTest extends TestCase
             'name' => $name,
             'version' => '1.0.0',
             'extension_class' => 'TestExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 }

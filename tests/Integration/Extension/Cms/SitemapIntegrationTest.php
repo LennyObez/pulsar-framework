@@ -256,6 +256,11 @@ final class InMemorySitemapContentRepository implements ContentRepositoryInterfa
         return $this->contents[$id] ?? null;
     }
 
+    public function findByImportId(string $importId): ?Content
+    {
+        return null;
+    }
+
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content
     {
         return null;

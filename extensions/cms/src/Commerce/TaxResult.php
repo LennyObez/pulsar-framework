@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tax calculation result with per-item breakdown.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxResult

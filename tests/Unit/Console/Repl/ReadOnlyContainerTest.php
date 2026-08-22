@@ -69,6 +69,15 @@ final class ReadOnlyContainerTest extends TestCase
     }
 
     #[Test]
+    public function singletonThrows(): void
+    {
+        $this->expectException(ReplSafeModeException::class);
+        $this->expectExceptionMessageMatches('/container mutation/');
+
+        $this->container->singleton('id', stdClass::class);
+    }
+
+    #[Test]
     public function instanceThrows(): void
     {
         $this->expectException(ReplSafeModeException::class);

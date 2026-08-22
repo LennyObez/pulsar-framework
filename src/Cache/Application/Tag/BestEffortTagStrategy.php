@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache\Application\Tag;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
+use Pulsar\Runtime\ResettableInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
@@ -21,14 +23,28 @@ use function bin2hex;
  * Documented race window: a read concurrent with an invalidation can
  * observe a stale value exactly once. Tag version key eviction is
  * treated as full invalidation (conservative miss).
+ *
+ * Tag versions are memoized per REQUEST, so a tag consulted by several tagged
+ * reads costs a single driver round-trip rather than one per read — the
+ * amortization ADR-0018 promises. The memo is kept coherent on local
+ * invalidation (the fresh version is stored). On persistent runtimes the
+ * instance outlives the request (CacheManager memoizes TaggedCache singletons),
+ * so the memo MUST be cleared between requests via {@see resetRequestState()}
+ * — otherwise another worker's invalidation is never observed and this worker
+ * keeps serving (and re-tagging writes with) a dead version for the worker's
+ * whole lifetime. CacheManager propagates the reset through the
+ * RequestResetRegistry.
  */
 #[Internal]
-final class BestEffortTagStrategy implements TagStrategyInterface
+final class BestEffortTagStrategy implements TagStrategyInterface, ResettableInterface
 {
     private const string TAG_KEY_PREFIX = '_tag:';
     private const string TAG_KEY_SUFFIX = ':ver';
 
     private readonly Randomizer $randomizer;
+
+    /** @var array<string, string> Memoized tag => version for this instance. */
+    private array $versionMemo = [];
 
     public function __construct(
         private readonly CacheDriverInterface $driver,
@@ -42,23 +58,34 @@ final class BestEffortTagStrategy implements TagStrategyInterface
             return [];
         }
 
-        $tagKeys = array_map(self::tagKey(...), $tags);
-        $rawValues = $this->driver->getMultiple($tagKeys);
+        // Only the tags not already memoized need a driver round-trip.
+        $missing = [];
+        foreach ($tags as $tag) {
+            if (!isset($this->versionMemo[$tag])) {
+                $missing[] = $tag;
+            }
+        }
+
+        if ($missing !== []) {
+            $missingKeys = array_map(self::tagKey(...), $missing);
+            $rawValues = $this->driver->getMultiple($missingKeys);
+
+            foreach ($missing as $i => $tag) {
+                $value = $rawValues[$missingKeys[$i]] ?? null;
+
+                if ($value === null) {
+                    // Initialize with a random version and persist it.
+                    $value = $this->generateVersion();
+                    $this->driver->set($missingKeys[$i], $value, null);
+                }
+
+                $this->versionMemo[$tag] = $value;
+            }
+        }
 
         $versions = [];
-
-        foreach ($tags as $i => $tag) {
-            $key = $tagKeys[$i];
-            $value = $rawValues[$key] ?? null;
-
-            if ($value === null) {
-                // Initialize with a random version
-                $version = $this->generateVersion();
-                $this->driver->set($key, $version, null);
-                $versions[$tag] = $version;
-            } else {
-                $versions[$tag] = $value;
-            }
+        foreach ($tags as $tag) {
+            $versions[$tag] = $this->versionMemo[$tag];
         }
 
         return $versions;
@@ -67,7 +94,12 @@ final class BestEffortTagStrategy implements TagStrategyInterface
     public function invalidateTag(string $tag): void
     {
         $key = self::tagKey($tag);
-        $this->driver->set($key, $this->generateVersion(), null);
+        $version = $this->generateVersion();
+        $this->driver->set($key, $version, null);
+
+        // Keep the memo coherent: later reads in this request must see the
+        // freshly bumped version, not the pre-invalidation one.
+        $this->versionMemo[$tag] = $version;
     }
 
     public function invalidateTags(array $tags): void
@@ -75,6 +107,17 @@ final class BestEffortTagStrategy implements TagStrategyInterface
         foreach ($tags as $tag) {
             $this->invalidateTag($tag);
         }
+    }
+
+    /**
+     * Clear the per-request tag-version memo so the next request re-reads
+     * versions from the driver and observes invalidations made by other
+     * workers. Called between requests on persistent runtimes.
+     */
+    #[Override]
+    public function resetRequestState(): void
+    {
+        $this->versionMemo = [];
     }
 
     private function generateVersion(): string

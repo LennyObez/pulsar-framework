@@ -1,20 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.0/phpunit.xsd"
-         bootstrap="../../vendor/autoload.php"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.2/phpunit.xsd"
+         bootstrap="bootstrap.php"
          cacheDirectory="../../.phpunit.cache"
          colors="true"
          executionOrder="depends,defects"
          failOnRisky="true"
          failOnWarning="true"
-         beStrictAboutOutputDuringTests="true">
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         failOnNotice="true"
+         failOnEmptyTestSuite="true"
+         beStrictAboutOutputDuringTests="true"
+         beStrictAboutChangesToGlobalState="true"
+         beStrictAboutTestsThatDoNotTestAnything="true">
     <testsuites>
         <testsuite name="Unit">
             <directory>../../tests/Unit</directory>
             <directory>../../extensions/opentelemetry/tests/Unit</directory>
+            <directory>../../extensions/observability/tests/Unit</directory>
+            <directory>../../extensions/grpc/tests/Unit</directory>
+            <directory>../../extensions/accessibility/tests/Unit</directory>
+            <directory>../../extensions/ai-governance/tests/Unit</directory>
+            <directory>../../extensions/cms/tests/Unit</directory>
+            <directory>../../extensions/analytics/tests/Unit</directory>
+            <directory>../../extensions/auth/tests/Unit</directory>
+            <directory>../../extensions/admin/tests/Unit</directory>
+            <directory>../../extensions/payments/tests/Unit</directory>
+            <directory>../../extensions/orm/tests/Unit</directory>
+            <directory>../../extensions/graphql/tests/Unit</directory>
+            <directory>../../extensions/mcp-server/tests/Unit</directory>
+            <directory>../../extensions/forum/tests/Unit</directory>
+            <directory>../../extensions/form/tests/Unit</directory>
+            <directory>../../extensions/example/tests/Unit</directory>
+            <directory>../../extensions/studio/tests/Unit</directory>
+            <directory>../../extensions/compliance/dora/tests/Unit</directory>
+            <directory>../../extensions/compliance/eidas/tests/Unit</directory>
+            <directory>../../extensions/compliance/fhir/tests/Unit</directory>
+            <directory>../../extensions/compliance/medical-devices/tests/Unit</directory>
+            <directory>../../extensions/compliance/psd2/tests/Unit</directory>
+            <directory>../../extensions/compliance/dsa/tests/Unit</directory>
+            <directory>../../extensions/compliance/data-act/tests/Unit</directory>
+            <directory>../../extensions/health-status/tests/Unit</directory>
+            <directory>../../extensions/booking/tests/Unit</directory>
+            <directory>../../extensions/devices/tests/Unit</directory>
+            <directory>../../extensions/feedback/tests/Unit</directory>
+            <directory>../../extensions/messaging/tests/Unit</directory>
+            <directory>../../extensions/observability-export/tests/Unit</directory>
+            <directory>../../extensions/releases/tests/Unit</directory>
+            <directory>../../extensions/subscriptions/tests/Unit</directory>
+            <directory>../../extensions/tickets/tests/Unit</directory>
         </testsuite>
         <testsuite name="Integration">
             <directory>../../tests/Integration</directory>
+            <directory>../../extensions/accessibility/tests/Integration</directory>
+        </testsuite>
+        <!--
+            Executes generated SQL against real engines. SQLite always runs; MySQL and
+            PostgreSQL run when a server is configured and FAIL rather than skip when one
+            is configured but unreachable, so a dead server cannot pass for an absent one.
+        -->
+        <testsuite name="Contract">
+            <directory>../../tests/Contract</directory>
         </testsuite>
         <testsuite name="E2E">
             <directory>../../tests/E2E</directory>
@@ -29,28 +76,77 @@
             <directory>../../tests/Property</directory>
         </testsuite>
     </testsuites>
+    <extensions>
+        <bootstrap class="Pulsar\Tests\Runner\ResetActiveEnvironmentExtension"/>
+        <!--
+            Records why each skipped test skipped. Inert unless PULSAR_SKIP_LEDGER_DIR
+            names a directory, so an ordinary local run is untouched. It exists because
+            the JUnit report cannot answer the question: PHPUnit writes `<skipped/>` as
+            an empty element with no message and no setting to change it, so the report
+            knows how many tests abstained and never why.
+        -->
+        <bootstrap class="Pulsar\Tests\Runner\SkipLedgerExtension"/>
+    </extensions>
     <php>
-        <ini name="memory_limit" value="512M"/>
+        <ini name="memory_limit" value="3G"/>
+        <!--
+            Test-only escape hatch for AbstractAdminController::authorize().
+            Lets unit tests that instantiate admin controllers without a
+            GateInterface (because they exercise business logic, not the
+            authorization layer itself) bypass the deny-by-default
+            check. Never defined in production — see the constant guard in
+            extensions/cms/src/Http/Controller/Admin/AbstractAdminController.php.
+        -->
+        <const name="PULSAR_TEST_BYPASS_AUTHZ" value="1"/>
     </php>
+    <!--
+        Path coverage is NOT declared here, deliberately. Asking for it in the
+        shared configuration makes every consumer of this file require Xdebug,
+        because branch and path data is Xdebug-only — PHPUnit refuses to run at
+        all under PCOV and reports "No tests executed". That silently broke
+        Infection, which runs the suite under PCOV for speed.
+
+        The coverage shards in ci.yml pass the path coverage flag on the command
+        line instead, so the Xdebug requirement lives with the one job that needs
+        it rather than with every job that reads this file.
+    -->
     <source>
         <include>
             <directory>../../src</directory>
             <directory>../../extensions/payments/src</directory>
             <directory>../../extensions/psr7-bridge/src</directory>
             <directory>../../extensions/studio/src</directory>
-            <directory>../../extensions/observability-export/src</directory>
-            <directory>../../extensions/social-sso/src</directory>
             <directory>../../extensions/mcp-server/src</directory>
             <directory>../../extensions/orm/src</directory>
             <directory>../../extensions/admin/src</directory>
             <directory>../../extensions/opentelemetry/src</directory>
-            <directory>../../extensions/oauth2/src</directory>
+            <directory>../../extensions/observability/src</directory>
+            <directory>../../extensions/observability-export/src</directory>
             <directory>../../extensions/form/src</directory>
-            <directory>../../extensions/webauthn/src</directory>
+            <directory>../../extensions/subscriptions/src</directory>
             <directory>../../extensions/cms/src</directory>
             <directory>../../extensions/graphql/src</directory>
             <directory>../../extensions/forum/src</directory>
             <directory>../../extensions/analytics/src</directory>
+            <directory>../../extensions/auth/src</directory>
+            <directory>../../extensions/grpc/src</directory>
+            <directory>../../extensions/accessibility/src</directory>
+            <directory>../../extensions/devices/src</directory>
+            <directory>../../extensions/feedback/src</directory>
+            <directory>../../extensions/releases/src</directory>
+            <directory>../../extensions/ai-governance/src</directory>
+            <directory>../../extensions/compliance/dora/src</directory>
+            <directory>../../extensions/compliance/eidas/src</directory>
+            <directory>../../extensions/compliance/fhir/src</directory>
+            <directory>../../extensions/compliance/medical-devices/src</directory>
+            <directory>../../extensions/compliance/psd2/src</directory>
+            <directory>../../extensions/health-status/src</directory>
+            <directory>../../extensions/booking/src</directory>
+            <directory>../../extensions/messaging/src</directory>
+            <directory>../../extensions/tickets/src</directory>
+            <directory>../../extensions/example/src</directory>
+            <directory>../../extensions/compliance/data-act/src</directory>
+            <directory>../../extensions/compliance/dsa/src</directory>
         </include>
     </source>
 </phpunit>

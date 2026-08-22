@@ -15,7 +15,7 @@ use Pulsar\Database\Driver;
  * Structural differences (indexes, constraints) are handled per-migration
  * with driver conditionals.
  */
-#[Internal(reason: 'Migration helper — not part of the public analytics API')]
+#[Internal(reason: 'Migration helper; not part of the public analytics API')]
 final readonly class AnalyticsDdl
 {
     public function __construct(

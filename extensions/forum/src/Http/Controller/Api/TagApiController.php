@@ -19,7 +19,7 @@ use function min;
 /**
  * Public REST API controller for forum tags.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class TagApiController
 {
     public function __construct(
@@ -28,9 +28,9 @@ final readonly class TagApiController
     ) {}
 
     /**
-     * GET /api/v1/forum/tags — List all tags ordered by usage.
+     * GET /api/v1/forum/tags: List all tags ordered by usage.
      */
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         $tags = $this->tagRepository->findAll();
 
@@ -46,7 +46,7 @@ final readonly class TagApiController
     }
 
     /**
-     * GET /api/v1/forum/tags/{slug} — Show a tag and its threads.
+     * GET /api/v1/forum/tags/{slug}: Show a tag and its threads.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {

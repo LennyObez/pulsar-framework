@@ -16,6 +16,7 @@ use function count;
  * Jobs are processed one at a time in sequence. If any job fails,
  * the remaining jobs in the chain are moved to the dead-letter queue
  * and a {@see \Pulsar\Queue\Event\ChainFailed} event is emitted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobChain

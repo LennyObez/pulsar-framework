@@ -17,6 +17,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function is_array;
+use function is_int;
 use function is_string;
 use function strlen;
 
@@ -26,19 +27,19 @@ use function strlen;
  * Provides theme token editing, CSS override management, version history,
  * and rollback capabilities. All operations are versioned and auditable.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class LiveCssController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class LiveCssController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private LiveCssServiceInterface $liveCss,
         private CssValidatorInterface $validator,
         private ThemeTokenResolverInterface $tokenResolver,
         private ThemeManagerInterface $themeManager,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function editor(ServerRequestInterface $request): Response
     {
@@ -91,9 +92,15 @@ final readonly class LiveCssController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $themeId = (string) ($body['theme_id'] ?? '');
-        $cssContent = (string) ($body['css_content'] ?? '');
-        $reason = (string) ($body['reason'] ?? '');
+        /** @var mixed $rawThemeId */
+        $rawThemeId = $body['theme_id'] ?? null;
+        $themeId = is_string($rawThemeId) ? $rawThemeId : '';
+        /** @var mixed $rawCss */
+        $rawCss = $body['css_content'] ?? null;
+        $cssContent = is_string($rawCss) ? $rawCss : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($themeId === '') {
             return Response::json(['error' => 'Theme ID is required'], 400);
@@ -148,8 +155,12 @@ final readonly class LiveCssController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $overrideId = (string) ($body['override_id'] ?? '');
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawOverrideId */
+        $rawOverrideId = $body['override_id'] ?? null;
+        $overrideId = is_string($rawOverrideId) ? $rawOverrideId : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($overrideId === '') {
             return Response::json(['error' => 'Override ID is required'], 400);
@@ -178,9 +189,15 @@ final readonly class LiveCssController
         $this->authorize($identity, 'cms.themes.view');
 
         $params = $request->getQueryParams();
-        $themeId = (string) ($params['theme_id'] ?? '');
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        /** @var mixed $rawThemeId */
+        $rawThemeId = $params['theme_id'] ?? null;
+        $themeId = is_string($rawThemeId) ? $rawThemeId : '';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         if ($themeId === '') {
             return Response::json(['error' => 'Theme ID is required'], 400);

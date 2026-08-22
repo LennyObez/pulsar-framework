@@ -18,9 +18,10 @@ use function sprintf;
 /**
  * Exact count for arrays (count()) or exact length for strings (mb_strlen()).
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Size implements RuleInterface
+final readonly class Size implements RuleInterface
 {
     public function __construct(
         private int $size,

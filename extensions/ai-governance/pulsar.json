@@ -1,0 +1,23 @@
+{
+  "name": "pulsar/ai-governance",
+  "version": "1.0.0-rc.11",
+  "description": "ISO 42001:2023 AI Management System governance extension with model registry, impact assessments, audit logging, data governance, and explainability",
+  "trust_tier": "core",
+  "kind": "product",
+  "extension_class": "Pulsar\\Extension\\AiGovernance\\AiGovernanceExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "provides": {
+    "services": [
+      "AiModelRegistryInterface",
+      "AiImpactAssessmentInterface",
+      "AiAuditLoggerInterface",
+      "AiDataGovernanceInterface",
+      "ExplainabilityInterface",
+      "AiLifecycleManagerInterface"
+    ],
+    "routes": false,
+    "commands": []
+  }
+}

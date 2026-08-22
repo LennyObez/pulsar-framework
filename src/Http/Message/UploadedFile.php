@@ -19,7 +19,9 @@ use function fwrite;
 use function in_array;
 use function is_dir;
 use function is_string;
+use function is_uploaded_file;
 use function is_writable;
+use function move_uploaded_file;
 use function rename;
 use function sprintf;
 use function stream_copy_to_stream;
@@ -35,9 +37,10 @@ use const UPLOAD_ERR_PARTIAL;
 
 /**
  * PSR-7 uploaded file value object.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
-class UploadedFile implements UploadedFileInterface
+final class UploadedFile implements UploadedFileInterface
 {
     private const array VALID_ERROR_CODES = [
         UPLOAD_ERR_OK,
@@ -62,6 +65,7 @@ class UploadedFile implements UploadedFileInterface
         private readonly int $error,
         private readonly ?string $clientFilename = null,
         private readonly ?string $clientMediaType = null,
+        private readonly bool $sapiUpload = false,
     ) {
         if (!in_array($error, self::VALID_ERROR_CODES, true)) {
             throw new InvalidArgumentException(sprintf('Invalid upload error code: %d', $error));
@@ -86,7 +90,9 @@ class UploadedFile implements UploadedFileInterface
         }
 
         if ($this->file !== null) {
-            $this->stream = Stream::fromFile($this->file);
+            $file = $this->file;
+            $this->assertGenuineUpload();
+            $this->stream = Stream::fromFile($file);
 
             return $this->stream;
         }
@@ -110,15 +116,53 @@ class UploadedFile implements UploadedFileInterface
         }
 
         if ($this->file !== null) {
-            $renamed = @rename($this->file, $targetPath);
-            if (!$renamed) {
-                $this->copyStreamTo($targetPath);
-            }
+            $this->moveFile($this->file, $targetPath);
         } else {
             $this->copyStreamTo($targetPath);
         }
 
         $this->moved = true;
+    }
+
+    /**
+     * Move a file-backed upload to its destination.
+     *
+     * A genuine SAPI upload is relocated with move_uploaded_file(), which
+     * re-validates is_uploaded_file() and is the only safe primitive for the
+     * PHP upload temp file. A programmatic source (factory, tests) uses a plain
+     * rename with a stream-copy backstop for cross-filesystem moves.
+     */
+    private function moveFile(string $source, string $targetPath): void
+    {
+        if ($this->sapiUpload) {
+            $this->assertGenuineUpload();
+
+            if (!@move_uploaded_file($source, $targetPath)) {
+                throw new RuntimeException(sprintf('Failed to move uploaded file to "%s"', $targetPath));
+            }
+
+            return;
+        }
+
+        if (!@rename($source, $targetPath)) {
+            $this->copyStreamTo($targetPath);
+        }
+    }
+
+    /**
+     * Reject access to a SAPI-sourced upload whose backing path is not a genuine
+     * PHP upload — a forged $_FILES tmp_name attempting path traversal or an
+     * arbitrary-file read. The guard applies only to uploads received from the
+     * SAPI; programmatically constructed UploadedFiles carry trusted paths and
+     * are exempt (is_uploaded_file() is false for every path outside a request).
+     */
+    private function assertGenuineUpload(): void
+    {
+        if ($this->sapiUpload && $this->file !== null && !is_uploaded_file($this->file)) {
+            throw new RuntimeException(
+                sprintf('Refusing to access "%s": not a file uploaded via HTTP POST', $this->file),
+            );
+        }
     }
 
     #[Override]

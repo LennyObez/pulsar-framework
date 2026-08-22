@@ -11,21 +11,30 @@ use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 
 use function array_map;
-use function array_merge;
-use function array_unique;
-use function array_values;
 use function is_array;
+use function is_int;
 
 /**
  * PSR-16-backed query cache with tag-based invalidation.
  *
- * Stores serialized query results and maintains a tag index so that
- * writes to specific tables can invalidate all related cached queries.
+ * Stores serialized query results, each stamped with the version of every tag
+ * it was cached against. Invalidation bumps a per-tag version counter, so all
+ * entries carrying an older version become stale on their next read without
+ * the cache having to enumerate or rewrite them.
+ *
+ * This versioning model replaces a per-tag key-list index. The list had two
+ * defects: building it was a read-modify-write that silently lost entries when
+ * two requests cached under the same tag concurrently (a dropped entry then
+ * survived invalidation as stale data), and it was written without a TTL, so
+ * it grew unbounded and never expired. Versioning has neither: writes touch
+ * only the entry's own key, and the bounded set of small integer counters is
+ * the only persistent bookkeeping.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryCache implements QueryCacheInterface
 {
-    private const string TAG_INDEX_PREFIX = 'qc_tag:';
+    private const string TAG_VERSION_PREFIX = 'qc_tagver.';
 
     public function __construct(
         private CacheInterface $cache,
@@ -37,54 +46,55 @@ final readonly class QueryCache implements QueryCacheInterface
         /** @var mixed $cached */
         $cached = $this->cache->get($key);
 
-        if (!is_array($cached)) {
+        if (
+            !is_array($cached)
+            || !isset($cached['rows'], $cached['tags'])
+            || !is_array($cached['rows'])
+            || !is_array($cached['tags'])
+        ) {
             return null;
         }
 
-        /** @var list<array<string, mixed>> $cached */
-        return self::deserializeResult($cached);
+        // The entry is fresh only while every tag it was stamped with still
+        // carries the same version. A version bumped by invalidateByTags makes
+        // the entry stale here, on read, without it being touched at write time.
+        /** @var array<array-key, mixed> $storedTags */
+        $storedTags = $cached['tags'];
+
+        foreach ($storedTags as $tag => $storedVersion) {
+            if (!is_int($storedVersion) || $this->tagVersion((string) $tag) !== $storedVersion) {
+                return null;
+            }
+        }
+
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $cached['rows'];
+
+        return self::deserializeResult($rows);
     }
 
     #[Override]
     public function put(string $key, Result $result, int $ttlSeconds, array $tags): void
     {
-        $this->cache->set($key, self::serializeResult($result), $ttlSeconds);
+        $tagVersions = [];
 
         foreach ($tags as $tag) {
-            $tagKey = self::TAG_INDEX_PREFIX . $tag;
-
-            /** @var mixed $existing */
-            $existing = $this->cache->get($tagKey);
-
-            /** @var list<string> $keys */
-            $keys = is_array($existing) ? $existing : [];
-            $keys[] = $key;
-
-            $this->cache->set($tagKey, array_values(array_unique($keys)));
+            $tagVersions[$tag] = $this->tagVersion($tag);
         }
+
+        $this->cache->set($key, [
+            'tags' => $tagVersions,
+            'rows' => self::serializeResult($result),
+        ], $ttlSeconds);
     }
 
     #[Override]
     public function invalidateByTags(array $tags): void
     {
-        $keysToDelete = [];
-
         foreach ($tags as $tag) {
-            $tagKey = self::TAG_INDEX_PREFIX . $tag;
-
-            /** @var mixed $existing */
-            $existing = $this->cache->get($tagKey);
-
-            if (is_array($existing)) {
-                /** @var list<string> $existing */
-                $keysToDelete = array_merge($keysToDelete, $existing);
-            }
-
-            $this->cache->delete($tagKey);
-        }
-
-        foreach (array_unique($keysToDelete) as $key) {
-            $this->cache->delete($key);
+            // Persisted without a TTL: the counter must outlive every entry it
+            // governs, and the count of distinct tags (table names) is bounded.
+            $this->cache->set(self::TAG_VERSION_PREFIX . $tag, $this->tagVersion($tag) + 1);
         }
     }
 
@@ -92,6 +102,19 @@ final readonly class QueryCache implements QueryCacheInterface
     public function flush(): void
     {
         $this->cache->clear();
+    }
+
+    /**
+     * Current version of a tag. Absent (never invalidated, or the counter was
+     * evicted) reads as 0 so that entries stamped 0 stay fresh; any later
+     * invalidation advances past 0 and makes them stale.
+     */
+    private function tagVersion(string $tag): int
+    {
+        /** @var mixed $version */
+        $version = $this->cache->get(self::TAG_VERSION_PREFIX . $tag);
+
+        return is_int($version) ? $version : 0;
     }
 
     /**

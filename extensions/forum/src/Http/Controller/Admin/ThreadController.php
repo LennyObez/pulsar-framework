@@ -21,9 +21,9 @@ use function max;
 use function min;
 
 /**
- * Admin controller for thread management — lock, pin, move, delete.
+ * Admin controller for thread management: lock, pin, move, delete.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class ThreadController
 {
     use RendersAdminView;
@@ -37,7 +37,7 @@ final readonly class ThreadController
     ) {}
 
     /**
-     * GET /admin/forum/threads — List threads with pagination.
+     * GET /admin/forum/threads: List threads with pagination.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -62,7 +62,7 @@ final readonly class ThreadController
     }
 
     /**
-     * GET /admin/forum/threads/{id} — Show a single thread.
+     * GET /admin/forum/threads/{id}: Show a single thread.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -81,7 +81,7 @@ final readonly class ThreadController
     }
 
     /**
-     * POST /admin/forum/threads/{id}/lock — Lock a thread.
+     * POST /admin/forum/threads/{id}/lock: Lock a thread.
      */
     public function lock(ServerRequestInterface $request, string $id): Response
     {
@@ -89,7 +89,7 @@ final readonly class ThreadController
         $this->authorize($identity, 'forum.admin.threads.moderate');
 
         try {
-            $thread = $this->forumService->lockThread($id);
+            $thread = $this->forumService->lockThread($id, $identity->id());
 
             return Response::json(['data' => self::serializeThread($thread)]);
         } catch (ForumException $e) {
@@ -98,7 +98,7 @@ final readonly class ThreadController
     }
 
     /**
-     * POST /admin/forum/threads/{id}/unlock — Unlock a thread.
+     * POST /admin/forum/threads/{id}/unlock: Unlock a thread.
      */
     public function unlock(ServerRequestInterface $request, string $id): Response
     {
@@ -106,7 +106,7 @@ final readonly class ThreadController
         $this->authorize($identity, 'forum.admin.threads.moderate');
 
         try {
-            $thread = $this->forumService->unlockThread($id);
+            $thread = $this->forumService->unlockThread($id, $identity->id());
 
             return Response::json(['data' => self::serializeThread($thread)]);
         } catch (ForumException $e) {
@@ -115,7 +115,7 @@ final readonly class ThreadController
     }
 
     /**
-     * POST /admin/forum/threads/{id}/pin — Pin a thread.
+     * POST /admin/forum/threads/{id}/pin: Pin a thread.
      */
     public function pin(ServerRequestInterface $request, string $id): Response
     {
@@ -123,7 +123,7 @@ final readonly class ThreadController
         $this->authorize($identity, 'forum.admin.threads.moderate');
 
         try {
-            $thread = $this->forumService->pinThread($id);
+            $thread = $this->forumService->pinThread($id, $identity->id());
 
             return Response::json(['data' => self::serializeThread($thread)]);
         } catch (ForumException $e) {
@@ -132,7 +132,7 @@ final readonly class ThreadController
     }
 
     /**
-     * POST /admin/forum/threads/{id}/unpin — Unpin a thread.
+     * POST /admin/forum/threads/{id}/unpin: Unpin a thread.
      */
     public function unpin(ServerRequestInterface $request, string $id): Response
     {
@@ -140,7 +140,7 @@ final readonly class ThreadController
         $this->authorize($identity, 'forum.admin.threads.moderate');
 
         try {
-            $thread = $this->forumService->unpinThread($id);
+            $thread = $this->forumService->unpinThread($id, $identity->id());
 
             return Response::json(['data' => self::serializeThread($thread)]);
         } catch (ForumException $e) {
@@ -149,7 +149,7 @@ final readonly class ThreadController
     }
 
     /**
-     * POST /admin/forum/threads/{id}/move — Move a thread to a different category.
+     * POST /admin/forum/threads/{id}/move: Move a thread to a different category.
      */
     public function move(ServerRequestInterface $request, string $id): Response
     {
@@ -165,7 +165,9 @@ final readonly class ThreadController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $categoryId = is_string($body['category_id'] ?? null) ? $body['category_id'] : '';
+        /** @var mixed $rawCategoryId */
+        $rawCategoryId = $body['category_id'] ?? null;
+        $categoryId = is_string($rawCategoryId) ? $rawCategoryId : '';
 
         if ($categoryId === '') {
             return Response::json(['error' => 'Category ID is required'], 422);
@@ -182,7 +184,7 @@ final readonly class ThreadController
     }
 
     /**
-     * DELETE /admin/forum/threads/{id} — Soft delete a thread.
+     * DELETE /admin/forum/threads/{id}: Soft delete a thread.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -190,7 +192,8 @@ final readonly class ThreadController
         $this->authorize($identity, 'forum.admin.threads.delete');
 
         try {
-            $this->forumService->deleteThread($id);
+            // Admin endpoint: bypass the author check (MED-4).
+            $this->forumService->deleteThread($id, $identity->id(), isModerator: true);
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {

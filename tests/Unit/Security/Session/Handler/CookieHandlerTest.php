@@ -70,7 +70,7 @@ final class CookieHandlerTest extends TestCase
         $oversizedData = str_repeat('x', 2049);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
 
         $handler->write('session-1', $oversizedData);
     }
@@ -122,7 +122,7 @@ final class CookieHandlerTest extends TestCase
         $handler = new CookieHandler($this->encryption, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session listing');
+        $this->expectExceptionMessageIsOrContains('does not support session listing');
 
         $handler->listSessions('user-1');
     }
@@ -133,7 +133,7 @@ final class CookieHandlerTest extends TestCase
         $handler = new CookieHandler($this->encryption, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session revocation');
+        $this->expectExceptionMessageIsOrContains('does not support session revocation');
 
         $handler->revokeSession('session-1');
     }
@@ -144,7 +144,7 @@ final class CookieHandlerTest extends TestCase
         $handler = new CookieHandler($this->encryption, $this->config);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support concurrency control');
+        $this->expectExceptionMessageIsOrContains('does not support concurrency control');
 
         $handler->getActiveSessions('user-1');
     }
@@ -204,5 +204,46 @@ final class CookieHandlerTest extends TestCase
         $handler->loadFromCookie('session-1', 'not-valid-encrypted-data');
 
         self::assertSame('', $handler->read('session-1'));
+    }
+
+    #[Test]
+    public function getCookieValueReturnsNullWithoutWrite(): void
+    {
+        $handler = new CookieHandler($this->encryption, $this->config);
+
+        self::assertNull($handler->getCookieValue('nonexistent'));
+    }
+
+    #[Test]
+    public function loadFromCookieIgnoresExpiredCookie(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $encryption = SessionEncryption::fromMasterKey($masterKey);
+
+        $config = new SessionConfig(
+            cookieName: 'COOKIE_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'cookie',
+            encryption: true,
+            cookieDomain: 'example.com',
+            cookieReplayWindow: 1, // 1-second replay window
+        );
+
+        $handler = new CookieHandler($encryption, $config);
+        $handler->write('session-1', 'old data');
+
+        $cookieValue = $handler->getCookieValue('session-1');
+        self::assertNotNull($cookieValue);
+
+        // The cookie was just created so should still be valid within 1 second
+        $handler2 = new CookieHandler($encryption, $config);
+        $handler2->loadFromCookie('session-1', $cookieValue);
+
+        // Should be readable since we just created it
+        self::assertSame('old data', $handler2->read('session-1'));
     }
 }

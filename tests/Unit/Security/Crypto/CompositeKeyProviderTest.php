@@ -79,7 +79,7 @@ final class CompositeKeyProviderTest extends TestCase
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must be exactly 32 bytes, got 16');
+        $this->expectExceptionMessageIsOrContains('must be exactly 32 bytes, got 16');
 
         $provider->deriveSubKey(1, 'encrypt_');
     }
@@ -127,7 +127,7 @@ final class CompositeKeyProviderTest extends TestCase
     public function emptyOverrideKeyThrowsOnConstruction(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
 
         new CompositeKeyProvider($this->masterKey, [
             'encrypt_' => '',
@@ -138,7 +138,7 @@ final class CompositeKeyProviderTest extends TestCase
     public function emptyContextThrowsOnConstruction(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('context must not be empty');
+        $this->expectExceptionMessageIsOrContains('context must not be empty');
 
         new CompositeKeyProvider($this->masterKey, [
             '' => random_bytes(32),
@@ -151,7 +151,7 @@ final class CompositeKeyProviderTest extends TestCase
         $provider = new CompositeKeyProvider($this->masterKey);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization');
+        $this->expectExceptionMessageIsOrContains('Serialization');
 
         serialize($provider);
     }
@@ -210,8 +210,19 @@ final class CompositeKeyProviderTest extends TestCase
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must be exactly 24 bytes, got 32');
+        $this->expectExceptionMessageIsOrContains('must be exactly 24 bytes, got 32');
 
         $provider->deriveSubKey(1, 'encrypt_', 24);
+    }
+
+    #[Test]
+    public function unserializationIsForbidden(): void
+    {
+        $provider = new CompositeKeyProvider($this->masterKey);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessageIsOrContains('Serialization of CompositeKeyProvider is forbidden');
+
+        $provider->__unserialize([]);
     }
 }

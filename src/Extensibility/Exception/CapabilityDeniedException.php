@@ -17,9 +17,10 @@ use function ucfirst;
  *
  * Error messages include the denied capability, the extension's effective tier,
  * and remediation guidance for the host application.
+ * @api
  */
 #[Api(since: '1.0.0')]
-class CapabilityDeniedException extends ExtensionException
+final class CapabilityDeniedException extends ExtensionException
 {
     /**
      * Denied access to a specific container service.
@@ -31,7 +32,7 @@ class CapabilityDeniedException extends ExtensionException
         ExtensionCapability $required,
     ): self {
         return new self(sprintf(
-            'Cannot resolve service "%s" — %s tier does not have %s capability. '
+            'Cannot resolve service "%s": %s tier does not have %s capability. '
             . 'Grant this capability in config/extensions.php by adding '
             . "'additional_capabilities' => ['%s'].",
             $serviceId,
@@ -66,7 +67,7 @@ class CapabilityDeniedException extends ExtensionException
         TrustTier $tier,
     ): self {
         return new self(sprintf(
-            'Service "%s" is not classified in the service restriction map — '
+            'Service "%s" is not classified in the service restriction map: '
             . 'denied by default for %s tier. '
             . 'Add the service to the safe allowlist or restriction map in ServiceRestrictionMap.',
             $serviceId,

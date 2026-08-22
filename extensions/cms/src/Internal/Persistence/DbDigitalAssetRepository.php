@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\DigitalAsset;
 use Pulsar\Extension\Cms\Commerce\DigitalAssetRepositoryInterface;
@@ -14,6 +15,9 @@ use Pulsar\Extension\Cms\Commerce\DigitalDownload;
 
 /**
  * Database-backed digital asset and download entitlement repository.
+ *
+ * @psalm-api Bound to DigitalAssetRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use DigitalAssetRepositoryInterface for public API')]
 final readonly class DbDigitalAssetRepository implements DigitalAssetRepositoryInterface
@@ -26,16 +30,13 @@ final readonly class DbDigitalAssetRepository implements DigitalAssetRepositoryI
         SELECT * FROM cms_digital_downloads WHERE download_token = :token LIMIT 1
         SQL;
 
-    private const string SQL_INSERT_ASSET = <<<'SQL'
-        INSERT INTO cms_digital_assets (id, product_id, file_storage_path, file_hash, file_name, file_size, max_downloads)
-        VALUES (:id, :product_id, :file_storage_path, :file_hash, :file_name, :file_size, :max_downloads)
-        ON CONFLICT (id) DO UPDATE SET
-            file_storage_path = EXCLUDED.file_storage_path,
-            file_hash = EXCLUDED.file_hash,
-            file_name = EXCLUDED.file_name,
-            file_size = EXCLUDED.file_size,
-            max_downloads = EXCLUDED.max_downloads
-        SQL;
+    private const array UPSERT_ASSET_COLUMNS = [
+        'id', 'product_id', 'file_storage_path', 'file_hash', 'file_name', 'file_size', 'max_downloads',
+    ];
+
+    private const array UPSERT_ASSET_UPDATE = [
+        'file_storage_path', 'file_hash', 'file_name', 'file_size', 'max_downloads',
+    ];
 
     private const string SQL_INSERT_DOWNLOAD = <<<'SQL'
         INSERT INTO cms_digital_downloads (id, order_item_id, digital_asset_id, download_token, downloads_remaining, expires_at)
@@ -67,7 +68,15 @@ final readonly class DbDigitalAssetRepository implements DigitalAssetRepositoryI
 
     public function save(DigitalAsset $digitalAsset): void
     {
-        $this->db->execute(self::SQL_INSERT_ASSET, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_digital_assets',
+            self::UPSERT_ASSET_COLUMNS,
+            ['id'],
+            self::UPSERT_ASSET_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $digitalAsset->id,
             'product_id' => $digitalAsset->productId,
             'file_storage_path' => $digitalAsset->fileStoragePath,

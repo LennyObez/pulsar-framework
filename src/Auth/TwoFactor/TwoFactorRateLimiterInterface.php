@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Optional rate limiting for 2FA verification attempts.
  *
- * Not wired by default — apps provide their own implementation
+ * Not wired by default: apps provide their own implementation
  * scoped to their specific rate limiting needs (identity + IP + timeframe, etc.).
  *
  * Documented context keys (apps decide which to populate):
@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  * - 'device_id': Persistent device fingerprint
  * - 'route': Route name for step-up context
  * - 'session_id': Hashed session ID
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TwoFactorRateLimiterInterface

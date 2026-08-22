@@ -16,13 +16,18 @@ use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Internal\Tools\CsvContentImporter;
 use Pulsar\Extension\Cms\Internal\Tools\MarkdownImporter;
+use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
+use Pulsar\Extension\Cms\Tools\DuplicateResolutionPolicy;
+use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function count;
+use function is_array;
 use function is_string;
+use function json_decode;
 
 /**
  * Admin controller for CMS data import.
@@ -31,18 +36,21 @@ use function is_string;
  * Execute operations require step-up authentication.
  * Accepts JSON bundles, Markdown (with YAML frontmatter), and CSV formats.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ImportController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ImportController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ImportExportServiceInterface $importExport,
-        private GateInterface $gate,
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        private CsvContentImporter $csvImporter,
+        ?GateInterface $gate = null,
+        private ?ImportAnalyzer $importAnalyzer = null,
+        private ?MediaBundleImporter $mediaBundleImporter = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function form(ServerRequestInterface $request): Response
     {
@@ -148,7 +156,10 @@ final readonly class ImportController
                 $this->persistMarkdownItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = ($item['translation']['title'] ?: 'untitled') . ': ' . $e->getMessage();
+                /** @var mixed $rawTitle */
+                $rawTitle = $item['translation']['title'] ?? null;
+                $title = is_string($rawTitle) ? $rawTitle : 'untitled';
+                $errors[] = $title . ': ' . $e->getMessage();
             }
         }
 
@@ -170,8 +181,7 @@ final readonly class ImportController
             return Response::json(['error' => 'CSV content is required'], 400);
         }
 
-        $importer = new CsvContentImporter();
-        $parsed = $importer->parse($csvContent);
+        $parsed = $this->csvImporter->parse($csvContent);
 
         if ($parsed === []) {
             return Response::json(['error' => 'No valid rows found in CSV'], 422);
@@ -205,7 +215,10 @@ final readonly class ImportController
                 $this->persistCsvItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = ($item['translation']['title'] ?: 'untitled') . ': ' . $e->getMessage();
+                /** @var mixed $rawTitle */
+                $rawTitle = $item['translation']['title'] ?? null;
+                $title = is_string($rawTitle) ? $rawTitle : 'untitled';
+                $errors[] = $title . ': ' . $e->getMessage();
             }
         }
 
@@ -216,65 +229,171 @@ final readonly class ImportController
         ]);
     }
 
+    public function analyzeUpload(ServerRequestInterface $request): Response
+    {
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.tools.import');
+
+        if ($this->importAnalyzer === null) {
+            return Response::json(['error' => 'Import analysis is not available'], 501);
+        }
+
+        $fileContent = $this->extractFileContent($request, 'import_file')
+            ?? $this->extractJsonContent($request);
+
+        if ($fileContent === null) {
+            return Response::json(['error' => 'File content is required'], 400);
+        }
+
+        $data = json_decode($fileContent, true);
+
+        if (!is_array($data)) {
+            return Response::json(['error' => 'Invalid JSON content'], 422);
+        }
+
+        /** @var array<string, mixed> $data */
+        $analysis = $this->importAnalyzer->analyze($data);
+
+        return Response::json($analysis->toArray());
+    }
+
+    public function executeWithOptions(ServerRequestInterface $request): Response
+    {
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.tools.import');
+        $this->requireStepUp($request);
+
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
+        /** @var mixed $rawPolicyValue */
+        $rawPolicyValue = $body['duplicate_policy'] ?? null;
+        $policyValue = is_string($rawPolicyValue) ? $rawPolicyValue : 'skip';
+        $policy = DuplicateResolutionPolicy::tryFrom($policyValue) ?? DuplicateResolutionPolicy::Skip;
+
+        $fileContent = $this->extractFileContent($request, 'import_file')
+            ?? $this->extractJsonContent($request);
+
+        if ($fileContent === null) {
+            return Response::json(['error' => 'File content is required'], 400);
+        }
+
+        if ($this->mediaBundleImporter !== null) {
+            try {
+                $report = $this->mediaBundleImporter->import($fileContent, $policy, dryRun: false);
+
+                return Response::json([
+                    'status' => 'imported',
+                    'result' => $report->toArray(),
+                ]);
+            } catch (CmsException $e) {
+                return Response::json(['error' => $e->getMessage()], 422);
+            }
+        }
+
+        // Fallback to standard JSON import
+        try {
+            $result = $this->importExport->importBundle($fileContent, dryRun: false);
+
+            return Response::json([
+                'status' => 'imported',
+                'result' => $result->toArray(),
+            ]);
+        } catch (CmsException $e) {
+            return Response::json(['error' => $e->getMessage()], 422);
+        }
+    }
+
     /**
-     * @param array{content: array<string, mixed>, translation: array<string, mixed>, blocks: list<array<string, mixed>>} $item
+     * @param array{
+     *     content: array{content_type?: string, author_id?: string},
+     *     translation: array{
+     *         locale?: string,
+     *         title?: string,
+     *         slug?: string,
+     *         path?: string,
+     *         body?: string,
+     *         excerpt?: string|null,
+     *         meta_title?: string|null,
+     *         meta_description?: string|null,
+     *     },
+     *     blocks: list<array<string, mixed>>,
+     * } $item
      */
     private function persistMarkdownItem(array $item): void
     {
+        $c = $item['content'];
+        $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $contentType = ContentType::tryFrom($item['content']['content_type'] ?? 'page') ?? ContentType::Page;
+        $contentType = ContentType::tryFrom($c['content_type'] ?? 'page') ?? ContentType::Page;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: $item['content']['author_id'] ?? 'system',
+            authorId: $c['author_id'] ?? 'system',
         );
 
         $this->contentRepository->save($content);
 
+        $slugSegmentFallback = $t['slug'] ?? 'untitled';
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: $item['translation']['locale'] ?? 'en',
-            title: $item['translation']['title'] ?? '',
-            slugSegment: $item['translation']['slug'] ?? 'untitled',
-            path: $item['translation']['path'] ?? $item['translation']['slug'] ?? 'untitled',
-            body: $item['translation']['body'] ?? '',
-            excerpt: $item['translation']['excerpt'] ?? null,
-            metaTitle: $item['translation']['meta_title'] ?? null,
-            metaDescription: $item['translation']['meta_description'] ?? null,
+            locale: $t['locale'] ?? 'en',
+            title: $t['title'] ?? '',
+            slugSegment: $slugSegmentFallback,
+            path: $t['path'] ?? $slugSegmentFallback,
+            body: $t['body'] ?? '',
+            excerpt: $t['excerpt'] ?? null,
+            metaTitle: $t['meta_title'] ?? null,
+            metaDescription: $t['meta_description'] ?? null,
         );
 
         $this->translationRepository->save($translation);
     }
 
     /**
-     * @param array{content: array<string, mixed>, translation: array<string, mixed>} $item
+     * @param array{
+     *     content: array{content_type?: string, author_id?: string},
+     *     translation: array{
+     *         locale?: string,
+     *         title?: string,
+     *         slug?: string,
+     *         path?: string,
+     *         body?: string,
+     *         excerpt?: string|null,
+     *         meta_title?: string|null,
+     *         meta_description?: string|null,
+     *     },
+     * } $item
      */
     private function persistCsvItem(array $item): void
     {
+        $c = $item['content'];
+        $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $contentType = ContentType::tryFrom($item['content']['content_type'] ?? 'page') ?? ContentType::Page;
+        $contentType = ContentType::tryFrom($c['content_type'] ?? 'page') ?? ContentType::Page;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: $item['content']['author_id'] ?? 'system',
+            authorId: $c['author_id'] ?? 'system',
         );
 
         $this->contentRepository->save($content);
 
+        $slugFallback = $t['slug'] ?? 'untitled';
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: $item['translation']['locale'] ?? 'en',
-            title: $item['translation']['title'] ?? '',
-            slugSegment: $item['translation']['slug'] ?? 'untitled',
-            path: $item['translation']['path'] ?? $item['translation']['slug'] ?? 'untitled',
-            body: $item['translation']['body'] ?? '',
-            excerpt: $item['translation']['excerpt'] ?? null,
-            metaTitle: $item['translation']['meta_title'] ?? null,
-            metaDescription: $item['translation']['meta_description'] ?? null,
+            locale: $t['locale'] ?? 'en',
+            title: $t['title'] ?? '',
+            slugSegment: $slugFallback,
+            path: $t['path'] ?? $slugFallback,
+            body: $t['body'] ?? '',
+            excerpt: $t['excerpt'] ?? null,
+            metaTitle: $t['meta_title'] ?? null,
+            metaDescription: $t['meta_description'] ?? null,
         );
 
         $this->translationRepository->save($translation);
@@ -285,6 +404,7 @@ final readonly class ImportController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $content */
         $content = $body['json_content'] ?? null;
 
         if (is_string($content) && $content !== '') {
@@ -302,6 +422,7 @@ final readonly class ImportController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $content */
         $content = $body[$fieldName] ?? null;
 
         if (is_string($content) && $content !== '') {

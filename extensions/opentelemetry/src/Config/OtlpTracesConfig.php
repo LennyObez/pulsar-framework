@@ -6,13 +6,13 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function is_array;
-use function is_bool;
-use function is_string;
 
 /**
  * Traces-specific OTLP configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OtlpTracesConfig
@@ -31,28 +31,23 @@ final readonly class OtlpTracesConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     endpoint?: string,
+     *     attribute_allowlist?: array<string, list<string>>,
+     *     db_statement_export?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawEnabled = $data['enabled'] ?? true;
-        $rawEndpoint = $data['endpoint'] ?? '';
-        $rawAllowlist = $data['attribute_allowlist'] ?? [];
-        $rawDbStatement = $data['db_statement_export'] ?? 'none';
-
-        $dbStatementExport = is_string($rawDbStatement)
-            ? (DbStatementExport::tryFrom($rawDbStatement) ?? DbStatementExport::None)
-            : DbStatementExport::None;
-
-        /** @var array<string, list<string>> $allowlist */
-        $allowlist = is_array($rawAllowlist) ? $rawAllowlist : [];
+        $allowlist = $data['attribute_allowlist'] ?? null;
 
         return new self(
-            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
-            endpoint: is_string($rawEndpoint) ? $rawEndpoint : '',
-            attributeAllowlist: $allowlist,
-            dbStatementExport: $dbStatementExport,
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            endpoint: Coerce::string($data['endpoint'] ?? null),
+            attributeAllowlist: is_array($allowlist) ? $allowlist : [],
+            dbStatementExport: DbStatementExport::tryFrom(Coerce::string($data['db_statement_export'] ?? null)) ?? DbStatementExport::None,
         );
     }
 }

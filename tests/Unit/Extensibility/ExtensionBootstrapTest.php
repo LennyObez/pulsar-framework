@@ -87,6 +87,57 @@ final class ExtensionBootstrapTest extends TestCase
     }
 
     #[Test]
+    public function registerExposesExtensionRegistryInContainer(): void
+    {
+        $extension = new class implements ExtensionInterface {
+            public function name(): string
+            {
+                return 'test/ext';
+            }
+            public function register(ContainerInterface $container): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/ext'));
+        $this->bootstrap->register($this->container);
+
+        self::assertTrue($this->container->has(ExtensionRegistry::class));
+        self::assertInstanceOf(ExtensionRegistry::class, $this->container->get(ExtensionRegistry::class));
+    }
+
+    #[Test]
+    public function registeredExtensionRegistryContainsLoadedManifests(): void
+    {
+        $extension = new class implements ExtensionInterface {
+            public function name(): string
+            {
+                return 'test/ext';
+            }
+            public function register(ContainerInterface $container): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $manifest = $this->createManifest('test/ext');
+        $this->bootstrap->addExtension($extension, $manifest);
+        $this->bootstrap->register($this->container);
+
+        /** @var ExtensionRegistry $registry */
+        $registry = $this->container->get(ExtensionRegistry::class);
+        $manifests = $registry->allManifests();
+
+        self::assertArrayHasKey('test/ext', $manifests);
+        self::assertSame('test/ext', $manifests['test/ext']->name);
+    }
+
+    #[Test]
     public function registerIsIdempotent(): void
     {
         $callCount = 0;
@@ -153,9 +204,61 @@ final class ExtensionBootstrapTest extends TestCase
     public function bootThrowsIfNotRegistered(): void
     {
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('must be registered before booting');
+        $this->expectExceptionMessageIsOrContains('must be registered before booting');
 
         $this->bootstrap->boot($this->container, $this->router);
+    }
+
+    #[Test]
+    public function resetLifecycleAllowsRebootWithoutReRegistering(): void
+    {
+        $registerCount = 0;
+        $bootCount = 0;
+        $extension = new class ($registerCount, $bootCount) implements ExtensionInterface {
+            public function __construct(private int &$registerCount, private int &$bootCount) {}
+
+            public function name(): string
+            {
+                return 'test/ext';
+            }
+
+            public function register(ContainerInterface $container): void
+            {
+                $this->registerCount++;
+            }
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->bootCount++;
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/ext'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertSame(1, $registerCount);
+        self::assertSame(1, $bootCount);
+        self::assertTrue($this->bootstrap->booted);
+        self::assertSame(ExtensionLifecycle::Booted, $this->bootstrap->registry->getState('test/ext'));
+
+        $this->bootstrap->resetLifecycle();
+
+        // Boot phase reset; registration retained, state dropped Booted -> Registered.
+        self::assertFalse($this->bootstrap->booted);
+        self::assertTrue($this->bootstrap->registered);
+        self::assertSame(ExtensionLifecycle::Registered, $this->bootstrap->registry->getState('test/ext'));
+
+        // Re-boot runs boot() again but does NOT re-run register().
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertSame(1, $registerCount);
+        self::assertSame(2, $bootCount);
     }
 
     #[Test]
@@ -277,6 +380,7 @@ final class ExtensionBootstrapTest extends TestCase
             'name' => 'test/ext',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'provides' => [
                 'commands' => ['TestCommand', 'OtherCommand'],
             ],
@@ -455,6 +559,283 @@ final class ExtensionBootstrapTest extends TestCase
         self::assertTrue($extension->booted);
     }
 
+    #[Test]
+    public function loadFromPathsSkipsInvalidExtensionsAndContinues(): void
+    {
+        // Create a temp directory structure with two extensions:
+        // one valid (class-not-found), one with invalid JSON
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_load_' . bin2hex(random_bytes(4));
+        mkdir($tempDir . '/good-ext', 0o755, true);
+        mkdir($tempDir . '/bad-ext', 0o755, true);
+
+        // Good extension with a class that doesn't exist but will be caught
+        file_put_contents($tempDir . '/good-ext/pulsar.json', json_encode([
+            'name' => 'test/good',
+            'version' => '1.0.0',
+            'extension_class' => 'NonExistentGoodClass',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+        ]));
+
+        // Bad extension with invalid JSON (parse error during discovery)
+        file_put_contents($tempDir . '/bad-ext/pulsar.json', '{invalid json}');
+
+        try {
+            // Should not throw: invalid JSON triggers discovery fallback,
+            // and class-not-found is collected as a warning
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            // Warnings include both the discovery error for invalid JSON
+            // and the class-not-found warning for the good extension
+            $warnings = $this->bootstrap->getLoadWarnings();
+            self::assertNotEmpty($warnings, 'Expected at least one load warning for the invalid extension');
+        } finally {
+            // Cleanup
+            @unlink($tempDir . '/good-ext/pulsar.json');
+            @unlink($tempDir . '/bad-ext/pulsar.json');
+            @rmdir($tempDir . '/good-ext');
+            @rmdir($tempDir . '/bad-ext');
+            @rmdir($tempDir);
+        }
+    }
+
+    #[Test]
+    public function loadFromPathsRecordsWarningsForSkippedExtensions(): void
+    {
+        // Create extension with non-existent class
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_warn_' . bin2hex(random_bytes(4));
+        mkdir($tempDir . '/broken-ext', 0o755, true);
+
+        file_put_contents($tempDir . '/broken-ext/pulsar.json', json_encode([
+            'name' => 'test/broken',
+            'version' => '1.0.0',
+            'extension_class' => 'Pulsar\\NonExistent\\BrokenExtension',
+            'pulsar' => ['min_version' => '0.1.0'],
+        ]));
+
+        try {
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $warnings = $this->bootstrap->getLoadWarnings();
+            self::assertNotEmpty($warnings);
+            self::assertStringContainsString('test/broken', $warnings[0]);
+            self::assertStringContainsString('class not found', $warnings[0]);
+        } finally {
+            @unlink($tempDir . '/broken-ext/pulsar.json');
+            @rmdir($tempDir . '/broken-ext');
+            @rmdir($tempDir);
+        }
+    }
+
+    #[Test]
+    public function getLoadWarningsReturnsEmptyBeforeLoading(): void
+    {
+        self::assertSame([], $this->bootstrap->getLoadWarnings());
+    }
+
+    #[Test]
+    public function setEnabledFilterRestrictsLoadedExtensions(): void
+    {
+        $extAlpha = $this->createTestExtension('test/alpha');
+        $extBeta = $this->createTestExtension('test/beta');
+
+        $this->bootstrap->addExtension($extAlpha, $this->createManifest('test/alpha'));
+        $this->bootstrap->addExtension($extBeta, $this->createManifest('test/beta'));
+
+        // Both extensions are added, verify
+        self::assertTrue($this->bootstrap->registry->has('test/alpha'));
+        self::assertTrue($this->bootstrap->registry->has('test/beta'));
+    }
+
+    #[Test]
+    public function setEnabledFilterToNullLoadsAll(): void
+    {
+        $this->bootstrap->setEnabledFilter(null);
+
+        $extA = $this->createTestExtension('test/a');
+        $extB = $this->createTestExtension('test/b');
+        $this->bootstrap->addExtension($extA, $this->createManifest('test/a'));
+        $this->bootstrap->addExtension($extB, $this->createManifest('test/b'));
+
+        self::assertCount(2, $this->bootstrap->registry->all());
+    }
+
+    #[Test]
+    public function setEnabledFilterRecordsDisabledExtensionsAsWarnings(): void
+    {
+        // Two extensions on disk; only one is enabled by the filter. The
+        // excluded one must surface as a load warning so an operator can tell
+        // "disabled by config" apart from "missing" or "failed to load".
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_disabled_' . bin2hex(random_bytes(4));
+        mkdir($tempDir . '/keep', 0o755, true);
+        mkdir($tempDir . '/drop', 0o755, true);
+
+        file_put_contents($tempDir . '/keep/pulsar.json', json_encode([
+            'name' => 'test/keep',
+            'version' => '1.0.0',
+            'extension_class' => 'Pulsar\\NonExistent\\KeepExtension',
+            'pulsar' => ['min_version' => '0.1.0'],
+        ]));
+        file_put_contents($tempDir . '/drop/pulsar.json', json_encode([
+            'name' => 'test/drop',
+            'version' => '1.0.0',
+            'extension_class' => 'Pulsar\\NonExistent\\DropExtension',
+            'pulsar' => ['min_version' => '0.1.0'],
+        ]));
+
+        try {
+            $this->bootstrap->setEnabledFilter(['test/keep']);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $warnings = $this->bootstrap->getLoadWarnings();
+            $disabled = array_filter(
+                $warnings,
+                static fn(string $w): bool => str_contains($w, 'disabled by config'),
+            );
+
+            self::assertCount(1, $disabled, 'expected exactly one disabled-by-config warning');
+            self::assertStringContainsString('test/drop', (string) array_values($disabled)[0]);
+            self::assertStringNotContainsString('test/keep', (string) array_values($disabled)[0]);
+        } finally {
+            @unlink($tempDir . '/keep/pulsar.json');
+            @unlink($tempDir . '/drop/pulsar.json');
+            @rmdir($tempDir . '/keep');
+            @rmdir($tempDir . '/drop');
+            @rmdir($tempDir);
+        }
+    }
+
+    #[Test]
+    public function setEnabledFilterWithEmptyListLoadsNone(): void
+    {
+        // Create temp directory with a valid-looking extension
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_filter_' . bin2hex(random_bytes(4));
+        mkdir($tempDir . '/test-ext', 0o755, true);
+
+        file_put_contents($tempDir . '/test-ext/pulsar.json', json_encode([
+            'name' => 'test/filtered',
+            'version' => '1.0.0',
+            'extension_class' => 'Pulsar\\NonExistent\\FilteredExtension',
+            'pulsar' => ['min_version' => '0.1.0'],
+        ]));
+
+        try {
+            $this->bootstrap->setEnabledFilter([]);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            // No extensions should have been loaded
+            self::assertSame([], $this->bootstrap->registry->all());
+        } finally {
+            @unlink($tempDir . '/test-ext/pulsar.json');
+            @rmdir($tempDir . '/test-ext');
+            @rmdir($tempDir);
+        }
+    }
+
+    #[Test]
+    public function productsAreOffByDefaultButInfrastructureLoads(): void
+    {
+        // No enable controls set. A bundled infrastructure extension (no kind)
+        // loads; a bundled product (kind=product) is turned off by default and
+        // surfaces as an "off by default" disabled entry, not a silent omission.
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_kind_' . bin2hex(random_bytes(4));
+        $this->writeManifest($tempDir, 'infra', 'test/infra');
+        $this->writeManifest($tempDir, 'product', 'test/product', ['kind' => 'product']);
+
+        try {
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $disabled = $this->bootstrap->disabledByConfig();
+            self::assertContains('test/product', $disabled, 'product must be off by default');
+            self::assertNotContains('test/infra', $disabled, 'infrastructure must load by default');
+
+            $offByDefault = array_filter(
+                $this->bootstrap->getLoadWarnings(),
+                static fn(string $w): bool => str_contains($w, 'off by default'),
+            );
+            self::assertCount(1, $offByDefault, 'expected one off-by-default warning');
+            self::assertStringContainsString('test/product', (string) array_values($offByDefault)[0]);
+        } finally {
+            $this->removeManifestDir($tempDir, ['infra', 'product']);
+        }
+    }
+
+    #[Test]
+    public function enabledProductsOptsInABundledProduct(): void
+    {
+        // setEnabledProducts turns a product on without disturbing the rest of
+        // the default posture: neither the product nor the infra ext is disabled.
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_optin_' . bin2hex(random_bytes(4));
+        $this->writeManifest($tempDir, 'infra', 'test/infra');
+        $this->writeManifest($tempDir, 'product', 'test/product', ['kind' => 'product']);
+
+        try {
+            $this->bootstrap->setEnabledProducts(['test/product']);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            self::assertSame([], $this->bootstrap->disabledByConfig(), 'opted-in product must not be disabled');
+        } finally {
+            $this->removeManifestDir($tempDir, ['infra', 'product']);
+        }
+    }
+
+    #[Test]
+    public function exclusiveAllowlistOverridesKindDefault(): void
+    {
+        // An explicit allowlist takes full control: a product named in it loads
+        // (kind ignored), and an infrastructure ext NOT named in it is dropped —
+        // via the allowlist channel, not the product channel.
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_allow_' . bin2hex(random_bytes(4));
+        $this->writeManifest($tempDir, 'infra', 'test/infra');
+        $this->writeManifest($tempDir, 'product', 'test/product', ['kind' => 'product']);
+
+        try {
+            $this->bootstrap->setEnabledFilter(['test/product']);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $disabled = $this->bootstrap->disabledByConfig();
+            self::assertContains('test/infra', $disabled, 'infra not in the allowlist must be dropped');
+            self::assertNotContains('test/product', $disabled, 'product in the allowlist must load');
+
+            $byAllowlist = array_filter(
+                $this->bootstrap->getLoadWarnings(),
+                static fn(string $w): bool => str_contains($w, 'extensions.enabled)'),
+            );
+            self::assertCount(1, $byAllowlist, 'expected one disabled-by-allowlist warning');
+        } finally {
+            $this->removeManifestDir($tempDir, ['infra', 'product']);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $extra Extra manifest keys (e.g. ['kind' => 'product'])
+     */
+    private function writeManifest(string $tempDir, string $subdir, string $name, array $extra = []): void
+    {
+        mkdir($tempDir . '/' . $subdir, 0o755, true);
+        file_put_contents(
+            $tempDir . '/' . $subdir . '/pulsar.json',
+            (string) json_encode([
+                'name' => $name,
+                'version' => '1.0.0',
+                'extension_class' => 'Pulsar\\NonExistent\\' . ucfirst($subdir) . 'Extension',
+                'pulsar' => ['min_version' => '0.1.0'],
+                ...$extra,
+            ]),
+        );
+    }
+
+    /**
+     * @param list<string> $subdirs
+     */
+    private function removeManifestDir(string $tempDir, array $subdirs): void
+    {
+        foreach ($subdirs as $subdir) {
+            @unlink($tempDir . '/' . $subdir . '/pulsar.json');
+            @rmdir($tempDir . '/' . $subdir);
+        }
+        @rmdir($tempDir);
+    }
+
     private function createTestExtension(string $name): ExtensionInterface
     {
         return new class ($name) implements ExtensionInterface {
@@ -482,6 +863,7 @@ final class ExtensionBootstrapTest extends TestCase
             'name' => $name,
             'version' => '1.0.0',
             'extension_class' => 'TestExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 }

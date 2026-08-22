@@ -16,8 +16,11 @@ use function count;
  * Optional widget for the pulsar/admin dashboard.
  *
  * Shows summary analytics: visitors today, top page, active sites count.
+ *
+ * @psalm-api Resolved by the admin DashboardWidget registry, not
+ *            instantiated by name.
  */
-#[Internal(reason: 'Admin widget — optional integration')]
+#[Internal(reason: 'Admin widget; optional integration')]
 final readonly class AnalyticsAdminWidget
 {
     public function __construct(

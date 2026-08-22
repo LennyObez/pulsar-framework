@@ -7,11 +7,16 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\EditorialReview;
 use Pulsar\Extension\Cms\Workflow\ReviewStatus;
 
-#[Internal(reason: 'Raw-DB repository — use EditorialWorkflowServiceInterface for public API')]
+/**
+ * @psalm-api Resolved from the DI container by EditorialWorkflowService; not
+ *            instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use EditorialWorkflowServiceInterface for public API')]
 final readonly class DbEditorialReviewRepository
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -37,21 +42,14 @@ final readonly class DbEditorialReviewRepository
         ORDER BY created_at DESC
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_editorial_reviews (
-            id, content_id, locale, requested_by, reviewer_id,
-            status, comment, decision_reason, created_at, decided_at
-        ) VALUES (
-            :id, :content_id, :locale, :requested_by, :reviewer_id,
-            :status, :comment, :decision_reason, :created_at, :decided_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            reviewer_id = EXCLUDED.reviewer_id,
-            status = EXCLUDED.status,
-            comment = EXCLUDED.comment,
-            decision_reason = EXCLUDED.decision_reason,
-            decided_at = EXCLUDED.decided_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'content_id', 'locale', 'requested_by', 'reviewer_id',
+        'status', 'comment', 'decision_reason', 'created_at', 'decided_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'reviewer_id', 'status', 'comment', 'decision_reason', 'decided_at',
+    ];
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -99,7 +97,15 @@ final readonly class DbEditorialReviewRepository
 
     public function save(EditorialReview $review): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_editorial_reviews',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $review->id,
             'content_id' => $review->contentId,
             'locale' => $review->locale,

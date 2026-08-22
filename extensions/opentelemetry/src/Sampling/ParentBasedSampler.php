@@ -20,6 +20,7 @@ use Pulsar\Observability\Tracing\TraceContext;
  *
  * Root spans created via TraceContext::create() default to traceFlags=0x01
  * (sampled), ensuring they pass through shouldSample().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ParentBasedSampler implements SamplerInterface

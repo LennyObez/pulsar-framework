@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Thrown when a cache lock cannot be acquired.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LockAcquisitionException extends RuntimeException implements

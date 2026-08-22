@@ -10,6 +10,7 @@ use Pulsar\Observability\Tracing\TraceContext;
 
 /**
  * Sampler that never records traces.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NeverSampler implements SamplerInterface

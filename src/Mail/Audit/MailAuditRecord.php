@@ -9,8 +9,9 @@ use Pulsar\Api\Api;
 /**
  * Immutable audit record for a mail message.
  *
- * Contains only metadata and HMAC hashes — never raw content.
+ * Contains only metadata and HMAC hashes: never raw content.
  * Recipient identity is pseudonymized via HMAC.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MailAuditRecord

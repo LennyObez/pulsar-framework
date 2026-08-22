@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Password input field (never pre-populated for security).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PasswordField extends AbstractField

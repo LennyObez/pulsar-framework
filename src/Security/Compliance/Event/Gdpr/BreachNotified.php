@@ -10,12 +10,11 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records that a supervisory authority has been notified of a breach.
  *
  * Supports controls for GDPR Article 33 notification to supervisory authority within 72 hours.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]
@@ -59,20 +58,33 @@ final readonly class BreachNotified extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     authority?: string,
+     *     notified_at?: string,
+     *     breach_event_id?: string,
+     *     response_deadline?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+        $notifiedAt = $data['notified_at'] ?? null;
+        $responseDeadline = $data['response_deadline'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            authority: is_string($data['authority'] ?? null) ? $data['authority'] : '',
-            notifiedAt: is_string($data['notified_at'] ?? null) ? new DateTimeImmutable($data['notified_at']) : new DateTimeImmutable(),
-            breachEventId: is_string($data['breach_event_id'] ?? null) ? $data['breach_event_id'] : '',
-            responseDeadline: is_string($data['response_deadline'] ?? null) ? new DateTimeImmutable($data['response_deadline']) : new DateTimeImmutable(),
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            authority: $data['authority'] ?? '',
+            notifiedAt: $notifiedAt !== null ? new DateTimeImmutable($notifiedAt) : new DateTimeImmutable(),
+            breachEventId: $data['breach_event_id'] ?? '',
+            responseDeadline: $responseDeadline !== null ? new DateTimeImmutable($responseDeadline) : new DateTimeImmutable(),
         );
     }
 }

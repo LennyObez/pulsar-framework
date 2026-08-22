@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
-use function is_string;
+use function is_array;
 
 /**
  * Top-level analytics extension configuration DTO.
  *
  * Loaded from config/analytics.php during the preBoot phase.
  * All values have sensible defaults for typical deployments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnalyticsConfig
@@ -37,25 +39,35 @@ final readonly class AnalyticsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     collection?: array{driver?: string},
+     *     trusted_proxies?: list<string>,
+     *     privacy?: array<string, mixed>,
+     *     tracking?: array<string, mixed>,
+     *     retention?: array<string, mixed>,
+     *     rate_limit?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $collection = (array) ($data['collection'] ?? []);
-
-        $proxies = (array) ($data['trusted_proxies'] ?? []);
+        $collection = $data['collection'] ?? null;
+        if (!is_array($collection)) {
+            $collection = [];
+        }
+        $privacy = $data['privacy'] ?? null;
+        $tracking = $data['tracking'] ?? null;
+        $retention = $data['retention'] ?? null;
+        $rateLimit = $data['rate_limit'] ?? null;
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            collectionDriver: (string) ($collection['driver'] ?? 'direct'),
-            trustedProxies: array_values(array_filter(
-                $proxies,
-                static fn(mixed $v): bool => is_string($v) && $v !== '',
-            )),
-            privacy: PrivacyConfig::fromArray((array) ($data['privacy'] ?? [])),
-            tracking: TrackingConfig::fromArray((array) ($data['tracking'] ?? [])),
-            retention: RetentionConfig::fromArray((array) ($data['retention'] ?? [])),
-            rateLimit: RateLimitConfig::fromArray((array) ($data['rate_limit'] ?? [])),
+            collectionDriver: Coerce::string($collection['driver'] ?? null, 'direct'),
+            trustedProxies: Coerce::stringListFromInput($data['trusted_proxies'] ?? null),
+            privacy: PrivacyConfig::fromArray(is_array($privacy) ? $privacy : []),
+            tracking: TrackingConfig::fromArray(is_array($tracking) ? $tracking : []),
+            retention: RetentionConfig::fromArray(is_array($retention) ? $retention : []),
+            rateLimit: RateLimitConfig::fromArray(is_array($rateLimit) ? $rateLimit : []),
         );
     }
 }

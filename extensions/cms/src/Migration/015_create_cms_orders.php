@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_orders (
@@ -54,26 +55,21 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_order_tenant_number
-                ON cms_orders (tenant_key, order_number)
-            SQL);
+        $indexes->ensure(
+            'cms_orders',
+            'uq_order_tenant_number',
+            ['tenant_key', 'order_number'],
+            unique: true,
+        );
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_order_customer ON cms_orders (customer_id)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_order_customer ON cms_orders (customer_id)
-                    WHERE customer_id IS NOT NULL
-                SQL);
-        }
+        $indexes->ensure(
+            'cms_orders',
+            'idx_order_customer',
+            ['customer_id'],
+            where: 'customer_id IS NOT NULL',
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_order_status_tenant ON cms_orders (status, tenant_id)
-            SQL);
+        $indexes->ensure('cms_orders', 'idx_order_status_tenant', ['status', 'tenant_id']);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_order_items (
@@ -95,9 +91,7 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_order_item_order ON cms_order_items (order_id)
-            SQL);
+        $indexes->ensure('cms_order_items', 'idx_order_item_order', ['order_id']);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_invoices (
@@ -119,14 +113,14 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_invoice_tenant_number
-                ON cms_invoices (tenant_key, invoice_number)
-            SQL);
+        $indexes->ensure(
+            'cms_invoices',
+            'uq_invoice_tenant_number',
+            ['tenant_key', 'invoice_number'],
+            unique: true,
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_invoice_order ON cms_invoices (order_id)
-            SQL);
+        $indexes->ensure('cms_invoices', 'idx_invoice_order', ['order_id']);
     }
 
     public function down(ConnectionInterface $connection): void

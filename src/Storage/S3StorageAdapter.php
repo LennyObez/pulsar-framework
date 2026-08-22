@@ -15,9 +15,11 @@ use function curl_init;
 use function curl_setopt_array;
 use function hash;
 use function is_string;
+use function libxml_use_internal_errors;
 use function ltrim;
 use function simplexml_load_string;
 use function sprintf;
+use function str_replace;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -58,11 +60,11 @@ final class S3StorageAdapter implements StorageAdapterInterface
 
         if ($metadata !== null) {
             if ($metadata->contentType !== null) {
-                $headers['Content-Type'] = $metadata->contentType;
+                $headers['Content-Type'] = $this->sanitizeHeaderValue($metadata->contentType);
             }
 
             if ($metadata->cacheControl !== null) {
-                $headers['Cache-Control'] = $metadata->cacheControl;
+                $headers['Cache-Control'] = $this->sanitizeHeaderValue($metadata->cacheControl);
             }
         }
 
@@ -200,11 +202,17 @@ final class S3StorageAdapter implements StorageAdapterInterface
 
         /** @phpstan-ignore argument.type (cURL option array types are overly strict in PHPStan stubs) */
         curl_setopt_array($ch, $options);
+
+        // No curl_close(): it has been a no-op since PHP 8.0 and is formally
+        // deprecated on PHP 8.5 (the framework's declared target), so calling it
+        // emits E_DEPRECATED on every request -- which lands in the response body
+        // under display_errors=On. The CurlHandle frees itself when $ch goes out
+        // of scope, exactly as CurlMailHttpClient already relies on. The
+        // try/finally existed only to close the handle, so it goes with it.
         $responseBody = curl_exec($ch);
 
         if (curl_errno($ch) !== 0) {
-            $error = curl_error($ch);
-            throw StorageException::connectionFailed($error);
+            throw StorageException::connectionFailed(curl_error($ch));
         }
 
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -213,6 +221,15 @@ final class S3StorageAdapter implements StorageAdapterInterface
             'status' => $statusCode,
             'body' => is_string($responseBody) ? $responseBody : '',
         ];
+    }
+
+    /**
+     * Strip CR/LF from user-supplied header values to prevent HTTP header
+     * injection (CRLF injection) into the outbound S3 request.
+     */
+    private function sanitizeHeaderValue(string $value): string
+    {
+        return str_replace(["\r", "\n"], '', $value);
     }
 
     private function buildObjectKey(string $key): string
@@ -262,7 +279,9 @@ final class S3StorageAdapter implements StorageAdapterInterface
      */
     private function parseListResponse(string $xml): array
     {
-        $doc = @simplexml_load_string($xml);
+        $prevErrors = libxml_use_internal_errors(true);
+        $doc = @simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NONET);
+        libxml_use_internal_errors($prevErrors);
 
         if ($doc === false) {
             return [];

@@ -19,6 +19,7 @@ use function strlen;
  * Redacts secrets from REPL output using multiple strategies:
  * known secret values, DSN credentials, #[Sensitive] properties,
  * and the framework SensitiveDataScrubber for array keys.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SecretRedactor
@@ -79,13 +80,13 @@ final class SecretRedactor
             $name = $property->getName();
 
             if ($this->hasSensitiveAttribute($property)) {
-                $result[$name] = self::REDACTED;
+                $result = [...$result, $name => self::REDACTED];
             } else {
-                $result[$name] = $property->isInitialized($obj) ? $property->getValue($obj) : '<uninitialized>';
+                $result = [...$result, $name => $property->isInitialized($obj) ? $property->getValue($obj) : '<uninitialized>'];
             }
         }
 
-        $result['__class'] = $obj::class;
+        $result = [...$result, '__class' => $obj::class];
 
         return $result;
     }

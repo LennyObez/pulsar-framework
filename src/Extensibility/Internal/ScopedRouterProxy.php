@@ -39,10 +39,10 @@ final readonly class ScopedRouterProxy implements RouterInterface
     public function __construct(
         private RouterInterface $inner,
         private TrustTier $tier,
-        private string $extensionName,
+        string $extensionName,
         private CapabilityPolicy $policy,
     ) {
-        $this->prefix = '/ext/' . $this->extensionName;
+        $this->prefix = '/ext/' . $extensionName;
     }
 
     #[Override]
@@ -129,6 +129,24 @@ final readonly class ScopedRouterProxy implements RouterInterface
     public function routes(): array
     {
         return $this->inner->routes();
+    }
+
+    #[Override]
+    public function resource(string $name, string $controller, array $middleware = []): self
+    {
+        $this->assertCanRegisterRoute('/' . $name);
+        $this->inner->resource($name, $controller, $middleware);
+
+        return $this;
+    }
+
+    #[Override]
+    public function apiResource(string $name, string $controller, array $middleware = []): self
+    {
+        $this->assertCanRegisterRoute('/' . $name);
+        $this->inner->apiResource($name, $controller, $middleware);
+
+        return $this;
     }
 
     #[Override]

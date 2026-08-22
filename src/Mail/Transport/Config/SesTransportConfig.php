@@ -6,9 +6,8 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
-
-use function is_string;
 
 /**
  * Configuration for the AWS SES mail transport.
@@ -31,10 +30,10 @@ final readonly class SesTransportConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            region: is_string($data['region'] ?? null) ? $data['region'] : 'us-east-1',
-            accessKey: is_string($data['access_key'] ?? null) ? $data['access_key'] : '',
-            secretKey: is_string($data['secret_key'] ?? null) ? $data['secret_key'] : '',
-            endpoint: is_string($data['endpoint'] ?? null) ? $data['endpoint'] : null,
+            region: Coerce::string($data['region'] ?? null, 'us-east-1'),
+            accessKey: Coerce::string($data['access_key'] ?? null),
+            secretKey: Coerce::string($data['secret_key'] ?? null),
+            endpoint: Coerce::nullableString($data['endpoint'] ?? null),
         );
     }
 }

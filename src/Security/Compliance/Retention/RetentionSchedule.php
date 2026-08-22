@@ -19,9 +19,10 @@ use function strtolower;
  * for common regulatory frameworks. Regulation identifiers are normalized
  * (lowercased, hyphens replaced with underscores) so that both 'SOX'
  * and 'sox', or 'PCI-DSS' and 'pci_dss', resolve to the same policy.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionSchedule
+final readonly class RetentionSchedule
 {
     /**
      * @var array<string, RetentionPolicy>
@@ -87,7 +88,7 @@ readonly class RetentionSchedule
                 regulation: 'SOX',
                 retentionPeriodDays: 2555,
                 effectiveDate: $effectiveDate,
-                description: 'SOX Section 802 — 7-year retention for audit work papers and financial records',
+                description: 'SOX Section 802: 7-year retention for audit work papers and financial records',
             ),
             new RetentionPolicy(
                 policyId: 'hipaa-default',
@@ -95,7 +96,7 @@ readonly class RetentionSchedule
                 regulation: 'HIPAA',
                 retentionPeriodDays: 2190,
                 effectiveDate: $effectiveDate,
-                description: 'HIPAA 45 CFR 164.530(j) — 6-year retention for policies and compliance documentation',
+                description: 'HIPAA 45 CFR 164.530(j): 6-year retention for policies and compliance documentation',
             ),
             new RetentionPolicy(
                 policyId: 'pci-dss-default',
@@ -103,7 +104,7 @@ readonly class RetentionSchedule
                 regulation: 'PCI-DSS',
                 retentionPeriodDays: 365,
                 effectiveDate: $effectiveDate,
-                description: 'PCI DSS Requirement 10.7 — 1-year retention for audit trail history',
+                description: 'PCI DSS Requirement 10.7: 1-year retention for audit trail history',
             ),
             new RetentionPolicy(
                 policyId: 'gdpr-default',
@@ -111,7 +112,7 @@ readonly class RetentionSchedule
                 regulation: 'GDPR',
                 retentionPeriodDays: 365,
                 effectiveDate: $effectiveDate,
-                description: 'GDPR Article 5(1)(e) — minimum retention period with storage limitation principle',
+                description: 'GDPR Article 5(1)(e): minimum retention period with storage limitation principle',
             ),
             new RetentionPolicy(
                 policyId: 'dora-default',
@@ -119,7 +120,7 @@ readonly class RetentionSchedule
                 regulation: 'DORA',
                 retentionPeriodDays: 1825,
                 effectiveDate: $effectiveDate,
-                description: 'DORA Article 12 — 5-year retention for ICT-related incident records',
+                description: 'DORA Article 12: 5-year retention for ICT-related incident records',
             ),
             new RetentionPolicy(
                 policyId: 'aml-default',
@@ -127,7 +128,7 @@ readonly class RetentionSchedule
                 regulation: 'AML',
                 retentionPeriodDays: 1825,
                 effectiveDate: $effectiveDate,
-                description: 'AML/KYC 4AMLD Article 40 — 5-year retention for transaction and identity records',
+                description: 'AML/KYC 4AMLD Article 40: 5-year retention for transaction and identity records',
             ),
         ]);
     }

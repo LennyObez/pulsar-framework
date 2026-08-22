@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Locale-specific product content (name, description, slug).
+ *
+ * @psalm-api Domain DTO; instantiated by ProductRepository from
+ *            translations table rows and returned to user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProductTranslation

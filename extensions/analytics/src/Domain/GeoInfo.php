@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Geographic information for a visitor, resolved from IP address.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GeoInfo

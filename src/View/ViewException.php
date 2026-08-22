@@ -7,6 +7,7 @@ namespace Pulsar\View;
 use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
+use Throwable;
 
 use function sprintf;
 
@@ -14,9 +15,10 @@ use function sprintf;
  * Exception thrown by the View module.
  *
  * Uses static factory methods for each failure scenario.
+ * @api
  */
 #[Api(since: '1.0.0')]
-class ViewException extends RuntimeException
+final class ViewException extends RuntimeException
 {
     #[NoDiscard]
     public static function templateNotFound(string $name, string $searchedPaths): self
@@ -29,13 +31,16 @@ class ViewException extends RuntimeException
     }
 
     #[NoDiscard]
-    public static function compilationFailed(string $template, string $reason): self
+    public static function compilationFailed(string $template, string $reason, ?Throwable $previous = null): self
     {
-        return new self(sprintf(
-            'Failed to compile template "%s": %s',
-            $template,
-            $reason,
-        ));
+        return new self(
+            sprintf(
+                'Failed to compile template "%s": %s',
+                $template,
+                $reason,
+            ),
+            previous: $previous,
+        );
     }
 
     #[NoDiscard]
@@ -103,6 +108,29 @@ class ViewException extends RuntimeException
             'Invalid directive @%s: %s',
             $directive,
             $reason,
+        ));
+    }
+
+    #[NoDiscard]
+    public static function sandboxViolation(string $template, string $symbol, string $kind): self
+    {
+        return new self(sprintf(
+            'Sandbox violation in template "%s": %s "%s" is not allowed',
+            $template,
+            $kind,
+            $symbol,
+        ));
+    }
+
+    #[NoDiscard]
+    public static function typedTemplateViolation(string $template, string $variable, string $expected, string $actual): self
+    {
+        return new self(sprintf(
+            'Type mismatch in template "%s": variable "$%s" expected %s, got %s',
+            $template,
+            $variable,
+            $expected,
+            $actual,
         ));
     }
 

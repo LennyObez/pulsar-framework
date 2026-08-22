@@ -12,9 +12,10 @@ use function array_map;
 
 /**
  * Immutable value object representing a role with its associated permissions.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Role
+final readonly class Role
 {
     /**
      * @param list<Permission> $permissions
@@ -38,22 +39,17 @@ readonly class Role
     /**
      * Build a Role from a raw array.
      *
-     * @param array<string, mixed> $data Expected keys: 'permissions' => list<string>
+     * @param array{permissions?: list<string>} $data
      */
     #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
-        /** @var list<string> $permissionNames */
-        $permissionNames = $data['permissions'] ?? [];
-
-        $permissions = array_map(
-            static fn(string $name): Permission => new Permission($name),
-            $permissionNames,
-        );
-
         return new self(
             name: $name,
-            permissions: $permissions,
+            permissions: array_map(
+                static fn(string $name): Permission => new Permission($name),
+                $data['permissions'] ?? [],
+            ),
         );
     }
 }

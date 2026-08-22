@@ -9,6 +9,10 @@ use Pulsar\Api\Api;
 /**
  * Value object representing a complete content type definition
  * with its associated custom fields.
+ *
+ * @psalm-api Public DTO produced by ContentTypeBuilder::build(); registered
+ *            with ContentTypeRegistryInterface.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentTypeDefinition

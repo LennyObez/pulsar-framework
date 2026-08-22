@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for calculating shipping costs and available methods.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ShippingCalculatorInterface

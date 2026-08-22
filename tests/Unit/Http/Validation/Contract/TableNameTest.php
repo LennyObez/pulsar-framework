@@ -97,7 +97,7 @@ final class TableNameTest extends TestCase
     public function exceptionMessageContainsValue(): void
     {
         $this->expectException(InvalidIdentifierException::class);
-        $this->expectExceptionMessage('Invalid table name: "DROP"');
+        $this->expectExceptionMessageIsOrContains('Invalid table name: "DROP"');
 
         new TableName('DROP');
     }

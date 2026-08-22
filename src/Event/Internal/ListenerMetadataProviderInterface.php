@@ -17,9 +17,13 @@ use Pulsar\Api\Internal;
 interface ListenerMetadataProviderInterface
 {
     /**
-     * Get the module IDs of all listeners registered for the given event class.
+     * Get the module IDs of all listeners registered for the given event class
+     * or logical event type.
      *
-     * @param class-string $eventClass
+     * For plain PHP events pass the event class name; for envelopes pass
+     * $envelope->eventType (the logical event identity, e.g. "order.placed").
+     *
+     * @param string $eventClass Event class name or logical event-type string
      * @return list<string>
      */
     public function listenerModuleIdsFor(string $eventClass): array;

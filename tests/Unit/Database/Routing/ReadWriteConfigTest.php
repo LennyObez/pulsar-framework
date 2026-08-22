@@ -50,18 +50,25 @@ final class ReadWriteConfigTest extends TestCase
     }
 
     #[Test]
-    public function constructorSetsProperties(): void
+    public function constructorDefaultsToDisabled(): void
     {
-        $config = new ReadWriteConfig(
-            readHosts: ['replica-a'],
-            writeHost: 'primary',
-            stickyDuration: 3000,
-            enabled: true,
-        );
+        $config = new ReadWriteConfig();
 
-        self::assertSame(['replica-a'], $config->readHosts);
-        self::assertSame('primary', $config->writeHost);
-        self::assertSame(3000, $config->stickyDuration);
+        self::assertSame([], $config->readHosts);
+        self::assertSame('', $config->writeHost);
+        self::assertSame('request', $config->stickyDuration);
+        self::assertFalse($config->enabled);
+    }
+
+    #[Test]
+    public function fromArrayCastsEnabledToBoolean(): void
+    {
+        $config = ReadWriteConfig::fromArray(['enabled' => 1]);
+
         self::assertTrue($config->enabled);
+
+        $config2 = ReadWriteConfig::fromArray(['enabled' => 0]);
+
+        self::assertFalse($config2->enabled);
     }
 }

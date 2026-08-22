@@ -10,12 +10,11 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records a cryptographic key rotation event.
  *
  * Supports controls for PCI-DSS Requirement 3 key management procedures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]
@@ -61,21 +60,33 @@ final readonly class KeyRotated extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     operator_identity?: string,
+     *     key_purpose?: string,
+     *     previous_key_id?: string,
+     *     new_key_id?: string,
+     *     rotation_reason?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            operatorIdentity: is_string($data['operator_identity'] ?? null) ? $data['operator_identity'] : '',
-            keyPurpose: is_string($data['key_purpose'] ?? null) ? $data['key_purpose'] : '',
-            previousKeyId: is_string($data['previous_key_id'] ?? null) ? $data['previous_key_id'] : '',
-            newKeyId: is_string($data['new_key_id'] ?? null) ? $data['new_key_id'] : '',
-            rotationReason: is_string($data['rotation_reason'] ?? null) ? $data['rotation_reason'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            operatorIdentity: $data['operator_identity'] ?? '',
+            keyPurpose: $data['key_purpose'] ?? '',
+            previousKeyId: $data['previous_key_id'] ?? '',
+            newKeyId: $data['new_key_id'] ?? '',
+            rotationReason: $data['rotation_reason'] ?? '',
         );
     }
 }

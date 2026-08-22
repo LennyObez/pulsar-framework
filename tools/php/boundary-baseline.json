@@ -20,6 +20,66 @@
       "file": "src/Api/OpenApi/OpenApiWiring.php",
       "import": "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
       "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/OutputValidatorTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\OutputValidator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/ProtocRunnerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\ProtocRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/ProtocVersionPinnerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\ProtocVersionPinner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/ServiceHandlerGeneratorTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\ServiceHandlerGenerator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Manifest/ManifestCompilerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Manifest\\ManifestCompiler",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Manifest/ManifestCompilerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Server\\ServiceRegistry",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/tests/Unit/Server/Controller/ActivityLogControllerTest.php",
+      "import": "Pulsar\\I18n\\Translator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/tests/Unit/Server/Controller/DeploymentControllerTest.php",
+      "import": "Pulsar\\I18n\\Translator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/tests/Unit/Server/Controller/HealthDashboardControllerTest.php",
+      "import": "Pulsar\\I18n\\Translator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/tests/Unit/Server/Controller/LandingControllerTest.php",
+      "import": "Pulsar\\I18n\\Translator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/admin/tests/Unit/Server/Controller/ActionHistoryControllerTest.php",
+      "import": "Pulsar\\I18n\\Translator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Internal/Diagnostics/SubprocessRunnerAdapter.php",
+      "import": "Pulsar\\Extension\\McpServer\\Internal\\Subprocess\\SubprocessRunner",
+      "rule": "cross_module_internal"
     }
   ]
 }

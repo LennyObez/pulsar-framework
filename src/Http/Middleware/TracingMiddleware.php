@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\RouteContext;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanProcessorInterface;
 use Pulsar\Observability\Tracing\SpanStatus;
@@ -18,6 +19,7 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function is_string;
 use function sprintf;
 
 /**
@@ -26,6 +28,16 @@ use function sprintf;
  * Parses incoming `traceparent` header for distributed trace propagation.
  * Attaches trace context and root span to request attributes. Sets span
  * status from response status code and adds `traceparent` to response.
+ *
+ * Accepting an incoming `traceparent` from anywhere is dangerous — a hostile
+ * client can spoof trace ids into the topology, force `sampled=01` to
+ * bypass our sampling rate (collector memory exhaustion), or attempt
+ * to correlate with internal trace ids leaked elsewhere. The middleware
+ * accepts the inbound header ONLY when the request arrives from a trusted
+ * proxy in the configured chain (`deploy.trusted_proxies`). With no
+ * TrustedProxy wired nothing is trusted: every client gets a fresh root
+ * span (deny-by-default). Deployments wanting distributed-trace
+ * continuity declare their upstream proxies explicitly.
  */
 final readonly class TracingMiddleware implements MiddlewareInterface
 {
@@ -37,6 +49,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         private float $samplingRate = 1.0,
         ?Randomizer $randomizer = null,
         private ?RouteContext $routeContext = null,
+        private ?TrustedProxy $trustedProxy = null,
     ) {
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
@@ -47,12 +60,18 @@ final readonly class TracingMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // Parse incoming traceparent or create new context
+        // Only honour `traceparent` from a trusted upstream.
+        // Untrusted clients get a fresh root span — their inbound
+        // header is silently discarded so trace topology and
+        // sampling decisions stay under our control.
         $parentContext = null;
-        $traceparent = $request->getHeaderLine('traceparent');
 
-        if ($traceparent !== '') {
-            $parentContext = $this->traceContextParser->parse($traceparent);
+        if ($this->shouldHonourInboundTraceparent($request)) {
+            $traceparent = $request->getHeaderLine('traceparent');
+
+            if ($traceparent !== '') {
+                $parentContext = $this->traceContextParser->parse($traceparent);
+            }
         }
 
         // Determine if this request should be sampled
@@ -68,10 +87,15 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
-        // Create root span
-        $spanName = sprintf('HTTP %s %s', $method, $path);
+        // Never seed the span name with the raw path — that
+        // makes the cardinality unbounded for any request that throws
+        // before route matching (parse errors, middleware exceptions
+        // pre-router) since the `finally` block only updates the name
+        // when a routeLabel is available. Start with a placeholder
+        // that the post-route logic always replaces with a bounded
+        // label or 'unmatched'.
         $span = new Span(
-            name: $spanName,
+            name: sprintf('HTTP %s pending', $method),
             context: $context,
             parentSpanId: $parentContext?->spanId,
         );
@@ -97,17 +121,49 @@ final readonly class TracingMiddleware implements MiddlewareInterface
                 $this->traceContextParser->serialize($context),
             );
         } finally {
-            // Update span name with resolved route for bounded cardinality
+            // Always replace the placeholder name with either a
+            // bounded route label or the literal `unmatched` so the
+            // span cardinality stays under control even when the
+            // request threw before route matching.
             $routeLabel = $this->routeContext?->label();
+            $span->name = sprintf(
+                'HTTP %s %s',
+                $request->getMethod(),
+                $routeLabel ?? 'unmatched',
+            );
 
             if ($routeLabel !== null && $routeLabel !== 'unmatched') {
-                $span->name = sprintf('HTTP %s %s', $request->getMethod(), $routeLabel);
                 $span->setAttribute('http.route', $routeLabel);
             }
 
             $span->end();
             $this->collector->onEnd($span);
         }
+    }
+
+    /**
+     * Traceparent is honoured only when the request comes from a
+     * trusted proxy. With no TrustedProxy wired, NOTHING is trusted
+     * (deny-by-default): otherwise any unauthenticated client could force
+     * sampling (`sampled=01` on every request exhausts the collector) or
+     * inject forged trace/span ids into the topology. Deployments that want
+     * distributed-trace continuity declare their upstream in
+     * `deploy.trusted_proxies`; TracingWiring then wires the TrustedProxy
+     * that validates REMOTE_ADDR against that chain.
+     */
+    private function shouldHonourInboundTraceparent(ServerRequestInterface $request): bool
+    {
+        if ($this->trustedProxy === null) {
+            return false;
+        }
+
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+
+        if (!is_string($remoteAddr) || $remoteAddr === '') {
+            return false;
+        }
+
+        return $this->trustedProxy->isTrustedSource($remoteAddr);
     }
 
     /**
@@ -129,9 +185,15 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             return false;
         }
 
-        $random = $this->randomizer->getInt(0, 999);
-
-        $threshold = (int) ($this->samplingRate * 1000.0);
+        // Scale to 1_000_000 so the smallest representable sampling
+        // rate is 1 in a million (1e-6). A narrower range such as
+        // `getInt(0, 999)` would clamp any rate below 1e-3 to a
+        // threshold of 0, silently disabling sampling for legitimate
+        // operator values like `samplingRate = 1e-4` (one in 10K).
+        // This range covers low-volume services up to multi-million-rps
+        // fleets without introducing a 64-bit codepath.
+        $random = $this->randomizer->getInt(0, 999_999);
+        $threshold = (int) ($this->samplingRate * 1_000_000.0);
 
         return $random < $threshold;
     }

@@ -1,0 +1,57 @@
+# Semgrep project configuration for the Pulsar framework.
+#
+# This file customises Semgrep's rule application for the codebase.
+# Rules excluded here are either false positives that cannot be
+# suppressed safely at the call site, or patterns that are legitimate
+# in specific contexts (e.g. test fixtures).
+#
+# Run locally:
+#   semgrep --config=.semgrep.yml
+#
+# Any local Semgrep invocation honours this file. No CI job is among them:
+# nothing under `.github/` runs Semgrep.
+#
+# Pulsar-specific advisory rules live in `tools/security/semgrep-pulsar-rules.yml`
+# and are wired up via the `composer security:lint` script.
+# Run together:
+#   semgrep --config=.semgrep.yml --config=tools/security/semgrep-pulsar-rules.yml
+#
+# Every Pulsar rule is severity WARNING, so nothing here gates a merge. A
+# companion `security:lint:strict` script used to pass `--severity=ERROR --error`;
+# because no rule was ever ERROR, it selected an empty rule set and exited 0 on
+# every run, which read as a passing security gate. It has been deleted rather than
+# repaired. ADR-0006's weak-algorithm clause is enforced instead by
+# `Pulsar\PHPStan\Rules\ForbidBrokenHashRule` under `composer phpstan`.
+#
+# The ASVS 10.1.1 malicious-code gate is likewise not a Semgrep rule: its PHP
+# frontend cannot parse four fifths of `src/` (readonly classes, named arguments
+# in attributes), and a parse failure skips the file silently. See
+# `tools/security/assert-no-malicious-code.php`.
+
+# Paths completely excluded from Semgrep scanning.
+# Vendor code is scanned by the supply-chain audit job separately.
+paths:
+  exclude:
+    - 'vendor/**'
+    - 'node_modules/**'
+    - 'storage/**'
+    - 'public/build/**'
+    - 'tools/php/fixtures/**'
+
+# Rule-specific overrides.
+rules:
+  # The `php.lang.security.dangerous-unlink` rule flags every `unlink()`
+  # call whose path is not a string literal. Its taint tracker cannot
+  # reason through `realpath()` + `str_starts_with(sys_get_temp_dir())`
+  # validation, producing consistent false positives on the canonical
+  # PHP recursive-delete idiom (RecursiveDirectoryIterator + unlink).
+  #
+  # The rule is retained for production code under src/ and extensions/,
+  # where any recursive delete must go through the audited `Storage`
+  # abstraction, and explicitly scoped out of tests/ where recursive
+  # tmpdir cleanup is required for hermetic test runs.
+  - id: php.lang.security.dangerous-unlink
+    paths:
+      exclude:
+        - 'tests/**'
+        - 'extensions/*/tests/**'

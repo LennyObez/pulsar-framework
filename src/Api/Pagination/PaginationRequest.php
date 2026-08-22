@@ -7,6 +7,7 @@ namespace Pulsar\Api\Pagination;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_float;
 use function is_int;
 use function is_numeric;
 use function is_string;
@@ -18,6 +19,7 @@ use function min;
  *
  * Validates and normalizes page size, page number, and cursor values
  * against configured limits.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginationRequest
@@ -47,20 +49,29 @@ final readonly class PaginationRequest
     #[NoDiscard]
     public static function fromQuery(array $query, int $defaultSize = 25, int $maxSize = 100): self
     {
+        /** @var mixed $rawPerPage */
         $rawPerPage = $query['per_page'] ?? $query['limit'] ?? $defaultSize;
-        $perPage = is_int($rawPerPage) ? $rawPerPage : (is_numeric($rawPerPage) ? (int) $rawPerPage : $defaultSize);
+        $perPage = is_int($rawPerPage)
+            ? $rawPerPage
+            : ((is_string($rawPerPage) || is_float($rawPerPage)) && is_numeric($rawPerPage) ? (int) $rawPerPage : $defaultSize);
         $perPage = max(1, min($perPage, $maxSize));
 
+        /** @var mixed $rawPage */
         $rawPage = $query['page'] ?? 1;
-        $page = is_int($rawPage) ? $rawPage : (is_numeric($rawPage) ? (int) $rawPage : 1);
+        $page = is_int($rawPage)
+            ? $rawPage
+            : ((is_string($rawPage) || is_float($rawPage)) && is_numeric($rawPage) ? (int) $rawPage : 1);
         $page = max(1, $page);
 
+        /** @var mixed $rawCursor */
         $rawCursor = $query['cursor'] ?? null;
         $cursor = is_string($rawCursor) && $rawCursor !== '' ? $rawCursor : null;
 
+        /** @var mixed $rawAfter */
         $rawAfter = $query['after'] ?? null;
         $after = is_string($rawAfter) && $rawAfter !== '' ? $rawAfter : null;
 
+        /** @var mixed $rawBefore */
         $rawBefore = $query['before'] ?? null;
         $before = is_string($rawBefore) && $rawBefore !== '' ? $rawBefore : null;
 

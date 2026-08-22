@@ -7,7 +7,9 @@ namespace Pulsar\Database\Pool;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\DriverVariant;
 use Pulsar\Database\Result;
 use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
@@ -18,6 +20,7 @@ use Pulsar\Database\Transaction;
  * All connection methods delegate to the wrapped connection.
  * Calling {@see disconnect()} returns the connection to the pool
  * instead of closing the underlying database link.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PooledConnection implements ConnectionInterface
@@ -73,6 +76,18 @@ final class PooledConnection implements ConnectionInterface
     }
 
     #[Override]
+    public function variant(): DriverVariant
+    {
+        return $this->wrapped->variant();
+    }
+
+    #[Override]
+    public function dialect(): DialectInterface
+    {
+        return $this->wrapped->dialect();
+    }
+
+    #[Override]
     public function name(): string
     {
         return $this->wrapped->name();
@@ -101,6 +116,20 @@ final class PooledConnection implements ConnectionInterface
     public function createdAt(): int
     {
         return $this->checkedOutAt;
+    }
+
+    /**
+     * Auto-return the connection to the pool if not explicitly returned.
+     *
+     * Prevents connection leaks when PooledConnection goes out of scope
+     * without calling disconnect(), especially during fiber crashes.
+     */
+    public function __destruct()
+    {
+        if (!$this->returned) {
+            $this->returned = true;
+            $this->pool->checkin($this);
+        }
     }
 
     /**

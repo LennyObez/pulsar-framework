@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * DTO representing a webhook notification payload.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class WebhookPayload
+final readonly class WebhookPayload
 {
     /**
      * @param string               $url     Target webhook URL

@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Client\OAuthClient;
-use Pulsar\Extension\OAuth2\Token\AccessToken;
+use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\Auth\OAuth2\Token\AccessToken;
 
 /**
  * Protocol conformance tests for client credentials grant constraints.

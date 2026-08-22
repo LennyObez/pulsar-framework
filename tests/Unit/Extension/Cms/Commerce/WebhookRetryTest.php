@@ -61,6 +61,13 @@ final class WebhookRetryTest extends TestCase
         $this->paymentGateway->method('verifyWebhookSignature')->willReturn(true);
 
         $this->webhookConnection->method('query')->willReturn(new Result([]));
+
+        // transaction() must actually run the callback (and propagate any
+        // exception it throws) so the handler's retry-on-failure path can be
+        // exercised. A bare stub would return null without invoking it.
+        $this->webhookConnection->method('transaction')->willReturnCallback(
+            fn(callable $callback): mixed => $callback($this->webhookConnection),
+        );
     }
 
     public function testRetryJobDispatchesRetryOnFailureWithIncrementedCount(): void
@@ -231,7 +238,7 @@ final class WebhookRetryTest extends TestCase
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('DB down');
+        $this->expectExceptionMessageIsOrContains('DB down');
 
         $handler->handle($payload, 'valid-sig');
     }
@@ -257,7 +264,7 @@ final class WebhookRetryTest extends TestCase
         );
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Invalid webhook signature');
+        $this->expectExceptionMessageIsOrContains('Invalid webhook signature');
 
         $handler->handle('{}', 'bad-sig');
     }

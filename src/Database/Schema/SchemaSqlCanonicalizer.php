@@ -17,6 +17,7 @@ use function trim;
  *
  * Ensures consistent hashes regardless of whitespace variations
  * or line ending differences across environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaSqlCanonicalizer

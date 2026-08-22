@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\RouteContext;
+use Pulsar\Observability\Diagnostics\DiagnosticsAuthGuard;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
 use Pulsar\Routing\Router;
@@ -54,7 +58,28 @@ final readonly class MetricsWiring implements ServiceWiringInterface
         // Register OpenMetrics endpoint if enabled
         if ($observabilityConfig->metrics->exporterEnabled) {
             $endpoint = $observabilityConfig->metrics->exporterEndpoint;
-            $router->get($endpoint, static function () use ($registry): Response {
+
+            // Gate the OpenMetrics exporter behind a Bearer-token guard.
+            // The default Prometheus / OpenTelemetry scrape pattern hits this
+            // endpoint on a private network, but a misconfigured load balancer
+            // or a sidecar with no allowlist would expose the entire metrics
+            // surface (request counts, error fingerprints, latency histograms
+            // per-route) to the internet. Reuse the diagnostics guard so a
+            // single env var (`PULSAR_DIAGNOSTICS_TOKEN`) protects both
+            // operator endpoints.
+            $guard = $container->has(DiagnosticsAuthGuard::class)
+                ? $container->get(DiagnosticsAuthGuard::class)
+                : new DiagnosticsAuthGuard(self::resolveOperatorToken($configManager->environment()));
+            $container->instance(DiagnosticsAuthGuard::class, $guard);
+
+            $router->get($endpoint, static function (ServerRequestInterface $request) use ($registry, $guard): Response {
+                if (!$guard->isAuthorized($request)) {
+                    return Response::text(
+                        'Metrics endpoint requires Bearer token from PULSAR_DIAGNOSTICS_TOKEN.',
+                        ResponseStatus::Unauthorized->value,
+                    )->withHeader('WWW-Authenticate', 'Bearer realm="pulsar-metrics"');
+                }
+
                 $exporter = new OpenMetricsExporter($registry);
 
                 return new Response(
@@ -63,5 +88,13 @@ final readonly class MetricsWiring implements ServiceWiringInterface
                 );
             });
         }
+    }
+
+    private static function resolveOperatorToken(Environment $environment): ?string
+    {
+        // Resolved through the Environment so a token set in .env is honoured.
+        $raw = $environment->get('PULSAR_DIAGNOSTICS_TOKEN');
+
+        return $raw !== null && $raw !== '' ? $raw : null;
     }
 }

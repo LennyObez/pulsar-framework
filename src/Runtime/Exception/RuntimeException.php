@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Runtime-specific exceptions with static factory methods.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RuntimeException extends BaseRuntimeException
@@ -37,7 +38,7 @@ final class RuntimeException extends BaseRuntimeException
 
     public static function bindingRefused(string $host, int $port, string $reason): self
     {
-        return new self(sprintf('Cannot bind to %s:%d — %s', $host, $port, $reason));
+        return new self(sprintf('Cannot bind to %s:%d: %s', $host, $port, $reason));
     }
 
     public static function extensionMissing(string $extension): self
@@ -51,5 +52,10 @@ final class RuntimeException extends BaseRuntimeException
     public static function fatalError(string $message): self
     {
         return new self(sprintf('Fatal runtime error: %s', $message));
+    }
+
+    public static function unsupportedType(string $message): self
+    {
+        return new self($message);
     }
 }

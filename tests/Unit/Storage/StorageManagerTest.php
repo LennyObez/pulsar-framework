@@ -52,7 +52,7 @@ final class StorageManagerTest extends TestCase
         $manager = new StorageManager($config);
 
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('Storage disk not found: "nonexistent"');
+        $this->expectExceptionMessageIsOrContains('Storage disk not found: "nonexistent"');
 
         $manager->disk('nonexistent');
     }
@@ -131,7 +131,7 @@ final class StorageManagerTest extends TestCase
         $manager = new StorageManager($config);
 
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('Storage disk not found: "missing"');
+        $this->expectExceptionMessageIsOrContains('Storage disk not found: "missing"');
 
         $manager->disk();
     }

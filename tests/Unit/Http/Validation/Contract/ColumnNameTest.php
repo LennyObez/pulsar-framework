@@ -56,7 +56,7 @@ final class ColumnNameTest extends TestCase
     public function exceptionMessageContainsColumn(): void
     {
         $this->expectException(InvalidIdentifierException::class);
-        $this->expectExceptionMessage('Invalid column name: "SELECT"');
+        $this->expectExceptionMessageIsOrContains('Invalid column name: "SELECT"');
 
         new ColumnName('SELECT');
     }

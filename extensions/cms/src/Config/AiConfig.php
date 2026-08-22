@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * AI content assistant configuration.
  *
  * Controls which LLM provider to use and connection parameters.
- * Disabled by default — requires explicit opt-in and API key configuration.
+ * Disabled by default; requires explicit opt-in and API key configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by ContentAssistant and AI controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AiConfig
@@ -31,16 +36,22 @@ final readonly class AiConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     provider?: string,
+     *     model?: string,
+     *     api_key?: string,
+     *     base_url?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            provider: (string) ($data['provider'] ?? 'openai'),
-            model: (string) ($data['model'] ?? ''),
-            apiKey: (string) ($data['api_key'] ?? ''),
-            baseUrl: (string) ($data['base_url'] ?? ''),
+            provider: Coerce::string($data['provider'] ?? null, 'openai'),
+            model: Coerce::string($data['model'] ?? null),
+            apiKey: Coerce::string($data['api_key'] ?? null),
+            baseUrl: Coerce::string($data['base_url'] ?? null),
         );
     }
 }

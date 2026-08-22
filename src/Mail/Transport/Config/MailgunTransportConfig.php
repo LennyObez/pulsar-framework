@@ -6,9 +6,8 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
-
-use function is_string;
 
 /**
  * Configuration for the Mailgun mail transport.
@@ -30,9 +29,9 @@ final readonly class MailgunTransportConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            domain: is_string($data['domain'] ?? null) ? $data['domain'] : '',
-            apiKey: is_string($data['api_key'] ?? null) ? $data['api_key'] : '',
-            endpoint: is_string($data['endpoint'] ?? null) ? $data['endpoint'] : 'https://api.mailgun.net',
+            domain: Coerce::string($data['domain'] ?? null),
+            apiKey: Coerce::string($data['api_key'] ?? null),
+            endpoint: Coerce::string($data['endpoint'] ?? null, 'https://api.mailgun.net'),
         );
     }
 }

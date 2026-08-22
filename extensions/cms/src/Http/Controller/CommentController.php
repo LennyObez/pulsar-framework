@@ -21,20 +21,25 @@ use function trim;
  * Handles comment form posts from content pages. Supports both
  * authenticated and guest submissions. CSRF validation is expected
  * to be handled by middleware before this controller is reached.
+ *
+ * @psalm-api Bound to a route by the CMS service provider; resolved
+ *            from the DI container by the router.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class CommentController
 {
     public function __construct(
         private CommentServiceInterface $commentService,
     ) {}
 
-    public function submit(ServerRequestInterface $request, string $locale, string $contentId): Response
+    public function submit(ServerRequestInterface $request, string $contentId): Response
     {
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $commentBody = trim((string) ($body['body'] ?? ''));
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+        $commentBody = trim(is_string($rawBody) ? $rawBody : '');
 
         if ($commentBody === '') {
             return Response::validationError([
@@ -50,8 +55,12 @@ final readonly class CommentController
         $guestEmail = null;
 
         if ($authorId === null) {
-            $guestName = is_string($body['guest_name'] ?? null) ? trim($body['guest_name']) : null;
-            $guestEmail = is_string($body['guest_email'] ?? null) ? trim($body['guest_email']) : null;
+            /** @var mixed $rawGuestName */
+            $rawGuestName = $body['guest_name'] ?? null;
+            $guestName = is_string($rawGuestName) ? trim($rawGuestName) : null;
+            /** @var mixed $rawGuestEmail */
+            $rawGuestEmail = $body['guest_email'] ?? null;
+            $guestEmail = is_string($rawGuestEmail) ? trim($rawGuestEmail) : null;
 
             if ($guestName === null || $guestName === '') {
                 return Response::validationError([
@@ -60,7 +69,9 @@ final readonly class CommentController
             }
         }
 
-        $ipHash = hash('sha256', $request->getServerParams()['REMOTE_ADDR'] ?? '');
+        /** @var mixed $remoteAddr */
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? '';
+        $ipHash = hash('sha256', is_string($remoteAddr) ? $remoteAddr : '');
         $userAgentHash = hash('sha256', $request->getHeaderLine('User-Agent'));
 
         try {

@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Channels are registered during boot. The registry is mutable to support
  * extension/plugin-provided channels registered at runtime.
+ *
+ * @psalm-api Public registry resolved from the DI container by
+ *            PublishingOrchestrator; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ChannelRegistry

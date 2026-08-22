@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Describes a security scheme for the OpenAPI specification.
  *
  * Supports OAuth2 (with flows), HTTP Bearer, and API key schemes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecuritySchemeDefinition
@@ -19,11 +20,11 @@ final readonly class SecuritySchemeDefinition
      * @param string $name Scheme identifier (referenced in endpoint security requirements)
      * @param SecuritySchemeType $type The security scheme type
      * @param string $description Human-readable description
-     * @param string|null $scheme HTTP auth scheme (e.g., 'bearer') — for type=http
-     * @param string|null $bearerFormat Token format hint (e.g., 'JWT') — for type=http+bearer
-     * @param string|null $apiKeyName Header or query parameter name — for type=apiKey
-     * @param string|null $apiKeyIn Location: 'header', 'query', or 'cookie' — for type=apiKey
-     * @param array<string, array<string, mixed>>|null $flows OAuth2 flows definition — for type=oauth2
+     * @param string|null $scheme HTTP auth scheme (e.g., 'bearer'): for type=http
+     * @param string|null $bearerFormat Token format hint (e.g., 'JWT'): for type=http+bearer
+     * @param string|null $apiKeyName Header or query parameter name: for type=apiKey
+     * @param string|null $apiKeyIn Location: 'header', 'query', or 'cookie': for type=apiKey
+     * @param array<string, array<string, mixed>>|null $flows OAuth2 flows definition: for type=oauth2
      */
     public function __construct(
         public string $name,

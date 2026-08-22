@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexColumn;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_media_assets (
@@ -38,13 +41,13 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_media_file_hash ON cms_media_assets (file_hash)
-            SQL);
+        $indexes->ensure('cms_media_assets', 'idx_media_file_hash', ['file_hash']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_media_tenant_created ON cms_media_assets (tenant_id, created_at DESC)
-            SQL);
+        // A tenant's library reads newest first.
+        $indexes->ensure('cms_media_assets', 'idx_media_tenant_created', [
+            'tenant_id',
+            IndexColumn::desc('created_at'),
+        ]);
 
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_media_asset_translations (

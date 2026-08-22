@@ -14,18 +14,26 @@ use Pulsar\Http\Message\Response;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
 /**
  * HTTP controller for the GraphQL endpoint.
  *
- * POST /graphql — Execute a query (reads query + variables from JSON body)
- * GET  /graphql — Return simplified schema introspection
+ * POST /graphql: Execute a query (reads query + variables from JSON body)
+ * GET  /graphql; Return simplified schema introspection
+ *
+ * Security: request bodies exceeding {@see MAX_BODY_SIZE} bytes are rejected
+ * before parsing to prevent resource exhaustion.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GraphqlController
 {
+    /** Maximum allowed request body size (64 KB). */
+    private const int MAX_BODY_SIZE = 65_536;
+
     public function __construct(
         private GraphqlExecutor $executor,
         private Schema $schema,
@@ -45,9 +53,16 @@ final readonly class GraphqlController
             ], 400);
         }
 
+        if (strlen($body) > self::MAX_BODY_SIZE) {
+            return Response::json([
+                'data' => null,
+                'errors' => [['message' => 'Request body exceeds maximum allowed size']],
+            ], 413);
+        }
+
         try {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return Response::json([
                 'data' => null,
@@ -77,7 +92,7 @@ final readonly class GraphqlController
     /**
      * Return the schema introspection result.
      */
-    public function introspect(ServerRequestInterface $request): Response
+    public function introspect(): Response
     {
         return Response::json([
             'data' => $this->schema->toIntrospection(),

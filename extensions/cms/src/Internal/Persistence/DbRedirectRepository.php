@@ -7,13 +7,18 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\Redirect;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 
 use function max;
 
-#[Internal(reason: 'Raw-DB repository — use RedirectRepositoryInterface for public API')]
+/**
+ * @psalm-api Bound to RedirectRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use RedirectRepositoryInterface for public API')]
 final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -26,19 +31,14 @@ final readonly class DbRedirectRepository implements RedirectRepositoryInterface
           AND deleted_at IS NULL
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_redirects (
-            id, tenant_id, from_path, to_path, status_code,
-            locale, hits, last_hit_at, created_at, created_by, reason
-        ) VALUES (
-            :id, :tenant_id, :from_path, :to_path, :status_code,
-            :locale, :hits, :last_hit_at, :created_at, :created_by, :reason
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            to_path = EXCLUDED.to_path,
-            status_code = EXCLUDED.status_code,
-            reason = EXCLUDED.reason
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'from_path', 'to_path', 'status_code',
+        'locale', 'hits', 'last_hit_at', 'created_at', 'created_by', 'reason',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'to_path', 'status_code', 'reason',
+    ];
 
     private const string SQL_FIND_ALL = <<<'SQL'
         SELECT * FROM cms_redirects
@@ -69,7 +69,8 @@ final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 
     public function findByPath(string $path, ?string $locale = null, ?string $tenantId = null): ?Redirect
     {
-        $tenantKey = ($tenantId ?? $this->tenantId) ?? self::SENTINEL_TENANT;
+        $resolved = $tenantId ?? $this->tenantId;
+        $tenantKey = $resolved ?? self::SENTINEL_TENANT;
 
         $result = $this->connection->query(self::SQL_FIND_BY_PATH, [
             'from_path' => $path,
@@ -87,7 +88,15 @@ final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 
     public function save(Redirect $redirect): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_redirects',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $redirect->id,
             'tenant_id' => $redirect->tenantId,
             'from_path' => $redirect->fromPath,
@@ -112,7 +121,8 @@ final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 
     public function findAll(int $page = 1, int $perPage = 50, ?string $tenantId = null): array
     {
-        $tenantKey = ($tenantId ?? $this->tenantId) ?? self::SENTINEL_TENANT;
+        $resolved = $tenantId ?? $this->tenantId;
+        $tenantKey = $resolved ?? self::SENTINEL_TENANT;
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 

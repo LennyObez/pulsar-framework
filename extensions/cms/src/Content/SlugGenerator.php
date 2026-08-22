@@ -14,6 +14,10 @@ use function strlen;
  *
  * Slugs are single path segments (no slashes) used in content URLs.
  * Transliteration converts non-ASCII characters to ASCII equivalents.
+ *
+ * @psalm-api Resolved by content/translation services from the DI
+ *            container; not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SlugGenerator
@@ -68,6 +72,13 @@ final readonly class SlugGenerator
      */
     public function validate(string $slug): bool
     {
+        // A user-supplied slug must be non-empty. The empty slug is only
+        // meaningful as the homepage content path (ContentTranslation::isValidSlug
+        // permits it there); it is never a valid slug to validate/generate here.
+        if ($slug === '') {
+            return false;
+        }
+
         return ContentTranslation::isValidSlug($slug);
     }
 

@@ -42,8 +42,11 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
 /**
  * Binds commerce services: checkout, tax, promotions, invoicing, digital delivery.
+ *
+ * @psalm-api Instantiated by name from CmsServiceProvider::register() to wire
+ *            commerce service bindings into the DI container.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsCommerceProvider
 {
     public function register(
@@ -167,7 +170,7 @@ final readonly class CmsCommerceProvider
                 if ($paymentGateway !== null) {
                     $container->instance(
                         WebhookHandler::class,
-                        new WebhookHandler($orderService, $orderRepository, $paymentGateway, $auditLogger),
+                        new WebhookHandler($orderService, $orderRepository, $paymentGateway, $connection, $auditLogger),
                     );
                 }
             }

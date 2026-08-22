@@ -101,7 +101,7 @@ Seven built-in transports are available:
 
 ### API transport configuration
 
-API transports (SES, Mailgun, Postmark, Sendgrid) require a `MailHttpClientInterface` implementation registered in the container. The transports build the request payload but delegate actual HTTP calls to this interface, keeping transport logic testable.
+API transports (SES, Mailgun, Postmark, Sendgrid) make their HTTP calls through a `MailHttpClientInterface`. The framework ships a default implementation, so these drivers work with no extra wiring — set the driver and its `driver_options` and you are done. See [The mail HTTP client](#the-mail-http-client) below to reuse your own HTTP stack.
 
 ```php
 'driver_options' => [
@@ -124,6 +124,16 @@ API transports (SES, Mailgun, Postmark, Sendgrid) require a `MailHttpClientInter
     ],
 ],
 ```
+
+### The mail HTTP client
+
+API transports delegate their HTTP calls to a `MailHttpClientInterface`, which keeps transport logic testable and lets you reuse your application's HTTP stack. Resolution is automatic, in order of preference:
+
+- **Default (zero config).** When the application binds nothing, `MailWiring` registers a cURL-backed client (`CurlMailHttpClient`). `ext-curl` is already a framework requirement, so `MAIL_DRIVER=mailgun|ses|postmark|sendgrid` works out of the box with no application wiring. TLS peer and host verification are always enforced, and both the connect and total transfer times are bounded so a hung provider cannot stall a worker.
+- **Reuse your HTTP stack (PSR-18).** Bind a PSR-18 `Psr\Http\Client\ClientInterface` in the container and `MailWiring` prefers it (adapting it via `Psr18MailHttpClient`), so mail flows through your client's connection pooling, retries, proxy, observability, and test doubles. The framework's PSR-17 request/stream factories are used unless you bind your own.
+- **Full control.** Bind your own `MailHttpClientInterface` and the framework uses it as-is.
+
+A transport-level failure (DNS, TLS, timeout) is wrapped in a driver-scoped `MailException`; an actual HTTP response — including a 4xx/5xx — is returned so the transport can surface the provider's status and body.
 
 ## Creating mailables
 

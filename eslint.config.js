@@ -13,8 +13,13 @@ export default tseslint.config(
       'extensions/studio/frontend/dist/**',
       'coverage/**',
       'node_modules/**',
+      'build/**',
       '*.config.js',
       '*.config.ts',
+      // Local agent tooling: gitignored, so CI never lints it. Without this,
+      // `pnpm lint` fails on a developer's machine and passes in CI — the two
+      // must report the same thing or neither is trusted.
+      '.claude/**',
     ],
   },
   {
@@ -29,13 +34,17 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       'no-console': 'warn',
     },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     ignores: ['resources/**/*.js', 'extensions/**/resources/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -45,7 +54,14 @@ export default tseslint.config(
       },
     },
     rules: {
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       'no-console': 'warn',
     },
   },
@@ -56,10 +72,27 @@ export default tseslint.config(
       sourceType: 'script',
       globals: {
         ...globals.browser,
+        // UMD-style guarded exports (typeof module !== 'undefined' && module.exports)
+        module: 'readonly',
+        exports: 'readonly',
+        // External libraries loaded via <script> tag from CDN
+        Hls: 'readonly',
+        pdfjsLib: 'readonly',
       },
     },
     rules: {
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // typescript-eslint variant fires on JS via the recommended preset and
+      // ignores our caughtErrorsIgnorePattern; the native rule alone is enough
+      // for plain JS resources.
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       'no-console': 'warn',
     },
   },

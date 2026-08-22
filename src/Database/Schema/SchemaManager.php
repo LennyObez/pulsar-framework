@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Schema;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 
@@ -13,6 +14,7 @@ use Pulsar\Database\ConnectionInterface;
  * Wraps DdlCompiler with connection execution. Uses transactions
  * for PostgreSQL (which supports transactional DDL). MySQL/MariaDB
  * and SQLite execute statements sequentially without atomicity guarantees.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaManager
@@ -43,9 +45,24 @@ final readonly class SchemaManager
         $this->executeStatements($this->compiler->compileAddIndex($table, $index));
     }
 
-    public function dropIndex(string $table, string $indexName): void
+    /**
+     * Scoped to the named table, which the statement itself cannot express.
+     *
+     * `DROP INDEX` takes only an index name on PostgreSQL and SQLite — the table has
+     * nowhere to go in the syntax — while index names are unique per schema and per
+     * database respectively, not per table. Dropping by name alone therefore destroys a
+     * same-named index belonging to some other table, and `IF EXISTS` turns the miss into
+     * silence. {@see IndexOperations} establishes the index belongs to this table before
+     * issuing anything, which is where the guarantee has to live.
+     *
+     * @return bool Whether an index was actually dropped. An index that belonged to
+     *              another table, or to nothing, leaves the schema unchanged — and a
+     *              caller that records an audit entry needs to know which happened.
+     */
+    #[NoDiscard]
+    public function dropIndex(string $table, string $indexName): bool
     {
-        $this->executeStatements($this->compiler->compileDropIndex($table, $indexName));
+        return new IndexOperations($this->connection)->dropIfPresent($table, $indexName);
     }
 
     public function dropTable(string $table): void

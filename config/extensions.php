@@ -37,17 +37,60 @@ return [
     | Add third-party extensions here to elevate their trust tier
     | or grant specific capabilities.
     |
+    | Every first-party extension bundled with the framework is listed here at
+    | core tier. The list is kept complete by a drift test
+    | (tests/Unit/Core/Boot/ExtensionSandboxDriftTest) so a newly added bundled
+    | extension cannot silently fall to the community cap and fail to boot — and,
+    | more importantly, so the sandbox always engages: an extension absent from
+    | this list runs at community tier regardless of the tier its own manifest
+    | requests.
+    |
     */
     'trusted_extensions' => [
-        'pulsar/example' => ['tier' => 'core'],
-        'pulsar/observability-export' => ['tier' => 'core'],
-        'pulsar/psr7-bridge' => ['tier' => 'core'],
-        'pulsar/mcp-server' => ['tier' => 'core'],
-        'pulsar/studio' => ['tier' => 'core'],
+        // Tier reflects trust, not enable-state. INFRASTRUCTURE and
+        // SECURITY/COMPLIANCE extensions run at CORE (full trust). Bundled
+        // APPLICATION/PRODUCT extensions run least-privilege at VERIFIED: they
+        // register and decorate their own services but cannot override a core
+        // binding (ContainerWrite), read the master key, or exec processes. The
+        // split is drift-guarded by ExtensionSandboxDriftTest.
+        'pulsar/accessibility' => ['tier' => 'core'],
         'pulsar/admin' => ['tier' => 'core'],
-        'pulsar/orm' => ['tier' => 'core'],
-        'pulsar/payments' => ['tier' => 'core'],
-        'pulsar/social-sso' => ['tier' => 'core'],
+        'pulsar/ai-governance' => ['tier' => 'verified'],
+        'pulsar/analytics' => ['tier' => 'verified'],
+        'pulsar/auth' => ['tier' => 'core'],
+        'pulsar/booking' => ['tier' => 'verified'],
+        'pulsar/cms' => ['tier' => 'verified'],
+        'pulsar/devices' => ['tier' => 'verified'],
+        'pulsar/example' => ['tier' => 'core'],
+        'pulsar/feedback' => ['tier' => 'verified'],
+        'pulsar/form' => ['tier' => 'core'],
+        'pulsar/forum' => ['tier' => 'verified'],
+        'pulsar/graphql' => ['tier' => 'core'],
+        'pulsar/grpc' => ['tier' => 'core'],
+        'pulsar/health-status' => ['tier' => 'verified'],
+        'pulsar/mcp-server' => ['tier' => 'core'],
+        'pulsar/messaging' => ['tier' => 'verified'],
+        'pulsar/observability' => ['tier' => 'core'],
+        'pulsar/observability-export' => ['tier' => 'core'],
         'pulsar/opentelemetry' => ['tier' => 'core'],
+        'pulsar/orm' => ['tier' => 'core'],
+        'pulsar/payments' => ['tier' => 'verified'],
+        'pulsar/psr7-bridge' => ['tier' => 'core'],
+        'pulsar/releases' => ['tier' => 'verified'],
+        'pulsar/social-sso' => ['tier' => 'core'],
+        'pulsar/studio' => ['tier' => 'core'],
+        'pulsar/subscriptions' => ['tier' => 'verified'],
+        'pulsar/tickets' => ['tier' => 'verified'],
+        // Compliance extensions live nested under extensions/compliance/*. They
+        // are first-party and register services (ContainerWrite) via their
+        // ServiceProviders, so they need core tier like every other bundled
+        // extension. The drift guard globs both depths to keep this complete.
+        'pulsar/data-act' => ['tier' => 'core'],
+        'pulsar/dora' => ['tier' => 'core'],
+        'pulsar/dsa' => ['tier' => 'core'],
+        'pulsar/eidas' => ['tier' => 'core'],
+        'pulsar/fhir' => ['tier' => 'core'],
+        'pulsar/medical-devices' => ['tier' => 'core'],
+        'pulsar/psd2' => ['tier' => 'core'],
     ],
 ];

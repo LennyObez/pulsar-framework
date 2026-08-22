@@ -9,6 +9,7 @@ use Pulsar\Extension\Form\Contract\FormInterface;
 
 /**
  * Base event for form lifecycle events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class FormEvent

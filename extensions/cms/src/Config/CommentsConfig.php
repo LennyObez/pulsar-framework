@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Comments system configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by CommentService and admin moderation views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentsConfig
@@ -40,22 +45,34 @@ final readonly class CommentsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     auto_approve_authenticated?: bool,
+     *     edit_window_minutes?: int,
+     *     max_nesting_depth?: int,
+     *     rate_limit_per_minute?: int,
+     *     rate_limit_per_hour?: int,
+     *     guest_comments_allowed?: bool,
+     *     require_email?: bool,
+     *     max_body_length?: int,
+     *     max_links_per_comment?: int,
+     *     honeypot_field_name?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: (bool) ($data['enabled'] ?? true),
-            autoApproveAuthenticated: (bool) ($data['auto_approve_authenticated'] ?? false),
-            editWindowMinutes: (int) ($data['edit_window_minutes'] ?? 15),
-            maxNestingDepth: (int) ($data['max_nesting_depth'] ?? 3),
-            rateLimitPerMinute: (int) ($data['rate_limit_per_minute'] ?? 5),
-            rateLimitPerHour: (int) ($data['rate_limit_per_hour'] ?? 30),
-            guestCommentsAllowed: (bool) ($data['guest_comments_allowed'] ?? true),
-            requireEmail: (bool) ($data['require_email'] ?? false),
-            maxBodyLength: (int) ($data['max_body_length'] ?? 10_000),
-            maxLinksPerComment: (int) ($data['max_links_per_comment'] ?? 3),
-            honeypotFieldName: (string) ($data['honeypot_field_name'] ?? 'website_url'),
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            autoApproveAuthenticated: Coerce::strictBool($data['auto_approve_authenticated'] ?? null),
+            editWindowMinutes: Coerce::int($data['edit_window_minutes'] ?? null, 15),
+            maxNestingDepth: Coerce::int($data['max_nesting_depth'] ?? null, 3),
+            rateLimitPerMinute: Coerce::int($data['rate_limit_per_minute'] ?? null, 5),
+            rateLimitPerHour: Coerce::int($data['rate_limit_per_hour'] ?? null, 30),
+            guestCommentsAllowed: Coerce::strictBool($data['guest_comments_allowed'] ?? null, true),
+            requireEmail: Coerce::strictBool($data['require_email'] ?? null),
+            maxBodyLength: Coerce::int($data['max_body_length'] ?? null, 10_000),
+            maxLinksPerComment: Coerce::int($data['max_links_per_comment'] ?? null, 3),
+            honeypotFieldName: Coerce::string($data['honeypot_field_name'] ?? null, 'website_url'),
         );
     }
 }

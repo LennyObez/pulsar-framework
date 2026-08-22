@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a plugin has been enabled.
+ *
+ * @psalm-api Event constructed by CmsPluginManager and dispatched through
+ *            the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PluginEnabled

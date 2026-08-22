@@ -42,7 +42,7 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     ) {}
 
     /**
-     * Truthfully delegates to the real container — never lies about existence.
+     * Truthfully delegates to the real container: never lies about existence.
      */
     #[Override]
     public function has(string $id): bool
@@ -67,26 +67,42 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
-        $this->assertCanWrite();
+        $this->assertCanRegister($id);
         $this->inner->bind($id, $concrete, $type);
+    }
+
+    #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->assertCanRegister($id);
+        $this->inner->singleton($id, $concrete);
     }
 
     #[Override]
     public function instance(string $id, object $instance): void
     {
-        $this->assertCanWrite();
+        $this->assertCanRegister($id);
         $this->inner->instance($id, $instance);
+    }
+
+    #[Override]
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void
+    {
+        $this->assertCanDecorate();
+        $this->inner->decorate($id, $decorator, $priority);
     }
 
     #[Override]
     public function forgetInstance(string $id): void
     {
+        $this->assertCanWrite();
         $this->inner->forgetInstance($id);
     }
 
     #[Override]
     public function setResolutionHints(?array $hints): void
     {
+        $this->assertCanWrite();
         $this->inner->setResolutionHints($hints);
     }
 
@@ -94,6 +110,8 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[NoDiscard]
     public function getBindings(): array
     {
+        $this->assertCanRead();
+
         return $this->inner->getBindings();
     }
 
@@ -101,7 +119,15 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[NoDiscard]
     public function getInstances(): array
     {
+        $this->assertCanRead();
+
         return $this->inner->getInstances();
+    }
+
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $this->inner->call($callable, $params);
     }
 
     private function assertCanResolve(string $serviceId): void
@@ -122,9 +148,16 @@ final readonly class ScopedContainerProxy implements ContainerInterface
             return;
         }
 
-        // Unknown service — deny by default for non-Core tiers
+        // Unknown service; deny by default for non-Core tiers
         if (!$this->tier->atLeast(TrustTier::Core)) {
             throw CapabilityDeniedException::forUnknownService($serviceId, $this->tier);
+        }
+    }
+
+    private function assertCanRead(): void
+    {
+        if (!$this->hasCapability(ExtensionCapability::ContainerRead)) {
+            throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ContainerRead);
         }
     }
 
@@ -133,6 +166,57 @@ final readonly class ScopedContainerProxy implements ContainerInterface
         if (!$this->hasCapability(ExtensionCapability::ContainerWrite)) {
             throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ContainerWrite);
         }
+    }
+
+    /**
+     * Registering a service the extension provides vs overriding an existing one.
+     *
+     * Rebinding an id that is ALREADY explicitly bound can hijack a core service
+     * (the rc.12 Session/Auth/CsrfGuard override hole), so that override power is
+     * ContainerWrite — Core only. Binding a NEW id — the extension's own service,
+     * or filling an unbound extension point — is the lesser ServiceRegister power
+     * available to Verified and Community. `has()` (PSR-11) is deliberately NOT
+     * used here: it is true for any autowirable class, which would misclassify a
+     * first-time registration as an override; only an EXPLICIT binding or cached
+     * instance counts as "already registered".
+     */
+    private function assertCanRegister(string $id): void
+    {
+        $alreadyRegistered = in_array($id, $this->inner->getBindings(), true)
+            || in_array($id, $this->inner->getInstances(), true);
+
+        if ($alreadyRegistered) {
+            $this->assertCanWrite();
+
+            return;
+        }
+
+        if (
+            $this->hasCapability(ExtensionCapability::ServiceRegister)
+            || $this->hasCapability(ExtensionCapability::ContainerWrite)
+        ) {
+            return;
+        }
+
+        throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ServiceRegister);
+    }
+
+    /**
+     * Decorating an existing service (wrapping it, original preserved) is the
+     * ServiceDecorate power — Verified and above. It is strictly less than
+     * ContainerWrite (override/replace), which also satisfies it. Community is
+     * denied: a decorator can still subvert behaviour of a core service.
+     */
+    private function assertCanDecorate(): void
+    {
+        if (
+            $this->hasCapability(ExtensionCapability::ServiceDecorate)
+            || $this->hasCapability(ExtensionCapability::ContainerWrite)
+        ) {
+            return;
+        }
+
+        throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ServiceDecorate);
     }
 
     private function hasCapability(ExtensionCapability $capability): bool

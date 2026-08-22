@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Service lifetime strategy.
  *
  * Determines how long a resolved service instance lives.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Lifetime: string

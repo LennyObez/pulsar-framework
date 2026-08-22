@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extensibility\Manifest;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,23 +13,6 @@ use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
 #[CoversClass(PulsarVersionConfig::class)]
 final class PulsarVersionConfigTest extends TestCase
 {
-    #[Test]
-    public function constructorSetsProperties(): void
-    {
-        $config = new PulsarVersionConfig('1.0.0', '2.0.0');
-
-        self::assertSame('1.0.0', $config->minVersion);
-        self::assertSame('2.0.0', $config->maxVersion);
-    }
-
-    #[Test]
-    public function constructorDefaultsMaxVersionToNull(): void
-    {
-        $config = new PulsarVersionConfig('1.0.0');
-
-        self::assertNull($config->maxVersion);
-    }
-
     #[Test]
     public function fromArrayWithAllFields(): void
     {
@@ -41,13 +25,54 @@ final class PulsarVersionConfigTest extends TestCase
         self::assertSame('2.0.0', $config->maxVersion);
     }
 
+    /**
+     * A manifest without `pulsar.min_version` triggers an
+     * E_USER_DEPRECATED notice (will become a hard exception
+     * in the next major). Until then the default remains
+     * '0.0.0' so existing manifests keep loading.
+     */
     #[Test]
-    public function fromArrayWithDefaults(): void
+    public function fromArrayWithMissingMinVersionEmitsDeprecation(): void
     {
-        $config = PulsarVersionConfig::fromArray([]);
+        $previous = set_error_handler(static function (int $errno, string $msg): bool {
+            if ($errno === E_USER_DEPRECATED && str_contains($msg, 'pulsar.min_version')) {
+                throw new InvalidArgumentException($msg);
+            }
+            return false;
+        });
 
-        self::assertSame('0.0.0', $config->minVersion);
-        self::assertNull($config->maxVersion);
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessageIsOrContains('pulsar.min_version');
+
+            (void) PulsarVersionConfig::fromArray([]);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
+     * When `min_version` is supplied, no deprecation
+     * fires and the value round-trips unchanged.
+     */
+    #[Test]
+    public function fromArrayWithExplicitMinVersionDoesNotEmitDeprecation(): void
+    {
+        $deprecations = [];
+        $previous = set_error_handler(static function (int $errno, string $msg) use (&$deprecations): bool {
+            if ($errno === E_USER_DEPRECATED) {
+                $deprecations[] = $msg;
+            }
+            return false;
+        });
+
+        try {
+            $config = PulsarVersionConfig::fromArray(['min_version' => '1.2.3']);
+            self::assertSame('1.2.3', $config->minVersion);
+            self::assertSame([], $deprecations);
+        } finally {
+            restore_error_handler();
+        }
     }
 
     #[Test]

@@ -8,13 +8,14 @@ use Pulsar\Extension\Admin\Domain\FieldType;
 /**
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 /** @var DataResourceInterface $resource */
 $resource = $templateData['resource'];
 /** @var array<string, mixed> $data */
 $data = $templateData['data'];
 /** @var string $mode */
 $mode = $templateData['mode'];
+/** @var string $id */
 $id = $templateData['id'] ?? '';
 $formFields = array_filter($resource->fields(), static fn($f): bool => $f->visibleOnForm && $f->editable);
 $actionUrl = $mode === 'create'
@@ -24,7 +25,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
 ?>
 <div class="admin-resource-form">
     <div class="admin-toolbar">
-        <a href="/admin/resources/<?= $e($resource->name()) ?>" class="admin-btn admin-btn--secondary">Cancel</a>
+        <a href="/admin/resources/<?= $e($resource->name()) ?>" class="admin-btn admin-btn--secondary" data-t="admin.resource.cancel"><?= __('admin.resource.cancel') ?></a>
     </div>
 
     <form class="admin-form" data-action="<?= $e($actionUrl) ?>" data-method="<?= $e($method) ?>">
@@ -42,7 +43,8 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
                 name="<?= $e($field->name) ?>"
                 class="admin-form__textarea"
                 placeholder="<?= $e($field->placeholder ?? '') ?>"
-            ><?= $e((string) ($data[$field->name] ?? '')) ?></textarea>
+            ><?php /** @var mixed $fieldVal */ $fieldVal = $data[$field->name] ?? '';
+                echo $e(is_scalar($fieldVal) ? (string) $fieldVal : ''); ?></textarea>
             <?php elseif ($field->type === FieldType::Boolean): ?>
             <input
                 type="checkbox"
@@ -58,18 +60,18 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
                 name="<?= $e($field->name) ?>"
                 class="admin-form__select"
             >
-                <option value="">Select...</option>
+                <option value="" data-t="admin.resource.select"><?= __('admin.resource.select') ?></option>
                 <?php foreach ($field->enumValues as $enumVal): ?>
                 <option value="<?= $e($enumVal) ?>" <?= ($data[$field->name] ?? '') === $enumVal ? 'selected' : '' ?>><?= $e($enumVal) ?></option>
                 <?php endforeach; ?>
             </select>
             <?php else: ?>
             <input
-                type="<?= $e($this->inputType($field->type)) ?>"
+                type="<?= $e(inputType($field->type)) ?>"
                 id="field-<?= $e($field->name) ?>"
                 name="<?= $e($field->name) ?>"
                 class="admin-form__input"
-                value="<?= $e((string) ($data[$field->name] ?? '')) ?>"
+                value="<?php /** @var mixed $inputVal */ $inputVal = $data[$field->name] ?? ''; ?><?= $e(is_scalar($inputVal) ? (string) $inputVal : '') ?>"
                 placeholder="<?= $e($field->placeholder ?? '') ?>"
             >
             <?php endif; ?>
@@ -78,7 +80,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
 
         <div class="admin-form__actions">
             <button type="submit" class="admin-btn admin-btn--primary">
-                <?= $e($mode === 'create' ? 'Create' : 'Save changes') ?>
+                <?= $mode === 'create' ? __('admin.resource.create', ['resource' => $resource->label()]) : __('admin.resource.save_changes') ?>
             </button>
         </div>
     </form>

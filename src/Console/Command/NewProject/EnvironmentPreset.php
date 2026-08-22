@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Controls debug flags, APP_URL defaults, and security posture
  * in the generated `.env` file.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EnvironmentPreset: string

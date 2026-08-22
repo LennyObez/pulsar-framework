@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * A single WHERE condition binding a column name to a value.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class WhereCondition
+final readonly class WhereCondition
 {
     public function __construct(
         public ColumnName $column,

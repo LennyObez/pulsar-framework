@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each capability controls access to a specific class of framework operations.
  * The CapabilityPolicy maps trust tiers to sets of granted capabilities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ExtensionCapability
@@ -18,8 +19,34 @@ enum ExtensionCapability
     /** Resolve services from the container. */
     case ContainerRead;
 
-    /** Bind or register new services in the container. */
+    /**
+     * Override or replace ANY existing binding in the container, including core
+     * services (Session, Auth, CsrfGuard, ...). This is the privileged
+     * container power and is reserved for Core: it can silently hijack a core
+     * security service. Registering a NEW service is the lesser
+     * {@see self::ServiceRegister} capability.
+     */
     case ContainerWrite;
+
+    /**
+     * Register a service the extension provides: a binding for an id that is not
+     * already bound — the extension's own interfaces, or one filling an unbound
+     * extension point. It cannot rebind an existing service (that is
+     * {@see self::ContainerWrite}), so it can never override a core service.
+     * The service-layer analogue of {@see self::RouteRegister} (own prefix) vs
+     * {@see self::RouteRegisterGlobal} (any path).
+     */
+    case ServiceRegister;
+
+    /**
+     * Decorate an existing service: register a wrapper that RECEIVES the current
+     * service and returns a replacement wrapping it. Enhances a service (incl. a
+     * core one) without the power to discard it or bind something unrelated —
+     * strictly less than {@see self::ContainerWrite} (override/replace). Granted
+     * to Verified and above: a decorator can still alter behaviour, so it is not
+     * offered at Community.
+     */
+    case ServiceDecorate;
 
     /** Register routes under the extension's namespace prefix. */
     case RouteRegister;

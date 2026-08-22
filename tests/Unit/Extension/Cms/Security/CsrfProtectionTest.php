@@ -15,10 +15,12 @@ use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Cache\Application\Lock\LockHandle;
+use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 
 /**
  * Security tests verifying that CSRF-like step-up protections work.
@@ -42,7 +44,10 @@ final class CsrfProtectionTest extends TestCase
         $gate = $this->createStub(GateInterface::class);
         $gate->method('denies')->willReturn(false);
 
-        $rateLimiter = new CmsRateLimiter($this->createStub(TaggedCacheInterface::class));
+        $lockStub = $this->createStub(LockInterface::class);
+        $lockStub->method('acquire')->willReturn(new LockHandle('r', 't', 1.0, 60));
+        $lockStub->method('release')->willReturn(true);
+        $rateLimiter = new CmsRateLimiter($this->createStub(TaggedCacheInterface::class), $lockStub);
 
         $this->controller = new TwoFactorController(
             $generator,
@@ -50,8 +55,8 @@ final class CsrfProtectionTest extends TestCase
             $recoveryGenerator,
             $qrEncoder,
             $rateLimiter,
-            $gate,
             null,
+            $gate,
         );
     }
 
@@ -74,7 +79,7 @@ final class CsrfProtectionTest extends TestCase
             });
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Step-up authentication is required');
+        $this->expectExceptionMessageIsOrContains('Step-up authentication is required');
 
         $this->controller->enroll($request);
     }
@@ -96,7 +101,7 @@ final class CsrfProtectionTest extends TestCase
             });
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Step-up authentication is required');
+        $this->expectExceptionMessageIsOrContains('Step-up authentication is required');
 
         $this->controller->confirm($request);
     }
@@ -118,7 +123,7 @@ final class CsrfProtectionTest extends TestCase
             });
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Step-up authentication is required');
+        $this->expectExceptionMessageIsOrContains('Step-up authentication is required');
 
         $this->controller->disable($request);
     }

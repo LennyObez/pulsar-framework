@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Metadata for a single entity column mapping.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ColumnMetadata

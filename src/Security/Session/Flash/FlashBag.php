@@ -16,6 +16,7 @@ use function is_array;
  * Flash data persists for exactly one request: data written via `set()` becomes
  * available on the next request via `get()`, then is automatically purged.
  * Call `age()` once per request (typically in middleware) to rotate the bags.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FlashBag
@@ -44,8 +45,7 @@ final class FlashBag
      */
     public function set(string $key, mixed $value): void
     {
-        $new = $this->getNewBag();
-        $new[$key] = $value;
+        $new = [...$this->getNewBag(), $key => $value];
         $this->session->set(self::KEY_NEW, $new);
     }
 
@@ -54,12 +54,14 @@ final class FlashBag
      */
     public function get(string $key, mixed $default = null): mixed
     {
+        /** @var array<string, mixed> $old */
         $old = $this->getOldBag();
 
         if (!array_key_exists($key, $old)) {
             return $default;
         }
 
+        /** @var mixed $value */
         $value = $old[$key];
         unset($old[$key]);
         $this->session->set(self::KEY_OLD, $old);
@@ -106,14 +108,19 @@ final class FlashBag
     public function keep(string ...$keys): void
     {
         $old = $this->getOldBag();
-        $new = $this->getNewBag();
+        $kept = [];
 
         foreach ($keys as $key) {
             if (array_key_exists($key, $old)) {
-                $new[$key] = $old[$key];
+                $kept = [...$kept, $key => $old[$key]];
             }
         }
 
+        if ($kept === []) {
+            return;
+        }
+
+        $new = [...$this->getNewBag(), ...$kept];
         $this->session->set(self::KEY_NEW, $new);
     }
 
@@ -131,6 +138,7 @@ final class FlashBag
      */
     private function getNewBag(): array
     {
+        /** @var mixed $bag */
         $bag = $this->session->get(self::KEY_NEW, []);
 
         /** @var array<string, mixed> */
@@ -142,6 +150,7 @@ final class FlashBag
      */
     private function getOldBag(): array
     {
+        /** @var mixed $bag */
         $bag = $this->session->get(self::KEY_OLD, []);
 
         /** @var array<string, mixed> */

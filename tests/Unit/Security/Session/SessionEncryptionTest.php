@@ -93,7 +93,7 @@ final class SessionEncryptionTest extends TestCase
         $encryption = $this->createEncryption();
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization of SessionEncryption is forbidden');
+        $this->expectExceptionMessageIsOrContains('Serialization of SessionEncryption is forbidden');
 
         serialize($encryption);
     }
@@ -150,7 +150,7 @@ final class SessionEncryptionTest extends TestCase
         $encryption = $this->createEncryption();
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('invalid base64 encoding');
+        $this->expectExceptionMessageIsOrContains('invalid base64 encoding');
 
         $encryption->decrypt('not!valid!base64!!!', 'session-1', 'file', 'example.com');
     }
@@ -164,7 +164,7 @@ final class SessionEncryptionTest extends TestCase
         $tooShort = base64_encode('short');
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('ciphertext too short');
+        $this->expectExceptionMessageIsOrContains('ciphertext too short');
 
         $encryption->decrypt($tooShort, 'session-1', 'file', 'example.com');
     }
@@ -182,7 +182,7 @@ final class SessionEncryptionTest extends TestCase
         $encoded = base64_encode($fakeKid . $fakeNonce . $fakeCiphertext);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('unknown key identifier');
+        $this->expectExceptionMessageIsOrContains('unknown key identifier');
 
         $encryption->decrypt($encoded, 'session-1', 'file', 'example.com');
     }
@@ -206,7 +206,7 @@ final class SessionEncryptionTest extends TestCase
         $encryption = $this->createEncryption();
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization of SessionEncryption is forbidden');
+        $this->expectExceptionMessageIsOrContains('Serialization of SessionEncryption is forbidden');
 
         $encryption->__unserialize([]);
     }

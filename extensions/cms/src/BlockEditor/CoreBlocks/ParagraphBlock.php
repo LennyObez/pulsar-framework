@@ -41,14 +41,20 @@ final readonly class ParagraphBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $text = htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawText */
+        $rawText = $data['text'] ?? null;
+        $text = htmlspecialchars(is_string($rawText) ? $rawText : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $alignment */
         $alignment = $data['alignment'] ?? null;
 
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' class="' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') . '"' : '';
+
         if (is_string($alignment) && in_array($alignment, self::VALID_ALIGNMENTS, true)) {
-            return "<p style=\"text-align:{$alignment}\">{$text}</p>";
+            return "<p style=\"text-align:$alignment\"$className$anchor>$text</p>";
         }
 
-        return "<p>{$text}</p>";
+        return "<p$className$anchor>$text</p>";
     }
 
     #[Override]

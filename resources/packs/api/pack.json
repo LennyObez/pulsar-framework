@@ -1,0 +1,19 @@
+{
+  "name": "api",
+  "description": "API-only project structure with OpenAPI, auth middleware, rate limiting, and versioning",
+  "version": "1.0.0",
+  "requiredPulsarVersion": "^1.0",
+  "compliancePresets": ["API-Security", "Rate-Limiting"],
+  "files": {
+    "config/api.php": "config/api.php",
+    "config/rate-limiting.php": "config/rate-limiting.php",
+    "config/auth.php": "config/auth.php",
+    "src/OpenApiSpec.php": "src/Http/OpenApiSpec.php",
+    "src/AuthMiddleware.php": "src/Http/Middleware/AuthMiddleware.php",
+    "src/RateLimitMiddleware.php": "src/Http/Middleware/RateLimitMiddleware.php",
+    "src/VersionMiddleware.php": "src/Http/Middleware/VersionMiddleware.php",
+    "tests/AuthMiddlewareTest.php": "tests/Unit/Http/Middleware/AuthMiddlewareTest.php",
+    "tests/RateLimitMiddlewareTest.php": "tests/Unit/Http/Middleware/RateLimitMiddlewareTest.php"
+  },
+  "postInstallCommands": []
+}

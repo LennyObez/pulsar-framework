@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception thrown for logging errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LogException extends RuntimeException

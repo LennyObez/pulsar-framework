@@ -17,6 +17,7 @@ use function explode;
 use function filter_var;
 use function in_array;
 use function inet_pton;
+use function is_string;
 use function ord;
 use function substr;
 use function trim;
@@ -28,7 +29,7 @@ use const FILTER_VALIDATE_IP;
  * Resolves client fingerprints from PSR-7 server requests.
  *
  * IP resolution order:
- * 1. Trusted proxy check — only trust forwarded headers from configured proxies
+ * 1. Trusted proxy check: only trust forwarded headers from configured proxies
  * 2. CF-Connecting-IP (when Cloudflare mode is enabled)
  * 3. X-Real-IP header
  * 4. X-Forwarded-For header (right-to-left, first untrusted IP)
@@ -36,7 +37,11 @@ use const FILTER_VALIDATE_IP;
  *
  * All hashes use BLAKE2b (keyed) via Pulsar's Hmac class.
  */
-#[Internal(reason: 'CMS security internals — use via service binding')]
+#[Internal(reason: 'CMS security internals; use via service binding')]
+/**
+ * @psalm-api Resolved from the DI container by middleware that derives the
+ *            client fingerprint; not instantiated by name.
+ */
 final readonly class ClientFingerprintResolver
 {
     public function __construct(
@@ -70,7 +75,9 @@ final readonly class ClientFingerprintResolver
     private function resolveIpAddress(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-        $remoteAddr = (string) ($serverParams['REMOTE_ADDR'] ?? '127.0.0.1');
+        /** @var mixed $rawRemoteAddr */
+        $rawRemoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
+        $remoteAddr = is_string($rawRemoteAddr) ? $rawRemoteAddr : '127.0.0.1';
 
         // Only trust forwarded headers if the request comes from a trusted proxy
         if (!$this->isTrustedProxy($remoteAddr)) {
@@ -99,7 +106,7 @@ final readonly class ClientFingerprintResolver
         if ($forwardedFor !== '') {
             $ips = array_map(trim(...), explode(',', $forwardedFor));
 
-            // Walk right-to-left — rightmost IPs are closest to server (most trusted)
+            // Walk right-to-left: rightmost IPs are closest to server (most trusted)
             // Find the first IP that is NOT a trusted proxy
             for ($i = count($ips) - 1; $i >= 0; $i--) {
                 if (!$this->isTrustedProxy($ips[$i])) {
@@ -107,7 +114,7 @@ final readonly class ClientFingerprintResolver
                 }
             }
 
-            // All IPs are trusted proxies — use the leftmost (original client)
+            // All IPs are trusted proxies: use the leftmost (original client)
             if ($ips !== []) {
                 return $this->normalizeIp($ips[0]);
             }
@@ -160,7 +167,7 @@ final readonly class ClientFingerprintResolver
 
         if ($remainingBits > 0 && $fullBytes < 16) {
             $mask = 0xFF << (8 - $remainingBits);
-            $masked .= chr(ord($binary[$fullBytes]) & $mask);
+            $masked .= chr((ord($binary[$fullBytes]) & $mask) & 0xFF);
             $fullBytes++;
         }
 

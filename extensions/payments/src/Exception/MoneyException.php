@@ -48,4 +48,22 @@ final class MoneyException extends RuntimeException
     {
         return new self(sprintf('Basis points must be non-negative, got %d', $basisPoints));
     }
+
+    /**
+     * Integer overflow guard. Money arithmetic on 64-bit ints
+     * silently wraps to a negative number on overflow, and a banking
+     * framework cannot tolerate a `999_999_999_999 + 999_999_999_999`
+     * that surfaces as a credit instead of a 500.
+     */
+    #[NoDiscard]
+    public static function overflow(string $operation, int $a, int $b): self
+    {
+        return new self(sprintf(
+            'Money arithmetic overflow on %s: %d %s %d would exceed PHP_INT_MAX',
+            $operation,
+            $a,
+            $operation === 'add' ? '+' : '*',
+            $b,
+        ));
+    }
 }

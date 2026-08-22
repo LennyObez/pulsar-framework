@@ -452,6 +452,33 @@ return [
 
 The extension loader discovers all `pulsar.json` manifests under the configured paths automatically.
 
+### Programmatic discovery
+
+To discover and load extensions programmatically (e.g. in a custom entry point):
+
+```php
+use Pulsar\Extensibility\ExtensionBootstrap;
+
+// Static factory creates a bootstrap with a default ExtensionLoader
+$extensions = ExtensionBootstrap::create();
+
+// Discover extensions from one or more directories
+$extensions->loadFromPaths([
+    __DIR__ . '/../extensions',      // Scans for pulsar.json in subdirectories
+    __DIR__ . '/../vendor/acme/ext', // Individual extension directory
+]);
+
+// Check for any load warnings (skipped extensions, version mismatches)
+foreach ($extensions->getLoadWarnings() as $warning) {
+    error_log($warning);
+}
+
+// Pass to Kernel constructor
+$kernel = new Kernel(extensionBootstrap: $extensions);
+```
+
+`loadFromPaths()` performs four steps: manifest discovery, version validation, class validation, and dependency-order sorting. Extensions that fail validation are skipped with a warning (logged via the injected `LoggerInterface`).
+
 ## Debugging extensions
 
 Use the CLI to inspect extensions:
@@ -460,6 +487,35 @@ Use the CLI to inspect extensions:
 php bin/pulsar diagnostics        # Shows loaded extension count
 php bin/pulsar show:container     # Shows all container bindings (including extension services)
 php bin/pulsar show:routes        # Shows all routes (including extension routes)
+```
+
+## Registering routes
+
+Extensions register their routes during `boot()`. Routes are first-registered-wins
+and application routes register before extensions, so an extension route on the
+same method and path as a project route is treated as a collision: it is excluded
+from matching, logged as a warning in production, and fails the boot in debug mode
+(see [ADR-0034](adr/0034-route-registration-precedence.md)).
+
+Because of this, an extension must not claim a bare top-level path
+unconditionally. Make routes **opt-in and prefix-configurable** so an application
+that owns a path can disable or relocate them. The `pulsar/booking` extension is
+the reference: `config/booking.php` exposes `routes_enabled`, `route_prefix`, and
+`admin_route_prefix`, and `boot()` returns early when routes are disabled and
+prefixes every path with the configured value.
+
+```php
+public function boot(ContainerInterface $container, RouterInterface $router): void
+{
+    $config = $container->get(BookingConfig::class);
+
+    if (!$config->routesEnabled) {
+        return;
+    }
+
+    $router->get($config->routePrefix, [BookingController::class, 'form'], 'booking.form');
+    // ...
+}
 ```
 
 ## Error handling
@@ -508,6 +564,51 @@ Some capabilities cannot be enforced at the PHP level because PHP has no native 
 | Verified  | Most      | Global   | Yes      | With grant    | Yes        | Yes     | No           |
 | Community | Limited   | Prefixed | No       | No            | No         | No      | No           |
 | Untrusted | Read-only | No       | No       | No            | No         | No      | No           |
+
+## Admin theme integration
+
+The Admin extension ships its own layout and styles. Projects can customize the admin panel appearance without forking the extension.
+
+### Theme configuration
+
+Set the theme key in `config/admin.php`:
+
+```php
+return [
+    'theme' => 'dark',  // Built-in themes: 'light' (default), 'dark'
+];
+```
+
+### CSS custom properties
+
+The admin panel uses CSS custom properties from `resources/ui/css/tokens.css` for colors, spacing, typography, and other design tokens. Override any token in your project stylesheet:
+
+```css
+:root {
+  --pulsar-color-primary: #1a73e8;
+  --pulsar-color-surface: #fafafa;
+  --pulsar-font-family-heading: 'Montserrat', sans-serif;
+}
+```
+
+### Load order
+
+Extension CSS loads after the base `pulsar-ui.css` stylesheet. This means extension styles can rely on base tokens, and project-level overrides applied after extensions take final precedence:
+
+1. `resources/ui/css/base.css` (framework base, includes `@font-face` declarations)
+2. `resources/ui/css/tokens.css` (design tokens)
+3. Extension stylesheets (e.g., admin, analytics, studio)
+4. Project stylesheets (highest specificity)
+
+To inject a project stylesheet into the admin layout, register it in `config/admin.php`:
+
+```php
+return [
+    'extra_css' => [
+        '/css/admin-overrides.css',
+    ],
+];
+```
 
 ## Concurrency constraints
 

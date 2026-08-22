@@ -37,9 +37,7 @@
         font-size: var(--text-2xl);
         font-weight: var(--font-bold);
         color: var(--color-text);
-        margin-block-end: var(--space-2);
-        padding-block-end: var(--space-2);
-        border-block-end: 1px solid var(--color-border);
+        margin-block-end: var(--space-4);
       }
       .catalog-section > p {
         font-size: var(--text-sm);
@@ -238,8 +236,7 @@
           <div class="catalog-demo pui-prose">
             <pre>
 $ php -S localhost:8942 resources/playground/router.php
-PHP Development Server started at http://localhost:8942</pre
-            >
+PHP Development Server started at http://localhost:8942</pre>
             <p>
               Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> to open the command palette.
             </p>
@@ -1667,10 +1664,12 @@ PHP Development Server started at http://localhost:8942</pre
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </button>
-                <div class="pui-accordion__content" id="acc-panel-1">
-                  Pulsar is a PHP 8.5+ HMVC framework designed for regulated, mission-critical
-                  domains such as banking, healthcare, and legal. It prioritizes security,
-                  compliance, and performance.
+                <div class="pui-accordion__body" id="acc-panel-1">
+                  <div class="pui-accordion__content">
+                    Pulsar is a PHP 8.5+ HMVC framework designed for regulated, mission-critical
+                    domains such as banking, healthcare, and legal. It prioritizes security,
+                    compliance, and performance.
+                  </div>
                 </div>
               </div>
               <div class="pui-accordion__item">
@@ -1690,10 +1689,12 @@ PHP Development Server started at http://localhost:8942</pre
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </button>
-                <div class="pui-accordion__content" id="acc-panel-2" hidden>
-                  Run <code class="pui-inline-code">pulsar new my-project</code> to scaffold a new
-                  project. The CLI will guide you through initial setup including database, auth,
-                  and module selection.
+                <div class="pui-accordion__body" id="acc-panel-2" hidden>
+                  <div class="pui-accordion__content">
+                    Run <code class="pui-inline-code">pulsar new my-project</code> to scaffold a new
+                    project. The CLI will guide you through initial setup including database, auth,
+                    and module selection.
+                  </div>
                 </div>
               </div>
               <div class="pui-accordion__item">
@@ -1713,9 +1714,11 @@ PHP Development Server started at http://localhost:8942</pre
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </button>
-                <div class="pui-accordion__content" id="acc-panel-3" hidden>
-                  The current release is 1.0.0-rc.11. The framework is stabilizing toward a GA
-                  release with comprehensive test coverage and security reviews.
+                <div class="pui-accordion__body" id="acc-panel-3" hidden>
+                  <div class="pui-accordion__content">
+                    The current release is 1.0.0-rc.11. The framework is stabilizing toward a GA
+                    release with comprehensive test coverage and security reviews.
+                  </div>
                 </div>
               </div>
             </div>

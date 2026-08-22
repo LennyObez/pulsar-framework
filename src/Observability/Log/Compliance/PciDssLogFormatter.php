@@ -11,9 +11,11 @@ use Pulsar\Observability\Log\LogEntry;
 use function in_array;
 use function is_array;
 use function is_string;
+use function preg_replace;
 use function preg_replace_callback;
 use function str_repeat;
 use function strlen;
+use function strtolower;
 use function substr;
 
 /**
@@ -21,7 +23,7 @@ use function substr;
  *
  * PAN numbers are detected via regex pattern matching and masked to show
  * only the last 4 digits. CVV values are fully masked. This masking is
- * irreversible — original data cannot be recovered from logs.
+ * irreversible: original data cannot be recovered from logs.
  *
  * Supports controls for PCI DSS Requirement 3.4 (render PAN unreadable).
  */
@@ -71,20 +73,21 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
     {
         $masked = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             $lowerKey = strtolower($key);
 
             if (in_array($lowerKey, self::CVV_KEYS, true)) {
-                $masked[$key] = '***';
+                $masked = [...$masked, $key => '***'];
             } elseif (in_array($lowerKey, self::EXPIRY_KEYS, true)) {
-                $masked[$key] = '**/**';
+                $masked = [...$masked, $key => '**/**'];
             } elseif (is_string($value)) {
-                $masked[$key] = $this->maskPanInString($value);
+                $masked = [...$masked, $key => $this->maskPanInString($value)];
             } elseif (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $masked[$key] = $this->maskContext($value);
+                $masked = [...$masked, $key => $this->maskContext($value)];
             } else {
-                $masked[$key] = $value;
+                $masked = [...$masked, $key => $value];
             }
         }
 
@@ -93,7 +96,6 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
 
     private function maskPanInString(string $value): string
     {
-        /** @var string */
         return preg_replace_callback(self::PAN_PATTERN, function (array $matches): string {
             $digits = preg_replace('/[^0-9]/', '', $matches[0]) ?? '';
 

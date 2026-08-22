@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  */
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
 #[Api(since: '1.0.0')]
-readonly class Validate
+final readonly class Validate
 {
     /**
      * @param class-string $rule Fully qualified rule class name

@@ -210,7 +210,7 @@ final class DdlCompilerTest extends TestCase
     {
         $compiler = $this->compiler(Driver::SQLite); // no connection, defaults to unsupported
         $this->expectException(SchemaException::class);
-        $this->expectExceptionMessage('not supported');
+        $this->expectExceptionMessageIsOrContains('not supported');
         $compiler->compileAlterDropColumn('users', 'email');
     }
 
@@ -223,20 +223,33 @@ final class DdlCompilerTest extends TestCase
         self::assertSame('ALTER TABLE `users` DROP COLUMN `email`', $stmts[0]);
     }
 
+    /**
+     * No `IF EXISTS`: MySQL has none for `DROP INDEX` and rejects the clause with
+     * error 1064. This assertion used to pin the invalid form, so every drop through the
+     * compiler failed on MySQL while the suite reported the SQL as correct.
+     */
     #[Test]
     public function dropIndexMysqlWithTableName(): void
     {
         $compiler = $this->compiler(Driver::MySQL);
         $stmts = $compiler->compileDropIndex('users', 'idx_email');
-        self::assertSame('DROP INDEX IF EXISTS `idx_email` ON `users`', $stmts[0]);
+        self::assertSame('DROP INDEX `idx_email` ON `users`', $stmts[0]);
     }
 
+    /**
+     * PostgreSQL qualifies the index with its table's schema rather than dropping by a bare
+     * name, which the search path would resolve independently of the table the existence
+     * guard checked.
+     */
     #[Test]
-    public function dropIndexPgsqlWithIfExists(): void
+    public function dropIndexPgsqlResolvesTheIndexThroughItsTable(): void
     {
         $compiler = $this->compiler(Driver::PostgreSQL);
         $stmts = $compiler->compileDropIndex('users', 'idx_email');
-        self::assertSame('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
+
+        self::assertStringContainsString("to_regclass(quote_ident('users'))", $stmts[0]);
+        self::assertStringContainsString("'idx_email'", $stmts[0]);
+        self::assertStringNotContainsString('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
     }
 
     #[Test]

@@ -136,7 +136,7 @@ final class DashboardControllerTest extends TestCase
         $request = $this->createRequest('text/html', $identity);
 
         $this->expectException(AuthorizationException::class);
-        $this->expectExceptionMessage('Permission denied');
+        $this->expectExceptionMessageIsOrContains('Permission denied');
 
         $controller->index($request);
     }

@@ -12,6 +12,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\W3CTraceContextParser;
@@ -34,7 +35,11 @@ final class TracingMiddlewareTest extends TestCase
         self::assertSame(1, $collector->count());
 
         $span = $collector->spans()[0];
-        self::assertSame('HTTP GET /test', $span->name);
+        // Span name is method + route label, not raw path. With no RouteContext
+        // wired, the post-route logic falls back to `unmatched` instead of using
+        // the raw path, which would make span cardinality unbounded.
+        self::assertSame('HTTP GET unmatched', $span->name);
+        self::assertSame('/test', $span->attributes()['http.path'] ?? null);
         self::assertSame(SpanStatus::Ok, $span->status);
         self::assertTrue($span->hasEnded());
     }
@@ -63,10 +68,21 @@ final class TracingMiddlewareTest extends TestCase
     public function parsesIncomingTraceparent(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
+        $middleware = new TracingMiddleware(
+            $collector,
+            new W3CTraceContextParser(),
+            samplingRate: 1.0,
+            trustedProxy: new TrustedProxy(['10.0.0.1/32']),
+        );
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
-        $request = $this->createRequest('GET', '/test', ['traceparent' => $incomingTraceparent]);
+        // Propagation is only honoured from the trusted upstream proxy.
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/test',
+            headers: ['traceparent' => $incomingTraceparent],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn(Response::html('ok'));

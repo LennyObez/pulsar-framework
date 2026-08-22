@@ -18,8 +18,14 @@ use function sprintf;
  * Accepts an associative array of field names mapped to lists of rules,
  * then runs each rule against the corresponding input value.
  *
- * When a Required rule fails for a field, remaining rules for that field
- * are skipped (short-circuit).
+ * Short-circuit policy:
+ *   - `Required` failure → remaining rules for that field are skipped.
+ *   - `TypeRuleInterface` failure (`IntegerType`, `StringType`,
+ *     `BooleanType`, `ArrayType`) → remaining rules skipped, since
+ *     downstream rules (`Min`, `Between`, `MinLength`, …) would either
+ *     misbehave or pile cascading violations on top of a single
+ *     type-mismatch root cause.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Validator
@@ -41,6 +47,7 @@ final class Validator
                 throw new InvalidArgumentException(sprintf('Rules for field "%s" must be a list', $field));
             }
 
+            /** @var mixed $value */
             $value = $data[$field] ?? null;
 
             foreach ($fieldRules as $rule) {
@@ -49,8 +56,12 @@ final class Validator
                 if ($violation !== null) {
                     $violations[] = $violation;
 
-                    // Short-circuit: if Required fails, skip remaining rules for this field
-                    if ($rule instanceof Required) {
+                    // Short-circuit on Required OR any type-rule
+                    // failure. Running e.g. `Min` against a value that
+                    // is not an integer in the first place stacks
+                    // confusing cascade violations on top of the real
+                    // root cause.
+                    if ($rule instanceof Required || $rule instanceof TypeRuleInterface) {
                         break;
                     }
                 }

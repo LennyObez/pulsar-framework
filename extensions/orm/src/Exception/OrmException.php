@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Base exception for ORM operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class OrmException extends RuntimeException

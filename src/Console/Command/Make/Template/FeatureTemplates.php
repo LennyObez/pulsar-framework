@@ -103,7 +103,7 @@ final readonly class FeatureTemplates
             PHP;
     }
 
-    public function routeEntry(string $feature, string $namespace, string $method): string
+    public function routeEntry(string $feature, string $method): string
     {
         $lcFeature = lcfirst($feature);
         $routeMethod = strtolower($method);

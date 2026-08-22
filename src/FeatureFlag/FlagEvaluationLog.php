@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\FeatureFlag;
 
 use Override;
+use Psr\Log\LoggerInterface;
 use Pulsar\Runtime\ResettableInterface;
 use Throwable;
 
@@ -23,6 +24,8 @@ final class FlagEvaluationLog implements FlagEvaluationLogInterface, ResettableI
     /** @var list<callable(FlagEvaluation): void> */
     private array $observers = [];
 
+    public function __construct(private readonly ?LoggerInterface $logger = null) {}
+
     /**
      * Record a flag evaluation.
      */
@@ -33,7 +36,14 @@ final class FlagEvaluationLog implements FlagEvaluationLogInterface, ResettableI
         foreach ($this->observers as $observer) {
             try {
                 $observer($evaluation);
-            } catch (Throwable) {
+            } catch (Throwable $observerException) {
+                // Observer failures must not poison the recording path.
+                // Surface the error through the injected logger instead of
+                // swallowing it silently (C-4).
+                $this->logger?->error('Feature flag evaluation observer failed', [
+                    'flag' => $evaluation->flagName,
+                    'exception' => $observerException,
+                ]);
             }
         }
     }

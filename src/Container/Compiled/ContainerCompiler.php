@@ -63,7 +63,7 @@ final class ContainerCompiler
                 $depsMap[$id] = self::resolveDependencyIds($concrete, $definitions);
                 $methods[] = self::generateClassFactoryMethod($methodName, $id, $concrete, $definition);
             } else {
-                // Callable factories cannot be compiled — generate a placeholder
+                // Callable factories cannot be compiled: generate a placeholder
                 // that throws at runtime. The optimize command should warn about these.
                 $methods[] = self::generateUnsupportedFactoryMethod($methodName, $id);
             }
@@ -161,7 +161,7 @@ final class ContainerCompiler
 
         return <<<PHP
                 /**
-                 * Service: $id (callable factory — not compilable)
+                 * Service: $id (callable factory; not compilable)
                  */
                 private function $methodName(): object
                 {
@@ -286,8 +286,15 @@ final class ContainerCompiler
 
             $typeName = $type->getName();
 
-            // Map to a service ID: check definitions first, then use the type name directly
+            // A bound service id is resolved directly; an unbound but instantiable
+            // concrete is recorded by class name so the compiled factory's get()
+            // autowires it at runtime, exactly as the dynamic container does.
+            // Either way the parameter keeps its position — dropping an unbound
+            // concrete shifted later arguments, raising ArgumentCountError or
+            // passing a value to the wrong parameter.
             if (isset($definitions[$typeName])) {
+                $deps[] = $typeName;
+            } elseif (class_exists($typeName) && new ReflectionClass($typeName)->isInstantiable()) {
                 $deps[] = $typeName;
             }
         }

@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Discovered -> Validated -> Registered -> Booted
  *
  * Failed can occur from any state if an error occurs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ExtensionLifecycle: string

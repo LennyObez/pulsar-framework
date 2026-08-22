@@ -10,7 +10,13 @@
   "provides": {
     "services": ["StudioManager", "EventStoreInterface", "DashboardAggregator"],
     "routes": true,
-    "commands": []
+    "migrations": ["database/migrations"],
+    "commands": [
+      "Pulsar\\Extension\\Studio\\Command\\Console\\ConsoleExportCommand",
+      "Pulsar\\Extension\\Studio\\Command\\Console\\ConsoleVerifyCommand",
+      "Pulsar\\Extension\\Studio\\Command\\Console\\Guardian\\GuardianCheckCommand",
+      "Pulsar\\Extension\\Studio\\Command\\Console\\Guardian\\GuardianSupervisorRunOnceCommand"
+    ]
   },
   "frontend": {
     "bundles": [

@@ -7,8 +7,10 @@ namespace Pulsar\Tests\Unit\Integrity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestEntry;
+use Pulsar\Integrity\ManifestScope;
 use Pulsar\Integrity\ManifestSigner;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
@@ -69,6 +71,7 @@ final class ManifestSignerTest extends TestCase
             entryCount: $manifest->entryCount,
             entries: $manifest->entries,
             signature: $signature,
+            scope: $manifest->scope,
         );
 
         self::assertTrue($signer->verify($signedManifest));
@@ -98,6 +101,7 @@ final class ManifestSignerTest extends TestCase
             entryCount: $manifest->entryCount,
             entries: $manifest->entries,
             signature: 'deadbeef' . str_repeat('00', 28),
+            scope: $manifest->scope,
         );
 
         self::assertFalse($signer->verify($tamperedManifest));
@@ -122,6 +126,7 @@ final class ManifestSignerTest extends TestCase
                 new ManifestEntry(path: 'src/Kernel.php', hash: 'tampered_hash', size: 999),
             ],
             signature: $signature,
+            scope: $manifest->scope,
         );
 
         self::assertFalse($signer->verify($modifiedManifest));
@@ -142,6 +147,7 @@ final class ManifestSignerTest extends TestCase
             entryCount: $manifest->entryCount,
             entries: $manifest->entries,
             signature: $signature,
+            scope: $manifest->scope,
         );
 
         self::assertFalse($signer->verify($modified));
@@ -162,6 +168,7 @@ final class ManifestSignerTest extends TestCase
             entryCount: $manifest->entryCount,
             entries: $manifest->entries,
             signature: $signature,
+            scope: $manifest->scope,
         );
 
         self::assertFalse($signer->verify($modified));
@@ -204,9 +211,90 @@ final class ManifestSignerTest extends TestCase
             entryCount: $manifest->entryCount,
             entries: $manifest->entries,
             signature: $signature,
+            scope: $manifest->scope,
         );
 
         self::assertFalse($signer2->verify($signedManifest));
+    }
+
+    /**
+     * The scope decides what the verifier looks at, so it is worth as much to an
+     * attacker as the hashes are. Adding one exclude pattern would otherwise
+     * carve a directory out of the check without disturbing the signature.
+     */
+    #[Test]
+    public function widening_the_exclusions_invalidates_the_signature(): void
+    {
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
+
+        $manifest = new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
+            algorithm: 'sha256',
+            generatedAt: 1700000000,
+            frameworkVersion: '1.0.0-rc.2',
+            entryCount: 1,
+            entries: [new ManifestEntry(path: 'src/Kernel.php', hash: 'aaa', size: 10)],
+            scope: new ManifestScope(['src/**/*.php'], []),
+        );
+
+        $signature = $signer->sign($manifest);
+
+        $honest = new IntegrityManifest(
+            version: $manifest->version,
+            algorithm: $manifest->algorithm,
+            generatedAt: $manifest->generatedAt,
+            frameworkVersion: $manifest->frameworkVersion,
+            entryCount: $manifest->entryCount,
+            entries: $manifest->entries,
+            signature: $signature,
+            scope: $manifest->scope,
+        );
+
+        self::assertTrue($signer->verify($honest));
+
+        $carvedOut = new IntegrityManifest(
+            version: $manifest->version,
+            algorithm: $manifest->algorithm,
+            generatedAt: $manifest->generatedAt,
+            frameworkVersion: $manifest->frameworkVersion,
+            entryCount: $manifest->entryCount,
+            entries: $manifest->entries,
+            signature: $signature,
+            scope: new ManifestScope(['src/**/*.php'], ['src/Uploads/**']),
+        );
+
+        self::assertFalse($signer->verify($carvedOut));
+    }
+
+    #[Test]
+    public function narrowing_the_inclusions_invalidates_the_signature(): void
+    {
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
+
+        $manifest = new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
+            algorithm: 'sha256',
+            generatedAt: 1700000000,
+            frameworkVersion: '1.0.0-rc.2',
+            entryCount: 0,
+            entries: [],
+            scope: new ManifestScope(['src/**/*.php', 'config/**/*.php'], []),
+        );
+
+        $signature = $signer->sign($manifest);
+
+        $narrowed = new IntegrityManifest(
+            version: $manifest->version,
+            algorithm: $manifest->algorithm,
+            generatedAt: $manifest->generatedAt,
+            frameworkVersion: $manifest->frameworkVersion,
+            entryCount: $manifest->entryCount,
+            entries: $manifest->entries,
+            signature: $signature,
+            scope: new ManifestScope(['src/**/*.php'], []),
+        );
+
+        self::assertFalse($signer->verify($narrowed));
     }
 
     #[Test]
@@ -215,25 +303,27 @@ final class ManifestSignerTest extends TestCase
         $signer = new ManifestSigner($this->hmac, $this->masterKey);
 
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $signature = $signer->sign($manifest);
         self::assertNotEmpty($signature);
 
         $signed = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
             signature: $signature,
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         self::assertTrue($signer->verify($signed));
@@ -245,7 +335,7 @@ final class ManifestSignerTest extends TestCase
         $signer = new ManifestSigner($this->hmac, $this->masterKey);
 
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
@@ -255,6 +345,7 @@ final class ManifestSignerTest extends TestCase
                 new ManifestEntry(path: 'b.php', hash: 'bbb', size: 20),
                 new ManifestEntry(path: 'c.php', hash: 'ccc', size: 30),
             ],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $signature = $signer->sign($manifest);
@@ -267,6 +358,7 @@ final class ManifestSignerTest extends TestCase
             entryCount: $manifest->entryCount,
             entries: $manifest->entries,
             signature: $signature,
+            scope: $manifest->scope,
         );
 
         self::assertTrue($signer->verify($signed));
@@ -290,6 +382,7 @@ final class ManifestSignerTest extends TestCase
             entryCount: $unsigned->entryCount,
             entries: $unsigned->entries,
             signature: 'some_existing_sig',
+            scope: $unsigned->scope,
         );
 
         $sigFromSigned = $signer->sign($withSig);
@@ -297,10 +390,29 @@ final class ManifestSignerTest extends TestCase
         self::assertSame($sig, $sigFromSigned);
     }
 
-    private function createTestManifest(): IntegrityManifest
+    /**
+     * A signature over a scopeless manifest would attest to a document that
+     * cannot say what it covers, so the signer produces none.
+     */
+    #[Test]
+    public function it_refuses_to_sign_a_manifest_without_a_scope(): void
     {
-        return new IntegrityManifest(
-            version: 1,
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
+
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('declares no scope');
+
+        $_ = $signer->sign($this->createScopelessManifest());
+    }
+
+    #[Test]
+    public function it_does_not_authenticate_a_manifest_without_a_scope(): void
+    {
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
+        $signature = $signer->sign($this->createTestManifest());
+
+        $scopeless = new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
@@ -308,6 +420,36 @@ final class ManifestSignerTest extends TestCase
             entries: [
                 new ManifestEntry(path: 'src/Kernel.php', hash: 'abc123def456', size: 1024),
             ],
+            signature: $signature,
+        );
+
+        self::assertFalse($signer->verify($scopeless));
+    }
+
+    private function createScopelessManifest(): IntegrityManifest
+    {
+        return new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
+            algorithm: 'sha256',
+            generatedAt: 1700000000,
+            frameworkVersion: '1.0.0-rc.2',
+            entryCount: 0,
+            entries: [],
+        );
+    }
+
+    private function createTestManifest(): IntegrityManifest
+    {
+        return new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
+            algorithm: 'sha256',
+            generatedAt: 1700000000,
+            frameworkVersion: '1.0.0-rc.2',
+            entryCount: 1,
+            entries: [
+                new ManifestEntry(path: 'src/Kernel.php', hash: 'abc123def456', size: 1024),
+            ],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
     }
 }

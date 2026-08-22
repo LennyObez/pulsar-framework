@@ -19,6 +19,7 @@ use function trim;
  *
  * URL-encodes values for use in href/src attributes. Validates against
  * dangerous URI schemes (javascript:, data:, vbscript:) to prevent XSS.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UrlEscaper implements EscaperInterface
@@ -43,7 +44,7 @@ final readonly class UrlEscaper implements EscaperInterface
             return $this->encodeUrl($trimmed);
         }
 
-        // Relative URL or path — encode safely
+        // Relative URL or path: encode safely
         return $this->encodeUrl($trimmed);
     }
 

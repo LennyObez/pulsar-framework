@@ -99,4 +99,75 @@ return [
     | false, redirect /en/about → /about with a 301 (GET/HEAD only).
     */
     'canonical_redirect' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Negotiate Unprefixed Locale
+    |--------------------------------------------------------------------------
+    | When true (default), the active locale for an unprefixed URL is chosen by
+    | Accept-Language negotiation. When false, an unprefixed URL is always the
+    | default locale, so default-locale URLs stay canonical and are never
+    | redirected to a negotiated translation (recommended with localized_slugs
+    | and default_locale_in_url = false). The negotiated preference is still
+    | exposed via the `_negotiated_locale` request attribute, so an application
+    | can offer its own courtesy redirect at `/` (e.g. 302 a first-time `fr`
+    | visitor to `/fr`) without it contaminating slug resolution.
+    */
+    'negotiate_unprefixed_locale' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Courtesy Redirect (opt-in, default off)
+    |--------------------------------------------------------------------------
+    | When true, an unprefixed GET/HEAD request is 302-redirected to the
+    | visitor's negotiated locale prefix (e.g. `/about` -> `/en/about`). The
+    | default locale is exempt — its canonical URL is the unprefixed one — so
+    | there is no loop with `canonical_redirect`. `courtesy_fallback_locale` is
+    | the locale used when no supported language is detected (e.g. send
+    | undetected visitors to `en` while keeping the default locale canonical).
+    | Pair with `locale_cookie_enabled` so a visitor's footer choice sticks.
+    */
+    'courtesy_redirect' => false,
+    'courtesy_fallback_locale' => '', // '' = use default_locale; e.g. 'en'
+
+    /*
+    |--------------------------------------------------------------------------
+    | Persist Locale Cookie (opt-in, default off)
+    |--------------------------------------------------------------------------
+    | When true, the cookie-aware negotiator is wired (the cookie and session
+    | take precedence over Accept-Language) and prefixed pages emit a
+    | `Set-Cookie` remembering the chosen locale. The cookie is a functional
+    | preference (ePrivacy-exempt), server-set, `HttpOnly`, `SameSite=Lax`,
+    | `Secure` on HTTPS, and never carries tracking data.
+    */
+    'locale_cookie_enabled' => false,
+    'locale_cookie_name' => 'pulsar_locale',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localized Route Slugs
+    |--------------------------------------------------------------------------
+    | Translate static URL path segments per locale. Each key is the canonical
+    | (default-locale) path a route is registered under; the value maps locale
+    | tags to translated slugs. Multi-segment keys are supported. Locales
+    | without an entry fall back to the key.
+    |
+    | With the example below and supported_locales ['en','fr','nl']:
+    |   /development            → 200 (en, canonical)
+    |   /fr/developpement       → 200 (fr, canonical)
+    |   /fr/development         → 301 → /fr/developpement (key alias)
+    |   /nl/ontwikkeling/projecten/{slug} → 200, params after the slug intact
+    |
+    | Requires url_strategy = 'path_prefix'. Validate with `php bin/pulsar
+    | i18n:slugs:lint` (run in CI). Empty by default — zero overhead when unset.
+    |
+    | 'localized_slugs' => [
+    |     'development' => ['fr' => 'developpement', 'nl' => 'ontwikkeling'],
+    |     'development/projects' => [
+    |         'fr' => 'developpement/projets',
+    |         'nl' => 'ontwikkeling/projecten',
+    |     ],
+    | ],
+    */
+    'localized_slugs' => [],
 ];

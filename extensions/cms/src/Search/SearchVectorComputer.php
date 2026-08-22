@@ -14,6 +14,9 @@ use Pulsar\Database\ConnectionInterface;
  * - B: headings + custom fields
  * - C: body plaintext
  * - D: taxonomy terms (lowest relevance)
+ *
+ * @psalm-api Resolved from the DI container by content services on the
+ *            PostgreSQL adapter; not instantiated by name.
  */
 final readonly class SearchVectorComputer
 {

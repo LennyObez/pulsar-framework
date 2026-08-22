@@ -10,11 +10,23 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for the Content aggregate root.
+ *
+ * @psalm-api Public binding contract; implemented by DbContentRepository and
+ *            consumed by all content services, controllers, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentRepositoryInterface
 {
     public function findById(string $id): ?Content;
+
+    /**
+     * Find a content item by its stable import identifier.
+     *
+     * Used for idempotent imports: if a record with this import_id exists,
+     * the importer updates it instead of creating a duplicate.
+     */
+    public function findByImportId(string $importId): ?Content;
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content;
 

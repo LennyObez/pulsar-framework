@@ -22,6 +22,8 @@ use function max;
 #[Internal]
 final readonly class OrmResourceQuery implements ResourceQueryInterface
 {
+    use SqlIdentifierValidator;
+
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
@@ -48,7 +50,7 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
 
         $countSql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $countResult = $this->connection->query($countSql, $bindings);
-        $total = (int) ($countResult->first()?->get('cnt') ?? 0);
+        $total = $countResult->first()?->getInt('cnt') ?? 0;
 
         $dataSql = "SELECT * FROM $table$whereStr$orderBy LIMIT $perPage OFFSET $offset";
         $dataResult = $this->connection->query($dataSql, $bindings);
@@ -124,7 +126,8 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
 
         $sql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $result = $this->connection->query($sql, $bindings);
-        return (int) ($result->first()?->get('cnt') ?? 0);
+
+        return $result->first()?->getInt('cnt') ?? 0;
     }
 
     private function tableName(DataResourceInterface $resource): string
@@ -154,13 +157,14 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
             ),
         );
 
+        /** @var mixed $value */
         foreach ($filters as $field => $value) {
             if (!in_array($field, $filterableFields, true)) {
                 continue;
             }
             $paramName = "filter_$field";
             $whereClauses[] = "$field = :$paramName";
-            $bindings[$paramName] = $value;
+            $bindings = [...$bindings, $paramName => $value];
         }
     }
 
@@ -170,9 +174,9 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
     private function buildOrderBy(DataResourceInterface $resource, array $sort): string
     {
         if ($sort === []) {
-            $field = $resource->defaultSortField();
+            $quotedField = $this->quoteIdentifier($resource->defaultSortField());
             $dir = strtoupper($resource->defaultSortDirection()) === 'ASC' ? 'ASC' : 'DESC';
-            return " ORDER BY $field $dir";
+            return " ORDER BY $quotedField $dir";
         }
 
         $sortableFields = array_map(
@@ -188,14 +192,15 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
             if (!in_array($field, $sortableFields, true)) {
                 continue;
             }
+            $quotedField = $this->quoteIdentifier($field);
             $dir = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
-            $clauses[] = "$field $dir";
+            $clauses[] = "$quotedField $dir";
         }
 
         if ($clauses === []) {
-            $field = $resource->defaultSortField();
+            $quotedField = $this->quoteIdentifier($resource->defaultSortField());
             $dir = strtoupper($resource->defaultSortDirection()) === 'ASC' ? 'ASC' : 'DESC';
-            return " ORDER BY $field $dir";
+            return " ORDER BY $quotedField $dir";
         }
 
         return ' ORDER BY ' . implode(', ', $clauses);

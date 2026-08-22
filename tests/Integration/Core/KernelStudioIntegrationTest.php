@@ -185,8 +185,9 @@ final class KernelStudioIntegrationTest extends TestCase
             new StudioExtension(),
             ExtensionManifest::fromArray([
                 'name' => 'pulsar/studio',
-                'version' => '1.0.0-rc.1',
+                'version' => '1.0.0-rc.1', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => StudioExtension::class,
+                'trust_tier' => 'core',
             ]),
         );
 
@@ -223,6 +224,18 @@ final class KernelStudioIntegrationTest extends TestCase
                 'session' => [],
                 'csrf' => [],
                 'headers' => [],
+            ];
+            PHP);
+
+        // The kernel engages the extension capability sandbox at boot: a bundled
+        // extension that registers services (studio) must be trusted at core, as
+        // the framework's shipped config/extensions.php declares it. Without this
+        // the extension is capped at community and denied ContainerWrite.
+        file_put_contents($this->tempDir . DIRECTORY_SEPARATOR . 'extensions.php', <<<'PHP'
+            <?php return [
+                'trusted_extensions' => [
+                    'pulsar/studio' => ['tier' => 'core'],
+                ],
             ];
             PHP);
     }

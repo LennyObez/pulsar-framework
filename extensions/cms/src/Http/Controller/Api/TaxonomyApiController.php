@@ -19,7 +19,7 @@ use function is_string;
  *
  * Provides read-only JSON endpoints for taxonomy and term retrieval.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class TaxonomyApiController
 {
     public function __construct(
@@ -28,7 +28,7 @@ final readonly class TaxonomyApiController
     ) {}
 
     /**
-     * GET /api/v1/taxonomies/{slug} — Show a single taxonomy by slug.
+     * GET /api/v1/taxonomies/{slug}: Show a single taxonomy by slug.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {
@@ -52,7 +52,7 @@ final readonly class TaxonomyApiController
     }
 
     /**
-     * GET /api/v1/taxonomies/{slug}/terms — List terms for a taxonomy.
+     * GET /api/v1/taxonomies/{slug}/terms: List terms for a taxonomy.
      */
     public function terms(ServerRequestInterface $request, string $slug): Response
     {
@@ -66,8 +66,12 @@ final readonly class TaxonomyApiController
         }
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
-        $parentId = is_string($params['parent_id'] ?? null) ? $params['parent_id'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        /** @var mixed $rawParentId */
+        $rawParentId = $params['parent_id'] ?? null;
+        $parentId = is_string($rawParentId) ? $rawParentId : null;
 
         $terms = $this->repository->findTerms($taxonomy->id, $locale, $parentId);
 

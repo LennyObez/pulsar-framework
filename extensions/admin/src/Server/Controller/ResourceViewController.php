@@ -23,6 +23,8 @@ use function str_contains;
 #[Internal]
 final readonly class ResourceViewController
 {
+    use RendersAdminLayout;
+
     public function __construct(
         private ViewResourceHandler $handler,
         private ResourceRegistryInterface $registry,
@@ -54,7 +56,7 @@ final readonly class ResourceViewController
 
         $resourceDef = $this->registry->get($resource);
 
-        return Response::html($this->renderView("{$resourceDef->label()} #$id", [
+        return Response::html($this->renderAdminView("{$resourceDef->label()} #$id", 'resource-view', [
             'resource' => $resourceDef,
             'data' => $result->data,
             'id' => $id,
@@ -62,15 +64,4 @@ final readonly class ResourceViewController
         ]));
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(string $title, array $templateData): string
-    {
-        $content = 'resource-view';
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

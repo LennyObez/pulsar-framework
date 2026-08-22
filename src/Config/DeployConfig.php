@@ -9,15 +9,18 @@ use Pulsar\Api\Api;
 
 use function in_array;
 use function is_array;
-use function is_int;
 use function is_string;
 
 /**
  * Typed configuration DTO for `config/deploy.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class DeployConfig
+final readonly class DeployConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/deploy.php. */
+    private const array KNOWN_KEYS = ['trusted_proxies', 'request_limits', 'http3', 'checks'];
+
     /** Default check configuration used when no explicit config is provided. */
     private const array DEFAULT_CHECKS = [
         'debug-mode' => ['enabled' => true, 'severity' => 'fail'],
@@ -33,6 +36,7 @@ readonly class DeployConfig
         'request-size-limits' => ['enabled' => true, 'severity' => 'warn'],
         'trusted-proxies' => ['enabled' => true, 'severity' => 'warn'],
         'integrity' => ['enabled' => true, 'severity' => 'fail'],
+        'audit-logger' => ['enabled' => true, 'severity' => 'fail'],
     ];
 
     /**
@@ -46,7 +50,17 @@ readonly class DeployConfig
         public bool $http3Enabled = false,
         public int $http3AltSvcMaxAge = 86400,
         public array $checks = self::DEFAULT_CHECKS,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Get the configuration for a specific check.
@@ -66,40 +80,37 @@ readonly class DeployConfig
     {
         $config = $this->checks[$name] ?? ['enabled' => true];
 
-        /** @var bool */
         return $config['enabled'] ?? true;
     }
 
     /**
-     * @param array<string, mixed> $data Raw array from config/deploy.php
+     * @param array{
+     *     trusted_proxies?: list<string>,
+     *     request_limits?: array{
+     *         max_post_size_mb?: int,
+     *         max_upload_size_mb?: int,
+     *     },
+     *     http3?: array{
+     *         enabled?: bool|int|string,
+     *         alt_svc_max_age?: int,
+     *     },
+     *     checks?: array<string, mixed>,
+     * } $data Raw array from config/deploy.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        /** @var list<string> $trustedProxies */
-        $trustedProxies = $data['trusted_proxies'] ?? [];
-
-        /** @var array<string, mixed> $requestLimits */
         $requestLimits = $data['request_limits'] ?? [];
-
-        /** @var array<string, mixed> $http3 */
         $http3 = $data['http3'] ?? [];
 
-        $rawMaxPost = $requestLimits['max_post_size_mb'] ?? 8;
-        $rawMaxUpload = $requestLimits['max_upload_size_mb'] ?? 10;
-        $rawAltSvcMaxAge = $http3['alt_svc_max_age'] ?? 86400;
-
-        /** @var array<string, mixed> $rawChecks */
-        $rawChecks = $data['checks'] ?? [];
-        $checks = self::parseChecks($rawChecks, $environment);
-
         return new self(
-            trustedProxies: $trustedProxies,
-            maxPostSizeMb: is_int($rawMaxPost) ? $rawMaxPost : 8,
-            maxUploadSizeMb: is_int($rawMaxUpload) ? $rawMaxUpload : 10,
+            trustedProxies: $data['trusted_proxies'] ?? [],
+            maxPostSizeMb: $requestLimits['max_post_size_mb'] ?? 8,
+            maxUploadSizeMb: $requestLimits['max_upload_size_mb'] ?? 10,
             http3Enabled: (bool) ($http3['enabled'] ?? false),
-            http3AltSvcMaxAge: is_int($rawAltSvcMaxAge) ? $rawAltSvcMaxAge : 86400,
-            checks: $checks,
+            http3AltSvcMaxAge: $http3['alt_svc_max_age'] ?? 86400,
+            checks: self::parseChecks($data['checks'] ?? [], $environment),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 
@@ -109,6 +120,16 @@ readonly class DeployConfig
      * Env override pattern: DEPLOY_CHECK_{NAME}_SEVERITY=fail|warn|off
      * (name is uppercased with hyphens replaced by underscores).
      *
+     * In Production mode an env-supplied `severity=off` is ignored.
+     * Honouring it would let anyone who controls the orchestration
+     * environment (env-var injection, a compromised runner) switch
+     * off the security-headers, debug-mode or opcache checks with no
+     * audit trail. An operator who genuinely needs a check disabled
+     * must say so in the git-tracked, code-reviewable config file.
+     * The `fail`/`warn` overrides stay available from env because
+     * they cannot weaken the gate beyond what the config file
+     * already permits.
+     *
      * @param array<string, mixed> $rawChecks
      * @return array<string, array{enabled: bool, severity: string}>
      */
@@ -116,11 +137,29 @@ readonly class DeployConfig
     {
         $defaults = self::DEFAULT_CHECKS;
         $result = [];
+        $isProduction = $environment->resolveMode() === EnvironmentMode::Production;
 
-        foreach ($defaults as $name => $defaultConfig) {
+        // Walk the union of default check names AND user-defined
+        // names so an extension that registers its own deploy check
+        // (e.g. `payments-webhook-secret`, custom org gate) can declare
+        // its severity via `config/deploy.php` instead of being silently
+        // dropped because the framework's DEFAULT_CHECKS list does not
+        // know about it. The check itself still has to be registered
+        // through `DeployCheckRegistry`; this method only carries the
+        // configuration.
+        $names = array_keys($defaults);
+        foreach (array_keys($rawChecks) as $userName) {
+            if (is_string($userName) && !in_array($userName, $names, true)) {
+                $names[] = $userName;
+            }
+        }
+
+        foreach ($names as $name) {
+            $defaultConfig = $defaults[$name] ?? ['enabled' => true, 'severity' => 'warn'];
             $config = $defaultConfig;
 
             if (isset($rawChecks[$name]) && is_array($rawChecks[$name])) {
+                /** @var mixed $rawSeverity */
                 $rawSeverity = $rawChecks[$name]['severity'] ?? null;
                 $config = [
                     'enabled' => (bool) ($rawChecks[$name]['enabled'] ?? $defaultConfig['enabled']),
@@ -133,10 +172,20 @@ readonly class DeployConfig
             $envValue = $environment->get($envKey);
 
             if (in_array($envValue, ['fail', 'warn', 'off'], true)) {
-                $config['severity'] = $envValue;
+                $isProductionOff = $envValue === 'off' && $isProduction;
 
-                if ($envValue === 'off') {
-                    $config['enabled'] = false;
+                if (!$isProductionOff) {
+                    // In production an env-supplied `severity=off` is
+                    // ignored: the file-configured (or default)
+                    // severity stays in force, so control of the env
+                    // cannot silently neutralise a deploy gate. fail /
+                    // warn overrides are still honoured because they
+                    // can only tighten or maintain the severity.
+                    $config['severity'] = $envValue;
+
+                    if ($envValue === 'off') {
+                        $config['enabled'] = false;
+                    }
                 }
             }
 

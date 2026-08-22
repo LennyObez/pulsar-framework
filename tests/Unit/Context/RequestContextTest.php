@@ -134,6 +134,74 @@ final class RequestContextTest extends TestCase
         self::assertArrayHasKey('user_agent', $array);
     }
 
+    #[Test]
+    public function fromArrayCoercesNonStringFieldsToNull(): void
+    {
+        $context = RequestContext::fromArray([
+            'correlation_id' => str_repeat('aa', 16),
+            'causation_id' => str_repeat('bb', 16),
+            'actor' => 42,
+            'tenant_id' => ['array'],
+            'ip' => false,
+            'user_agent' => 0,
+            'locale' => null,
+        ]);
+
+        self::assertNull($context->actor);
+        self::assertNull($context->tenantId);
+        self::assertNull($context->ip);
+        self::assertNull($context->userAgent);
+        self::assertNull($context->locale);
+    }
+
+    #[Test]
+    public function fromArrayThrowsForNonStringCorrelationId(): void
+    {
+        $this->expectException(\Pulsar\Context\Exception\ContextException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid correlation ID');
+
+        (void) RequestContext::fromArray([
+            'correlation_id' => 12345,
+            'causation_id' => str_repeat('bb', 16),
+        ]);
+    }
+
+    #[Test]
+    public function fromArrayCreatesTimestampFromString(): void
+    {
+        $context = RequestContext::fromArray([
+            'correlation_id' => str_repeat('cc', 16),
+            'causation_id' => str_repeat('dd', 16),
+            'timestamp' => '2025-06-01T12:00:00.000000+00:00',
+        ]);
+
+        self::assertSame('2025', $context->timestamp->format('Y'));
+    }
+
+    #[Test]
+    public function fromArrayGeneratesTimestampWhenMissing(): void
+    {
+        $before = new DateTimeImmutable();
+
+        $context = RequestContext::fromArray([
+            'correlation_id' => str_repeat('cc', 16),
+            'causation_id' => str_repeat('dd', 16),
+        ]);
+
+        self::assertGreaterThanOrEqual($before, $context->timestamp);
+    }
+
+    #[Test]
+    public function fromArrayDefaultsAttributesToEmptyArray(): void
+    {
+        $context = RequestContext::fromArray([
+            'correlation_id' => str_repeat('cc', 16),
+            'causation_id' => str_repeat('dd', 16),
+        ]);
+
+        self::assertSame([], $context->attributes);
+    }
+
     private function createContext(): RequestContext
     {
         return new RequestContext(

@@ -158,7 +158,7 @@ final class ModerationWorkflowTest extends TestCase
         );
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already has a pending report');
+        $this->expectExceptionMessageIsOrContains('already has a pending report');
 
         $stack->moderationService->submitThreadReport(
             threadId: $thread->id,
@@ -246,7 +246,7 @@ final class ModerationWorkflowTest extends TestCase
         );
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('banned');
+        $this->expectExceptionMessageIsOrContains('banned');
 
         $stack->moderationService->banUser(
             userId: 'user-trouble',

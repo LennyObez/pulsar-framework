@@ -15,9 +15,10 @@ use function sprintf;
 
 /**
  * All array elements must be unique (strict comparison). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Distinct implements RuleInterface
+final readonly class Distinct implements RuleInterface
 {
     public function __construct(
         private string $message = '',
@@ -38,8 +39,10 @@ readonly class Distinct implements RuleInterface
             );
         }
 
+        /** @var list<mixed> $unique */
         $unique = [];
 
+        /** @var mixed $element */
         foreach ($value as $element) {
             if (in_array($element, $unique, true)) {
                 return new Violation(
@@ -52,7 +55,7 @@ readonly class Distinct implements RuleInterface
                 );
             }
 
-            $unique[] = $element;
+            $unique = [...$unique, $element];
         }
 
         return null;

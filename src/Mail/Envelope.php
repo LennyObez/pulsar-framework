@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines the envelope (sender, recipients, subject) for a mailable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Envelope

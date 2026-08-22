@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Database\Schema\SchemaColumn;
 use Pulsar\Database\Schema\SchemaColumnType;
 use Pulsar\Database\Schema\SchemaDefaultExpression;
@@ -26,6 +25,8 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function array_map;
+use function is_int;
+use function is_scalar;
 use function is_string;
 use function mb_strlen;
 
@@ -35,6 +36,8 @@ use function mb_strlen;
 #[Internal]
 final readonly class SchemaApiController
 {
+    use ExtractsRequestActor;
+
     public function __construct(
         private CreateTableHandler $createHandler,
         private AlterTableHandler $alterHandler,
@@ -155,6 +158,13 @@ final readonly class SchemaApiController
         $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $column */
         $column = $body['column'] ?? '';
+
+        if ($column === '') {
+            // Answering 200 here used to hand the operator `DROP COLUMN ""` as the change
+            // they were about to approve. A preview of nothing is not a preview.
+            return Response::json(['error' => 'A "column" field is required'], 400);
+        }
+
         $result = $this->previewHandler->previewDropColumn($table, $column);
 
         return Response::json($result);
@@ -174,12 +184,17 @@ final readonly class SchemaApiController
         $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $indexName */
         $indexName = $body['name'] ?? '';
+
+        if ($indexName === '') {
+            return Response::json(['error' => 'A "name" field is required'], 400);
+        }
+
         $result = $this->previewHandler->previewDropIndex($table, $indexName);
 
         return Response::json($result);
     }
 
-    public function previewDropTable(ServerRequestInterface $request, string $table): Response
+    public function previewDropTable(string $table): Response
     {
         $result = $this->previewHandler->previewDropTable($table);
 
@@ -201,7 +216,9 @@ final readonly class SchemaApiController
     {
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $limit = (int) ($body['limit'] ?? '100');
+        /** @var mixed $limitRaw */
+        $limitRaw = $body['limit'] ?? 100;
+        $limit = (is_int($limitRaw) || is_string($limitRaw)) && is_numeric($limitRaw) ? (int) $limitRaw : 100;
         $entries = $this->changeLog->recent($limit);
 
         $entryData = array_map(
@@ -222,7 +239,7 @@ final readonly class SchemaApiController
         return Response::json(['entries' => $entryData]);
     }
 
-    public function exportBundle(ServerRequestInterface $request): Response
+    public function exportBundle(): Response
     {
         $bundle = $this->changeLog->exportSqlBundle();
 
@@ -238,14 +255,11 @@ final readonly class SchemaApiController
 
     private function extractContext(ServerRequestInterface $request): MutationContext
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        /** @var string $reason */
         $reason = $body['reason'] ?? '';
 
         if (!is_string($reason) || mb_strlen($reason) < 5) {
@@ -310,7 +324,9 @@ final readonly class SchemaApiController
      */
     private function buildColumnFromArray(array $c): SchemaColumn
     {
-        $type = SchemaColumnType::from((string) ($c['type'] ?? 'string'));
+        /** @var mixed $typeRaw */
+        $typeRaw = $c['type'] ?? 'string';
+        $type = SchemaColumnType::from(is_string($typeRaw) ? $typeRaw : 'string');
 
         $defaultExpression = null;
         if (isset($c['default_expression']) && is_string($c['default_expression']) && $c['default_expression'] !== '') {
@@ -320,20 +336,27 @@ final readonly class SchemaApiController
         /** @var list<string> $enumValues */
         $enumValues = $c['enum_values'] ?? [];
 
+        /** @var mixed $nameRaw */
+        $nameRaw = $c['name'] ?? '';
+        /** @var mixed $defaultValue */
+        $defaultValue = $c['default_value'] ?? null;
+        /** @var bool|float|int|string|null $typedDefault */
+        $typedDefault = is_scalar($defaultValue) || $defaultValue === null ? $defaultValue : null;
+
         return new SchemaColumn(
-            name: (string) ($c['name'] ?? ''),
+            name: is_string($nameRaw) ? $nameRaw : '',
             type: $type,
-            nullable: (bool) ($c['nullable'] ?? false),
-            primaryKey: (bool) ($c['primary_key'] ?? false),
-            autoIncrement: (bool) ($c['auto_increment'] ?? false),
-            unsigned: (bool) ($c['unsigned'] ?? false),
-            unique: (bool) ($c['unique'] ?? false),
-            default: $c['default_value'] ?? null,
-            hasDefault: (bool) ($c['has_default'] ?? false),
+            nullable: !empty($c['nullable']),
+            primaryKey: !empty($c['primary_key']),
+            autoIncrement: !empty($c['auto_increment']),
+            unsigned: !empty($c['unsigned']),
+            unique: !empty($c['unique']),
+            default: $typedDefault,
+            hasDefault: !empty($c['has_default']),
             defaultExpression: $defaultExpression,
-            length: isset($c['length']) ? (int) $c['length'] : null,
-            precision: isset($c['precision']) ? (int) $c['precision'] : null,
-            scale: isset($c['scale']) ? (int) $c['scale'] : null,
+            length: isset($c['length']) && is_numeric($c['length']) ? (int) $c['length'] : null,
+            precision: isset($c['precision']) && is_numeric($c['precision']) ? (int) $c['precision'] : null,
+            scale: isset($c['scale']) && is_numeric($c['scale']) ? (int) $c['scale'] : null,
             enumValues: $enumValues,
         );
     }
@@ -346,10 +369,12 @@ final readonly class SchemaApiController
         /** @var list<string> $columns */
         $columns = $i['columns'] ?? [];
 
+        /** @var mixed $nameRaw */
+        $nameRaw = $i['name'] ?? '';
         return new SchemaIndex(
-            name: (string) ($i['name'] ?? ''),
+            name: is_string($nameRaw) ? $nameRaw : '',
             columns: $columns,
-            unique: (bool) ($i['unique'] ?? false),
+            unique: !empty($i['unique']),
         );
     }
 
@@ -363,13 +388,21 @@ final readonly class SchemaApiController
         /** @var list<string> $referencedColumns */
         $referencedColumns = $fk['referenced_columns'] ?? [];
 
+        /** @var mixed $fkName */
+        $fkName = $fk['name'] ?? '';
+        /** @var mixed $refTable */
+        $refTable = $fk['referenced_table'] ?? '';
+        /** @var mixed $onDelete */
+        $onDelete = $fk['on_delete'] ?? 'RESTRICT';
+        /** @var mixed $onUpdate */
+        $onUpdate = $fk['on_update'] ?? 'RESTRICT';
         return new SchemaForeignKey(
-            name: (string) ($fk['name'] ?? ''),
+            name: is_string($fkName) ? $fkName : '',
             columns: $columns,
-            referencedTable: (string) ($fk['referenced_table'] ?? ''),
+            referencedTable: is_string($refTable) ? $refTable : '',
             referencedColumns: $referencedColumns,
-            onDelete: SchemaReferentialAction::from((string) ($fk['on_delete'] ?? 'RESTRICT')),
-            onUpdate: SchemaReferentialAction::from((string) ($fk['on_update'] ?? 'RESTRICT')),
+            onDelete: SchemaReferentialAction::from(is_string($onDelete) ? $onDelete : 'RESTRICT'),
+            onUpdate: SchemaReferentialAction::from(is_string($onUpdate) ? $onUpdate : 'RESTRICT'),
         );
     }
 }

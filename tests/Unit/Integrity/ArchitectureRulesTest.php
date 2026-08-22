@@ -15,6 +15,8 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 
 use function array_keys;
+use function array_unique;
+use function array_values;
 use function count;
 use function dirname;
 use function file_get_contents;
@@ -25,6 +27,7 @@ use function is_array;
 use function json_decode;
 use function preg_match;
 use function sprintf;
+use function str_starts_with;
 
 use const DIRECTORY_SEPARATOR;
 use const GLOB_ONLYDIR;
@@ -112,6 +115,11 @@ final class ArchitectureRulesTest extends TestCase
         foreach (self::$fileReferences as $filePath => $references) {
             $sourceNamespace = self::$fileNamespaces[$filePath] ?? '';
 
+            // Composition roots are exempt — they wire cross-module services by design
+            if (ModuleMap::isCompositionRoot($sourceNamespace)) {
+                continue;
+            }
+
             foreach ($references as $ref) {
                 if (!ModuleMap::isController($ref)) {
                     continue;
@@ -136,6 +144,56 @@ final class ArchitectureRulesTest extends TestCase
     }
 
     // ---------------------------------------------------------------
+    // Rule 1b: No competitor-framework dependencies in production code
+    // ---------------------------------------------------------------
+
+    #[Test]
+    public function competitor_framework_imports_are_forbidden_in_production_code(): void
+    {
+        // Pulsar builds its own components — production code must not depend on
+        // competitor frameworks. This also guards against an undeclared
+        // transitive dependency leaking into production: Symfony's Filesystem
+        // was used here without a composer `require` entry and would fatal on
+        // `composer install --no-dev`. Reimplement natively or use a PSR
+        // interface (Psr\* is allowed — those are standards, not frameworks).
+        $forbiddenPrefixes = [
+            'Symfony\\',
+            'Illuminate\\',
+            'Laravel\\',
+            'Doctrine\\',
+            'GuzzleHttp\\',
+            'Monolog\\',
+            'Laminas\\',
+            'Zend\\',
+            'Nette\\',
+            'Yiisoft\\',
+            'Cake\\',
+            'Slim\\',
+        ];
+
+        $violations = [];
+
+        foreach (self::$fileReferences as $filePath => $references) {
+            foreach ($references as $ref) {
+                foreach ($forbiddenPrefixes as $prefix) {
+                    if (str_starts_with($ref, $prefix)) {
+                        $violations[] = sprintf('%s imports %s', self::shortPath($filePath), $ref);
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        self::assertEmpty(
+            $violations,
+            'Production code (src/ + extensions/*/src/) must not import competitor frameworks — '
+            . "Pulsar builds its own components. Reimplement natively or depend on a PSR interface.\nFound:\n- "
+            . implode("\n- ", $violations),
+        );
+    }
+
+    // ---------------------------------------------------------------
     // Rule 2: No cross-module view references
     // ---------------------------------------------------------------
 
@@ -146,6 +204,11 @@ final class ArchitectureRulesTest extends TestCase
 
         foreach (self::$fileReferences as $filePath => $references) {
             $sourceNamespace = self::$fileNamespaces[$filePath] ?? '';
+
+            // Composition roots are exempt — they wire cross-module services by design
+            if (ModuleMap::isCompositionRoot($sourceNamespace)) {
+                continue;
+            }
 
             foreach ($references as $ref) {
                 if (!ModuleMap::isView($ref)) {
@@ -198,14 +261,35 @@ final class ArchitectureRulesTest extends TestCase
                 continue;
             }
 
+            // The registry that defines the roots is exempt as a source, for the same
+            // reason it is exempt as a target below: it is what the rules are written
+            // in. It holds class NAMES as strings and imports nothing — storing names
+            // rather than importing them is the whole point. Counting those strings as
+            // imports is what put OptimizeCommand and BuildCommand in the baseline;
+            // they come back out with this, because there was never a violation to
+            // record. Reading the list is not depending on what it lists.
+            if ($sourceNamespace === 'Pulsar\Api\CompositionRoots') {
+                continue;
+            }
+
             foreach ($references as $ref) {
                 // Same module — no restriction
                 if (ModuleMap::sameModule($sourceNamespace, $ref)) {
                     continue;
                 }
 
-                // The Api attribute classes themselves are always accessible
-                if ($ref === 'Pulsar\Api\Api' || $ref === 'Pulsar\Api\Internal') {
+                // Architecture metadata is accessible from everywhere by nature: it is
+                // what the rules are written in, not something the rules govern. The two
+                // attributes have always been here; CompositionRoots joins them because
+                // it is the same kind of thing — the single definition of which classes
+                // may cross module boundaries. It lived in triplicate precisely because
+                // sharing it looked like a boundary violation, so each consumer wrote its
+                // own, and the three drifted.
+                if (
+                    $ref === 'Pulsar\Api\Api'
+                    || $ref === 'Pulsar\Api\Internal'
+                    || $ref === 'Pulsar\Api\CompositionRoots'
+                ) {
                     continue;
                 }
 
@@ -345,7 +429,24 @@ final class ArchitectureRulesTest extends TestCase
                 // Extract extension name from path: extensions/{Name}/src
                 if (preg_match('/extensions[\\\\\/]([^\\\\\/]+)[\\\\\/]src$/', $extDir, $matches) === 1) {
                     $extName = $matches[1];
-                    $namespace = 'Pulsar\\\\Extension\\\\' . ucfirst($extName);
+
+                    // Convert directory name to PascalCase namespace segment:
+                    // social-sso -> SocialSso, oauth2 -> OAuth2, ai-governance -> AiGovernance
+                    $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $extName)));
+
+                    // Special case: oauth2 -> OAuth2 (standard casing)
+                    $namespacePart = match ($namespacePart) {
+                        'Oauth2' => 'OAuth2',
+                        'Opentelemetry' => 'OpenTelemetry',
+                        'Webauthn' => 'WebAuthn',
+                        'ObservabilityExport' => 'ObservabilityExport',
+                        'SocialSso' => 'SocialSso',
+                        'AiGovernance' => 'AiGovernance',
+                        'McpServer' => 'McpServer',
+                        default => $namespacePart,
+                    };
+
+                    $namespace = 'Pulsar\\\\Extension\\\\' . $namespacePart;
 
                     if (!str_contains($deptracContent, $namespace)) {
                         $uncovered[] = $extName;
@@ -465,7 +566,16 @@ final class ArchitectureRulesTest extends TestCase
                 continue;
             }
 
-            $references = ImportAnalyzer::extractReferences($filePath);
+            // Combine static `use` / FQCN references with the
+            // class-string scan so `$container->get('Pulsar\Foo\Bar')`
+            // and `class_exists('Pulsar\Foo\Bar')` are not invisible
+            // to boundary enforcement. Without the merge the
+            // arbitrary-class-instantiation pattern bypasses the
+            // architecture rules — exactly the case those rules
+            // exist to surface.
+            $staticRefs = ImportAnalyzer::extractReferences($filePath);
+            $stringRefs = ImportAnalyzer::extractClassStringReferences($filePath);
+            $references = array_values(array_unique([...$staticRefs, ...$stringRefs]));
             if ($references !== []) {
                 self::$fileReferences[$filePath] = $references;
             }

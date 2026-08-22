@@ -81,9 +81,13 @@ final class SecureEnvGeneratorTest extends TestCase
         $first = $this->generator->generate('app', EnvironmentPreset::Local);
         $second = $this->generator->generate('app', EnvironmentPreset::Local);
 
-        // Extract keys for comparison
-        preg_match('/APP_KEY=(.+)/', $first, $firstKey);
-        preg_match('/APP_KEY=(.+)/', $second, $secondKey);
+        // Extract keys for comparison; assert each .env line matches before reading the capture.
+        if (preg_match('/APP_KEY=(.+)/', $first, $firstKey) !== 1) {
+            self::fail('First .env content does not contain an APP_KEY line.');
+        }
+        if (preg_match('/APP_KEY=(.+)/', $second, $secondKey) !== 1) {
+            self::fail('Second .env content does not contain an APP_KEY line.');
+        }
 
         self::assertNotSame($firstKey[1], $secondKey[1]);
     }
@@ -94,8 +98,12 @@ final class SecureEnvGeneratorTest extends TestCase
         $first = $this->generator->generate('app', EnvironmentPreset::Local);
         $second = $this->generator->generate('app', EnvironmentPreset::Local);
 
-        preg_match('/PULSAR_MASTER_KEY=(.+)/', $first, $firstKey);
-        preg_match('/PULSAR_MASTER_KEY=(.+)/', $second, $secondKey);
+        if (preg_match('/PULSAR_MASTER_KEY=(.+)/', $first, $firstKey) !== 1) {
+            self::fail('First .env content does not contain a PULSAR_MASTER_KEY line.');
+        }
+        if (preg_match('/PULSAR_MASTER_KEY=(.+)/', $second, $secondKey) !== 1) {
+            self::fail('Second .env content does not contain a PULSAR_MASTER_KEY line.');
+        }
 
         self::assertNotSame($firstKey[1], $secondKey[1]);
     }
@@ -125,6 +133,15 @@ final class SecureEnvGeneratorTest extends TestCase
         foreach ($requiredKeys as $key) {
             self::assertStringContainsString($key . '=', $content, "Missing env variable: {$key}");
         }
+    }
+
+    #[Test]
+    public function it_uses_db_connection_not_db_driver(): void
+    {
+        $content = $this->generator->generate('test-app', EnvironmentPreset::Local);
+
+        self::assertStringContainsString('DB_CONNECTION=', $content);
+        self::assertStringNotContainsString('DB_DRIVER=', $content);
     }
 
     #[Test]

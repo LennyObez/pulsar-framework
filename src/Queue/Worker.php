@@ -26,9 +26,11 @@ use Pulsar\Queue\Retry\RetryDecision;
 use Pulsar\Queue\Serialization\TypeRegistry;
 use Throwable;
 
+use function ceil;
 use function class_exists;
 use function function_exists;
 use function hrtime;
+use function is_a;
 use function memory_get_usage;
 use function sprintf;
 use function time;
@@ -50,6 +52,7 @@ use const SIGTERM;
  * Emits lifecycle events (JobCompleted, JobFailed, JobRetried) and records
  * processing metrics. Supports graceful shutdown via POSIX signals on Unix
  * and polling-based status checks on Windows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Worker
@@ -204,18 +207,21 @@ final class Worker
     {
         $jobClass = $envelope->jobClass;
 
-        $this->typeRegistry?->assertAllowed($jobClass);
+        if ($this->typeRegistry === null) {
+            throw QueueException::typeNotAllowed(
+                $jobClass . ' (TypeRegistry is required: no job class can be instantiated without a type allowlist)',
+            );
+        }
 
-        if (!class_exists($jobClass)) {
+        $this->typeRegistry->assertAllowed($jobClass);
+
+        if (!class_exists($jobClass) || !is_a($jobClass, QueueableInterface::class, true)) {
             throw QueueException::serializationFailed($jobClass);
         }
 
-        /** @var object $job */
-        $job = new $jobClass();
-
-        if (!$job instanceof QueueableInterface) {
-            throw QueueException::serializationFailed($jobClass);
-        }
+        /** @var class-string<QueueableInterface> $jobClassName */
+        $jobClassName = $jobClass;
+        $job = new $jobClassName();
 
         $requestContext = $this->buildRequestContext($envelope);
 
@@ -234,7 +240,19 @@ final class Worker
         try {
             $job->handle($context);
         } finally {
-            $this->contextHolder?->clear();
+            // Cleanup must never mask the original job exception. If the context
+            // holder throws during clear() (e.g. a backing-store failure), log it
+            // separately and let the original Throwable propagate from the try block.
+            try {
+                $this->contextHolder?->clear();
+            } catch (Throwable $cleanupError) {
+                $this->logger?->error(sprintf(
+                    'Request context cleanup failed after job "%s": %s',
+                    $envelope->id,
+                    $cleanupError->getMessage(),
+                ));
+            }
+
             unset($job, $context);
         }
     }
@@ -242,7 +260,7 @@ final class Worker
     /**
      * Handle a failed job: determine retry eligibility, re-queue or dead-letter.
      *
-     * Non-idempotent jobs (#[NonIdempotent]) are never auto-retried — they go
+     * Non-idempotent jobs (#[NonIdempotent]) are never auto-retried; they go
      * directly to the dead-letter queue. Idempotent and side-effect-free jobs
      * are retried per the retry policy until max attempts are exhausted.
      */
@@ -296,7 +314,9 @@ final class Worker
     ): void {
         $nextEnvelope = $envelope->withNextAttempt();
         $delayMs = $policy->getDelay($envelope->attempt);
-        $delaySeconds = (int) ($delayMs / 1000);
+        // Round up so that a positive sub-second delay (e.g. 500ms) is never
+        // truncated to an immediate retry; whole-second delays are unaffected.
+        $delaySeconds = $delayMs > 0 ? (int) ceil($delayMs / 1000) : 0;
 
         $serialized = $this->envelopeSerializer->serialize($nextEnvelope);
         $this->driver->push($queue, $nextEnvelope->jobClass, $serialized, $delaySeconds);
@@ -429,13 +449,14 @@ final class Worker
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant — SIGINT/SIGTERM are POSIX-only, guarded by OS check above */
-        pcntl_signal(SIGINT, function (): void {
+        $sigint = SIGINT;
+        $sigterm = SIGTERM;
+
+        pcntl_signal($sigint, function (): void {
             $this->stop();
         });
 
-        /** @psalm-suppress UndefinedConstant */
-        pcntl_signal(SIGTERM, function (): void {
+        pcntl_signal($sigterm, function (): void {
             $this->stop();
         });
     }
@@ -474,10 +495,7 @@ final class Worker
         }
 
         $elapsed = time() - $startedAt;
-        if ($this->options->timeLimitSeconds > 0 && $elapsed >= $this->options->timeLimitSeconds) {
-            return true;
-        }
 
-        return false;
+        return $this->options->timeLimitSeconds > 0 && $elapsed >= $this->options->timeLimitSeconds;
     }
 }

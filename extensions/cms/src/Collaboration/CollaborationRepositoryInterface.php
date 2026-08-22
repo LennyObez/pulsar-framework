@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence contract for CRDT collaboration state and sessions.
+ *
+ * @psalm-api Public binding contract; implemented by DbCollaborationRepository
+ *            and consumed by CollaborationService.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CollaborationRepositoryInterface

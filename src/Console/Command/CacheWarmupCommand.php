@@ -13,7 +13,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
 
 /**
- * Alias for `optimize` — discoverable as `cache:warmup`.
+ * Alias for `optimize`: discoverable as `cache:warmup`.
  *
  * Delegates entirely to OptimizeCommand with the same options.
  */

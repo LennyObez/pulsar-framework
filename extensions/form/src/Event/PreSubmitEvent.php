@@ -11,6 +11,7 @@ use Pulsar\Extension\Form\Contract\FormInterface;
  * Fired before form data is processed.
  *
  * Listeners can inspect or modify the raw submission data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PreSubmitEvent extends FormEvent

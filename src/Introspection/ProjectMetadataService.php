@@ -21,6 +21,7 @@ use function mb_substr;
  * Assembles a ProjectMetadataSnapshot from the runtime probe, config
  * schema reflector, API snapshot file, and registered contributors.
  * The snapshot is memoized per-process to avoid redundant work.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ProjectMetadataService
@@ -47,7 +48,7 @@ final class ProjectMetadataService
     /**
      * Get the project metadata snapshot.
      *
-     * Memoized per-process — returns the cached snapshot after the first call.
+     * Memoized per-process: returns the cached snapshot after the first call.
      */
     public function snapshot(): ProjectMetadataSnapshot
     {

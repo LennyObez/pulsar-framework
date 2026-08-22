@@ -12,6 +12,10 @@ use Pulsar\Api\Api;
  * Provides ranked full-text search with recency and taxonomy boosting,
  * typeahead suggestions, click tracking, and aggregated analytics.
  * Adapters exist for PostgreSQL (tsvector), SQLite (FTS5), and MySQL (FULLTEXT).
+ *
+ * @psalm-api Public binding contract; implemented by driver-specific search
+ *            services produced by SearchServiceFactory.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SearchServiceInterface
