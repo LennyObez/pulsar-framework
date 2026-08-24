@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Routing\Binding\BindingMeta;
+use Pulsar\Routing\Binding\BindingScope;
 use Pulsar\Routing\Binding\CompiledBindingMap;
 use stdClass;
 
@@ -157,7 +158,7 @@ final class CompiledBindingMapTest extends TestCase
                     class: stdClass::class,
                     keyName: 'uuid',
                     keyType: 'string',
-                    scoped: true,
+                    scope: BindingScope::Contained,
                     parentRelation: 'users',
                     authzPolicy: 'user.view',
                     customResolver: stdClass::class,
@@ -172,7 +173,7 @@ final class CompiledBindingMapTest extends TestCase
         self::assertSame(stdClass::class, $data['users.show']['user']['class']);
         self::assertSame('uuid', $data['users.show']['user']['key_name']);
         self::assertSame('string', $data['users.show']['user']['key_type']);
-        self::assertTrue($data['users.show']['user']['scoped']);
+        self::assertSame('contained', $data['users.show']['user']['scope']);
         self::assertSame('users', $data['users.show']['user']['parent_relation']);
         self::assertSame('user.view', $data['users.show']['user']['authz_policy']);
         self::assertSame(stdClass::class, $data['users.show']['user']['custom_resolver']);
@@ -190,7 +191,10 @@ final class CompiledBindingMapTest extends TestCase
         $data = $map->toArray();
         $entry = $data['users.show']['user'];
 
-        self::assertArrayNotHasKey('scoped', $entry);
+        // The scope is not a default that may be omitted: a reader has to be
+        // able to tell an undeclared scope from a declared root, and a missing
+        // key cannot say both.
+        self::assertSame('path', $entry['scope']);
         self::assertArrayNotHasKey('parent_relation', $entry);
         self::assertArrayNotHasKey('authz_policy', $entry);
         self::assertArrayNotHasKey('custom_resolver', $entry);
@@ -223,7 +227,73 @@ final class CompiledBindingMapTest extends TestCase
 
         self::assertSame($original['users.show']['user']['class'], $roundTripped['users.show']['user']['class']);
         self::assertSame($original['posts.show']['post']['key_name'], $roundTripped['posts.show']['post']['key_name']);
-        self::assertTrue($roundTripped['posts.show']['post']['scoped']);
+        self::assertSame('contained', $roundTripped['posts.show']['post']['scope']);
         self::assertSame('posts', $roundTripped['posts.show']['post']['parent_relation']);
+    }
+
+    #[Test]
+    public function aDeclaredRootSurvivesTheRoundTrip(): void
+    {
+        // The direction the map could not express before. `scoped => false` was
+        // indistinguishable from "nothing recorded", so the path pass overwrote
+        // it and a deliberately global child came back scoped — which is why
+        // the documented escape hatch did not work.
+        $map = CompiledBindingMap::fromArray([
+            'settings.show' => [
+                'setting' => [
+                    'class' => stdClass::class,
+                    'scope' => 'root',
+                ],
+            ],
+        ]);
+
+        $meta = $map->get('settings.show', 'setting');
+
+        self::assertNotNull($meta);
+        self::assertSame(BindingScope::Root, $meta->scope);
+        self::assertSame('root', $map->toArray()['settings.show']['setting']['scope']);
+    }
+
+    #[Test]
+    public function aScopeThisBuildCannotReadFallsBackToThePath(): void
+    {
+        // A cache file from a newer build, or edited by hand, must not be able
+        // to switch a containment check off by naming a scope that does not
+        // exist here. The unreadable value leaves the path in charge.
+        $map = CompiledBindingMap::fromArray([
+            'posts.show' => [
+                'post' => [
+                    'class' => stdClass::class,
+                    'scope' => 'unsupervised',
+                ],
+            ],
+        ]);
+
+        $meta = $map->get('posts.show', 'post');
+
+        self::assertNotNull($meta);
+        self::assertSame(BindingScope::Path, $meta->scope);
+    }
+
+    #[Test]
+    public function aLegacyScopedFlagWithoutARelationDoesNotBecomeAContainedBinding(): void
+    {
+        // `scoped => true` with nothing to resolve through describes no
+        // reachable state; the path decides instead of the binder inventing
+        // a relation.
+        $map = CompiledBindingMap::fromArray([
+            'posts.show' => [
+                'post' => [
+                    'class' => stdClass::class,
+                    'scoped' => true,
+                ],
+            ],
+        ]);
+
+        $meta = $map->get('posts.show', 'post');
+
+        self::assertNotNull($meta);
+        self::assertSame(BindingScope::Path, $meta->scope);
+        self::assertNull($meta->parentRelation);
     }
 }

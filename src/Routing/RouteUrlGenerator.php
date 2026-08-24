@@ -9,6 +9,7 @@ use Pulsar\Config\DomainConfig;
 
 use function is_string;
 use function preg_replace;
+use function preg_replace_callback;
 use function rawurlencode;
 use function str_replace;
 use function trim;
@@ -57,6 +58,27 @@ final class RouteUrlGenerator
 
             $path = str_replace($search, $replace, $path);
         }
+
+        // `{param:key}` declares the column the model binder looks the
+        // parameter up by; the URL still carries the value alone. Substituting
+        // by the bare name keeps url() and the router reading the same path —
+        // without this the placeholder would survive verbatim into the link.
+        $replaced = preg_replace_callback(
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*):[a-zA-Z_][a-zA-Z0-9_]*(\??)}#',
+            static function (array $matches) use ($parameters): string {
+                $value = $parameters[$matches[1]] ?? null;
+
+                if ($value !== null) {
+                    return rawurlencode($value);
+                }
+
+                // Unfilled: an optional placeholder drops out, a required one
+                // stays put, matching how the bare `{param}` form behaves.
+                return $matches[2] === '?' ? '' : $matches[0];
+            },
+            $path,
+        );
+        $path = $replaced ?? $path;
 
         // Remove unfilled optional parameters
         $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?}#', '', $path);

@@ -61,6 +61,39 @@ final class RoutingException extends Exception
     }
 
     /**
+     * The route index and the route table disagree: a route matching the
+     * requested path and accepting the requested method exists, and the indexed
+     * lookup did not return it.
+     *
+     * Raised from {@see Router::match()}'s cold scan, which is otherwise the
+     * 405 detector. It is deliberately not a 405: the requested method IS
+     * allowed on the matched route, so an `Allow` header built from that route
+     * would contain the method the response claims to reject, and a client or a
+     * cache acting on it would be acting on a contradiction. It is deliberately
+     * not a silent recovery either — the cold scan sees routes the match tables
+     * exclude on purpose (a later registration shadowed by an earlier one), so
+     * serving from it would resurrect a route the collision rules retired.
+     *
+     * A 500 is the honest answer: the request is well-formed and the router is
+     * not, which is a defect in the framework or in a route the framework
+     * indexed wrongly, and it must be visible rather than dressed as traffic.
+     */
+    #[NoDiscard]
+    public static function routeIndexInconsistent(string $path, Method $method, string $routePath): self
+    {
+        return new self(
+            sprintf(
+                'Route index inconsistent: request "%s %s" matches registered route "%s", which accepts that '
+                . 'method, but the indexed lookup did not return it. The route is registered and unroutable.',
+                $method->value,
+                $path,
+                $routePath,
+            ),
+            500,
+        );
+    }
+
+    /**
      * Create a "not implemented" exception for an unrecognized HTTP method.
      *
      * RFC 9110 §15.6.2: 501 signals the server does not support the method for
@@ -110,12 +143,28 @@ final class RoutingException extends Exception
 
     /**
      * Create a "router locked" exception for strict cache mode.
+     *
+     * Raised only for a registration the cached table does not already contain
+     * — an identical replay is accepted, see {@see \Pulsar\Routing\Router::add()}
+     * — so the route that provoked it is the drift, and naming it is the whole
+     * diagnosis. Without the path the operator was told a cache was stale and
+     * left to find out which of several hundred routes said so.
      */
     #[NoDiscard]
-    public static function routerLocked(): self
+    public static function routerLocked(?string $path = null): self
     {
+        $subject = $path === null
+            ? 'A route'
+            : sprintf('Route "%s"', $path);
+
         return new self(
-            'Router is locked in strict cached mode. Register all routes before `pulsar optimize --strict`, or use non-strict mode.',
+            sprintf(
+                '%s is not in the strict route cache this deployment booted from. The router is '
+                . 'locked to that table because the table is authoritative, so the deployed code '
+                . 'and its cache disagree: re-run `pulsar optimize --strict`, or boot without a '
+                . 'strict cache.',
+                $subject,
+            ),
             423,
         );
     }
@@ -152,5 +201,46 @@ final class RoutingException extends Exception
     public static function unexpectedReturnType(string $type): self
     {
         return new self(sprintf('Handler must return a Response or string, got %s', $type));
+    }
+
+    /**
+     * A framework route declared {@see \Pulsar\Routing\RouteAccess::Authenticated}
+     * with an empty permission list.
+     *
+     * {@see \Pulsar\Auth\Middleware\AuthorizationMiddleware} reads an empty
+     * list as deny-everyone, so the registration would produce a route no caller
+     * can ever reach — a broken feature wearing the appearance of a guarded one.
+     * Name the permission, or use
+     * {@see \Pulsar\Routing\RouteAccessRegistrar::ANY_AUTHENTICATED} when the
+     * grant really is "any authenticated identity".
+     */
+    #[NoDiscard]
+    public static function accessDeclarationWithoutPermission(string $path): self
+    {
+        return new self(
+            sprintf(
+                'Route "%s" is declared as requiring authentication but names no permission. '
+                . 'AuthorizationMiddleware default-denies an empty permission list, so the route '
+                . 'would be unreachable for every caller.',
+                $path,
+            ),
+            500,
+        );
+    }
+
+    /**
+     * Framework routes reached the end of boot without declaring who may reach
+     * them; see {@see \Pulsar\Routing\RouteAccessReporter}.
+     *
+     * @param list<string> $messages One human-readable description per route.
+     */
+    #[NoDiscard]
+    public static function undeclaredFrameworkRoutes(array $messages): self
+    {
+        return new self(
+            'Framework routes declaring no access detected at boot (debug mode fails closed):' . PHP_EOL . ' - '
+                . implode(PHP_EOL . ' - ', $messages),
+            500,
+        );
     }
 }

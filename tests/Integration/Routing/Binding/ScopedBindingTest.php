@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Integration\Routing\Binding;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -15,7 +16,9 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Binding\BindingMeta;
+use Pulsar\Routing\Binding\BindingPreset;
 use Pulsar\Routing\Binding\BindingResolver;
+use Pulsar\Routing\Binding\BindingScope;
 use Pulsar\Routing\Binding\CompiledBindingMap;
 use Pulsar\Routing\Binding\Contract\AuthorizationHookInterface;
 use Pulsar\Routing\Binding\Contract\ModelResolverPort;
@@ -60,7 +63,7 @@ final class ScopedBindingTest extends TestCase
                     class: stdClass::class,
                     keyName: 'id',
                     keyType: 'string',
-                    scoped: true,
+                    scope: BindingScope::Contained,
                     parentRelation: 'posts',
                 ),
             ],
@@ -80,7 +83,7 @@ final class ScopedBindingTest extends TestCase
         $identity->method('isAuthenticated')->willReturn(true);
         $identity->method('id')->willReturn('user-1');
 
-        $config = new ModelBindingConfig(preset: 'standard');
+        $config = new ModelBindingConfig(preset: BindingPreset::Standard);
         $middleware = new ModelBindingMiddleware(
             $binder,
             $config,
@@ -109,7 +112,7 @@ final class ScopedBindingTest extends TestCase
             }))
             ->willReturn(new Response(statusCode: 200, body: 'ok'));
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedRequest);
         self::assertInstanceOf(ServerRequestInterface::class, $capturedRequest);
@@ -133,7 +136,7 @@ final class ScopedBindingTest extends TestCase
                     class: stdClass::class,
                     keyName: 'id',
                     keyType: 'string',
-                    scoped: true,
+                    scope: BindingScope::Contained,
                     parentRelation: 'posts',
                 ),
             ],
@@ -147,7 +150,7 @@ final class ScopedBindingTest extends TestCase
         );
 
         $authHook = $this->createStub(AuthorizationHookInterface::class);
-        $config = new ModelBindingConfig(preset: 'standard');
+        $config = new ModelBindingConfig(preset: BindingPreset::Standard);
         $middleware = new ModelBindingMiddleware($binder, $config, $authHook);
 
         $route = new Route(
@@ -163,9 +166,31 @@ final class ScopedBindingTest extends TestCase
 
         $handler = $this->createStub(RequestHandlerInterface::class);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(404, $response->getStatusCode());
+    }
+
+    /**
+     * Run the middleware the way the kernel runs it.
+     *
+     * The middleware does not read `_route`: the kernel passes the route it is
+     * dispatching to the pipeline, which binds a per-dispatch copy of the
+     * middleware to it. These tests write the same route into both places, which
+     * is what a real dispatch does; that the two cannot be made to DISAGREE is
+     * the subject of DispatchedRouteAuthorityTest.
+     */
+    private function dispatch(
+        ModelBindingMiddleware $middleware,
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
+        /** @var MatchedRoute|null $route */
+        $route = $request->getAttribute('_route');
+
+        $bound = $route === null ? $middleware : $middleware->forDispatchedRoute($route);
+
+        return $bound->process($request, $handler);
     }
 }
 

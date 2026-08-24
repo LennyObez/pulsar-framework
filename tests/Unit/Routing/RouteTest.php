@@ -104,6 +104,58 @@ final class RouteTest extends TestCase
         self::assertNull($route->matchesPath('/users/1/2'));
     }
 
+    #[Test]
+    public function matchesPathAcceptsACustomBindingKeyAndCapturesTheBareName(): void
+    {
+        // `{user:slug}` declares the column model binding looks the parameter
+        // up by. The URL still carries the value alone, and the parameter is
+        // captured as `user` — a PCRE group name cannot contain `:`, and the
+        // controller signature names the parameter, never the key.
+        $route = new Route([Method::GET], '/users/{user:slug}', fn() => null);
+
+        self::assertSame(['user' => 'john-doe'], $route->matchesPath('/users/john-doe'));
+
+        // The key changes nothing about the segment the parameter captures.
+        self::assertNull($route->matchesPath('/users/john/doe'));
+        self::assertNull($route->matchesPath('/users'));
+    }
+
+    #[Test]
+    public function matchesPathAcceptsACustomBindingKeyOnANestedRoute(): void
+    {
+        $route = new Route([Method::GET], '/users/{user:slug}/posts/{post:uuid}', fn() => null);
+
+        self::assertSame(
+            ['user' => 'john-doe', 'post' => 'e5f1'],
+            $route->matchesPath('/users/john-doe/posts/e5f1'),
+        );
+    }
+
+    #[Test]
+    public function aConstraintAppliesToAParameterDeclaredWithACustomKey(): void
+    {
+        // Constraints are keyed by parameter name, which the `:key` suffix does
+        // not change.
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{user:slug}',
+            handler: fn() => null,
+            constraints: ['user' => '[a-z\-]+'],
+        );
+
+        self::assertSame(['user' => 'john-doe'], $route->matchesPath('/users/john-doe'));
+        self::assertNull($route->matchesPath('/users/John_Doe'));
+    }
+
+    #[Test]
+    public function anOptionalParameterMayAlsoDeclareACustomKey(): void
+    {
+        $route = new Route([Method::GET], '/posts/{post:slug?}', fn() => null);
+
+        self::assertSame([], $route->matchesPath('/posts'));
+        self::assertSame(['post' => 'hello-world'], $route->matchesPath('/posts/hello-world'));
+    }
+
     /**
      * @return iterable<string, array{string, list<Method>}>
      */

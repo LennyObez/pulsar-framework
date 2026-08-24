@@ -12,6 +12,7 @@ use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as PsrRequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Routing\MatchedRoute;
 use RuntimeException;
 use Throwable;
 
@@ -131,12 +132,23 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     /**
      * Process a request through the middleware stack with a callable handler.
      *
+     * $dispatchedRoute is the route whose handler $handler is going to invoke.
+     * Passing it binds every {@see DispatchedRouteAwareInterface} middleware in
+     * the stack to that route for this dispatch, so a middleware whose decisions
+     * come from the route reads the one being served rather than the `_route`
+     * attribute, which every frame between routing and the handler can rewrite.
+     * Only the kernel knows the answer, so only the kernel passes it; null is
+     * every other caller, and leaves those middleware unbound.
+     *
      * @param callable(ServerRequestInterface): ResponseInterface $handler
      */
-    public function dispatch(ServerRequestInterface $request, callable $handler): ResponseInterface
-    {
+    public function dispatch(
+        ServerRequestInterface $request,
+        callable $handler,
+        ?MatchedRoute $dispatchedRoute = null,
+    ): ResponseInterface {
         $wrappedHandler = new CallableRequestHandler($handler);
-        $pipeline = $this->createPipeline($wrappedHandler);
+        $pipeline = $this->createPipeline($wrappedHandler, $dispatchedRoute);
 
         return $pipeline->handle($request);
     }
@@ -187,14 +199,31 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
     /**
      * Build a chained RequestHandler from the middleware stack and a final handler.
+     *
+     * Resolved instances are memoised for the process lifetime, but a
+     * route-bound copy is not: it belongs to one dispatch, and reusing it would
+     * serve the next request the previous request's route. So the binding
+     * happens here, on the way into the chain, and the memoised instance stays
+     * unbound — which is also what keeps a Fiber-interleaved worker from sharing
+     * one route between concurrent requests.
+     *
+     * $dispatchedRoute is null on the paths where there is no answer yet: the
+     * global pipeline runs before routing, and {@see handle()} caches its chain
+     * across requests precisely because nothing in it depends on a route.
      */
-    private function createPipeline(PsrRequestHandlerInterface $handler): PsrRequestHandlerInterface
-    {
+    private function createPipeline(
+        PsrRequestHandlerInterface $handler,
+        ?MatchedRoute $dispatchedRoute = null,
+    ): PsrRequestHandlerInterface {
         $resolved = $this->resolvedMiddleware ??= $this->resolveAllMiddleware();
 
         $current = $handler;
 
         foreach ($resolved as $middleware) {
+            if ($dispatchedRoute !== null && $middleware instanceof DispatchedRouteAwareInterface) {
+                $middleware = $middleware->forDispatchedRoute($dispatchedRoute);
+            }
+
             $current = new MiddlewareHandler($middleware, $current);
         }
 

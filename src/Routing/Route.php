@@ -125,6 +125,15 @@ final readonly class Route
 
     /**
      * Convert route path to regex pattern, applying per-parameter constraints.
+     *
+     * A placeholder may name the column the parameter binds by —
+     * `/users/{user:slug}` — which the model binder reads from the path. The
+     * key is part of the declaration, not of the URL: the capture group is
+     * named for the parameter alone (`user`), both because a PCRE group name
+     * cannot contain `:` and because everything downstream, from
+     * {@see MatchedRoute::parameter()} to the controller signature, addresses
+     * the parameter by its bare name. Route constraints are keyed the same
+     * way, so `['user' => '[a-z-]+']` constrains `{user:slug}`.
      */
     private function pathToPattern(string $path): string
     {
@@ -136,9 +145,11 @@ final readonly class Route
 
         $constraints = $this->constraints;
 
-        // Convert {param} to (?P<param>CONSTRAINT) using constraints or default [^/]+
+        // Convert {param} and {param:key} to (?P<param>CONSTRAINT) using
+        // constraints or default [^/]+. Note: preg_quote escapes : to \:, so
+        // the key suffix is matched in its escaped form and dropped.
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)}#',
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?:\\\\:[a-zA-Z_][a-zA-Z0-9_]*)?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
@@ -148,12 +159,12 @@ final readonly class Route
         );
         $pattern = $replaced ?? $pattern;
 
-        // Convert /{param?} to (?:/(?P<param>CONSTRAINT))?: the preceding slash
-        // becomes optional together with the parameter so that /blog/{page?}
-        // matches both /blog and /blog/2.
+        // Convert /{param?} and /{param:key?} to (?:/(?P<param>CONSTRAINT))?:
+        // the preceding slash becomes optional together with the parameter so
+        // that /blog/{page?} matches both /blog and /blog/2.
         // Note: preg_quote escapes ? to \?, so we match the escaped form.
         $replaced = preg_replace_callback(
-            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)\\\\\?}#',
+            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)(?:\\\\:[a-zA-Z_][a-zA-Z0-9_]*)?\\\\\?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Guard;
 
 use LogicException;
+use NoDiscard;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
@@ -15,6 +16,7 @@ use Pulsar\Security\Session\SessionInterface;
 use function array_keys;
 use function count;
 use function sprintf;
+use function time;
 
 /**
  * Session-based authentication guard.
@@ -26,6 +28,18 @@ use function sprintf;
 final class SessionGuard implements GuardInterface
 {
     private const string SESSION_KEY = '_pulsar_identity';
+
+    /**
+     * When the credentials behind the stored identity were last presented.
+     *
+     * Distinct from the session's `createdAt`: `login()` rotates the session id
+     * but `regenerate()` carries the metadata across, so `createdAt` answers
+     * "how old is this browser's session", not "how recently did this person
+     * prove who they are". Only the second question decides whether a sensitive
+     * operation may proceed without re-authentication, so it gets its own
+     * stamp.
+     */
+    private const string AUTHENTICATED_AT_KEY = '_pulsar_authenticated_at';
 
     public function __construct(
         private readonly SessionInterface $session,
@@ -67,6 +81,26 @@ final class SessionGuard implements GuardInterface
     {
         $this->session->regenerate();
         $this->storeIdentity($identity);
+        $this->session->set(self::AUTHENTICATED_AT_KEY, time());
+    }
+
+    /**
+     * When this session last authenticated, or null if it never did.
+     *
+     * Read by `Pulsar\Auth\Middleware\SensitiveOperationMiddleware` to decide
+     * whether a sensitive operation still sits inside the re-authentication
+     * window.
+     */
+    #[NoDiscard]
+    public function lastAuthenticatedAt(): ?int
+    {
+        if (!$this->session->isStarted() || !$this->session->has(self::AUTHENTICATED_AT_KEY)) {
+            return null;
+        }
+
+        $stamp = $this->session->getInt(self::AUTHENTICATED_AT_KEY, 0);
+
+        return $stamp > 0 ? $stamp : null;
     }
 
     /**

@@ -8,12 +8,14 @@ use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Method;
+use Pulsar\Routing\Binding\BindingScope;
 use Pulsar\Routing\Binding\ExplicitBinding;
 
 use function array_values;
 use function count;
 use function ksort;
 use function sprintf;
+use function str_contains;
 use function strstr;
 use function trim;
 
@@ -53,10 +55,11 @@ final class Router implements RouterInterface
     /**
      * First-segment bucket index for dynamic routes.
      *
-     * Maps `method => firstStaticSegment => registrationSequence => Route` so the
+     * Maps `method => bucketKey => registrationSequence => Route` so the
      * dynamic-route scan for `/users/{id}` requests only walks routes whose
      * pattern begins with the `users` segment. The catch-all bucket `''` holds
-     * routes whose pattern starts with a dynamic segment (e.g. `/{lang}/posts`).
+     * every route whose first segment is not a literal a request path can
+     * reproduce verbatim — `/{lang}/posts`, and equally `/u{user}/posts/{post}`.
      *
      * Bucket entries are keyed by the route's global registration sequence so the
      * first-segment and catch-all buckets can be merged back into registration
@@ -110,19 +113,29 @@ final class Router implements RouterInterface
 
     /**
      * Whether the router is locked (strict cache mode).
-     * When locked, addRoute() throws RoutingException::routerLocked().
+     *
+     * When locked, {@see self::add()} accepts a registration identical to one
+     * the cached table already holds and refuses every other with
+     * {@see RoutingException::routerLocked()}. See
+     * {@see self::isReplayOfCachedRoute()} for why the test is identity rather
+     * than arrival.
      */
     public private(set) bool $locked = false;
 
     /**
      * Add a route to the router.
      *
-     * @throws RoutingException If the router is locked in strict cache mode
+     * @throws RoutingException If the router is locked and this route is not
+     *                          already in the cached table
      */
     public function add(Route $route): self
     {
+        if ($this->locked && $this->isReplayOfCachedRoute($route)) {
+            return $this;
+        }
+
         if ($this->locked) {
-            throw RoutingException::routerLocked();
+            throw RoutingException::routerLocked($route->path);
         }
 
         $this->routes[] = $route;
@@ -135,6 +148,54 @@ final class Router implements RouterInterface
         $this->indexRouteByMethod($route, count($this->routes) - 1);
 
         return $this;
+    }
+
+    /**
+     * Whether a registration arriving at a locked router is one the cached
+     * table already holds, field for field.
+     *
+     * A strict route cache is authoritative, and the lock exists to keep a route
+     * out of the served table that was never written into the verified one. What
+     * the lock does NOT get to refuse is the boot that produced the cache in the
+     * first place: every wiring that registered a route at `pulsar optimize`
+     * time registers it again on the next boot, and so does every extension. The
+     * lock used to throw on all of them, so the first framework wiring to reach
+     * it — `I18nWiring`, third in the boot order — aborted the boot, and a
+     * deployment that ran `optimize --strict` could not start at all.
+     *
+     * So the question is identity, not arrival. A registration equal in every
+     * field to one already indexed adds nothing to the table and is dropped; a
+     * registration that differs anywhere is a route the cache does not vouch
+     * for, and it still throws. `==` rather than `===` because the replay is a
+     * different object built from the same declaration — the cached half was
+     * rebuilt by {@see \Pulsar\Core\Boot\CachedRouteReconstructor} — and equality
+     * of value is exactly the claim being tested. It covers handler, name,
+     * middleware, constraints, host and attributes, so a route whose access
+     * declaration or middleware changed since the cache was written is drift and
+     * is reported as drift.
+     *
+     * Every method the route claims must resolve to that same route: a
+     * registration that widens `[GET]` to `[GET, POST]` is not the cached route,
+     * and half-matching it would serve a verb the cache never carried.
+     */
+    private function isReplayOfCachedRoute(Route $route): bool
+    {
+        if ($route->methods === []) {
+            return false;
+        }
+
+        $normalizedPath = '/' . trim($route->path, '/');
+        $hostKey = $route->host ?? '';
+
+        foreach ($route->methods as $method) {
+            $existing = $this->registeredRouteKeys[$method->value][$normalizedPath][$hostKey] ?? null;
+
+            if ($existing === null || $existing != $route) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -151,12 +212,12 @@ final class Router implements RouterInterface
 
         // A static route has no dynamic segments and no host constraint, so it can
         // live in the O(1) static table; everything else is bucketed by its first
-        // static segment: `/users/{id}` buckets under `users`, `/{lang}/x`
-        // under `''` (catch-all), keyed by registration sequence.
+        // literal segment: `/users/{id}` buckets under `users`, `/{lang}/x` and
+        // `/u{user}/x` under `''` (catch-all), keyed by registration sequence.
         $isStatic = $route->compiledPattern === null && $route->host === null;
         $normalizedPath = '/' . trim($route->path, '/');
         $hostKey = $route->host ?? '';
-        $firstSegment = $isStatic ? '' : $this->firstStaticSegment($route->path);
+        $firstSegment = $isStatic ? '' : $this->routeBucketKey($route->path);
 
         foreach ($route->methods as $method) {
             $existing = $this->registeredRouteKeys[$method->value][$normalizedPath][$hostKey] ?? null;
@@ -196,11 +257,43 @@ final class Router implements RouterInterface
     }
 
     /**
-     * Extract the first static (non-`{...}`) path segment of a route
-     * pattern. `/users/{id}` → `users`, `/api/v1/users/{id}` → `api`,
-     * `/{lang}/posts` → `''`, `/` → `''`.
+     * The bucket a route pattern is indexed under.
+     *
+     * `/users/{id}` → `users`, `/api/v1/users/{id}` → `api`, `/{lang}/posts` →
+     * `''`, `/u{user}/posts/{post}` → `''`, `/` → `''`.
+     *
+     * The bucket is a hash lookup against {@see requestFirstSegment()}, so a
+     * route may only claim a key that some request path's first segment can
+     * equal VERBATIM. A segment holding a placeholder never can: `u{user}` is
+     * matched by `u1`, `u2`, `uanything`, and by the literal string `u{user}`
+     * alone out of all of them. Indexing such a route under its own pattern
+     * text put it in a bucket no request could reach — the route stopped
+     * routing entirely, and the cold 405 scan then found it by regex and
+     * answered `405` with the requested method in its own `Allow` header.
+     *
+     * So the rule is stricter than "does not begin with `{`": the whole segment
+     * must be free of placeholders, or the route goes to the catch-all bucket
+     * and is scanned on every dynamic request. That gives up the partition for
+     * partial-segment routes, which is the price of them being matchable at
+     * all; no prefix key can serve a hash bucket, because the request side
+     * would have to try every prefix length to find it.
      */
-    private function firstStaticSegment(string $path): string
+    private function routeBucketKey(string $path): string
+    {
+        $first = $this->requestFirstSegment($path);
+
+        return str_contains($first, '{') ? '' : $first;
+    }
+
+    /**
+     * The first path segment of a request, verbatim. `/users/1` → `users`,
+     * `/u1/posts/20` → `u1`, `/` → `''`.
+     *
+     * No placeholder handling here, deliberately: this reads a concrete URL,
+     * where `{` is an ordinary character. The placeholder rule belongs to
+     * {@see routeBucketKey()}, which reads a pattern.
+     */
+    private function requestFirstSegment(string $path): string
     {
         $normalized = trim($path, '/');
         if ($normalized === '') {
@@ -208,15 +301,8 @@ final class Router implements RouterInterface
         }
 
         $first = strstr($normalized, '/', true);
-        $first = $first === false ? $normalized : $first;
 
-        // A `{...}` first segment can't be pre-partitioned; the route lives in
-        // the catch-all bucket.
-        if ($first === '' || $first[0] === '{') {
-            return '';
-        }
-
-        return $first;
+        return $first === false ? $normalized : $first;
     }
 
     /**
@@ -361,10 +447,11 @@ final class Router implements RouterInterface
         }
 
         // Narrow the dynamic-route scan to the first-segment bucket of the
-        // request path + the catch-all bucket (patterns starting with `{...}`),
-        // merged back into registration order via their sequence keys so an
-        // earlier catch-all wins over a later static-first-segment overlap.
-        $requestFirstSegment = $this->firstStaticSegment($normalizedPath);
+        // request path + the catch-all bucket (every pattern whose first segment
+        // is not a literal — `/{lang}/x`, `/u{user}/x`), merged back into
+        // registration order via their sequence keys so an earlier catch-all
+        // wins over a later literal-first-segment overlap.
+        $requestFirstSegment = $this->requestFirstSegment($normalizedPath);
         $methodBuckets = $this->dynamicRouteBuckets[$method->value] ?? [];
 
         $candidates = $methodBuckets[$requestFirstSegment] ?? [];
@@ -408,6 +495,24 @@ final class Router implements RouterInterface
                 foreach ($route->methods as $m) {
                     $allowedMethodsMap[$m->value] = $m;
                 }
+            }
+
+            // The scan above ignores the method, so a route reaching here that
+            // DOES accept the requested method is one the indexed pass should
+            // have returned and did not. Answering 405 for it is a lie the
+            // client can read off the response — the rejected method is listed
+            // in the very `Allow` header the refusal carries — and it is how a
+            // partial-segment route indexed under a bucket key no request could
+            // produce stayed hidden: unroutable, reported as a method problem.
+            //
+            // Serving the route from here instead would be worse than the lie.
+            // This scan walks every registered route, including the ones
+            // deliberately excluded from the match tables as collisions, so a
+            // shadowed route would start being served by the fallback that was
+            // meant to describe a miss. The index and the route table have
+            // disagreed; say so, and fail closed.
+            if (isset($allowedMethodsMap[$method->value])) {
+                throw RoutingException::routeIndexInconsistent($path, $method, $pathMatches[0]->path);
             }
 
             throw RoutingException::methodNotAllowed($path, $method, array_values($allowedMethodsMap));
@@ -494,7 +599,10 @@ final class Router implements RouterInterface
     /**
      * Lock the router (strict cache mode).
      *
-     * When locked, any attempt to register routes throws RoutingException::routerLocked().
+     * Called once, by the kernel, after a strict route cache has been loaded —
+     * so the table is already populated when the lock closes, and a later
+     * registration can be compared against it. Registering a route the table
+     * does not already hold throws {@see RoutingException::routerLocked()}.
      */
     public function lock(): void
     {
@@ -572,12 +680,32 @@ final class Router implements RouterInterface
      * When the model binding middleware resolves route parameters, explicit
      * bindings take precedence over implicit type-hint resolution.
      *
+     * `$scope` is the one place an application overrides what the route path
+     * says about containment, and the default overrides nothing. Declaring
+     * {@see BindingScope::Root} makes a parameter resolve globally even inside
+     * a nested path — nothing then checks that the resource belongs to what
+     * precedes it in the URL, on every route carrying that parameter name, not
+     * just the one you had in mind. Declaring {@see BindingScope::Contained}
+     * names the relation for a segment that cannot, such as `blog-posts`.
+     *
      * @param class-string $modelClass
      * @param class-string|null $resolverClass
+     * @param string|null $parentRelation Relation to resolve through; required by, and exclusive to, {@see BindingScope::Contained}
      */
-    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self
-    {
-        $this->explicitBindings[] = new ExplicitBinding($parameter, $modelClass, $resolverClass);
+    public function model(
+        string $parameter,
+        string $modelClass,
+        ?string $resolverClass = null,
+        BindingScope $scope = BindingScope::Path,
+        ?string $parentRelation = null,
+    ): self {
+        $this->explicitBindings[] = new ExplicitBinding(
+            $parameter,
+            $modelClass,
+            $resolverClass,
+            $scope,
+            $parentRelation,
+        );
 
         return $this;
     }
@@ -637,6 +765,33 @@ final class Router implements RouterInterface
             }
 
             $this->indexRouteByMethod($route, count($this->routes) - 1);
+        }
+    }
+
+    /**
+     * Load pre-built binding declarations alongside {@see loadRoutes()}.
+     *
+     * The counterpart of {@see model()} for a boot that reads its route table
+     * from a cache instead of building it. `Router::model()` runs from the
+     * project route files, and a cached-route boot does not read those files —
+     * so without this the one channel an application has for declaring
+     * {@see BindingScope::Root} or naming a relation would exist in development
+     * and not in the deployment it was written for.
+     *
+     * Separate from {@see model()} rather than a loop over it, for the same
+     * reason {@see loadRoutes()} is separate from {@see add()}: this is not
+     * registration, it is restoration of a registration that already happened,
+     * and it must stay usable while the composition root is locking the router
+     * down for strict cache mode.
+     *
+     * @internal Intended for the composition root's cached-boot path.
+     *
+     * @param list<ExplicitBinding> $bindings
+     */
+    public function loadBindings(array $bindings): void
+    {
+        foreach ($bindings as $binding) {
+            $this->explicitBindings[] = $binding;
         }
     }
 }

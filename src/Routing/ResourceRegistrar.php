@@ -20,6 +20,23 @@ use function trim;
  * Extracted from Router so the resource scaffolding (and its naive
  * pluralization) is a single responsibility, separate from registration and
  * matching. Pure: returns Route lists the Router then registers.
+ *
+ * ## The routes it builds declare no access, and that has a consequence
+ *
+ * These are an APPLICATION's routes: the caller passes the middleware and owns
+ * the decision, so this scaffolder does not take one on its behalf and no
+ * {@see RouteAccess} is attached (see
+ * {@see \Pulsar\Routing\RouteAccessReporter}, which for the same reason does
+ * not judge them).
+ *
+ * The consequence is worth stating because it is counter-intuitive. Passing
+ * `['auth']` as the middleware does NOT produce seven guarded routes — it
+ * produces seven routes that {@see \Pulsar\Auth\Middleware\AuthorizationMiddleware}
+ * refuses for every caller, because it reads an empty `permissions` attribute
+ * as deny-everyone. An application that wants a guarded resource set registers
+ * the routes it needs through {@see RouteAccessRegistrar::authenticated()},
+ * which names the permission per route, or attaches the `permissions` attribute
+ * itself.
  */
 #[Internal(reason: 'Resource route scaffolding; use Router::resource()/apiResource()')]
 final class ResourceRegistrar

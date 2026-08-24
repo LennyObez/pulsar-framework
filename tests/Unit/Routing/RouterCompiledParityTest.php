@@ -68,6 +68,54 @@ final class RouterCompiledParityTest extends TestCase
         }
     }
 
+    #[Test]
+    public function bothMatchersReadTheCustomBindingKeySyntaxTheSameWay(): void
+    {
+        // `{param:key}` names the column model binding resolves by. It is a
+        // declaration, not part of the URL, so both matchers must strip it and
+        // capture the parameter under its bare name — a compiled table that
+        // matched only the literal `/users/{user:slug}` would take every
+        // custom-key route out of service in production alone.
+        $routes = [
+            new Route(methods: [Method::GET], path: '/users/{user:slug}', handler: 'C::user', name: 'user'),
+            new Route(
+                methods: [Method::GET],
+                path: '/users/{user:slug}/posts/{post}',
+                handler: 'C::post',
+                name: 'post',
+            ),
+            new Route(methods: [Method::GET], path: '/posts/{post:slug?}', handler: 'C::posts', name: 'posts'),
+        ];
+
+        $router = new Router();
+        foreach ($routes as $route) {
+            $router->add($route);
+        }
+
+        $tree = new RouteCompiler()->compile($routes);
+
+        $cases = [
+            [Method::GET, '/users/john-doe'],
+            [Method::GET, '/users/john-doe/posts/20'],
+            [Method::GET, '/posts'],
+            [Method::GET, '/posts/hello-world'],
+            [Method::GET, '/users/john/doe'],
+        ];
+
+        foreach ($cases as [$method, $path]) {
+            $live = $this->describe(static fn(): MatchedRoute => $router->match($method, $path));
+            $compiled = $this->describe(static fn(): MatchedRoute => $tree->match($method, $path));
+
+            self::assertSame($live['path'], $compiled['path'], "matched route differs for {$path}");
+            self::assertSame($live['params'], $compiled['params'], "extracted params differ for {$path}");
+        }
+
+        self::assertSame(
+            ['post' => '20', 'user' => 'john-doe'],
+            $this->describe(static fn(): MatchedRoute => $tree->match(Method::GET, '/users/john-doe/posts/20'))['params'],
+        );
+    }
+
     /**
      * @param callable(): MatchedRoute $match
      *

@@ -66,6 +66,42 @@ final class RouteUrlGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function substitutes_a_parameter_declared_with_a_custom_binding_key(): void
+    {
+        // `{user:slug}` names the column model binding resolves by; the URL
+        // carries the value alone. Leaving the placeholder in would emit a link
+        // the router cannot match back — the routes that most need url() are
+        // exactly the ones declaring a key.
+        self::assertSame(
+            '/users/john-doe/posts/20',
+            RouteUrlGenerator::generate(
+                $this->route('/users/{user:slug}/posts/{post}'),
+                ['user' => 'john-doe', 'post' => '20'],
+                null,
+            ),
+        );
+    }
+
+    #[Test]
+    public function percent_encodes_a_custom_key_parameter_like_any_other(): void
+    {
+        self::assertSame(
+            '/users/..%2Fadmin',
+            RouteUrlGenerator::generate($this->route('/users/{user:slug}'), ['user' => '../admin'], null),
+        );
+    }
+
+    #[Test]
+    public function strips_an_unfilled_optional_parameter_that_declares_a_key(): void
+    {
+        self::assertSame('/posts', RouteUrlGenerator::generate($this->route('/posts/{post:slug?}'), [], null));
+        self::assertSame(
+            '/posts/hello',
+            RouteUrlGenerator::generate($this->route('/posts/{post:slug?}'), ['post' => 'hello'], null),
+        );
+    }
+
+    #[Test]
     public function builds_subdomain_url_when_scope_maps_to_subdomain(): void
     {
         $domain = new DomainConfig(

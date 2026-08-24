@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\Authorization\Gate;
 use Pulsar\Auth\Authorization\InMemoryRoleRegistry;
@@ -27,22 +28,18 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Observability\Metrics\LabelSet;
+use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Session\SessionInterface;
 
 use function bin2hex;
-use function explode;
-use function file_get_contents;
 use function is_file;
-use function json_decode;
 use function random_bytes;
 use function sys_get_temp_dir;
-use function trim;
 use function unlink;
-
-use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(AuthManager::class)]
 #[CoversClass(SessionGuard::class)]
@@ -170,7 +167,7 @@ final class AuthenticationFlowTest extends TestCase
         $manager = new AuthManager();
         $manager->addGuard($guard);
 
-        $middleware = new AuthenticationMiddleware($manager);
+        $middleware = new AuthenticationMiddleware($manager, new AuthenticationState());
 
         $request = new ServerRequest(
             method: 'GET',
@@ -308,17 +305,28 @@ final class AuthenticationFlowTest extends TestCase
     }
 
     /**
-     * ASVS 7.2.1 — a failed login must reach the audit sink, and the
-     * credential that failed must not.
+     * A refusal with no identity behind it is COUNTED, not chained.
      *
-     * Drives a real request through the kernel: global
-     * AuthenticationMiddleware attaches the lazy SecurityContext, the route's
-     * AuthorizationMiddleware resolves it, the TokenGuard presents the bearer
-     * token, the resolver refuses it, and the resulting decision is asserted
-     * on disk in the JSON Lines file the framework actually ships.
+     * This test used to assert the opposite, and the posture changed for a
+     * reason the shape of the old entry states by itself: actor `anonymous`,
+     * action `authenticate`, reason `unauthenticated`, and `resource` set to the
+     * REQUESTED PATH. Every such entry carries the same information as every
+     * other one, none of them names anybody, and the only column that varies is
+     * chosen by the caller — so an unauthenticated client could grow the
+     * tamper-evident chain without limit, one HMAC advance and one `LOCK_EX`
+     * append per request, and bury the denials that do name an actor.
+     *
+     * What is recorded instead is a counter labelled with the ROUTE and the
+     * reason, both bounded by the route table, plus the occurrence in the access
+     * log every deployment already keeps. Nothing about the credential reaches
+     * either, which is the half of ASVS 7.2.1 this test still asserts on disk.
+     *
+     * A denial that DOES name an actor is unchanged — full entry, one per
+     * occurrence, no ceiling. {@see \Pulsar\Tests\Integration\Auth\AuthorizationFlowTest::deniedPermissionIsRecordedInTheAuditSink()}
+     * is that half, driven through the same kernel.
      */
     #[Test]
-    public function rejectedBearerTokenIsRecordedInTheAuditSink(): void
+    public function aRejectedBearerTokenIsCountedRatherThanChained(): void
     {
         $auditPath = $this->createAuditLogPath();
         $auditLogger = new AuditLogger(new AuditFileSink($auditPath), random_bytes(32));
@@ -333,11 +341,13 @@ final class AuthenticationFlowTest extends TestCase
 
         // Wired the way AuthWiring wires it: AuthenticationMiddleware global,
         // AuthorizationMiddleware behind the `auth` route alias.
+        $metrics = new MetricRegistry();
+
         $kernel = new Kernel();
-        $kernel->addMiddleware(new AuthenticationMiddleware($manager));
+        $kernel->addMiddleware(new AuthenticationMiddleware($manager, new AuthenticationState()));
         $kernel->middlewareRegistry()->alias(
             'auth',
-            new AuthorizationMiddleware(new Gate(new InMemoryRoleRegistry()), $auditLogger),
+            new AuthorizationMiddleware(new Gate(new InMemoryRoleRegistry()), $auditLogger, null, $metrics),
         );
         $kernel->router()->add(new Route(
             methods: [Method::GET],
@@ -355,43 +365,48 @@ final class AuthenticationFlowTest extends TestCase
 
         self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
 
-        self::assertFileExists($auditPath, 'the decision reached no audit sink');
+        self::assertFileDoesNotExist(
+            $auditPath,
+            'an unauthenticated refusal must not advance the tamper-evident chain: '
+            . 'the entry names nobody and its only varying column is the caller\'s own path.',
+        );
 
-        $raw = file_get_contents($auditPath);
-        self::assertIsString($raw);
+        self::assertSame(
+            1.0,
+            $metrics->counter('pulsar_auth_anonymous_denials_total')->value(
+                new LabelSet(['reason' => 'unauthenticated', 'route' => '/reports/quarterly']),
+            ),
+            'the refusal is counted, labelled with the route rather than the requested path',
+        );
 
-        $entries = $this->readAuditEntries($raw);
+        // Ten more of the same, each to a path of the caller's choosing. The
+        // chain does not move and the counter has one series, which is the
+        // property the per-path chain entry could not have.
+        for ($i = 0; $i < 10; ++$i) {
+            $kernel->handle(new ServerRequest(
+                method: 'GET',
+                uri: '/reports/quarterly?probe=' . $i,
+                headers: ['Authorization' => 'Bearer ' . self::REJECTED_TOKEN],
+            ));
+        }
 
-        self::assertCount(1, $entries);
-        self::assertSame('authentication', $entries[0]['event']);
-        self::assertSame('failure', $entries[0]['outcome']);
-        self::assertSame('anonymous', $entries[0]['actor']);
-        self::assertSame('authenticate', $entries[0]['action']);
-        self::assertSame('/reports/quarterly', $entries[0]['resource']);
-        self::assertSame(['reason' => 'unauthenticated'], $entries[0]['metadata']);
-
-        self::assertStringNotContainsString(self::REJECTED_TOKEN, $raw);
+        self::assertFileDoesNotExist($auditPath);
+        self::assertCount(
+            1,
+            $metrics->counter('pulsar_auth_anonymous_denials_total')->values(),
+            'the label set is route-table-bounded, so eleven caller-chosen paths are one series',
+        );
+        self::assertSame(
+            11.0,
+            $metrics->counter('pulsar_auth_anonymous_denials_total')->value(
+                new LabelSet(['reason' => 'unauthenticated', 'route' => '/reports/quarterly']),
+            ),
+        );
     }
 
     private function createAuditLogPath(): string
     {
         return $this->auditLogPath = sys_get_temp_dir()
             . '/pulsar_authn_flow_audit_' . bin2hex(random_bytes(8)) . '.jsonl';
-    }
-
-    /**
-     * @return list<array{event: string, outcome: string, actor: string, action: string, resource: string, metadata: array<string, mixed>}>
-     */
-    private function readAuditEntries(string $raw): array
-    {
-        $entries = [];
-
-        foreach (explode("\n", trim($raw)) as $line) {
-            /** @var array{event: string, outcome: string, actor: string, action: string, resource: string, metadata: array<string, mixed>} $entry */
-            $entry = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
-            $entries[] = $entry;
-        }
-
-        return $entries;
     }
 }

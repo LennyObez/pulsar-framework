@@ -19,6 +19,8 @@ use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\SessionInterface;
 use Pulsar\Security\Session\SessionManager;
 
+use function time;
+
 #[CoversClass(SessionGuard::class)]
 final class SessionGuardTest extends TestCase
 {
@@ -95,8 +97,18 @@ final class SessionGuardTest extends TestCase
         self::assertSame([], $identity->attributes());
     }
 
+    /**
+     * Login rotates the id, stores the identity, and stamps when the
+     * credentials were presented.
+     *
+     * Driven against a real SessionManager rather than a mock: the stamp is
+     * what `SensitiveOperationMiddleware` reads to decide whether a password
+     * change may proceed without re-authentication, so the property worth
+     * asserting is that the value is in the store and readable — not that
+     * `set()` was called some number of times.
+     */
     #[Test]
-    public function loginRegeneratesSessionAndStoresIdentity(): void
+    public function loginRegeneratesSessionStoresIdentityAndStampsAuthenticationTime(): void
     {
         $identity = new Identity(
             id: 'user-1',
@@ -106,15 +118,54 @@ final class SessionGuardTest extends TestCase
             attributes: [],
         );
 
-        $session = $this->createMock(SessionInterface::class);
-        $session->expects(self::once())->method('regenerate');
-        $session->expects(self::once())->method('set')->with(
-            '_pulsar_identity',
-            $identity->toArray(),
-        );
+        $session = new SessionManager(new ArrayHandler(), new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        ));
+        $session->start();
+
+        $anonymousId = $session->id();
+        $before = time();
 
         $guard = new SessionGuard($session);
         $guard->login($identity);
+
+        self::assertNotSame($anonymousId, $session->id(), 'login must rotate the session id');
+        self::assertSame($identity->toArray(), $session->get('_pulsar_identity'));
+
+        $stamp = $guard->lastAuthenticatedAt();
+        self::assertNotNull($stamp, 'login must record when the credentials were presented');
+        self::assertGreaterThanOrEqual($before, $stamp);
+        self::assertLessThanOrEqual(time(), $stamp);
+    }
+
+    /**
+     * A session that never authenticated has no stamp, so every operation
+     * requiring re-authentication demands it rather than reading a zero as a
+     * timestamp at the epoch.
+     */
+    #[Test]
+    public function lastAuthenticatedAtIsNullBeforeAnyLogin(): void
+    {
+        $session = new SessionManager(new ArrayHandler(), new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        ));
+        $session->start();
+
+        self::assertNull(new SessionGuard($session)->lastAuthenticatedAt());
     }
 
     /**

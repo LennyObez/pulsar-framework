@@ -75,6 +75,31 @@ final readonly class StepUpMiddleware implements MiddlewareInterface
         $session->set($sessionKey, time());
     }
 
+    /**
+     * When this identity last completed a step-up challenge, or null.
+     *
+     * A step-up challenge is a re-authentication, so `SensitiveOperationMiddleware`
+     * accepts it in place of a fresh login when deciding whether a sensitive
+     * operation may proceed. Without this reader the two controls would each
+     * demand their own credential prompt for the same request.
+     */
+    public static function stepUpAuthenticatedAt(SessionInterface $session, string $identityId): ?int
+    {
+        if (!$session->isStarted()) {
+            return null;
+        }
+
+        $sessionKey = self::SESSION_KEY_PREFIX . '[' . $identityId . ']';
+
+        if (!$session->has($sessionKey)) {
+            return null;
+        }
+
+        $stamp = $session->getInt($sessionKey, 0);
+
+        return $stamp > 0 ? $stamp : null;
+    }
+
     private function forbiddenResponse(ServerRequestInterface $request): ResponseInterface
     {
         if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {

@@ -13,6 +13,7 @@ use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Http\RateLimit\RateLimitKeyStrategy;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\TrustedProxy;
+use Pulsar\Routing\MatchedRoute;
 
 use function hash;
 use function is_string;
@@ -33,14 +34,54 @@ use function substr;
  *
  * Returns 429 Too Many Requests with standard rate-limit headers
  * when the limit is exceeded.
+ *
+ * ## Route-scoped buckets are keyed from the dispatched route
+ *
+ * The route-scoped strategies used to read the `_route` request attribute and
+ * accept it only `if (is_string($route))`. That attribute is a
+ * {@see MatchedRoute} object — {@see \Pulsar\Core\Kernel::dispatchRoute()}
+ * writes it as one — so the test was false on every request that ever reached
+ * this middleware, and every route-scoped bucket silently fell through to the
+ * method-and-path fallback. `/users/1` and `/users/2` were therefore different
+ * buckets on one route: a route-scoped limit was evaded by varying the id, and
+ * the number of buckets the limiter store held was bounded by the URL space
+ * rather than by the route table.
+ *
+ * Replacing the dead test with a live read of the same attribute would have
+ * swapped a broken control for an evadable one — `_route` is rewritable by every
+ * frame between routing and here, and this middleware is piped route-level, so
+ * another route middleware sits in front of it. The route arrives as an argument
+ * instead: {@see DispatchedRouteAwareInterface} is bound by the pipeline the
+ * kernel hands the dispatched route to, before the chain is built and therefore
+ * before any frame that could write an attribute exists.
+ *
+ * An unbound copy — piped globally, where routing has not happened yet — keeps
+ * the documented method-and-path fallback, which is the honest key for a request
+ * whose route is not decided.
  */
-final readonly class RateLimitMiddleware implements MiddlewareInterface
+final readonly class RateLimitMiddleware implements DispatchedRouteAwareInterface, MiddlewareInterface
 {
     public function __construct(
         private RateLimiterInterface $limiter,
         private ?TrustedProxy $trustedProxy = null,
         private RateLimitKeyStrategy $keyStrategy = RateLimitKeyStrategy::Ip,
+        private ?MatchedRoute $dispatchedRoute = null,
     ) {}
+
+    /**
+     * Bind a copy of this middleware to the route the kernel is dispatching.
+     *
+     * A copy, not a mutation: one instance serves every request for the process
+     * lifetime, and a persistent worker interleaves Fiber-suspended requests
+     * through it, so a route stored on the shared object would be another
+     * request's route. The class is readonly, so the copy is a construction
+     * rather than a `clone`.
+     */
+    #[Override]
+    public function forDispatchedRoute(MatchedRoute $route): self
+    {
+        return new self($this->limiter, $this->trustedProxy, $this->keyStrategy, $route);
+    }
 
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -109,17 +150,29 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Identify the matched route for route-scoped strategies. Prefers the
-     * router-set `_route` attribute; falls back to method + path so an
-     * unmatched/ad-hoc request still buckets deterministically.
+     * Identify the route for route-scoped strategies.
+     *
+     * The dispatched route's NAME when it has one, its PATTERN otherwise. Both
+     * come from the route table, so the number of distinct buckets a route-scoped
+     * strategy can ever create is the size of that table — which is what makes it
+     * a route-scoped limit rather than a per-URL one. The name is preferred
+     * because two routes may share a pattern under different hosts or methods,
+     * and a name distinguishes them where a pattern does not.
+     *
+     * Falls back to method + path only when this copy was never bound to a
+     * dispatch: the global pipeline runs before routing, so there is no route to
+     * name and inventing one would be a guess. That fallback is per-URL by
+     * construction, which is why it is the answer for a request with no route
+     * rather than the answer for a route-scoped strategy.
      */
     private function resolveRoute(ServerRequestInterface $request): string
     {
-        /** @var mixed $route */
-        $route = $request->getAttribute('_route');
+        $route = $this->dispatchedRoute;
 
-        if (is_string($route) && $route !== '') {
-            return $route;
+        if ($route !== null) {
+            $name = $route->getName();
+
+            return $name !== null && $name !== '' ? $name : $route->route->path;
         }
 
         return $request->getMethod() . ' ' . $request->getUri()->getPath();

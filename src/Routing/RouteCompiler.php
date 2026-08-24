@@ -177,9 +177,13 @@ final class RouteCompiler
         $pattern = preg_quote($path, '#');
         $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
 
-        // Required params: {param}
+        // Required params: {param} and {param:key}. The `:key` suffix names the
+        // column the model binder looks the parameter up by and never reaches
+        // the URL, so it is dropped here and the capture stays named for the
+        // parameter alone — a PCRE group name cannot contain `:` in any case.
+        // preg_quote escaped the `:` to `\:`, so the regex matches that form.
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)}#',
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?:\\\\:[a-zA-Z_][a-zA-Z0-9_]*)?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
@@ -190,13 +194,13 @@ final class RouteCompiler
         );
         $pattern = $replaced ?? $pattern;
 
-        // Optional params: /{param?}. The preceding slash becomes optional
-        // together with the parameter so that /blog/{page?} matches both /blog
-        // and /blog/2 — byte-identical to Route::pathToPattern(). preg_quote
-        // escaped the `?` to `\?`, so the literal token here is `/{param\?}`
-        // and the regex matches the escaped form.
+        // Optional params: /{param?} and /{param:key?}. The preceding slash
+        // becomes optional together with the parameter so that /blog/{page?}
+        // matches both /blog and /blog/2 — byte-identical to
+        // Route::pathToPattern(). preg_quote escaped the `?` to `\?`, so the
+        // literal token here is `/{param\?}` and the regex matches that form.
         $replaced = preg_replace_callback(
-            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)\\\\\?}#',
+            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)(?:\\\\:[a-zA-Z_][a-zA-Z0-9_]*)?\\\\\?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';

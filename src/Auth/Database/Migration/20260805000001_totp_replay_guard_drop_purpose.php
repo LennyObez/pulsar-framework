@@ -35,10 +35,14 @@ use Pulsar\Database\Schema\TableIntrospector;
  *
  * ## Why every step is idempotent, and why nothing returns early
  *
- * MySQL and SQLite commit each DDL statement as it runs — {@see \Pulsar\Database\Schema\
- * SchemaCapabilities::supportsTransactionalDdl()} says so — while MigrationRunner records
- * a migration only once `up()` has returned. A run that dies partway therefore leaves the
- * schema half-changed and the migration unrecorded, and runs again from the top.
+ * MigrationRunner records a migration only once `up()` has returned, and writes that record
+ * outside the transaction it wrapped `up()` in. A run killed in that window leaves the
+ * migration unrecorded and runs again from the top, on every engine.
+ *
+ * MySQL reaches the same replay a second way, and a worse one: it commits each DDL statement
+ * as it runs — {@see \Pulsar\Database\Schema\SchemaCapabilities::supportsTransactionalDdl()}
+ * says so, and says the opposite of SQLite, whose DDL is transactional — so there the
+ * resumed run meets a schema that is half-changed rather than whole.
  *
  * An earlier draft opened `up()` with `if (!hasPurposeColumn()) return;`. On the second
  * run that guard was the defect: the column had already gone, so the method returned

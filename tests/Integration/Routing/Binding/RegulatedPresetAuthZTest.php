@@ -7,6 +7,8 @@ namespace Pulsar\Tests\Integration\Routing\Binding;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -16,6 +18,7 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Attribute\PublicRoute;
 use Pulsar\Routing\Binding\BindingMeta;
+use Pulsar\Routing\Binding\BindingPreset;
 use Pulsar\Routing\Binding\BindingResolver;
 use Pulsar\Routing\Binding\CompiledBindingMap;
 use Pulsar\Routing\Binding\Contract\AuthorizationHookInterface;
@@ -44,7 +47,7 @@ final class RegulatedPresetAuthZTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             models: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             authHook: $authHook,
             authenticated: true,
         );
@@ -57,13 +60,19 @@ final class RegulatedPresetAuthZTest extends TestCase
         );
 
         $handler = $this->createPassthroughHandler();
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(200, $response->getStatusCode());
     }
 
+    /**
+     * A policy denial is answered with the status a missing row is answered
+     * with. The pair `403`/`404` told any caller the policy refuses whether the
+     * id names a real record, which under a regulated preset is the disclosure
+     * the preset exists to prevent.
+     */
     #[Test]
-    public function regulatedPresetDenyReturns403(): void
+    public function regulatedPresetDenyIsIndistinguishableFromAMissingRow(): void
     {
         $model = new stdClass();
 
@@ -72,7 +81,7 @@ final class RegulatedPresetAuthZTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             models: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'healthcare'),
+            config: new ModelBindingConfig(preset: BindingPreset::Healthcare),
             authHook: $authHook,
             authenticated: true,
         );
@@ -85,9 +94,9 @@ final class RegulatedPresetAuthZTest extends TestCase
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
@@ -99,7 +108,7 @@ final class RegulatedPresetAuthZTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             models: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'legal'),
+            config: new ModelBindingConfig(preset: BindingPreset::Legal),
             authHook: $authHook,
             authenticated: false,
         );
@@ -112,7 +121,7 @@ final class RegulatedPresetAuthZTest extends TestCase
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(401, $response->getStatusCode());
     }
@@ -126,7 +135,7 @@ final class RegulatedPresetAuthZTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             models: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             authHook: $authHook,
             authenticated: true,
         );
@@ -140,7 +149,7 @@ final class RegulatedPresetAuthZTest extends TestCase
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(403, $response->getStatusCode());
     }
@@ -155,7 +164,7 @@ final class RegulatedPresetAuthZTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             models: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             authHook: $authHook,
             authenticated: true,
         );
@@ -169,7 +178,7 @@ final class RegulatedPresetAuthZTest extends TestCase
         );
 
         $handler = $this->createPassthroughHandler();
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(200, $response->getStatusCode());
     }
@@ -186,7 +195,7 @@ final class RegulatedPresetAuthZTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             models: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $authHook,
             authenticated: false,
             logger: $logger,
@@ -200,10 +209,32 @@ final class RegulatedPresetAuthZTest extends TestCase
         );
 
         $handler = $this->createPassthroughHandler();
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         // Permissive preset: no 401, passes through with a debug log
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Run the middleware the way the kernel runs it.
+     *
+     * The middleware does not read `_route`: the kernel passes the route it is
+     * dispatching to the pipeline, which binds a per-dispatch copy of the
+     * middleware to it. These tests write the same route into both places, which
+     * is what a real dispatch does; that the two cannot be made to DISAGREE is
+     * the subject of DispatchedRouteAuthorityTest.
+     */
+    private function dispatch(
+        ModelBindingMiddleware $middleware,
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
+        /** @var MatchedRoute|null $route */
+        $route = $request->getAttribute('_route');
+
+        $bound = $route === null ? $middleware : $middleware->forDispatchedRoute($route);
+
+        return $bound->process($request, $handler);
     }
 
     /**

@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\Gate;
 use Pulsar\Auth\Authorization\InMemoryRoleRegistry;
@@ -50,6 +51,8 @@ use const JSON_THROW_ON_ERROR;
 #[CoversClass(AuthorizationMiddleware::class)]
 final class AuthorizationFlowTest extends TestCase
 {
+    private ?MatchedRoute $dispatchedRoute = null;
+
     private InMemoryRoleRegistry $registry;
     private Gate $gate;
     private ?string $auditLogPath = null;
@@ -182,6 +185,7 @@ final class AuthorizationFlowTest extends TestCase
             ['permissions' => ['users.view']],
             $authManager,
         );
+        $middleware = $middleware->forDispatchedRoute($this->dispatchedRoute());
 
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
@@ -209,6 +213,7 @@ final class AuthorizationFlowTest extends TestCase
             ['permissions' => ['content.view']],
             $authManager,
         );
+        $middleware = $middleware->forDispatchedRoute($this->dispatchedRoute());
 
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
@@ -236,6 +241,7 @@ final class AuthorizationFlowTest extends TestCase
             ['permissions' => ['content.create']],
             $authManager,
         );
+        $middleware = $middleware->forDispatchedRoute($this->dispatchedRoute());
 
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
@@ -329,7 +335,7 @@ final class AuthorizationFlowTest extends TestCase
         // Registered globally, the middleware runs before the router has
         // matched, so the required permissions are unknown.
         $kernel = new Kernel();
-        $kernel->addMiddleware(new AuthenticationMiddleware($authManager));
+        $kernel->addMiddleware(new AuthenticationMiddleware($authManager, new AuthenticationState()));
         $kernel->addMiddleware(new AuthorizationMiddleware($this->gate, $auditLogger));
         $kernel->router()->add(new Route(
             methods: [Method::GET],
@@ -365,7 +371,7 @@ final class AuthorizationFlowTest extends TestCase
         // Wired the way AuthWiring wires it: AuthenticationMiddleware global,
         // AuthorizationMiddleware behind the `auth` route alias.
         $kernel = new Kernel();
-        $kernel->addMiddleware(new AuthenticationMiddleware($authManager));
+        $kernel->addMiddleware(new AuthenticationMiddleware($authManager, new AuthenticationState()));
         $kernel->middlewareRegistry()->alias('auth', new AuthorizationMiddleware($this->gate, $auditLogger));
         $kernel->router()->add(new Route(
             methods: [Method::GET],
@@ -406,6 +412,17 @@ final class AuthorizationFlowTest extends TestCase
     }
 
     /**
+     * The route the last {@see createRequestWithRoute()} built, handed to the
+     * middleware the way the kernel's pipeline hands it down.
+     */
+    private function dispatchedRoute(): MatchedRoute
+    {
+        self::assertNotNull($this->dispatchedRoute, 'build a request first');
+
+        return $this->dispatchedRoute;
+    }
+
+    /**
      * @param array<string, mixed> $routeAttributes
      */
     private function createRequestWithRoute(
@@ -420,7 +437,7 @@ final class AuthorizationFlowTest extends TestCase
             attributes: $routeAttributes,
         );
 
-        $matchedRoute = new MatchedRoute($route);
+        $this->dispatchedRoute = new MatchedRoute($route);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -430,8 +447,10 @@ final class AuthorizationFlowTest extends TestCase
 
         $securityContext = new SecurityContext($authManager, $request);
 
-        return $request
-            ->withAttribute('_route', $matchedRoute)
-            ->withAttribute('_security_context', $securityContext);
+        // No `_route` here. The route reaches the middleware as an argument,
+        // through the same DispatchedRouteAwareInterface channel the pipeline
+        // uses, because a route-level frame in front of this one can put
+        // anything it likes in the attribute.
+        return $request->withAttribute('_security_context', $securityContext);
     }
 }

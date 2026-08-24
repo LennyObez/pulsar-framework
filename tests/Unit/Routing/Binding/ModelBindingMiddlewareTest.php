@@ -22,6 +22,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Attribute\PublicRoute;
 use Pulsar\Routing\Binding\BindingMeta;
+use Pulsar\Routing\Binding\BindingPreset;
 use Pulsar\Routing\Binding\BindingResolver;
 use Pulsar\Routing\Binding\CompiledBindingMap;
 use Pulsar\Routing\Binding\Contract\AuthorizationHookInterface;
@@ -60,7 +61,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute(null);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -75,7 +76,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -93,7 +94,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -103,7 +104,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $capturedRequest = null;
         $handler = $this->createCapturingHandler($capturedRequest);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedRequest);
         self::assertSame($model, $capturedRequest->getAttribute('_model_user'));
@@ -124,7 +125,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
         );
 
@@ -138,7 +139,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -156,7 +157,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $user, 'post' => $post],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
             routeName: 'users.posts.show',
             routePath: '/users/{user}/posts/{post}',
@@ -175,7 +176,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $capturedRequest = null;
         $handler = $this->createCapturingHandler($capturedRequest);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedRequest);
         self::assertSame($user, $capturedRequest->getAttribute('_model_user'));
@@ -197,7 +198,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -211,7 +212,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched, acceptJson: true);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(404, $response->getStatusCode());
         self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
@@ -226,7 +227,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched, acceptJson: false);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(404, $response->getStatusCode());
         $body = (string) $response->getBody();
@@ -244,14 +245,19 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-42');
 
         $resolverCalled = false;
-        $identityResolver = static function (ServerRequestInterface $req) use ($identity, &$resolverCalled): IdentityInterface {
+
+        // No parameter, and that is the contract rather than a convenience: the
+        // resolver is never handed the request, so no request attribute can
+        // decide who the binding layer authorizes against.
+        $identityResolver = static function () use ($identity, &$resolverCalled): IdentityInterface {
             $resolverCalled = true;
+
             return $identity;
         };
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: $identityResolver,
         );
 
@@ -259,7 +265,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertTrue($resolverCalled);
     }
@@ -271,7 +277,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: null,
         );
 
@@ -280,7 +286,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $handler = $this->createHandlerReturning($this->nextResponse);
 
         // Permissive preset + null identity = skip authz, proceed normally
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -292,7 +298,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => null,
         );
 
@@ -301,7 +307,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $handler = $this->createHandlerReturning($this->nextResponse);
 
         // Permissive preset + null identity = skip authz, proceed normally
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -316,7 +322,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $unauthIdentity,
         );
 
@@ -325,7 +331,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $handler = $this->createHandlerReturning($this->nextResponse);
 
         // Permissive preset + unauthenticated = skip authz, proceed normally
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -341,7 +347,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -349,13 +355,13 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
 
     #[Test]
-    public function standardPresetReturnsForbiddenWhenAuthHookDenies(): void
+    public function standardPresetRefusesWhenAuthHookDenies(): void
     {
         $model = new stdClass();
         $this->authHook->method('authorize')->willReturn(false);
@@ -363,7 +369,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -371,9 +377,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     // ── Authorization policy propagation (declared authzPolicy) ──────────
@@ -421,7 +427,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $authHook,
             identityResolver: fn() => $this->createAuthenticatedIdentity('user-1'),
         );
@@ -430,7 +436,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
         self::assertInstanceOf(BindingMeta::class, $capturedMeta);
@@ -448,7 +454,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -459,7 +465,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         // Permissive preset + _without_authorization = skip, delegate to handler
         self::assertSame($this->nextResponse, $response);
@@ -480,7 +486,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => null,
             logger: $logger,
         );
@@ -489,7 +495,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -498,7 +504,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
     #[Test]
     #[DataProvider('regulatedPresetProvider')]
-    public function regulatedPresetReturnsForbiddenWhenAuthBypassWithoutPublicRoute(string $preset): void
+    public function regulatedPresetReturnsForbiddenWhenAuthBypassWithoutPublicRoute(BindingPreset $preset): void
     {
         $model = new stdClass();
 
@@ -516,19 +522,19 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(403, $response->getStatusCode());
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{BindingPreset}>
      */
     public static function regulatedPresetProvider(): iterable
     {
-        yield 'banking' => ['banking'];
-        yield 'healthcare' => ['healthcare'];
-        yield 'legal' => ['legal'];
+        yield 'banking' => [BindingPreset::Banking];
+        yield 'healthcare' => [BindingPreset::Healthcare];
+        yield 'legal' => [BindingPreset::Legal];
     }
 
     #[Test]
@@ -538,7 +544,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: static fn() => null,
         );
 
@@ -546,7 +552,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(401, $response->getStatusCode());
     }
@@ -558,7 +564,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'healthcare'),
+            config: new ModelBindingConfig(preset: BindingPreset::Healthcare),
             identityResolver: static fn() => null,
         );
 
@@ -566,7 +572,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched, acceptJson: true);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(401, $response->getStatusCode());
         self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
@@ -581,7 +587,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: static fn() => $identity,
         );
 
@@ -589,13 +595,13 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
 
     #[Test]
-    public function regulatedPresetReturnsForbiddenWhenAuthHookDenies(): void
+    public function regulatedPresetRefusesWhenAuthHookDenies(): void
     {
         $model = new stdClass();
         $this->authHook->method('authorize')->willReturn(false);
@@ -603,7 +609,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: static fn() => $identity,
         );
 
@@ -611,9 +617,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     // ── PublicRoute attribute bypass on regulated preset ──────────────────
@@ -625,7 +631,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: static fn() => null,
             handler: [MiddlewareTestPublicMethodController::class, 'show'],
         );
@@ -638,7 +644,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -650,7 +656,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'legal'),
+            config: new ModelBindingConfig(preset: BindingPreset::Legal),
             identityResolver: static fn() => null,
             handler: [MiddlewareTestPublicClassController::class, 'show'],
         );
@@ -663,7 +669,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -677,7 +683,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: fn() => $this->createAuthenticatedIdentity('u-1'),
             handler: [MiddlewareTestPublicMethodController::class, 'show'],
         );
@@ -690,7 +696,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame($this->nextResponse, $response);
     }
@@ -726,7 +732,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             tenantContext: $tenantContext,
             identityResolver: static fn() => $identity,
@@ -736,7 +742,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedContext);
         self::assertSame('tenant-abc', $capturedContext->tenantId);
@@ -770,7 +776,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             tenantContext: $tenantContext,
             identityResolver: static fn() => $identity,
@@ -780,7 +786,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedContext);
         self::assertNull($capturedContext->tenantId);
@@ -811,7 +817,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             tenantContext: null,
             identityResolver: static fn() => $identity,
@@ -821,7 +827,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedContext);
         self::assertNull($capturedContext->tenantId);
@@ -852,7 +858,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             identityResolver: static fn() => $identity,
         );
@@ -861,7 +867,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedContext);
         self::assertSame('subject-99', $capturedContext->subjectId);
@@ -891,7 +897,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             identityResolver: null,
         );
@@ -900,10 +906,93 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedContext);
         self::assertNull($capturedContext->subjectId);
+    }
+
+    // ── Soft-deleted rows ────────────────────────────────────────────────
+
+    #[Test]
+    public function trashedRowsAreExcludedUnlessTheRouteAsksForThem(): void
+    {
+        $context = $this->captureResolutionContext($this->createMatchedRoute(['user' => '42']));
+
+        self::assertFalse($context->includeTrashed);
+    }
+
+    #[Test]
+    public function aRouteMayOptIntoResolvingTrashedRows(): void
+    {
+        // A restore or archive endpoint declares `_with_trashed` where it is
+        // registered. Its neighbours on the same model do not, and stay blind
+        // to deleted rows.
+        $matched = $this->createMatchedRoute(['user' => '42'], attributes: ['_with_trashed' => true]);
+
+        $context = $this->captureResolutionContext($matched);
+
+        self::assertTrue($context->includeTrashed);
+    }
+
+    #[Test]
+    public function nothingOnTheRequestCanOptIntoResolvingTrashedRows(): void
+    {
+        // The opt-in is read from the route table, never from the request, so a
+        // caller cannot un-hide soft-deleted rows on a route that never granted
+        // it — here by planting the same name as a request attribute.
+        $uri = $this->createStub(UriInterface::class);
+        $uri->method('getPath')->willReturn('/users/42');
+
+        $attributes = [
+            '_route' => $this->createMatchedRoute(['user' => '42']),
+            '_with_trashed' => true,
+        ];
+
+        $context = $this->captureResolutionContext(null, $this->buildRequestStub($attributes, false, $uri));
+
+        self::assertFalse($context->includeTrashed);
+    }
+
+    /**
+     * Run one binding and hand back the ResolutionContext the resolver saw.
+     */
+    private function captureResolutionContext(
+        ?MatchedRoute $matchedRoute,
+        ?ServerRequestInterface $request = null,
+    ): ResolutionContext {
+        $capturedContext = null;
+        $resolver = $this->createMock(ModelResolverPort::class);
+        $resolver->expects(self::once())
+            ->method('resolve')
+            ->with(
+                self::anything(),
+                self::anything(),
+                self::anything(),
+                self::callback(static function (ResolutionContext $ctx) use (&$capturedContext): bool {
+                    $capturedContext = $ctx;
+                    return true;
+                }),
+            )
+            ->willReturn(new stdClass());
+
+        $this->authHook->method('authorize')->willReturn(true);
+
+        $middleware = new ModelBindingMiddleware(
+            binder: $this->createRealBinder($resolver, ['user']),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
+            authHook: $this->authHook,
+        );
+
+        $this->dispatch(
+            $middleware,
+            $request ?? $this->createRequestWithRoute($matchedRoute),
+            $this->createHandlerReturning($this->nextResponse),
+        );
+
+        self::assertInstanceOf(ResolutionContext::class, $capturedContext);
+
+        return $capturedContext;
     }
 
     // ── Audit logging ────────────────────────────────────────────────────
@@ -930,7 +1019,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
             auditLogger: $auditLogger,
         );
@@ -939,14 +1028,20 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
     public function auditLoggingFailureDoesNotDisruptRequest(): void
     {
+        // The failure must not disrupt the request AND must not disappear. With
+        // no logger wired into this middleware it goes to the server error log,
+        // the same last-resort channel the kernel uses; see
+        // AnonymousDenialAuditTest for the rest of that property.
+        $this->expectOutputRegex('/Audit write failed for a model-binding denial/');
+
         $model = new stdClass();
         $this->authHook->method('authorize')->willReturn(false);
 
@@ -959,7 +1054,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
             auditLogger: $auditLogger,
         );
@@ -969,9 +1064,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $handler = $this->createHandlerReturning($this->nextResponse);
 
         // Should not throw despite audit failure
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
@@ -985,7 +1080,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         // No audit logger injected
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
             auditLogger: null,
         );
@@ -995,9 +1090,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $handler = $this->createHandlerReturning($this->nextResponse);
 
         // Should not throw
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     // ── Handler resolution edge cases ────────────────────────────────────
@@ -1016,7 +1111,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             authHook: $this->authHook,
             identityResolver: static fn() => null,
         );
@@ -1032,7 +1127,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         // Closure handler => binder returns [] => middleware delegates immediately
         self::assertSame($this->nextResponse, $response);
@@ -1045,7 +1140,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: static fn() => null,
             handler: MiddlewareTestPublicInvokableController::class,
         );
@@ -1058,7 +1153,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         // Invokable controller with #[PublicRoute] on class => bypass allowed
         self::assertSame($this->nextResponse, $response);
@@ -1077,7 +1172,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             authHook: $this->authHook,
             identityResolver: static fn() => null,
         );
@@ -1097,7 +1192,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         // Non-class handler => binder returns [] => middleware delegates immediately
         self::assertSame($this->nextResponse, $response);
@@ -1112,7 +1207,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: fn() => $this->createAuthenticatedIdentity('u-1'),
         );
 
@@ -1128,7 +1223,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(403, $response->getStatusCode());
     }
@@ -1136,7 +1231,7 @@ final class ModelBindingMiddlewareTest extends TestCase
     // ── Multiple models — partial authorization ──────────────────────────
 
     #[Test]
-    public function authorizationDeniedOnSecondModelReturnsForbidden(): void
+    public function authorizationDeniedOnSecondModelRefusesTheRequest(): void
     {
         $user = new stdClass();
         $post = new stdClass();
@@ -1152,15 +1247,22 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $identity = $this->createAuthenticatedIdentity('user-1');
 
+        // `/users/{user}/posts/{post}` binds the post through the user, so the
+        // two models come back from resolve() and resolveScoped() in turn.
+        $queue = [$user, $post];
+        $nextModel = static function () use (&$queue): ?object {
+            return array_shift($queue);
+        };
+
         $resolver = $this->createStub(ModelResolverPort::class);
-        $resolver->method('resolve')
-            ->willReturnOnConsecutiveCalls($user, $post);
+        $resolver->method('resolve')->willReturnCallback($nextModel);
+        $resolver->method('resolveScoped')->willReturnCallback($nextModel);
 
         $binder = $this->createRealBinder($resolver, ['user', 'post'], 'users.posts.show', '/users/{user}/posts/{post}');
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $authHook,
             identityResolver: static fn() => $identity,
         );
@@ -1175,9 +1277,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
         self::assertSame(2, $callCount);
     }
 
@@ -1192,7 +1294,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -1201,9 +1303,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
@@ -1215,7 +1317,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -1226,9 +1328,9 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     // ── Combined tenant + identity context ───────────────────────────────
@@ -1262,7 +1364,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = new ModelBindingMiddleware(
             binder: $binder,
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             tenantContext: $tenantContext,
             identityResolver: static fn() => $identity,
@@ -1272,7 +1374,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $middleware->process($request, $handler);
+        $this->dispatch($middleware, $request, $handler);
 
         self::assertNotNull($capturedContext);
         self::assertSame('org-42', $capturedContext->tenantId);
@@ -1282,15 +1384,18 @@ final class ModelBindingMiddlewareTest extends TestCase
     // ── Error response content negotiation ───────────────────────────────
 
     #[Test]
-    public function forbiddenResponseShowsForbiddenMessageInPlainText(): void
+    public function aPolicyRefusalShowsTheNotFoundMessageInPlainText(): void
     {
+        // A policy refusal is answered with what a missing row is answered with,
+        // body included: "Forbidden" in a body is the existence oracle the status
+        // code used to be.
         $model = new stdClass();
         $this->authHook->method('authorize')->willReturn(false);
 
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -1298,14 +1403,14 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched, acceptJson: false);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
-        self::assertSame('Forbidden', (string) $response->getBody());
+        self::assertSame(404, $response->getStatusCode());
+        self::assertSame('Not Found', (string) $response->getBody());
     }
 
     #[Test]
-    public function forbiddenResponseShowsJsonWhenAcceptHeaderPresent(): void
+    public function aPolicyRefusalShowsJsonWhenAcceptHeaderPresent(): void
     {
         $model = new stdClass();
         $this->authHook->method('authorize')->willReturn(false);
@@ -1313,7 +1418,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $identity = $this->createAuthenticatedIdentity('user-1');
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'standard'),
+            config: new ModelBindingConfig(preset: BindingPreset::Standard),
             identityResolver: static fn() => $identity,
         );
 
@@ -1321,14 +1426,14 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched, acceptJson: true);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
-        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
         $body = (string) $response->getBody();
         /** @var array{error: string, status: int} $decoded */
         $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('Forbidden', $decoded['error']);
-        self::assertSame(403, $decoded['status']);
+        self::assertSame('Not Found', $decoded['error']);
+        self::assertSame(404, $decoded['status']);
     }
 
     #[Test]
@@ -1338,7 +1443,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         $middleware = $this->buildMiddleware(
             binderModels: ['user' => $model],
-            config: new ModelBindingConfig(preset: 'banking'),
+            config: new ModelBindingConfig(preset: BindingPreset::Banking),
             identityResolver: static fn() => null,
         );
 
@@ -1346,7 +1451,7 @@ final class ModelBindingMiddlewareTest extends TestCase
         $request = $this->createRequestWithRoute($matched, acceptJson: true);
         $handler = $this->createHandlerReturning($this->nextResponse);
 
-        $response = $middleware->process($request, $handler);
+        $response = $this->dispatch($middleware, $request, $handler);
 
         self::assertSame(401, $response->getStatusCode());
         $body = (string) $response->getBody();
@@ -1366,7 +1471,7 @@ final class ModelBindingMiddlewareTest extends TestCase
      * When $binderModels is a non-empty array, the binder returns those models.
      *
      * @param array<string, object>|null $binderModels
-     * @param (Closure(ServerRequestInterface): ?IdentityInterface)|null $identityResolver
+     * @param (Closure(): ?IdentityInterface)|null $identityResolver
      * @param callable|class-string|array{0: class-string, 1: string}|null $handler
      * @param list<string>|null $parameterNames
      */
@@ -1394,11 +1499,17 @@ final class ModelBindingMiddlewareTest extends TestCase
             $resolver = $this->createStub(ModelResolverPort::class);
             $paramNames = [];
         } else {
-            // Return the provided models in order
+            // Return the provided models in order, whichever door the binder
+            // comes through: a nested route resolves its first parameter with
+            // resolve() and every parameter under it with resolveScoped(), so
+            // a stub that only answers resolve() would 404 the child.
             $resolver = $this->createStub(ModelResolverPort::class);
-            $models = array_values($binderModels);
-            $resolver->method('resolve')
-                ->willReturnOnConsecutiveCalls(...$models);
+            $queue = array_values($binderModels);
+            $nextModel = static function () use (&$queue): ?object {
+                return array_shift($queue);
+            };
+            $resolver->method('resolve')->willReturnCallback($nextModel);
+            $resolver->method('resolveScoped')->willReturnCallback($nextModel);
             /** @var list<string> $derivedNames */
             $derivedNames = array_keys($binderModels);
             $paramNames = $parameterNames ?? $derivedNames;
@@ -1408,7 +1519,7 @@ final class ModelBindingMiddlewareTest extends TestCase
 
         return new ModelBindingMiddleware(
             binder: $binder,
-            config: $config ?? new ModelBindingConfig(preset: 'standard'),
+            config: $config ?? new ModelBindingConfig(preset: BindingPreset::Standard),
             authHook: $this->authHook,
             tenantContext: $tenantContext,
             identityResolver: $identityResolver,
@@ -1469,6 +1580,28 @@ final class ModelBindingMiddlewareTest extends TestCase
         );
 
         return new MatchedRoute($route, $parameters);
+    }
+
+    /**
+     * Run the middleware the way the kernel runs it.
+     *
+     * The middleware does not read `_route`: the kernel passes the route it is
+     * dispatching to the pipeline, which binds a per-dispatch copy of the
+     * middleware to it. The request builders here write the same route into both
+     * places, which is what a real dispatch does; that the two cannot be made to
+     * DISAGREE is the subject of {@see DispatchedRouteAuthorityTest}.
+     */
+    private function dispatch(
+        ModelBindingMiddleware $middleware,
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
+        /** @var MatchedRoute|null $route */
+        $route = $request->getAttribute('_route');
+
+        $bound = $route === null ? $middleware : $middleware->forDispatchedRoute($route);
+
+        return $bound->process($request, $handler);
     }
 
     /**
