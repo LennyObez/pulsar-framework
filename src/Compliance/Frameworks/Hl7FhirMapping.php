@@ -4,128 +4,149 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
- * Registers HL7 FHIR capability controls into the catalog.
+ * Declares the HL7 FHIR conformance controls Pulsar can be assessed against.
  *
- * Maps Pulsar framework features to HL7 FHIR interoperability requirements
- * they provide coverage for. FHIR controls are functional capabilities
- * rather than regulatory mandates.
+ * Conformance to a FHIR version is established by running a conformance suite
+ * against the deployed server, not by inspecting the running process, so most of
+ * these name that report as the artefact. The two that ARE observable at runtime
+ * — the audit trail and the enforcement of security labels — are probed.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class Hl7FhirMapping
 {
     /**
-     * Register HL7 FHIR controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'FHIR-RES-001',
-            framework: 'hl7_fhir',
-            title: 'FHIR Resource Types',
-            description: 'Support core FHIR R4/R5 resource types: Patient, Observation, Encounter, '
-                . 'Condition, MedicationRequest, AllergyIntolerance, Procedure, DiagnosticReport. '
-                . 'Immutable DTOs with full JSON serialization/deserialization.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_resources', 'fhir_serialization'],
-        ));
+        return [
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-RES-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'FHIR Resource Types',
+                requirement: 'A FHIR server shall support the resource types it declares in its '
+                    . 'CapabilityStatement, conforming to the resource definitions of the '
+                    . 'stated FHIR version.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-REST-001',
-            framework: 'hl7_fhir',
-            title: 'FHIR RESTful API',
-            description: 'FHIR-conformant REST endpoints supporting read, search, create, update, '
-                . 'delete interactions with proper Content-Type headers (application/fhir+json). '
-                . 'Includes CapabilityStatement at /metadata.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_rest_api', 'fhir_capability_statement'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-REST-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'FHIR RESTful API',
+                requirement: 'A FHIR server shall implement the RESTful interactions it declares, with '
+                    . 'the media types and status codes the specification requires.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-BUNDLE-001',
-            framework: 'hl7_fhir',
-            title: 'Bundle Support',
-            description: 'Bundle resource support for batch and transaction operations. '
-                . 'Supports searchset, collection, batch-response, and transaction-response types.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_bundle', 'fhir_batch_operations'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-BUNDLE-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'Bundle Support',
+                requirement: 'A FHIR server shall process Bundle resources for the batch and '
+                    . 'transaction interactions it declares support for.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-SEARCH-001',
-            framework: 'hl7_fhir',
-            title: 'FHIR Search Parameters',
-            description: 'Support for FHIR search parameter handling including _id, _lastUpdated, '
-                . 'subject, and custom search parameters per resource type.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_search', 'fhir_search_parameters'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-SEARCH-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'FHIR Search Parameters',
+                requirement: 'A FHIR server shall support the search parameters it declares for each '
+                    . 'resource type, with the comparators and modifiers the specification '
+                    . 'defines.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-TERM-001',
-            framework: 'hl7_fhir',
-            title: 'Terminology Services',
-            description: 'CodeSystem interface for SNOMED-CT, LOINC, ICD-10 with lookup and '
-                . 'validation. ValueSet validation for bound coded elements. ConceptMap for '
-                . 'code translation between systems.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_terminology', 'fhir_code_systems', 'fhir_value_sets', 'fhir_concept_maps'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-TERM-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'Terminology Services',
+                requirement: 'A FHIR server shall support code system lookup, value set validation and '
+                    . 'concept map translation for the terminologies it declares.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-SMART-001',
-            framework: 'hl7_fhir',
-            title: 'SMART on FHIR',
-            description: 'SMART App Launch support extending OAuth2 with FHIR-specific scoping '
-                . '(patient/*.read, user/*.write, etc.). Scope parsing, enforcement, and '
-                . 'well-known SMART configuration endpoint.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_smart_launch', 'fhir_smart_scopes', 'fhir_smart_configuration'],
-        ));
+            // SMART scopes are enforced by a FHIR server against the scopes granted
+            // at authorization. Nothing in this repository implements SMART, and the
+            // control was decided by whether routes classified as handling regulated
+            // data carry their required middleware — a real check, of a mechanism
+            // that knows nothing about FHIR scopes.
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-SMART-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'SMART on FHIR',
+                requirement: 'A SMART on FHIR server shall enforce the scopes granted at authorization '
+                    . 'on every subsequent request, restricting access to the resources those '
+                    . 'scopes permit.',
+                artefact: 'The SMART on FHIR conformance statement for the server, with the '
+                    . 'scope-enforcement test results showing a request outside its granted '
+                    . 'scopes refused.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-AUDIT-001',
-            framework: 'hl7_fhir',
-            title: 'FHIR AuditEvent',
-            description: 'Mapping from Pulsar AuditEntry to FHIR AuditEvent resource format. '
-                . 'Export capability for FHIR-conformant audit logs as AuditEvent bundles.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_audit_event', 'fhir_audit_export'],
-        ));
+            ControlDeclaration::probed(
+                id: 'FHIR-AUDIT-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'FHIR AuditEvent',
+                requirement: 'A FHIR server shall record an AuditEvent for the security-relevant '
+                    . 'interactions the implementation guide requires, and retain them so they '
+                    . 'can be examined.',
+                probe: new TamperEvidentAuditProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-VAL-001',
-            framework: 'hl7_fhir',
-            title: 'Healthcare Validation Rules',
-            description: 'FHIR-aware validation rules: FhirResourceId, Hl7Date, MRN, NPI format '
-                . 'validators for healthcare data integrity.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['fhir_resource_id_validation', 'hl7_date_validation', 'mrn_validation', 'npi_validation'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-VAL-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'Healthcare Validation Rules',
+                requirement: 'A FHIR server shall validate submitted resources against the definitions '
+                    . 'and invariants of the FHIR version it declares.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-SEC-001',
-            framework: 'hl7_fhir',
-            title: 'FHIR Security Labels',
-            description: 'Support for security labels on resources via Meta.security coding. '
-                . 'Enables data classification and access control based on sensitivity tags.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['fhir_security_labels', 'data_classification'],
-        ));
+            // Security labels live in a resource's Meta.security and are honoured by
+            // the FHIR server on read and write. Route middleware coverage cannot
+            // see a resource, let alone its labels.
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-SEC-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'FHIR Security Labels',
+                requirement: 'A FHIR server shall honour the security labels carried in Meta.security '
+                    . 'when deciding whether a request may read or write a resource.',
+                artefact: 'The security-label policy the server enforces, with test results '
+                    . 'showing a labelled resource refused to a request that lacks the '
+                    . 'corresponding clearance.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'FHIR-PROF-001',
-            framework: 'hl7_fhir',
-            title: 'FHIR Profiles & Conformance',
-            description: 'Infrastructure for profile-based resource validation. Meta.profile '
-                . 'support for declaring conformance to implementation guides.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['fhir_profiles', 'fhir_conformance'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'FHIR-PROF-001',
+                framework: ComplianceFramework::Hl7Fhir,
+                title: 'FHIR Profiles & Conformance',
+                requirement: 'A FHIR server shall validate resources against the profiles declared in '
+                    . 'Meta.profile and in its CapabilityStatement.',
+                artefact: 'The FHIR conformance test report for the deployed version, showing the '
+                    . 'declared CapabilityStatement and the results of the conformance suite '
+                    . 'run against it.',
+            ),
+        ];
     }
 }

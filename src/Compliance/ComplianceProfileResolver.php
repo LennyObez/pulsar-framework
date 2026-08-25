@@ -220,6 +220,7 @@ final readonly class ComplianceProfileResolver
                 ComplianceFramework::NistCsf => FrameworkRequirements::nistCsf(),
                 ComplianceFramework::Dsa => FrameworkRequirements::dsa(),
                 ComplianceFramework::DataAct => FrameworkRequirements::dataAct(),
+                ComplianceFramework::AiAct => FrameworkRequirements::aiAct(),
             };
 
             $requirements[] = $req;

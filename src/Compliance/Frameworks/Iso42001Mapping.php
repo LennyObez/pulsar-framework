@@ -4,216 +4,218 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\AiAuditTrailProbe;
+use Pulsar\Compliance\Probe\AiDataGovernanceProbe;
+use Pulsar\Compliance\Probe\AiExplainabilityProbe;
+use Pulsar\Compliance\Probe\AiImpactAssessmentProbe;
+use Pulsar\Compliance\Probe\AiLifecycleProbe;
+use Pulsar\Compliance\Probe\AiModelRegistryProbe;
+use Pulsar\Compliance\Probe\AiMonitoringProbe;
 
 /**
- * Registers ISO/IEC 42001:2023 AI Management System controls into the catalog.
+ * Declares the ISO/IEC 42001:2023 AI Management System controls Pulsar can be
+ * assessed against.
  *
- * Maps Pulsar framework features (core + AI governance extension) to ISO 42001
- * requirements. This is the world's first PHP framework to implement these controls.
+ * Every one of them depends on the ai-governance extension, so every probe here
+ * requires that extension to be ACTIVE — installed, registered and booted — and
+ * not merely available on disk. Thirteen of the fifteen used to be registered as
+ * Implemented on the strength of interfaces existing in a package a deployment
+ * might never have enabled.
  *
- * ISO 42001 clauses:
- * - 4: Context of the organization
- * - 5: Leadership
- * - 6: Planning (risk assessment, objectives)
- * - 7: Support (resources, competence, documentation)
- * - 8: Operation (AI system lifecycle, data management)
- * - 9: Performance evaluation (monitoring, audit, review)
- * - 10: Improvement (nonconformity, continual improvement)
- * - Annex A: Reference controls (A.2–A.10)
+ * Three of them cite {@see \Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface},
+ * which has ZERO implementations anywhere in this repository — the interface, the
+ * lifecycle manager that references it, and one test double are all there is.
+ * Clause 9.1, A.7 and 10.1 therefore cannot be satisfied on any deployment: at
+ * best they report Partial with the missing hook named, and on a deployment
+ * without the extension they report an outright gap. That is the same fact the old
+ * catalogue reported as covered.
+ *
+ * Where the extension is not installed at all, the probes still report gaps rather
+ * than NotApplicable: enabling Iso42001 in config/compliance.php IS the operator's
+ * assertion that the deployment must satisfy it, so its absence is a gap and not a
+ * scoping fact. Letting one config line silence a whole standard is precisely the
+ * escape hatch this design exists to close.
  *
  * @see https://www.iso.org/standard/81230.html
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class Iso42001Mapping
 {
     /**
-     * Register ISO 42001:2023 controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        // --- Clause 6: Planning ---
+        return [
+            // --- Clause 6: Planning ---
 
-        $catalog->register(new Control(
-            id: 'ISO42001-6.1.2',
-            framework: 'iso42001',
-            title: 'AI Risk Assessment',
-            description: 'The organization shall establish a process for AI risk assessment that identifies '
-                . 'risks to individuals, groups, and societies. Covered by the AiImpactAssessmentInterface '
-                . 'with structured findings across fairness, transparency, accountability, privacy, safety, '
-                . 'and security categories. Risk scoring from 0.0 to 10.0 with severity-weighted computation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['ai_impact_assessment', 'ai_risk_scoring', 'impact_categories'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-6.1.2',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI Risk Assessment',
+                requirement: 'The organization shall define and apply an AI risk assessment process '
+                    . 'that identifies risks to individuals, groups of individuals and societies.',
+                probe: new AiImpactAssessmentProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-6.1.4',
-            framework: 'iso42001',
-            title: 'AI Risk Treatment',
-            description: 'The organization shall define and apply an AI risk treatment process. Covered by '
-                . 'deployment gates that enforce pre-production validation checks, model risk level '
-                . 'classification (minimal/limited/high/unacceptable per EU AI Act alignment), and '
-                . 'lifecycle transition controls that prevent unsafe deployments.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['deployment_gates', 'ai_risk_levels', 'lifecycle_transitions'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-6.1.4',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI Risk Treatment',
+                requirement: 'The organization shall define and apply an AI risk treatment process '
+                    . 'to select appropriate risk treatment options and determine the controls '
+                    . 'necessary to implement them.',
+                probe: new AiLifecycleProbe(),
+            ),
 
-        // --- Clause 7: Support ---
+            // --- Clause 7: Support ---
 
-        $catalog->register(new Control(
-            id: 'ISO42001-7.5',
-            framework: 'iso42001',
-            title: 'Documented Information',
-            description: 'The organization shall control documented information required by the AIMS. '
-                . 'Covered by model cards (ModelCard DTO) that document model capabilities, limitations, '
-                . 'known biases, training data sources, performance metrics, and ethical considerations. '
-                . 'Structured as immutable readonly DTOs with mandatory fields.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['model_cards', 'ai_model_registry', 'data_provenance'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-7.5',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Documented Information',
+                requirement: 'The AI management system shall include documented information '
+                    . 'required by this document and determined by the organization as necessary '
+                    . 'for its effectiveness.',
+                probe: new AiModelRegistryProbe(),
+            ),
 
-        // --- Clause 8: Operation ---
+            // --- Clause 8: Operation ---
 
-        $catalog->register(new Control(
-            id: 'ISO42001-8.2',
-            framework: 'iso42001',
-            title: 'AI System Impact Assessment',
-            description: 'The organization shall conduct an AI system impact assessment. Covered by '
-                . 'AiImpactAssessmentInterface with structured assessment across six categories, '
-                . 'severity classification (low/medium/high/critical), and actionable recommendations.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['ai_impact_assessment', 'impact_findings', 'impact_recommendations'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-8.2',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI System Impact Assessment',
+                requirement: 'The organization shall conduct AI system impact assessments at '
+                    . 'appropriate stages of the AI system life cycle.',
+                probe: new AiImpactAssessmentProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-8.3',
-            framework: 'iso42001',
-            title: 'Data for AI Systems',
-            description: 'The organization shall manage data used for AI systems including quality, '
-                . 'provenance, and consent. Covered by AiDataGovernanceInterface with training data '
-                . 'provenance tracking (source, license, transformations), data quality reports '
-                . '(completeness, accuracy, consistency metrics), and consent verification.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_provenance', 'data_quality_reports', 'consent_tracking'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-8.3',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Data for AI Systems',
+                requirement: 'The organization shall define, document and implement processes for '
+                    . 'managing data used in AI systems, including data provenance, quality and '
+                    . 'the basis on which it was obtained.',
+                probe: new AiDataGovernanceProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-8.4',
-            framework: 'iso42001',
-            title: 'AI System Life Cycle',
-            description: 'The organization shall manage AI systems throughout their life cycle. Covered by '
-                . 'AiLifecycleManagerInterface with six lifecycle stages (development → testing → staging '
-                . '→ production → deprecated → retired), deployment gates, monitoring hooks, and rollback.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['ai_lifecycle_manager', 'deployment_gates', 'monitoring_hooks', 'model_rollback'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-8.4',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI System Life Cycle',
+                requirement: 'The organization shall define and implement processes for the '
+                    . 'responsible design, development, deployment, operation and retirement of AI '
+                    . 'systems.',
+                probe: new AiLifecycleProbe(),
+            ),
 
-        // --- Clause 9: Performance Evaluation ---
+            // --- Clause 9: Performance evaluation ---
 
-        $catalog->register(new Control(
-            id: 'ISO42001-9.1',
-            framework: 'iso42001',
-            title: 'Monitoring, Measurement, Analysis, and Evaluation',
-            description: 'The organization shall monitor and measure AI system performance. Covered by '
-                . 'MonitoringHookInterface for registering production monitoring checks, AiAuditLoggerInterface '
-                . 'for tamper-evident logging of all AI events (invocations, decisions, overrides, bias '
-                . 'detection), and integration with core observability (OpenTelemetry, metrics).',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['monitoring_hooks', 'ai_audit_logging', 'observability'],
-        ));
+            // The control the audit named. It was Implemented on the strength of
+            // MonitoringHookInterface, an interface with no implementations, so the
+            // catalogue asserted that a deployment monitored its models because a
+            // file describing monitoring existed.
+            ControlDeclaration::probed(
+                id: 'ISO42001-9.1',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Monitoring, Measurement, Analysis and Evaluation',
+                requirement: 'The organization shall determine what needs to be monitored and '
+                    . 'measured, the methods for monitoring, measurement, analysis and evaluation, '
+                    . 'and when the results shall be analysed and evaluated.',
+                probe: new AiMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-9.2',
-            framework: 'iso42001',
-            title: 'Internal Audit',
-            description: 'The organization shall conduct internal audits. Covered by the HMAC-chained audit '
-                . 'trail with AI-specific event types (ModelInvoked, DecisionMade, HumanOverride, '
-                . 'BiasDetected, ModelDeployed, ModelRetired), tamper detection, and compliance reporting.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['ai_audit_logging', 'hmac_chain', 'compliance_reporting'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-9.2',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Internal Audit',
+                requirement: 'The organization shall conduct internal audits at planned intervals '
+                    . 'to provide information on whether the AI management system conforms to '
+                    . 'requirements and is effectively implemented and maintained.',
+                probe: new AiAuditTrailProbe(),
+            ),
 
-        // --- Clause 10: Improvement ---
+            // --- Clause 10: Improvement ---
 
-        $catalog->register(new Control(
-            id: 'ISO42001-10.1',
-            framework: 'iso42001',
-            title: 'Continual Improvement',
-            description: 'The organization shall continually improve the AIMS. Covered by model versioning '
-                . 'in the registry (version tracking, status transitions), monitoring hooks that detect '
-                . 'drift and degradation, and the ability to retire and replace models.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['model_versioning', 'monitoring_hooks', 'model_retirement'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-10.1',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Continual Improvement',
+                requirement: 'The organization shall continually improve the suitability, adequacy '
+                    . 'and effectiveness of the AI management system.',
+                probe: new AiMonitoringProbe(),
+            ),
 
-        // --- Annex A Controls ---
+            // --- Annex A reference controls ---
 
-        $catalog->register(new Control(
-            id: 'ISO42001-A.2',
-            framework: 'iso42001',
-            title: 'AI Policy',
-            description: 'The organization shall establish an AI policy. Framework provides configurable '
-                . 'governance settings (audit_invocations, require_impact_assessment, require_model_card, '
-                . 'require_consent_for_training_data) as policy controls. Organizational AI policy documents '
-                . 'are the deployer\'s responsibility.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['ai_governance_config', 'deployment_gates'],
-        ));
+            // An AI policy is a document approved by management. The extension's
+            // governance flags are settings that follow from such a policy; they
+            // are not the policy, and grading the control from them is how A.2 came
+            // to read Partial on the strength of four booleans.
+            ControlDeclaration::operatorResponsibility(
+                id: 'ISO42001-A.2',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI Policy',
+                requirement: 'The organization shall document an AI policy, approved by top '
+                    . 'management, and communicate it within the organization.',
+                artefact: 'The approved AI policy, with its management approval record and '
+                    . 'evidence of communication to the people it binds.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-A.5',
-            framework: 'iso42001',
-            title: 'Data for AI Systems',
-            description: 'Controls for managing data used in AI systems. Covered by DataProvenance DTO '
-                . '(source, license, consent, transformations), DataQualityReport DTO (completeness, '
-                . 'accuracy, consistency), and consent verification across all provenance records.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_provenance', 'data_quality_reports', 'consent_tracking'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-A.5',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Data for AI Systems',
+                requirement: 'The organization shall define and implement controls for the data '
+                    . 'used to develop and operate AI systems, covering provenance, quality, '
+                    . 'preparation and the basis on which the data was obtained.',
+                probe: new AiDataGovernanceProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-A.6',
-            framework: 'iso42001',
-            title: 'AI System Life Cycle',
-            description: 'Controls for AI system development, deployment, and retirement. Covered by '
-                . 'model registry with lifecycle states, deployment gate validation, and rollback.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['ai_lifecycle_manager', 'ai_model_registry', 'deployment_gates'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-A.6',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI System Life Cycle',
+                requirement: 'The organization shall define and implement controls for the '
+                    . 'responsible development, deployment and retirement of AI systems.',
+                probe: new AiLifecycleProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-A.7',
-            framework: 'iso42001',
-            title: 'AI System Operation and Monitoring',
-            description: 'Controls for operating and monitoring AI systems. Covered by monitoring hooks '
-                . 'that run health checks on production models and AI audit logging that tracks '
-                . 'all model invocations, decisions, and human overrides.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['monitoring_hooks', 'ai_audit_logging', 'ai_invocation_logging'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-A.7',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI System Operation and Monitoring',
+                requirement: 'The organization shall define and implement controls for operating '
+                    . 'AI systems and monitoring their behaviour in production.',
+                probe: new AiMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-A.8',
-            framework: 'iso42001',
-            title: 'Transparency and Explainability',
-            description: 'Controls ensuring transparency in AI decision-making. Covered by '
-                . 'ExplainabilityInterface with structured explanations (decision factors, confidence '
-                . 'scores, alternatives considered), human override logging, and model card documentation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['explainability', 'decision_factors', 'human_override_logging', 'model_cards'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-A.8',
+                framework: ComplianceFramework::Iso42001,
+                title: 'Transparency and Explainability',
+                requirement: 'The organization shall determine and document the level of '
+                    . 'transparency and explainability appropriate to each AI system and to the '
+                    . 'people affected by its decisions.',
+                probe: new AiExplainabilityProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'ISO42001-A.10',
-            framework: 'iso42001',
-            title: 'AI System Documentation',
-            description: 'Controls for documenting AI systems and their impacts. Covered by model cards, '
-                . 'impact assessment findings, data provenance records, and comprehensive audit logs.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['model_cards', 'ai_impact_assessment', 'data_provenance', 'ai_audit_logging'],
-        ));
+            ControlDeclaration::probed(
+                id: 'ISO42001-A.10',
+                framework: ComplianceFramework::Iso42001,
+                title: 'AI System Documentation',
+                requirement: 'The organization shall document the AI systems it develops or uses, '
+                    . 'including their intended purpose, limitations and the assessments performed '
+                    . 'on them.',
+                probe: new AiModelRegistryProbe(),
+            ),
+        ];
     }
 }

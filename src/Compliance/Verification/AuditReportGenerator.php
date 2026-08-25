@@ -157,9 +157,10 @@ final readonly class AuditReportGenerator
                 'description' => 'Most-restrictive-wins profile resolution across frameworks.',
             ],
             'compliance.evidence_collection' => [
-                'component' => 'Pulsar\\Compliance\\Evidence\\EvidenceCollector',
-                'file' => 'src/Compliance/Evidence/EvidenceCollector.php',
-                'description' => 'Automated compliance evidence collection and storage.',
+                'component' => 'Pulsar\\Compliance\\Verification\\EvidenceChain',
+                'file' => 'src/Compliance/Verification/EvidenceChain.php',
+                'description' => 'HMAC-chained evidence records, one per verification run, '
+                    . 'collected on the interval config/compliance.php declares.',
             ],
         ];
     }
@@ -185,6 +186,7 @@ final readonly class AuditReportGenerator
             ComplianceFramework::NistCsf => 'NIST Cybersecurity Framework (CSF)',
             ComplianceFramework::Dsa => 'Digital Services Act (EU 2022/2065)',
             ComplianceFramework::DataAct => 'EU Data Act (Regulation 2023/2854)',
+            ComplianceFramework::AiAct => 'EU AI Act (Regulation (EU) 2024/1689)',
         };
     }
 }

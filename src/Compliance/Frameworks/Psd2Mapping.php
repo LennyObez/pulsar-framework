@@ -4,98 +4,119 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\MultiFactorAuthenticationProbe;
+use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
- * Registers PSD2 controls into the catalog.
+ * Declares the PSD2 and RTS controls Pulsar can be assessed against.
  *
- * Maps Pulsar framework features to PSD2 (Payment Services Directive 2) requirements
- * they provide coverage for, focusing on SCA, transaction monitoring, and open banking.
+ * Dynamic linking and the SCA exemptions turn on how a specific payment flow was
+ * built and on fraud rates the framework never sees, so they name the design and
+ * reporting evidence instead of being probed.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class Psd2Mapping
 {
     /**
-     * Register PSD2 controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'Art97.1',
-            framework: 'psd2',
-            title: 'Strong Customer Authentication',
-            description: 'Payment service providers shall apply strong customer authentication where the '
-                . 'payer initiates an electronic payment transaction. Covered by SCA middleware, '
-                . 'challenge generation, and 2FA integration.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['sca_enforcement', 'mfa', 'step_up_auth'],
-        ));
+        return [
+            ControlDeclaration::probed(
+                id: 'Art97.1',
+                framework: ComplianceFramework::Psd2,
+                title: 'Strong Customer Authentication',
+                requirement: 'Payment service providers shall apply strong customer authentication '
+                    . 'where the payer accesses a payment account online, initiates an '
+                    . 'electronic payment transaction, or carries out any action through a '
+                    . 'remote channel implying a risk of fraud.',
+                probe: new MultiFactorAuthenticationProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art97.2',
-            framework: 'psd2',
-            title: 'SCA Dynamic Linking',
-            description: 'The authentication code shall be dynamically linked to the amount and the payee. '
-                . 'Covered by ScaDynamicLinkingService which binds authentication codes '
-                . 'to transaction amount, currency, and payee identity.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['sca_dynamic_linking', 'challenge_verification'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'Art97.2',
+                framework: ComplianceFramework::Psd2,
+                title: 'SCA Dynamic Linking',
+                requirement: 'For remote electronic payment transactions, the authentication code '
+                    . 'shall be dynamically linked to the amount and the payee of the '
+                    . 'transaction.',
+                artefact: 'The design record of the payment authentication flow showing how the '
+                    . 'authentication code is dynamically linked to the amount and the payee, '
+                    . 'with the test evidence for that linkage.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'RTS.Art16',
-            framework: 'psd2',
-            title: 'Low-Value Transaction Exemption',
-            description: 'SCA exemption for contactless electronic payments below EUR 50 and remote '
-                . 'electronic payments below EUR 30. Covered by TransactionRiskAnalyzer with '
-                . 'configurable low-value threshold.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['sca_exemptions', 'transaction_risk_analysis'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'RTS.Art16',
+                framework: ComplianceFramework::Psd2,
+                title: 'Low-Value Transaction Exemption',
+                requirement: 'Payment service providers may be exempted from strong customer '
+                    . 'authentication for remote electronic payments below the thresholds and '
+                    . 'cumulative limits set by the regulatory technical standards (Article '
+                    . '16).',
+                artefact: 'The documented low-value exemption policy and evidence of the cumulative '
+                    . 'amount and consecutive-transaction counters that enforce its limits.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'RTS.Art18',
-            framework: 'psd2',
-            title: 'Transaction Risk Analysis',
-            description: 'Real-time risk analysis of transactions using fraud rates, velocity checks, '
-                . 'and anomaly detection. Covered by TransactionRiskAnalyzer with velocity '
-                . 'tracking and configurable risk thresholds.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['transaction_risk_analysis', 'velocity_tracking', 'fraud_scoring'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'RTS.Art18',
+                framework: ComplianceFramework::Psd2,
+                title: 'Transaction Risk Analysis',
+                requirement: 'Payment service providers may be exempted from strong customer '
+                    . 'authentication where a real-time transaction risk analysis identifies no '
+                    . 'abnormal pattern and the fraud rate remains below the reference '
+                    . 'threshold (Article 18).',
+                artefact: 'The transaction risk analysis methodology and the fraud rate reporting '
+                    . 'submitted for the exemption threshold claimed.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art66',
-            framework: 'psd2',
-            title: 'Account Information Service Provider Access',
-            description: 'Secure access for AISPs using eIDAS certificates. Covered by '
-                . 'CertificateAuthenticationMiddleware with QWAC/QSEAL validation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['certificate_authentication', 'eidas_certificates'],
-        ));
+            // Article 66 obliges an ASPSP to ALLOW account information service
+            // providers in, without discrimination, on the user's explicit consent.
+            // It was decided by whether classified routes carry their required
+            // middleware — a measure of keeping requests out, which is the
+            // opposite obligation, and which no amount of tightening can evidence.
+            ControlDeclaration::operatorResponsibility(
+                id: 'Art66',
+                framework: ComplianceFramework::Psd2,
+                title: 'Account Information Service Provider Access',
+                requirement: 'Payment service providers shall allow account information service '
+                    . 'providers to access payment account information with the explicit '
+                    . 'consent of the payment service user, and shall not discriminate against '
+                    . 'such requests.',
+                artefact: 'The dedicated interface offered to account information service '
+                    . 'providers, its published availability and performance statistics, and '
+                    . 'the record of the consent captured for each access.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art67',
-            framework: 'psd2',
-            title: 'Payment Initiation Service Provider Access',
-            description: 'Secure access for PISPs using eIDAS certificates and SCA. Covered by '
-                . 'CertificateAuthenticationMiddleware and SCA enforcement middleware.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['certificate_authentication', 'sca_enforcement', 'eidas_certificates'],
-        ));
+            // Article 67 is Article 66's obligation for payment initiation service
+            // providers, and was probed the same way, with the same inversion.
+            ControlDeclaration::operatorResponsibility(
+                id: 'Art67',
+                framework: ComplianceFramework::Psd2,
+                title: 'Payment Initiation Service Provider Access',
+                requirement: 'Account servicing payment service providers shall allow payment '
+                    . 'initiation service providers to initiate payments with the explicit '
+                    . 'consent of the payer, treating such requests without discrimination.',
+                artefact: 'The payment initiation interface offered to third-party providers, '
+                    . 'the record of the payer\'s explicit consent for each initiation, and the '
+                    . 'evidence that such requests are not treated differently from the '
+                    . 'institution\'s own.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art94',
-            framework: 'psd2',
-            title: 'Audit Trail for Payment Transactions',
-            description: 'Complete audit trail for all payment transactions and authentication events. '
-                . 'Covered by compliance events (ScaChallengeCreated, ScaChallengeVerified, '
-                . 'TransactionRiskAssessed, CertificateValidated) and AuditLogger integration.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['audit_logging', 'compliance_events', 'psd2_events'],
-        ));
+            ControlDeclaration::probed(
+                id: 'Art94',
+                framework: ComplianceFramework::Psd2,
+                title: 'Audit Trail for Payment Transactions',
+                requirement: 'Payment service providers shall keep records of payment transactions '
+                    . 'sufficient to evidence authentication, execution and any fraud, and '
+                    . 'retain them for the period national law prescribes.',
+                probe: new TamperEvidentAuditProbe(),
+            ),
+        ];
     }
 }

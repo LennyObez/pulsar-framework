@@ -4,154 +4,164 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\AccessRestrictionProbe;
+use Pulsar\Compliance\Probe\AssetInventoryProbe;
+use Pulsar\Compliance\Probe\ContinuousMonitoringProbe;
+use Pulsar\Compliance\Probe\DataProtectionAtRestProbe;
+use Pulsar\Compliance\Probe\GovernanceProfileProbe;
+use Pulsar\Compliance\Probe\IncidentResponseProbe;
+use Pulsar\Compliance\Probe\PlatformHardeningProbe;
+use Pulsar\Compliance\Probe\RecoveryCapabilityProbe;
+use Pulsar\Compliance\Probe\RiskAssessmentProbe;
+use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
- * Registers NIST Cybersecurity Framework 2.0 controls into the catalog.
+ * Declares the NIST Cybersecurity Framework 2.0 outcomes Pulsar can be assessed
+ * against, across the six functions: Govern, Identify, Protect, Detect, Respond,
+ * Recover.
  *
- * Maps Pulsar framework features to the six NIST CSF 2.0 functions:
- * Govern, Identify, Protect, Detect, Respond, Recover.
+ * Ten of these eleven used to be registered as Implemented. RC.RP is the one that
+ * matters: it was a Partial literal whose description named health checks, worker
+ * restarts and "deployment primitives", none of which restores anything. There is
+ * no backup or restore primitive in the framework at all — the only thing
+ * resembling one lives in the CMS extension, for content — so RC.RP now reports a
+ * measured gap and will keep reporting one until somebody builds the primitive,
+ * installs a package that provides it, or removes NistCsf from
+ * enabled_frameworks. Forcing that choice is what this design is for.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class NistCsfMapping
 {
     /**
-     * Register NIST CSF 2.0 controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        // --- GV: Govern ---
+        return [
+            // --- GV: Govern ---
 
-        $catalog->register(new Control(
-            id: 'NIST-GV.OC',
-            framework: 'nist_csf',
-            title: 'Govern: Organizational Context (GV.OC)',
-            description: 'Understand the organizational mission, stakeholder expectations, and legal/regulatory '
-                . 'requirements that inform cybersecurity risk management. Covered by the compliance '
-                . 'profile resolver which aggregates regulatory requirements across enabled frameworks.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['compliance_profile', 'compliance_verification', 'extension_registry'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-GV.OC',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Govern: Organizational Context (GV.OC)',
+                requirement: 'The circumstances — mission, stakeholder expectations, dependencies, '
+                    . 'and legal, regulatory and contractual requirements — surrounding the '
+                    . 'organization\'s cybersecurity risk management decisions are understood.',
+                probe: new GovernanceProfileProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'NIST-GV.RM',
-            framework: 'nist_csf',
-            title: 'Govern: Risk Management Strategy (GV.RM)',
-            description: 'Establish and communicate the organization\'s risk management strategy. Covered by '
-                . 'configurable compliance profiles, security configuration defaults, and the '
-                . 'most-restrictive-wins resolution strategy across regulatory frameworks.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['compliance_profile', 'security_config', 'data_classification'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-GV.RM',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Govern: Risk Management Strategy (GV.RM)',
+                requirement: 'The organization\'s priorities, constraints, risk tolerance and '
+                    . 'appetite statements, and assumptions are established, communicated and used '
+                    . 'to support operational risk decisions.',
+                probe: new GovernanceProfileProbe(),
+            ),
 
-        // --- ID: Identify ---
+            // --- ID: Identify ---
 
-        $catalog->register(new Control(
-            id: 'NIST-ID.AM',
-            framework: 'nist_csf',
-            title: 'Identify: Asset Management (ID.AM)',
-            description: 'Maintain inventories of hardware, software, services, and data flows. Covered by '
-                . 'extension registry, service discovery, and API snapshot tooling that catalog '
-                . 'deployed components and their public interfaces.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['extension_registry', 'service_discovery', 'api_snapshot'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-ID.AM',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Identify: Asset Management (ID.AM)',
+                requirement: 'Assets — data, hardware, software, systems, facilities, services and '
+                    . 'people — that enable the organization to achieve business purposes are '
+                    . 'identified and managed consistent with their relative importance.',
+                probe: new AssetInventoryProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'NIST-ID.RA',
-            framework: 'nist_csf',
-            title: 'Identify: Risk Assessment (ID.RA)',
-            description: 'Understand the cybersecurity risk to the organization. Covered by the compliance '
-                . 'verification engine, FIPS compliance checks, and boundary enforcement that '
-                . 'continuously validate the security posture.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['compliance_verification', 'fips_validation', 'boundary_check'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-ID.RA',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Identify: Risk Assessment (ID.RA)',
+                requirement: 'The cybersecurity risk to the organization, assets and individuals '
+                    . 'is understood by the organization.',
+                probe: new RiskAssessmentProbe(),
+            ),
 
-        // --- PR: Protect ---
+            // --- PR: Protect ---
 
-        $catalog->register(new Control(
-            id: 'NIST-PR.AA',
-            framework: 'nist_csf',
-            title: 'Protect: Identity Management, Authentication, and Access Control (PR.AA)',
-            description: 'Manage identities, credentials, and access. Covered by authentication middleware, '
-                . 'RBAC, MFA support, session management with idle timeouts, and CSRF protection.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['authentication', 'rbac', 'mfa', 'session_management', 'csrf_protection'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-PR.AA',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Protect: Identity Management, Authentication, and Access Control (PR.AA)',
+                requirement: 'Access to physical and logical assets is limited to authorized users, '
+                    . 'services and hardware, and is managed commensurate with the assessed risk '
+                    . 'of unauthorized access.',
+                probe: new AccessRestrictionProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'NIST-PR.DS',
-            framework: 'nist_csf',
-            title: 'Protect: Data Security (PR.DS)',
-            description: 'Protect data confidentiality, integrity, and availability. Covered by encryption '
-                . 'at rest (AES-256-GCM / XSalsa20-Poly1305), TLS enforcement, tokenization, '
-                . 'input validation, and output escaping.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['crypto_keyring', 'envelope_encryption', 'tokenization', 'tls_enforcement', 'input_validation'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-PR.DS',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Protect: Data Security (PR.DS)',
+                requirement: 'Data are managed consistent with the organization\'s risk strategy to '
+                    . 'protect the confidentiality, integrity and availability of information.',
+                probe: new DataProtectionAtRestProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'NIST-PR.PS',
-            framework: 'nist_csf',
-            title: 'Protect: Platform Security (PR.PS)',
-            description: 'Manage the security of hardware, software, and services. Covered by security headers '
-                . 'middleware (HSTS, CSP, COOP/COEP/CORP), rate limiting, and secure configuration defaults.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['security_headers', 'rate_limiting', 'security_config'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-PR.PS',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Protect: Platform Security (PR.PS)',
+                requirement: 'The hardware, software and services of physical and virtual platforms '
+                    . 'are managed consistent with the organization\'s risk strategy to protect '
+                    . 'their confidentiality, integrity and availability.',
+                probe: new PlatformHardeningProbe(),
+            ),
 
-        // --- DE: Detect ---
+            // --- DE: Detect ---
 
-        $catalog->register(new Control(
-            id: 'NIST-DE.CM',
-            framework: 'nist_csf',
-            title: 'Detect: Continuous Monitoring (DE.CM)',
-            description: 'Monitor assets to find anomalies, indicators of compromise, and other adverse events. '
-                . 'Covered by structured audit logging, queue health monitoring, and OpenTelemetry '
-                . 'instrumentation for metrics, traces, and logs.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['audit_logging', 'queue_monitoring', 'opentelemetry', 'health_checks'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-DE.CM',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Detect: Continuous Monitoring (DE.CM)',
+                requirement: 'Assets are monitored to find anomalies, indicators of compromise and '
+                    . 'other potentially adverse events.',
+                probe: new ContinuousMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'NIST-DE.AE',
-            framework: 'nist_csf',
-            title: 'Detect: Adverse Event Analysis (DE.AE)',
-            description: 'Analyze detected anomalies to understand attack techniques and impact. Covered by '
-                . 'tamper-evident HMAC-chained audit logs, compliance event system, and incident '
-                . 'reporting infrastructure.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['hmac_chain', 'compliance_events', 'incident_reporting'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-DE.AE',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Detect: Adverse Event Analysis (DE.AE)',
+                requirement: 'Anomalies, indicators of compromise and other potentially adverse '
+                    . 'events are analyzed to characterize the events and detect cybersecurity '
+                    . 'incidents.',
+                probe: new TamperEvidentAuditProbe(),
+            ),
 
-        // --- RS: Respond ---
+            // --- RS: Respond ---
 
-        $catalog->register(new Control(
-            id: 'NIST-RS.MA',
-            framework: 'nist_csf',
-            title: 'Respond: Incident Management (RS.MA)',
-            description: 'Manage and coordinate incident response. Covered by the incident reporter, breach '
-                . 'notification subsystem, and compliance event logging that supports regulated '
-                . 'notification deadlines.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['incident_reporting', 'breach_notification', 'compliance_events', 'audit_logging'],
-        ));
+            ControlDeclaration::probed(
+                id: 'NIST-RS.MA',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Respond: Incident Management (RS.MA)',
+                requirement: 'Responses to detected cybersecurity incidents are managed.',
+                probe: new IncidentResponseProbe(),
+            ),
 
-        // --- RC: Recover ---
+            // --- RC: Recover ---
 
-        $catalog->register(new Control(
-            id: 'NIST-RC.RP',
-            framework: 'nist_csf',
-            title: 'Recover: Incident Recovery Plan Execution (RC.RP)',
-            description: 'Execute the recovery portion of the incident response plan. Framework provides health '
-                . 'check infrastructure, worker restart mechanisms, and deployment primitives. Actual '
-                . 'backup and disaster recovery procedures are the deployer\'s responsibility.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['health_checks', 'deployment', 'queue_monitoring'],
-        ));
+            // Deliberately probed rather than handed to the operator. Recovery is a
+            // capability the software either has or has not, and this one has not:
+            // no deployment can assert that recovery does not apply to it, so there
+            // is no honest way to scope the control out. It stays red.
+            ControlDeclaration::probed(
+                id: 'NIST-RC.RP',
+                framework: ComplianceFramework::NistCsf,
+                title: 'Recover: Incident Recovery Plan Execution (RC.RP)',
+                requirement: 'Restoration activities are performed to ensure operational '
+                    . 'availability of systems and services affected by cybersecurity incidents.',
+                probe: new RecoveryCapabilityProbe(),
+            ),
+        ];
     }
 }

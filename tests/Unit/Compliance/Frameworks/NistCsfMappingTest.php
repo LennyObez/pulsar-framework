@@ -7,157 +7,241 @@ namespace Pulsar\Tests\Unit\Compliance\Frameworks;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlOutcome;
+use Pulsar\Compliance\Evidence\ControlEvidenceGatherer;
 use Pulsar\Compliance\Frameworks\NistCsfMapping;
+use Pulsar\Compliance\Probe\DataProtectionAtRestProbe;
+use Pulsar\Compliance\Probe\GovernanceProfileProbe;
+use Pulsar\Compliance\Probe\IncidentResponseProbe;
+use Pulsar\Compliance\Probe\RecoveryCapabilityProbe;
+use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
+use Pulsar\Security\Audit\AuditFileSink;
+use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Incident\FileIncidentReporter;
+use Pulsar\Security\Incident\InMemoryIncidentReporter;
+use Pulsar\Security\Session\SessionEncryption;
+use Pulsar\Tests\Unit\Compliance\Support\DeploymentUnderAssessment;
 
-use function array_map;
-use function sprintf;
-
+/**
+ * NIST CSF 2.0, assessed against deployments that do and do not have the thing.
+ *
+ * Ten of the eleven outcomes used to read Implemented and RC.RP read Partial. The
+ * RC.RP tests below are the ones that matter: the framework has no backup or
+ * restore primitive, so recovery reports a gap on every deployment, however well
+ * equipped, and no amount of adding services makes it green.
+ */
 #[CoversClass(NistCsfMapping::class)]
+#[CoversClass(RecoveryCapabilityProbe::class)]
+#[CoversClass(TamperEvidentAuditProbe::class)]
+#[CoversClass(GovernanceProfileProbe::class)]
+#[CoversClass(DataProtectionAtRestProbe::class)]
+#[CoversClass(IncidentResponseProbe::class)]
 final class NistCsfMappingTest extends TestCase
 {
-    private ControlCatalog $catalog;
-
-    protected function setUp(): void
-    {
-        $this->catalog = new ControlCatalog();
-        NistCsfMapping::register($this->catalog);
-    }
+    private const string AUDIT_SINK = 'Pulsar\Security\Audit\AuditSinkInterface';
+    private const string SESSION_ENCRYPTION = 'Pulsar\Security\Session\SessionEncryption';
+    private const string MASTER_KEY = 'Pulsar\Security\Crypto\MasterKey';
+    private const string INCIDENT_REPORTER = 'Pulsar\Security\Incident\IncidentReporterInterface';
 
     #[Test]
-    public function registersElevenControls(): void
+    public function declaresElevenOutcomes(): void
     {
-        $controls = $this->catalog->byFramework('nist_csf');
-
-        self::assertCount(11, $controls);
+        self::assertCount(11, NistCsfMapping::declarations());
     }
 
-    #[Test]
-    public function registersExpectedControlIds(): void
-    {
-        $controls = $this->catalog->byFramework('nist_csf');
-        $ids = array_map(static fn(Control $c): string => $c->id, $controls);
+    // --- RC.RP: the outcome with nothing behind it ---------------------------
 
-        // Govern
-        self::assertContains('NIST-GV.OC', $ids);
-        self::assertContains('NIST-GV.RM', $ids);
-        // Identify
-        self::assertContains('NIST-ID.AM', $ids);
-        self::assertContains('NIST-ID.RA', $ids);
-        // Protect
-        self::assertContains('NIST-PR.AA', $ids);
-        self::assertContains('NIST-PR.DS', $ids);
-        self::assertContains('NIST-PR.PS', $ids);
-        // Detect
-        self::assertContains('NIST-DE.CM', $ids);
-        self::assertContains('NIST-DE.AE', $ids);
-        // Respond
-        self::assertContains('NIST-RS.MA', $ids);
-        // Recover
-        self::assertContains('NIST-RC.RP', $ids);
+    #[Test]
+    public function recoveryIsAGapBecauseTheFrameworkHasNoBackupPrimitive(): void
+    {
+        $finding = self::bare()->finding(ComplianceFramework::NistCsf, 'NIST-RC.RP');
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertSame('probe.recovery_capability', $finding->probeId);
     }
 
+    /**
+     * The evidence must name the contract nothing answered, so the report says what
+     * is missing rather than only that something is.
+     */
     #[Test]
-    public function allControlsHaveCorrectFramework(): void
+    public function recoveryEvidenceNamesTheContractNothingAnswers(): void
     {
-        foreach ($this->catalog->all() as $control) {
-            self::assertSame('nist_csf', $control->framework);
+        $finding = self::bare()->finding(ComplianceFramework::NistCsf, 'NIST-RC.RP');
+
+        $details = '';
+
+        foreach ($finding->evidence as $observation) {
+            $details .= $observation->detail . "\n";
         }
+
+        self::assertStringContainsString(ControlEvidenceGatherer::BACKUP_SERVICE_CONTRACT, $details);
+    }
+
+    /**
+     * The load-bearing test for the whole design. A deployment with everything the
+     * framework can offer still fails RC.RP, because recovery is not among the
+     * things the framework offers. Before this change the same deployment — and
+     * every other — reported RC.RP as covered.
+     */
+    #[Test]
+    public function recoveryStaysAGapOnAFullyEquippedDeployment(): void
+    {
+        $finding = self::bare()
+            ->resolving(self::AUDIT_SINK, AuditFileSink::class)
+            ->resolving(self::SESSION_ENCRYPTION, SessionEncryption::class)
+            ->resolving(self::MASTER_KEY, MasterKey::class)
+            ->resolving(self::INCIDENT_REPORTER, FileIncidentReporter::class)
+            ->withVerifiedEvidenceChain()
+            ->withHealthCheck(DeploymentUnderAssessment::passingHealthCheck('database'))
+            ->finding(ComplianceFramework::NistCsf, 'NIST-RC.RP');
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+    }
+
+    /**
+     * And it cannot be scoped away either: no deployment can assert that recovery
+     * does not apply to it, so the probe reads no scope assertion at all.
+     */
+    #[Test]
+    public function recoveryCannotBeScopedOut(): void
+    {
+        $finding = self::bare()
+            ->assertingScope('stores_cardholder_data', false)
+            ->assertingScope('processes_personal_data', false)
+            ->assertingScope('processes_health_data', false)
+            ->finding(ComplianceFramework::NistCsf, 'NIST-RC.RP');
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
     }
 
     #[Test]
-    public function allControlsHaveValidStatus(): void
+    public function recoveryNamesWhatWouldCloseTheGap(): void
     {
-        foreach ($this->catalog->all() as $control) {
-            self::assertContains($control->status, [
-                ControlStatus::Implemented,
-                ControlStatus::Partial,
-                ControlStatus::Planned,
-            ]);
-        }
+        $finding = self::bare()->finding(ComplianceFramework::NistCsf, 'NIST-RC.RP');
+
+        self::assertNotSame([], $finding->remediations);
+        self::assertStringContainsString(
+            'enabled_frameworks',
+            implode(' ', $finding->remediations),
+            'A gap the framework cannot close must at least tell the operator that '
+                . 'un-declaring the framework is the alternative.',
+        );
+    }
+
+    // --- DE.AE: adverse event analysis ---------------------------------------
+
+    #[Test]
+    public function adverseEventAnalysisIsAGapWithNoAuditTrail(): void
+    {
+        self::assertSame(
+            ControlOutcome::Unsatisfied,
+            self::bare()->finding(ComplianceFramework::NistCsf, 'NIST-DE.AE')->outcome,
+        );
     }
 
     #[Test]
-    public function allControlsHaveFrameworkFeatures(): void
+    public function adverseEventAnalysisIsSatisfiedWhenTheChainVerifies(): void
     {
-        foreach ($this->catalog->all() as $control) {
-            self::assertNotEmpty(
-                $control->frameworkFeatures,
-                sprintf('Control %s should list at least one framework feature.', $control->id),
-            );
-        }
+        $finding = self::bare()
+            ->resolving(self::AUDIT_SINK, AuditFileSink::class)
+            ->withVerifiedEvidenceChain()
+            ->finding(ComplianceFramework::NistCsf, 'NIST-DE.AE');
+
+        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
+    }
+
+    // --- GV.OC: organizational context ---------------------------------------
+
+    #[Test]
+    public function governanceIsAGapWhenNoComplianceProfileWasResolved(): void
+    {
+        $finding = self::bare()
+            ->withoutComplianceProfile()
+            ->finding(ComplianceFramework::NistCsf, 'NIST-GV.OC');
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+    }
+
+    /**
+     * A resolved compliance profile is context, not governance.
+     *
+     * GV.OC was Satisfied on the profile resolving — an enumeration of what the
+     * deployment has, at grade Resolved, which stopped proving behaviour. Nothing
+     * in the framework exercises a governance profile, so the report now says the
+     * profile was found and the control was not observed.
+     */
+    #[Test]
+    public function governanceIsClaimedAndNotObservedWhenOnlyTheProfileResolves(): void
+    {
+        $finding = self::bare()->finding(ComplianceFramework::NistCsf, 'NIST-GV.OC');
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('Claimed and not observed', $finding->summary);
+        self::assertNotSame([], $finding->remediations);
+    }
+
+    // --- PR.DS: data security -------------------------------------------------
+
+    #[Test]
+    public function dataSecurityIsNotSatisfiedWithoutAnEncrypter(): void
+    {
+        $finding = self::bare()->finding(ComplianceFramework::NistCsf, 'NIST-PR.DS');
+
+        self::assertNotSame(ControlOutcome::Satisfied, $finding->outcome);
     }
 
     #[Test]
-    public function allControlsHaveNonEmptyTitleAndDescription(): void
+    public function dataSecurityIsSatisfiedWhenTheEncrypterResolves(): void
     {
-        foreach ($this->catalog->all() as $control) {
-            self::assertNotEmpty($control->title, sprintf('Control %s must have a title.', $control->id));
-            self::assertNotEmpty($control->description, sprintf('Control %s must have a description.', $control->id));
-        }
+        $finding = self::bare()
+            ->resolving(self::SESSION_ENCRYPTION, SessionEncryption::class)
+            ->finding(ComplianceFramework::NistCsf, 'NIST-PR.DS');
+
+        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
     }
 
-    #[Test]
-    public function recoveryControlIsPartial(): void
-    {
-        $control = $this->catalog->get('NIST-RC.RP');
+    // --- RS.MA: incident management -------------------------------------------
 
-        self::assertNotNull($control);
-        self::assertSame(ControlStatus::Partial, $control->status);
+    /**
+     * An incident register that empties on restart cannot evidence a notification
+     * deadline, so the in-memory reporter is refused by name rather than counted
+     * because something was bound.
+     */
+    #[Test]
+    public function incidentManagementRefusesTheInMemoryReporter(): void
+    {
+        $finding = self::bare()
+            ->resolving(self::INCIDENT_REPORTER, InMemoryIncidentReporter::class)
+            ->finding(ComplianceFramework::NistCsf, 'NIST-RS.MA');
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
     }
 
+    /**
+     * A durable reporter is still only a resolved class name.
+     *
+     * The distinction the accept list draws — `FileIncidentReporter` writes
+     * somewhere that survives a restart, `InMemoryIncidentReporter` does not — is
+     * worth printing and is not evidence that an incident was ever reported.
+     * Nothing exercises the reporter, so RS.MA reports a gap naming the class it
+     * found rather than a pass resting on it.
+     */
     #[Test]
-    public function identityProtectionControlIsImplemented(): void
+    public function incidentManagementIsClaimedAndNotObservedWithADurableReporter(): void
     {
-        $control = $this->catalog->get('NIST-PR.AA');
+        $finding = self::bare()
+            ->resolving(self::INCIDENT_REPORTER, FileIncidentReporter::class)
+            ->finding(ComplianceFramework::NistCsf, 'NIST-RS.MA');
 
-        self::assertNotNull($control);
-        self::assertSame(ControlStatus::Implemented, $control->status);
-        self::assertContains('authentication', $control->frameworkFeatures);
-        self::assertContains('mfa', $control->frameworkFeatures);
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('Claimed and not observed', $finding->summary);
+        self::assertStringContainsString('FileIncidentReporter', $finding->summary);
     }
 
-    #[Test]
-    public function dataSecurityControlReferencesEncryption(): void
+    private static function bare(): DeploymentUnderAssessment
     {
-        $control = $this->catalog->get('NIST-PR.DS');
-
-        self::assertNotNull($control);
-        self::assertContains('crypto_keyring', $control->frameworkFeatures);
-        self::assertContains('tls_enforcement', $control->frameworkFeatures);
-    }
-
-    #[Test]
-    public function continuousMonitoringControlReferencesAuditLogging(): void
-    {
-        $control = $this->catalog->get('NIST-DE.CM');
-
-        self::assertNotNull($control);
-        self::assertContains('audit_logging', $control->frameworkFeatures);
-        self::assertContains('opentelemetry', $control->frameworkFeatures);
-    }
-
-    #[Test]
-    public function allSixFunctionsAreRepresented(): void
-    {
-        $controls = $this->catalog->byFramework('nist_csf');
-        $ids = array_map(static fn(Control $c): string => $c->id, $controls);
-
-        $prefixes = ['NIST-GV', 'NIST-ID', 'NIST-PR', 'NIST-DE', 'NIST-RS', 'NIST-RC'];
-
-        foreach ($prefixes as $prefix) {
-            $found = false;
-
-            foreach ($ids as $id) {
-                if (str_starts_with($id, $prefix)) {
-                    $found = true;
-                    break;
-                }
-            }
-
-            self::assertTrue($found, sprintf('No control found for NIST CSF function prefix %s.', $prefix));
-        }
+        return DeploymentUnderAssessment::withNothing([ComplianceFramework::NistCsf]);
     }
 }

@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Compliance\Evidence\EvidenceChainHead;
 use Pulsar\Compliance\Evidence\EvidenceRecord;
 use Pulsar\Compliance\Evidence\InMemoryEvidenceStore;
 
@@ -23,6 +24,34 @@ final class InMemoryEvidenceStoreTest extends TestCase
         $store->store($record);
 
         self::assertSame($record, $store->get('r1'));
+    }
+
+    #[Test]
+    public function theAnchorIsKeptSoTheChainBehavesTheSameWayItDoesOverAFile(): void
+    {
+        // Records and anchor live in the same object and are written in the same
+        // call, so they cannot disagree. What this store cannot do is survive the
+        // process, and that is said on chainState() rather than dressed up as an
+        // anchoring problem — a chain over it would otherwise report Unanchored on
+        // every test and every development run.
+        $store = new InMemoryEvidenceStore();
+
+        self::assertFalse($store->hasHead());
+        self::assertNull($store->head());
+
+        $head = new EvidenceChainHead(
+            version: 1,
+            genesis: 'genesis-commitment',
+            height: 2,
+            signature: 'tail-signature',
+            updatedAt: new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
+            mac: 'mac',
+        );
+
+        $store->writeHead($head);
+
+        self::assertTrue($store->hasHead());
+        self::assertSame($head, $store->head());
     }
 
     #[Test]

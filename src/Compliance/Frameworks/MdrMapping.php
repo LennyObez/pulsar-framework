@@ -4,106 +4,114 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\ContinuousMonitoringProbe;
+use Pulsar\Compliance\Probe\IncidentResponseProbe;
+use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
- * Registers EU MDR 2017/745 controls into the catalog.
+ * Declares the EU MDR controls Pulsar can be assessed against.
  *
- * Maps Pulsar medical device extension features to MDR regulatory
- * requirements they provide tooling support for.
- *
- * @see https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32017R0745
+ * UDI assignment, classification, clinical evaluation and EUDAMED registration are
+ * regulatory acts performed by the manufacturer; the declarations name the
+ * submissions and files rather than claiming the framework covers them.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class MdrMapping
 {
     /**
-     * Register MDR controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'MDR-UDI-001',
-            framework: 'mdr',
-            title: 'Unique Device Identification (Article 27)',
-            description: 'UDI system with DI/PI components, issuing agency support (GS1, HIBCC, ICCBBA, IFA), '
-                . 'format validation including GTIN-14 check digit, and device registry for tracking.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['udi_identifier', 'udi_validation', 'udi_registry', 'device_tracking'],
-        ));
+        return [
+            ControlDeclaration::operatorResponsibility(
+                id: 'MDR-UDI-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Unique Device Identification (Article 27)',
+                requirement: 'Manufacturers shall assign a unique device identifier to their devices '
+                    . 'and submit it with the required data elements to the UDI database '
+                    . '(Article 27).',
+                artefact: 'The UDI assignment records for each device and its packaging levels, '
+                    . 'with the corresponding UDI database submissions.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-CLASS-001',
-            framework: 'mdr',
-            title: 'Device Classification (Annex VIII)',
-            description: 'Risk classification system supporting Class I, IIa, IIb, and III devices '
-                . 'with status tracking (Active, Recalled, Suspended, Withdrawn, Expired).',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['device_classification', 'device_status_tracking'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'MDR-CLASS-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Device Classification (Annex VIII)',
+                requirement: 'Devices shall be classified as class I, IIa, IIb or III, taking into '
+                    . 'account their intended purpose and inherent risks, according to the '
+                    . 'rules in Annex VIII.',
+                artefact: 'The documented classification rationale for each device against the '
+                    . 'Annex VIII rules, with the notified body assessment where required.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-PMS-001',
-            framework: 'mdr',
-            title: 'Post-Market Surveillance (Articles 83-86)',
-            description: 'PMS reporting with adverse event summaries, trend analysis interface, '
-                . 'and support for PMS reports, PSURs, and PMCF reports.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['pms_reporting', 'adverse_event_tracking', 'trend_analysis', 'pmcf'],
-        ));
+            ControlDeclaration::probed(
+                id: 'MDR-PMS-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Post-Market Surveillance (Articles 83-86)',
+                requirement: 'Manufacturers shall plan, establish and maintain a post-market '
+                    . 'surveillance system proportionate to the risk class and appropriate to '
+                    . 'the type of device (Articles 83 to 86).',
+                probe: new ContinuousMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-VIG-001',
-            framework: 'mdr',
-            title: 'Vigilance Reporting (Article 87)',
-            description: 'Serious incident reporting with MDR-compliant categorization (death, '
-                . 'serious deterioration of health, public health threat). Supports initial, '
-                . 'follow-up, and final report lifecycle with competent authority tracking.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['vigilance_reporting', 'serious_incident_classification', 'report_lifecycle'],
-        ));
+            ControlDeclaration::probed(
+                id: 'MDR-VIG-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Vigilance Reporting (Article 87)',
+                requirement: 'Manufacturers shall report serious incidents and field safety corrective '
+                    . 'actions to the competent authorities within the deadlines set by the '
+                    . 'Regulation (Article 87).',
+                probe: new IncidentResponseProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-CLIN-001',
-            framework: 'mdr',
-            title: 'Clinical Investigations (Articles 62-82)',
-            description: 'Clinical investigation lifecycle tracking with ethics committee approval, '
-                . 'competent authority notification, subject enrollment, and endpoint tracking.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['clinical_investigation', 'ethics_approval', 'competent_authority'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'MDR-CLIN-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Clinical Investigations (Articles 62-82)',
+                requirement: 'Clinical investigations shall be designed, conducted and reported in '
+                    . 'accordance with the requirements of Articles 62 to 82 and Annex XV.',
+                artefact: 'The clinical evaluation report and, where applicable, the clinical '
+                    . 'investigation plan, ethics committee approval and competent authority '
+                    . 'notification.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-RISK-001',
-            framework: 'mdr',
-            title: 'Risk Management (per ISO 14971)',
-            description: 'Risk management file with hazard analysis, severity/probability assessment, '
-                . 'risk control tracking, and residual risk evaluation per ISO 14971.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['risk_management', 'hazard_analysis', 'risk_controls'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'MDR-RISK-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Risk Management (per ISO 14971)',
+                requirement: 'Manufacturers shall establish, implement, document and maintain a risk '
+                    . 'management system as a continuous iterative process throughout the '
+                    . 'device life cycle.',
+                artefact: 'The risk management file required by ISO 14971, with hazard analysis, '
+                    . 'risk control measures and the residual risk evaluation.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-TRACE-001',
-            framework: 'mdr',
-            title: 'Traceability (Article 25)',
-            description: 'Device traceability through UDI system with lot number and serial number '
-                . 'tracking. Supports recall identification via lot-based and serial-based lookup.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['device_traceability', 'lot_tracking', 'serial_tracking'],
-        ));
+            ControlDeclaration::probed(
+                id: 'MDR-TRACE-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'Traceability (Article 25)',
+                requirement: 'Economic operators shall be able to identify to whom they supplied '
+                    . 'devices and from whom they were supplied, for the period the Regulation '
+                    . 'prescribes (Article 25).',
+                probe: new TamperEvidentAuditProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'MDR-EUDAMED-001',
-            framework: 'mdr',
-            title: 'EUDAMED Integration (Article 33)',
-            description: 'Registry interface designed for EUDAMED integration. Default in-memory '
-                . 'implementation; production deployments provide persistent EUDAMED-connected adapter.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['eudamed_registry', 'device_registration'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'MDR-EUDAMED-001',
+                framework: ComplianceFramework::Mdr,
+                title: 'EUDAMED Integration (Article 33)',
+                requirement: 'Manufacturers shall enter and keep up to date in EUDAMED the information '
+                    . 'the Regulation requires about themselves and their devices (Article 33).',
+                artefact: 'The EUDAMED registration confirmations for the manufacturer, the devices '
+                    . 'and the certificates.',
+            ),
+        ];
     }
 }

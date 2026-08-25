@@ -4,110 +4,117 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\GovernanceProfileProbe;
+use Pulsar\Compliance\Probe\IncidentResponseProbe;
+use Pulsar\Compliance\Probe\RecoveryCapabilityProbe;
+use Pulsar\Compliance\Probe\RiskAssessmentProbe;
+use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
- * Registers DORA (EU 2022/2554) controls into the catalog.
+ * Declares the DORA controls Pulsar can be assessed against.
  *
- * Maps Pulsar DORA extension features to Digital Operational Resilience Act
- * requirements for financial entities.
- *
- * @see https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2554
+ * Resilience testing, third-party risk and information sharing are discharged by
+ * the financial entity, not by the software, and now name the artefact an
+ * assessor should be shown. Business continuity is probed and will report a gap
+ * until a backup primitive exists.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class DoraMapping
 {
     /**
-     * Register DORA controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'DORA-RISK-001',
-            framework: 'dora',
-            title: 'ICT Risk Management Framework (Articles 5-16)',
-            description: 'ICT asset registry with criticality classification, dependency tracking, '
-                . 'recovery objectives (RTO/RPO), and third-party provider mapping. '
-                . 'Risk categories cover cyber attacks, system failures, and concentration risk.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['ict_asset_registry', 'risk_classification', 'dependency_tracking', 'recovery_objectives'],
-        ));
+        return [
+            ControlDeclaration::probed(
+                id: 'DORA-RISK-001',
+                framework: ComplianceFramework::Dora,
+                title: 'ICT Risk Management Framework (Articles 5-16)',
+                requirement: 'Financial entities shall have an internal governance and control '
+                    . 'framework that ensures effective and prudent management of ICT risk '
+                    . '(Articles 5 to 16).',
+                probe: new RiskAssessmentProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-INC-001',
-            framework: 'dora',
-            title: 'ICT Incident Management (Articles 17-23)',
-            description: 'Incident classification (major/non-major), reporting phase tracking '
-                . '(detection, initial 4h, intermediate 72h, final 1 month), affected service '
-                . 'and client tracking, financial impact estimation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['incident_classification', 'incident_reporting_timeline', 'incident_impact_tracking'],
-        ));
+            ControlDeclaration::probed(
+                id: 'DORA-INC-001',
+                framework: ComplianceFramework::Dora,
+                title: 'ICT Incident Management (Articles 17-23)',
+                requirement: 'Financial entities shall define, establish and implement an ICT-related '
+                    . 'incident management process to detect, manage and notify ICT-related '
+                    . 'incidents (Articles 17 to 23).',
+                probe: new IncidentResponseProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-INC-002',
-            framework: 'dora',
-            title: 'ICT Incident Compliance Events',
-            description: 'Compliance event types for ICT incident detection (IctIncidentDetected) '
-                . 'and recovery initiation (RecoveryInitiated) with audit trail support.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['incident_events', 'recovery_events', 'compliance_audit_trail'],
-        ));
+            ControlDeclaration::probed(
+                id: 'DORA-INC-002',
+                framework: ComplianceFramework::Dora,
+                title: 'ICT Incident Compliance Events',
+                requirement: 'Financial entities shall record all ICT-related incidents and '
+                    . 'significant cyber threats, and retain the records for the period '
+                    . 'required by the competent authority.',
+                probe: new TamperEvidentAuditProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-TEST-001',
-            framework: 'dora',
-            title: 'Digital Operational Resilience Testing (Articles 24-27)',
-            description: 'Resilience test records covering vulnerability scanning, penetration testing, '
-                . 'network security, source code review, scenario-based testing, and threat-led '
-                . 'penetration testing (TLPT). Compliance events for test completion.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['resilience_testing', 'vulnerability_scanning', 'penetration_testing', 'tlpt'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'DORA-TEST-001',
+                framework: ComplianceFramework::Dora,
+                title: 'Digital Operational Resilience Testing (Articles 24-27)',
+                requirement: 'Financial entities shall establish, maintain and review a sound and '
+                    . 'comprehensive digital operational resilience testing programme (Articles '
+                    . '24 to 27).',
+                artefact: 'The digital operational resilience testing programme, its schedule, and '
+                    . 'the report of the most recent test including any threat-led penetration '
+                    . 'test.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-TPR-001',
-            framework: 'dora',
-            title: 'ICT Third-Party Risk Management (Articles 28-44)',
-            description: 'Third-party provider register with risk level assessment, contract tracking, '
-                . 'subcontractor chain visibility, exit strategy documentation, and concentration '
-                . 'risk analysis. Compliance events for risk assessment completion.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['third_party_register', 'concentration_risk', 'exit_strategy', 'subcontractor_tracking'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'DORA-TPR-001',
+                framework: ComplianceFramework::Dora,
+                title: 'ICT Third-Party Risk Management (Articles 28-44)',
+                requirement: 'Financial entities shall manage ICT third-party risk as an integral '
+                    . 'component of ICT risk, and maintain a register of contractual '
+                    . 'arrangements (Articles 28 to 44).',
+                artefact: 'The register of information on contractual arrangements with ICT '
+                    . 'third-party service providers, including subcontracting chains and exit '
+                    . 'strategies.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-SHARE-001',
-            framework: 'dora',
-            title: 'Information Sharing (Article 45)',
-            description: 'Cyber threat indicator sharing with severity classification, affected sector '
-                . 'tracking, and mitigation recommendations. Supports indicators of compromise, '
-                . 'tactics, techniques, and procedures.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['threat_intelligence', 'indicator_sharing', 'sector_coordination'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'DORA-SHARE-001',
+                framework: ComplianceFramework::Dora,
+                title: 'Information Sharing (Article 45)',
+                requirement: 'Financial entities may exchange cyber threat information and '
+                    . 'intelligence among themselves within trusted communities (Article 45).',
+                artefact: 'The record of participation in cyber threat information and intelligence '
+                    . 'sharing arrangements, with the arrangements themselves.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-BCM-001',
-            framework: 'dora',
-            title: 'Business Continuity Management (Article 11)',
-            description: 'Recovery time and point objectives per ICT asset, recovery plan tracking, '
-                . 'and integration with Pulsar resilience patterns (circuit breaker, retry policy).',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['business_continuity', 'recovery_planning', 'resilience_integration'],
-        ));
+            ControlDeclaration::probed(
+                id: 'DORA-BCM-001',
+                framework: ComplianceFramework::Dora,
+                title: 'Business Continuity Management (Article 11)',
+                requirement: 'Financial entities shall put in place an ICT business continuity policy '
+                    . 'and associated response and recovery plans, including backup and '
+                    . 'restoration procedures (Article 11).',
+                probe: new RecoveryCapabilityProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'DORA-GOV-001',
-            framework: 'dora',
-            title: 'ICT Governance (Article 5)',
-            description: 'Compliance profile integration: 4-hour breach notification deadline, '
-                . 'mandatory resilience testing, encryption requirements, and tamper-evident audit.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['compliance_profile', 'breach_notification', 'governance_integration'],
-        ));
+            ControlDeclaration::probed(
+                id: 'DORA-GOV-001',
+                framework: ComplianceFramework::Dora,
+                title: 'ICT Governance (Article 5)',
+                requirement: 'The management body of a financial entity shall define, approve, oversee '
+                    . 'and be accountable for the implementation of the ICT risk management '
+                    . 'framework (Article 5).',
+                probe: new GovernanceProfileProbe(),
+            ),
+        ];
     }
 }

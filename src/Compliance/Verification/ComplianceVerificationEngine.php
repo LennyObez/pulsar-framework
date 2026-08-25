@@ -187,6 +187,27 @@ final readonly class ComplianceVerificationEngine
     }
 
     /**
+     * A copy of this engine that verifies without appending evidence.
+     *
+     * The boot check needs it. Under PHP-FPM the kernel boots once per REQUEST,
+     * so a boot-time {@see self::verify()} that records would grow the evidence
+     * chain by one signed record per request — thousands of identical entries a
+     * minute, none of which is evidence of anything and all of which an auditor
+     * has to page through. Evidence is collected on the interval
+     * `config/compliance.php` declares, by
+     * {@see EvidenceCollectionJob}; the boot check exists to fail a
+     * misconfigured deployment fast, which is a different job.
+     *
+     * The engine bound in the container keeps its chain, so an on-demand run
+     * still records.
+     */
+    #[NoDiscard]
+    public function withoutEvidenceRecording(): self
+    {
+        return clone($this, ['evidenceChain' => null]);
+    }
+
+    /**
      * Whether verification is enabled.
      */
     #[NoDiscard]

@@ -4,472 +4,479 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\AccessRestrictionProbe;
+use Pulsar\Compliance\Probe\ApplicationHardeningProbe;
+use Pulsar\Compliance\Probe\AssetInventoryProbe;
+use Pulsar\Compliance\Probe\ConfigurationManagementProbe;
+use Pulsar\Compliance\Probe\ConsentManagementProbe;
+use Pulsar\Compliance\Probe\ContinuousMonitoringProbe;
+use Pulsar\Compliance\Probe\DataErasureProbe;
+use Pulsar\Compliance\Probe\IncidentResponseProbe;
+use Pulsar\Compliance\Probe\PlatformHardeningProbe;
+use Pulsar\Compliance\Probe\RecoveryCapabilityProbe;
+use Pulsar\Compliance\Probe\RiskAssessmentProbe;
+use Pulsar\Compliance\Probe\TransportSecurityProbe;
 
 /**
- * Registers SOC 2 Trust Services Criteria controls into the catalog.
+ * Declares the SOC 2 Trust Services Criteria Pulsar can be assessed against.
  *
- * Maps Pulsar framework features to the SOC 2 controls they provide coverage for.
+ * Forty-two criteria, and the honest split is stark: CC1.x (control environment),
+ * CC2.x (communication) and CC9.x (risk mitigation) are organizational by
+ * definition, and every one of them used to carry a status derived from a Pulsar
+ * feature — CC1.1, the commitment to integrity and ethical values, was graded from
+ * the existence of audit logging. They are operator-responsibility declarations
+ * now, each naming the artefact an assessor asks for, which is both truthful and
+ * more use to that assessor than a tick beside a criterion no code can meet.
+ *
+ * Because operator-responsibility controls are excluded from the coverage
+ * arithmetic, this framework's reported coverage will fall sharply. That is the
+ * correction, not a regression: the previous figure counted criteria the framework
+ * had never assessed.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class Soc2Mapping
 {
     /**
-     * Register SOC 2 controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'CC1.1',
-            framework: 'soc2',
-            title: 'COSO Principle 1: Integrity and Ethical Values',
-            description: 'The entity demonstrates a commitment to integrity and ethical values through '
-                . 'comprehensive audit logging that captures all security-relevant operations with '
-                . 'tamper-evident chains.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['audit_logging', 'hmac_chain'],
-        ));
+        return [
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC1.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'COSO Principle 1: Integrity and Ethical Values',
+                requirement: 'The entity demonstrates a commitment to integrity and ethical values.',
+                artefact: 'The code of conduct, its acknowledgement records, and the record of '
+                    . 'deviations addressed.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.1',
-            framework: 'soc2',
-            title: 'Logical and Physical Access Controls',
-            description: 'The entity implements logical access security software, infrastructure, and '
-                . 'architectures over protected information assets to protect them from security events. '
-                . 'Covered by authentication middleware, session management, and authorization policies.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['authentication', 'authorization', 'session_management'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC6.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Logical and Physical Access Controls',
+                requirement: 'The entity implements logical access security software, infrastructure '
+                    . 'and architectures over protected information assets to protect them from '
+                    . 'security events.',
+                probe: new AccessRestrictionProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.3',
-            framework: 'soc2',
-            title: 'Role-Based Access Control',
-            description: 'The entity authorizes, modifies, or removes access to data, software, functions, '
-                . 'and other protected information assets based on roles and responsibilities. '
-                . 'Covered by the RBAC subsystem and permission gates.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['rbac', 'permission_gates', 'authorization'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC6.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'Role-Based Access Control',
+                requirement: 'The entity authorizes, modifies or removes access to data, software, '
+                    . 'functions and other protected information assets based on roles, '
+                    . 'responsibilities or the system design and changes.',
+                probe: new AccessRestrictionProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC7.2',
-            framework: 'soc2',
-            title: 'System Monitoring',
-            description: 'The entity monitors system components and the operation of those components for '
-                . 'anomalies that are indicative of malicious acts, natural disasters, and errors affecting '
-                . 'the entity\'s ability to meet its objectives. Covered by metrics collection, health '
-                . 'checks, and observability instrumentation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['observability', 'metrics', 'health_checks'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC7.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'System Monitoring',
+                requirement: 'The entity monitors system components and the operation of those '
+                    . 'components for anomalies indicative of malicious acts, natural disasters '
+                    . 'and errors.',
+                probe: new ContinuousMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC8.1',
-            framework: 'soc2',
-            title: 'Change Management',
-            description: 'The entity authorizes, designs, develops or acquires, configures, documents, tests, '
-                . 'approves, and implements changes to infrastructure, data, software, and procedures to '
-                . 'meet its objectives. Covered by deployment pipelines and integrity verification.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['deployment', 'integrity_verification', 'extension_signatures'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC8.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Change Management',
+                requirement: 'The entity authorizes, designs, develops or acquires, configures, '
+                    . 'documents, tests, approves and implements changes to infrastructure, '
+                    . 'data, software and procedures to meet its objectives.',
+                artefact: 'The change tickets for the deployed release, with their approvals, test '
+                    . 'evidence and the CI run for the deployed commit.',
+            ),
 
-        // ── CC1: Control Environment ────────────────────────────────────
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC1.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Board of Directors Independence and Oversight',
+                requirement: 'The board of directors demonstrates independence from management and '
+                    . 'exercises oversight of the development and performance of internal '
+                    . 'control.',
+                artefact: 'The board charter, the minutes evidencing independent oversight, and the '
+                    . 'membership record showing the required independence.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC1.2',
-            framework: 'soc2',
-            title: 'Board of Directors Independence and Oversight',
-            description: 'Framework enforces separation of duties via RBAC with distinct admin, '
-                . 'developer, and auditor roles that cannot be combined.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['rbac', 'role_separation', 'authorization'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC1.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'Management Responsibility for Internal Controls',
+                requirement: 'Management establishes, with board oversight, structures, reporting '
+                    . 'lines and appropriate authorities and responsibilities in the pursuit of '
+                    . 'objectives.',
+                artefact: 'The organisation chart, the documented authority and responsibility '
+                    . 'assignments, and the delegation records.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC1.3',
-            framework: 'soc2',
-            title: 'Management Responsibility for Internal Controls',
-            description: 'Compliance verification engine provides automated control checking '
-                . 'with regression detection and evidence chain tracking.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['compliance_verification', 'regression_detection', 'evidence_chain'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC1.4',
+                framework: ComplianceFramework::Soc2,
+                title: 'Competence of Personnel',
+                requirement: 'The entity demonstrates a commitment to attract, develop and retain '
+                    . 'competent individuals in alignment with objectives.',
+                artefact: 'The role competency definitions, the hiring records against them, and '
+                    . 'the training completion records.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC1.4',
-            framework: 'soc2',
-            title: 'Competence of Personnel',
-            description: 'Extension trust tiers enforce capability restrictions based on '
-                . 'author verification level (community, verified, first-party).',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['trust_tiers', 'capability_policy', 'extension_signatures'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC1.5',
+                framework: ComplianceFramework::Soc2,
+                title: 'Accountability for Internal Controls',
+                requirement: 'The entity holds individuals accountable for their internal control '
+                    . 'responsibilities in the pursuit of objectives.',
+                artefact: 'The performance objectives tied to internal-control responsibilities, '
+                    . 'and the evaluations recorded against them.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC1.5',
-            framework: 'soc2',
-            title: 'Accountability for Internal Controls',
-            description: 'Audit log with HMAC chain provides tamper-evident record of all '
-                . 'security-relevant operations with actor attribution.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['audit_logging', 'hmac_chain', 'actor_attribution'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC2.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Internal Information Quality',
+                requirement: 'The entity obtains or generates and uses relevant, quality information '
+                    . 'to support the functioning of internal control.',
+                artefact: 'The definition of the information required for internal control and the '
+                    . 'evidence that it is produced at the quality and frequency stated.',
+            ),
 
-        // ── CC2: Communication and Information ──────────────────────────
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC2.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Internal Communication',
+                requirement: 'The entity internally communicates information, including objectives and '
+                    . 'responsibilities for internal control, necessary to support its '
+                    . 'functioning.',
+                artefact: 'The internal communication records covering control responsibilities, '
+                    . 'and the channel through which deficiencies can be reported.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC2.1',
-            framework: 'soc2',
-            title: 'Internal Information Quality',
-            description: 'Structured logging with compliance formatters (HIPAA, PCI-DSS, SOX) '
-                . 'ensures information quality and consistency.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['structured_logging', 'compliance_log_formatters'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC2.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'External Communication',
+                requirement: 'The entity communicates with external parties regarding matters '
+                    . 'affecting the functioning of internal control.',
+                artefact: 'The external communication records, including the channel through which '
+                    . 'external parties can report matters affecting internal control.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC2.2',
-            framework: 'soc2',
-            title: 'Internal Communication',
-            description: 'Event dispatcher with cross-module scope tracking enables auditable '
-                . 'internal communication between framework components.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['event_dispatcher', 'cross_module_events'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC3.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Risk Identification',
+                requirement: 'The entity specifies objectives with sufficient clarity to enable the '
+                    . 'identification and assessment of risks relating to those objectives.',
+                probe: new RiskAssessmentProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC2.3',
-            framework: 'soc2',
-            title: 'External Communication',
-            description: 'Notification channels (email, webhook, SMS) with audit trails for '
-                . 'all external communications including breach notifications.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['notifications', 'webhook_channel', 'breach_notification'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC3.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Risk Assessment for Fraud',
+                requirement: 'The entity considers the potential for fraud in assessing risks to the '
+                    . 'achievement of objectives.',
+                artefact: 'The fraud risk assessment, naming the fraud scenarios considered and the '
+                    . 'controls assigned to each.',
+            ),
 
-        // ── CC3: Risk Assessment ────────────────────────────────────────
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC3.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'Risk Assessment for Changes',
+                requirement: 'The entity identifies and assesses changes that could significantly '
+                    . 'impact the system of internal control.',
+                artefact: 'The change risk assessments performed for significant changes, with the '
+                    . 'approval records.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC3.1',
-            framework: 'soc2',
-            title: 'Risk Identification',
-            description: 'Account takeover guard with risk scoring identifies authentication '
-                . 'threats. Rate limiters detect brute force and abuse patterns.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['takeover_guard', 'rate_limiting', 'risk_scoring'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC3.4',
+                framework: ComplianceFramework::Soc2,
+                title: 'Consideration of External Threats',
+                requirement: 'The entity identifies and assesses changes in the external environment, '
+                    . 'including threats, that could significantly impact the system of '
+                    . 'internal control.',
+                probe: new ContinuousMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC3.2',
-            framework: 'soc2',
-            title: 'Risk Assessment for Fraud',
-            description: 'CSRF middleware, input validation, and sanitization prevent injection '
-                . 'and cross-site attacks. SVG sanitizer blocks malicious uploads.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['csrf_protection', 'input_validation', 'svg_sanitizer'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC4.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Ongoing Monitoring',
+                requirement: 'The entity selects, develops and performs ongoing or separate '
+                    . 'evaluations to ascertain whether the components of internal control are '
+                    . 'present and functioning.',
+                probe: new ContinuousMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC3.3',
-            framework: 'soc2',
-            title: 'Risk Assessment for Changes',
-            description: 'Build artifact verification with integrity checks ensures code '
-                . 'changes are authorized. Extension signatures verify provenance.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['build_verification', 'integrity_checks', 'extension_signatures'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC4.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Evaluation and Communication of Deficiencies',
+                requirement: 'The entity evaluates and communicates internal control deficiencies in a '
+                    . 'timely manner to those parties responsible for taking corrective action.',
+                artefact: 'The deficiency log, showing how each deficiency was evaluated, '
+                    . 'communicated to the responsible party, and remediated.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC3.4',
-            framework: 'soc2',
-            title: 'Consideration of External Threats',
-            description: 'Security headers middleware (CSP, HSTS, X-Frame-Options), CORS '
-                . 'policy enforcement, and safe redirect validation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['security_headers', 'cors', 'safe_redirect'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC5.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Selection and Development of Controls',
+                requirement: 'The entity selects and develops control activities that contribute to '
+                    . 'the mitigation of risks to the achievement of objectives to acceptable '
+                    . 'levels.',
+                artefact: 'The control selection rationale linking each risk identified to the '
+                    . 'control chosen to mitigate it.',
+            ),
 
-        // ── CC4: Monitoring Activities ──────────────────────────────────
+            ControlDeclaration::probed(
+                id: 'CC5.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Technology Controls',
+                requirement: 'The entity selects and develops general control activities over '
+                    . 'technology to support the achievement of objectives.',
+                probe: new ApplicationHardeningProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC4.1',
-            framework: 'soc2',
-            title: 'Ongoing Monitoring',
-            description: 'MetricRegistry with threshold-based alerting provides continuous '
-                . 'monitoring. Health check endpoints expose component status.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['metrics', 'alerting', 'health_checks'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC5.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'Deployment of Control Activities',
+                requirement: 'The entity deploys control activities through policies that establish '
+                    . 'what is expected and procedures that put those policies into action.',
+                probe: new ConfigurationManagementProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC4.2',
-            framework: 'soc2',
-            title: 'Evaluation and Communication of Deficiencies',
-            description: 'Error tracking with aggregation and fingerprinting identifies and '
-                . 'groups deficiencies. Compliance verification reports gaps.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['error_tracking', 'error_aggregation', 'compliance_verification'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC6.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Prior to Issuing System Credentials',
+                requirement: 'Prior to issuing system credentials, the entity registers and authorizes '
+                    . 'new internal and external users whose access is administered by the '
+                    . 'entity.',
+                artefact: 'The access request, approval and provisioning records showing identity '
+                    . 'was verified before credentials were issued, and the deprovisioning '
+                    . 'records on exit.',
+            ),
 
-        // ── CC5: Control Activities ─────────────────────────────────────
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC6.4',
+                framework: ComplianceFramework::Soc2,
+                title: 'Restriction of Physical Access',
+                requirement: 'The entity restricts physical access to facilities and protected '
+                    . 'information assets to authorized personnel.',
+                artefact: 'The physical access records for the facilities holding the information '
+                    . 'assets, and the periodic review of who holds that access.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC5.1',
-            framework: 'soc2',
-            title: 'Selection and Development of Controls',
-            description: 'Framework provides defense-in-depth with authentication, authorization, '
-                . 'encryption, audit logging, and input validation as composable middleware.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['authentication', 'authorization', 'encryption', 'middleware_pipeline'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC6.5',
+                framework: ComplianceFramework::Soc2,
+                title: 'Disposal of Confidential Information',
+                requirement: 'The entity discontinues logical and physical protections over physical '
+                    . 'assets only after the ability to read or recover data and software from '
+                    . 'those assets has been diminished.',
+                probe: new DataErasureProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC5.2',
-            framework: 'soc2',
-            title: 'Technology Controls',
-            description: 'Automated deployment gates, CI verification, and runtime integrity '
-                . 'checks ensure technology controls are consistently applied.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['deployment_gates', 'ci_verification', 'runtime_integrity'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC6.6',
+                framework: ComplianceFramework::Soc2,
+                title: 'Logical Access: External Threats',
+                requirement: 'The entity implements logical access security measures to protect '
+                    . 'against threats from sources outside its system boundaries.',
+                probe: new PlatformHardeningProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC5.3',
-            framework: 'soc2',
-            title: 'Deployment of Control Activities',
-            description: 'Middleware pipeline enforces security controls (auth, rate limit, '
-                . 'CSRF, headers) uniformly across all HTTP endpoints.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['middleware_pipeline', 'security_middleware'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC6.7',
+                framework: ComplianceFramework::Soc2,
+                title: 'Transmission Integrity',
+                requirement: 'The entity restricts the transmission, movement and removal of '
+                    . 'information to authorized users and processes, and protects it during '
+                    . 'transmission, movement and removal.',
+                probe: new TransportSecurityProbe(),
+            ),
 
-        // ── CC6: Additional Logical and Physical Access Controls ────────
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC6.8',
+                framework: ComplianceFramework::Soc2,
+                title: 'Preventing Unauthorized Software',
+                requirement: 'The entity implements controls to prevent or detect and act upon the '
+                    . 'introduction of unauthorized or malicious software.',
+                artefact: 'The software allow-list or code-signing policy, with the verification '
+                    . 'records for the software actually running.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.2',
-            framework: 'soc2',
-            title: 'Prior to Issuing System Credentials',
-            description: 'Password hashing (Argon2id via PasswordHasher), TOTP 2FA enrollment, '
-                . 'and recovery code generation for identity verification before credential issuance.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['password_hashing', 'totp_2fa', 'recovery_codes'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC7.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Anomaly Detection',
+                requirement: 'The entity uses detection and monitoring procedures to identify changes '
+                    . 'to configurations that result in the introduction of new '
+                    . 'vulnerabilities, and susceptibilities to newly discovered '
+                    . 'vulnerabilities.',
+                probe: new ContinuousMonitoringProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.4',
-            framework: 'soc2',
-            title: 'Restriction of Physical Access',
-            description: 'Not directly applicable: framework is software-only. IP allowlisting '
-                . 'and maintenance mode provide network-level access restrictions.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['ip_allowlisting', 'maintenance_mode'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC7.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'Security Incident Response',
+                requirement: 'The entity evaluates security events to determine whether they could or '
+                    . 'have resulted in a failure to meet its objectives, and if so takes '
+                    . 'action to prevent or address such failures.',
+                probe: new IncidentResponseProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.5',
-            framework: 'soc2',
-            title: 'Disposal of Confidential Information',
-            description: 'Data purge orchestrator with retention policies enables automated '
-                . 'disposal. Sodium memory zeroing for cryptographic keys.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_purge', 'retention_policies', 'memory_zeroing'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CC7.4',
+                framework: ComplianceFramework::Soc2,
+                title: 'Recovery from Security Incidents',
+                requirement: 'The entity responds to identified security incidents by executing a '
+                    . 'defined incident response program to understand, contain, remediate and '
+                    . 'communicate them.',
+                // Understand, contain, remediate and COMMUNICATE. This was decided by
+                // whether a backup and restore primitive is in service, which is A1.3's
+                // subject and this one's neighbour; the incident reporter that records
+                // what happened and starts the notification clock is the mechanism the
+                // criterion actually names, and CC7.3 beside it already cites it.
+                probe: new IncidentResponseProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.6',
-            framework: 'soc2',
-            title: 'Logical Access: External Threats',
-            description: 'Rate limiting, account lockout, and step-up authentication protect '
-                . 'against brute force, credential stuffing, and privilege escalation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['rate_limiting', 'step_up_auth', 'takeover_guard'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC7.5',
+                framework: ComplianceFramework::Soc2,
+                title: 'Identification of Vulnerabilities',
+                requirement: 'The entity identifies, develops and implements activities to recover '
+                    . 'from identified security incidents.',
+                artefact: 'The vulnerability scan and dependency audit reports for the deployed '
+                    . 'commit, with the remediation record for each finding.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.7',
-            framework: 'soc2',
-            title: 'Transmission Integrity',
-            description: 'HSTS enforcement, TLS requirement for JWKS/OAuth endpoints, and '
-                . 'signed build artifacts ensure data integrity in transit.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['hsts', 'tls_enforcement', 'signed_artifacts'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC9.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Risk Mitigation through Controls',
+                requirement: 'The entity identifies, selects and develops risk mitigation activities '
+                    . 'for risks arising from potential business disruptions.',
+                artefact: 'The business continuity and disruption risk assessment, with the '
+                    . 'mitigation plan it produced.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC6.8',
-            framework: 'soc2',
-            title: 'Preventing Unauthorized Software',
-            description: 'Extension trust tiers with Ed25519 signature verification prevent '
-                . 'unauthorized code execution. Capability policies restrict API access.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['trust_tiers', 'signature_verification', 'capability_policy'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CC9.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Vendor Risk Management',
+                requirement: 'The entity assesses and manages risks associated with vendors and '
+                    . 'business partners.',
+                artefact: 'The vendor risk assessments and the contractual security commitments '
+                    . 'obtained from each vendor and business partner.',
+            ),
 
-        // ── CC7: System Operations ──────────────────────────────────────
+            ControlDeclaration::operatorResponsibility(
+                id: 'A1.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Availability Commitments and Objectives',
+                requirement: 'The entity maintains, monitors and evaluates current processing capacity '
+                    . 'and use of system components to manage capacity demand and to enable the '
+                    . 'implementation of additional capacity.',
+                artefact: 'The availability commitments made to customers and the capacity plan '
+                    . 'supporting them, with the measurement of actual availability against '
+                    . 'them.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC7.1',
-            framework: 'soc2',
-            title: 'Anomaly Detection',
-            description: 'Error tracking with fingerprinting detects anomalous patterns. '
-                . 'Metric threshold alerting identifies operational anomalies.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['error_tracking', 'threshold_alerting', 'anomaly_detection'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'A1.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Environmental Protections',
+                requirement: 'The entity authorizes, designs, develops, implements, operates, '
+                    . 'approves, maintains and monitors environmental protections, software, '
+                    . 'data backup processes and recovery infrastructure to meet its '
+                    . 'objectives.',
+                artefact: 'The environmental protection and redundancy arrangements of the hosting '
+                    . 'facilities, and their most recent test records.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC7.3',
-            framework: 'soc2',
-            title: 'Security Incident Response',
-            description: 'Breach notification service, incident logging, and compliance-aware '
-                . 'audit formatters support structured incident response.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['breach_notification', 'incident_logging', 'audit_logging'],
-        ));
+            ControlDeclaration::probed(
+                id: 'A1.3',
+                framework: ComplianceFramework::Soc2,
+                title: 'Recovery Procedures',
+                requirement: 'The entity tests recovery plan procedures supporting system recovery to '
+                    . 'meet its objectives.',
+                probe: new RecoveryCapabilityProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC7.4',
-            framework: 'soc2',
-            title: 'Recovery from Security Incidents',
-            description: 'Key rotation, session invalidation, and password reset flows '
-                . 'support recovery. Backup/restore capabilities for data recovery.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['key_rotation', 'session_management', 'backup_restore'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'PI1.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Processing Integrity Policies',
+                requirement: 'The entity obtains or generates, uses and communicates relevant, quality '
+                    . 'information regarding the objectives related to processing to support '
+                    . 'the use of products and services.',
+                artefact: 'The documented processing integrity objectives and the specifications '
+                    . 'the processing is measured against.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC7.5',
-            framework: 'soc2',
-            title: 'Identification of Vulnerabilities',
-            description: 'Static analysis integration (PHPStan, Psalm), boundary enforcement, '
-                . 'and dependency auditing identify code vulnerabilities.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['static_analysis', 'boundary_enforcement', 'dependency_audit'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'PI1.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Accuracy and Completeness',
+                requirement: 'The entity implements policies and procedures over system inputs, '
+                    . 'including controls over completeness and accuracy, to result in products '
+                    . 'and services that meet the entity\'s objectives.',
+                artefact: 'The data-quality monitoring reports showing completeness and accuracy of '
+                    . 'processed data, with the exceptions and their resolution.',
+            ),
 
-        // ── CC9: Risk Mitigation ────────────────────────────────────────
+            ControlDeclaration::probed(
+                id: 'C1.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Confidential Information Identification',
+                requirement: 'The entity identifies and maintains confidential information to meet its '
+                    . 'objectives related to confidentiality.',
+                probe: new AssetInventoryProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC9.1',
-            framework: 'soc2',
-            title: 'Risk Mitigation through Controls',
-            description: 'Circuit breaker and resilience patterns prevent cascading failures. '
-                . 'Queue health monitoring with dead letter handling.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['circuit_breaker', 'resilience', 'queue_health'],
-        ));
+            ControlDeclaration::probed(
+                id: 'C1.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Confidential Information Disposal',
+                requirement: 'The entity disposes of confidential information to meet its objectives '
+                    . 'related to confidentiality.',
+                probe: new DataErasureProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CC9.2',
-            framework: 'soc2',
-            title: 'Vendor Risk Management',
-            description: 'Extension trust tiers categorize third-party code risk. Scoped '
-                . 'container proxies isolate vendor code from framework internals.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['trust_tiers', 'scoped_containers', 'vendor_isolation'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'P1.1',
+                framework: ComplianceFramework::Soc2,
+                title: 'Privacy Notice',
+                requirement: 'The entity provides notice to data subjects about its privacy practices '
+                    . 'to meet its objectives related to privacy.',
+                artefact: 'The published privacy notice and the record of the version in force at '
+                    . 'each point in time.',
+            ),
 
-        // ── A1: Availability ────────────────────────────────────────────
-
-        $catalog->register(new Control(
-            id: 'A1.1',
-            framework: 'soc2',
-            title: 'Availability Commitments and Objectives',
-            description: 'Performance budgets, health check endpoints, and boot profiling '
-                . 'support availability measurement and SLA compliance.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['performance_budgets', 'health_checks', 'boot_profiling'],
-        ));
-
-        $catalog->register(new Control(
-            id: 'A1.2',
-            framework: 'soc2',
-            title: 'Environmental Protections',
-            description: 'Database failover manager, connection pooling, and persistent '
-                . 'runtimes support high-availability deployments.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['failover_manager', 'connection_pooling', 'persistent_runtime'],
-        ));
-
-        $catalog->register(new Control(
-            id: 'A1.3',
-            framework: 'soc2',
-            title: 'Recovery Procedures',
-            description: 'Backup service with integrity verification (BLAKE2b hashing) and '
-                . 'restore capabilities. Database migration rollback support.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['backup_service', 'integrity_hashing', 'migration_rollback'],
-        ));
-
-        // ── PI1: Processing Integrity ───────────────────────────────────
-
-        $catalog->register(new Control(
-            id: 'PI1.1',
-            framework: 'soc2',
-            title: 'Processing Integrity Policies',
-            description: 'Input validation, CSRF protection, and content type enforcement '
-                . 'ensure processing integrity for all HTTP operations.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['input_validation', 'csrf_protection', 'content_type_enforcement'],
-        ));
-
-        $catalog->register(new Control(
-            id: 'PI1.2',
-            framework: 'soc2',
-            title: 'Accuracy and Completeness',
-            description: 'Saga orchestrator with step-level tracking ensures multi-step '
-                . 'operations complete fully or compensate correctly.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['saga_orchestrator', 'compensation', 'step_tracking'],
-        ));
-
-        // ── C1: Confidentiality ─────────────────────────────────────────
-
-        $catalog->register(new Control(
-            id: 'C1.1',
-            framework: 'soc2',
-            title: 'Confidential Information Identification',
-            description: 'Sensitive data scrubber for error tracking, redaction pipeline for '
-                . 'logs, and encrypted column guard for ORM fields.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_scrubber', 'redaction_pipeline', 'encrypted_columns'],
-        ));
-
-        $catalog->register(new Control(
-            id: 'C1.2',
-            framework: 'soc2',
-            title: 'Confidential Information Disposal',
-            description: 'Data purge orchestrator with configurable retention policies per '
-                . 'data category. Memory zeroing for cryptographic material.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_purge', 'retention_policies', 'memory_zeroing'],
-        ));
-
-        // ── P1: Privacy ─────────────────────────────────────────────────
-
-        $catalog->register(new Control(
-            id: 'P1.1',
-            framework: 'soc2',
-            title: 'Privacy Notice',
-            description: 'Cookie consent banner with granular opt-in for GDPR compliance. '
-                . 'Consent manager tracks and audits all consent decisions.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['consent_banner', 'consent_manager', 'gdpr_compliance'],
-        ));
-
-        $catalog->register(new Control(
-            id: 'P1.2',
-            framework: 'soc2',
-            title: 'Choice and Consent',
-            description: 'ConsentManagerInterface with per-purpose tracking, policy versioning, '
-                . 'and revocation support. Granular cookie consent categories.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['consent_manager', 'purpose_tracking', 'consent_revocation'],
-        ));
+            ControlDeclaration::probed(
+                id: 'P1.2',
+                framework: ComplianceFramework::Soc2,
+                title: 'Choice and Consent',
+                requirement: 'The entity communicates choices available regarding the collection, use, '
+                    . 'retention, disclosure and disposal of personal information, and obtains '
+                    . 'consent where required.',
+                probe: new ConsentManagementProbe(),
+            ),
+        ];
     }
 }

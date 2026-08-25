@@ -4,88 +4,93 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\ConsentManagementProbe;
+use Pulsar\Compliance\Probe\DataErasureProbe;
+use Pulsar\Compliance\Probe\DataProtectionAtRestProbe;
+use Pulsar\Compliance\Probe\DataRetentionProbe;
+use Pulsar\Compliance\Probe\SubjectRightsProbe;
 
 /**
- * Registers CCPA/CPRA controls into the catalog.
+ * Declares the CCPA/CPRA consumer-rights controls Pulsar can be assessed against.
  *
- * Maps Pulsar framework features to the California Consumer Privacy Act (CCPA)
- * and California Privacy Rights Act (CPRA) requirements they provide coverage for.
+ * The three consumer-rights controls are gated on the operator's assertion about
+ * personal data, so a deployment that genuinely holds none is scoped out on the
+ * record rather than silently.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class CcpaMapping
 {
     /**
-     * Register CCPA/CPRA controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'CCPA-1798.100',
-            framework: 'ccpa',
-            title: 'Right to Know',
-            description: 'Consumers have the right to know what personal information is collected, used, shared, '
-                . 'or sold. Covered by the data classification system, audit logging of data access, '
-                . 'and structured data export capabilities.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_classification', 'audit_logging', 'data_export'],
-        ));
+        return [
+            ControlDeclaration::probed(
+                id: 'CCPA-1798.100',
+                framework: ComplianceFramework::Ccpa,
+                title: 'Right to Know',
+                requirement: 'A consumer has the right to request that a business disclose the '
+                    . 'categories and specific pieces of personal information it has collected '
+                    . 'about them.',
+                probe: new SubjectRightsProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CCPA-1798.105',
-            framework: 'ccpa',
-            title: 'Right to Delete',
-            description: 'Consumers have the right to request deletion of personal information collected from them. '
-                . 'Covered by the data purge orchestrator, session purge, and audit log purge subsystems.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_purge', 'session_purge', 'audit_log_purge'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CCPA-1798.105',
+                framework: ComplianceFramework::Ccpa,
+                title: 'Right to Delete',
+                requirement: 'A consumer has the right to request that a business delete personal '
+                    . 'information the business has collected from them, subject to the '
+                    . 'statutory exceptions.',
+                probe: new DataErasureProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CCPA-1798.120',
-            framework: 'ccpa',
-            title: 'Right to Opt-Out of Sale/Sharing',
-            description: 'Consumers have the right to opt out of the sale or sharing of their personal information. '
-                . 'Covered by the consent management subsystem with explicit opt-out tracking '
-                . 'and consent withdrawal support.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['consent_management', 'consent_withdrawal', 'data_classification'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CCPA-1798.120',
+                framework: ComplianceFramework::Ccpa,
+                title: 'Right to Opt-Out of Sale/Sharing',
+                requirement: 'A consumer has the right, at any time, to direct a business that sells '
+                    . 'or shares personal information about them to third parties not to do so.',
+                probe: new ConsentManagementProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CCPA-1798.140',
-            framework: 'ccpa',
-            title: 'Data Categories and Sensitive PI',
-            description: 'CCPA/CPRA defines categories of personal information and sensitive personal information '
-                . 'requiring enhanced protections. Covered by data classification and encryption '
-                . 'subsystems that distinguish sensitivity levels.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_classification', 'crypto_keyring', 'envelope_encryption'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'CCPA-1798.140',
+                framework: ComplianceFramework::Ccpa,
+                title: 'Data Categories and Sensitive PI',
+                requirement: 'A business shall identify the categories of personal information it '
+                    . 'collects, including the categories treated as sensitive personal '
+                    . 'information.',
+                artefact: 'The documented inventory of the personal-information categories '
+                    . 'collected, the sensitive categories among them, and the business purpose '
+                    . 'for each.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'CCPA-1798.150',
-            framework: 'ccpa',
-            title: 'Data Security (Safe Harbor)',
-            description: 'CCPA provides a safe harbor for encrypted data: breaches of encrypted PI do not trigger '
-                . 'private right of action if the encryption key is not compromised. Covered by the '
-                . 'crypto keyring, envelope encryption, and tokenization subsystems.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['crypto_keyring', 'envelope_encryption', 'tokenization'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CCPA-1798.150',
+                framework: ComplianceFramework::Ccpa,
+                title: 'Data Security (Safe Harbor)',
+                requirement: 'A business shall implement and maintain reasonable security procedures '
+                    . 'and practices appropriate to the nature of the personal information it '
+                    . 'holds.',
+                probe: new DataProtectionAtRestProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'CCPA-1798.185',
-            framework: 'ccpa',
-            title: 'CPRA Data Minimization',
-            description: 'CPRA requires that collection, use, retention, and sharing of personal information '
-                . 'be limited to what is reasonably necessary for the disclosed purpose. Covered by '
-                . 'data retention policies and the purge orchestrator.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['data_retention', 'data_purge', 'consent_management'],
-        ));
+            ControlDeclaration::probed(
+                id: 'CCPA-1798.185',
+                framework: ComplianceFramework::Ccpa,
+                title: 'CPRA Data Minimization',
+                requirement: 'A business shall not retain personal information for longer than is '
+                    . 'reasonably necessary for the disclosed purpose for which it was '
+                    . 'collected.',
+                probe: new DataRetentionProbe(),
+            ),
+        ];
     }
 }

@@ -24,10 +24,13 @@ use Pulsar\Compliance\Verification\RegressionDetector;
 use Pulsar\Compliance\Verification\RegressionInput;
 use Pulsar\Compliance\Verification\RuntimeVerifier;
 use Pulsar\Compliance\Verification\VerificationConfig;
+use Pulsar\Security\Crypto\AesGcmCipherSuite;
+use Pulsar\Security\Crypto\MasterKey;
 use RuntimeException;
 use Stringable;
 
 use function count;
+use function str_repeat;
 
 #[CoversClass(ComplianceVerificationEngine::class)]
 final class ComplianceVerificationEngineTest extends TestCase
@@ -43,7 +46,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: new CustomControlRegistry(),
             config: new VerificationConfig(),
@@ -64,7 +67,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: new CustomControlRegistry(),
             config: new VerificationConfig(),
@@ -92,7 +95,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: new CustomControlRegistry(),
             config: new VerificationConfig(strictMode: false),
@@ -120,7 +123,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: new CustomControlRegistry(),
             config: new VerificationConfig(strictMode: true),
@@ -210,7 +213,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: $registry,
             config: new VerificationConfig(),
@@ -246,7 +249,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: new CustomControlRegistry(),
             config: new VerificationConfig(),
@@ -307,7 +310,7 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         $engine = new ComplianceVerificationEngine(
             profile: $profile,
-            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            runtimeVerifier: new RuntimeVerifier($profile, true, $this->masterKey(), true, true, new AesGcmCipherSuite()),
             conflictDetector: new ConflictDetector(),
             customControlRegistry: new CustomControlRegistry(),
             config: new VerificationConfig(),
@@ -320,6 +323,15 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         self::assertGreaterThan(0, $report->totalCount());
         self::assertNotEmpty($logger->errors);
+    }
+
+    /**
+     * A real key, because {@see RuntimeVerifier} derives from it rather than
+     * being told that derivation works.
+     */
+    private function masterKey(): MasterKey
+    {
+        return MasterKey::fromHex(str_repeat('a1', 32));
     }
 
     private function createProfile(): ComplianceProfile

@@ -296,4 +296,18 @@ final class FrameworkRequirements
     {
         return new DataActRequirements();
     }
+
+    /**
+     * EU AI Act (Regulation (EU) 2024/1689) requirements.
+     *
+     * Imposes no security-configuration floor, on purpose. Every AI Act article
+     * that would justify one belongs to Chapter III, whose application the
+     * digital omnibus deferred to 2 December 2027 and 2 August 2028. What binds
+     * today — Articles 4 and 5, Chapter V, Article 50 — is conduct rather than
+     * configuration, and is declared in AiActMapping. See AiActRequirements.
+     */
+    public static function aiAct(): AiActRequirements
+    {
+        return new AiActRequirements();
+    }
 }

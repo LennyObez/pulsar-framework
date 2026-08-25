@@ -4,80 +4,81 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Frameworks;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Compliance\Control;
-use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Probe\BreachNotificationProbe;
+use Pulsar\Compliance\Probe\CryptographicControlProbe;
+use Pulsar\Compliance\Probe\DataProtectionAtRestProbe;
+use Pulsar\Compliance\Probe\PseudonymizationProbe;
 
 /**
- * Registers GDPR controls into the catalog.
- *
- * Maps Pulsar framework features to GDPR articles they provide coverage for.
+ * Declares the GDPR controls Pulsar can be assessed against.
  */
-#[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
+#[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class GdprMapping
 {
     /**
-     * Register GDPR controls into the given catalog.
+     * @return list<ControlDeclaration>
      */
-    public static function register(ControlCatalog $catalog): void
+    #[NoDiscard]
+    public static function declarations(): array
     {
-        $catalog->register(new Control(
-            id: 'Art5(1)(f)',
-            framework: 'gdpr',
-            title: 'Integrity and Confidentiality',
-            description: 'Personal data shall be processed in a manner that ensures appropriate security, '
-                . 'including protection against unauthorized or unlawful processing and against accidental '
-                . 'loss, destruction, or damage, using appropriate technical or organizational measures. '
-                . 'Covered by encryption subsystems and access control.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['crypto_keyring', 'authorization', 'access_control'],
-        ));
+        return [
+            ControlDeclaration::probed(
+                id: 'Art5(1)(f)',
+                framework: ComplianceFramework::Gdpr,
+                title: 'Integrity and Confidentiality',
+                requirement: 'Personal data shall be processed in a manner that ensures appropriate '
+                    . 'security, including protection against unauthorised or unlawful '
+                    . 'processing and against accidental loss, destruction or damage.',
+                probe: new DataProtectionAtRestProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art25',
-            framework: 'gdpr',
-            title: 'Data Protection by Design and by Default',
-            description: 'The controller shall implement appropriate technical and organizational measures '
-                . 'for ensuring that, by default, only personal data which are necessary for each specific '
-                . 'purpose of the processing are processed. Covered by pseudonymization services and '
-                . 'data classification.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['pseudonymization', 'data_classification', 'data_minimization'],
-        ));
+            ControlDeclaration::probed(
+                id: 'Art25',
+                framework: ComplianceFramework::Gdpr,
+                title: 'Data Protection by Design and by Default',
+                requirement: 'The controller shall implement appropriate technical and organisational '
+                    . 'measures, such as pseudonymisation, designed to implement '
+                    . 'data-protection principles and to integrate the necessary safeguards '
+                    . 'into the processing.',
+                probe: new PseudonymizationProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art30',
-            framework: 'gdpr',
-            title: 'Records of Processing Activities',
-            description: 'Each controller shall maintain a record of processing activities under its '
-                . 'responsibility. Covered by comprehensive audit logging with structured compliance '
-                . 'events for each data processing operation.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['audit_logging', 'compliance_events', 'hmac_chain'],
-        ));
+            ControlDeclaration::operatorResponsibility(
+                id: 'Art30',
+                framework: ComplianceFramework::Gdpr,
+                title: 'Records of Processing Activities',
+                requirement: 'Each controller shall maintain a record of processing activities under '
+                    . 'its responsibility, in writing and available to the supervisory '
+                    . 'authority on request.',
+                artefact: 'The written record of processing activities, naming the purposes, the '
+                    . 'categories of data subjects and personal data, the recipients, and the '
+                    . 'retention periods.',
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art32',
-            framework: 'gdpr',
-            title: 'Security of Processing',
-            description: 'The controller and the processor shall implement appropriate technical and '
-                . 'organizational measures to ensure a level of security appropriate to the risk, '
-                . 'including encryption of personal data, ongoing confidentiality, and regular testing. '
-                . 'Covered by cryptographic subsystems, access control, and system monitoring.',
-            status: ControlStatus::Implemented,
-            frameworkFeatures: ['crypto_keyring', 'access_control', 'observability', 'integrity_verification'],
-        ));
+            ControlDeclaration::probed(
+                id: 'Art32',
+                framework: ComplianceFramework::Gdpr,
+                title: 'Security of Processing',
+                requirement: 'The controller and processor shall implement measures appropriate to the '
+                    . 'risk, including the pseudonymisation and encryption of personal data and '
+                    . 'the ability to ensure the ongoing confidentiality, integrity, '
+                    . 'availability and resilience of processing systems.',
+                probe: new CryptographicControlProbe(),
+            ),
 
-        $catalog->register(new Control(
-            id: 'Art33',
-            framework: 'gdpr',
-            title: 'Notification of a Personal Data Breach',
-            description: 'In the case of a personal data breach, the controller shall without undue delay '
-                . 'notify the personal data breach to the supervisory authority. Covered by compliance '
-                . 'event infrastructure for breach detection and notification workflows.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['compliance_events', 'breach_detection', 'audit_logging'],
-        ));
+            ControlDeclaration::probed(
+                id: 'Art33',
+                framework: ComplianceFramework::Gdpr,
+                title: 'Notification of a Personal Data Breach',
+                requirement: 'The controller shall notify a personal data breach to the supervisory '
+                    . 'authority without undue delay and, where feasible, not later than 72 '
+                    . 'hours after having become aware of it.',
+                probe: new BreachNotificationProbe(),
+            ),
+        ];
     }
 }

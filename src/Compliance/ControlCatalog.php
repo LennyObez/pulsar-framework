@@ -6,93 +6,247 @@ namespace Pulsar\Compliance;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Compliance\Control\ControlDeclaration;
+use Throwable;
 
+use function array_values;
 use function count;
+use function in_array;
+use function sprintf;
 
 /**
- * Mutable registry of regulatory controls.
+ * The registry of declared controls.
  *
- * Controls are registered at boot time by framework mapping classes.
- * Once populated, the catalog provides filtered views by framework, status,
- * and individual lookup by control ID.
+ * It holds {@see ControlDeclaration}s and offers no view by outcome — no
+ * `byStatus()`, no coverage arithmetic — because a catalog cannot know an
+ * outcome. An outcome exists only once a probe has run against a gathered
+ * evidence set, which is {@see \Pulsar\Compliance\Control\ControlAssessment}'s
+ * job. Separating the two is what makes a control status impossible to write as
+ * a literal: the catalog holds mappings that have no status to write, and the
+ * statuses are computed later, from the deployment.
+ *
+ * Entries are keyed by framework AND identifier. Control identifiers are only
+ * unique within a standard ("A.5.1" belongs to ISO 27001 and "6.1.2" to ISO
+ * 42001, and SOC 2 and SWIFT CSP both number theirs from 1), so a single flat
+ * index would let one standard's control silently displace another's.
+ *
+ * DECLARATIONS ARE BUILT ON FIRST READ, NOT AT BOOT
+ * -------------------------------------------------
+ * Nothing on the request path reads this catalog. It is read by
+ * `compliance:report` and by the `compliance:check` gate, and by nothing else —
+ * a control declaration is an input to an assessment, and an assessment only
+ * happens when someone asks for one. Building it at boot therefore charged every
+ * request of every application for a data structure that request would never
+ * look at: sixteen mapping classes autoloaded and 193 declarations plus their
+ * probes constructed, measured at 0.52 ms warm and 21.7 ms cold per boot — the
+ * eighth most expensive of the framework's 51 wirings. The measurement and its
+ * conditions are recorded in {@see \Pulsar\Core\Wiring\ComplianceCatalogWiring}.
+ *
+ * {@see contribute()} therefore takes a SOURCE — a callable that produces
+ * declarations — and the sources are executed at the first read. The mapping
+ * classes are not even autoloaded until then.
+ *
+ * The laziness is memoized, not repeated: each source runs exactly once, so two
+ * reads cannot disagree, and a report never observes a half-built catalog.
  * @api
  */
-#[Api(since: '1.0.0')]
+#[Api(since: '1.0.0-rc.12')]
 final class ControlCatalog
 {
-    /** @var array<string, Control> */
-    private array $controls = [];
+    /** @var array<string, ControlDeclaration> */
+    private array $declarations = [];
 
     /**
-     * Register a control in the catalog.
+     * Sources not yet executed. Emptied by the first read.
      *
-     * If a control with the same ID already exists, it is silently replaced.
+     * @var list<callable(): list<ControlDeclaration>>
      */
-    public function register(Control $control): void
+    private array $sources = [];
+
+    /** Whether any read has happened, and with it the deferred sources. */
+    private bool $built = false;
+
+    /**
+     * The failure that ended the build, if it ended in one.
+     *
+     * Re-thrown on every later read. A build that threw half-way leaves some
+     * sources' declarations registered and the rest absent, and a catalog missing
+     * a control looks exactly like a catalog whose controls are all present — so
+     * a partially built catalog must never be readable, not even once.
+     */
+    private ?Throwable $buildFailure = null;
+
+    /**
+     * Register a deferred source of declarations.
+     *
+     * The callable is NOT invoked here. It is invoked once, at the catalog's
+     * first read, which is what keeps the declaring mapping classes off the boot
+     * path entirely.
+     *
+     * Contributing after the catalog has been read is refused
+     * ({@see CatalogAlreadyBuiltException}) rather than accepted late: a source
+     * that arrives after an assessment has run declares controls that assessment
+     * silently omitted, and an artefact missing a control looks exactly like an
+     * artefact whose controls are all present.
+     *
+     * {@see register()} carries no such hazard and is deliberately not guarded
+     * the same way: it takes declarations rather than a promise of them, so a
+     * late call is visible in {@see count()} the instant it happens.
+     *
+     * @param callable(): list<ControlDeclaration> $source
+     *
+     * @throws CatalogAlreadyBuiltException when the catalog has already been read
+     */
+    public function contribute(callable $source): void
     {
-        $this->controls[$control->id] = $control;
+        if ($this->built) {
+            throw CatalogAlreadyBuiltException::forLateContribution();
+        }
+
+        $this->sources[] = $source;
     }
 
     /**
-     * Retrieve a control by its unique identifier.
+     * Register declarations.
      *
-     * @return Control|null The control, or null if not found
+     * Re-declaring the same control of the same framework is refused rather than
+     * silently replacing it: two mappings disagreeing about one control is a bug
+     * whose only symptom, under replacement, is that whichever ran last wins.
+     *
+     * @throws DuplicateControlException when a control is declared twice
+     */
+    public function register(ControlDeclaration ...$declarations): void
+    {
+        foreach ($declarations as $declaration) {
+            $key = self::key($declaration->framework, $declaration->id);
+
+            if (isset($this->declarations[$key])) {
+                throw DuplicateControlException::forControl($declaration->framework, $declaration->id);
+            }
+
+            $this->declarations[$key] = $declaration;
+        }
+    }
+
+    /**
+     * Retrieve one control of one framework.
      */
     #[NoDiscard]
-    public function get(string $id): ?Control
+    public function get(ComplianceFramework $framework, string $id): ?ControlDeclaration
     {
-        return $this->controls[$id] ?? null;
+        $this->build();
+
+        return $this->declarations[self::key($framework, $id)] ?? null;
+    }
+
+    #[NoDiscard]
+    public function has(ComplianceFramework $framework, string $id): bool
+    {
+        $this->build();
+
+        return isset($this->declarations[self::key($framework, $id)]);
     }
 
     /**
-     * Return all registered controls keyed by ID.
+     * Every registered declaration, in registration order.
      *
-     * @return array<string, Control>
+     * @return list<ControlDeclaration>
      */
     #[NoDiscard]
     public function all(): array
     {
-        return $this->controls;
+        $this->build();
+
+        return array_values($this->declarations);
     }
 
     /**
-     * Return controls belonging to a specific compliance framework.
-     *
-     * @return list<Control>
+     * @return list<ControlDeclaration>
      */
     #[NoDiscard]
-    public function byFramework(string $framework): array
+    public function byFramework(ComplianceFramework $framework): array
     {
-        return array_values(
-            array_filter(
-                $this->controls,
-                static fn(Control $control): bool => $control->framework === $framework,
-            ),
-        );
+        $this->build();
+
+        $matching = [];
+
+        foreach ($this->declarations as $declaration) {
+            if ($declaration->framework === $framework) {
+                $matching[] = $declaration;
+            }
+        }
+
+        return $matching;
     }
 
     /**
-     * Return controls matching a specific implementation status.
+     * The frameworks that have at least one declared control, in registration order.
      *
-     * @return list<Control>
+     * @return list<ComplianceFramework>
      */
     #[NoDiscard]
-    public function byStatus(ControlStatus $status): array
+    public function frameworks(): array
     {
-        return array_values(
-            array_filter(
-                $this->controls,
-                static fn(Control $control): bool => $control->status === $status,
-            ),
-        );
+        $this->build();
+
+        $frameworks = [];
+
+        foreach ($this->declarations as $declaration) {
+            if (!in_array($declaration->framework, $frameworks, true)) {
+                $frameworks[] = $declaration->framework;
+            }
+        }
+
+        return $frameworks;
     }
 
-    /**
-     * Return the total number of registered controls.
-     */
     #[NoDiscard]
     public function count(): int
     {
-        return count($this->controls);
+        $this->build();
+
+        return count($this->declarations);
+    }
+
+    /**
+     * Execute the deferred sources, once.
+     *
+     * Sources are taken off the pending list BEFORE they run, so a source that
+     * throws is never retried with half its declarations already registered — the
+     * retry would rediscover them as duplicates and report the wrong defect. The
+     * failure itself is remembered and re-thrown on every later read, because the
+     * catalog is now missing controls and a caller that swallowed the first
+     * exception would be handed a clean-looking partial one.
+     *
+     * @throws DuplicateControlException when two sources declare the same control
+     */
+    private function build(): void
+    {
+        if ($this->buildFailure !== null) {
+            throw $this->buildFailure;
+        }
+
+        if ($this->built) {
+            return;
+        }
+
+        $this->built = true;
+        $sources = $this->sources;
+        $this->sources = [];
+
+        try {
+            foreach ($sources as $source) {
+                $this->register(...$source());
+            }
+        } catch (Throwable $failure) {
+            $this->buildFailure = $failure;
+
+            throw $failure;
+        }
+    }
+
+    private static function key(ComplianceFramework $framework, string $id): string
+    {
+        return sprintf('%s/%s', $framework->value, $id);
     }
 }

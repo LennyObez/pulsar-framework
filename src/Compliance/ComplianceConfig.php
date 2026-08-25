@@ -6,6 +6,7 @@ namespace Pulsar\Compliance;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Compliance\Evidence\ComplianceScope;
 use Pulsar\Config\ReportsUnknownKeys;
 use Pulsar\Config\UnknownKeys;
 
@@ -31,7 +32,7 @@ use function is_string;
 final readonly class ComplianceConfig implements ReportsUnknownKeys
 {
     /** Top-level keys read from config/compliance.php. */
-    private const array KNOWN_KEYS = ['enabled_frameworks', 'verification'];
+    private const array KNOWN_KEYS = ['enabled_frameworks', 'verification', 'scope'];
 
     /** Keys read from the nested `verification` section. */
     private const array VERIFICATION_KEYS = ['enabled', 'boot_check', 'evidence_interval', 'strict_mode'];
@@ -42,6 +43,10 @@ final readonly class ComplianceConfig implements ReportsUnknownKeys
      * @param bool $bootCheck Whether controls are verified once at boot
      * @param int $evidenceInterval Seconds between evidence-collection passes
      * @param bool $strictMode Fail-closed at boot on any non-compliant setting (else tighten + warn)
+     * @param ComplianceScope $scope What the operator asserts about the data this deployment
+     *        handles. The ONLY thing a compliance report will accept as grounds for calling a
+     *        control not applicable, and reproduced in the report with its config key so the
+     *        claim carries the operator's name rather than the framework's silence.
      * @param list<string> $unknownKeys Keys present in the file that this DTO does not read (typos)
      */
     public function __construct(
@@ -50,6 +55,7 @@ final readonly class ComplianceConfig implements ReportsUnknownKeys
         public bool $bootCheck = true,
         public int $evidenceInterval = 3600,
         public bool $strictMode = false,
+        public ComplianceScope $scope = new ComplianceScope(),
         public array $unknownKeys = [],
     ) {}
 
@@ -91,6 +97,7 @@ final readonly class ComplianceConfig implements ReportsUnknownKeys
             bootCheck: is_bool($bootCheck) ? $bootCheck : true,
             evidenceInterval: is_int($evidenceInterval) ? $evidenceInterval : 3600,
             strictMode: is_bool($strictMode) ? $strictMode : false,
+            scope: ComplianceScope::fromArray($data['scope'] ?? null),
             unknownKeys: $unknown,
         );
     }

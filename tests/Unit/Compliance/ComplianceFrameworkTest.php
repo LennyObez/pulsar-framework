@@ -14,9 +14,9 @@ use Pulsar\Compliance\ComplianceFramework;
 final class ComplianceFrameworkTest extends TestCase
 {
     #[Test]
-    public function hasEighteenCases(): void
+    public function hasNineteenCases(): void
     {
-        self::assertCount(18, ComplianceFramework::cases());
+        self::assertCount(19, ComplianceFramework::cases());
     }
 
     #[Test]
@@ -49,6 +49,7 @@ final class ComplianceFrameworkTest extends TestCase
         yield 'NistCsf' => [ComplianceFramework::NistCsf, 'nist_csf'];
         yield 'Dsa' => [ComplianceFramework::Dsa, 'dsa'];
         yield 'DataAct' => [ComplianceFramework::DataAct, 'data_act'];
+        yield 'AiAct' => [ComplianceFramework::AiAct, 'ai_act'];
     }
 
     #[Test]

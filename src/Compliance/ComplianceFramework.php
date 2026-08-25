@@ -31,4 +31,5 @@ enum ComplianceFramework: string
     case NistCsf = 'nist_csf';
     case Dsa = 'dsa';
     case DataAct = 'data_act';
+    case AiAct = 'ai_act';
 }

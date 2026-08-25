@@ -608,12 +608,22 @@ final class ComplianceProfileResolverTest extends TestCase
     }
 
     #[Test]
-    public function allSixteenFrameworksCombined(): void
+    public function allNineteenFrameworksCombined(): void
     {
         $all = ComplianceFramework::cases();
         $profile = $this->resolver->resolve($all);
 
-        self::assertCount(18, $profile->enabledFrameworks);
+        self::assertCount(19, $profile->enabledFrameworks);
+
+        // Every figure below is unchanged from when this was eighteen frameworks,
+        // and that is the assertion about AiAct rather than an oversight. Its
+        // requirements object implements none of the Has* interfaces, because
+        // every AI Act article that would justify a retention or cipher floor sits
+        // in Chapter III, deferred to 2027 and 2028. The resolver takes the most
+        // restrictive value across enabled frameworks, so a requirements object
+        // that asserted one would move a number here on the authority of an
+        // article binding nobody. None moved.
+
         self::assertSame(12, $profile->passwordMinLength);
         self::assertSame(300, $profile->sessionIdleTimeout);
         self::assertSame(4, $profile->breachNotificationHours);

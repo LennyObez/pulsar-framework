@@ -14,9 +14,9 @@ use Pulsar\Compliance\Evidence\EvidenceType;
 final class EvidenceTypeTest extends TestCase
 {
     #[Test]
-    public function hasNineCases(): void
+    public function hasTenCases(): void
     {
-        self::assertCount(9, EvidenceType::cases());
+        self::assertCount(10, EvidenceType::cases());
     }
 
     #[Test]
@@ -31,6 +31,7 @@ final class EvidenceTypeTest extends TestCase
      */
     public static function evidenceTypeProvider(): iterable
     {
+        yield 'VerificationRun' => [EvidenceType::VerificationRun, 'verification_evidence'];
         yield 'Configuration' => [EvidenceType::Configuration, 'configuration'];
         yield 'AuditLog' => [EvidenceType::AuditLog, 'audit_log'];
         yield 'TestResult' => [EvidenceType::TestResult, 'test_result'];
@@ -47,5 +48,13 @@ final class EvidenceTypeTest extends TestCase
     {
         self::assertSame(EvidenceType::AuditLog, EvidenceType::from('audit_log'));
         self::assertSame(EvidenceType::Sbom, EvidenceType::from('sbom'));
+    }
+
+    #[Test]
+    public function theVerificationRunValueIsTheOneAlreadyInStoredRecords(): void
+    {
+        // Records written before this case existed carry the literal string, and
+        // an evidence chain is not worth rewriting for a case name.
+        self::assertSame('verification_evidence', EvidenceType::VerificationRun->value);
     }
 }
