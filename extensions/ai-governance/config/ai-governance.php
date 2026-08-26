@@ -55,6 +55,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Risk-tier gates have no key here, deliberately
+    |--------------------------------------------------------------------------
+    |
+    | Two deployment gates are always active and cannot be switched off from
+    | this file. A model classified 'unacceptable' is refused production because
+    | EU AI Act Article 5 prohibits the practice, and a model classified 'high'
+    | must carry an impact assessment, a model card and at least one registered
+    | monitoring hook because Articles 9, 11 and 72(3) require them before such
+    | a system is placed on the market. Neither is an operator preference, so
+    | neither gets a toggle. The require_* settings above are a different thing:
+    | they are what an operator chooses to demand of EVERY model, whatever its
+    | tier, and switching them off does not reach the two gates below them.
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
     | Store Implementations
     |--------------------------------------------------------------------------
     |

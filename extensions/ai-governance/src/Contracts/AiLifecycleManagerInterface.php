@@ -8,7 +8,6 @@ use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extension\AiGovernance\Dto\AiModel;
-use RuntimeException;
 
 /**
  * Manages AI model lifecycle, deployment gates, and monitoring.
@@ -42,7 +41,13 @@ interface AiLifecycleManagerInterface
     /**
      * Deploy a model to production if all gates pass.
      *
-     * @throws RuntimeException If any deployment gate fails
+     * The gates an installation gets include two that read the model's risk
+     * tier and are not configurable: an EU AI Act Article 5 prohibited practice
+     * is refused outright, and an Article 6 high-risk system is refused until it
+     * carries an impact assessment, a model card and a registered monitoring
+     * hook.
+     *
+     * @throws InvalidArgumentException If the model is not found or any deployment gate fails
      */
     public function deploy(string $modelId): AiModel;
 

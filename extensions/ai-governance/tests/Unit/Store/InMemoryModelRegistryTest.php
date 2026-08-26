@@ -14,6 +14,9 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelRiskLevel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryModelRegistry;
 
+use function restore_error_handler;
+use function set_error_handler;
+
 #[CoversClass(InMemoryModelRegistry::class)]
 final class InMemoryModelRegistryTest extends TestCase
 {
@@ -114,7 +117,9 @@ final class InMemoryModelRegistryTest extends TestCase
     public function updateRiskLevelThrowsOnUnknownModel(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->registry->updateRiskLevel('missing', AiModelRiskLevel::High);
+        // Cast rather than assign: the return is deliberately unused here, and
+        // updateRiskLevel() is #[NoDiscard] because it can withdraw a live model.
+        (void) $this->registry->updateRiskLevel('missing', AiModelRiskLevel::High);
     }
 
     #[Test]
@@ -179,6 +184,148 @@ final class InMemoryModelRegistryTest extends TestCase
         $this->registry->transitionStatus('m1', AiModelStatus::Retired);
 
         self::assertSame(AiModelStatus::Retired, $this->registry->get('m1')?->status);
+    }
+
+    #[Test]
+    public function refusesToRegisterAProhibitedPracticeAlreadyInProduction(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Article 5');
+
+        $this->registry->register($this->createModel(
+            'm1',
+            status: AiModelStatus::Production,
+            riskLevel: AiModelRiskLevel::Unacceptable,
+        ));
+    }
+
+    /**
+     * The refusal above is specific to Article 5 and must not generalise. An
+     * inventory that would not record a running high-risk system could not
+     * govern it, and the Act treats an unmet condition as a gap
+     * rather than as a system that may not exist.
+     */
+    #[Test]
+    public function recordsAHighRiskSystemThatIsAlreadyLiveWithItsObligationsUnmet(): void
+    {
+        $this->registry->register($this->createModel(
+            'm1',
+            status: AiModelStatus::Production,
+            riskLevel: AiModelRiskLevel::High,
+        ));
+
+        self::assertSame(AiModelStatus::Production, $this->registry->get('m1')?->status);
+        self::assertSame(AiModelRiskLevel::High, $this->registry->get('m1')?->riskLevel);
+    }
+
+    #[Test]
+    public function refusesToTransitionAProhibitedPracticeIntoProduction(): void
+    {
+        $this->registry->register($this->createModel(
+            'm1',
+            status: AiModelStatus::Staging,
+            riskLevel: AiModelRiskLevel::Unacceptable,
+        ));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Article 5');
+
+        $this->registry->transitionStatus('m1', AiModelStatus::Production);
+    }
+
+    #[Test]
+    public function refusesToRestoreAProhibitedPracticeFromDeprecated(): void
+    {
+        $this->registry->register($this->createModel(
+            'm1',
+            status: AiModelStatus::Deprecated,
+            riskLevel: AiModelRiskLevel::Unacceptable,
+        ));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Article 5');
+
+        $this->registry->transitionStatus('m1', AiModelStatus::Production);
+    }
+
+    #[Test]
+    public function stillAllowsAPermittedModelIntoProduction(): void
+    {
+        $this->registry->register($this->createModel(
+            'm1',
+            status: AiModelStatus::Staging,
+            riskLevel: AiModelRiskLevel::High,
+        ));
+
+        $updated = $this->registry->transitionStatus('m1', AiModelStatus::Production);
+
+        self::assertSame(AiModelStatus::Production, $updated->status);
+    }
+
+    #[Test]
+    public function reclassifyingALiveModelAsProhibitedWithdrawsItFromProduction(): void
+    {
+        $this->registry->register($this->createModel('m1', status: AiModelStatus::Staging));
+        $this->registry->transitionStatus('m1', AiModelStatus::Production);
+
+        $updated = $this->registry->updateRiskLevel('m1', AiModelRiskLevel::Unacceptable);
+
+        self::assertSame(AiModelRiskLevel::Unacceptable, $updated->riskLevel);
+        self::assertSame(AiModelStatus::Deprecated, $updated->status);
+        self::assertSame(AiModelStatus::Deprecated, $this->registry->get('m1')?->status);
+        self::assertSame(AiModelStatus::Production, $this->registry->getPreviousStatus('m1'));
+    }
+
+    /**
+     * The withdrawal is reported only through the return value, so dropping it
+     * has to be diagnosed rather than silently allowed. PHP does not inherit
+     * `#[NoDiscard]` from the interface, which is why the attribute sits on the
+     * implementation and why this asserts the diagnostic instead of the
+     * attribute.
+     */
+    #[Test]
+    public function discardingTheReclassificationResultIsDiagnosed(): void
+    {
+        $this->registry->register($this->createModel('m1', status: AiModelStatus::Staging));
+        $this->registry->transitionStatus('m1', AiModelStatus::Production);
+
+        $diagnostics = [];
+        set_error_handler(static function (int $severity, string $message) use (&$diagnostics): bool {
+            $diagnostics[] = $message;
+
+            return true;
+        });
+
+        try {
+            $this->registry->updateRiskLevel('m1', AiModelRiskLevel::Unacceptable);
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertCount(1, $diagnostics);
+        self::assertStringContainsString('updateRiskLevel', $diagnostics[0]);
+    }
+
+    #[Test]
+    public function reclassifyingAModelThatIsNotLiveLeavesItsStatusAlone(): void
+    {
+        $this->registry->register($this->createModel('m1', status: AiModelStatus::Staging));
+
+        $updated = $this->registry->updateRiskLevel('m1', AiModelRiskLevel::Unacceptable);
+
+        self::assertSame(AiModelRiskLevel::Unacceptable, $updated->riskLevel);
+        self::assertSame(AiModelStatus::Staging, $updated->status);
+    }
+
+    #[Test]
+    public function reclassifyingALiveModelAsPermittedLeavesItInProduction(): void
+    {
+        $this->registry->register($this->createModel('m1', status: AiModelStatus::Staging));
+        $this->registry->transitionStatus('m1', AiModelStatus::Production);
+
+        $updated = $this->registry->updateRiskLevel('m1', AiModelRiskLevel::High);
+
+        self::assertSame(AiModelStatus::Production, $updated->status);
     }
 
     private function createModel(

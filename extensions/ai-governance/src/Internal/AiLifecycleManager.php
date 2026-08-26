@@ -20,6 +20,11 @@ use function sprintf;
 
 /**
  * Manages AI model lifecycle with deployment gates and monitoring hooks.
+ *
+ * The hook collection is held by {@see MonitoringHookRegistry} rather than by
+ * this class, because the high-risk deployment gate has to see it too: EU AI
+ * Act Article 72 makes post-market monitoring a precondition of deployment, not
+ * something that starts existing afterwards.
  */
 #[Internal(reason: 'Internal implementation; use AiLifecycleManagerInterface for public access')]
 final class AiLifecycleManager implements AiLifecycleManagerInterface
@@ -27,12 +32,10 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
     /** @var list<DeploymentGateInterface> */
     private array $gates = [];
 
-    /** @var list<MonitoringHookInterface> */
-    private array $hooks = [];
-
     public function __construct(
         private readonly AiModelRegistryInterface $registry,
         private readonly AiAuditLoggerInterface $auditLogger,
+        private readonly MonitoringHookRegistry $monitoringHooks,
     ) {}
 
     #[Override]
@@ -44,7 +47,7 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
     #[Override]
     public function addMonitoringHook(MonitoringHookInterface $hook): void
     {
-        $this->hooks[] = $hook;
+        $this->monitoringHooks->add($hook);
     }
 
     #[Override]
@@ -117,7 +120,7 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
 
         $results = [];
 
-        foreach ($this->hooks as $hook) {
+        foreach ($this->monitoringHooks->all() as $hook) {
             $results[] = $hook->check($model, $context);
         }
 

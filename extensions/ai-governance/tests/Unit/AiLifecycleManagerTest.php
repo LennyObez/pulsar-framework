@@ -14,9 +14,11 @@ use Pulsar\Extension\AiGovernance\Contracts\DeploymentGateInterface;
 use Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface;
 use Pulsar\Extension\AiGovernance\Contracts\MonitoringResult;
 use Pulsar\Extension\AiGovernance\Dto\AiModel;
+use Pulsar\Extension\AiGovernance\Enum\AiAuditEvent;
 use Pulsar\Extension\AiGovernance\Enum\AiModelRiskLevel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Internal\AiLifecycleManager;
+use Pulsar\Extension\AiGovernance\Internal\MonitoringHookRegistry;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryModelRegistry;
 
 #[CoversClass(AiLifecycleManager::class)]
@@ -24,13 +26,15 @@ final class AiLifecycleManagerTest extends TestCase
 {
     private InMemoryModelRegistry $registry;
     private AiAuditLoggerInterface&Stub $auditLogger;
+    private MonitoringHookRegistry $monitoringHooks;
     private AiLifecycleManager $manager;
 
     protected function setUp(): void
     {
         $this->registry = new InMemoryModelRegistry();
         $this->auditLogger = $this->createStub(AiAuditLoggerInterface::class);
-        $this->manager = new AiLifecycleManager($this->registry, $this->auditLogger);
+        $this->monitoringHooks = new MonitoringHookRegistry();
+        $this->manager = new AiLifecycleManager($this->registry, $this->auditLogger, $this->monitoringHooks);
     }
 
     public function testDeployWithNoGatesSucceeds(): void
@@ -96,6 +100,57 @@ final class AiLifecycleManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIsOrContains('gate-a: Failure A; gate-b: Failure B');
         $this->manager->deploy('m1');
+    }
+
+    public function testDeployAuditsEachGateFailureBeforeRefusing(): void
+    {
+        $model = $this->createModel('m1', AiModelStatus::Staging);
+        $this->registry->register($model);
+
+        $gate = $this->createStub(DeploymentGateInterface::class);
+        $gate->method('name')->willReturn('prohibited_practice');
+        $gate->method('evaluate')->willReturn(false);
+        $gate->method('failureReason')->willReturn('EU AI Act Article 5 prohibits this practice.');
+
+        $auditLogger = $this->createMock(AiAuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('logAiEvent')
+            ->with(
+                AiAuditEvent::DeploymentGateFailed,
+                'm1',
+                'ai.deployment_gate_failed',
+                'prohibited_practice',
+                ['reason' => 'EU AI Act Article 5 prohibits this practice.'],
+            );
+
+        $manager = new AiLifecycleManager($this->registry, $auditLogger, new MonitoringHookRegistry());
+        $manager->addDeploymentGate($gate);
+
+        $this->expectException(InvalidArgumentException::class);
+        $manager->deploy('m1');
+    }
+
+    public function testMonitoringHooksRegisteredOutOfBandAreRun(): void
+    {
+        $model = $this->createModel('m1');
+        $this->registry->register($model);
+
+        $hook = $this->createStub(MonitoringHookInterface::class);
+        $hook->method('name')->willReturn('bias-check');
+        $hook->method('check')->willReturn(new MonitoringResult(
+            healthy: true,
+            hookName: 'bias-check',
+            message: 'No bias detected',
+        ));
+
+        // Registered on the shared collection rather than through the manager,
+        // which is how the high-risk gate and the manager see the same hooks.
+        $this->monitoringHooks->add($hook);
+
+        $results = $this->manager->monitor('m1');
+
+        self::assertCount(1, $results);
+        self::assertSame('bias-check', $results[0]->hookName);
     }
 
     public function testDeployThrowsForUnknownModel(): void

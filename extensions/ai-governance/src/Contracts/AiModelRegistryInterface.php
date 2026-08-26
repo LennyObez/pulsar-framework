@@ -24,6 +24,25 @@ interface AiModelRegistryInterface
 {
     /**
      * Register a new AI model in the governance registry.
+     *
+     * Implementations must refuse a model that is already in production status
+     * and classified `AiModelRiskLevel::Unacceptable`: EU AI Act
+     * (Regulation (EU) 2024/1689) Article 5 prohibits the practice outright, and
+     * a registry that accepted one would be recording a prohibited system as
+     * live.
+     *
+     * That refusal does not generalise to `AiModelRiskLevel::High`. Recording a
+     * high-risk system that is already running — with its Article 9, 11 and 72
+     * obligations still unmet — is what an inventory is for, and a registry that
+     * refused the record could not govern the system it was built to govern. The
+     * asymmetry follows the Act: Article 5 bans the practice outright, while a
+     * high-risk system is permitted subject to conditions, and an unmet
+     * condition is a gap to be recorded rather than a fact to be denied.
+     * Authorising a *transition* into production is a different operation, and
+     * it runs the deployment gates of
+     * {@see AiLifecycleManagerInterface::deploy()}.
+     *
+     * @throws InvalidArgumentException If the model is a prohibited practice already in production
      */
     public function register(AiModel $model): void;
 
@@ -36,15 +55,35 @@ interface AiModelRegistryInterface
     /**
      * Transition a model to a new lifecycle status.
      *
-     * @throws InvalidArgumentException If the model is not found or the transition is invalid
+     * Implementations must refuse a transition to `AiModelStatus::Production`
+     * for a model classified `AiModelRiskLevel::Unacceptable`, whatever the
+     * status state machine would otherwise allow. This is the invariant the
+     * deployment gates exist to keep, held here too because this method is
+     * reachable without them.
+     *
+     * @throws InvalidArgumentException If the model is not found, the transition is invalid,
+     *                                  or the model is a prohibited practice bound for production
      */
     public function transitionStatus(string $modelId, AiModelStatus $newStatus): AiModel;
 
     /**
      * Update the risk level classification of a model.
      *
+     * Reclassifying a model that is in production as
+     * `AiModelRiskLevel::Unacceptable` withdraws it from production in the same
+     * operation — the returned model carries the new classification and a status
+     * that is no longer production. The alternative, refusing the update, would
+     * leave a prohibited system live and its classification unrecorded.
+     *
+     * The return value is not optional to read: it is the only place the caller
+     * learns that the model it reclassified is no longer serving traffic.
+     * PHP does not inherit `#[NoDiscard]` from an interface onto an implementing
+     * method, so the attribute below documents the contract while each
+     * implementation must repeat it to make discarding the withdrawal diagnose.
+     *
      * @throws InvalidArgumentException If the model is not found
      */
+    #[NoDiscard]
     public function updateRiskLevel(string $modelId, AiModelRiskLevel $riskLevel): AiModel;
 
     /**

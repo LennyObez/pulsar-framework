@@ -17,12 +17,17 @@ use Pulsar\Extension\AiGovernance\Contracts\AiDataGovernanceInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiImpactAssessmentInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiLifecycleManagerInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface;
+use Pulsar\Extension\AiGovernance\Contracts\AiTransparencyInterface;
 use Pulsar\Extension\AiGovernance\Contracts\ExplainabilityInterface;
 use Pulsar\Extension\AiGovernance\Internal\AiAuditLogger;
 use Pulsar\Extension\AiGovernance\Internal\AiLifecycleManager;
 use Pulsar\Extension\AiGovernance\Internal\ConsentEnforcingDataGovernance;
+use Pulsar\Extension\AiGovernance\Internal\Gate\HighRiskObligationsGate;
 use Pulsar\Extension\AiGovernance\Internal\Gate\ImpactAssessmentGate;
 use Pulsar\Extension\AiGovernance\Internal\Gate\ModelCardGate;
+use Pulsar\Extension\AiGovernance\Internal\Gate\ProhibitedPracticeGate;
+use Pulsar\Extension\AiGovernance\Internal\MonitoringHookRegistry;
+use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryAiTransparency;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryDataGovernanceStore;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryExplainabilityStore;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryImpactAssessmentStore;
@@ -63,6 +68,15 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
                 AiModelRegistryInterface::class,
                 'ai_governance.registry_store',
             );
+        });
+
+        // Article 50 transparency. Bound unconditionally and with no configuration
+        // switch, because the duty it carries has applied since 2 August 2026 and
+        // a deployment cannot turn it off. What a deployment chooses is what it
+        // DECLARES through the contract; whether the contract exists is not a
+        // choice, or an application would discharge Article 50 by never wiring it.
+        $container->bind(AiTransparencyInterface::class, static function (): AiTransparencyInterface {
+            return new InMemoryAiTransparency();
         });
 
         // Impact Assessment
@@ -130,7 +144,24 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
             /** @var AiGovernanceConfig $config */
             $config = $container->get(AiGovernanceConfig::class);
 
-            $manager = new AiLifecycleManager($registry, $auditLogger);
+            /** @var AiImpactAssessmentInterface $assessments */
+            $assessments = $container->get(AiImpactAssessmentInterface::class);
+
+            // Shared with the high-risk gate, which must be able to see whether
+            // any monitoring hook exists before a high-risk system deploys.
+            $monitoringHooks = new MonitoringHookRegistry();
+
+            $manager = new AiLifecycleManager($registry, $auditLogger, $monitoringHooks);
+
+            // Risk classification decides deployment, and it decides it first.
+            // Neither of these two gates sits behind a configuration key: an
+            // Article 5 prohibition is not an operator preference, and the
+            // pre-market obligations of a high-risk system do not lapse because
+            // require_model_card ships off. They are registered ahead of the
+            // configurable gates so a refusal names the regulation rather than a
+            // house rule.
+            $manager->addDeploymentGate(new ProhibitedPracticeGate());
+            $manager->addDeploymentGate(new HighRiskObligationsGate($assessments, $monitoringHooks));
 
             // Translate the configured deployment requirements into gates the
             // lifecycle manager enforces on deploy(); without this the
@@ -140,8 +171,6 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
             }
 
             if ($config->requireImpactAssessment) {
-                /** @var AiImpactAssessmentInterface $assessments */
-                $assessments = $container->get(AiImpactAssessmentInterface::class);
                 $manager->addDeploymentGate(new ImpactAssessmentGate($assessments, $config->impactRiskThreshold));
             }
 
@@ -160,6 +189,7 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
             AiDataGovernanceInterface::class,
             ExplainabilityInterface::class,
             AiLifecycleManagerInterface::class,
+            AiTransparencyInterface::class,
         ];
     }
 }

@@ -17,6 +17,8 @@ use Pulsar\Extension\AiGovernance\Contracts\AiLifecycleManagerInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface;
 use Pulsar\Extension\AiGovernance\Contracts\ExplainabilityInterface;
 
+use function sprintf;
+
 #[CoversClass(AiGovernanceServiceProvider::class)]
 final class AiGovernanceServiceProviderTest extends TestCase
 {
@@ -35,13 +37,24 @@ final class AiGovernanceServiceProviderTest extends TestCase
         self::assertContains(AiLifecycleManagerInterface::class, $provides);
     }
 
+    /**
+     * Everything the provider ANNOUNCES it provides, it binds.
+     *
+     * This used to also assert `exactly(7)` calls to `bind()`, which is not a
+     * property of the provider — it is a count of the lines in its `register()`
+     * — and it broke the moment the provider grew an eighth binding it should
+     * have had all along. `provides()` is the list that means something: the
+     * deferred-provider registry indexes on it, so an id announced there and not
+     * bound here is a service the container promises and cannot deliver.
+     * Comparing the two lists checks that, and needs no maintenance when the
+     * provider grows.
+     */
     #[Test]
-    public function registerBindsAllServices(): void
+    public function registerBindsEverythingProvidesAnnounces(): void
     {
         $bindings = [];
         $container = $this->createMock(ContainerInterface::class);
-        $container->expects(self::exactly(7))
-            ->method('bind')
+        $container->method('bind')
             ->willReturnCallback(function (string $id) use (&$bindings): void {
                 $bindings[] = $id;
             });
@@ -49,12 +62,15 @@ final class AiGovernanceServiceProviderTest extends TestCase
         $provider = new AiGovernanceServiceProvider();
         $provider->register($container);
 
+        foreach ($provider->provides() as $announced) {
+            self::assertContains(
+                $announced,
+                $bindings,
+                sprintf('provides() announces "%s" but register() does not bind it', $announced),
+            );
+        }
+
         self::assertContains(AiGovernanceConfig::class, $bindings);
-        self::assertContains(AiModelRegistryInterface::class, $bindings);
-        self::assertContains(AiImpactAssessmentInterface::class, $bindings);
-        self::assertContains(AiAuditLoggerInterface::class, $bindings);
-        self::assertContains(AiDataGovernanceInterface::class, $bindings);
-        self::assertContains(ExplainabilityInterface::class, $bindings);
         self::assertContains(AiLifecycleManagerInterface::class, $bindings);
     }
 }
