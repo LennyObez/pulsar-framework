@@ -13,11 +13,11 @@ use Pulsar\Extensibility\ExtensionCapability;
 final class ExtensionCapabilityTest extends TestCase
 {
     #[Test]
-    public function enumHasEighteenCases(): void
+    public function enumHasNineteenCases(): void
     {
         $cases = ExtensionCapability::cases();
 
-        self::assertCount(18, $cases);
+        self::assertCount(19, $cases);
     }
 
     #[Test]
@@ -42,6 +42,7 @@ final class ExtensionCapabilityTest extends TestCase
             'EnvRead',
             'ConfigWrite',
             'ProcessExec',
+            'AuthGuardAccess',
         ];
 
         $actual = array_map(static fn(ExtensionCapability $c): string => $c->name, ExtensionCapability::cases());

@@ -371,7 +371,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $registry->register(new BlockEditor\CoreBlocks\SiteTitleBlock());
         $registry->register(new BlockEditor\CoreBlocks\NavigationBlock());
         $registry->register(new BlockEditor\CoreBlocks\AvatarBlock());
-        $registry->register(new BlockEditor\CoreBlocks\ComplianceBadgeBlock());
+        $this->registerComplianceBadgeBlock($container, $registry);
         $registry->register(new BlockEditor\CoreBlocks\BenchmarkBlock());
 
         // Columns (registered last; depends on BlockRenderer which uses the registry)
@@ -380,6 +380,47 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             $blockRenderer = $container->get(BlockEditor\BlockRenderer::class);
             $registry->register(new BlockEditor\CoreBlocks\ColumnsBlock($blockRenderer));
         }
+    }
+
+    /**
+     * Register the compliance badge block, but only where a source of observed
+     * results exists.
+     *
+     * The block publishes compliance statements to the open internet, so the
+     * failure mode of registering it without evidence behind it is a public
+     * false claim rather than an empty area of a page. If an integrator has
+     * bound their own {@see BlockEditor\Compliance\ObservedComplianceSourceInterface}
+     * that one wins; otherwise the block reads the JSON report artefact. Clearing
+     * `compliance_report_path` leaves the block unavailable in the editor
+     * entirely, which is the correct outcome for a site that does not assess
+     * itself.
+     */
+    private function registerComplianceBadgeBlock(
+        ContainerInterface $container,
+        BlockEditor\BlockTypeRegistry $registry,
+    ): void {
+        if ($container->has(BlockEditor\Compliance\ObservedComplianceSourceInterface::class)) {
+            /** @var BlockEditor\Compliance\ObservedComplianceSourceInterface $source */
+            $source = $container->get(BlockEditor\Compliance\ObservedComplianceSourceInterface::class);
+            $registry->register(new BlockEditor\CoreBlocks\ComplianceBadgeBlock($source));
+
+            return;
+        }
+
+        if (!$container->has(CmsConfig::class)) {
+            return;
+        }
+
+        /** @var CmsConfig $config */
+        $config = $container->get(CmsConfig::class);
+
+        if ($config->complianceReportPath === '') {
+            return;
+        }
+
+        $registry->register(new BlockEditor\CoreBlocks\ComplianceBadgeBlock(
+            new BlockEditor\Compliance\JsonReportComplianceSource($config->complianceReportPath),
+        ));
     }
 
     #[Override]

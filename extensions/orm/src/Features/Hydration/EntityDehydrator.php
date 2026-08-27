@@ -119,6 +119,20 @@ final class EntityDehydrator
     }
 
     /**
+     * Extract the database-ready value of a single mapped column.
+     *
+     * The same conversion the write path applies — custom caster, then type
+     * cast — so the value compares against the stored column rather than
+     * against whatever shape the property happens to hold. Used where a
+     * relation is keyed on a column other than the primary key, which
+     * {@see extractId()} cannot reach.
+     */
+    public function extractColumnValue(object $entity, ColumnMetadata $column): mixed
+    {
+        return $this->extractValue(self::reflectionFor($entity::class), $entity, $column);
+    }
+
+    /**
      * Extract the version value from an entity (for optimistic locking).
      */
     public function extractVersion(object $entity): ?int

@@ -26,6 +26,12 @@ final readonly class ExtensionManifest
      * @param array<string, string> $autoload Explicit PSR-4 map (namespace prefix with
      *        trailing `\` => absolute source directory). Empty means "derive from
      *        extension_class + path"; see {@see self::autoloadMap()}.
+     * @param TrustTier $requestedTrustTier The tier the manifest ASKS for. Parsed, not
+     *        verified — nothing authenticates a pulsar.json, so this is a self-assertion
+     *        by the extension about the extension. It can only lower the tier the host
+     *        granted in config/extensions.php, never raise it; see
+     *        {@see \Pulsar\Extensibility\ExtensionBootstrap} for the resolution rule.
+     *        Never read this as "this extension is verified".
      */
     public function __construct(
         public string $name,

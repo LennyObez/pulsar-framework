@@ -35,6 +35,28 @@ use const DIRECTORY_SEPARATOR;
  *     self-elevate to Core; trust is granted by the host, never claimed by the
  *     extension.
  *
+ * What is actually checked, precisely, because a tier is a security statement
+ * and this is the only thing standing behind it:
+ *   - The extension's NAME, as its own pulsar.json spells it, is looked up in
+ *     the host's `trusted_extensions` list. A hit yields the tier the HOST
+ *     wrote; a miss yields Community.
+ *   - The manifest's `trust_tier` then caps that from below, so an extension
+ *     may ask for less than the host granted and never for more.
+ *
+ * And what is NOT checked, in this class or anywhere else in the framework:
+ * nothing authenticates the manifest. There is no signature verification for
+ * extensions in Pulsar — no publisher key, no trust store, no checksum tied to
+ * an identity. `src/Integrity/` signs with a subkey of the host's OWN master
+ * key, which makes a deployed tree tamper-evident to its operator; it cannot
+ * attest that a third party published this extension, and it is off by default.
+ * The security of a tier above Community therefore rests entirely on the
+ * operator having written that extension's name into config/extensions.php,
+ * and on the name being unique among the extensions on disk (the registry
+ * refuses a second extension claiming a name already taken, so an impostor can
+ * only take a listed name by being discovered first — which needs write access
+ * to an extension path, the same access that would let it edit the listed
+ * extension outright).
+ *
  * Boot-time only; extracted from {@see \Pulsar\Core\Kernel}.
  */
 #[Internal]

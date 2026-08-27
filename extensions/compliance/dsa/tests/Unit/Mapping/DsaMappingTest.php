@@ -7,108 +7,107 @@ namespace Pulsar\Extension\Dsa\Tests\Unit\Mapping;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Compliance\ComplianceFramework;
+use Pulsar\Compliance\Control\ControlAssessment;
+use Pulsar\Compliance\Control\ControlFinding;
+use Pulsar\Compliance\Control\ControlOutcome;
 use Pulsar\Compliance\ControlCatalog;
-use Pulsar\Compliance\ControlStatus;
 use Pulsar\Extension\Dsa\Mapping\DsaMapping;
+use Pulsar\Security\Audit\AuditFileSink;
+use Pulsar\Tests\Unit\Compliance\Support\DeploymentUnderAssessment;
 
-use function count;
+use function sprintf;
 
+/**
+ * The Digital Services Act obligations, assessed rather than asserted.
+ *
+ * Almost all of them are discharged in published documents and in the product —
+ * a contact point, terms of service, a transparency report, a complaint-handling
+ * system — none of which an application framework can observe. They name the
+ * artefact an assessor should be shown. The one runtime-observable obligation is
+ * that a statement of reasons, once issued, is retained provably.
+ */
 #[CoversClass(DsaMapping::class)]
 final class DsaMappingTest extends TestCase
 {
-    private ControlCatalog $catalog;
+    private const string AUDIT_SINK = 'Pulsar\Security\Audit\AuditSinkInterface';
 
-    protected function setUp(): void
+    #[Test]
+    public function declaresTenControls(): void
     {
-        $this->catalog = new ControlCatalog();
-        DsaMapping::register($this->catalog);
+        self::assertCount(10, DsaMapping::declarations());
     }
 
     #[Test]
-    public function registerAddsAllDsaControls(): void
+    public function everyControlBelongsToTheDsaFramework(): void
     {
-        $dsaControls = $this->catalog->byFramework('dsa');
-
-        self::assertGreaterThanOrEqual(10, count($dsaControls));
-    }
-
-    #[Test]
-    public function contactPointControlIsRegistered(): void
-    {
-        $control = $this->catalog->get('dsa-art-11');
-
-        self::assertNotNull($control);
-        self::assertSame('dsa', $control->framework);
-        self::assertSame('Points of contact for authorities', $control->title);
-        self::assertSame(ControlStatus::Implemented, $control->status);
-    }
-
-    #[Test]
-    public function legalRepresentativeControlIsRegistered(): void
-    {
-        $control = $this->catalog->get('dsa-art-13');
-
-        self::assertNotNull($control);
-        self::assertSame('dsa', $control->framework);
-        self::assertSame(ControlStatus::Implemented, $control->status);
-    }
-
-    #[Test]
-    public function transparencyReportingControlIsRegistered(): void
-    {
-        $control = $this->catalog->get('dsa-art-15');
-
-        self::assertNotNull($control);
-        self::assertSame('Transparency reporting obligations', $control->title);
-        self::assertContains('transparency_report', $control->frameworkFeatures);
-        self::assertContains('moderation_log', $control->frameworkFeatures);
-    }
-
-    #[Test]
-    public function noticeAndActionControlIsRegistered(): void
-    {
-        $control = $this->catalog->get('dsa-art-16');
-
-        self::assertNotNull($control);
-        self::assertSame(ControlStatus::Implemented, $control->status);
-        self::assertContains('notice_action', $control->frameworkFeatures);
-    }
-
-    #[Test]
-    public function appealHandlingControlIsRegistered(): void
-    {
-        $control = $this->catalog->get('dsa-art-20');
-
-        self::assertNotNull($control);
-        self::assertSame(ControlStatus::Implemented, $control->status);
-        self::assertContains('appeal_handler', $control->frameworkFeatures);
-    }
-
-    #[Test]
-    public function trustedFlaggerControlIsRegistered(): void
-    {
-        $control = $this->catalog->get('dsa-art-22');
-
-        self::assertNotNull($control);
-        self::assertContains('trusted_flagger_registry', $control->frameworkFeatures);
-    }
-
-    #[Test]
-    public function vlopSystemicRiskControlIsPartial(): void
-    {
-        $control = $this->catalog->get('dsa-art-34');
-
-        self::assertNotNull($control);
-        self::assertSame(ControlStatus::Partial, $control->status);
-    }
-
-    #[Test]
-    public function allControlsBelongToDsaFramework(): void
-    {
-        $dsaControls = $this->catalog->byFramework('dsa');
-
-        foreach ($dsaControls as $control) {
-            self::assertSame('dsa', $control->framework);
+        foreach (DsaMapping::declarations() as $declaration) {
+            self::assertSame(ComplianceFramework::Dsa, $declaration->framework);
         }
+    }
+
+    /**
+     * A control with no probe must name what an assessor is to be shown, or it is
+     * a control quietly excluded from coverage and from view at the same time.
+     */
+    #[Test]
+    public function everyUnprobedObligationNamesItsAssessorArtefact(): void
+    {
+        foreach (DsaMapping::declarations() as $declaration) {
+            if ($declaration->isProbed()) {
+                continue;
+            }
+
+            self::assertNotSame('', $declaration->operatorArtefact, $declaration->id);
+        }
+    }
+
+    #[Test]
+    public function statementsOfReasonsAreAGapWithoutARetainedAuditTrail(): void
+    {
+        $finding = self::finding(
+            'dsa-art-17',
+            DeploymentUnderAssessment::withNothing([ComplianceFramework::Dsa]),
+        );
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertSame('probe.tamper_evident_audit', $finding->probeId);
+    }
+
+    #[Test]
+    public function statementsOfReasonsAreSatisfiedWhenTheTrailIsDurableAndVerifiable(): void
+    {
+        $deployment = DeploymentUnderAssessment::withNothing([ComplianceFramework::Dsa])
+            ->resolving(self::AUDIT_SINK, AuditFileSink::class)
+            ->withVerifiedEvidenceChain();
+
+        self::assertSame(ControlOutcome::Satisfied, self::finding('dsa-art-17', $deployment)->outcome);
+    }
+
+    #[Test]
+    public function theSystemicRiskAssessmentIsNeverTheFrameworksToClaim(): void
+    {
+        $finding = self::finding(
+            'dsa-art-34',
+            DeploymentUnderAssessment::withNothing([ComplianceFramework::Dsa]),
+        );
+
+        self::assertSame(ControlOutcome::OperatorResponsibility, $finding->outcome);
+        self::assertNull($finding->probeId);
+        self::assertFalse($finding->outcome->countsTowardCoverage());
+    }
+
+    private static function finding(string $id, DeploymentUnderAssessment $deployment): ControlFinding
+    {
+        $catalog = new ControlCatalog();
+        $catalog->register(...DsaMapping::declarations());
+
+        foreach (new ControlAssessment($catalog)->assessAll($deployment->evidence()) as $finding) {
+            if ($finding->declaration->id === $id) {
+                return $finding;
+            }
+        }
+
+        self::fail(sprintf('No DSA control %s is declared.', $id));
     }
 }

@@ -41,6 +41,23 @@ use const DIRECTORY_SEPARATOR;
  * and its config tier. A new bundled extension defaults to infrastructure/core
  * unless it is listed as a product below, which forces a conscious
  * least-privilege decision rather than a silent core-and-enabled grant.
+ *
+ * The two axes are audited separately, and they have to be: `kind` decides
+ * whether an extension LOADS and the tier decides what it may DO, and inferring
+ * one from the other would make a privilege grant a side effect of an
+ * enable-state decision.
+ *
+ * There is deliberately no core-tier exception list any more. One existed, for
+ * `pulsar/ai-governance`, and its stated ground — that the sandbox denies an
+ * extension the ids it registers for itself — was false against this tree:
+ * `ScopeRegistrations` and `ScopedContainerProxy::isOwnCode()` both rescue an
+ * extension's own ids in `assertCanResolve()`. What actually failed at verified
+ * was a HOST service, `ExtensionConfigRegistry`, missing from the restriction
+ * map; it also took `pulsar/booking` and `pulsar/payments` down inside `boot()`.
+ * Classifying it fixed all three, so the exception had nothing left to justify.
+ * A future exception must be established the way that one was disproved — by
+ * booting the extension at the tier in question and reading the error — and
+ * `ShippedDeploymentGateTest` is the shape that does it.
  */
 final class ExtensionSandboxDriftTest extends TestCase
 {
@@ -126,7 +143,9 @@ final class ExtensionSandboxDriftTest extends TestCase
                 $trusted[$name]['tier'] ?? null,
                 sprintf(
                     'Bundled extension "%s" must be trusted at "%s" tier (%s). A product runs least-privilege '
-                    . 'at verified; infrastructure/security runs at core.',
+                    . 'at verified; infrastructure/security runs at core. There is no core-tier exception for '
+                    . 'a product: if one appears to be needed, boot the extension at verified, read the error, '
+                    . 'and fix what it names.',
                     $name,
                     $expectedTier,
                     $isProduct ? 'product' : 'infrastructure/security',

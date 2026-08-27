@@ -6,10 +6,12 @@ namespace Pulsar\Extension\DataAct;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Compliance\ControlCatalog;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\DataAct\Access\DataAccessController;
+use Pulsar\Extension\DataAct\Mapping\DataActMapping;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -44,6 +46,19 @@ final readonly class DataActExtension implements ExtensionInterface
         // into the strict route cache instead of being skipped as non-serializable.
         $router->get('/data-act/export', [DataAccessController::class, 'requestExport']);
         $router->get('/data-act/export/{requestId}', [DataAccessController::class, 'exportStatus']);
+
+        // {@see DataActMapping} declared six Data Act controls that nothing
+        // registered anywhere — no provider, no wiring, no boot hook — so every one
+        // of them was unreachable and unfalsifiable. See DsaExtension::boot() for
+        // why this is the right moment and why it is conditional.
+        if ($container->has(ControlCatalog::class)) {
+            /** @var ControlCatalog $catalog */
+            $catalog = $container->get(ControlCatalog::class);
+
+            // A deferred source, for the reason DsaExtension::boot() gives: the
+            // mapping is autoloaded at the catalog's first read, not at boot.
+            $catalog->contribute(static fn(): array => DataActMapping::declarations());
+        }
     }
 
     /**

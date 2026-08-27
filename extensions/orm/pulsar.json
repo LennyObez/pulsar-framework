@@ -16,7 +16,8 @@
       "TransactionManagerInterface",
       "ColumnEncryptorInterface",
       "TenantScopeInterface",
-      "SchemaBuilderInterface"
+      "SchemaBuilderInterface",
+      "ModelResolverPort"
     ],
     "routes": false,
     "commands": []

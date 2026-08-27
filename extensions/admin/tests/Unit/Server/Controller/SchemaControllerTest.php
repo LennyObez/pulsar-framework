@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Tests\Unit\Server\Controller;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -176,8 +177,54 @@ final class SchemaControllerTest extends TestCase
         /** @var array<string, bool> $capabilities */
         $capabilities = $body['capabilities'];
         self::assertFalse($capabilities['supportsNativeEnum']);
-        self::assertFalse($capabilities['supportsTransactionalDdl']);
+        self::assertTrue($capabilities['supportsTransactionalDdl']);
         self::assertFalse($capabilities['supportsAlterColumnType']);
+    }
+
+    /**
+     * The rendered page names the engine it is actually talking to.
+     *
+     * `data-driver` drives the schema builder's front end — which types it offers, which
+     * warnings it shows — and it used to be reconstructed from two capability answers:
+     * `supportsNativeEnum() ? 'mysql' : (supportsTransactionalDdl() ? 'pgsql' : 'sqlite')`.
+     * That reads the right value only while those two happen to separate the three engines.
+     * Correcting SQLite's transactional-DDL answer to the truth broke it silently: every
+     * SQLite database began rendering as `pgsql`, and the page offered a dialect the
+     * database does not speak.
+     *
+     * Each engine is asserted, because a single case would pass under the old expression
+     * too — it is the pair that pins the mapping.
+     *
+     * The create form is the page read, because `schema/create` and `schema/view` are the
+     * two templates that emit `data-driver`; the listing receives the value and has no use
+     * for it.
+     */
+    #[Test]
+    #[DataProvider('driverNames')]
+    public function theRenderedPageNamesTheDriverItIsConnectedTo(Driver $driver, string $expected): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn($driver);
+        $connection->method('query')->willReturn(new Result([]));
+
+        $controller = $this->makeControllerWithIntrospector(new DatabaseIntrospector($connection), $driver);
+
+        $response = $controller->createForm();
+
+        self::assertStringContainsString(
+            'data-driver="' . $expected . '"',
+            (string) $response->getBody(),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{Driver, string}>
+     */
+    public static function driverNames(): iterable
+    {
+        yield 'sqlite' => [Driver::SQLite, 'sqlite'];
+        yield 'mysql' => [Driver::MySQL, 'mysql'];
+        yield 'pgsql' => [Driver::PostgreSQL, 'pgsql'];
     }
 
     #[Test]

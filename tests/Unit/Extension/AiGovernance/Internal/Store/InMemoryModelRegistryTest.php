@@ -174,7 +174,9 @@ final class InMemoryModelRegistryTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $this->registry->updateRiskLevel('ghost', AiModelRiskLevel::High);
+        // Cast rather than assign: the return is deliberately unused here, and
+        // updateRiskLevel() is #[NoDiscard] because it can withdraw a live model.
+        (void) $this->registry->updateRiskLevel('ghost', AiModelRiskLevel::High);
     }
 
     #[Test]

@@ -169,6 +169,14 @@ return [
         'cache_ttl' => 3600,
     ],
 
+    // Path to the JSON artefact `pulsar compliance:report --format=json` writes.
+    // The compliance-badge block renders only what that assessment observed;
+    // with no readable report at this path every badge renders "not assessed"
+    // rather than falling back to a bare framework name. Regenerate it as a
+    // deployment step so the date each badge shows stays close to the
+    // deployment it describes.
+    'compliance_report_path' => 'var/compliance/report.json',
+
     // Comments frontend configuration
     'comments' => [
         // Maximum nesting depth for threaded comments

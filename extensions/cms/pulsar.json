@@ -25,7 +25,8 @@
       "EditorialWorkflowServiceInterface",
       "ContentLockServiceInterface",
       "SafeHtmlPolicy",
-      "BreadcrumbGeneratorInterface"
+      "BreadcrumbGeneratorInterface",
+      "AccountSectionRegistry"
     ],
     "routes": true,
     "migrations": ["src/Migration"],

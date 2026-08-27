@@ -89,4 +89,30 @@ enum ExtensionCapability
 
     /** Execute external processes. */
     case ProcessExec;
+
+    /**
+     * Hold the framework's authentication guard — `GuardInterface` and the
+     * `SessionGuard` behind it.
+     *
+     * Added because nothing in this list named the power, and the alternatives
+     * were both wrong. Safe-listing the guard would have handed `login()` to
+     * Untrusted, which holds `ContainerRead` and nothing else — the same
+     * mistake as the safe-listed audit logger that let it write audit entries
+     * without `AuditWrite`. Pricing it at some existing capability would make
+     * `config/extensions.php` — the record ADR-0023 asks an auditor to read —
+     * say that granting, say, `ServiceDecorate` was the decision, when the
+     * decision was to let an extension authenticate a user.
+     *
+     * The power is real: a holder can call `login()` with an identity it
+     * constructed, `logout()` anyone, and `updateIdentity()` on the session in
+     * flight. It is also needed by legitimate work — `pulsar/forum` ships its
+     * own registration and sign-in pages and their controllers take the guard —
+     * which is why this is a capability rather than a refusal.
+     *
+     * Core and Verified hold it (they hold everything but the three crown
+     * jewels); Community and Untrusted are granted from an explicit list that
+     * does not name it. That is the line an audited extension shipping a login
+     * page sits above and an unaudited one does not.
+     */
+    case AuthGuardAccess;
 }

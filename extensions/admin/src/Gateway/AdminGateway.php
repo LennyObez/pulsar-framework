@@ -152,6 +152,16 @@ final readonly class AdminGateway
      */
     public function export(string $resourceName, ExportFormat $format, array $filters = []): ExportResourceResult
     {
+        // export-fetchall-forbidden matches any `->execute()` whose receiver is named for
+        // export/report/backfill, to catch `Pulsar\Database\Statement::execute()`
+        // materialising a whole result set through fetchAll(). This receiver is an
+        // ExportResourceHandler, not a Statement: `execute()` dispatches a request object
+        // and issues no SQL. The rows it eventually reads are bounded by
+        // ExportResourceRequest::$maxRows (10,000 by default), passed to the query as a
+        // page size, so the unbounded materialisation the rule guards against cannot occur
+        // on this path. The suppression sits on the matched line's own predecessor because
+        // that is the only placement Semgrep honours.
+        // nosemgrep: tools.security.pulsar.security.export-fetchall-forbidden
         return $this->exportHandler->execute(new ExportResourceRequest(
             resourceName: $resourceName,
             format: $format,

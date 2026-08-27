@@ -87,9 +87,70 @@ final class PreviewDdlHandlerTest extends TestCase
 
         $result = $this->handler->previewCreate($def);
 
-        // SQLite should have multiple warnings
+        // SQLite still cannot add a foreign key to an existing table.
         $warningCodes = array_map(fn($w) => $w['code'], $result['warnings']);
-        self::assertContains('NO_TRANSACTIONAL_DDL', $warningCodes);
         self::assertContains('NO_ALTER_ADD_FK', $warningCodes);
+    }
+
+    /**
+     * The atomicity warning is shown to the operator whose schema changes really are not
+     * atomic, and to nobody else.
+     *
+     * `NO_TRANSACTIONAL_DDL` renders as "Schema changes are not atomic on this database
+     * driver". SQLite used to receive it because
+     * {@see SchemaCapabilities::supportsTransactionalDdl()} answered false there, and the
+     * sentence was simply untrue: SQLite rolls DDL back with the enclosing transaction, and
+     * {@see \Pulsar\Tests\Contract\TransactionalDdlContractTest} measures that against the
+     * engine. A warning that is false is worse than no warning — it teaches an operator to
+     * take precautions the engine already takes, and to distrust the ones that matter.
+     *
+     * MySQL is asserted alongside it, because a test that only showed the warning gone would
+     * equally pass if the warning had been deleted.
+     */
+    #[Test]
+    public function theNonAtomicWarningIsRaisedForMySqlAndNotForSqlite(): void
+    {
+        $def = new TableDefinition(
+            name: 'warn_test',
+            columns: [new SchemaColumn('id', SchemaColumnType::Integer)],
+        );
+
+        self::assertNotContains(
+            'NO_TRANSACTIONAL_DDL',
+            array_map(fn($w) => $w['code'], $this->handler->previewCreate($def)['warnings']),
+            'SQLite undoes DDL with the transaction around it, so telling its operator that '
+            . 'schema changes are not atomic is a false warning',
+        );
+
+        self::assertContains(
+            'NO_TRANSACTIONAL_DDL',
+            array_map(fn($w) => $w['code'], $this->handlerFor(Driver::MySQL)->previewCreate($def)['warnings']),
+            'MySQL commits each DDL statement as it runs, which is the deployment this warning '
+            . 'exists for',
+        );
+    }
+
+    /**
+     * A handler for an engine other than the one {@see setUp()} builds.
+     *
+     * The connection stays SQLite because nothing here executes: `previewCreate()` compiles
+     * and collects warnings, and both are decided by the capabilities object alone.
+     */
+    private function handlerFor(Driver $driver): PreviewDdlHandler
+    {
+        $connection = new PdoConnection(
+            connectionName: 'test',
+            driver: Driver::SQLite,
+            dsn: 'sqlite::memory:',
+            username: null,
+            password: null,
+        );
+
+        $capabilities = new SchemaCapabilities($driver, $connection);
+
+        return new PreviewDdlHandler(
+            new SchemaManager($connection, new DdlCompiler($driver, $capabilities), $capabilities),
+            $capabilities,
+        );
     }
 }

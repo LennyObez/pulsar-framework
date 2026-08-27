@@ -51,7 +51,7 @@ final class ConfigDiagnosticsReporter
         'admin', 'anti-spam', 'api', 'app', 'broadcasting', 'business', 'cache', 'compliance',
         'data_protection', 'database', 'deploy', 'dev', 'documentation', 'domains', 'edge', 'event',
         'extensions', 'features', 'i18n', 'integrity', 'introspection', 'live', 'mail', 'marketplace',
-        'notification', 'observability', 'openapi', 'opentelemetry', 'profiler', 'queue', 'repl',
+        'model_binding', 'notification', 'observability', 'openapi', 'opentelemetry', 'profiler', 'queue', 'repl',
         'resilience', 'routing', 'runtime', 'scheduler', 'security', 'storage', 'studio', 'supervisor',
         'supply-chain', 'tenancy', 'view',
     ];

@@ -15,6 +15,7 @@ use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Contracts\SchemaBuilderInterface;
 use Pulsar\Extension\Orm\Contracts\TransactionManagerInterface;
+use Pulsar\Extension\Orm\Features\Binding\OrmModelResolver;
 use Pulsar\Extension\Orm\Features\Encryption\AttributeColumnEncryptor;
 use Pulsar\Extension\Orm\Features\Encryption\EncryptedColumnGuard;
 use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
@@ -28,6 +29,8 @@ use Pulsar\Extension\Orm\Features\Tenancy\TenantColumnResolver;
 use Pulsar\Extension\Orm\Features\Tenancy\TenantInsertEnricher;
 use Pulsar\Extension\Orm\Features\Tenancy\TenantScopeApplier;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
+use Pulsar\Routing\Binding\Contract\ModelResolverPort;
+use Pulsar\Routing\Binding\ModelBindingConfig;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\MasterKey;
@@ -234,6 +237,28 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
 
             return new EntityManager($connection, $registry, $hydrator, $persister, $txManager, $tenantScopeApplier);
         });
+
+        // Route model binding adapter. ModelResolverPort belongs to the routing
+        // module, which must not know about an ORM; the ORM owns entity
+        // resolution, so the adapter is bound from this side (ADR-0002) and a
+        // host wires the binding middleware against the port alone.
+        $container->bind(ModelResolverPort::class, static function () use ($container): ModelResolverPort {
+            /** @var EntityManager $entityManager */
+            $entityManager = $container->get(EntityManager::class);
+
+            /** @var TenantColumnResolver $tenantColumnResolver */
+            $tenantColumnResolver = $container->get(TenantColumnResolver::class);
+
+            /** @var EntityDehydrator $dehydrator */
+            $dehydrator = $container->get(EntityDehydrator::class);
+
+            return new OrmModelResolver(
+                $entityManager,
+                $tenantColumnResolver,
+                $dehydrator,
+                self::loadModelBindingConfig($container),
+            );
+        });
     }
 
     /**
@@ -250,6 +275,33 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             : [];
 
         return OrmConfig::fromArray($configData);
+    }
+
+    /**
+     * Load the route model binding configuration the resolver enforces.
+     *
+     * A host that wires ModelBindingMiddleware binds its own ModelBindingConfig,
+     * and that instance wins: the two halves of the feature enforce different
+     * keys of one section — the middleware enforces `preset`, this resolver
+     * enforces `allowed_key_names` — so a second copy would not be a duplicate,
+     * it would be a different policy applied at the other half, and the host's
+     * allow-list would not be the one deciding what reaches a query. With
+     * nothing bound, the `model_binding` section is read exactly the way
+     * loadOrmConfig() reads `orm`, and an absent section yields the documented
+     * defaults — `allowed_key_names` of id, uuid, slug.
+     */
+    private static function loadModelBindingConfig(ContainerInterface $container): ModelBindingConfig
+    {
+        if ($container->has(ModelBindingConfig::class)) {
+            /** @var ModelBindingConfig */
+            return $container->get(ModelBindingConfig::class);
+        }
+
+        $configData = $container->has(ExtensionConfigRegistry::class)
+            ? $container->get(ExtensionConfigRegistry::class)->section('model_binding')
+            : [];
+
+        return ModelBindingConfig::fromArray($configData);
     }
 
     public function provides(): array
@@ -270,6 +322,7 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             TransactionManagerInterface::class,
             SchemaBuilderInterface::class,
             EntityManager::class,
+            ModelResolverPort::class,
         ];
     }
 }

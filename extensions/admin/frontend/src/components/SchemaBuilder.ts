@@ -15,9 +15,12 @@ import type {
   TableStructure,
 } from '../types.js';
 
+// Mirrors Pulsar\Database\Schema\SchemaColumnType. 'bigtext' is the wide text
+// type — LONGTEXT on MySQL, where 'text' stops at 65,535 bytes.
 const COLUMN_TYPES = [
   'string',
   'text',
+  'bigtext',
   'integer',
   'smallint',
   'bigint',

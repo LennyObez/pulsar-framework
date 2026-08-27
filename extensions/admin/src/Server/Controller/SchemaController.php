@@ -59,7 +59,7 @@ final readonly class SchemaController
         return Response::html($this->renderAdminView('Database', 'schema/list', [
             'tables' => $tableData,
             'capabilities' => $this->capabilities->toArray(),
-            'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
+            'driver' => $this->capabilities->driver()->value,
             'schema_enabled' => $this->config->enabled,
         ]));
     }
@@ -72,7 +72,7 @@ final readonly class SchemaController
         return Response::html($this->renderAdminView('Create table', 'schema/create', [
             'tables' => $tableNames,
             'capabilities' => $this->capabilities->toArray(),
-            'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
+            'driver' => $this->capabilities->driver()->value,
             'schema_enabled' => $this->config->enabled,
         ]));
     }
@@ -107,7 +107,7 @@ final readonly class SchemaController
             'columns' => $columnData,
             'primaryKey' => $pk,
             'capabilities' => $this->capabilities->toArray(),
-            'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
+            'driver' => $this->capabilities->driver()->value,
             'schema_enabled' => $this->config->enabled,
         ]));
     }

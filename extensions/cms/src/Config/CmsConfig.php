@@ -81,6 +81,13 @@ final readonly class CmsConfig
         public AiConfig $ai = new AiConfig(),
         public PublishingConfig $publishing = new PublishingConfig(),
         public FormsConfig $forms = new FormsConfig(),
+        /**
+         * Path to the JSON artefact `pulsar compliance:report --format=json`
+         * writes. Read by the compliance-badge block, which renders only what
+         * that assessment observed. An empty value leaves the block unregistered
+         * rather than rendering framework names with nothing behind them.
+         */
+        public string $complianceReportPath = 'var/compliance/report.json',
     ) {}
 
     /**
@@ -111,6 +118,7 @@ final readonly class CmsConfig
      *     ai?: array<string, mixed>,
      *     publishing?: array<string, mixed>,
      *     forms?: array<string, mixed>,
+     *     compliance_report_path?: string,
      * } $data
      */
     public static function fromArray(array $data): self
@@ -150,6 +158,10 @@ final readonly class CmsConfig
             ai: AiConfig::fromArray($sub('ai')),
             publishing: PublishingConfig::fromArray($sub('publishing')),
             forms: FormsConfig::fromArray($sub('forms')),
+            complianceReportPath: Coerce::string(
+                $data['compliance_report_path'] ?? null,
+                'var/compliance/report.json',
+            ),
         );
     }
 }
