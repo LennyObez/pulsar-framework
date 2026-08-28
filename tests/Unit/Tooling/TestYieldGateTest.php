@@ -6,13 +6,10 @@ namespace Pulsar\Tests\Unit\Tooling;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Support\Gates\GuardsGate;
+use Pulsar\Tests\Unit\Tooling\Support\InvokesCiScript;
 
-use function array_values;
-use function is_dir;
-use function proc_close;
-use function proc_open;
 use function sprintf;
-use function stream_get_contents;
 use function sys_get_temp_dir;
 use function unlink;
 
@@ -34,8 +31,11 @@ use function unlink;
  * merged output. That claim is asserted against a report whose attributes say one
  * thing and whose elements say another.
  */
+#[GuardsGate(gate: 'tools/ci/assert-test-yield.php', plants: 'a report whose executed count is under the floor, one whose skipped share is over the cap, an absent report, and an invocation missing a bound')]
 final class TestYieldGateTest extends TestCase
 {
+    use InvokesCiScript;
+
     private const string SCRIPT = __DIR__ . '/../../../tools/ci/assert-test-yield.php';
 
     /** @var list<string> */
@@ -186,35 +186,6 @@ final class TestYieldGateTest extends TestCase
      */
     private function invokeGate(string $report, string ...$bounds): array
     {
-        // array_values, because proc_open wants a list and unpacking a variadic does not
-        // guarantee one — a named argument would give it a string key.
-        $command = array_values([PHP_BINARY, self::SCRIPT, $report, ...$bounds]);
-
-        // Descriptor 0 is given its own pipe and closed at once, rather than left
-        // unspecified. An unspecified descriptor is INHERITED, and under a parallel
-        // test runner the inherited stdin is the pipe the runner uses to send its
-        // worker the next command. Handing a duplicate of that to an unrelated
-        // subprocess is a coordination hazard for the sake of nothing: this child
-        // reads no input, so it should be given none.
-        $process = proc_open(
-            $command,
-            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
-            $pipes,
-            is_dir(__DIR__) ? __DIR__ : null,
-        );
-
-        self::assertIsResource($process, 'could not start the gate');
-
-        fclose($pipes[0]);
-
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
-
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        $status = proc_close($process);
-
-        return [$status, $stdout, $stderr];
+        return $this->runScript(self::SCRIPT, $report, ...$bounds);
     }
 }

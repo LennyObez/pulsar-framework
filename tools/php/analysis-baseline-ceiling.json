@@ -1,0 +1,24 @@
+{
+  "note": "High-water marks for the suppression baselines the static-analysis gates read. A baseline is a promise that a number goes down; until this file existed nothing read the number, so an entry added to silence a new finding changed a file and nothing else. tests/Unit/Tooling/AnalysisBaselineRatchetTest.php compares each count against its ceiling on every `composer test` run and fails when one has grown. Raising a ceiling is therefore a deliberate, reviewable line in a diff that says so, rather than a silent side effect of running a --generate-baseline command.",
+  "measured": "2026-08-22",
+  "ceilings": {
+    "tools/php/phpstan-baseline.neon": {
+      "findings": 10,
+      "unit": "sum of `count:` across every ignoreErrors block, because one block can hide many errors",
+      "owner": "composer phpstan, via includes: phpstan-baseline.neon in tools/php/phpstan.neon"
+    },
+    "tools/php/substitutability-baseline.json": {
+      "findings": 1254,
+      "unit": "entries recorded by --generate-baseline, one per accepted finding",
+      "owner": "composer class-shape, tools/ci/assert-substitutability-and-immutability.php"
+    }
+  },
+  "notRatchetedHere": {
+    "tools/php/analysis-baseline-ceiling.json": "This file. It is the ratchet rather than a thing ratcheted: it suppresses nothing and holds only the counts the other baselines must not exceed.",
+    "tools/php/boundary-baseline.json": "scripts/boundary_ratchet.php exists to ratchet it; that script is referenced by no composer script and no workflow, so the ratchet does not run. Recorded as a known gap rather than claimed as covered.",
+    "tools/php/wiring-baseline.json": "read by scripts/wiring_check.php, which is declared as `composer wiring:check` and invoked by nothing.",
+    "tools/php/benchmark-baseline.json": "not a suppression list: it holds measured timings that the comparative benchmark in benchmark-regression.yml compares against, so it moves in both directions by design.",
+    "tools/php/deptrac-baseline.yaml": "orphaned. No configuration, script or workflow references this file; tools/php/deptrac.yaml declares no `baseline:` key. It suppresses nothing because nothing reads it.",
+    "tools/security/semgrep-baseline.json": "read by tools/security/assert-semgrep-clean.php, which has its own negative tests in tests/Unit/Tooling/SemgrepGateTest.php covering a second occurrence of a baselined match."
+  }
+}

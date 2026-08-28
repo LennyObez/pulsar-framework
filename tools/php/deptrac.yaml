@@ -2422,7 +2422,30 @@ deptrac:
       [Extensibility, Api, Support, Container, Config, Core, ErrorHandling, Routing, Http]
     Attribute_Internal: [Attribute, Api, Support, Container, Config, Core, ErrorHandling]
     Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
-    Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling, Database, Security]
+    # BufferedAuthorizationDecisionSink turns the Gate's decisions into audit entries.
+    # Audit is how it writes them, Event is the AuthorizationGranted / AuthorizationDenied
+    # envelope whose payload hash the entry cites, and Context is the request the decision
+    # was made in — captured with the decision, because the flush runs after the pipeline
+    # has cleared it. All three are already in the module's public half:
+    # AuthorizationMiddleware writes through Audit and reads Context, and the events are
+    # the module's own. The sink stays module-private because which keys the entry carries
+    # is the module's business; moving it to the composition root to satisfy the ruleset
+    # would export that knowledge to keep a line shorter.
+    Auth_Internal:
+      [
+        Auth,
+        Api,
+        Support,
+        Container,
+        Config,
+        Context,
+        Core,
+        ErrorHandling,
+        Database,
+        Security,
+        Audit,
+        Event,
+      ]
     Broadcasting_Internal:
       [Broadcasting, Api, Support, Container, Config, Core, ErrorHandling, Event]
     Build_Internal: [Build, Api, Support, Container, Config, Core, ErrorHandling]

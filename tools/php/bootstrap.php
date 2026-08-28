@@ -3,13 +3,20 @@
 declare(strict_types=1);
 
 /**
- * PHPUnit bootstrap.
+ * PHPUnit and PHPBench bootstrap.
  *
  * Loads Composer's autoloader, then registers PSR-4 autoloading for the
  * framework's bundled extensions. Extensions are intentionally NOT part of the
  * root composer.json autoload (ADR-0004: no privileged built-in access), so
  * this registration is what makes their `src/` classes resolvable to the test
  * suite. Test classes themselves remain mapped via composer.json autoload-dev.
+ *
+ * tools/php/phpbench.json points `runner.bootstrap` here for the same reason.
+ * It used to point straight at vendor/autoload.php, and every benchmark under
+ * tests/Benchmark/Cms — twelve files, twenty budgeted subjects — died in setUp
+ * with "Class Pulsar\Extension\Cms\... not found" because this registration had
+ * not run. PHPBench reported them as errors and exited non-zero; the CI step
+ * piped that exit code into `tee` and threw it away, so the job kept passing.
  */
 
 require __DIR__ . '/../../vendor/autoload.php';

@@ -37,11 +37,67 @@ const ALLOWED_VIOLATIONS = [
     'Pulsar\\Extension\\Payments\\Contracts\\FakeAdapterLeak' => 'boundary-leak fixture: squats a foreign namespace on purpose',
 ];
 
-$command = 'composer dump-autoload --optimize --strict-psr --no-interaction 2>&1';
+/**
+ * Composer project this runs against; defaults to the repository.
+ *
+ * `--root=` exists so the gate can be pointed at a planted project that violates
+ * PSR-4 on purpose and observed refusing it. Without it the only way to see this
+ * script fail would be to break the repository, and a gate nobody has ever watched
+ * fail is indistinguishable from no gate.
+ */
+$root = dirname(__DIR__, 2);
+
+foreach (array_slice($argv ?? [], 1) as $argument) {
+    if (is_string($argument) && str_starts_with($argument, '--root=')) {
+        $root = substr($argument, strlen('--root='));
+
+        continue;
+    }
+
+    fwrite(STDERR, sprintf("Unknown option: %s\n", is_string($argument) ? $argument : '<non-string>'));
+
+    exit(2);
+}
+
+if (!is_dir($root)) {
+    fwrite(STDERR, sprintf("Not a directory: %s\n", $root));
+
+    exit(2);
+}
+
+$command = sprintf(
+    'composer dump-autoload --optimize --strict-psr --no-interaction --working-dir=%s 2>&1',
+    escapeshellarg($root),
+);
 $output = shell_exec($command);
 
 if (!is_string($output)) {
     fwrite(STDERR, "Could not run: {$command}\n");
+
+    exit(1);
+}
+
+// A run that produced no classmap checked nothing, and "no violations found" is
+// the same sentence whether the tree is clean or whether composer never got as far
+// as reading it. `--strict-psr` only warns, so composer's own exit code cannot tell
+// the two apart either: this is the only place the difference can be noticed.
+if (preg_match('/Generated (?:optimized )?autoload files containing (\d+) classes/', $output, $generated) !== 1) {
+    fwrite(STDERR, sprintf(
+        "composer produced no classmap, so nothing was checked for PSR-4 compliance.\n"
+        . "This is not a clean tree; it is an unmeasured one. Composer said:\n\n%s\n",
+        rtrim($output),
+    ));
+
+    exit(1);
+}
+
+if ((int) $generated[1] === 0) {
+    fwrite(STDERR, sprintf(
+        "composer generated a classmap of 0 classes in %s, so every class in it complied with\n"
+        . "its PSR-4 rule for the trivial reason that there were none. Check the autoload\n"
+        . "configuration before reading this as a pass.\n",
+        $root,
+    ));
 
     exit(1);
 }
@@ -76,6 +132,10 @@ if ($violations !== []) {
     exit(1);
 }
 
-printf("OK: every class complies with its PSR-4 rule (%d documented exception(s) skipped).\n", $allowed);
+printf(
+    "OK: every one of %d class(es) complies with its PSR-4 rule (%d documented exception(s) skipped).\n",
+    (int) $generated[1],
+    $allowed,
+);
 
 exit(0);

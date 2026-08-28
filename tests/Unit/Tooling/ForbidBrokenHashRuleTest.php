@@ -8,6 +8,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Pulsar\PHPStan\Rules\ForbidBrokenHashRule;
+use Pulsar\Tests\Support\Gates\GuardsGate;
 
 use function file_get_contents;
 use function sprintf;
@@ -29,6 +30,7 @@ use function strlen;
  *
  * @extends RuleTestCase<ForbidBrokenHashRule>
  */
+#[GuardsGate(gate: 'phpstan rule ForbidBrokenHashRule', plants: 'md5 and sha1 call sites in a fixture tree outside the reviewed exemption list, and an exemption that does not state the standard requiring it')]
 final class ForbidBrokenHashRuleTest extends RuleTestCase
 {
     private const string FIXTURE_ROOT = __DIR__ . '/data/broken-hash';

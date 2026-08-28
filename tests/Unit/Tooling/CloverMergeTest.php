@@ -6,23 +6,18 @@ namespace Pulsar\Tests\Unit\Tooling;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Support\Gates\GuardsGate;
+use Pulsar\Tests\Unit\Tooling\Support\InvokesCiScript;
 use SimpleXMLElement;
 
-use function array_values;
-use function fclose;
 use function file_put_contents;
-use function is_dir;
 use function is_file;
-use function proc_close;
-use function proc_open;
 use function rand;
 use function simplexml_load_file;
-use function stream_get_contents;
 use function sys_get_temp_dir;
 use function unlink;
 
 use const DIRECTORY_SEPARATOR;
-use const PHP_BINARY;
 
 /**
  * Guards the merge that turns the coverage parts back into one report.
@@ -36,8 +31,11 @@ use const PHP_BINARY;
  * once, not twice. Summing the parts' own metrics — the obvious implementation —
  * gets that wrong, and gets it wrong in the flattering direction.
  */
+#[GuardsGate(gate: 'tools/ci/merge-clover.php', plants: 'a merge missing one of its parts, and a merge whose output would contain no files at all')]
 final class CloverMergeTest extends TestCase
 {
+    use InvokesCiScript;
+
     private const string SCRIPT = __DIR__ . '/../../../tools/ci/merge-clover.php';
 
     /** @var list<string> */
@@ -218,29 +216,8 @@ final class CloverMergeTest extends TestCase
      */
     private function invoke(string $output, string ...$parts): array
     {
-        $command = array_values([PHP_BINARY, self::SCRIPT, $output, ...$parts]);
-
-        // Descriptor 0 gets its own pipe and is closed at once: an unspecified
-        // descriptor is inherited, and handing a parallel runner's control pipe to
-        // an unrelated subprocess is a hazard for the sake of nothing.
-        $process = proc_open(
-            $command,
-            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
-            $pipes,
-            is_dir(__DIR__) ? __DIR__ : null,
-        );
-
-        self::assertIsResource($process, 'could not start the merge');
-
-        fclose($pipes[0]);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        return [proc_close($process), $stdout, $stderr];
+        return $this->runScript(self::SCRIPT, $output, ...$parts);
     }
-
     private function outputPath(): string
     {
         $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_merged_' . rand(100000, 999999) . '.xml';

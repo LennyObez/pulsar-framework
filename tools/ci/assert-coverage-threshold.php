@@ -11,12 +11,45 @@ declare(strict_types=1);
  * below is edited in one place instead of inside a YAML string.
  *
  * Usage:
- *   php tools/ci/assert-coverage-threshold.php [clover.xml] [threshold]
+ *   php tools/ci/assert-coverage-threshold.php [clover.xml] [threshold] [--report-only=A,B]
  *
- * Exits 1 when any measured dimension is below the threshold.
+ * Exits 1 when any measured dimension is below the threshold, except the
+ * dimensions named in --report-only, whose figure is printed and not gated.
+ *
+ * That option exists for one honest case: a dimension measured for the first
+ * time. Branch coverage has never been measured on this suite, because the only
+ * driver that emits it cannot finish the suite inside a single job — see
+ * ADR-0042. A floor chosen before the first measurement would be a number rather
+ * than a standard, so the nightly workflow reports Conditions until there is a
+ * figure to set the floor from. Naming the dimension on the command line keeps
+ * that decision visible in the workflow instead of buried here.
  */
 
-$cloverPath = $argv[1] ?? 'coverage/clover.xml';
+$arguments = $argv ?? [];
+
+/** @var list<string> $positional */
+$positional = [];
+
+/** @var array<string, true> $reportOnly */
+$reportOnly = [];
+
+foreach (array_slice($arguments, 1) as $argument) {
+    if (str_starts_with($argument, '--report-only=')) {
+        foreach (explode(',', substr($argument, 14)) as $dimension) {
+            $dimension = trim($dimension);
+
+            if ($dimension !== '') {
+                $reportOnly[$dimension] = true;
+            }
+        }
+
+        continue;
+    }
+
+    $positional[] = $argument;
+}
+
+$cloverPath = $positional[0] ?? 'coverage/clover.xml';
 
 /**
  * Coverage floor for the current release step.
@@ -28,7 +61,7 @@ $cloverPath = $argv[1] ?? 'coverage/clover.xml';
  */
 const DEFAULT_THRESHOLD = 80.0;
 
-$threshold = isset($argv[2]) ? (float) $argv[2] : DEFAULT_THRESHOLD;
+$threshold = isset($positional[1]) ? (float) $positional[1] : DEFAULT_THRESHOLD;
 
 if (!is_file($cloverPath)) {
     fwrite(STDERR, sprintf(
@@ -80,6 +113,22 @@ foreach ($dimensions as $name => [$percent, $coveredCount, $totalCount]) {
     // percentage.
     if ($totalCount === 0) {
         printf("%-11s: not measured (the active coverage driver reports no data for it)\n", $name);
+
+        continue;
+    }
+
+    // Named on --report-only: printed, and not allowed to decide the outcome.
+    // A dimension being measured for the first time has no floor yet, and
+    // inventing one before seeing the figure would be picking a number rather
+    // than setting a standard.
+    if (isset($reportOnly[$name])) {
+        printf(
+            "%-11s: %6.2f%% (%d/%d) — reported, not gated\n",
+            $name,
+            $percent,
+            $coveredCount,
+            $totalCount,
+        );
 
         continue;
     }

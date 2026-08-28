@@ -1,8 +1,24 @@
-# NOTHING IN CI RUNS THIS FILE. No workflow under `.github/` invokes Semgrep;
-# the only entry point is `composer security:lint`, which is part of the local
-# `composer qa` sequence and exits 0 whatever it finds, because `--error` is not
-# passed and every rule here is severity WARNING. Read the findings as review
-# material, not as a gate — a rule in this file cannot stop a merge.
+# THIS FILE IS A GATE. It is run by `composer security:lint`, which is an entry of
+# `composer qa` and a step of the `security-semgrep` job in
+# `.github/workflows/ci.yml`. A rule added here can stop a merge, so write it as
+# something you are willing to block on.
+#
+# The header used to say the opposite, and it was accurate: no workflow invoked
+# Semgrep, and `composer security:lint` passed neither `--error` nor `--severity`,
+# so it exited 0 whatever it found. What changed is `tools/security/assert-semgrep-clean.php`,
+# which now stands between the composer script and the binary. Read its docblock
+# before editing anything here — three of its decisions constrain what a rule in
+# this file means:
+#
+#   * The gate fails at WARNING, the lowest severity any rule here uses. Severity
+#     is therefore NOT a way to add a rule that only advises; every rule here
+#     blocks. If a rule is not worth blocking on, it does not belong in this file.
+#   * Findings are ratcheted against `tools/security/semgrep-baseline.json`. A new
+#     rule added here will fail the build on every existing violation unless the
+#     baseline is regenerated in the same commit — which is the correct workflow,
+#     and the diff is the record of what the rule found.
+#   * The scan runs `--jobs=1`. Semgrep's parallel scheduling gave a different
+#     answer on this codebase between runs.
 #
 # The one clause of ADR-0006 that IS gated lives elsewhere: MD2/MD4/MD5/SHA-1
 # are rejected by `Pulsar\PHPStan\Rules\ForbidBrokenHashRule`, registered in
@@ -32,13 +48,20 @@ rules:
   # libsodium accepts only `''` or 16-64 bytes there. Passing a short domain
   # string throws SodiumException at runtime.
   #
-  # This preference is NOT enforced and must not be cited as a control. Roughly
-  # 57 call sites outside the allowlist below still hash with unkeyed SHA-256,
-  # several of them over credential material, and no gate rejects the next one.
-  # SHA-256 is an ASVS-approved algorithm, so the gap is an ADR-0006 migration
-  # debt rather than an ASVS V6.2 failure — see the V6.2 row of
-  # `docs/security/asvs-l2-matrix.md`, which states it. Promoting this rule to
-  # ERROR means migrating those call sites first; it is not a severity edit.
+  # This rule now rejects the NEXT unkeyed SHA-256 call site, and only that. It
+  # must not be cited as a control saying the codebase has migrated: 51 call sites
+  # outside the allowlist below still hash with unkeyed SHA-256, several of them
+  # over credential material, and every one of them is recorded in
+  # `tools/security/semgrep-baseline.json` so the gate lets them through. The list
+  # is the debt, written down; read it before quoting this rule at anyone.
+  #
+  # SHA-256 is an ASVS-approved algorithm, so the gap is ADR-0006 migration debt
+  # rather than an ASVS V6.2 failure — see the V6.2 row of
+  # `docs/security/asvs-l2-matrix.md`, which states it. Clearing the debt means
+  # migrating those 51 sites and regenerating the baseline smaller each time; the
+  # gate prints how many baselined findings no longer match, so the floor moving
+  # down is visible in the log. Severity is not the lever — this rule already
+  # blocks at WARNING, because the gate's threshold is WARNING.
   - id: pulsar.security.forbidden-sha256
     languages: [php]
     severity: WARNING

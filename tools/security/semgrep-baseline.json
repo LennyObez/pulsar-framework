@@ -1,0 +1,343 @@
+{
+  "semgrep_version": "1.155.0",
+  "ruleset": "tools/security/semgrep-pulsar-rules.yml",
+  "severity_threshold": "WARNING",
+  "targets": ["src", "extensions"],
+  "findings": [
+    {
+      "fingerprint": "064f7ac7a1556532f9cac7d37bbb19e4",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Http/Middleware/CmsPageCacheMiddleware.php",
+      "count": 1,
+      "snippet": "$digest = hash('sha256', $host . \"\\0\" . $path . \"\\0\" . $canonicalQuery);"
+    },
+    {
+      "fingerprint": "0898fffa9d7aee0e5eeb2bf13ae739de",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Features/Schema/CreateTableHandler.php",
+      "count": 1,
+      "snippet": "'sql_fingerprint' => hash('sha256', implode(\"\\n\", $statements)),"
+    },
+    {
+      "fingerprint": "0a90d107c6a6d17e89511528f733e687",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Http/Controller/CommentController.php",
+      "count": 1,
+      "snippet": "$userAgentHash = hash('sha256', $request->getHeaderLine('User-Agent'));"
+    },
+    {
+      "fingerprint": "0e1503d7aba17dfa71342f4c8be718da",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Live/Internal/ComponentStateEncryptor.php",
+      "count": 1,
+      "snippet": "return hash('sha256', $payload);"
+    },
+    {
+      "fingerprint": "17c3ba3c750fb14f24814243bf77f2e8",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Storage/S3StorageAdapter.php",
+      "count": 1,
+      "snippet": "$payloadHash = hash('sha256', $content);"
+    },
+    {
+      "fingerprint": "2ea32f090fc14a8f38fbfa551573585d",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/opentelemetry/src/Instrumentation/InstrumentedConnection.php",
+      "count": 1,
+      "snippet": "DbStatementExport::Hash => $span->setAttribute('db.statement.hash', hash('sha256', $sql)),"
+    },
+    {
+      "fingerprint": "3e8db722ed5b1780d623cb61d17b5476",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/AiCrawler/Internal/CrawlerIdentityVerifier.php",
+      "count": 1,
+      "snippet": "$cacheKey = 'ai-crawler.fcrdns.' . hash('sha256', $clientIp);"
+    },
+    {
+      "fingerprint": "5282ec25aafa859db123d0eec6b6812c",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/compliance/eidas/src/Internal/Delivery/InMemoryDeliveryService.php",
+      "count": 1,
+      "snippet": "contentHash: hash('sha256', $content),"
+    },
+    {
+      "fingerprint": "535fe186e0e40f8defef26299c4993f6",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/ZeroTrust/DeviceIdentity/Internal/WebAuthnAttestationVerifier.php",
+      "count": 1,
+      "snippet": "$clientDataHash = hash('sha256', $clientDataJSON, true);"
+    },
+    {
+      "fingerprint": "5361969709bcdec2d4518962208b1974",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/Compliance/Pseudonymization/ForgetService.php",
+      "count": 1,
+      "snippet": "$confirmationHash = hash('sha256', $pseudonym);"
+    },
+    {
+      "fingerprint": "56e572fc6ad30547b9acb09bf241a78f",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Auth/Token/PersonalAccessTokenManager.php",
+      "count": 2,
+      "snippet": "$tokenHash = hash('sha256', $plaintext);"
+    },
+    {
+      "fingerprint": "57092752d5390eb1da7a253169f48834",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Internal/Commerce/InvoiceService.php",
+      "count": 1,
+      "snippet": "$evidenceHash = hash('sha256', $evidencePayload);"
+    },
+    {
+      "fingerprint": "58e58540ff9beceb98cdff782e707b60",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Storage/S3StorageAdapter.php",
+      "count": 1,
+      "snippet": "$payloadHash ??= hash('sha256', $body);"
+    },
+    {
+      "fingerprint": "637c85c69e3439686e61eddd1cb470d4",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/forum/src/Http/Controller/Auth/PasswordResetController.php",
+      "count": 2,
+      "snippet": "$tokenHash = hash('sha256', $token);"
+    },
+    {
+      "fingerprint": "6b03d37198474786968b016650a999be",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Internal/Themes/ThemeManager.php",
+      "count": 1,
+      "snippet": "$manifestHash = hash('sha256', $manifestJson);"
+    },
+    {
+      "fingerprint": "71b7f664158286782313fde1144e3b0a",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Features/Schema/DropTableHandler.php",
+      "count": 1,
+      "snippet": "$evidenceHash = hash('sha256', $canonicalized);"
+    },
+    {
+      "fingerprint": "7e069b74a976e86f7368a827edd2cb5f",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/ApiSigning/RequestSigner.php",
+      "count": 2,
+      "snippet": "bodyHash: hash('sha256', $body),"
+    },
+    {
+      "fingerprint": "7f8e337a0a3ea4224bb6eb6504905df1",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Internal/Cache/CmsCacheKeys.php",
+      "count": 1,
+      "snippet": "return 'x' . hash('sha256', $value);"
+    },
+    {
+      "fingerprint": "878755fc235f154d6b3ef961b8bf8bb7",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/PrivacyPass/Internal/PrivacyPassDirectoryClient.php",
+      "count": 1,
+      "snippet": "return 'privacy-pass.directory.' . hash('sha256', $directoryUrl);"
+    },
+    {
+      "fingerprint": "952a7a0b2555e206ce47e42b0ff21e7c",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/form/src/Csrf/FormCsrfManager.php",
+      "count": 1,
+      "snippet": "return hash('sha256', \"$sessionId:$formId:$action:$secret\");"
+    },
+    {
+      "fingerprint": "98533f4f5772d55fd324e69548c99dd9",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Mail/Webhook/CacheBackedDeduplicationStore.php",
+      "count": 1,
+      "snippet": "return 'mail-webhook.dedup.' . hash('sha256', ($tenantId ?? 'default') . \"\\0\" . $eventId);"
+    },
+    {
+      "fingerprint": "9938a60f88bb0d27a4667fc29d19d3da",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/Compliance/Evidence/InMemoryEvidenceExporter.php",
+      "count": 1,
+      "snippet": "$hashManifest = hash('sha256', $serialized !== false ? $serialized : '[]');"
+    },
+    {
+      "fingerprint": "9c2848f1303ccdc6797a8e7089215fc7",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/PrivacyPass/Internal/IssuerPublicKey.php",
+      "count": 1,
+      "snippet": "return hash('sha256', $this->spkiDer, true);"
+    },
+    {
+      "fingerprint": "9d7150874b07da8568dfe3a09bf290c1",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Storage/S3StorageAdapter.php",
+      "count": 1,
+      "snippet": "$response = $this->request('GET', '/', '', [], hash('sha256', ''), $queryString);"
+    },
+    {
+      "fingerprint": "9d94a249536fdd8dca61acdd044f1c15",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Internal/Plugins/CmsPluginManager.php",
+      "count": 1,
+      "snippet": "$manifestHash = hash('sha256', $manifestJson);"
+    },
+    {
+      "fingerprint": "a39231b6c290c5228cbbdf9a8e97fc01",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/auth/src/Social/Domain/PkceChallenge.php",
+      "count": 1,
+      "snippet": "$challenge = self::base64UrlEncode(hash('sha256', $verifier, true));"
+    },
+    {
+      "fingerprint": "a4cc7d1e26a992297aee230ef81a0974",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Features/Schema/AlterTableHandler.php",
+      "count": 1,
+      "snippet": "'sql_fingerprint' => hash('sha256', implode(\"\\n\", $statements)),"
+    },
+    {
+      "fingerprint": "a57de0cad408cb53eae7ae0fdfe4afaa",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/I18n/Compiler/I18nCatalogCompiler.php",
+      "count": 1,
+      "snippet": "$totalHash = hash('sha256', implode(\"\\n\", $hashParts));"
+    },
+    {
+      "fingerprint": "ac0f10889aa718edc94cf84515cd88c7",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Internal/Storage/SqliteSchemaChangeLogStore.php",
+      "count": 1,
+      "snippet": "$bundleHash = hash('sha256', implode(\"\\n\", $allStatements));"
+    },
+    {
+      "fingerprint": "af1e7de16431dea5bade0cdba18c5395",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/Risk/VelocitySignalProvider.php",
+      "count": 1,
+      "snippet": "$key = 'risk.velocity.' . hash('sha256', $ip) . '.' . $bucket;"
+    },
+    {
+      "fingerprint": "b1b2416c063676248757d19649f2ffa5",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Features/Schema/CreateTableHandler.php",
+      "count": 1,
+      "snippet": "$evidenceHash = hash('sha256', $canonicalized);"
+    },
+    {
+      "fingerprint": "b615fe68c64e9286cc7fdc8cb63810ec",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Internal/LiveCss/CspHashComputer.php",
+      "count": 1,
+      "snippet": "$rawHash = hash('sha256', $styleContent, true);"
+    },
+    {
+      "fingerprint": "b998a0493cd7d0a8b70133c86affbc22",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/PrivacyPass/TokenChallenge.php",
+      "count": 1,
+      "snippet": "return hash('sha256', $this->encode(), true);"
+    },
+    {
+      "fingerprint": "bb7c1b6f8f7203dcf11ef68e2d72d821",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/payments/src/Internal/Support/ParametersHasher.php",
+      "count": 1,
+      "snippet": "return hash('sha256', $json);"
+    },
+    {
+      "fingerprint": "c4ab6225dd32d18fdafe3ebe6aa80512",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/payments/src/Internal/Infrastructure/Provider/NullProvider.php",
+      "count": 1,
+      "snippet": "return substr(hash('sha256', $input), 0, 32);"
+    },
+    {
+      "fingerprint": "c6c1580cf01be18c0f29c030c2d8a9fe",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Features/Schema/AlterTableHandler.php",
+      "count": 1,
+      "snippet": "$evidenceHash = hash('sha256', $canonicalized);"
+    },
+    {
+      "fingerprint": "cd73101d04343b341b267a4492732c1b",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/auth/src/OAuth2/Grant/AuthorizationCodeGrant.php",
+      "count": 1,
+      "snippet": "$computed = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');"
+    },
+    {
+      "fingerprint": "cf4ff9006f888e514168a055164621d5",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/ManagedChallenge/ManagedChallengeService.php",
+      "count": 1,
+      "snippet": "$digest = hash('sha256', $id . '.' . $solution, true);"
+    },
+    {
+      "fingerprint": "d553d86e00e0bbc56d3f5886a3276365",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Build/ArtifactIntegrityVerifier.php",
+      "count": 1,
+      "snippet": "$actualHash = hash('sha256', $contents);"
+    },
+    {
+      "fingerprint": "e0141ba583c0d70d3fe0b1260207ec8d",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/payments/src/Internal/Infrastructure/Provider/SimulatorProvider.php",
+      "count": 1,
+      "snippet": "return substr(hash('sha256', $input), 0, 32);"
+    },
+    {
+      "fingerprint": "e2505028ed3c988f4a76cb097699d0ac",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Http/Middleware/RateLimitMiddleware.php",
+      "count": 1,
+      "snippet": "return 'req-' . substr(hash( 'sha256', $request->getMethod() . '|' . (string) $request->getUri(), ), 0, 16);"
+    },
+    {
+      "fingerprint": "ea3f0f353df7ced48904768f7ddb0530",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/form/src/Field/Regulated/AbstractRegulatedField.php",
+      "count": 1,
+      "snippet": "policyTextHash: hash('sha256', $this->policyText),"
+    },
+    {
+      "fingerprint": "eaf2d33f628638357c274f33cdaac9e3",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Security/AntiSpam/ManagedChallenge/ManagedChallengeAssetController.php",
+      "count": 1,
+      "snippet": "$etag = '\"' . substr(hash('sha256', $contents), 0, 32) . '\"';"
+    },
+    {
+      "fingerprint": "eebf5e26e2b88c35728d92130da74b3c",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Http/Middleware/RateLimitMiddleware.php",
+      "count": 1,
+      "snippet": "return 'ua-' . substr(hash('sha256', $userAgent), 0, 16);"
+    },
+    {
+      "fingerprint": "eeccdb01c01f0bdd8a4db87e57b94aaa",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/cms/src/Http/Controller/CommentController.php",
+      "count": 1,
+      "snippet": "$ipHash = hash('sha256', is_string($remoteAddr) ? $remoteAddr : '');"
+    },
+    {
+      "fingerprint": "f383e7dbabbbc4d694332d1a64a7646d",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "extensions/admin/src/Features/Schema/RenameTableHandler.php",
+      "count": 1,
+      "snippet": "$evidenceHash = hash('sha256', $canonicalized);"
+    },
+    {
+      "fingerprint": "fcefc63eae2298fcd42c599ba99de7a7",
+      "rule": "tools.security.pulsar.security.forbidden-sha256",
+      "path": "src/Storage/S3Signer.php",
+      "count": 2,
+      "snippet": "hash('sha256', $canonicalRequest),"
+    }
+  ],
+  "unparsed": [
+    {
+      "path": "src/Resilience/RetryPolicy.php",
+      "reason": "Semgrep 1.155.0 cannot parse this file at all, so no rule examines it. Its PHP frontend rejects the `readonly` class modifier; on 744 other files it recovers and still scans the body, but here recovery fails at the `#[Api(since: '1.0.0')]` attribute on line 26 and the whole file is abandoned. Confirmed by planting `hash('sha256', 'PLANTED')` in a copy at line 132: forbidden-sha256 did not report it. What the hole hides: this file is not covered by forbidden-sha256 or export-fetchall-forbidden. It contains no hash call and no statement execution today, and the ADR-0006 broken-digest clause is enforced over it by Pulsar\\PHPStan\\Rules\\ForbidBrokenHashRule, which parses with PHP's own tokenizer and has no such blind spot. Accepted rather than worked around: rewriting framework source to suit a third-party parser puts the tool in charge of the code."
+    }
+  ]
+}

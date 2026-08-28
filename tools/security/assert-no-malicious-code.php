@@ -310,11 +310,63 @@ const REVIEWED = [
                 . 'scenario\'s. Array form, [$phpBinary, $scriptPath].',
         ],
     ],
-    'tests/Unit/Tooling/TestYieldGateTest.php' => [
+    'tests/Unit/Tooling/Support/InvokesCiScript.php' => [
         'process-spawn' => [
             'count' => 1,
-            'reason' => 'Invokes tools/ci/assert-test-yield.php to assert its exit codes. Array '
-                . 'form; a gate\'s exit code can only be tested by running it.',
+            'reason' => 'The one place the tooling tests start a CI script, shared by the gate '
+                . 'tests that assert exit codes — a gate\'s exit code can only be tested by '
+                . 'running it. Array form, [PHP_BINARY, $script, ...$arguments], so no element '
+                . 'reaches a shell, and the arguments are literals written in the test beside '
+                . 'the assertion.',
+        ],
+    ],
+    'tests/Unit/Tooling/Support/InvokesShellGate.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Three merge gates are bash scripts (check-adr.sh, check-pr-size.sh, '
+                . 'check-pr-title-scope.sh), and the only thing CI branches on is their exit code, '
+                . 'so the negative tests run them. Array form, [$bash, $script]: the interpreter is '
+                . 'resolved from a fixed candidate list or PULSAR_BASH, the script path is a '
+                . 'constant in the test, and neither reaches a shell for parsing. The environment '
+                . 'is the parent\'s plus literal overrides written beside the assertion.',
+        ],
+    ],
+    'tests/Unit/Tooling/Support/PlantedGitRepository.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Builds a throwaway repository with a planted diff for the PR gates to '
+                . 'judge — those gates decide by asking git, so a stub would test the stub. Array '
+                . 'form; every element is a literal or the temporary path this class created, and '
+                . 'identity and signing are pinned with -c so the result does not depend on the '
+                . 'developer\'s git configuration.',
+        ],
+    ],
+    'tests/Unit/Tooling/KernelBootSmokeGateTest.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Runs `bin/pulsar list` twice — once in a planted project whose config '
+                . 'throws, once in the repository — to assert a kernel that cannot boot makes the '
+                . 'CLI exit non-zero, which is the whole content of the boot smoke step in two CI '
+                . 'jobs. Array form, [PHP_BINARY, <repo>/bin/pulsar, list].',
+        ],
+    ],
+    'scripts/check_compliance_claims.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Runs `pulsar compliance:report --format=json` and reads its findings. '
+                . 'The gate deliberately does not re-derive the report: two answers to "is this '
+                . 'control met?", disagreeing, is the ambiguity it exists to remove. Array form, '
+                . '[PHP_BINARY, <root>/bin/pulsar, ...], every element a literal or the '
+                . 'script\'s own dirname.',
+        ],
+    ],
+    'tools/security/assert-semgrep-clean.php' => [
+        'process-spawn' => [
+            'count' => 2,
+            'reason' => 'Runs Semgrep over the tree, and separately `semgrep --version` so the '
+                . 'baseline records which version produced it. Array form; the binary comes from '
+                . '--semgrep, SEMGREP_BIN or the PATH lookup, and every other element is a '
+                . 'literal or a scan target from the gate\'s own list.',
         ],
     ],
     'tests/Unit/Integrity/MaliciousCodeGateTest.php' => [

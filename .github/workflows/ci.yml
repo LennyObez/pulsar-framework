@@ -49,10 +49,24 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
+      # The gate a contributor runs (`composer qa`) and the gate this file enforces
+      # are one declared list with two consumers, and this step is what keeps them
+      # that way. See tools/ci/assert-qa-ci-parity.php for why CI does not simply
+      # call `composer qa` -- the short version is that doing so would serialise
+      # nine jobs into one and hand every contributor the sum of what they now wait
+      # for the maximum of. It runs first because it costs milliseconds and its
+      # failure invalidates the meaning of every step below it.
+      - name: Local gate and CI gate are the same gate
+        run: composer qa:parity
+
       # Assert that the version reported by Pulsar\Core\Version matches
       # composer.json, so a release PR cannot bump one without the other.
+      # This used to be tools/ci/check-version-consistency.sh, a bash
+      # re-implementation of the same assertion that `composer version:check`
+      # already made. Two copies of one policy drift, and the copy CI ran was not
+      # the copy contributors ran. The bash script is gone; this is the one check.
       - name: Version constants consistency
-        run: bash tools/ci/check-version-consistency.sh
+        run: composer version:check
 
       - run: composer cs:check
 
@@ -89,6 +103,10 @@ jobs:
       - name: Boundary enforcement (Deptrac)
         run: composer boundary:deptrac
 
+      # Annotated rather than run as `composer boundary:custom`, because on a pull
+      # request it takes a --diff-base the composer script cannot carry. The two
+      # steps below are one gate under two conditions, so only one annotation.
+      # qa-gate: boundary:custom
       - name: Boundary enforcement (API targeting)
         if: github.event_name == 'pull_request'
         env:
@@ -282,6 +300,12 @@ jobs:
 
       # Runs first: fails in minutes rather than after the coverage pass, and it is
       # the only thing guarding test isolation.
+      #
+      # This is `composer test` for parity purposes, run a different way: paratest
+      # rather than serial PHPUnit, with a yield assertion behind it. The local
+      # script stays serial because a contributor wants a readable failure, not a
+      # sharded one.
+      # qa-gate: test
       - name: Run all tests in parallel (isolation guard, no coverage)
         env:
           XDEBUG_MODE: 'off'
@@ -563,6 +587,18 @@ jobs:
     timeout-minutes: 20
     needs: php-quality
 
+    defaults:
+      run:
+        # `shell: bash` is what turns pipefail on; the implicit default is
+        # `bash -e {0}` WITHOUT it. Two steps below pipe into `tee`, and without
+        # pipefail the step's exit status is tee's — always 0. Every #[Assert] in
+        # tests/Benchmark was therefore unenforceable here: phpbench exits 2 on a
+        # breached budget (verified locally with a deliberately impossible
+        # assertion) and tee threw that away, so the job named 'Hard Gate' could
+        # not fail on a performance budget at all. One line, and it is the line
+        # that makes the rest of this job mean something.
+        shell: bash
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -595,6 +631,23 @@ jobs:
           echo "manifest_hash=$MANIFEST_HASH" >> "$GITHUB_ENV"
 
       - name: 'Tier A: Run PHPBench with assertions (hard gate)'
+        # Two things in tools/php/phpbench.json make this step mean something, and
+        # neither can carry a comment of its own because the file is JSON.
+        #
+        # `runner.php_config` pins the child interpreter (OPcache on, JIT off,
+        # Xdebug off), so a budget means the same thing here as on the machine it
+        # was derived on -- Xdebug alone moved the kernel-boot subject by 2.2x.
+        # Nothing in this step should set ini flags; doing so would silently
+        # invalidate every budget in tests/Benchmark.
+        #
+        # `runner.retry_threshold` is 20, not the 5 it was. PHPBench re-runs any
+        # iteration deviating more than the threshold from the variant mean, in a
+        # `while (getRejectCount() > 0)` loop that has no limit -- 1.7 never calls
+        # `SubjectMetadata::setRetryLimit()`. At 5 a variant that cannot settle
+        # does not fail, it spins: one CMS subject retried more than ten times
+        # locally before landing at 3.3%, and the CMS group alone did not finish
+        # in twenty minutes. The threshold was never the gate; the #[Assert]
+        # budgets are, and they have margin to spare over a 20% sample.
         run: composer bench:ci 2>&1 | tee benchmark-tier-a.txt
 
       - name: 'Tier A: Run memory peak budgets'
@@ -869,6 +922,131 @@ jobs:
           PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
           export PULSAR_MASTER_KEY
           php bin/pulsar i18n:slugs:lint
+
+  # Semgrep appeared ZERO times under .github/ until this job existed, and
+  # `composer security:lint` passed neither --error nor --severity, so it exited 0
+  # whatever it found. The ruleset's own header said as much: "a rule in this file
+  # cannot stop a merge". It can now.
+  #
+  # Its own job rather than a step in php-quality: the scan is single-threaded (see
+  # tools/security/assert-semgrep-clean.php for the measurement that forced that)
+  # and takes two to four minutes, and php-quality is the job every other one waits
+  # on. Nothing depends on this job, and nothing should -- it is a required check on
+  # the merge, not a prerequisite for running tests.
+  security-semgrep:
+    name: Semgrep (Pulsar ruleset, gating)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          coverage: none
+
+      # Installed through the runner's preinstalled pipx rather than by adding an
+      # action: one fewer third-party action to pin, review and trust in a job whose
+      # entire purpose is supply-chain and source hygiene.
+      #
+      # The version pin is load-bearing rather than hygiene. Which files Semgrep's
+      # PHP frontend can parse changes between releases, and this gate records the
+      # files it cannot parse as accepted blind spots; a floating version would move
+      # that set silently in either direction — new holes appearing unnoticed, or
+      # recorded holes going stale. The baseline stores the version it was measured
+      # under, and the assertion below refuses to scan under a different one rather
+      # than producing an answer that means something else.
+      - name: Install Semgrep
+        run: |
+          pipx install "semgrep==1.155.0"
+          installed="$(semgrep --version)"
+          if [ "$installed" != "1.155.0" ]; then
+            echo "Expected semgrep 1.155.0, got '$installed'." >&2
+            exit 1
+          fi
+
+      # Fails on WARNING, not on ERROR, because every rule in the Pulsar ruleset is
+      # WARNING and a threshold above the lowest severity present would re-create
+      # the inert gate this job replaces. The 51 pre-existing findings are recorded
+      # in tools/security/semgrep-baseline.json as ADR-0006 migration debt; the
+      # fifty-second fails the build.
+      #
+      # No `composer install` above: the gate script uses no autoloaded class and
+      # Semgrep reads source rather than a resolved dependency tree, so installing
+      # would cost a minute and change no answer.
+      - run: composer security:lint
+
+  # The artefact an assessor is actually handed, produced from a booted deployment
+  # rather than from a table of literals somebody typed. ADR-0041 and ADR-0045
+  # record why that distinction is the whole point: a control that reports itself
+  # implemented on the strength of a class existing is worth less than no control.
+  #
+  # Its own job because it boots the kernel, which nothing else in php-quality does,
+  # and because the JSON report is worth keeping as an artifact whether the gate
+  # passed or failed -- a failing report is the more useful of the two to read.
+  compliance-report:
+    name: Compliance Report (claims are observed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: php-quality
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_sqlite, sodium
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      # Produced BEFORE the gate and deliberately not allowed to fail the step. A
+      # failing report is the more useful of the two to read, and a step ordering
+      # that only kept the artifact on success would throw away exactly the runs
+      # someone needs it for.
+      #
+      # The master key is generated per run and never written into this file, for
+      # the same reason as in cache-warmup: a key committed to a workflow is public.
+      # Assigned then exported, because `export X="$(cmd)"` returns export's status
+      # and a failing key generation would otherwise go unnoticed.
+      - name: Produce the report
+        run: |
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
+          mkdir -p build/compliance
+          php scripts/check_compliance_claims.php --json > build/compliance/report.json || true
+
+      - name: Upload compliance report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: compliance-report
+          path: build/compliance/report.json
+          retention-days: 30
+
+      # The gate itself, run for its human-readable output: when it fails it names
+      # each control, why the deployment did not show it, and what would fix it,
+      # which is what a reader needs in the log rather than in a JSON attachment.
+      - name: Fail on any control claimed and not observed
+        run: |
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
+          composer compliance:check
 
   adr-check:
     name: ADR Governance Check
