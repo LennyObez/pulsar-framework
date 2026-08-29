@@ -131,10 +131,11 @@ therefore never existed and this ADR's migration had nothing to correct. Both no
 through `Pulsar\Database\Schema\IndexOperations`.
 
 Every step is individually guarded rather than the whole `up()` being skipped when the
-column is already gone. MySQL and SQLite commit each DDL statement as it runs while the
-migration runner records a migration only once `up()` returns, so a run that dies partway
-runs again from the top — and an early return would report success over a half-migrated
-table.
+column is already gone. The migration runner records a migration only once `up()` returns,
+and does it outside the transaction that wrapped `up()`, so a run interrupted in that window
+runs again from the top on any engine. MySQL adds a second route to the same replay, because
+it commits each DDL statement as it runs and can leave the schema half-changed as well. An
+early return would report success over a half-migrated table.
 
 Rollback: `down()` restores the column with a default and puts the original index back. It
 does not restore the wide key, for the reason given above.

@@ -1,6 +1,6 @@
 # Mail
 
-Pulsar's mail module provides a unified API for sending email through multiple transport backends. It supports typed Mailable classes, inline and file attachments, TLS encryption policy enforcement, HIPAA-compliant PHI scrubbing, audit logging, and async delivery via the queue system.
+Pulsar's mail module provides a unified API for sending email through multiple transport backends. It supports typed Mailable classes, inline and file attachments, TLS encryption policy enforcement, pattern-based PHI redaction, audit logging, and async delivery via the queue system.
 
 ## Quick start
 
@@ -251,9 +251,11 @@ The `encryption_policy` setting controls TLS enforcement for outgoing mail:
 
 When a fallback occurs under the `prefer` policy, a `MailEncryptionFallbackEvent` is emitted with the recipient email, reason, and policy.
 
-## HIPAA compliance mode
+## PHI redaction mode
 
-When `hipaa_mode` is enabled, the `PhiScrubber` is registered in the container and can be used to scan outgoing mail content for Protected Health Information (PHI) patterns before sending.
+> This is a redaction aid, not a HIPAA control. It matches a fixed set of patterns; it does not understand your data, and PHI that does not match a pattern below passes through untouched. Treating a regex as a Safeguard is how a control comes to be reported as met on the strength of code existing — see [ADR-0045](adr/0045-a-control-status-is-observed-not-written.md). Whether your mail flow handles PHI safely is a question for your risk assessment.
+
+When `hipaa_mode` is enabled (off by default), the `PhiScrubber` is registered in the container and can be used to scan outgoing mail content for Protected Health Information (PHI) patterns before sending.
 
 Detected patterns:
 
@@ -264,6 +266,8 @@ Detected patterns:
 - Dates of birth
 
 Matches are replaced with `[REDACTED]`. The scrubber also exposes `containsPhi()` for detection without modification.
+
+The scrubber is registered, not applied: your mailables must call it. Enabling `hipaa_mode` alone changes nothing about what is sent.
 
 ## Audit logging
 

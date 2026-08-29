@@ -38,26 +38,31 @@ Pulsar targets teams building **mission-critical applications** where you need:
 - **Deterministic architecture** (explicit boundaries, predictable boot pipeline)
 - **Extension-first design** (stable hooks, compatibility checks, versioned lifecycle)
 - **Measurable performance** (bench harness + budgets compared against stored baselines in CI; blocks merges when signal is stable, otherwise advisory with artifacts)
-- **Security by default** (secure sessions, CSRF, headers, encryption, auditability)
-- **Regulated-domain readiness** (documentation mapping features to compliance controls)
+- **Security by default** (secure sessions, CSRF, security headers, auditability). Encryption at rest, session
+  encryption and audit HMAC integrity are derived from `PULSAR_MASTER_KEY` and are inactive until you set it —
+  `composer deploy:check` refuses staging and production without one
+- **Regulated-domain readiness** (control mappings whose outcome is computed against your deployment by
+  `pulsar compliance:report`, not asserted here)
 
 ## Compliance-ready controls
 
-Pulsar provides framework-level controls for seven regulatory and standards frameworks. It does **not** claim certification — it provides secure defaults, audit infrastructure, and documented control mappings that reduce the work required for compliance certification.
+Pulsar provides framework-level controls for seven regulatory and standards frameworks. It does **not** claim certification, and this table is not a statement about your deployment. It lists what the framework offers and what remains yours.
 
-| Framework          | What Pulsar provides                                                                                                             | What the integrator must add                                                                           |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **SOC 2**          | Audit logging with HMAC chain, RBAC, session management, observability, incident interfaces                                      | Organizational policies, personnel training, SOC 2 Type II audit engagement                            |
-| **HIPAA 2026**     | Encryption (at rest + in transit), MFA support, audit trails, access controls, incident reporting interfaces                     | BAA execution, PHI data handling procedures, workforce training, 72-hour restoration procedures        |
-| **ISO 27001:2022** | Annex A technological controls (A.8.x): authentication, logging, cryptography, access restriction, configuration management      | ISMS documentation, risk treatment plans, management review, internal audit program                    |
-| **GDPR**           | Consent management interfaces, data retention/purging interfaces, encryption, audit trails, `#[SensitiveParameter]` masking      | DPO appointment, DPIA execution, data processing agreements, breach notification procedures            |
-| **PCI DSS v4.0.1** | Tokenization, encryption, key management, session hardening, audit logging with retention, CSRF protection                       | QSA engagement, network segmentation, vulnerability scanning, PCI DSS SAQ/ROC                          |
-| **ISO 42001:2023** | AI model registry, impact assessments, explainability, data governance, lifecycle management, deployment gates, AI audit logging | AI policy documentation, model card content, production monitoring implementations, AIMS certification |
-| **NIS2**           | Cryptography, access controls, incident reporting, monitoring, resilience (circuit breaker, retry)                               | Risk management policies, supply chain security, incident notification to authorities                  |
+For what a deployment actually achieves, run `pulsar compliance:report`: it assesses each control with a probe against the running application and exits non-zero on a control an enabled framework claims and the deployment does not show. On the default framework set, a first run is red — see [docs/compliance.md](docs/compliance.md) for the baseline and the reasons.
 
-> **ISO 42001:2023 differentiator**: Pulsar is the first PHP framework to ship AI Management System controls. The `pulsar/ai-governance` extension provides model registry, impact assessments, explainability interfaces, training data governance, and lifecycle management with deployment gates — all mapped to ISO 42001 clauses.
+| Framework          | What Pulsar provides                                                                                                            | What the integrator must add                                                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SOC 2**          | Audit logging with HMAC chain (requires `PULSAR_MASTER_KEY`), RBAC, session management, observability, incident interfaces      | Organizational policies, personnel training, SOC 2 Type II audit engagement. 24 of the 42 criteria are organizational and are reported as operator responsibilities, not as coverage                                         |
+| **HIPAA 2026**     | Encryption at rest (requires `PULSAR_MASTER_KEY`), MFA support, audit trails, access controls, incident reporting interfaces    | TLS termination, BAA execution, PHI data handling procedures, workforce training, and 72-hour restoration — which needs a backup primitive Pulsar does not ship                                                              |
+| **ISO 27001:2022** | Annex A technological controls (A.8.x): authentication, logging, cryptography, access restriction, configuration management     | ISMS documentation, risk treatment plans, management review, internal audit program                                                                                                                                          |
+| **GDPR**           | Consent management interfaces, data retention/purging interfaces, encryption, audit trails, `#[SensitiveParameter]` masking     | DPO appointment, DPIA execution, data processing agreements, breach notification procedures                                                                                                                                  |
+| **PCI DSS v4.0.1** | Tokenization, encryption, key management, session hardening, audit logging with retention, CSRF protection                      | QSA engagement, network segmentation, vulnerability scanning, PCI DSS SAQ/ROC                                                                                                                                                |
+| **ISO 42001:2023** | AI governance **contracts** plus in-memory reference stores, via the optional `pulsar/ai-governance` extension (off by default) | Durable stores for every `InMemory*` binding, a `MonitoringHookInterface` implementation (none exists in the tree, so Clause 9.1 cannot be satisfied today), AI policy documentation, model card content, AIMS certification |
+| **NIS2**           | Cryptography, access controls, incident reporting, monitoring, resilience (circuit breaker, retry)                              | Risk management policies, supply chain security, incident notification to authorities                                                                                                                                        |
 
-**Additional frameworks** (PSD2, eIDAS, MDR, HL7/FHIR, ISO 13485) are covered through extensions and compliance event mappings. See [docs/compliance-matrix.md](docs/compliance-matrix.md) for the full control matrix.
+> **ISO 42001:2023 differentiator**: Pulsar is the first PHP framework to ship AI Management System **contracts** — model registry, impact assessments, explainability, training data governance, and lifecycle management with deployment gates, mapped to ISO 42001 clauses. What ships behind them are in-memory reference implementations suitable for development, and one contract, `MonitoringHookInterface`, has no implementation at all. Treat this as a head start on the interfaces, not as a working AI management system.
+
+**Additional frameworks** (PSD2, eIDAS, MDR, HL7/FHIR, ISO 13485) are covered through extensions and compliance event mappings. See [docs/compliance.md](docs/compliance.md) for the full control matrix, and run `pulsar compliance:report` for the matrix of the deployment in front of you.
 
 ## Core principles
 

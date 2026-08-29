@@ -1022,14 +1022,6 @@
                     "return": "Pulsar\\Api\\Exception\\ApiException",
                     "static": true
                 },
-                "entitySerializationBanned": {
-                    "params": [
-                        "string $entityClass",
-                        "string $correlationId"
-                    ],
-                    "return": "Pulsar\\Api\\Exception\\ApiException",
-                    "static": true
-                },
                 "fieldLimitExceeded": {
                     "params": [
                         "int $requested",
@@ -3084,6 +3076,44 @@
             },
             "constants": []
         },
+        "Pulsar\\Auth\\Authorization\\AuthorizationDecision": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $identityId",
+                        "string $permission",
+                        "?string $resource",
+                        "bool $allowed",
+                        "string $reason",
+                        "float $decidedAtUnix"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "decidedAt": {
+                    "params": [],
+                    "return": "DateTimeImmutable",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Auth\\Authorization\\AuthorizationDecisionSinkInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "record": {
+                    "params": [
+                        "Pulsar\\Auth\\Authorization\\AuthorizationDecision $decision"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Auth\\Authorization\\Event\\AuthenticationFailed": {
             "since": "1.0.0",
             "methods": [],
@@ -3634,6 +3664,11 @@
                         "Psr\\Http\\Message\\ServerRequestInterface $request"
                     ],
                     "return": "?Pulsar\\Auth\\Identity\\IdentityInterface",
+                    "static": false
+                },
+                "lastAuthenticatedAt": {
+                    "params": [],
+                    "return": "?int",
                     "static": false
                 },
                 "login": {
@@ -6321,7 +6356,8 @@
                         "array $routes",
                         "array $containerHints",
                         "string $appEnv",
-                        "bool $strict"
+                        "bool $strict",
+                        "array $bindings"
                     ],
                     "return": "array",
                     "static": false
@@ -7303,6 +7339,18 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\CatalogAlreadyBuiltException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "forLateContribution": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\CatalogAlreadyBuiltException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\ComplianceConfig": {
             "since": "1.0.0-rc.12",
             "methods": [],
@@ -7314,6 +7362,7 @@
                         "bool $bootCheck",
                         "int $evidenceInterval",
                         "bool $strictMode",
+                        "Pulsar\\Compliance\\Evidence\\ComplianceScope $scope",
                         "array $unknownKeys"
                     ],
                     "return": null,
@@ -7448,75 +7497,6 @@
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\ComplianceReport": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": {
-                "__construct": {
-                    "params": [
-                        "Pulsar\\Compliance\\ControlCatalog $catalog",
-                        "Pulsar\\Compliance\\ControlMapping $mapping",
-                        "Pulsar\\Compliance\\ControlVerifier $verifier"
-                    ],
-                    "return": null,
-                    "static": false
-                },
-                "crossFrameworkSummary": {
-                    "params": [
-                        "array $frameworks"
-                    ],
-                    "return": "array",
-                    "static": false
-                },
-                "generate": {
-                    "params": [
-                        "string $framework"
-                    ],
-                    "return": "array",
-                    "static": false
-                }
-            },
-            "constants": []
-        },
-        "Pulsar\\Compliance\\ComplianceStatusProvider": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": {
-                "__construct": {
-                    "params": [
-                        "Pulsar\\Compliance\\ControlCatalog $catalog",
-                        "Pulsar\\Compliance\\ControlMapping $mapping",
-                        "Pulsar\\Compliance\\ControlVerifier $verifier",
-                        "Pulsar\\Compliance\\ComplianceReport $report"
-                    ],
-                    "return": null,
-                    "static": false
-                },
-                "featureCoverageMap": {
-                    "params": [],
-                    "return": "array",
-                    "static": false
-                },
-                "frameworkDetail": {
-                    "params": [
-                        "string $framework"
-                    ],
-                    "return": "array",
-                    "static": false
-                },
-                "overview": {
-                    "params": [],
-                    "return": "array",
-                    "static": false
-                },
-                "verifier": {
-                    "params": [],
-                    "return": "Pulsar\\Compliance\\ControlVerifier",
-                    "static": false
-                }
-            },
-            "constants": []
-        },
         "Pulsar\\Compliance\\Concern\\HasAccessControl": {
             "since": "1.0.0",
             "methods": [],
@@ -7637,27 +7617,8 @@
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\Control": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": {
-                "__construct": {
-                    "params": [
-                        "string $id",
-                        "string $framework",
-                        "string $title",
-                        "string $description",
-                        "Pulsar\\Compliance\\ControlStatus $status",
-                        "array $frameworkFeatures"
-                    ],
-                    "return": null,
-                    "static": false
-                }
-            },
-            "constants": []
-        },
         "Pulsar\\Compliance\\ControlCatalog": {
-            "since": "1.0.0",
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
                 "all": {
@@ -7667,16 +7628,16 @@
                 },
                 "byFramework": {
                     "params": [
-                        "string $framework"
+                        "Pulsar\\Compliance\\ComplianceFramework $framework"
                     ],
                     "return": "array",
                     "static": false
                 },
-                "byStatus": {
+                "contribute": {
                     "params": [
-                        "Pulsar\\Compliance\\ControlStatus $status"
+                        "callable $source"
                     ],
-                    "return": "array",
+                    "return": "void",
                     "static": false
                 },
                 "count": {
@@ -7684,16 +7645,30 @@
                     "return": "int",
                     "static": false
                 },
+                "frameworks": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
                 "get": {
                     "params": [
+                        "Pulsar\\Compliance\\ComplianceFramework $framework",
                         "string $id"
                     ],
-                    "return": "?Pulsar\\Compliance\\Control",
+                    "return": "?Pulsar\\Compliance\\Control\\ControlDeclaration",
+                    "static": false
+                },
+                "has": {
+                    "params": [
+                        "Pulsar\\Compliance\\ComplianceFramework $framework",
+                        "string $id"
+                    ],
+                    "return": "bool",
                     "static": false
                 },
                 "register": {
                     "params": [
-                        "Pulsar\\Compliance\\Control $control"
+                        "Pulsar\\Compliance\\Control\\ControlDeclaration $declarations"
                     ],
                     "return": "void",
                     "static": false
@@ -7701,8 +7676,68 @@
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\ControlMapping": {
-            "since": "1.0.0",
+        "Pulsar\\Compliance\\Control\\ContractResolution": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "answeredBy": {
+                    "params": [
+                        "string $contract",
+                        "string $role",
+                        "string $concrete",
+                        "array $accepts",
+                        "array $inert"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ContractResolution",
+                    "static": true
+                },
+                "detail": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "discharged": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "unanswered": {
+                    "params": [
+                        "string $contract",
+                        "string $role"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ContractResolution",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ControlAssessment": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
                 "__construct": {
@@ -7712,43 +7747,767 @@
                     "return": null,
                     "static": false
                 },
-                "controlsForFeature": {
+                "assessAll": {
                     "params": [
-                        "string $featureName"
+                        "Pulsar\\Compliance\\Control\\ControlEvidence $evidence"
                     ],
                     "return": "array",
                     "static": false
                 },
-                "coverageReport": {
-                    "params": [],
-                    "return": "array",
-                    "static": false
-                },
-                "featureCoverageMap": {
-                    "params": [],
-                    "return": "array",
-                    "static": false
-                },
-                "featuresForControl": {
+                "assessFrameworks": {
                     "params": [
-                        "string $controlId"
+                        "array $frameworks",
+                        "Pulsar\\Compliance\\Control\\ControlEvidence $evidence"
                     ],
                     "return": "array",
                     "static": false
                 },
-                "map": {
+                "summarize": {
                     "params": [
-                        "string $featureName",
-                        "string $controlId"
+                        "array $findings"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\CoverageSummary",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ControlDeclaration": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
                     ],
                     "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "isProbed": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "operatorResponsibility": {
+                    "params": [
+                        "string $id",
+                        "Pulsar\\Compliance\\ComplianceFramework $framework",
+                        "string $title",
+                        "string $requirement",
+                        "string $artefact"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ControlDeclaration",
+                    "static": true
+                },
+                "probed": {
+                    "params": [
+                        "string $id",
+                        "Pulsar\\Compliance\\ComplianceFramework $framework",
+                        "string $title",
+                        "string $requirement",
+                        "Pulsar\\Compliance\\Control\\ControlProbeInterface $probe"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ControlDeclaration",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ControlEvidence": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "gathered": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\Observation $observations"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ControlEvidence",
+                    "static": true
+                },
+                "observation": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
                     "static": false
                 }
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\ControlStatus": {
-            "since": "1.0.0",
+        "Pulsar\\Compliance\\Control\\ControlFinding": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "assess": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ControlDeclaration $declaration",
+                        "Pulsar\\Compliance\\Control\\ControlEvidence $evidence"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ControlFinding",
+                    "static": true
+                },
+                "isFailing": {
+                    "params": [
+                        "bool $strict"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ControlOutcome": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "countsTowardCoverage": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "isGap": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "severityRank": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ControlProbeInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ControlRequirement": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "of": {
+                    "params": [
+                        "array $required",
+                        "array $supporting",
+                        "?Pulsar\\Compliance\\Control\\ObservationId $scope",
+                        "array $whenUnobserved"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\CoverageSummary": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "hasGaps": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "over": {
+                    "params": [
+                        "array $findings"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\CoverageSummary",
+                    "static": true
+                },
+                "probedCoveragePercent": {
+                    "params": [],
+                    "return": "float",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ExecutedSubject": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "failed": {
+                    "params": [
+                        "string $name",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ExecutedSubject",
+                    "static": true
+                },
+                "passed": {
+                    "params": [
+                        "string $name",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ExecutedSubject",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "forCloning": {
+                    "params": [
+                        "string $type"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forDeserialization": {
+                    "params": [
+                        "string $type",
+                        "int $properties"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forFactWithoutRemediation": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forForeignProduction": {
+                    "params": [
+                        "string $produced",
+                        "string $seam",
+                        "?string $caller"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forNotApplicable": {
+                    "params": [
+                        "string $summary",
+                        "Pulsar\\Compliance\\Control\\Observation $scope"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forPartial": {
+                    "params": [
+                        "string $summary",
+                        "array $evidence"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forPartialWithoutRemediation": {
+                    "params": [
+                        "string $summary"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forPopulatedAbsence": {
+                    "params": [
+                        "string $subject",
+                        "int $found"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forRequirementWithoutFacts": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forSatisfied": {
+                    "params": [
+                        "string $summary",
+                        "array $evidence"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forSubjectedNotApplicable": {
+                    "params": [
+                        "string $summary",
+                        "array $required"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forUnsatisfiedWithoutRemediation": {
+                    "params": [
+                        "string $summary"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\IncompleteEvidenceException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "missing": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "notGathered": {
+                    "params": [
+                        "array $missing"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\IncompleteEvidenceException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\Inspection": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "coverage": {
+                    "params": [
+                        "string $population",
+                        "array $members",
+                        "array $shortfall",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Inspection",
+                    "static": true
+                },
+                "defectScan": {
+                    "params": [
+                        "string $population",
+                        "array $defects",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Inspection",
+                    "static": true
+                },
+                "membership": {
+                    "params": [
+                        "string $population",
+                        "string $member",
+                        "array $roster",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Inspection",
+                    "static": true
+                },
+                "nothingToInspect": {
+                    "params": [
+                        "string $population",
+                        "string $why"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Inspection",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\Measurement": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "completed": {
+                    "params": [
+                        "string $subject",
+                        "array $results",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Measurement",
+                    "static": true
+                },
+                "couldNotRun": {
+                    "params": [
+                        "string $subject",
+                        "string $why"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Measurement",
+                    "static": true
+                },
+                "succeeded": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\Observation": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "assertedInScope": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "string $detail",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "assertedOutOfScope": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "string $detail",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "cite": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "declaredMet": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "string $detail",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "declaredUnmet": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "string $detail",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "inspected": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "Pulsar\\Compliance\\Control\\Inspection $inspection",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "isAdmissibleAsProof": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "measured": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "Pulsar\\Compliance\\Control\\Measurement $measurement",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "noSubject": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "Pulsar\\Compliance\\Control\\SubjectAbsence $absence",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
+                "resolved": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "Pulsar\\Compliance\\Control\\ContractResolution $resolution",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ObservationGrade": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "provesBehaviour": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\ObservationId": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
                 "cases": {
@@ -7773,104 +8532,404 @@
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\ControlVerifier": {
-            "since": "1.0.0",
+        "Pulsar\\Compliance\\Control\\ProbeVerdict": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
-                "__construct": {
-                    "params": [
-                        "Pulsar\\Compliance\\ControlCatalog $catalog"
-                    ],
+                "__clone": {
+                    "params": [],
                     "return": null,
                     "static": false
                 },
-                "registerVerifier": {
+                "__set_state": {
                     "params": [
-                        "string $controlId",
-                        "callable $verifier"
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
                     ],
                     "return": "void",
                     "static": false
                 },
-                "summarize": {
-                    "params": [
-                        "array $results"
-                    ],
-                    "return": "array",
-                    "static": true
-                },
-                "verify": {
-                    "params": [
-                        "string $controlId"
-                    ],
-                    "return": "Pulsar\\Compliance\\VerificationResult",
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
                     "static": false
                 },
-                "verifyAll": {
+                "reach": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ControlRequirement $requirement",
+                        "Pulsar\\Compliance\\Control\\ControlEvidence $evidence"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\ProbeVerdict",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\RequiredFact": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "contributing": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "array $remediations",
+                        "string $whenMissing"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\RequiredFact",
+                    "static": true
+                },
+                "essential": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "array $remediations",
+                        "string $whenMissing"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\RequiredFact",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\SubjectAbsence": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "noneIn": {
+                    "params": [
+                        "string $subject",
+                        "array $population",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\SubjectAbsence",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\UnmeasuredSubjectException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "emptyPopulation": {
+                    "params": [
+                        "string $population"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\UnmeasuredSubjectException",
+                    "static": true
+                },
+                "nothingRan": {
+                    "params": [
+                        "string $subject"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\UnmeasuredSubjectException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\DuplicateControlException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "forControl": {
+                    "params": [
+                        "Pulsar\\Compliance\\ComplianceFramework $framework",
+                        "string $id"
+                    ],
+                    "return": "Pulsar\\Compliance\\DuplicateControlException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\ComplianceScope": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $overrides"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "assertion": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                },
+                "assertions": {
                     "params": [],
                     "return": "array",
                     "static": false
                 },
-                "verifyFramework": {
+                "fromArray": {
                     "params": [
-                        "string $framework"
+                        "mixed $raw"
                     ],
+                    "return": "Pulsar\\Compliance\\Evidence\\ComplianceScope",
+                    "static": true
+                },
+                "inScope": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\DatabaseTlsObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "configuredForTls": {
+                    "params": [
+                        "?Pulsar\\Config\\DatabaseConfig $config"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "connectionUsesTls": {
+                    "params": [
+                        "Pulsar\\Config\\ConnectionConfig $connection"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "connectionsWithoutTls": {
+                    "params": [
+                        "Pulsar\\Config\\DatabaseConfig $config"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "isLocalIpcConnection": {
+                    "params": [
+                        "Pulsar\\Config\\ConnectionConfig $connection"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "networkedConnections": {
+                    "params": [
+                        "Pulsar\\Config\\DatabaseConfig $config"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Config\\DatabaseConfig $config",
+                        "?Pulsar\\Database\\ConnectionInterface $connection"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\EvidenceChainHead": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "int $version",
+                        "string $genesis",
+                        "int $height",
+                        "string $signature",
+                        "DateTimeImmutable $updatedAt",
+                        "string $mac"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $decoded"
+                    ],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceChainHead",
+                    "static": true
+                },
+                "message": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "toArray": {
+                    "params": [],
                     "return": "array",
                     "static": false
                 }
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\Evidence\\EvidenceCollector": {
-            "since": "1.0.0",
+        "Pulsar\\Compliance\\Evidence\\EvidenceChainHeadAware": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
-                "__construct": {
-                    "params": [
-                        "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface $store",
-                        "?Random\\Randomizer $randomizer"
-                    ],
-                    "return": null,
-                    "static": false
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
                 },
-                "collect": {
+                "countForControl": {
                     "params": [
-                        "string $controlId",
-                        "string $type",
-                        "string $description",
-                        "array $data",
-                        "?string $signature"
+                        "string $controlId"
                     ],
-                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceRecord",
-                    "static": false
+                    "return": "int",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
                 },
-                "collectAll": {
+                "forControl": {
                     "params": [
                         "string $controlId"
                     ],
                     "return": "array",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "get": {
+                    "params": [
+                        "string $id"
+                    ],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceRecord",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "hasHead": {
+                    "params": [],
+                    "return": "bool",
                     "static": false
                 },
-                "collectByType": {
-                    "params": [
-                        "string $controlId",
-                        "string $type"
-                    ],
-                    "return": "array",
-                    "static": false
-                },
-                "registerCollector": {
-                    "params": [
-                        "string $type",
-                        "callable $collector"
-                    ],
-                    "return": "void",
+                "head": {
+                    "params": [],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceChainHead",
                     "static": false
                 },
                 "store": {
-                    "params": [],
-                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface",
+                    "params": [
+                        "Pulsar\\Compliance\\Evidence\\EvidenceRecord $record"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "writeHead": {
+                    "params": [
+                        "Pulsar\\Compliance\\Evidence\\EvidenceChainHead $head"
+                    ],
+                    "return": "void",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\EvidenceChainStateAware": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "chainState": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\Audit\\AuditChainState",
+                    "static": false
+                },
+                "countForControl": {
+                    "params": [
+                        "string $controlId"
+                    ],
+                    "return": "int",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "forControl": {
+                    "params": [
+                        "string $controlId"
+                    ],
+                    "return": "array",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "get": {
+                    "params": [
+                        "string $id"
+                    ],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceRecord",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
+                },
+                "store": {
+                    "params": [
+                        "Pulsar\\Compliance\\Evidence\\EvidenceRecord $record"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface"
                 }
             },
             "constants": []
@@ -7890,6 +8949,18 @@
                         "?string $signature"
                     ],
                     "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\EvidenceSourceInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "gather": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlEvidence",
                     "static": false
                 }
             },
@@ -7961,13 +9032,69 @@
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\Evidence\\InMemoryEvidenceStore": {
-            "since": "1.0.0",
+        "Pulsar\\Compliance\\Evidence\\EvidenceWriteFailedException": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
+                "directoryNotCreated": {
+                    "params": [
+                        "string $directory"
+                    ],
+                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceWriteFailedException",
+                    "static": true
+                },
+                "headNotEncodable": {
+                    "params": [
+                        "string $path",
+                        "Throwable $previous"
+                    ],
+                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceWriteFailedException",
+                    "static": true
+                },
+                "headNotWritable": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceWriteFailedException",
+                    "static": true
+                },
+                "notEncodable": {
+                    "params": [
+                        "string $recordId",
+                        "Throwable $previous"
+                    ],
+                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceWriteFailedException",
+                    "static": true
+                },
+                "notWritable": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": "Pulsar\\Compliance\\Evidence\\EvidenceWriteFailedException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\FileEvidenceStore": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": null,
+                    "static": false
+                },
                 "all": {
                     "params": [],
                     "return": "array",
+                    "static": false
+                },
+                "chainState": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\Audit\\AuditChainState",
                     "static": false
                 },
                 "countForControl": {
@@ -7991,9 +9118,50 @@
                     "return": "?Pulsar\\Compliance\\Evidence\\EvidenceRecord",
                     "static": false
                 },
+                "hasHead": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "head": {
+                    "params": [],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceChainHead",
+                    "static": false
+                },
+                "headPath": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "latestForControl": {
+                    "params": [
+                        "string $controlId"
+                    ],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceRecord",
+                    "static": false
+                },
+                "path": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "recent": {
+                    "params": [
+                        "int $limit"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
                 "store": {
                     "params": [
                         "Pulsar\\Compliance\\Evidence\\EvidenceRecord $record"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "writeHead": {
+                    "params": [
+                        "Pulsar\\Compliance\\Evidence\\EvidenceChainHead $head"
                     ],
                     "return": "void",
                     "static": false
@@ -8001,35 +9169,1138 @@
             },
             "constants": []
         },
-        "Pulsar\\Compliance\\VerificationResult": {
+        "Pulsar\\Compliance\\Evidence\\InMemoryEvidenceStore": {
             "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "chainState": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\Audit\\AuditChainState",
+                    "static": false
+                },
+                "countForControl": {
+                    "params": [
+                        "string $controlId"
+                    ],
+                    "return": "int",
+                    "static": false
+                },
+                "forControl": {
+                    "params": [
+                        "string $controlId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "get": {
+                    "params": [
+                        "string $id"
+                    ],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceRecord",
+                    "static": false
+                },
+                "hasHead": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "head": {
+                    "params": [],
+                    "return": "?Pulsar\\Compliance\\Evidence\\EvidenceChainHead",
+                    "static": false
+                },
+                "store": {
+                    "params": [
+                        "Pulsar\\Compliance\\Evidence\\EvidenceRecord $record"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "writeHead": {
+                    "params": [
+                        "Pulsar\\Compliance\\Evidence\\EvidenceChainHead $head"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\ResolvedBindings": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
                 "__construct": {
                     "params": [
-                        "string $controlId",
-                        "bool $passed",
-                        "string $message",
-                        "?int $verifiedAt"
+                        "array $resolved"
                     ],
                     "return": null,
                     "static": false
                 },
-                "fail": {
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "answered": {
                     "params": [
-                        "string $controlId",
-                        "string $message"
+                        "string $contract"
                     ],
-                    "return": "Pulsar\\Compliance\\VerificationResult",
+                    "return": "bool",
+                    "static": false
+                },
+                "concreteFor": {
+                    "params": [
+                        "string $contract"
+                    ],
+                    "return": "?string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\RouteInventory": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $routes"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "classifiedRoutes": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "Pulsar\\Compliance\\Verification\\DataPathVerifier $verifier"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\TokenVaultObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Random\\Randomizer $randomizer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Security\\Crypto\\TokenizationServiceInterface $vault",
+                        "?Pulsar\\Security\\Crypto\\TokenStoreInterface $store"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\UnknownScopeAssertionException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "forId": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id"
+                    ],
+                    "return": "Pulsar\\Compliance\\Evidence\\UnknownScopeAssertionException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AccessRestrictionProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiAuditTrailProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiDataGovernanceProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiExplainabilityProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiImpactAssessmentProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiLifecycleProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiModelRegistryProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiMonitoringProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AiTransparencyProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\ApplicationHardeningProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\AssetInventoryProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\BreachNotificationProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\CapabilityProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Control\\ControlProbeInterface"
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Control\\ControlProbeInterface"
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\ConfigurationManagementProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\ConsentManagementProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\ContinuousMonitoringProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\CryptographicControlProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\DataErasureProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\DataLeakagePreventionProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\DataProtectionAtRestProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\DataRetentionProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\GovernanceProfileProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\HealthDataProtectionProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\IncidentResponseProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\KeyManagementProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\MultiFactorAuthenticationProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\PanAtRestProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\PlatformHardeningProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\PseudonymizationProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\RecoveryCapabilityProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\RiskAssessmentProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\SecureSessionProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\SubjectRightsProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\TamperEvidentAuditProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Probe\\TransportSecurityProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\ComplianceAssessment": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Compliance\\Report\\ReportContext $context",
+                        "array $frameworks",
+                        "array $findings"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "failing": {
+                    "params": [
+                        "bool $strict"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "findingsFor": {
+                    "params": [
+                        "Pulsar\\Compliance\\ComplianceFramework $framework"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "gaps": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "operatorResponsibilities": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "partials": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "summary": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\CoverageSummary",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\JsonReportRenderer": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "render": {
+                    "params": [
+                        "Pulsar\\Compliance\\Report\\ComplianceAssessment $assessment"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "toArray": {
+                    "params": [
+                        "Pulsar\\Compliance\\Report\\ComplianceAssessment $assessment"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\MarkdownReportRenderer": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "render": {
+                    "params": [
+                        "Pulsar\\Compliance\\Report\\ComplianceAssessment $assessment"
+                    ],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\ReportContext": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $applicationName",
+                        "string $environment",
+                        "DateTimeImmutable $generatedAt",
+                        "string $phpVersion",
+                        "string $sapi",
+                        "string $frameworkSource"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "generatedAtIso": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\ReportDisclaimer": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": [],
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\ReportFormat": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "accepted": {
+                    "params": [],
+                    "return": "string",
                     "static": true
                 },
-                "pass": {
-                    "params": [
-                        "string $controlId",
-                        "string $message"
-                    ],
-                    "return": "Pulsar\\Compliance\\VerificationResult",
+                "cases": {
+                    "params": [],
+                    "return": "array",
                     "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\ReportRendererInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "render": {
+                    "params": [
+                        "Pulsar\\Compliance\\Report\\ComplianceAssessment $assessment"
+                    ],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Report\\TextReportRenderer": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "render": {
+                    "params": [
+                        "Pulsar\\Compliance\\Report\\ComplianceAssessment $assessment"
+                    ],
+                    "return": "string",
+                    "static": false
                 }
             },
             "constants": []
@@ -8050,6 +10321,43 @@
                         "Pulsar\\Compliance\\Verification\\VerificationReport $report"
                     ],
                     "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\BreachNotificationCheck": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Compliance\\ComplianceProfile $profile",
+                        "bool $constrained",
+                        "?Pulsar\\Security\\Incident\\IncidentReporterInterface $register",
+                        "?Psr\\Clock\\ClockInterface $clock"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "description": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "domain": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Verification\\ComplianceCheckDomain",
+                    "static": false
+                },
+                "execute": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Verification\\CheckResult",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
                     "static": false
                 }
             },
@@ -8265,6 +10573,11 @@
                     ],
                     "return": "Pulsar\\Compliance\\Verification\\VerificationReport",
                     "static": false
+                },
+                "withoutEvidenceRecording": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Verification\\ComplianceVerificationEngine",
+                    "static": false
                 }
             },
             "constants": []
@@ -8417,9 +10730,19 @@
                     "return": null,
                     "static": false
                 },
+                "appendRefusal": {
+                    "params": [],
+                    "return": "?string",
+                    "static": false
+                },
                 "currentSignature": {
                     "params": [],
                     "return": "string",
+                    "static": false
+                },
+                "height": {
+                    "params": [],
+                    "return": "int",
                     "static": false
                 },
                 "periodSummary": {
@@ -8436,11 +10759,136 @@
                     "return": "Pulsar\\Compliance\\Evidence\\EvidenceRecord",
                     "static": false
                 },
-                "verifyChain": {
+                "verify": {
                     "params": [
-                        "array $records"
+                        "int $limit"
                     ],
+                    "return": "Pulsar\\Compliance\\Verification\\EvidenceChainVerification",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\EvidenceChainVerdict": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "admissible": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "cases": {
+                    "params": [],
                     "return": "array",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\EvidenceChainVerification": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Compliance\\Verification\\EvidenceChainVerdict $verdict",
+                        "int $present",
+                        "?int $attested",
+                        "int $verified",
+                        "int $examined",
+                        "array $brokenAt",
+                        "string $summary"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "admissible": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\EvidenceCollectionJob": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Compliance\\Verification\\ComplianceVerificationEngine $engine",
+                        "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface $store",
+                        "int $intervalSeconds",
+                        "Pulsar\\Scheduler\\Schedule $schedule",
+                        "?Psr\\Clock\\ClockInterface $clock"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "execute": {
+                    "params": [
+                        "Pulsar\\Scheduler\\JobContext $context"
+                    ],
+                    "return": "Pulsar\\Scheduler\\JobResult",
+                    "static": false
+                },
+                "getDescription": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "getName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "getSchedule": {
+                    "params": [],
+                    "return": "Pulsar\\Scheduler\\Schedule",
+                    "static": false
+                },
+                "scheduleFor": {
+                    "params": [
+                        "int $intervalSeconds",
+                        "string $timezone"
+                    ],
+                    "return": "Pulsar\\Scheduler\\Schedule",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\PasswordPolicyCheck": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Compliance\\ComplianceProfile $profile",
+                        "bool $constrained"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "description": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "domain": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Verification\\ComplianceCheckDomain",
+                    "static": false
+                },
+                "execute": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Verification\\CheckResult",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
                     "static": false
                 }
             },
@@ -8533,9 +10981,10 @@
                     "params": [
                         "Pulsar\\Compliance\\ComplianceProfile $profile",
                         "bool $sessionEncryptionActive",
-                        "bool $masterKeyDerived",
+                        "?Pulsar\\Security\\Crypto\\MasterKey $masterKey",
                         "bool $auditLogActive",
-                        "bool $dbTlsActive"
+                        "bool $dbTlsActive",
+                        "?Pulsar\\Security\\Crypto\\CipherSuiteInterface $activeCipherSuite"
                     ],
                     "return": null,
                     "static": false
@@ -8544,6 +10993,20 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\UnverifiableEvidenceChainException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "refusingToAppend": {
+                    "params": [
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Compliance\\Verification\\UnverifiableEvidenceChainException",
+                    "static": true
                 }
             },
             "constants": []
@@ -8693,7 +11156,6 @@
                         "int $paginationMaxSize",
                         "string $versioningStrategy",
                         "Pulsar\\Api\\Resource\\ComplexityLimits $complexityLimits",
-                        "bool $entitySerializationBanEnabled",
                         "array $unknownKeys"
                     ],
                     "return": null,
@@ -8878,7 +11340,8 @@
                     "params": [
                         "array $roles",
                         "array $superRoles",
-                        "array $unknownKeys"
+                        "array $unknownKeys",
+                        "int $decisionAuditBuffer"
                     ],
                     "return": null,
                     "static": false
@@ -9781,6 +12244,14 @@
                     "return": "Pulsar\\Config\\Exception\\ConfigException",
                     "static": true
                 },
+                "malformedTrustedExtension": {
+                    "params": [
+                        "string $extensionName",
+                        "string $found"
+                    ],
+                    "return": "Pulsar\\Config\\Exception\\ConfigException",
+                    "static": true
+                },
                 "missingRequired": {
                     "params": [
                         "string $key",
@@ -9789,9 +12260,27 @@
                     "return": "Pulsar\\Config\\Exception\\ConfigException",
                     "static": true
                 },
+                "unknownExtensionCapability": {
+                    "params": [
+                        "string $extensionName",
+                        "string $capability",
+                        "array $known"
+                    ],
+                    "return": "Pulsar\\Config\\Exception\\ConfigException",
+                    "static": true
+                },
                 "unknownKeys": {
                     "params": [
                         "array $descriptions"
+                    ],
+                    "return": "Pulsar\\Config\\Exception\\ConfigException",
+                    "static": true
+                },
+                "unknownTrustTier": {
+                    "params": [
+                        "string $extensionName",
+                        "string $tier",
+                        "array $known"
                     ],
                     "return": "Pulsar\\Config\\Exception\\ConfigException",
                     "static": true
@@ -13213,6 +15702,20 @@
             },
             "constants": []
         },
+        "Pulsar\\Container\\CallableReflector": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "reflect": {
+                    "params": [
+                        "callable $callable"
+                    ],
+                    "return": "ReflectionFunctionAbstract",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Container\\Compiled\\RouteServiceManifest": {
             "since": "1.0.0",
             "methods": [],
@@ -14033,6 +16536,36 @@
             },
             "constants": []
         },
+        "Pulsar\\Core\\Controller\\ArgumentResolverRegistryInterface": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "add": {
+                    "params": [
+                        "Pulsar\\Core\\Controller\\HandlerArgumentResolverInterface $resolver"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Controller\\ConflictingSealedArgumentException": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "alreadySealed": {
+                    "params": [
+                        "array $parameters",
+                        "Pulsar\\Core\\Controller\\HandlerSignature $signature",
+                        "string $resolver"
+                    ],
+                    "return": "Pulsar\\Core\\Controller\\ConflictingSealedArgumentException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Core\\Controller\\ControllerResolverInterface": {
             "since": "1.0.0-rc.11",
             "methods": [],
@@ -14042,6 +16575,85 @@
                         "string $class"
                     ],
                     "return": "object",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Controller\\HandlerArgumentResolverInterface": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "resolve": {
+                    "params": [
+                        "Pulsar\\Core\\Controller\\HandlerSignature $signature",
+                        "Psr\\Http\\Message\\ServerRequestInterface $request",
+                        "array $routeParameters"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Controller\\HandlerParameter": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $name",
+                        "?string $type",
+                        "bool $builtin",
+                        "bool $hasDefault",
+                        "mixed $default",
+                        "array $typeAlternatives"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "accepts": {
+                    "params": [
+                        "object $value"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "builtinCanHoldObject": {
+                    "params": [
+                        "string $typeName"
+                    ],
+                    "return": "bool",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Controller\\HandlerSignature": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $class",
+                        "string $method",
+                        "array $parameters"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Controller\\SealedArgument": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "mixed $value"
+                    ],
+                    "return": null,
                     "static": false
                 }
             },
@@ -14642,6 +17254,43 @@
             },
             "constants": []
         },
+        "Pulsar\\DataProtection\\DataPurgeJob": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\DataProtection\\DataPurgeOrchestrator $orchestrator",
+                        "Pulsar\\Scheduler\\Schedule $schedule"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "execute": {
+                    "params": [
+                        "Pulsar\\Scheduler\\JobContext $context"
+                    ],
+                    "return": "Pulsar\\Scheduler\\JobResult",
+                    "static": false
+                },
+                "getDescription": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "getName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "getSchedule": {
+                    "params": [],
+                    "return": "Pulsar\\Scheduler\\Schedule",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\DataProtection\\DataPurgeOrchestrator": {
             "since": "1.0.0",
             "methods": [],
@@ -14657,9 +17306,23 @@
                     "return": null,
                     "static": false
                 },
+                "countExpired": {
+                    "params": [
+                        "Pulsar\\DataProtection\\RetentionPolicyInterface $policy"
+                    ],
+                    "return": "int",
+                    "static": false
+                },
                 "dryRun": {
                     "params": [],
                     "return": "array",
+                    "static": false
+                },
+                "purge": {
+                    "params": [
+                        "Pulsar\\DataProtection\\RetentionPolicyInterface $policy"
+                    ],
+                    "return": "int",
                     "static": false
                 },
                 "purgeAll": {
@@ -14988,6 +17651,7 @@
                         "int $batchSize",
                         "bool $auditPurgeOperations",
                         "bool $dryRun",
+                        "string $schedule",
                         "array $unknownKeys"
                     ],
                     "return": null,
@@ -18394,6 +21058,13 @@
                     "return": "Pulsar\\Database\\Schema\\ColumnBuilder",
                     "static": false
                 },
+                "bigText": {
+                    "params": [
+                        "string $column"
+                    ],
+                    "return": "Pulsar\\Database\\Schema\\ColumnBuilder",
+                    "static": false
+                },
                 "binary": {
                     "params": [
                         "string $column"
@@ -18406,6 +21077,13 @@
                         "string $column"
                     ],
                     "return": "Pulsar\\Database\\Schema\\ColumnBuilder",
+                    "static": false
+                },
+                "collation": {
+                    "params": [
+                        "Pulsar\\Database\\Schema\\SchemaCollation $collation"
+                    ],
+                    "return": "void",
                     "static": false
                 },
                 "date": {
@@ -18585,6 +21263,13 @@
                 "build": {
                     "params": [],
                     "return": "Pulsar\\Database\\Schema\\SchemaColumn",
+                    "static": false
+                },
+                "collation": {
+                    "params": [
+                        "Pulsar\\Database\\Schema\\SchemaCollation $collation"
+                    ],
+                    "return": "Pulsar\\Database\\Schema\\ColumnBuilder",
                     "static": false
                 },
                 "comment": {
@@ -18942,6 +21627,11 @@
                     "return": null,
                     "static": false
                 },
+                "driver": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Driver",
+                    "static": false
+                },
                 "driverVariant": {
                     "params": [],
                     "return": "Pulsar\\Database\\DriverVariant",
@@ -19039,6 +21729,32 @@
             },
             "constants": []
         },
+        "Pulsar\\Database\\Schema\\SchemaCollation": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Database\\Schema\\SchemaColumn": {
             "since": "1.0.0",
             "methods": [],
@@ -19059,7 +21775,8 @@
                         "?int $precision",
                         "?int $scale",
                         "array $enumValues",
-                        "?string $comment"
+                        "?string $comment",
+                        "?Pulsar\\Database\\Schema\\SchemaCollation $collation"
                     ],
                     "return": null,
                     "static": false
@@ -19421,7 +22138,8 @@
                         "string $name",
                         "array $columns",
                         "array $indexes",
-                        "array $foreignKeys"
+                        "array $foreignKeys",
+                        "?Pulsar\\Database\\Schema\\SchemaCollation $collation"
                     ],
                     "return": null,
                     "static": false
@@ -19657,6 +22375,49 @@
                     "params": [],
                     "return": "void",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Transport\\NegotiatedTransport": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $encrypted",
+                        "string $detail"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Transport\\TransportSecurity": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "crossesNetwork": {
+                    "params": [
+                        "Pulsar\\Database\\Driver $driver"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "honoursSslModeOption": {
+                    "params": [
+                        "Pulsar\\Database\\Driver $driver"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "negotiated": {
+                    "params": [
+                        "Pulsar\\Database\\ConnectionInterface $connection"
+                    ],
+                    "return": "?Pulsar\\Database\\Transport\\NegotiatedTransport",
+                    "static": true
                 }
             },
             "constants": []
@@ -20900,27 +23661,6 @@
             },
             "constants": []
         },
-        "Pulsar\\Extensibility\\EnvironmentInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": {
-                "get": {
-                    "params": [
-                        "string $key"
-                    ],
-                    "return": "?string",
-                    "static": false
-                },
-                "has": {
-                    "params": [
-                        "string $key"
-                    ],
-                    "return": "bool",
-                    "static": false
-                }
-            },
-            "constants": []
-        },
         "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException": {
             "since": "1.0.0",
             "methods": [],
@@ -20948,10 +23688,54 @@
                     "static": true,
                     "inherited_from": "Pulsar\\Extensibility\\Exception\\ExtensionException"
                 },
+                "forAutowiredReach": {
+                    "params": [
+                        "string $className",
+                        "string $reachPath",
+                        "Pulsar\\Extensibility\\TrustTier $tier"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
+                    "static": true
+                },
                 "forCapability": {
                     "params": [
                         "Pulsar\\Extensibility\\TrustTier $tier",
                         "Pulsar\\Extensibility\\ExtensionCapability $denied"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
+                    "static": true
+                },
+                "forInjectedService": {
+                    "params": [
+                        "string $className",
+                        "string $serviceId",
+                        "Pulsar\\Extensibility\\TrustTier $tier",
+                        "Pulsar\\Extensibility\\ExtensionCapability $required"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
+                    "static": true
+                },
+                "forReachableValue": {
+                    "params": [
+                        "string $origin",
+                        "string $rootType",
+                        "Pulsar\\Extensibility\\TrustTier $tier"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
+                    "static": true
+                },
+                "forReservedPath": {
+                    "params": [
+                        "string $path",
+                        "Pulsar\\Extensibility\\TrustTier $tier"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
+                    "static": true
+                },
+                "forSandboxEscape": {
+                    "params": [
+                        "string $serviceId",
+                        "Pulsar\\Extensibility\\TrustTier $tier"
                     ],
                     "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
                     "static": true
@@ -20961,6 +23745,15 @@
                         "string $serviceId",
                         "Pulsar\\Extensibility\\TrustTier $tier",
                         "Pulsar\\Extensibility\\ExtensionCapability $required"
+                    ],
+                    "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
+                    "static": true
+                },
+                "forTakenRouteName": {
+                    "params": [
+                        "string $name",
+                        "string $heldBy",
+                        "Pulsar\\Extensibility\\TrustTier $tier"
                     ],
                     "return": "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException",
                     "static": true
@@ -21369,6 +24162,14 @@
                     "return": "void",
                     "static": false
                 },
+                "buildCommand": {
+                    "params": [
+                        "string $commandClass",
+                        "Pulsar\\Container\\ContainerInterface $container"
+                    ],
+                    "return": "object",
+                    "static": false
+                },
                 "create": {
                     "params": [],
                     "return": "Pulsar\\Extensibility\\ExtensionBootstrap",
@@ -21423,6 +24224,13 @@
                 "setEnabledProducts": {
                     "params": [
                         "?array $names"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "shutdown": {
+                    "params": [
+                        "Pulsar\\Container\\ContainerInterface $container"
                     ],
                     "return": "void",
                     "static": false
@@ -21536,6 +24344,13 @@
                         "string $section"
                     ],
                     "return": "bool",
+                    "static": false
+                },
+                "restrictedTo": {
+                    "params": [
+                        "array $sections"
+                    ],
+                    "return": "Pulsar\\Extensibility\\ExtensionConfigRegistry",
                     "static": false
                 },
                 "section": {
@@ -23235,13 +26050,16 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "Pulsar\\Resilience\\HealthCheck\\HealthCheckRunnerInterface $runner"
+                        "Pulsar\\Resilience\\HealthCheck\\HealthCheckRunnerInterface $runner",
+                        "?Closure $detailAuthorizer"
                     ],
                     "return": null,
                     "static": false
                 },
                 "__invoke": {
-                    "params": [],
+                    "params": [
+                        "?Psr\\Http\\Message\\ServerRequestInterface $request"
+                    ],
                     "return": "Pulsar\\Http\\Message\\Response",
                     "static": false
                 }
@@ -25422,6 +28240,29 @@
                     ],
                     "return": "Psr\\Http\\Message\\ResponseInterface",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Http\\Middleware\\DispatchedRouteAwareInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "forDispatchedRoute": {
+                    "params": [
+                        "Pulsar\\Routing\\MatchedRoute $route"
+                    ],
+                    "return": "Pulsar\\Http\\Middleware\\DispatchedRouteAwareInterface",
+                    "static": false
+                },
+                "process": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request",
+                        "Psr\\Http\\Server\\RequestHandlerInterface $handler"
+                    ],
+                    "return": "Psr\\Http\\Message\\ResponseInterface",
+                    "static": false,
+                    "inherited_from": "Psr\\Http\\Server\\MiddlewareInterface"
                 }
             },
             "constants": []
@@ -36005,7 +38846,8 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "Pulsar\\Observability\\Metrics\\MetricRegistry $metrics"
+                        "Pulsar\\Observability\\Metrics\\MetricRegistry $metrics",
+                        "Pulsar\\Observability\\Rum\\RumUrlLabels $urlLabels"
                     ],
                     "return": null,
                     "static": false
@@ -36015,6 +38857,32 @@
                         "array $payload"
                     ],
                     "return": "Pulsar\\Observability\\Rum\\RumCollectionResult",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Observability\\Rum\\RumUrlLabels": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "int $limit"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "distinctCount": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "label": {
+                    "params": [
+                        "mixed $reported"
+                    ],
+                    "return": "string",
                     "static": false
                 }
             },
@@ -39119,13 +41987,78 @@
                         "string $class",
                         "string $keyName",
                         "string $keyType",
-                        "bool $scoped",
+                        "Pulsar\\Routing\\Binding\\BindingScope $scope",
                         "?string $parentRelation",
                         "?string $authzPolicy",
-                        "?string $customResolver"
+                        "?string $customResolver",
+                        "?string $parentParameter"
                     ],
                     "return": null,
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Routing\\Binding\\BindingPreset": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "fromConfig": {
+                    "params": [
+                        "mixed $value"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\BindingPreset",
+                    "static": true
+                },
+                "isRegulated": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Routing\\Binding\\BindingScope": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
                 }
             },
             "constants": []
@@ -39183,16 +42116,23 @@
                     "params": [
                         "Pulsar\\Routing\\Binding\\Contract\\ModelResolverPort $defaultResolver",
                         "Pulsar\\Routing\\Binding\\BindingResolver $bindingResolver",
-                        "Pulsar\\Container\\ContainerInterface $container"
+                        "Pulsar\\Container\\ContainerInterface $container",
+                        "?Pulsar\\Routing\\Binding\\BindingProvenance $provenance"
                     ],
                     "return": null,
+                    "static": false
+                },
+                "beginRequest": {
+                    "params": [],
+                    "return": "void",
                     "static": false
                 },
                 "bind": {
                     "params": [
                         "Pulsar\\Routing\\MatchedRoute $matchedRoute",
                         "Psr\\Http\\Message\\ServerRequestInterface $request",
-                        "Pulsar\\Routing\\Binding\\ResolutionContext $context"
+                        "Pulsar\\Routing\\Binding\\ResolutionContext $context",
+                        "Pulsar\\Routing\\Binding\\BindingAuthorization $authorization"
                     ],
                     "return": "array",
                     "static": false
@@ -39201,9 +42141,17 @@
                     "params": [
                         "Pulsar\\Routing\\MatchedRoute $matchedRoute",
                         "Psr\\Http\\Message\\ServerRequestInterface $request",
-                        "Pulsar\\Routing\\Binding\\ResolutionContext $context"
+                        "Pulsar\\Routing\\Binding\\ResolutionContext $context",
+                        "Pulsar\\Routing\\Binding\\BindingAuthorization $authorization"
                     ],
                     "return": "Pulsar\\Routing\\Binding\\ResolvedBindings",
+                    "static": false
+                },
+                "plan": {
+                    "params": [
+                        "Pulsar\\Routing\\MatchedRoute $matchedRoute"
+                    ],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -39215,7 +42163,7 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "string $preset",
+                        "Pulsar\\Routing\\Binding\\BindingPreset $preset",
                         "?string $authorizationHook",
                         "array $allowedKeyNames",
                         "bool $compiledMode"
@@ -39242,6 +42190,15 @@
             "since": "1.0.0-rc.11",
             "methods": [],
             "signatures": {
+                "ambiguousBoundType": {
+                    "params": [
+                        "string $parameter",
+                        "string $handler",
+                        "array $classes"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
                 "authBypassForbidden": {
                     "params": [
                         "string $routeName"
@@ -39253,6 +42210,37 @@
                     "params": [
                         "string $modelClass",
                         "string|int $keyValue"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "authorizationForAnotherRoute": {
+                    "params": [
+                        "string $boundRoute"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "authorizationMandatory": {
+                    "params": [
+                        "string $preset",
+                        "string $route"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "containedWithoutParent": {
+                    "params": [
+                        "string $parameter",
+                        "string $routePath"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "inconsistentScope": {
+                    "params": [
+                        "string $modelClass",
+                        "string $detail"
                     ],
                     "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
                     "static": true
@@ -39293,6 +42281,66 @@
                         "string $modelClass",
                         "string $keyName",
                         "string|int $keyValue"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "placeholderSharesSegment": {
+                    "params": [
+                        "string $parameter",
+                        "string $segment",
+                        "string $routePath"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "unbindableBoundType": {
+                    "params": [
+                        "string $parameter",
+                        "string $handler",
+                        "string $declaredType"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "undeclaredAuthorizationOptOut": {
+                    "params": [
+                        "string $route"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "undeclaredParent": {
+                    "params": [
+                        "string $parameter",
+                        "string $parentParameter",
+                        "string $routePath"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "undeterminedRelation": {
+                    "params": [
+                        "string $parameter",
+                        "string $parentParameter",
+                        "string $routePath"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "unreadableParent": {
+                    "params": [
+                        "string $parameter",
+                        "string $segment",
+                        "string $routePath"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
+                    "static": true
+                },
+                "unresolvedParent": {
+                    "params": [
+                        "string $parameter",
+                        "string $parentParameter"
                     ],
                     "return": "Pulsar\\Routing\\Binding\\ModelBindingException",
                     "static": true
@@ -39586,6 +42634,120 @@
             },
             "constants": []
         },
+        "Pulsar\\Routing\\RouteAccess": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "of": {
+                    "params": [
+                        "Pulsar\\Routing\\Route $route"
+                    ],
+                    "return": "?Pulsar\\Routing\\RouteAccess",
+                    "static": true
+                },
+                "reasonOf": {
+                    "params": [
+                        "Pulsar\\Routing\\Route $route"
+                    ],
+                    "return": "?string",
+                    "static": true
+                },
+                "requiresCredential": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Routing\\RouteAccessRegistrar": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Routing\\RouterInterface $router",
+                        "Pulsar\\Http\\Middleware\\MiddlewareRegistry $middlewareRegistry",
+                        "?Psr\\Log\\LoggerInterface $logger"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "authenticated": {
+                    "params": [
+                        "array $methods",
+                        "string $path",
+                        "mixed $handler",
+                        "?string $name",
+                        "array $permissions",
+                        "string $because",
+                        "array $middleware",
+                        "array $constraints"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "operatorRoute": {
+                    "params": [
+                        "array $methods",
+                        "string $path",
+                        "mixed $handler",
+                        "?string $name",
+                        "string $because",
+                        "array $middleware",
+                        "array $constraints"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "publicRoute": {
+                    "params": [
+                        "array $methods",
+                        "string $path",
+                        "mixed $handler",
+                        "?string $name",
+                        "string $because",
+                        "array $middleware",
+                        "array $constraints"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "signedRoute": {
+                    "params": [
+                        "array $methods",
+                        "string $path",
+                        "mixed $handler",
+                        "?string $name",
+                        "string $because",
+                        "array $middleware",
+                        "array $constraints"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Routing\\RouteCompiler": {
             "since": "1.0.0",
             "methods": [],
@@ -39728,6 +42890,13 @@
                     "return": "Pulsar\\Routing\\Router",
                     "static": false
                 },
+                "loadBindings": {
+                    "params": [
+                        "array $bindings"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
                 "loadRoutes": {
                     "params": [
                         "array $routes"
@@ -39753,7 +42922,9 @@
                     "params": [
                         "string $parameter",
                         "string $modelClass",
-                        "?string $resolverClass"
+                        "?string $resolverClass",
+                        "Pulsar\\Routing\\Binding\\BindingScope $scope",
+                        "?string $parentRelation"
                     ],
                     "return": "Pulsar\\Routing\\Router",
                     "static": false
@@ -39896,7 +43067,9 @@
                     "params": [
                         "string $parameter",
                         "string $modelClass",
-                        "?string $resolverClass"
+                        "?string $resolverClass",
+                        "Pulsar\\Routing\\Binding\\BindingScope $scope",
+                        "?string $parentRelation"
                     ],
                     "return": "Pulsar\\Routing\\RouterInterface",
                     "static": false
@@ -39949,6 +43122,13 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "accessDeclarationWithoutPermission": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": "Pulsar\\Routing\\RoutingException",
+                    "static": true
+                },
                 "getAllowHeader": {
                     "params": [],
                     "return": "string",
@@ -40011,8 +43191,26 @@
                     "return": "Pulsar\\Routing\\RoutingException",
                     "static": true
                 },
+                "routeIndexInconsistent": {
+                    "params": [
+                        "string $path",
+                        "Pulsar\\Http\\Method $method",
+                        "string $routePath"
+                    ],
+                    "return": "Pulsar\\Routing\\RoutingException",
+                    "static": true
+                },
                 "routerLocked": {
-                    "params": [],
+                    "params": [
+                        "?string $path"
+                    ],
+                    "return": "Pulsar\\Routing\\RoutingException",
+                    "static": true
+                },
+                "undeclaredFrameworkRoutes": {
+                    "params": [
+                        "array $messages"
+                    ],
                     "return": "Pulsar\\Routing\\RoutingException",
                     "static": true
                 },
@@ -46450,6 +49648,50 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\Compliance\\Pseudonymization\\FilePseudonymLookup": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "delete": {
+                    "params": [
+                        "string $subjectId"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "findByPseudonym": {
+                    "params": [
+                        "string $pseudonym"
+                    ],
+                    "return": "?Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymMapping",
+                    "static": false
+                },
+                "findBySubjectId": {
+                    "params": [
+                        "string $subjectId"
+                    ],
+                    "return": "?Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymMapping",
+                    "static": false
+                },
+                "store": {
+                    "params": [
+                        "string $subjectId",
+                        "string $pseudonym",
+                        "string $encryptedSalt"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetResult": {
             "since": "1.0.0",
             "methods": [],
@@ -47417,6 +50659,20 @@
                         "string $context"
                     ],
                     "return": "?string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Crypto\\MasterKeyFailure": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $reason"
+                    ],
+                    "return": null,
                     "static": false
                 }
             },
@@ -50539,6 +53795,7 @@
                         "bool $isProduction",
                         "bool $debugMode",
                         "?string $masterKey",
+                        "Pulsar\\Security\\Posture\\SecurityRuntimeBindings $bindings",
                         "array $degradedSecurityFeatures"
                     ],
                     "return": null,
@@ -50629,7 +53886,8 @@
                         "string $name",
                         "Pulsar\\Security\\Posture\\SecurityPostureStatus $status",
                         "string $reason",
-                        "string $fix"
+                        "string $fix",
+                        "bool $relaxed"
                     ],
                     "return": null,
                     "static": false
@@ -50656,6 +53914,15 @@
                     "params": [
                         "string $name",
                         "string $reason"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureItem",
+                    "static": true
+                },
+                "relaxed": {
+                    "params": [
+                        "string $name",
+                        "string $reason",
+                        "string $fix"
                     ],
                     "return": "Pulsar\\Security\\Posture\\SecurityPostureItem",
                     "static": true
@@ -50736,6 +54003,30 @@
                     ],
                     "return": "Pulsar\\Security\\Posture\\SecurityPostureStatus",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityRuntimeBindings": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $masterKeyBound",
+                        "bool $encryptorBound",
+                        "bool $sessionEncryptionBound",
+                        "?string $masterKeyFailure"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "Pulsar\\Container\\ContainerInterface $container"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityRuntimeBindings",
+                    "static": true
                 }
             },
             "constants": []
@@ -65622,7 +68913,10 @@
         "Pulsar\\Api\\OpenApi\\EndpointScanner",
         "Pulsar\\Api\\OpenApi\\OpenApiWiring",
         "Pulsar\\Api\\Resource\\ResourceMetadataCache",
-        "Pulsar\\Api\\Security\\EntitySerializationGuard",
+        "Pulsar\\Auth\\AuthenticationState",
+        "Pulsar\\Auth\\Authorization\\DecisionRecordingState",
+        "Pulsar\\Auth\\Internal\\Authorization\\AuthorizationDecisionFlushListener",
+        "Pulsar\\Auth\\Internal\\Authorization\\BufferedAuthorizationDecisionSink",
         "Pulsar\\Auth\\Internal\\Persistence\\DatabaseRecoveryCodeStore",
         "Pulsar\\Auth\\Internal\\Persistence\\DatabaseTotpReplayGuard",
         "Pulsar\\Auth\\Internal\\Persistence\\DatabaseTotpSecretStore",
@@ -65667,7 +68961,9 @@
         "Pulsar\\Cache\\CacheIntegrity",
         "Pulsar\\Cache\\CacheLock",
         "Pulsar\\Cache\\CacheManifest",
+        "Pulsar\\Cache\\CachedBinding",
         "Pulsar\\Cache\\CachedRoute",
+        "Pulsar\\Cache\\CachedRouteTable",
         "Pulsar\\Cache\\ConfigCache",
         "Pulsar\\Cache\\ContainerCache",
         "Pulsar\\Cache\\FrameworkCache",
@@ -65696,6 +68992,9 @@
         "Pulsar\\Cloud\\Gcp\\PubSubQueueDriver",
         "Pulsar\\Cloud\\Gcp\\SecretManagerProvider",
         "Pulsar\\Compliance\\Concern\\FrameworkRequirements",
+        "Pulsar\\Compliance\\Control\\MeasuringComponent",
+        "Pulsar\\Compliance\\Evidence\\ControlEvidenceGatherer",
+        "Pulsar\\Compliance\\Frameworks\\AiActMapping",
         "Pulsar\\Compliance\\Frameworks\\CcpaMapping",
         "Pulsar\\Compliance\\Frameworks\\DoraMapping",
         "Pulsar\\Compliance\\Frameworks\\EidasMapping",
@@ -65713,6 +69012,7 @@
         "Pulsar\\Compliance\\Frameworks\\Soc2Mapping",
         "Pulsar\\Compliance\\Frameworks\\SwiftCspMapping",
         "Pulsar\\Compliance\\MfaScopeRank",
+        "Pulsar\\Compliance\\Report\\ReportVocabulary",
         "Pulsar\\Config\\BusinessProfileProvider",
         "Pulsar\\Config\\CallableConfigLoader",
         "Pulsar\\Config\\ConfigManager",
@@ -65721,6 +69021,7 @@
         "Pulsar\\Console\\Command\\BuildCommand",
         "Pulsar\\Console\\Command\\CacheWarmupCommand",
         "Pulsar\\Console\\Command\\ConfigReferenceCommand",
+        "Pulsar\\Console\\Command\\DataPurgeCommand",
         "Pulsar\\Console\\Command\\DbFreshCommand",
         "Pulsar\\Console\\Command\\DbInspectCommand",
         "Pulsar\\Console\\Command\\DebugConfigCommand",
@@ -65768,7 +69069,6 @@
         "Pulsar\\Console\\Repl\\SafeModeProvider",
         "Pulsar\\Console\\Repl\\SandboxConnection",
         "Pulsar\\Console\\Repl\\ShellCommand",
-        "Pulsar\\Container\\CallableReflector",
         "Pulsar\\Container\\Compiled\\CompiledContainer",
         "Pulsar\\Container\\Compiled\\ContainerCompiler",
         "Pulsar\\Container\\Compiler\\CompilerPassProcessor",
@@ -65790,11 +69090,16 @@
         "Pulsar\\Core\\Boot\\BuildArtifactVerifier",
         "Pulsar\\Core\\Boot\\CachedRouteReconstructor",
         "Pulsar\\Core\\Boot\\ConfigDiagnosticsReporter",
+        "Pulsar\\Core\\Boot\\DeferredComposition",
         "Pulsar\\Core\\Boot\\ExtensionConfigPublisher",
         "Pulsar\\Core\\Boot\\ExtensionDiscovery",
         "Pulsar\\Core\\Boot\\ExtensionSandbox",
         "Pulsar\\Core\\Boot\\ExtensionViewPathRegistrar",
         "Pulsar\\Core\\Boot\\ProjectRouteLoader",
+        "Pulsar\\Core\\Controller\\ArgumentResolverChain",
+        "Pulsar\\Core\\Controller\\ArgumentResolverLifecycle",
+        "Pulsar\\Core\\Controller\\ArgumentResolverLifecycleException",
+        "Pulsar\\Core\\Controller\\HandlerDescriptor",
         "Pulsar\\Core\\Controller\\ReflectionControllerResolver",
         "Pulsar\\Core\\Kernel",
         "Pulsar\\Core\\Wiring\\AntiSpamWiring",
@@ -65804,11 +69109,13 @@
         "Pulsar\\Core\\Wiring\\BroadcastWiring",
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
+        "Pulsar\\Core\\Wiring\\ComplianceCatalogWiring",
         "Pulsar\\Core\\Wiring\\ComplianceLoggingWiring",
         "Pulsar\\Core\\Wiring\\ComplianceVerificationWiring",
         "Pulsar\\Core\\Wiring\\ComplianceWiring",
         "Pulsar\\Core\\Wiring\\ConfigLoaderRegistrar",
         "Pulsar\\Core\\Wiring\\ConfigWiring",
+        "Pulsar\\Core\\Wiring\\DataRetentionWiring",
         "Pulsar\\Core\\Wiring\\DatabaseWiring",
         "Pulsar\\Core\\Wiring\\DeployWiring",
         "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
@@ -65826,6 +69133,7 @@
         "Pulsar\\Core\\Wiring\\LoggingWiring",
         "Pulsar\\Core\\Wiring\\MailWiring",
         "Pulsar\\Core\\Wiring\\MetricsWiring",
+        "Pulsar\\Core\\Wiring\\ModelBindingWiring",
         "Pulsar\\Core\\Wiring\\NotificationWiring",
         "Pulsar\\Core\\Wiring\\ProfilerWiring",
         "Pulsar\\Core\\Wiring\\ProvidesConfigLoaders",
@@ -65874,6 +69182,7 @@
         "Pulsar\\Deploy\\Check\\HttpsReadinessCheck",
         "Pulsar\\Deploy\\Check\\IntegrityCheck",
         "Pulsar\\Deploy\\Check\\JitCheck",
+        "Pulsar\\Deploy\\Check\\MasterKeyCheck",
         "Pulsar\\Deploy\\Check\\OpcacheCheck",
         "Pulsar\\Deploy\\Check\\RateLimitCheck",
         "Pulsar\\Deploy\\Check\\RequestSizeCheck",
@@ -65937,6 +69246,7 @@
         "Pulsar\\Http\\Middleware\\CanonicalPathMiddleware",
         "Pulsar\\Http\\Middleware\\MiddlewareHandler",
         "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
+        "Pulsar\\Http\\Middleware\\PostRoutingPipeline",
         "Pulsar\\Http\\RateLimit\\CacheRateLimiter",
         "Pulsar\\Http\\RateLimit\\RateLimiter",
         "Pulsar\\Http\\RateLimit\\SqliteRateLimiter",
@@ -66060,7 +69370,10 @@
         "Pulsar\\Queue\\Tenant\\TenantJobMiddleware",
         "Pulsar\\Queue\\Tenant\\TenantRateLimiter",
         "Pulsar\\Rendering\\CachedPage",
+        "Pulsar\\Routing\\Binding\\BindingAuthorization",
+        "Pulsar\\Routing\\Binding\\BindingProvenance",
         "Pulsar\\Routing\\Binding\\BindingResolver",
+        "Pulsar\\Routing\\Binding\\BoundModelArgumentResolver",
         "Pulsar\\Routing\\Binding\\CompiledBindingMap",
         "Pulsar\\Routing\\Binding\\ExplicitBinding",
         "Pulsar\\Routing\\Binding\\ModelBindingMiddleware",
@@ -66069,6 +69382,7 @@
         "Pulsar\\Routing\\HostNormalizer",
         "Pulsar\\Routing\\Internal\\ConfigDomainResolver",
         "Pulsar\\Routing\\ResourceRegistrar",
+        "Pulsar\\Routing\\RouteAccessReporter",
         "Pulsar\\Routing\\RouteCollision",
         "Pulsar\\Routing\\RouteCollisionReporter",
         "Pulsar\\Routing\\RouteUrlGenerator",

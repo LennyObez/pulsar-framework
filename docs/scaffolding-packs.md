@@ -152,7 +152,7 @@ Supports controls for HIPAA Security Rule and MDR.
 
 **Configuration:**
 
-- `config/phi-access.php`: HIPAA-compliant PHI access logging with unusual access alerts
+- `config/phi-access.php`: PHI access logging with unusual-access alerts, addressing HIPAA §164.312(b). Scaffolding is a starting point, not a control: what it logs and who reviews it decide whether the Safeguard is met.
 - `config/data-classification.php`: Data sensitivity classification (Public, Internal, Confidential, PHI, Restricted)
 - `config/encryption.php`: Encryption for PHI fields (patient name, DOB, SSN, diagnosis)
 

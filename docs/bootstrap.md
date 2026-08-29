@@ -131,7 +131,9 @@ $router->get('/users/{id}', function (ServerRequest $request, string $id) {
 
 Project routes load before extension routes, so extensions can layer routes on top of or alongside project-defined routes. CMS routes, forum routes, and other extension routes are registered during the extension boot phase.
 
-When routes are cached (via `pulsar routes:cache`), route files are not loaded. The cached routes are used directly instead.
+When routes are cached (via `pulsar optimize`), route files are not loaded. The cached route table is used directly instead — including the `Router::model()` binding declarations the route files made, which are compiled into the same cache payload and applied with the routes. See [Route model binding](route-model-binding.md#explicit-bindings-under-pulsar-optimize).
+
+Because the route files are not read, edits to them reach a cached deployment only when `pulsar optimize` runs again. The cache's invalidation key covers `config/`, `composer.lock` and structural environment variables, not `routes/`.
 
 ## Adding global middleware
 

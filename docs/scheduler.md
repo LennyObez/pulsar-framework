@@ -418,6 +418,19 @@ Registered jobs (3):
 
 ---
 
+## Jobs the framework registers itself
+
+Two of the jobs `scheduler:list` shows are Pulsar's own. Both are registered at boot and both are inert until `scheduler:tick` runs, so enabling the scheduler is what turns them on.
+
+| Job                           | Registered by                  | Schedule from                                               | What it does                                                                                                 |
+| ----------------------------- | ------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `data-protection:purge`       | `DataRetentionWiring`          | `purge.schedule` in `config/data_protection.php`            | Applies every retention policy; honours `purge.dry_run`. Set the schedule to `''` to register no job at all. |
+| `compliance:collect-evidence` | `ComplianceVerificationWiring` | `verification.evidence_interval` in `config/compliance.php` | Runs compliance verification and appends one HMAC-chained evidence record, at most once per interval.        |
+
+`compliance:collect-evidence` carries its interval twice on purpose. The cron expression decides how often the scheduler considers it — cron cannot express "every N seconds", so the interval is rounded to something cron can say and never rounded up past itself. The elapsed check inside the job decides whether a run actually records, and it reads the last stored record's timestamp rather than process memory, because `scheduler:tick` is a fresh process on every tick.
+
+---
+
 ## Deployment
 
 ### Running via system cron

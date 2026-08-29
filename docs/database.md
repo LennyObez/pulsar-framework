@@ -250,7 +250,82 @@ $schema->drop('temp_table');
 $schema->dropIfExists('temp_table');
 ```
 
-See the [ORM extension docs](orm.md#schema-builder) for the full `TableBuilder` column reference. The core `SchemaBuilder` uses the same `Blueprint` type and supports the same column methods.
+`Blueprint`'s column methods are `id()`, `string()`, `text()`, `bigText()`, `integer()`, `bigInteger()`, `smallInteger()`, `float()`, `decimal()`, `boolean()`, `date()`, `time()`, `timestamp()`, `timestamps()`, `json()`, `uuid()`, `binary()`, `enum()` and `foreignId()`; the table-level ones are `collation()`, `index()`, `unique()` and `foreign()`. The ORM extension's `TableBuilder` is a separate class with its own reference ([ORM docs](orm.md#schema-builder)); it is not this one, and the two do not track each other method for method.
+
+Two `Blueprint` methods decide things that are easy to get wrong on MySQL, and both are covered below: how wide a text column really is, and whether two identifiers differing only in case are one key or two.
+
+### Text width: `text()` is narrow on MySQL
+
+`text()` compiles to `TEXT` on all three engines, and that single word buys three different ceilings:
+
+| Engine          | `text()`                  | `bigText()`        |
+| --------------- | ------------------------- | ------------------ |
+| MySQL / MariaDB | `TEXT` — **65,535 bytes** | `LONGTEXT` — 4 GiB |
+| PostgreSQL      | `TEXT` — about 1 GiB      | `TEXT` — the same  |
+| SQLite          | `TEXT` — about 1 GiB      | `TEXT` — the same  |
+
+The MySQL figure is **bytes, not characters**: a `utf8mb4` column runs out somewhere between 16,383 and 65,535 characters depending on which ones they are. It is not a soft limit in either direction it can fall. With `sql_mode` at MySQL's shipped default an oversized write raises error 1406 and the statement fails; with strict mode switched off the value is truncated and the row is quietly wrong — the worse outcome, because truncated JSON parses as nothing on the next read and the failure surfaces far from the write that caused it.
+
+So the choice is about who decides the width:
+
+- **`text()`** — text a person typed into a field somebody sized: a description, a comment, an operator's note on why a job was retried. 64 KiB is a bound you chose.
+- **`bigText()`** — a value whose size the data decides: a serialized job payload, a saga context, an integration event body, a stack trace. The ceiling is one no payload reaches.
+
+```php
+use Pulsar\Database\Schema\Blueprint;
+
+$schema->create('failed_jobs', function (Blueprint $table) {
+    $table->string('id', 255);
+    $table->bigText('payload');       // LONGTEXT on MySQL, TEXT elsewhere
+    $table->bigText('exception');     // a stack trace has no natural ceiling
+    $table->text('note')->nullable(); // 64 KiB is plenty for a human note
+});
+```
+
+`bigText()` costs almost nothing on MySQL, so the choice can be made on evidence rather than on caution: a `LONGTEXT` value carries a 4-byte length prefix where `TEXT` carries 2, and an index on the column must state a prefix length — which is equally true of `TEXT`, so nothing is given up there.
+
+Both methods are thin wrappers over `SchemaColumnType::BigText` and `SchemaColumnType::Text`, which is what you name when you build a `SchemaColumn` value directly instead of going through the `Blueprint`.
+
+This is not a hypothetical trap. The framework's own `saga_states`, `workflow_instances`, `workflow_transitions`, `failed_jobs`, `outbox_events` and `saga_step_results` tables were first written against `text()`, and every serialized column in them silently carried a 64 KiB ceiling on MySQL where the hand-written DDL they replaced had used `LONGTEXT`. `BigText` exists because of that narrowing ([ADR-0043](adr/0043-schema-belongs-to-migrations.md)).
+
+### How a table compares the text it stores
+
+A collation decides two things at once: the order text sorts in, and — the half with teeth — whether two values differing only in case or in accent are the same value. The second is not a display concern. `PRIMARY KEY` and `UNIQUE` are enforced through the column's collation, so under a case-insensitive one `order-42` and `ORDER-42` collide on insert, and a lookup by identifier can return a row nobody asked for.
+
+MySQL is why this has to be stated rather than assumed. Its shipped defaults are case- and accent-insensitive — `utf8mb4_0900_ai_ci` on MySQL 8.0, `utf8mb4_general_ci` and `latin1_swedish_ci` on the versions and forks beside it — so a table created with no collation clause silently gets the insensitive behaviour. PostgreSQL and SQLite default the other way.
+
+`Blueprint::collation()` states the intent once for the whole table:
+
+```php
+use Pulsar\Database\Schema\Blueprint;
+use Pulsar\Database\Schema\SchemaCollation;
+
+$schema->create('integration_events', function (Blueprint $table) {
+    $table->collation(SchemaCollation::Exact);   // every character column in the table
+    $table->string('event_id', 64)->unique();    // ...the key included
+    $table->bigText('payload_json');
+});
+```
+
+| Engine          | What `SchemaCollation::Exact` emits                                             | Why that is the right translation                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MySQL / MariaDB | `COLLATE=utf8mb4_bin` on the table, `COLLATE utf8mb4_bin` on a character column | The server default folds case and accents, so this is where the request changes behaviour                                                                |
+| PostgreSQL      | nothing                                                                         | Every collation `initdb` creates is deterministic, so equality falls through to a byte comparison — and there is no table-level `COLLATE` clause to emit |
+| SQLite          | nothing                                                                         | The default collating sequence is `BINARY`, which is that same byte comparison; `NOCASE` has to be asked for by name                                     |
+
+Because MySQL derives a table's character set from its collation when only the collation is given, `Exact` brings `utf8mb4` with it — a separate character-set option could only agree or contradict, so the layer does not offer one. It does not offer a storage engine either: InnoDB has been MySQL's default since 5.5 and MariaDB's since 10.2 — since 10.0 counting XtraDB, the InnoDB fork MariaDB shipped before that — a server configured to default elsewhere is a connection-level problem rather than a per-table one, and PostgreSQL and SQLite have no such concept to name.
+
+`ColumnBuilder::collation()` sets it on one column, overriding the table's, for a table that wants a mixed rule:
+
+```php
+$table->string('slug', 191)->collation(SchemaCollation::Exact);
+```
+
+On an integer, boolean or JSON column the request is a no-op rather than an error. MySQL rejects a `COLLATE` clause on those outright — it is a parse error, not an ignored hint — so a table-wide collation must not be able to compose a statement the engine refuses to read.
+
+**There is no case-insensitive counterpart, and its absence is deliberate.** `Exact` is an intent all three engines can honour: MySQL by naming `utf8mb4_bin`, the other two by saying nothing, because they already do it. A case-insensitive case has no such answer. PostgreSQL has no table-level spelling for it — it needs a non-deterministic ICU collation created per database, or the `citext` extension — and SQLite's `NOCASE` folds ASCII `a`–`z` only, so `Ä` and `ä` stay distinct under it. The enum would be accepting a request it could honour on one engine of three and approximate on the other two, and a promise kept in one deployment out of three is worse than no vocabulary at all. Match case-insensitively in the query instead — `WHERE LOWER(email) = LOWER(:email)`, or an indexed generated column — where the folding is visible at the point it applies.
+
+One thing this is not: the `collation` key in `config/database.php`. A table's comparison rule belongs to the table and is fixed at `CREATE TABLE`. The config key is carried on `ConnectionConfig` and read by nothing that builds a DSN or issues a statement, so setting it to `utf8mb4_bin` there changes no comparison anywhere. Ask for `SchemaCollation::Exact` on the table that needs it.
 
 ## Connection pooling
 

@@ -103,7 +103,7 @@
 **E2: Authorization bypass for compliance operations**
 
 - **Threat**: An attacker bypasses authorization to emit forged compliance events or access pseudonymization services.
-- **Mitigation**: Authorization events (`AuthorizationGranted`, `AuthorizationDenied`, `PrivilegeEscalated`, `StepUpAuthRequired`) are dispatched by the Gate and carry their own nonce and correlation ID. Step-up authentication can be required for sensitive operations based on trust score evaluation.
+- **Mitigation**: Every decision the Gate reaches — grant and refusal alike — is written to the HMAC-chained audit log by the `AuthorizationDecisionSinkInterface` the composition root binds, carrying a CSPRNG nonce, the correlation ID of the request the decision was made in, and the payload hash of the `AuthorizationGranted` / `AuthorizationDenied` event describing it. `PrivilegeEscalated` and `StepUpAuthRequired` are dispatched events and carry their own nonce and correlation ID. Step-up authentication can be required for sensitive operations based on trust score evaluation.
 - **Residual risk**: Low. Authorization enforcement depends on correct Gate configuration at the application level.
 
 ## Abuse cases

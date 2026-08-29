@@ -8,7 +8,7 @@ Pulsar provides a guard-based authentication system with lazy identity resolutio
 
 Authentication uses a two-tier approach to avoid paying the cost of full authentication on every request:
 
-1. **Global middleware** (`AuthenticationMiddleware`) runs on every request but only performs cheap work - creating a `SecurityContext` wrapper and setting a default `AnonymousIdentity`.
+1. **Global middleware** (`AuthenticationMiddleware`) runs on every request but only performs cheap work - creating a `SecurityContext` wrapper, publishing it into `AuthenticationState`, and setting a default `AnonymousIdentity` on the request attributes.
 2. **Route-level middleware** (`AuthorizationMiddleware`, `TwoFactorMiddleware`) triggers full identity resolution via `SecurityContext::identity()` only on protected routes.
 
 ```
@@ -16,7 +16,8 @@ Request
   │
   ▼
 AuthenticationMiddleware (global)
-  │  Sets _security_context (lazy)
+  │  Publishes the lazy SecurityContext into AuthenticationState
+  │  Sets _security_context (the same instance)
   │  Sets _identity = AnonymousIdentity
   ▼
 AuthorizationMiddleware (route-level, optional)
@@ -397,12 +398,32 @@ $sessionGuard->updateIdentity($verified);
 
 ### AuthenticationMiddleware (global)
 
-Runs on every request. Attaches `SecurityContext` and default `AnonymousIdentity` to the request attributes. Does **not** trigger full authentication:
+Runs on every request. Builds the request's `SecurityContext`, publishes it into
+`AuthenticationState`, and attaches it plus a default `AnonymousIdentity` to the request
+attributes. Does **not** trigger full authentication:
 
 ```php
 // Registered automatically as global middleware by Kernel
-// Sets: _security_context (SecurityContext), _identity (AnonymousIdentity)
+// Publishes: the SecurityContext, into AuthenticationState
+// Sets: _security_context (the same instance), _identity and identity (AnonymousIdentity)
 ```
+
+#### The identity attributes are an output, never an input
+
+`_identity` and `identity` are written for the controllers and extensions that read them.
+Nothing in the framework reads them back to decide who is calling. They used to be read back:
+this middleware preserved an already-authenticated `identity` attribute in place of the
+context it would otherwise build, so any frame piped ahead of it could name the caller — and
+route model binding, which authorized against that attribute, believed it.
+
+Anything that legitimately knows the caller before the guards do says so through
+`AuthenticationState`, which needs the container and is therefore reachable only from the
+composition root. `pulsar serve --dev-identity` is the one such caller in the framework: it
+publishes a `SecurityContext::established()` before `Kernel::handle()` runs, and this
+middleware leaves an already-established context alone.
+
+`AuthenticationState` is registered for per-request reset, so a resident worker does not carry
+one request's caller into the next.
 
 ### AuthorizationMiddleware (route-level)
 
@@ -434,6 +455,34 @@ $route = new Route(
     middleware: ['2fa'],
 );
 ```
+
+### SensitiveOperationMiddleware (route-level)
+
+Runs `AccountTakeoverGuard` over an operation before the handler can perform it. The route names the operation it performs in its attributes, the same way it names the permissions it requires:
+
+```php
+// Apply via route middleware alias 'sensitive':
+$route = new Route(
+    methods: [Method::POST],
+    path: '/account/password',
+    handler: $handler,
+    attributes: ['sensitive_operation' => 'password_change'],
+    middleware: ['auth', 'sensitive'],
+);
+```
+
+Accepted values are the cases of `SensitiveOperation`: `password_change`, `email_change`, `mfa_disable`, `recovery_code_regenerate`, `account_delete`, `api_key_create`. The enum case itself may be passed instead of the string.
+
+Two checks run, each with a different failure mode:
+
+1. **Re-authentication window** (default 5 minutes). Changing a password from a session opened hours ago is the classic takeover: the attacker holds a stolen cookie, not the credentials. Either a fresh login or a completed step-up challenge satisfies the window, so a route already carrying `step-up` does not prompt twice.
+2. **Takeover risk.** A credential change arriving from a different address _and_ a different device than the session was opened on is refused; one of the two passes but is recorded, because a mobile network re-issuing an address is ordinary and a swapped device is not.
+
+Both outcomes are written to the HMAC-chained audit log against the authenticated identity — `auth.takeover.high_risk`, `auth.takeover.elevated_risk`, or `auth.sensitive_operation.refused` with the reason.
+
+The middleware is fail-closed throughout. A route carrying the alias without a recognised `sensitive_operation`, a request with no security context, an unauthenticated identity, a session with no metadata to compare against, and an audit sink that cannot record the decision all produce `403 Forbidden` rather than a silent pass.
+
+Behind a load balancer, bind a `TrustedProxy` so the guard compares the real client address: without one every request carries the balancer's `REMOTE_ADDR` and no address change is ever visible.
 
 ## Exceptions
 
@@ -473,18 +522,20 @@ Boot → Config → Logger → Tracer → Metrics → ErrorTracker → Exception
 
 The `createAuthServices()` method registers services conditionally based on config and container state:
 
-| Service                    | Condition                                   |
-| -------------------------- | ------------------------------------------- |
-| `PasswordHasher`           | Always                                      |
-| `SessionGuard`             | `SessionInterface` bound in container       |
-| `TokenGuard`               | `TokenResolverInterface` bound in container |
-| `AuthManager`              | Always                                      |
-| `InMemoryRoleRegistry`     | Always (populated from config roles)        |
-| `Gate`                     | Always                                      |
-| `TwoFactorManager`         | `two_factor.enabled` is `true`              |
-| `AuthenticationMiddleware` | Always (registered as global middleware)    |
-| `AuthorizationMiddleware`  | Always (alias: `'auth'`)                    |
-| `TwoFactorMiddleware`      | Always (alias: `'2fa'`)                     |
+| Service                                                 | Condition                                                                                 |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `PasswordHasher`                                        | Always                                                                                    |
+| `SessionGuard`                                          | `SessionInterface` bound in container                                                     |
+| `TokenGuard`                                            | `TokenResolverInterface` bound in container                                               |
+| `AuthManager`                                           | Always                                                                                    |
+| `InMemoryRoleRegistry`                                  | Always (populated from config roles)                                                      |
+| `Gate`                                                  | Always                                                                                    |
+| `TwoFactorManager`                                      | `two_factor.enabled` is `true`                                                            |
+| `AuthenticationMiddleware`                              | Always (registered as global middleware)                                                  |
+| `AuthorizationMiddleware`                               | Always (alias: `'auth'`)                                                                  |
+| `TwoFactorMiddleware`                                   | Always (alias: `'2fa'`)                                                                   |
+| `StepUpMiddleware`                                      | `SessionInterface` bound (alias: `'step-up'`)                                             |
+| `AccountTakeoverGuard` + `SensitiveOperationMiddleware` | `SessionInterface`, `SessionManager`, and a PSR-3 logger all bound (alias: `'sensitive'`) |
 
 ## Related docs
 

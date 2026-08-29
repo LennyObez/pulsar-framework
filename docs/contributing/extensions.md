@@ -77,13 +77,13 @@ Here is a complete example:
 
 ### Optional fields
 
-| Field         | Description                                                                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `description` | Human-readable summary of what the extension does.                                                                                                                             |
-| `trust_tier`  | Requested trust level: `core`, `verified`, `community`, or `untrusted`. This is metadata only. The host application's `TrustedExtensionsConfig` determines the effective tier. |
-| `pulsar`      | Framework version constraints (`min_version`, `max_version`).                                                                                                                  |
-| `provides`    | Lists of services, routes, commands, and middleware the extension registers.                                                                                                   |
-| `requires`    | Map of extension names to version constraints for dependencies.                                                                                                                |
+| Field         | Description                                                                                                                                                                                                                                                                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `description` | Human-readable summary of what the extension does.                                                                                                                                                                                                                                                                                                                |
+| `trust_tier`  | Requested trust level: `core`, `verified`, `community`, or `untrusted`. Unverified metadata — nothing authenticates a manifest — so it can only **lower** the tier the host granted, never raise it. Declaring `core` here gets you nothing; the host's `TrustedExtensionsConfig` decides.                                                                        |
+| `pulsar`      | Framework version constraints (`min_version`, `max_version`).                                                                                                                                                                                                                                                                                                     |
+| `provides`    | Lists of services, routes, commands, and middleware the extension registers. `provides.services` is also the extension's PUBLIC SURFACE: a type named there, and shipped in this extension's own directory, is resolvable from any other loaded extension's scope; everything else it ships stays private to it. Naming a type you do not ship publishes nothing. |
+| `requires`    | Map of extension names to version constraints for dependencies.                                                                                                                                                                                                                                                                                                   |
 
 The version format must follow semver (`MAJOR.MINOR.PATCH` with optional prerelease suffix). Invalid versions are rejected with `ManifestException::invalidVersion()`.
 
@@ -228,7 +228,9 @@ public function boot(ContainerInterface $container, RouterInterface $router): vo
 }
 ```
 
-The `group()` method applies a common URL prefix to all routes registered inside the callback. Route names (the third argument) should be unique across the application, so prefix them with your extension name.
+The `group()` method applies a common URL prefix to all routes registered inside the callback, and hands the callback a scoped router — not a raw one — so everything registered inside it is confined exactly as it would be outside.
+
+Route names (the third argument) are a **global, last-wins key**: the router stores one route per name, so a later registration of an existing name silently takes over every URL generated for it. At `Community` and `Untrusted` your names are rewritten to `ext.{your-extension-name}.{name}` for that reason, alongside the path prefix — so `route()` inside your own templates should use the rewritten name, or better, generate URLs from `RouterInterface::routes()` rather than hard-coding either form. At `Verified` and `Core` your names are left alone, and it is on you to keep them unique.
 
 ## Registering commands
 
@@ -361,7 +363,9 @@ Extensions operate under a trust tier system that controls their access to frame
 | `Community` | Unaudited third-party extensions | Limited          | Prefixed only      |
 | `Untrusted` | Experimental or sandboxed        | Read-only        | None               |
 
-Your `pulsar.json` declares a requested trust tier, but the host application's configuration determines the effective tier. The effective tier is always the lower of the requested and allowed tiers.
+Your `pulsar.json` declares a requested trust tier, but the host application's configuration determines the effective tier. The effective tier is always the lower of the requested and allowed tiers, and an extension the host has not listed in its `config/extensions.php` is capped at `Community` whatever its manifest asks for.
+
+This asymmetry is deliberate, and it is the only thing that makes an unverified field safe to parse. Pulsar performs **no signature verification on extensions** — your manifest is not signed, not checked against a publisher key, and not attested by anything. So the declaration is useful in exactly one direction: declaring a tier _below_ what a host might grant is a real, honoured self-restriction (declare `untrusted` and you will run read-only even in a deployment that trusts you). Declaring `core` is a no-op that no operator will see as a credential.
 
 For most community extensions, the `Community` tier is appropriate. Extensions that need access to sensitive services (cryptographic keys, raw database connections, audit sinks) should document this requirement clearly and explain why the elevated access is necessary. The host application operator makes the final decision.
 
@@ -371,5 +375,10 @@ See the [extension trust tiers documentation](../extensions.md) and [ADR-0023](.
 
 - **Resolving services in `register()`.** During the registration phase, other extensions have not registered their services yet. If you need to resolve cross-extension services, use `preBoot()` or `boot()`.
 - **Creating escaped Fibers.** Pulsar uses a synchronous execution model. Any Fiber your extension creates must complete within the same request or command lifecycle. Fibers that escape their scope break deterministic execution guarantees.
-- **Shadowing framework routes.** Community-tier extensions can only register routes under a prefix. Attempting to register routes at `/admin` or `/_studio` from a community extension will be denied by the `ScopedRouterProxy`.
+- **Shadowing framework routes.** Community-tier extensions can only register routes under a prefix (path AND route name). Separately, and at every tier below `Core`, the reserved paths `/login`, `/logout`, `/admin`, `/_studio` and `/api` are refused outright — exact paths only, so `/admin/my-feature` is yours and `/admin` is not.
+- **Taking a route name something else already uses.** A route name is a single global key and the LAST registration of a name is the one `route()` resolves, so a name another route already holds is refused at every tier below `Core` — not prefixed, refused, because there is no version of `login` that is only a bit `login`. Name your routes after your extension (`acme.reports.index`), which is what the Community prefix does for you automatically. Re-registering a route of your own, identically, is not a collision: that is what a warm route cache replays on every boot.
+- **Depending on the container in a constructor.** A class you bind by name, a controller you route to, a middleware you attach and a command you declare are all built by your extension's scope, which fills each constructor parameter through the same checks a `get()` would get. `__construct(ContainerInterface $c)` is refused with a message saying so: use the scoped container passed to `register()`/`boot()`. Your own services, and any class your extension ships, resolve without needing to be classified.
+- **Reaching a host service that is not classified.** Anything not on the safe list or the restriction map is denied by default, whether you ask for it by name or declare it as a constructor parameter. If your extension needs one, say so in your README and ask the operator for the capability — or open an issue to have the service classified.
+- **Assuming `has()` reports the host's bindings.** `has()` answers for YOUR scope: true when your extension can actually resolve the id, false when the host has bound it and your tier may not have it. That is what makes `if ($c->has($x)) { $c->get($x); }` — the PSR-11 idiom, and the right way to degrade around an optional service — safe to write. It also means a service you can see in the host's composition root can read as "not configured" to you, and the fix is a capability grant, not a workaround.
+- **Reaching another extension's class that its manifest does not publish.** An extension's `provides.services` list is its public surface: name a type there and any other loaded extension can resolve it, leave it out and only your own extension can. Consuming one is nothing to declare — `pulsar/forum` resolves `pulsar/admin`'s `AdminGateway` because admin publishes it, not because forum asked. Guard the call with `has()` so your extension still boots when the other one is not installed.
 - **Importing from `\Internal\` namespaces.** Anything under an `\Internal\` namespace is module-private. Cross-module imports from internal namespaces will fail boundary enforcement checks (`composer boundary:check`). Wire your dependencies through the composition root instead.

@@ -331,14 +331,15 @@ To prevent abuse and resource exhaustion, configurable complexity caps are enfor
 
 Exceeding any limit returns `400 Bad Request` with a descriptive error message identifying which limit was exceeded. Limits are configurable per resource or globally via `ApiConfig`.
 
-## Entity serialization ban
+## Returning something that is not a response
 
-Entities and ORM models **cannot** be serialized directly to API responses. Attempting to return an entity from a controller produces:
+A controller action must return a `ResponseInterface` (or a string, which the kernel wraps in an HTML response). Returning anything else -- a domain entity, an ORM model, an array -- is refused by `Kernel::invokeHandler()`, which throws `RoutingException::unexpectedReturnType()` before the value can be serialized. The client receives the configured error response and no entity data reaches the response body.
 
-- **Development**: A framework-level error with a descriptive message
-- **Production**: A generic `500` response with an audit log event containing the correlation ID
+There is no toggle for this: `Kernel::invokeHandler()` has no branch that serializes the returned value, so on the full kernel the refusal is a property of the dispatch path rather than a setting. Wrap the entity in an `ApiResource` subclass to expose it deliberately.
 
-The error is always observable in the audit trail. No entity data is leaked in the response body.
+It is a property of _that_ dispatch path, and the qualifier is load-bearing. `Pulsar\Core\MicroKernel`, the single-file kernel and part of the public API, dispatches the same handler shapes and ends differently: a returned array is passed to `Response::json()`, so a controller returning `['patient' => $patient]` emits every public property of the entity as JSON, with no `ApiResource` and no `FieldAuthorizer` between it and the wire. A returned entity object is not serialized there, but it is not refused either — it falls through to an empty `200 text/html`. An API that must not leak an entity by accident belongs on the full `Kernel`.
+
+Note that the kernel inspects what the action _returns_, not what the action _puts in a response it builds_. `Response::json($entity)` serializes the entity, and nothing here stops it -- choosing what a resource exposes is the job of `ApiResource` and `FieldAuthorizer`.
 
 ## Configuration
 
@@ -357,6 +358,5 @@ return [
         'max_nesting_depth' => 3,
         'max_includes' => 10,
     ],
-    'entity_serialization_ban' => true,
 ];
 ```

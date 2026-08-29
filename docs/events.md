@@ -317,8 +317,28 @@ synchronous delivery unchanged:
 ```
 
 When enabled (and a database connection is bound), the wiring binds `OutboxPort`
-to `DatabaseOutboxPort` (schema auto-installed), an in-process
-`IntegrationEventBusPort`, and the `OutboxRelay`.
+to `DatabaseOutboxPort`, an in-process `IntegrationEventBusPort`, and the
+`OutboxRelay`.
+
+> **Run the migration first.** The `outbox_events` table is **not** created at
+> boot. In rc.11 and earlier the wiring called
+> `DatabaseOutboxPort::installSchema()` on every start-up, which meant the
+> application's own database role had to hold `CREATE`; rc.12 deletes that
+> installer (ADR-0043) and the table now comes from
+> `src/Event/Database/Migration/20260821000004_create_event_outbox_table.php`,
+> applied by `pulsar migrate:run` as a deploy step. Enabling the outbox without
+> running migrations leaves `store()` failing on a missing table.
+>
+> The same migration adds `dead_lettered_at` to an outbox table that predates the
+> dead-letter feature, and rebuilds the pending index that was compiled without
+> it. That upgrade previously lived in a `migrateSchema()` method nothing ever
+> called, so a deployment that installed before dead-lettering has never received
+> it — running migrations is what finally applies it.
+>
+> Rolling that migration back is not symmetrical: `down()` drops `outbox_events`
+> only while it is empty, and refuses while it holds committed-but-unpublished or
+> dead-lettered envelopes — see
+> [Rolling back](migrations.md#when-a-rollback-refuses).
 
 - **Producer:** inject `OutboxPort` and call `store($envelope)` inside your
   domain transaction.

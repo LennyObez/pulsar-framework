@@ -87,10 +87,22 @@ php -d memory_limit=-1 -d pcov.enabled=1 -d pcov.directory=. -d pcov.exclude='~/
 > php tools/ci/merge-clover.php coverage/clover.xml build/coverage/clover-*.xml
 > ```
 
-CI enforces an **80% threshold on statements and methods**. Conditions are reported as
-not measured: branch data comes from Xdebug alone, and Xdebug costs 0.87 s per test on
-the CI runner — 10.6 hours for this suite, past GitHub's six-hour ceiling for a job. The
-threshold is checked by parsing `coverage/clover.xml` after the test run.
+CI enforces an **80% threshold on statements and methods**. On a pull request, Conditions
+is reported as not measured: branch data comes from Xdebug alone, and Xdebug costs 0.87 s
+per test on the CI runner — 10.6 hours for this suite, past GitHub's six-hour ceiling for
+a job. The threshold is checked by parsing `coverage/clover.xml` after the test run.
+
+Branch coverage is measured nightly over the security-critical core, by
+`.github/workflows/coverage-nightly.yml` — a single job running `src/Auth`, `src/Security`
+and `src/Audit` under Xdebug. It is that slice and not the whole suite because Xdebug needs
+10.75 hours for everything against a six-hour ceiling for one job. The figure is reported
+and not gated until there is a first measurement to set a floor from; see
+[ADR-0042](adr/0042-coverage-and-mutation-are-bounded-by-memory.md). To reproduce it
+locally on one dimension:
+
+```bash
+php tools/ci/assert-coverage-threshold.php coverage/clover.xml 80 --report-only=Conditions
+```
 
 ## Test structure
 

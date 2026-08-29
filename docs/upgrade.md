@@ -99,6 +99,80 @@ Existing manifests without these fields continue to work.
 
 `Router`, `Route`, `RouteGroup`, and `MatchedRoute` are stable API. Route registration methods (`get`, `post`, `put`, `patch`, `delete`, `any`, `group`) have not changed signatures.
 
+### Framework schema now comes from migrations
+
+Five of the framework's own tables used to be created by an `installSchema()` method on the storage class that read them. Those methods are deleted and the tables ship as framework migrations, applied by `migrate:run` ([ADR-0043](adr/0043-schema-belongs-to-migrations.md)):
+
+| Table                                        | Migration                                           |
+| -------------------------------------------- | --------------------------------------------------- |
+| `saga_states`                                | `20260821000001_create_saga_states_table.php`       |
+| `workflow_instances`, `workflow_transitions` | `20260821000002_create_workflow_tables.php`         |
+| `failed_jobs`                                | `20260821000003_create_failed_jobs_table.php`       |
+| `outbox_events`                              | `20260821000004_create_event_outbox_table.php`      |
+| `saga_step_results`                          | `20260821000005_create_saga_step_results_table.php` |
+
+**This is breaking for the transactional outbox, and only for it.** `EventWiring` called `DatabaseOutboxPort::installSchema()` on every boot, so a deployment with `outbox.enabled` set got `outbox_events` for free. It no longer does: run migrations before the new build serves its first request, or `store()` fails on a missing table. The other four installers had no production caller, so those tables were never created for anyone — the migrations are the first DDL those subsystems have ever had, and `saga_step_results` had none in any form.
+
+Applying these to a host that already has the tables leaves those tables exactly as they are. `up()` asks `TableIntrospector` whether the table exists and returns if it does, so nothing in the five files alters the type, the width or the collation of a column that is already there. One change is intended and does reach an existing table: `20260821000004` adds `outbox_events.dead_lettered_at` where it is absent and rebuilds the pending index that was compiled before that column existed. That upgrade previously lived in a `migrateSchema()` method nothing ever called, so a deployment that installed before dead-lettering has never received it.
+
+Two consequences worth planning for: the runtime database role no longer needs `CREATE`, and `down()` on these migrations refuses to drop a table that holds rows rather than destroying unpublished events or sagas with compensation still owed.
+
+#### What an adopted table does not get, and what that costs
+
+"Leaves them as they are" cuts both ways. A fresh install creates these tables with `LONGTEXT` for every column holding a serialized value (`SchemaColumnType::BigText`) and `COLLATE=utf8mb4_bin` on the table (`SchemaCollation::Exact`). A host that already has the table gets neither, because `CREATE TABLE` never runs for it — and the migration is recorded as applied either way, so `migrate:status` cannot tell you which of the two shapes a host is on. Only the database can.
+
+For the one framework table a Pulsar deployment ever created for itself, this costs nothing. `outbox_events` came from `DatabaseOutboxPort::installSchema()`, whose MySQL branch already wrote `payload_json LONGTEXT`, `metadata_json LONGTEXT` and `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin`; the migration reproduces that shape rather than narrowing it, so on MySQL an adopting host already has both of the things this section is about. (It can still differ from a fresh install in ways that cost nothing here — on PostgreSQL and SQLite the installer's key columns were unbounded `TEXT` where a fresh install writes `VARCHAR`; [ADR-0043](adr/0043-schema-belongs-to-migrations.md) lists those.) The other four installers had no production caller, so those tables are created by the migration and are the new shape by construction.
+
+The case that needs a decision is a table that reached the host some other way — hand-written DDL, a dump restored from an older system, a table someone created by hand to unblock a deploy. It keeps whatever it has, and on MySQL that is two specific risks:
+
+- **A narrow `TEXT` payload column stops at 65,535 bytes** — bytes, not characters, so a `utf8mb4` column runs out somewhere between 16,383 and 65,535 characters. Under MySQL's shipped `sql_mode` an oversized write raises error 1406 and the caller sees it refused inside its own transaction; with strict mode switched off the value is truncated instead and the stored JSON no longer parses on the next read.
+- **A case-insensitive table collation makes two ids differing only in case one row.** MySQL's defaults — `utf8mb4_0900_ai_ci` on 8.0, `utf8mb4_general_ci` on MariaDB — fold case and accents, and every one of these tables keys on an identifier. Ids the framework issues itself are `bin2hex()` over random bytes, lower-case hex that cannot collide that way; ids an application supplies can. It fails silently rather than loudly, because these storages upsert: the second write overwrites the first instead of raising.
+
+Which columns are wide on a fresh install:
+
+| Table                  | `LONGTEXT` on MySQL             | Deliberately narrow |
+| ---------------------- | ------------------------------- | ------------------- |
+| `saga_states`          | `step_results`, `context`       | —                   |
+| `workflow_instances`   | `context`                       | —                   |
+| `workflow_transitions` | `metadata`                      | `reason`            |
+| `failed_jobs`          | `payload`, `exception`          | —                   |
+| `outbox_events`        | `payload_json`, `metadata_json` | `last_error`        |
+| `saga_step_results`    | `result_data`, `error_message`  | —                   |
+
+All six tables are created `COLLATE=utf8mb4_bin` on MySQL.
+
+**Keeping the narrow shape is a supported outcome.** If your ids come from the framework and your payloads stay under 64 KiB, the adopted table behaves identically to the fresh one and there is nothing to do. Decide it per host on evidence rather than on assumption:
+
+```sql
+-- MySQL: the type and comparison rule the table actually has
+SELECT COLUMN_NAME, COLUMN_TYPE, COLLATION_NAME
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'outbox_events';
+
+SELECT TABLE_COLLATION FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'outbox_events';
+```
+
+**To converge on the fresh-install shape, issue the `ALTER` yourself.** No migration does it for you, and that is deliberate: retyping a live column is a table rebuild, which belongs in a maintenance window rather than in the middle of a deploy.
+
+```sql
+-- MODIFY restates the whole column definition, so repeat NOT NULL or you drop it.
+ALTER TABLE outbox_events
+    MODIFY payload_json  LONGTEXT NOT NULL,
+    MODIFY metadata_json LONGTEXT NOT NULL;
+
+-- Every character column in the table, plus the table default.
+ALTER TABLE outbox_events CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+```
+
+Three things to plan for:
+
+- **Both statements copy the table.** InnoDB cannot change a column's type in place, so the rebuild takes a lock and blocks writes for its duration. Size the window against the table, and drain the outbox relay or the queue worker first.
+- **The collation change cannot fail on existing rows.** Moving from a case-insensitive collation to an exact one only separates values that were previously treated as equal; it never merges two rows, so no `PRIMARY KEY` can be violated by the conversion. The reverse direction can, which is part of why the framework offers no case-insensitive counterpart.
+- **`CONVERT TO CHARACTER SET` is a collation-only change when the table is already utf8mb4.** On a table still on `latin1` it re-encodes every value and can promote `TEXT` to `MEDIUMTEXT` to preserve the byte length. That is a data migration, not a schema tweak — rehearse it on a copy.
+
+PostgreSQL and SQLite need none of this. `Text` and `BigText` both compile to `TEXT` there, which is already the widest either engine has, and both compare text exactly by default, so `SchemaCollation::Exact` emits nothing on them because there is nothing to say.
+
 ## Migration steps checklist
 
 ### 1. Update Composer dependency
@@ -155,7 +229,15 @@ Ensure all `pulsar.json` manifests specify a `min_version` compatible with 1.0.0
 }
 ```
 
-### 5. Run diagnostics
+### 5. Run migrations
+
+```bash
+php bin/pulsar migrate:run
+```
+
+This applies the framework's own migrations alongside your project's and your extensions' — see [Where migrations come from](migrations.md#where-migrations-come-from). On a host that already has the tables it is close to a no-op, and the shape of those tables is left alone rather than upgraded; on a fresh one it is what creates them, in the wider and byte-exact shape. If you use the transactional outbox, read the [breaking-change note](#framework-schema-now-comes-from-migrations) above before deploying: that step is what keeps the first request of the new build from failing on a missing table, and [What an adopted table does not get](#what-an-adopted-table-does-not-get-and-what-that-costs) is what to check afterwards on a host whose tables predate it.
+
+### 6. Run diagnostics
 
 ```bash
 php bin/pulsar diagnostics
@@ -163,7 +245,7 @@ php bin/pulsar diagnostics
 
 Verify that all extensions load and all required PHP extensions are available.
 
-### 6. Run tests
+### 7. Run tests
 
 ```bash
 composer test
@@ -171,7 +253,7 @@ composer test
 
 Fix any type errors or API changes surfaced by your test suite.
 
-### 7. Run static analysis
+### 8. Run static analysis
 
 ```bash
 php -d memory_limit=512M vendor/bin/phpstan analyse -c tools/php/phpstan.neon

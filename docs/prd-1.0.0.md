@@ -61,8 +61,13 @@ docs (`docs/compliance/<framework>.md`).
 
 ## Quality gates at GA
 
-- `composer qa` includes: `cs:check`, `phpstan`, `psalm`, `boundary:check`,
-  `test`, `security:lint` (Semgrep).
+- `composer qa` includes: `qa:parity`, `version:check`, `autoload:check`,
+  `cs:check`, `phpstan`, `psalm`, `boundary:check`, `class-shape`,
+  `security:malicious`, `test`, `compliance:check`, `security:lint` (Semgrep,
+  gating at WARNING against `tools/security/semgrep-baseline.json`).
+- `qa:parity` is what keeps that list honest: it fails the build when
+  `.github/workflows/ci.yml` does not run every entry of `qa`. CI may enforce
+  more, never less.
 - `composer qa:full` adds `mutation` (Infection MSI ≥ 80, 90 for
   src/Auth/src/Security/src/Audit) and `test:coverage`.
 - CI gate: line coverage ≥ 80% (ramps to 90 at GA), Infection MSI ≥ 80.

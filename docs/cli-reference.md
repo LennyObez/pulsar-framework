@@ -97,9 +97,11 @@ php bin/pulsar show:routes --path=/api
 | `--method` | `-m`  | Filter by HTTP method  |
 | `--path`   | `-p`  | Filter by path pattern |
 
-Output columns: Method, Path, Name, Handler, Middleware.
+Output columns: Method, Path, Name, Access, Handler, Middleware.
 
 The handler column displays the class and method (e.g., `UserController::index`) or `Closure` for anonymous handlers. Middleware names are shortened to their class basename.
+
+`Access` is the route's declared `Pulsar\Routing\RouteAccess` — `public`, `operator`, `signed` or `authenticated` — and `-` for a route that declares nothing. A `-` is not "unrestricted": `AuthorizationMiddleware` default-denies an empty permission list, so an undeclared route is reachable by anyone where that middleware is absent from the pipeline and by nobody where it is present. See [Declaring who may reach a route](authorization.md#declaring-who-may-reach-a-route).
 
 #### `show:container`
 
@@ -211,6 +213,8 @@ php bin/pulsar migrate:rollback --all
 | ------- | ----- | ------------------------------- |
 | `--all` | --    | Rollback all migrations (reset) |
 
+A failing `down()` stops the run and prints two lines — the version that failed, then `Caused by:` with the reason. The framework's own storage migrations use that reason to refuse dropping a table that still holds rows; see [When a rollback refuses](migrations.md#when-a-rollback-refuses). Returns exit code 0 on success, 1 on failure.
+
 #### `migrate:create`
 
 Create a new migration file.
@@ -256,6 +260,46 @@ php bin/pulsar health:repair
 ```
 
 First diagnoses all registered repair jobs, then runs repairs for any that need attention. Each repair reports status (FIXED or FAILED) and lists the actions performed. Exit code 0 if all repairs succeed, 1 if any fail.
+
+### Compliance
+
+#### `compliance:report`
+
+Assess the running deployment against the controls its enabled frameworks declare, and print the result.
+
+```bash
+php bin/pulsar compliance:report
+php bin/pulsar compliance:report --framework=pci_dss
+php bin/pulsar compliance:report --format=json > compliance.json
+php bin/pulsar compliance:report --format=markdown > compliance.md
+php bin/pulsar compliance:report --strict
+```
+
+Every outcome in the report is computed when the command runs, by a probe reading facts gathered out of the booted application. No control's status is written down anywhere, so none can be edited into passing: the only way to turn a gap green is to change the deployment, or to stop claiming the framework by removing it from `enabled_frameworks` in `config/compliance.php`.
+
+Each finding names the probe that concluded it and every observation it rests on, with that observation's grade — `measured` (something ran), `resolved` (this concrete class answered), `declared` (a config value was read) or `asserted` (the operator's word) — and the class that produced it. Only `measured` and `resolved` evidence can carry a control to satisfied, so a control can never be satisfied by configuration alone.
+
+Options:
+
+| Option                          | Effect                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--framework=<id>`              | Report on one enabled framework. A framework that is not enabled is refused, not assessed.                                                                                |
+| `--format=text\|json\|markdown` | `text` (default) for a terminal, `markdown` for the document an assessor is handed, `json` for a pipeline. Under `--format=json` nothing but the document reaches stdout. |
+| `--strict`                      | Also fail on partially satisfied controls.                                                                                                                                |
+
+Exit codes:
+
+| Code | Meaning                                                                                                                                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Every control an enabled framework claims was observed.                                                                                                                                                                         |
+| 1    | At least one claimed control was not observed, or an enabled framework has no mapping at all.                                                                                                                                   |
+| 2    | The report could not be produced: unknown framework or format, evidence gathering failed, a probe returned a verdict its evidence cannot support, or no framework is enabled. "Nothing to assess" is deliberately never a pass. |
+
+Controls Pulsar cannot observe — an approved policy, a signed breach register, a CI run for the deployed commit — are printed last as an operator checklist with the artefact each assessor should be shown. They are excluded from the coverage arithmetic and never affect the exit code.
+
+The report is a statement about the boot that produced it. Its header records the SAPI for that reason: run it in the deployed image, as the deploying user, or the artefact describes a process that is not the one serving traffic.
+
+`composer compliance:check` runs the same report and fails on any control claimed and not observed.
 
 ### Project creation
 
@@ -358,6 +402,25 @@ php bin/pulsar cache:warmup --strict --encrypt
 | ----------- | ----- | ------------------------------------------------ |
 | `--strict`  | `-s`  | Fail if any closure-based route is detected      |
 | `--encrypt` | `-e`  | Encrypt cached data (requires PULSAR_MASTER_KEY) |
+
+### Data protection
+
+#### `data:purge`
+
+Apply the retention policies declared in `config/data_protection.php`, deleting the records that have outlived them.
+
+```bash
+php bin/pulsar data:purge
+php bin/pulsar data:purge --dry-run
+```
+
+| Option      | Short | Description                                                                |
+| ----------- | ----- | -------------------------------------------------------------------------- |
+| `--dry-run` | --    | Count expired records without deleting, whatever `purge.dry_run` is set to |
+
+Retention is applied by exactly two things: this command and the `data-protection:purge` scheduled job (`purge.schedule`, default `0 3 * * *`). A category is only examined when it has BOTH a policy in `config/data_protection.php` and a purge implementation in the container — `audit_logs` and `user_sessions` by default. The command says so rather than reporting a silent success when neither is true.
+
+Without the `--dry-run` flag the command obeys `purge.dry_run`, so a console run and a scheduled run are the same operation rather than two policies.
 
 ### Queue
 
@@ -529,13 +592,13 @@ php bin/pulsar deploy:check
 php bin/pulsar deploy:check --env=staging --json
 ```
 
-| Option     | Short | Default      | Description                        |
-| ---------- | ----- | ------------ | ---------------------------------- |
-| `--env`    | `-e`  | `production` | Target environment to check        |
-| `--json`   | `-j`  | --           | Output as JSON                     |
-| `--strict` | `-s`  | --           | Fail on warnings (not just errors) |
+| Option     | Short | Default      | Description                                                  |
+| ---------- | ----- | ------------ | ------------------------------------------------------------ |
+| `--env`    | `-e`  | `production` | Target environment to check                                  |
+| `--json`   | `-j`  | --           | Output as JSON                                               |
+| `--strict` | `-s`  | --           | Also refuse the deploy on warnings (errors always refuse it) |
 
-Runs all registered deploy checks and produces a report with pass/warning/error counts. See [`docs/deployment.md`](deployment.md) for details.
+Runs all registered deploy checks and produces a report with pass/warning/error counts. Exits `1` when any check is error-severity, so the command can be used directly as a deploy gate. See [`docs/deployment.md`](deployment.md) for details.
 
 ### Scheduler
 

@@ -59,7 +59,13 @@
 ## Static analysis hook
 
 A Semgrep rule could enforce rule (1) under `composer security:lint`;
-it is not written yet.
+it is not written yet. Note what writing it now costs and buys:
+`composer security:lint` is a gate (it runs in the `security-semgrep` CI job
+and fails at WARNING), so a rule added to
+`tools/security/semgrep-pulsar-rules.yml` blocks merges rather than advising.
+Adding one therefore means fixing every call site it finds, or recording them
+in `tools/security/semgrep-baseline.json` in the same commit so the diff shows
+what the rule found.
 
 ## Related ADRs
 

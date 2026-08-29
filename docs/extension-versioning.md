@@ -105,6 +105,19 @@ When the kernel boots, the `ExtensionLoader` runs through this sequence:
 
 If an extension fails at any point, it transitions to `ExtensionLifecycle::Failed` and the error is logged. Other extensions continue loading normally unless they depend on the failed extension.
 
+## What boot time does not check: manifest authenticity
+
+The steps above are the complete set of checks a manifest passes. Every one of them asks whether the manifest is **well-formed and compatible**. None of them asks whether it is **genuine**, and it is worth stating plainly what that means for a regulated deployment:
+
+- **Pulsar verifies no extension signature, anywhere.** There is no publisher key, no trust store, no signed release artefact and no verifier on the load path. An extension is whatever files are in the directory when discovery runs.
+- **`trust_tier` in `pulsar.json` is a request, not a credential.** It is parsed and then used only to _lower_ the tier the host granted. A manifest declaring `"trust_tier": "core"` in a deployment that has not listed that extension in `config/extensions.php` runs at `Community`, sandboxed by `ScopedContainerProxy` and `ScopedRouterProxy` like any other unlisted extension. It cannot elevate itself, which is precisely why parsing an unverified field here is safe.
+- **`name`, `version` and `requires` are equally self-asserted.** Version constraints protect you from an _incompatible_ extension, not from a _hostile_ one. An extension that lies about its version gets loaded and then breaks.
+- **The trust decision lives in `config/extensions.php`**, which belongs to the host application. That file — and every other file under `config/` and `src/` — is inside the default scope of the [integrity manifest](integrity.md), so tampering with the allow-list after deployment is detectable when integrity verification is enabled. Extension directories are not in that default scope; add them to `integrity.include` if you want the same tamper-evidence over the extensions themselves.
+
+The framework's own integrity subsystem signs with a subkey of the **host's** master key. That makes a deployed tree tamper-evident to its operator; it cannot attest that a third party published an extension, because there is no third-party identity involved. Publisher signature verification is a feature Pulsar does not have yet, and nothing in the framework should be read as a substitute for one.
+
+**What to do instead, today:** treat installing an extension exactly as you treat adding a Composer dependency — review the source, pin the version, and add the name to `config/extensions.php` only when you are prepared to vouch for it. Anything you have not listed is capped at `Community` automatically.
+
 ## Compatibility guidelines for extension authors
 
 When deciding on your `min_version` and `max_version`:

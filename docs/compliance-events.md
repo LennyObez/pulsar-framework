@@ -4,7 +4,9 @@
 
 Pulsar's compliance event system provides a structured, auditable event model for regulated domains. Every compliance event extends the `ComplianceEvent` base class and carries a unique event ID, timestamp, correlation ID, and cryptographic nonce for replay protection.
 
-The system supports controls for:
+> **These events record assertions, they do not verify them.** An event such as `DpiaCompleted` or `PenetrationTestCompleted` is your organization stating that something happened outside the software; Pulsar timestamps and chains that statement, which is genuinely useful evidence, and it has no way to know whether the assessment was performed or was any good. Emitting the event is not performing the activity. For controls whose outcome Pulsar can actually observe, see `pulsar compliance:report`.
+
+The system provides an event vocabulary for:
 
 - **GDPR** -- Consent management, data subject rights, breach notification, pseudonymization
 - **HIPAA** -- PHI access logging, breach notification, security incident response, audit review
@@ -86,12 +88,14 @@ Authorization events live in `Pulsar\Auth\Authorization\Event` and implement `En
 | ------------------------- | ------------------------------------------------------- |
 | `AuthenticationSucceeded` | Dispatched on successful authentication                 |
 | `AuthenticationFailed`    | Dispatched on failed authentication attempt             |
-| `AuthorizationGranted`    | Dispatched when the Gate grants access                  |
-| `AuthorizationDenied`     | Dispatched when the Gate denies access                  |
+| `AuthorizationGranted`    | Built for every grant the Gate reaches                  |
+| `AuthorizationDenied`     | Built for every refusal the Gate reaches                |
 | `PrivilegeEscalated`      | Dispatched when a user's roles are escalated in-session |
 | `StepUpAuthRequired`      | Dispatched when step-up authentication is triggered     |
 
 Each authorization event carries its own `correlationId` and `nonce` for replay safety, and provides a `create()` factory that generates these automatically using a cryptographically secure `Randomizer`.
+
+The two authorization-decision events are **not dispatched to application listeners**. `Gate::allows()` hands each decision to its `AuthorizationDecisionSinkInterface`, and the framework's sink constructs the event when it writes the audit entry — after the decision has been returned. Putting the dispatcher on the authorization path meant every listener the application had registered ran inside every decision; see [ADR-0052](adr/0052-an-authorization-decision-does-not-run-the-application.md) and [Decision audit trail](authorization.md#decision-audit-trail). An application that wants to observe decisions binds an `AuthorizationDecisionSinkInterface`.
 
 ```php
 use Pulsar\Auth\Authorization\Event\AuthorizationGranted;

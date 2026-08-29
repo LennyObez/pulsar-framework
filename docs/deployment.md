@@ -4,11 +4,20 @@
 
 Before deploying to staging or production:
 
-1. Run `php bin/pulsar asset:publish --copy` to publish extension assets to `public/assets/`
-2. Run `php bin/pulsar optimize` to build framework caches
-3. Run `php bin/pulsar deploy:check --env=production` to validate readiness
-4. Run `php bin/pulsar integrity:build --sign` to create a signed integrity manifest
-5. Verify all health checks pass: `php bin/pulsar health:check`
+1. Run `php bin/pulsar migrate:run` to bring the database to the shape this build expects
+2. Run `php bin/pulsar asset:publish --copy` to publish extension assets to `public/assets/`
+3. Run `php bin/pulsar optimize` to build framework caches
+4. Run `php bin/pulsar deploy:check --env=production` to validate readiness
+5. Run `php bin/pulsar integrity:build --sign` to create a signed integrity manifest
+6. Verify all health checks pass: `php bin/pulsar health:check`
+
+### Schema migrations
+
+`migrate:run` is a deploy step, not a development convenience. The framework's own tables — the transactional outbox, workflows, sagas, the failed-job repository, second-factor authentication — ship as migrations and are created by nothing else; a build deployed without this step fails at first use of whichever subsystem is missing its table, rather than quietly creating it under a role that should not hold `CREATE` at all ([ADR-0043](adr/0043-schema-belongs-to-migrations.md)).
+
+Run it before the new build serves traffic, and check what it will do first with `php bin/pulsar migrate:status`. See the [Migrations guide](migrations.md) for the three sources it applies.
+
+Rolling one of those migrations back is not the mirror image of applying it. `down()` refuses to drop a framework table that still holds rows, so a rollback under incident pressure stops with an explanation instead of deleting unpublished integration events, untriaged dead-lettered jobs, or sagas with compensation still owed — plan the data step before the schema step. [When a rollback refuses](migrations.md#when-a-rollback-refuses) shows the message and what clears it.
 
 ### Asset publishing
 
@@ -63,17 +72,24 @@ php bin/pulsar deploy:check --env=staging --json
 
 Each check returns one of three severity levels:
 
-| Severity | Meaning                                       |
-| -------- | --------------------------------------------- |
-| Pass     | Check passed                                  |
-| Warning  | Non-critical issue, deployment can proceed    |
-| Error    | Critical issue, deployment should not proceed |
+| Severity | Meaning                                    | Exit code             |
+| -------- | ------------------------------------------ | --------------------- |
+| Pass     | Check passed                               | 0                     |
+| Warning  | Non-critical issue, deployment can proceed | 0 (1 with `--strict`) |
+| Error    | Critical issue, the deploy is refused      | 1                     |
 
-Use `--strict` to treat warnings as errors:
+An error-severity result exits non-zero on its own — the command is the gate, so
+a pipeline that reads the exit code stops. `--strict` adds the one stricter thing
+left, treating warnings as errors too:
 
 ```bash
 php bin/pulsar deploy:check --strict
 ```
+
+To stop a particular check from refusing a deploy, lower its severity in
+`config/deploy.php` (`warn`, or `off` to skip it). That is the supported way, and
+it leaves the decision in a diff someone can review — unlike omitting a flag at
+the call site, which leaves no trace.
 
 ### Severity overrides
 

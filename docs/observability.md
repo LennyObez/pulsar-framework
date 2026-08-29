@@ -234,6 +234,30 @@ Automatically records HTTP metrics:
 - `pulsar_http_request_duration_seconds` - Histogram of request durations
 - `pulsar_http_errors_total` - Counter for 5xx responses with labels: method, path
 
+### ModelBindingMiddleware
+
+Route model binding reports what it refused, and reports it here rather than in the
+tamper-evident audit chain:
+
+- `pulsar_model_binding_anonymous_denials_total` - Counter with labels: route, reason. Every
+  request a bound route refused for having no authenticated caller. These write nothing to the
+  audit chain: nothing was accessed, every entry would be the same entry, and an entry per
+  request would let an unauthenticated caller decide how far the chain grows. A denial that
+  names somebody is still chained in full, with no ceiling.
+- `pulsar_model_binding_refusals_total` - Counter with labels: route, status. Every refusal the
+  middleware serves, of every status. This is what keeps "a route that cannot be served is
+  diagnosed once" an aggregation rather than a suppression: the `error` line stops repeating,
+  the occurrences do not stop being counted.
+
+Both label sets are drawn from the route table, never from the request. A `Counter` keys a map
+in memory on its labels, so a label the caller chooses is a map the caller sizes.
+
+Both series are registered when the middleware is composed, so they exist at zero before
+anything is refused - a dashboard can tell "no anonymous denials" from "not reporting". With
+`metrics.enabled` off there is no registry and the counts are lost; `ModelBindingWiring`
+declares `MetricRegistry` as an optional binding so that shows up as a degraded feature rather
+than as a silence. See [Route model binding](route-model-binding.md).
+
 ### Middleware ordering
 
 TracingMiddleware is registered as the outermost middleware (first in, last out) to ensure spans cover the full request lifecycle. MetricsMiddleware is registered inner to tracing.

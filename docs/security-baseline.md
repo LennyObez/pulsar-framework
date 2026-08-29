@@ -1,6 +1,8 @@
 # Security baseline
 
-Pulsar ships secure defaults for session management, CSRF protection, security headers, cryptographic primitives, and audit logging. All security features are configured via the `SecurityConfig` DTO loaded from `config/security.php`.
+Pulsar ships secure defaults for session management, CSRF protection and security headers. All security features are configured via the `SecurityConfig` DTO loaded from `config/security.php`.
+
+> **Cryptography and audit integrity are not among those defaults.** Every at-rest protection is derived from `PULSAR_MASTER_KEY`, which both shipped environment templates leave empty. Without it there is no encryptor, session payloads are stored unencrypted, and the audit chain is never keyed — while `config/security.php` still reads `'encryption' => true`. `composer deploy:check` refuses staging and production without a usable key (the `master-key` gate); local development is left to you, which is why the templates carry the consequence inline. See [docs/compliance.md](compliance.md).
 
 ## Configuration
 
@@ -482,7 +484,8 @@ The general `Encryptor` uses `sodium_crypto_secretbox` (XSalsa20-Poly1305) witho
 1. Generate a master key: `php -r "echo bin2hex(random_bytes(32));"`
 2. Set the environment variable: `PULSAR_MASTER_KEY=<64-char-hex>`
 3. The kernel automatically registers `MasterKey`, `Encryptor`, and `AuditLogger` when the key is present
-4. If `PULSAR_MASTER_KEY` is not set, crypto-dependent services are not registered; session, CSRF, and security headers still function
+4. If `PULSAR_MASTER_KEY` is not set, crypto-dependent services are not registered and **nothing raises an error**: no `EncryptorInterface`, no `SessionEncryption`, no keyed audit chain, no `SecretVault`. Session, CSRF and security headers still function, so the application looks healthy while its at-rest protections are absent
+5. A key that is present but malformed is rejected during wiring, which logs an error and binds a `MasterKeyFailure`, then lets the boot continue — leaving the same empty container as an unset key
 
 ## Kernel integration
 
@@ -538,12 +541,46 @@ silently inert — most importantly, a security feature disabled by a missing
 binding (e.g. a captcha whose single-use replay cache is unbound because
 `TaggedCacheInterface` is missing) is reported as a `FAIL`, not dropped.
 
-Controls evaluated: debug mode, CSRF protection, HTTPS/HSTS, master key
-presence and strength, session encryption, session cookie flags
-(`Secure`/`HttpOnly`/`SameSite`), baseline security headers, and every
-security feature flagged inert by the wiring-contract detector. Outside
-production, production-only weaknesses surface as `DEGRADED` warnings rather
-than failures, so they remain visible without breaking local development.
+Controls evaluated: debug mode, CSRF protection, HTTPS/HSTS, the master key,
+session encryption, session cookie flags (`Secure`/`HttpOnly`/`SameSite`),
+baseline security headers, and every security feature flagged inert by the
+wiring-contract detector. Outside production, production-only weaknesses
+surface as `DEGRADED` warnings rather than failures, so they remain visible
+without breaking local development.
+
+Two of those controls are decided from the **container**, not from
+`config/security.php`, because a configuration value records what was asked for
+and these two questions are about what is running:
+
+- **`master_key`** — the supplied value is put through the same
+  `MasterKey::fromHex()` parse the wiring performs, and the report then checks
+  that a `MasterKey` and an `EncryptorInterface` are actually bound. A key that
+  is sixty-four characters long but does not decode is a `FAIL`, in every
+  environment: the operator asked for cryptography and the process is running
+  without it.
+- **`session_encryption`** — `security.session.encryption = true` is a request.
+  It is honoured only inside the branch `SecurityWiring` skips when the master
+  key is missing or rejected, so the report requires a bound `SessionEncryption`
+  before reporting `OK`. Enabled-but-unbound is a `FAIL` in every environment,
+  because it means session payloads are being written in cleartext. Encryption
+  switched **off** in configuration keeps the usual environment-aware treatment:
+  `FAIL` in production, `DEGRADED` elsewhere.
+
+### A rejected master key
+
+Supplying `PULSAR_MASTER_KEY` and having it refused is not the same state as
+supplying nothing, even though the two leave an identical container. The boot
+continues either way — an unusable key should not take a deployment offline
+over a subsystem it may not use — but a rejection is now recorded rather than
+swallowed:
+
+- `SecurityWiring` logs it at `error` level (this is an event, not a
+  configuration choice), naming what is unbound as a result: the encryptor,
+  session encryption, tokenization and the audit HMAC chain.
+- A `MasterKeyFailure` is bound into the container carrying the reason. It is
+  what lets `security:check` and `deploy:check` tell "never asked for
+  cryptography" apart from "asked and was refused", and it is why the master-key
+  posture item can report the actual parse error instead of a length.
 
 ### Inspecting the posture
 

@@ -46,8 +46,9 @@ addressed a problem that did not exist while leaving the one that did.
 Two dead ends are worth recording so they are not re-explored:
 
 - **Xdebug instead of PCOV.** Xdebug is the only driver that emits branch and condition
-  data, and it costs 0.87 s per test on this runner: 10.6 hours for the suite, past
-  GitHub's own six-hour ceiling for a job. It cannot finish here, sharded or not.
+  data, and it costs 0.87 s per test on this runner: 10.75 hours for the full suite, past
+  GitHub's own six-hour ceiling for a job. No arrangement of one job finishes it. What one
+  job can finish is a slice, which is what `coverage-nightly.yml` measures.
 - **Reusing one instrumented run for both gates.** Infection consumes per-test coverage
   in PHPUnit's XML format. That is the same data that will not fit in memory, now
   written to disk; the artifact would run to several gigabytes.
@@ -95,9 +96,27 @@ Three narrower mechanisms were tried first and rejected on evidence:
 
 ## Consequences
 
-The condition and branch dimension is **not measured anywhere**, in any job, and will not
-be until either PCOV grows branch support or the suite shrinks by an order of magnitude.
-Statement and method coverage are enforced as before, over the whole suite.
+The condition and branch dimension is **not measured on a pull request**, and will not be
+until PCOV grows branch support. Statement and method coverage are enforced as before,
+over the whole suite.
+
+It is measured nightly over part of the tree. `coverage-nightly.yml` is a single job
+with no matrix, and that constraint decides its scope: Xdebug needs 10.75 hours for the
+full suite against GitHub's six-hour ceiling for one job, and splitting the work changes
+each piece without changing the total. So the nightly measures the slice a single job can
+reach — `src/Auth`, `src/Security` and `src/Audit`, through the same
+`tools/php/mutation/phpunit.xml` that scopes mutation testing, so both figures describe
+the same code. Branch coverage for the other 2,109 files under `src/` is measured
+nowhere, and will not be until PCOV learns branches.
+
+That figure is reported, not gated, and the distinction is deliberate. Branch coverage
+has never been measured on this suite. A floor set before the first measurement would be
+a number someone picked, not a standard anything met, and a gate nobody can justify is
+the kind that gets lowered the first time it fails. `assert-coverage-threshold.php`
+therefore takes `--report-only=Conditions`, which prints the figure and refuses to let it
+decide the outcome — while leaving statements and methods gated exactly as they are on a
+pull request. Setting the floor is the follow-up to the first green nightly run, and it
+is a decision that belongs to whoever reads that number.
 
 Mutation testing covers 483 of the 2,592 files under `src/`. Everything outside
 those three trees has no mutation gate. This is a real reduction, and it is the honest
