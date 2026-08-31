@@ -132,7 +132,7 @@ final class ControlCatalogTest extends TestCase
      * until someone reads the catalog. Every boot of every application binds this
      * catalog; only `compliance:report` and the `compliance:check` gate ever read
      * one, so a source executed at contribute() time would charge every request
-     * for the sixteen mapping classes and the 193 declarations behind them.
+     * for the seventeen mapping classes and the 215 declarations behind them.
      */
     #[Test]
     public function aDeferredSourceIsNotExecutedUntilTheCatalogIsRead(): void

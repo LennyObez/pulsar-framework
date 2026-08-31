@@ -16,6 +16,7 @@ use Pulsar\Compliance\Control\ControlFinding;
 use Pulsar\Compliance\Control\ControlOutcome;
 use Pulsar\Compliance\Control\Observation;
 use Pulsar\Compliance\ControlCatalog;
+use Pulsar\Compliance\Frameworks\AiActMapping;
 use Pulsar\Compliance\Frameworks\CcpaMapping;
 use Pulsar\Compliance\Frameworks\DoraMapping;
 use Pulsar\Compliance\Frameworks\EidasMapping;
@@ -50,6 +51,7 @@ use function sprintf;
  * the literal they were reading, and that stayed green through the entire life of
  * the ADR-0041 defect they were nominally covering.
  */
+#[CoversClass(AiActMapping::class)]
 #[CoversClass(CcpaMapping::class)]
 #[CoversClass(DoraMapping::class)]
 #[CoversClass(EidasMapping::class)]
@@ -72,7 +74,7 @@ use function sprintf;
 final class FrameworkMappingTest extends TestCase
 {
     /** Every control the framework declares, across all sixteen core mappings. */
-    private const int TOTAL_CONTROLS = 193;
+    private const int TOTAL_CONTROLS = 215;
 
     /**
      * What a deployment carrying every implementation this release assesses can
@@ -85,6 +87,7 @@ final class FrameworkMappingTest extends TestCase
      * @var array<string, int>
      */
     private const array SATISFIED_WHEN_EQUIPPED = [
+        'ai_act' => 0,
         'ccpa' => 1,
         'dora' => 1,
         'eidas' => 0,
@@ -109,6 +112,7 @@ final class FrameworkMappingTest extends TestCase
     private static function declarations(): array
     {
         return [
+            ...AiActMapping::declarations(),
             ...CcpaMapping::declarations(),
             ...DoraMapping::declarations(),
             ...EidasMapping::declarations(),
@@ -234,14 +238,14 @@ final class FrameworkMappingTest extends TestCase
      * is how a compliance subsystem drifts.
      *
      * The figures fell hard when `ObservationGrade::provesBehaviour()` was narrowed
-     * to Measured. Across the sixteen mappings a fully-equipped deployment used to
+     * to Measured. Across the seventeen mappings a fully-equipped deployment used to
      * satisfy 78 of 96 assessed controls; it now satisfies 32. The 46 that moved
      * did not get worse — nothing about the deployment changed — they were passing
      * on resolved identity, which answers "which class is bound, and is it on the
      * allow-list" and is ADR-0041's defect one lookup deeper. Their findings now
      * read "Claimed and not observed" and name the class that was found.
      *
-     * Two frameworks satisfy nothing at all on an equipped deployment. eIDAS is
+     * Three frameworks satisfy nothing at all on an equipped deployment. eIDAS is
      * one of them, and that is the correct report: Pulsar observes no signature
      * being created or validated, so it has nothing to say about a deployment's
      * trust services beyond which classes are wired. A number that said otherwise

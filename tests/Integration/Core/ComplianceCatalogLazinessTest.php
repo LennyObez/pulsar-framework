@@ -44,7 +44,7 @@ use const JSON_THROW_ON_ERROR;
  *     the binding is a closure and `has()` is answered from the binding;
  *  2. resolving the catalog out of the container still loads no mapping: what
  *     comes back holds a deferred source, not declarations;
- *  3. the first READ builds all 193 declarations and loads the mappings then.
+ *  3. the first READ builds all 215 declarations and loads the mappings then.
  *
  * Boot pays for step 1. Only `compliance:report` and the `compliance:check` gate
  * reach step 3.
@@ -93,7 +93,7 @@ final class ComplianceCatalogLazinessTest extends TestCase
         self::assertFalse(
             $observed['mappingLoadedAfterWire'],
             self::A_MAPPING . ' was autoloaded during boot. The catalog is being built at wiring time again: '
-                . 'that is 0.52 ms warm and ~22 ms cold on every request of every application, for 193 '
+                . 'that is 0.52 ms warm and ~22 ms cold on every request of every application, for 215 '
                 . 'declarations no request reads.',
         );
         self::assertFalse(
@@ -128,7 +128,7 @@ final class ComplianceCatalogLazinessTest extends TestCase
             'Reading the catalog did not load the mappings, so it cannot have built anything.',
         );
         self::assertSame(
-            193,
+            215,
             $observed['count'],
             'The deferred build produced a different number of controls than registering them eagerly did.',
         );
