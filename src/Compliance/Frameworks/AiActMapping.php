@@ -92,9 +92,9 @@ final class AiActMapping
                 id: 'ai-act-art-5-enforcement',
                 framework: ComplianceFramework::AiAct,
                 title: 'A model classified as a prohibited practice cannot reach production',
-                requirement: 'Observes that a model registry is resolved. In Pulsar that registry '
-                    . 'refuses to register a model into production status, and refuses to transition '
-                    . 'one there, when it is classified AiModelRiskLevel::Unacceptable — the tier that '
+                requirement: 'Observes that a model registry is resolved. That registry refuses to '
+                    . 'register a model into production status, and refuses to transition one there, '
+                    . 'when it is classified AiModelRiskLevel::Unacceptable — the tier that '
                     . 'corresponds to Article 5. The refusal names no remedial artefact because '
                     . 'Article 5 bans the practice rather than conditioning it. What this control '
                     . 'establishes is that the mechanism is in place; whether every system in service '
@@ -142,11 +142,11 @@ final class AiActMapping
                     . 'content shall ensure the outputs are marked in a machine-readable format and '
                     . 'detectable as artificially generated or manipulated, with solutions that are '
                     . 'effective, interoperable, robust and reliable as far as this is technically '
-                    . 'feasible (Article 50(2)). Applies since 2 August 2026. Pulsar marks at the '
-                    . 'delivery boundary, which satisfies the machine-readable and detectable limbs; '
-                    . 'it embeds nothing in a media signal, so the robustness limb for image, audio '
-                    . 'and video is discharged by a provenance standard applied where the media is '
-                    . 'produced.',
+                    . 'feasible (Article 50(2)). Applies since 2 August 2026. The framework marks at '
+                    . 'the delivery boundary, which satisfies the machine-readable and detectable '
+                    . 'limbs; it embeds nothing in a media signal, so the robustness limb for image, '
+                    . 'audio and video is discharged by a provenance standard applied where the media '
+                    . 'is produced.',
                 artefact: 'A captured response for each generated output kind, showing the mark it '
                     . 'carried; and for image, audio or video, the provenance or watermarking scheme '
                     . 'applied at generation, with its coverage.',
