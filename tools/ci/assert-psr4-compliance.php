@@ -35,6 +35,12 @@ const ALLOWED_VIOLATIONS = [
     // Simulates an extension leaking a class into a namespace it does not own,
     // so the boundary checker has something real to catch.
     'Pulsar\\Extension\\Payments\\Contracts\\FakeAdapterLeak' => 'boundary-leak fixture: squats a foreign namespace on purpose',
+    // The sandbox-escape fixture. Its whole point is that class_exists() answers
+    // false at bind time, so an extension can bind a name, THEN declare the class,
+    // and watch the old check wave the binding through with nothing to reflect on.
+    // SandboxEscapeRoutesTest asserts the class is absent before it binds; making
+    // this file PSR-4 compliant would load it early and the test would prove nothing.
+    'Acme\\Evil\\DeclaredAfterBinding' => 'sandbox-escape fixture: not being autoloadable IS the test',
 ];
 
 /**

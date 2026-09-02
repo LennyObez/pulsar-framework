@@ -7,11 +7,11 @@ namespace Pulsar\Tests\Unit\Tooling;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Tests\Support\Gates\GuardsGate;
 use Pulsar\Core\Kernel;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tests\Benchmark\Support\BootBenchmarkKernel;
+use Pulsar\Tests\Support\Gates\GuardsGate;
 use Pulsar\Tests\Unit\Tooling\Support\InvokesCiScript;
 use RuntimeException;
 

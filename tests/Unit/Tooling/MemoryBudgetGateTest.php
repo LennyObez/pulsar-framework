@@ -7,8 +7,8 @@ namespace Pulsar\Tests\Unit\Tooling;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Tests\Support\Gates\GuardsGate;
 use Pulsar\Tests\Benchmark\Support\MemoryProfileRunner;
+use Pulsar\Tests\Support\Gates\GuardsGate;
 use RuntimeException;
 
 use function bin2hex;

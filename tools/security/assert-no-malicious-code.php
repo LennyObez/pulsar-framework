@@ -391,20 +391,6 @@ const REVIEWED = [
                 . 'Script path is escapeshellarg()-quoted.',
         ],
     ],
-    'tests/Unit/Integrity/DriverDispatchRatchetTest.php' => [
-        'shell-command' => [
-            'count' => 1,
-            'reason' => 'Asks `git grep` which tracked files name a Driver case, deliberately, so '
-                . 'scratch files cannot fire the ratchet. Root is escapeshellarg()-quoted.',
-        ],
-    ],
-    'tests/Unit/Integrity/RootCleanlinessTest.php' => [
-        'shell-command' => [
-            'count' => 1,
-            'reason' => 'Asks `git ls-files` what is committed at the repository root, which is '
-                . 'the thing the test guards. Root is escapeshellarg()-quoted.',
-        ],
-    ],
     'tests/Unit/Rendering/StaticSiteGeneratorCoverageTest.php' => [
         'shell-command' => [
             'count' => 2,
@@ -428,6 +414,53 @@ const REVIEWED = [
             'reason' => 'Executes the directive\'s own compiler output to assert the loop it '
                 . 'generates behaves. The evaluated string is a compiler artefact built from a '
                 . 'fixed expression literal, never from input.',
+        ],
+    ],
+    'tests/Unit/Compliance/Control/OutcomeSealTest.php' => [
+        'unserialize-unbounded' => [
+            'count' => 1,
+            'reason' => 'Round-trips this test OWN value to prove the sealed class refuses to come '
+                . 'back through unserialize(). The payload is never external; the refusal is the assertion.',
+        ],
+    ],
+    'tests/Unit/Compliance/Verification/EvidenceChainResumptionTest.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Runs a child PHP process to prove the evidence chain resumes across a real '
+                . 'process boundary, which is the only way to simulate a crash. proc_open is given an '
+                . 'ARRAY, so no shell is involved.',
+        ],
+    ],
+    'tests/Unit/Integrity/Support/DriverDispatchScanner.php' => [
+        'shell-command' => [
+            'count' => 1,
+            'reason' => 'Asks `git grep` which files name a Driver case, so the ratchet sees tracked and '
+                . 'untracked files alike. Root is escapeshellarg()-quoted; the pattern is a literal. '
+                . 'Extracted here from DriverDispatchRatchetTest, which no longer shells out itself.',
+        ],
+    ],
+    'tests/Unit/Integrity/Support/PlantsFiles.php' => [
+        'shell-command' => [
+            'count' => 2,
+            'reason' => 'Plants a throwaway git repository in a temp directory so a gate can be watched '
+                . 'refusing something real. Both calls quote the root with escapeshellarg(); the rest '
+                . 'of each command is a literal.',
+        ],
+    ],
+    'tests/Unit/Integrity/Support/RootFileScanner.php' => [
+        'shell-command' => [
+            'count' => 1,
+            'reason' => 'Asks `git ls-files` what is committed at the repository root. Root is '
+                . 'escapeshellarg()-quoted. Extracted here from RootCleanlinessTest, which no longer '
+                . 'shells out itself.',
+        ],
+    ],
+    'tests/Unit/Tooling/Support/PlantsDefectsForGates.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Runs a quality gate as a subprocess against a planted defect, which is the only '
+                . 'way to observe a gate FAILING rather than assume it can. proc_open is given an '
+                . 'ARRAY, so no shell is involved.',
         ],
     ],
 ];
