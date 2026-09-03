@@ -181,6 +181,7 @@
   },
   "config": {
     "sort-packages": true,
+    "process-timeout": 0,
     "allow-plugins": {
       "infection/extension-installer": true,
       "bamarni/composer-bin-plugin": true
