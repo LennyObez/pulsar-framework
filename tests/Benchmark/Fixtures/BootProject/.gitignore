@@ -1,0 +1,8 @@
+# Runtime state the boot benchmark writes into its own fixture project.
+#
+# The repository root ignores /var/, and that pattern is root-anchored: it does
+# not reach this directory. Without this file the compiled container and route
+# cache the benchmark produces show up as untracked changes after every run, so
+# a clean tree becomes something that has to be re-established rather than
+# observed.
+/var/
