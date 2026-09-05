@@ -45,6 +45,7 @@ final class RootCleanlinessTest extends TestCase
         'composer.lock',
         'package.json',
         'pnpm-lock.yaml',
+        'pnpm-workspace.yaml', // pnpm 12 reads its settings only from here
 
         // Entry documentation — anything longer belongs in docs/
         'CHANGELOG.md',

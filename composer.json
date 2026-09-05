@@ -29,7 +29,7 @@
     "ext-sodium": "*",
     "ext-zip": "*",
     "ext-zlib": "*",
-    "league/commonmark": "^2.8.2",
+    "league/commonmark": "^2.10.2",
     "psr/cache": "^3.0",
     "psr/clock": "^1.0",
     "psr/container": "^2.0",

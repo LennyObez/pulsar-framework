@@ -24,12 +24,12 @@ declare(strict_types=1);
  * check locally, and PHPStan sees the code.
  *
  * Usage:
- *   php tools/ci/assert-no-advisories.php [--ecosystem=composer|pnpm] [report.json]
+ *   php tools/ci/assert-no-advisories.php [--ecosystem=composer|pnpm] [--workspace=DIR] [report.json]
  *
  * Exit codes: 0 no advisories, 1 advisories found, 2 the report is unusable.
  */
 
-const ADVISORY_GATE_USAGE = 'Usage: php tools/ci/assert-no-advisories.php [--ecosystem=composer|pnpm] [report.json]';
+const ADVISORY_GATE_USAGE = 'Usage: php tools/ci/assert-no-advisories.php [--ecosystem=composer|pnpm] [--workspace=DIR] [report.json]';
 
 /**
  * The gate could not read the report.
@@ -107,22 +107,20 @@ function composerAdvisoryLines(array $data, string $path): array
 }
 
 /**
- * `pnpm audit --json` emits `advisories` as id => advisory, the severity totals
- * in `metadata.vulnerabilities`, and anything silenced by `pnpm.auditConfig` in
- * `muted`.
+ * `pnpm audit --json` emits `advisories` as id => advisory and the severity totals
+ * in `metadata.vulnerabilities`; pnpm 10 and earlier also list silenced advisories
+ * in `muted`.
  *
- * All three are read. The shell version this replaces trusted the totals alone,
- * and a total is a summary: it can read zero while the advisory list is not
- * empty, and it is the field most likely to move if the format changes. Muted
- * entries fail as well — an ignore list that quietly switches the gate off is
- * the same fail-open in a more deliberate form.
+ * All are read. A total is a summary that can read zero while the list is not
+ * empty, so it is never trusted alone, and muted entries fail too: an ignore list
+ * that quietly switches the gate off is the same fail-open, made deliberate.
  *
  * @param array<mixed> $data
  * @return list<string>
  */
 function pnpmAdvisoryLines(array $data, string $path): array
 {
-    foreach (['advisories', 'muted', 'metadata'] as $key) {
+    foreach (['advisories', 'metadata'] as $key) {
         if (!array_key_exists($key, $data)) {
             advisoryGateUnusable(sprintf(
                 'Audit report "%s" has no "%s" key; pnpm\'s output format has changed.',
@@ -164,7 +162,7 @@ function pnpmAdvisoryLines(array $data, string $path): array
     }
 
     /** @var mixed $muted */
-    $muted = $data['muted'];
+    $muted = $data['muted'] ?? [];
 
     if (!is_array($muted)) {
         advisoryGateUnusable('"muted" is not a list of silenced advisories.');
@@ -220,12 +218,41 @@ function pnpmAdvisoryLines(array $data, string $path): array
     return $found;
 }
 
+/**
+ * Since pnpm 11, `auditConfig` in pnpm-workspace.yaml removes ignored advisories
+ * from the report altogether, so a silenced tree reads as clean. Refused unread.
+ */
+function pnpmRefuseSilencing(string $workspace): void
+{
+    $file = $workspace . '/pnpm-workspace.yaml';
+    $yaml = is_file($file) ? file_get_contents($file) : '';
+
+    if ($yaml === false) {
+        advisoryGateUnusable(sprintf('"%s" exists but cannot be read.', $file));
+    }
+
+    if (preg_match('/^["\']?auditConfig["\']?\s*:/m', $yaml) === 1) {
+        advisoryGateUnusable(sprintf(
+            '"%s" declares auditConfig, which hides advisories from the report this gate reads. '
+            . 'This gate does not honour silencing: upgrade, override or replace the dependency.',
+            $file,
+        ));
+    }
+}
+
 $ecosystem = 'composer';
 $path = null;
+$workspace = dirname(__DIR__, 2);
 
 foreach (array_slice($argv ?? [], 1) as $argument) {
     if (str_starts_with($argument, '--ecosystem=')) {
         $ecosystem = substr($argument, strlen('--ecosystem='));
+
+        continue;
+    }
+
+    if (str_starts_with($argument, '--workspace=')) {
+        $workspace = substr($argument, strlen('--workspace='));
 
         continue;
     }
@@ -281,6 +308,10 @@ try {
 
 if (!is_array($data)) {
     advisoryGateUnusable(sprintf('Audit report "%s" did not decode to an object.', $path));
+}
+
+if ($ecosystem === 'pnpm') {
+    pnpmRefuseSilencing($workspace);
 }
 
 $found = match ($ecosystem) {
