@@ -12,7 +12,8 @@
     configuration:
 
       - A second <testsuite> naming these paths would make `composer test` run all
-        3,753 of them twice, and would double them in the coverage partition.
+        of them twice (3,712 at rc.12), and would double them in the coverage
+        partition.
       - Carving them out of the Unit suite would silently drop them from
         `composer test:all`, which selects that suite by name.
       - A `filter` regex has to survive JSON5 unescaping and then per-platform
@@ -47,6 +48,7 @@
     </testsuites>
     <extensions>
         <bootstrap class="Pulsar\Tests\Runner\ResetActiveEnvironmentExtension"/>
+        <bootstrap class="Pulsar\Tests\Runner\RestoresBasePathAnchorExtension"/>
         <bootstrap class="Pulsar\Tests\Runner\SkipLedgerExtension"/>
     </extensions>
     <php>

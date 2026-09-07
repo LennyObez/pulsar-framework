@@ -79,6 +79,14 @@
     <extensions>
         <bootstrap class="Pulsar\Tests\Runner\ResetActiveEnvironmentExtension"/>
         <!--
+            Restores the PULSAR_BASE_PATH the run started with before every test.
+            The bootstrap script above anchors it once; a single test clearing it
+            handed the next kernel boot the right to re-point the whole process at
+            a fixture project, which killed nine tests in another suite that were
+            green in isolation. See the class docblock.
+        -->
+        <bootstrap class="Pulsar\Tests\Runner\RestoresBasePathAnchorExtension"/>
+        <!--
             Records why each skipped test skipped. Inert unless PULSAR_SKIP_LEDGER_DIR
             names a directory, so an ordinary local run is untouched. It exists because
             the JUnit report cannot answer the question: PHPUnit writes `<skipped/>` as
