@@ -25,6 +25,13 @@ return [
     | full FIPS 140-2 compliance when deployed with a NIST-validated OpenSSL
     | FIPS provider. Use FipsValidator::verify() to confirm compliance.
     |
+    | "aes-gcm" runs on libsodium's own AES-256-GCM by default. Set the
+    | PULSAR_CRYPTO_FORCE_OPENSSL environment variable to "1" or "true" to run
+    | it through the OpenSSL provider instead, which is how a FIPS deployment
+    | keeps the cipher inside its validated module. Same algorithm, same key,
+    | same ciphertext format either way; boot fails if that OpenSSL build has
+    | no aes-256-gcm.
+    |
     */
     'cipher_suite' => 'sodium',
 

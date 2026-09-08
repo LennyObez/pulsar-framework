@@ -134,6 +134,35 @@ final class SecurityException extends RuntimeException
     }
 
     /**
+     * A second call reached the audit chain advance while one was still inside it.
+     *
+     * The advance reads the previous entry's HMAC, builds an entry chained to it,
+     * writes it and only then publishes the new head. A call that enters that
+     * window reads the same predecessor and writes an entry claiming the same
+     * position; whichever of the two is not published last is orphaned, and every
+     * later verification reports the chain as tampered with.
+     *
+     * The realistic source is a nested call: an audit sink — or something a sink
+     * reaches, a logger handler, an event listener — that itself logs an audit
+     * event. It is refused rather than waited out because waiting cannot resolve
+     * it: the second call is on the same call stack as the first, so the first
+     * cannot finish until the second returns. See
+     * {@see \Pulsar\Security\Audit\AuditLogger} for why the fiber case is refused
+     * on the same terms.
+     */
+    #[NoDiscard]
+    public static function auditChainAdvanceReentered(string $action): self
+    {
+        return new self(sprintf(
+            'Audit chain advance re-entered while logging "%s": a second entry would claim the '
+            . 'position the first has not finished taking, breaking the chain from that point on. '
+            . 'An audit sink, or something it calls, is logging an audit event of its own; make '
+            . 'that path write without going back through the logger.',
+            $action,
+        ));
+    }
+
+    /**
      * Audit sink write failure.
      */
     #[NoDiscard]

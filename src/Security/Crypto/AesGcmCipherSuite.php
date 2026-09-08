@@ -7,6 +7,7 @@ namespace Pulsar\Security\Crypto;
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\Environment;
 use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\Randomizer;
@@ -23,6 +24,7 @@ use function sodium_crypto_aead_aes256gcm_encrypt;
 use function sodium_crypto_aead_aes256gcm_is_available;
 use function sprintf;
 use function strlen;
+use function strtolower;
 use function substr;
 
 /**
@@ -33,17 +35,23 @@ use function substr;
  * Extensions). This keeps the crypto stack within ADR-0006's libsodium-only
  * policy.
  *
- * Fallback path uses OpenSSL `aes-256-gcm`. It is selected only when
- * `sodium_crypto_aead_aes256gcm_is_available()` returns `false`, which
- * indicates an unsupported CPU (e.g. AMD pre-Bulldozer, ARMv7 without Crypto
- * Ext, some emulated environments). The fallback is documented as a narrowly
- * scoped exception in ADR-0006.
+ * Fallback path uses OpenSSL `aes-256-gcm`. It is taken when any of these
+ * holds, and ADR-0006 records it under the FIPS bullet of its exception list:
+ *  - `sodium_crypto_aead_aes256gcm_is_available()` returns `false`, which
+ *    indicates an unsupported CPU (e.g. AMD pre-Bulldozer, ARMv7 without Crypto
+ *    Ext, some emulated environments);
+ *  - the deployment sets `PULSAR_CRYPTO_FORCE_OPENSSL` to `1` or `true`;
+ *  - the caller passes `$preferSodium: false`.
  *
  * FIPS 140-2/140-3 compliance notes:
  *  - AES-256-GCM is FIPS-approved regardless of implementation.
- *  - When FIPS compliance is required, deploy with a NIST-validated
- *    OpenSSL FIPS provider and set `PULSAR_CRYPTO_FORCE_OPENSSL=1` so the
- *    fallback path is taken unconditionally.
+ *  - When FIPS compliance is required, deploy with a NIST-validated OpenSSL
+ *    FIPS provider and set `PULSAR_CRYPTO_FORCE_OPENSSL=1`. The constructor
+ *    reads that variable through {@see Environment::read()} — so a hardened
+ *    environment loader's allowlist applies (ADR-0033) — and takes the OpenSSL
+ *    path unconditionally, refusing to construct if that OpenSSL build does not
+ *    offer `aes-256-gcm`. An explicit `$preferSodium` argument outranks it: the
+ *    variable configures a deployment, not a caller that has already chosen.
  *  - Use `FipsValidator::verify()` to confirm deployment.
  *
  * Ciphertext format: version byte (0x02) || nonce (12) || tag (16) || ciphertext.
@@ -61,14 +69,24 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
     private const int NONCE_LENGTH = 12;
     private const int TAG_LENGTH = 16;
 
+    /**
+     * Deployment switch that pins this suite to OpenSSL, so a FIPS deployment's
+     * NIST-validated provider does the AES-256-GCM rather than libsodium's own
+     * implementation of it.
+     */
+    private const string FORCE_OPENSSL_ENV = 'PULSAR_CRYPTO_FORCE_OPENSSL';
+
     private Randomizer $randomizer;
     private bool $useSodium;
 
     /**
-     * @param bool|null $preferSodium Overrides the default auto-detection.
-     *                                `true` forces sodium (throws at construction
-     *                                if sodium AES-GCM is unavailable),
-     *                                `false` forces OpenSSL, `null` auto-detects.
+     * @param bool|null $preferSodium Overrides both auto-detection and the
+     *                                `PULSAR_CRYPTO_FORCE_OPENSSL` deployment
+     *                                switch. `true` forces sodium (throws at
+     *                                construction if sodium AES-GCM is
+     *                                unavailable), `false` forces OpenSSL,
+     *                                `null` defers to the environment and then
+     *                                to CPU auto-detection.
      */
     public function __construct(?bool $preferSodium = null)
     {
@@ -83,6 +101,19 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
             }
             $this->useSodium = true;
         } elseif ($preferSodium === false) {
+            $this->useSodium = false;
+        } elseif (self::opensslForcedByEnvironment()) {
+            // Fail closed rather than quietly ignoring the switch: an operator
+            // who set it is telling us this deployment must not encrypt outside
+            // its validated provider, and a build without aes-256-gcm cannot
+            // honour that at all.
+            if (!FipsValidator::isAes256GcmAvailable()) {
+                throw SecurityException::encryptionFailed(
+                    self::FORCE_OPENSSL_ENV . ' is set, but this OpenSSL build does not offer '
+                    . 'aes-256-gcm; deploy a provider that offers it or unset the variable.',
+                );
+            }
+
             $this->useSodium = false;
         } else {
             $this->useSodium = sodium_crypto_aead_aes256gcm_is_available();
@@ -255,6 +286,22 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
         // 'aes-gcm'); the sodium/openssl backend is an internal detail and must
         // not change the identity used for payload routing.
         return 'aes-gcm';
+    }
+
+    /**
+     * Whether the deployment has pinned this suite to OpenSSL.
+     *
+     * Read through {@see Environment::read()} so the value resolves the same way
+     * every other Pulsar setting does — the active (optionally allowlisted)
+     * environment first, `getenv()` only as the pre-bootstrap fallback (ADR-0033).
+     * Only `1` and `true` enable it; any other value, including an empty or
+     * absent one, leaves CPU auto-detection in charge.
+     */
+    private static function opensslForcedByEnvironment(): bool
+    {
+        $value = Environment::read(self::FORCE_OPENSSL_ENV);
+
+        return $value === '1' || strtolower($value) === 'true';
     }
 
     private static function validateKeyLength(

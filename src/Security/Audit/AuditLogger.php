@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Security\Audit;
 
 use DateTimeImmutable;
-use Fiber;
 use InvalidArgumentException;
 use JsonException;
 use Override;
@@ -44,8 +43,42 @@ final class AuditLogger implements AuditLoggerInterface
 
     private string $previousHmac;
 
-    /** Cooperative fiber mutex for HMAC chain integrity. */
-    private bool $chainLocked = false;
+    /**
+     * Raised for exactly as long as one call is between reading
+     * {@see previousHmac} and replacing it.
+     *
+     * A second entrant inside that window — a nested {@see log()} from an audit
+     * sink, a listener the sink reaches, or a fiber resumed while the first is
+     * parked mid-write — reads the same predecessor and writes a second entry
+     * claiming the same position in the chain. One of the two is broken forever
+     * after, and a chain verifier reports the file as tampered with.
+     *
+     * This used to be a spin on a bare `Fiber::suspend()`, guarded by
+     * `Fiber::getCurrent() !== null`, which failed in both directions. A caller
+     * on the main thread skipped the wait entirely and walked straight into the
+     * window it was supposed to be excluded from, so the case most likely to
+     * actually occur — a sink that logs — was not covered at all. And a caller
+     * inside a fiber suspended with no value, which is the protocol
+     * {@see \Pulsar\Runtime\Fiber\FiberScheduler} reads as "resume me when my
+     * connection socket becomes readable": the wait was answered by an unrelated
+     * event, or by nothing, on the tamper-evidence mechanism of a compliance
+     * framework. Waiting cannot be made correct here in any case. There is no
+     * execution context that both holds this flag and can be resumed by the code
+     * that is waiting on it — the waiter does not know which scheduler, if any,
+     * is driving the holder, or what protocol would wake it. Under the execution
+     * model of ADR-0071 a second entrant is always a defect, so it is refused,
+     * loudly and immediately, rather than parked on a condition nothing may ever
+     * satisfy.
+     *
+     * Deliberately one flag on the instance, and not fiber-keyed the way
+     * {@see \Pulsar\Auth\Authorization\Gate} keys its recording state per ADR-0057.
+     * The Gate asks "is THIS call stack inside its own record", which an
+     * instance-wide flag answers wrongly the moment two fibers exist. The question
+     * here is "is ANYONE between reading the head and replacing it", because there
+     * is one head per logger and two writers must not share it — and that is what
+     * an instance-wide flag answers exactly.
+     */
+    private bool $advancingChain = false;
 
     private readonly Randomizer $randomizer;
 
@@ -120,6 +153,9 @@ final class AuditLogger implements AuditLoggerInterface
      * @param array<string, mixed> $metadata
      *
      * @throws AuditActorMissingException when no actor can be resolved.
+     * @throws SecurityException when a second call reaches the chain advance
+     *                           while one is still inside it — see
+     *                           {@see $advancingChain}
      * @throws RandomException
      * @throws JsonException
      * @throws SodiumException
@@ -163,12 +199,13 @@ final class AuditLogger implements AuditLoggerInterface
         $id = bin2hex($this->randomizer->getBytes(16));
         $timestamp = new DateTimeImmutable();
 
-        // Acquire cooperative mutex: suspend fiber until the chain is unlocked.
-        // Only suspend when running inside a Fiber; main-thread calls are inherently serial.
-        while ($this->chainLocked && Fiber::getCurrent() !== null) {
-            Fiber::suspend();
+        // Exclusive for the length of the chain advance. See $advancingChain for
+        // why a second entrant is refused instead of made to wait.
+        if ($this->advancingChain) {
+            throw SecurityException::auditChainAdvanceReentered($action);
         }
-        $this->chainLocked = true;
+
+        $this->advancingChain = true;
 
         try {
             $entry = AuditEntry::create(
@@ -187,7 +224,7 @@ final class AuditLogger implements AuditLoggerInterface
             $this->sink->write($entry);
             $this->previousHmac = $entry->hmac;
         } finally {
-            $this->chainLocked = false;
+            $this->advancingChain = false;
         }
 
         return $entry;

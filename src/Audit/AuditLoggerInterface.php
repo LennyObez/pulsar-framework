@@ -35,6 +35,14 @@ interface AuditLoggerInterface
      *
      * @param array<string, mixed> $metadata
      *
+     * A chaining implementation may additionally refuse a call that re-enters it
+     * while one is still writing — an audit sink, or a handler or listener it
+     * reaches, that logs an audit event of its own. That is a defect in the sink
+     * and not a condition to catch and continue from; the framework's
+     * {@see \Pulsar\Security\Audit\AuditLogger} raises
+     * `SecurityException::auditChainAdvanceReentered()`, naming the call to go and
+     * find.
+     *
      * @throws AuditActorMissingException when no actor can be resolved.
      * @throws RandomException
      * @throws JsonException

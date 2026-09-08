@@ -46214,7 +46214,7 @@
             "constants": []
         },
         "Pulsar\\Security\\AntiSpam\\AntiSpamConfigSet": {
-            "since": "",
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
                 "__construct": {
@@ -51762,6 +51762,13 @@
                     "return": "Pulsar\\Security\\Exception\\SecurityException",
                     "static": true
                 },
+                "auditChainAdvanceReentered": {
+                    "params": [
+                        "string $action"
+                    ],
+                    "return": "Pulsar\\Security\\Exception\\SecurityException",
+                    "static": true
+                },
                 "auditChainCorrupted": {
                     "params": [
                         "string $reason"
@@ -54771,6 +54778,33 @@
                         "Psr\\Http\\Server\\RequestHandlerInterface $handler"
                     ],
                     "return": "Psr\\Http\\Message\\ResponseInterface",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Session\\SessionPayloadCipherInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "decrypt": {
+                    "params": [
+                        "string $encrypted",
+                        "string $sessionId",
+                        "string $handlerType",
+                        "string $domain"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "encrypt": {
+                    "params": [
+                        "string $data",
+                        "string $sessionId",
+                        "string $handlerType",
+                        "string $domain"
+                    ],
+                    "return": "string",
                     "static": false
                 }
             },

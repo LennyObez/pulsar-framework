@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Session;
 
 use NoDiscard;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\EnvKeyRing;
 use Pulsar\Security\Crypto\KeyRingInterface;
@@ -32,9 +33,19 @@ use function substr;
  * Key rotation is supported via key_id in the ciphertext header. On read, the key_id
  * is used to look up the correct decryption key from the KeyRing. On write, the
  * current key is always used.
+ *
+ * THE CLASS STAYS `#[Internal]` AND THE TWO OPERATIONS DO NOT. It answers
+ * {@see SessionPayloadCipherInterface}, which publishes only sealing a payload
+ * for a session context and opening it again — never a key, a key id or an
+ * algorithm. That contract exists so the cipher can be EXERCISED from outside
+ * this module: until it did, a compliance report could say that this class had
+ * been constructed and nothing more, and "the class is bound" is the claim
+ * ADR-0041 showed to be worthless. See
+ * {@see \Pulsar\Compliance\Evidence\SessionSealObserver} for what is run against
+ * it and what the answers are allowed to support.
  */
 #[Internal]
-final class SessionEncryption
+final class SessionEncryption implements SessionPayloadCipherInterface
 {
     private const int SUB_KEY_ID = 3;
 
@@ -110,9 +121,16 @@ final class SessionEncryption
      * Output format: base64(kid_binary(8 bytes) || nonce(24 bytes) || ciphertext+tag)
      * AAD = session_id|handler_type|domain
      *
+     * The payload is marked `#[SensitiveParameter]` here as well as on the
+     * contract: the attribute is read from the frame on the stack, not from the
+     * interface, so an unmarked implementation would print the whole session
+     * payload into any backtrace taken through this call.
+     *
      * @throws SecurityException If encryption fails
      */
+    #[Override]
     public function encrypt(
+        #[SensitiveParameter]
         string $data,
         string $sessionId,
         string $handlerType,
@@ -145,6 +163,7 @@ final class SessionEncryption
      *
      * @throws SecurityException If decryption fails (wrong key, tampered data, etc.)
      */
+    #[Override]
     public function decrypt(
         string $encrypted,
         string $sessionId,

@@ -36,8 +36,9 @@ use function is_array;
  * containers, so the central sweep flags a genuine typo — in any top-level key or
  * a misspelled sub-section name — under the real file label "anti-spam", without
  * false-positives on the file's legitimate keys. See {@see self::unknownConfigKeys()}.
+ * @api
  */
-#[Api]
+#[Api(since: '1.0.0-rc.12')]
 final readonly class AntiSpamConfigSet implements ReportsUnknownKeys
 {
     /**
