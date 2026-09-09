@@ -53,6 +53,16 @@ enum SchemaColumnType: string
     case SmallInt = 'smallint';
     case BigInt = 'bigint';
     case Float = 'float';
+
+    /**
+     * An 8-byte floating-point number on every engine.
+     *
+     * `DOUBLE` on MySQL, where {@see Float} is a 4-byte `FLOAT` that keeps about seven
+     * significant digits; `DOUBLE PRECISION` on PostgreSQL, the same type Float already
+     * maps to there; `DOUBLE` (REAL affinity) on SQLite. A value an assessor reads back
+     * takes the wide type.
+     */
+    case Double = 'double';
     case Decimal = 'decimal';
     case Boolean = 'boolean';
     case DateTime = 'datetime';

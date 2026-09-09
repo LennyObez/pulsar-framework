@@ -61,6 +61,7 @@ final class PostgresSchemaCompilerTest extends TestCase
         yield 'json' => [SchemaColumnType::Json, 'JSONB', []];
         yield 'binary' => [SchemaColumnType::Binary, 'BYTEA', []];
         yield 'float' => [SchemaColumnType::Float, 'DOUBLE PRECISION', []];
+        yield 'double' => [SchemaColumnType::Double, 'DOUBLE PRECISION', []];
         yield 'date' => [SchemaColumnType::Date, 'DATE', []];
         yield 'time' => [SchemaColumnType::Time, 'TIME', []];
         yield 'smallint' => [SchemaColumnType::SmallInt, 'SMALLINT', []];

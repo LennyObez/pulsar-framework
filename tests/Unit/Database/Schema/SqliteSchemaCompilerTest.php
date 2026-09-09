@@ -66,6 +66,7 @@ final class SqliteSchemaCompilerTest extends TestCase
         yield 'json' => [SchemaColumnType::Json, 'TEXT', []];
         yield 'binary' => [SchemaColumnType::Binary, 'BLOB', []];
         yield 'float' => [SchemaColumnType::Float, 'FLOAT', []];
+        yield 'double' => [SchemaColumnType::Double, 'DOUBLE', []];
         yield 'date' => [SchemaColumnType::Date, 'DATE', []];
         yield 'time' => [SchemaColumnType::Time, 'TIME', []];
         yield 'smallint' => [SchemaColumnType::SmallInt, 'SMALLINT', []];

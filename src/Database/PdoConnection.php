@@ -30,7 +30,9 @@ use function strtolower;
 /**
  * PDO-based database connection with lazy initialization.
  *
- * The actual PDO instance is created on first use, not at construction.
+ * The actual PDO instance is created on first use, not at construction, and is
+ * discarded again as soon as an error says the connection behind it is gone — see
+ * {@see recoverFromLostConnection()} for what is retried and what is not.
  */
 final class PdoConnection implements ConnectionInterface
 {
@@ -140,10 +142,8 @@ final class PdoConnection implements ConnectionInterface
     #[Override]
     public function query(string $sql, array $bindings = []): Result
     {
-        $pdo = $this->pdo();
-
         try {
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->prepareStatement($sql);
             $this->bindValues($stmt, $bindings);
             $stmt->execute();
 
@@ -152,6 +152,8 @@ final class PdoConnection implements ConnectionInterface
 
             return Result::fromArrays($data);
         } catch (PDOException $e) {
+            $this->recoverFromLostConnection($e);
+
             throw DatabaseException::queryFailed($sql, $e);
         }
     }
@@ -159,15 +161,15 @@ final class PdoConnection implements ConnectionInterface
     #[Override]
     public function execute(string $sql, array $bindings = []): int
     {
-        $pdo = $this->pdo();
-
         try {
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->prepareStatement($sql);
             $this->bindValues($stmt, $bindings);
             $stmt->execute();
 
             return $stmt->rowCount();
         } catch (PDOException $e) {
+            $this->recoverFromLostConnection($e);
+
             throw DatabaseException::queryFailed($sql, $e);
         }
     }
@@ -175,15 +177,72 @@ final class PdoConnection implements ConnectionInterface
     #[Override]
     public function prepare(string $sql): Statement
     {
-        $pdo = $this->pdo();
-
         try {
-            $stmt = $pdo->prepare($sql);
-
-            return new Statement($stmt, $sql);
+            return new Statement($this->prepareStatement($sql), $sql);
         } catch (PDOException $e) {
+            $this->recoverFromLostConnection($e);
+
             throw DatabaseException::prepareError($sql, $e);
         }
+    }
+
+    /**
+     * Prepare a statement, reconnecting once if the handle turns out to be dead.
+     *
+     * Preparing is the one step of running a statement that is safe to repeat: with
+     * emulated prepares off it is a round trip that PARSES the SQL and executes none of
+     * it, so a prepare that failed because the connection was gone changed nothing on
+     * any server. That is the whole extent of the retry. A failure at
+     * {@see PDOStatement::execute()} is NOT retried, because PDO cannot say whether the
+     * statement reached the server before the socket died — re-sending an INSERT that
+     * did arrive would double a payment, and re-sending a SELECT could re-run
+     * `nextval()` or an advisory lock. Those failures still discard the handle, so the
+     * NEXT caller reconnects; they simply reach this caller as the failure they were.
+     *
+     * @throws PDOException The original failure when the connection is healthy, or the
+     *                      reconnected handle fails too.
+     * @throws DatabaseException When the reconnect itself cannot be made.
+     */
+    private function prepareStatement(string $sql): PDOStatement
+    {
+        try {
+            return $this->pdo()->prepare($sql);
+        } catch (PDOException $e) {
+            if (!$this->recoverFromLostConnection($e)) {
+                throw $e;
+            }
+
+            return $this->pdo()->prepare($sql);
+        }
+    }
+
+    /**
+     * Discard a handle whose connection is gone, and say whether the caller may retry.
+     *
+     * Returns false for anything that is not a lost connection — a deadlock, a
+     * constraint violation, a syntax error — so a healthy handle is never thrown away
+     * over an application bug.
+     *
+     * It also returns false, having discarded the handle, when a transaction was open.
+     * The server dropped that transaction with the socket, so a fresh handle would run
+     * the caller's next statement in autocommit, OUTSIDE the transaction the caller
+     * still believes surrounds it, and commit it. The depth counter is reset in the same
+     * breath: leaving it above zero would make {@see inTransaction()} claim a
+     * transaction that no longer exists anywhere, and every later `beginTransaction()`
+     * would issue `SAVEPOINT` against a transaction that was never begun.
+     */
+    private function recoverFromLostConnection(PDOException $exception): bool
+    {
+        if (!LostConnection::occurred($exception)) {
+            return false;
+        }
+
+        $wasInTransaction = $this->transactionDepth > 0;
+
+        $this->connection = null;
+        $this->transactionDepth = 0;
+
+        return !$wasInTransaction;
     }
 
     #[Override]
@@ -199,7 +258,22 @@ final class PdoConnection implements ConnectionInterface
                 $pdo->exec(sprintf('SAVEPOINT pulsar_sp_%d', $depth));
             }
         } catch (PDOException $e) {
-            throw DatabaseException::queryFailed('BEGIN TRANSACTION/SAVEPOINT', $e);
+            // Opening the outermost transaction on a connection that turned out to be
+            // dead applied nothing anywhere, so the retry repeats an operation that
+            // never happened. recoverFromLostConnection() answers false at any greater
+            // depth, because the SAVEPOINT belonged to a transaction the lost socket
+            // took with it.
+            if (!$this->recoverFromLostConnection($e)) {
+                throw DatabaseException::queryFailed('BEGIN TRANSACTION/SAVEPOINT', $e);
+            }
+
+            $pdo = $this->pdo();
+
+            try {
+                $pdo->beginTransaction();
+            } catch (PDOException $retry) {
+                throw DatabaseException::queryFailed('BEGIN TRANSACTION/SAVEPOINT', $retry);
+            }
         }
 
         $this->transactionDepth++;
@@ -314,6 +388,11 @@ final class PdoConnection implements ConnectionInterface
 
     /**
      * Get or create the PDO instance (lazy initialization).
+     *
+     * The handle is cached for the life of this object, which under a persistent
+     * runtime is the life of the worker. {@see recoverFromLostConnection()} is what
+     * clears it: without that, a single dropped connection made every later request
+     * served by that worker fail against a socket that was already gone.
      *
      * @throws DatabaseException
      */

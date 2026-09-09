@@ -8,7 +8,6 @@ use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 use function array_keys;
-use function array_values;
 use function is_dir;
 use function is_string;
 use function ksort;
@@ -24,23 +23,71 @@ use function substr;
  * Supports multiple migration directories (project + extensions).
  * Migration filenames must follow the convention:
  * {YYYYMMDDHHMMSS}_description_snake_case.php
+ *
+ * ## Where a version comes from
+ *
+ * A version identifies a migration in the tracking table for the life of the
+ * database, so it must depend on the migration and on nothing else. Timestamp
+ * filenames are globally unique and are used verbatim. Sequential filenames
+ * (`001_create_pages.php`) are unique only within the directory that ships
+ * them, so they are qualified by the **source** that ships them — the label the
+ * caller passes alongside the directory.
+ *
+ * Until 1.0.0-rc.12 that qualifier was a CRC32 of the directory's ABSOLUTE
+ * path. The same migration therefore had one version on a developer machine and
+ * another on a deploy host, and a deploy into a different filesystem path made
+ * every already-applied sequential migration look pending — re-running it
+ * against a live database. Nothing about a migration changes when a checkout
+ * moves, so nothing about where the checkout sits may reach the version.
+ *
+ * {@see MigrationRunner::getPending()} refuses to run when the tracking table
+ * still holds versions of the old shape; see {@see MigrationVersionScheme} for
+ * how the two are reconciled.
  * @api
  */
 #[Api(since: '1.0.0')]
 final class MigrationRepository
 {
-    /** @var list<string> */
-    private readonly array $migrationsPaths;
+    /** @var list<array{label: string, path: string}> */
+    private readonly array $sources;
 
     /** @var array<string, MigrationFile>|null */
     private ?array $discoveryCache = null;
 
     /**
-     * @param list<string>|string $migrationsPaths One or more directories to scan
+     * @param list<string>|array<string, string>|string $migrationsPaths
+     *     One directory, a list of directories, or a map of source label => directory.
+     *
+     *     A **labelled** entry qualifies the sequential versions found in that
+     *     directory, so two sources may each ship `001_`. The label must name the
+     *     source — the extension, the module, the project — and must be identical on
+     *     every host, because it becomes part of the version recorded in the database.
+     *     {@see MigrationPathResolver} supplies `project`, `core:<Module>` and
+     *     `ext:<name>`.
+     *
+     *     An **unlabelled** entry (a bare string, or a list) qualifies nothing:
+     *     sequential versions keep their bare zero-padded number, and two unlabelled
+     *     directories shipping the same number collide loudly rather than being
+     *     separated by a qualifier nobody can reproduce.
      */
     public function __construct(array|string $migrationsPaths)
     {
-        $this->migrationsPaths = is_string($migrationsPaths) ? [$migrationsPaths] : array_values($migrationsPaths);
+        if (is_string($migrationsPaths)) {
+            $this->sources = [['label' => '', 'path' => $migrationsPaths]];
+
+            return;
+        }
+
+        $sources = [];
+
+        foreach ($migrationsPaths as $label => $path) {
+            $sources[] = [
+                'label' => is_string($label) ? $label : '',
+                'path' => $path,
+            ];
+        }
+
+        $this->sources = $sources;
     }
 
     /**
@@ -61,7 +108,9 @@ final class MigrationRepository
 
         $migrations = [];
 
-        foreach ($this->migrationsPaths as $migrationsPath) {
+        foreach ($this->sources as $source) {
+            $migrationsPath = $source['path'];
+
             if (!is_dir($migrationsPath)) {
                 continue;
             }
@@ -71,10 +120,10 @@ final class MigrationRepository
                 continue;
             }
 
-            // Compute a path prefix for sequential versions to prevent
-            // collisions across extensions (e.g., CMS 001_ vs Forum 001_).
-            // Timestamp versions are globally unique and need no prefix.
-            $pathPrefix = $this->computePathPrefix($migrationsPath);
+            // Sequential versions are qualified by the source that ships them so
+            // that CMS 001_ and Forum 001_ stay distinct. Timestamp versions are
+            // globally unique and take no qualifier.
+            $prefix = MigrationVersionScheme::prefixForSource($source['label']);
 
             foreach ($files as $file) {
                 if (!str_ends_with($file, '.php')) {
@@ -88,10 +137,8 @@ final class MigrationRepository
 
                 [$rawVersion, $name, $isSequential] = $parsed;
 
-                // Sequential versions get a path-scoped prefix to avoid
-                // collisions: "a3f2_00000000000001" vs "7b1c_00000000000001"
-                $version = $isSequential
-                    ? $pathPrefix . '_' . $rawVersion
+                $version = $isSequential && $prefix !== ''
+                    ? $prefix . '_' . $rawVersion
                     : $rawVersion;
 
                 if (isset($migrations[$version])) {
@@ -161,17 +208,6 @@ final class MigrationRepository
     }
 
     /**
-     * Compute a short deterministic prefix from a directory path.
-     *
-     * Uses the first 4 hex chars of a CRC32 hash, giving 65,536 buckets.
-     * Collisions are astronomically unlikely for < 100 extensions.
-     */
-    private function computePathPrefix(string $path): string
-    {
-        return substr(hash('crc32b', $path), 0, 4);
-    }
-
-    /**
      * Load a migration instance from a file path.
      *
      * @throws DatabaseException If the file does not return a MigrationInterface.
@@ -199,6 +235,10 @@ final class MigrationRepository
      *
      * Compact and separated formats normalize to a 14-digit version string.
      * Sequential format zero-pads to 14 digits for consistent ordering.
+     *
+     * The returned value carries no source qualifier: it is the version as the
+     * FILENAME states it, which is what a caller inspecting a filename asked for.
+     * {@see discover()} is what qualifies a sequential version with its source.
      *
      * @return string|null The 14-digit version, or null if not a valid migration filename.
      */

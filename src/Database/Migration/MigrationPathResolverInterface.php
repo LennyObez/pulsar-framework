@@ -21,10 +21,18 @@ interface MigrationPathResolverInterface
     /**
      * Resolve all migration paths in priority order.
      *
-     * Returns the project migration path first, followed by extension
-     * migration paths in the order extensions were registered.
+     * Returns the framework's own migration paths first, then the project migration
+     * path, then extension migration paths in the order extensions were registered.
      *
-     * @return list<string> Absolute directory paths
+     * Each entry is keyed by the NAME of the source that ships it — `core:Auth`,
+     * `project`, `ext:pulsar/cms`. The name is what
+     * {@see MigrationRepository::__construct()} qualifies sequential versions with, so
+     * it must identify the source and must be identical on every host: it becomes part
+     * of the version string recorded in the migrations table. Iterating the returned
+     * array by value still yields the directory paths, which is all a consumer that
+     * only scans directories needs.
+     *
+     * @return array<string, string> Source name => absolute directory path
      */
     public function resolve(): array;
 }

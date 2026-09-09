@@ -17776,6 +17776,49 @@
             },
             "constants": []
         },
+        "Pulsar\\Database\\Cache\\CachedQueryRunner": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Database\\ConnectionInterface $connection",
+                        "Pulsar\\Database\\Cache\\QueryCacheInterface $cache",
+                        "Pulsar\\Database\\Cache\\SensitivityMetadata $sensitivity",
+                        "Pulsar\\Database\\Cache\\QueryCacheConfig $config",
+                        "Pulsar\\Database\\Cache\\TableTagExtractorInterface $tagExtractor",
+                        "?string $tenantId",
+                        "?string $schemaVersion"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "invalidate": {
+                    "params": [
+                        "string $tables"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "query": {
+                    "params": [
+                        "string $sql",
+                        "array $bindings",
+                        "?int $ttlSeconds"
+                    ],
+                    "return": "Pulsar\\Database\\Result",
+                    "static": false
+                },
+                "run": {
+                    "params": [
+                        "Pulsar\\Database\\Cache\\CacheableQuery $query"
+                    ],
+                    "return": "Pulsar\\Database\\Result",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Database\\Cache\\QueryCache": {
             "since": "1.0.0",
             "methods": [],
@@ -17829,6 +17872,7 @@
                         "int $defaultTtlSeconds",
                         "array $sensitiveTableNames",
                         "array $authorizationColumns",
+                        "bool $regulatedPreset",
                         "array $unknownKeys"
                     ],
                     "return": null,
@@ -17943,6 +17987,21 @@
         },
         "Pulsar\\Database\\Cache\\TableTagExtractor": {
             "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "extractTags": {
+                    "params": [
+                        "string $sql",
+                        "?array $queryBuilderContext"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Database\\Cache\\TableTagExtractorInterface": {
+            "since": "1.0.0-rc.12",
             "methods": [],
             "signatures": {
                 "extractTags": {
@@ -18963,6 +19022,13 @@
                     "return": "Pulsar\\Database\\Exception\\DatabaseException",
                     "static": true
                 },
+                "migrationIdentityMismatch": {
+                    "params": [
+                        "string $details"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\DatabaseException",
+                    "static": true
+                },
                 "migrationNotFound": {
                     "params": [
                         "string $version"
@@ -19000,10 +19066,30 @@
                     "return": "Pulsar\\Database\\Exception\\DatabaseException",
                     "static": true
                 },
+                "queryCacheNeedsACacheStore": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\Exception\\DatabaseException",
+                    "static": true
+                },
                 "queryFailed": {
                     "params": [
                         "string $sql",
                         "?Throwable $previous"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\DatabaseException",
+                    "static": true
+                },
+                "readWriteRoutingDecoratedAway": {
+                    "params": [
+                        "string $manager"
+                    ],
+                    "return": "Pulsar\\Database\\Exception\\DatabaseException",
+                    "static": true
+                },
+                "readWriteRoutingUnsupportedDriver": {
+                    "params": [
+                        "string $driver",
+                        "string $host"
                     ],
                     "return": "Pulsar\\Database\\Exception\\DatabaseException",
                     "static": true
@@ -19808,6 +19894,14 @@
                     "return": null,
                     "static": false
                 },
+                "assertVersionsAreRecognised": {
+                    "params": [
+                        "array $applied",
+                        "array $discovered"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
                 "ensureMigrationTable": {
                     "params": [],
                     "return": "void",
@@ -20356,22 +20450,9 @@
                         "int $maxConnections",
                         "int $idleTimeoutSeconds",
                         "int $maxLifetimeSeconds",
-                        "int $healthCheckIntervalSeconds",
-                        "array $unknownKeys"
+                        "int $healthCheckIntervalSeconds"
                     ],
                     "return": null,
-                    "static": false
-                },
-                "fromArray": {
-                    "params": [
-                        "array $data"
-                    ],
-                    "return": "Pulsar\\Database\\Pool\\PoolConfig",
-                    "static": true
-                },
-                "unknownConfigKeys": {
-                    "params": [],
-                    "return": "array",
                     "static": false
                 }
             },
@@ -20758,6 +20839,47 @@
             },
             "constants": []
         },
+        "Pulsar\\Database\\Routing\\QueryRouterInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "connection": {
+                    "params": [
+                        "?string $name"
+                    ],
+                    "return": "Pulsar\\Database\\ConnectionInterface",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\ConnectionManagerInterface"
+                },
+                "connectionForQuery": {
+                    "params": [
+                        "string $sql"
+                    ],
+                    "return": "Pulsar\\Database\\ConnectionInterface",
+                    "static": false
+                },
+                "disconnect": {
+                    "params": [
+                        "?string $name"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\ConnectionManagerInterface"
+                },
+                "getDefaultConnectionName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Database\\ConnectionManagerInterface"
+                },
+                "routedConnection": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\ConnectionInterface",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Database\\Routing\\ReadWriteConfig": {
             "since": "1.0.0",
             "methods": [],
@@ -20894,6 +21016,11 @@
                 "resetRouting": {
                     "params": [],
                     "return": "void",
+                    "static": false
+                },
+                "routedConnection": {
+                    "params": [],
+                    "return": "Pulsar\\Database\\ConnectionInterface",
                     "static": false
                 },
                 "usePrimary": {
@@ -69198,13 +69325,17 @@
         "Pulsar\\Database\\Dialect\\AbstractDialect",
         "Pulsar\\Database\\Failover\\CacheBackedFailoverStateStore",
         "Pulsar\\Database\\Failover\\FailoverConnectionManager",
+        "Pulsar\\Database\\LostConnection",
         "Pulsar\\Database\\Migration\\MigrationFlockHolder",
         "Pulsar\\Database\\Migration\\MigrationPathResolver",
+        "Pulsar\\Database\\Migration\\MigrationVersionScheme",
         "Pulsar\\Database\\Monitor\\CompositeSqlLogger",
         "Pulsar\\Database\\Monitor\\PiiMasker",
         "Pulsar\\Database\\Monitor\\ProfilerSqlLogger",
         "Pulsar\\Database\\Monitor\\QueryClassifier",
         "Pulsar\\Database\\Pool\\PooledEntry",
+        "Pulsar\\Database\\Routing\\ReadWriteConnections",
+        "Pulsar\\Database\\Routing\\RoutingConnection",
         "Pulsar\\Deploy\\Check\\AuditLoggerReadinessCheck",
         "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
         "Pulsar\\Deploy\\Check\\DebugModeCheck",

@@ -72,14 +72,14 @@ final class NewMigrationsValidationTest extends TestCase
                 'extensions/forum/src/Migration/021_add_tenant_id_to_tags.php',
 
             // Analytics migrations
-            'analytics/20260327000001_add_missing_fk_indexes' =>
-                'extensions/analytics/src/Migration/20260327000001_add_missing_fk_indexes.php',
-            'analytics/20260327000002_add_check_constraints' =>
-                'extensions/analytics/src/Migration/20260327000002_add_check_constraints.php',
+            'analytics/20260327010001_add_missing_fk_indexes' =>
+                'extensions/analytics/src/Migration/20260327010001_add_missing_fk_indexes.php',
+            'analytics/20260327010002_add_check_constraints' =>
+                'extensions/analytics/src/Migration/20260327010002_add_check_constraints.php',
 
             // Health-status migration
-            'health-status/20260327000003_add_check_constraints' =>
-                'extensions/health-status/database/migrations/20260327000003_add_check_constraints.php',
+            'health-status/20260327020003_add_check_constraints' =>
+                'extensions/health-status/database/migrations/20260327020003_add_check_constraints.php',
         ];
 
         foreach ($files as $name => $path) {

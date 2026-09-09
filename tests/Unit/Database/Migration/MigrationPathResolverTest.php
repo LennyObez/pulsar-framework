@@ -13,11 +13,15 @@ use Pulsar\Extensibility\ExtensionLifecycle;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
 
+use function array_filter;
+use function array_keys;
 use function array_search;
 use function array_slice;
 use function array_values;
 use function is_int;
 use function str_replace;
+use function str_starts_with;
+use function substr;
 
 use const DIRECTORY_SEPARATOR;
 
@@ -36,7 +40,7 @@ final class MigrationPathResolverTest extends TestCase
     {
         $resolver = new MigrationPathResolver($this->createDatabaseConfig('database/migrations'));
 
-        $paths = $resolver->resolve();
+        $paths = array_values($resolver->resolve());
         $index = array_search('database/migrations', $paths, true);
 
         self::assertGreaterThan(0, $index, 'the framework ships migrations and none were discovered');
@@ -198,12 +202,17 @@ final class MigrationPathResolverTest extends TestCase
      * project and its extensions contribute does not depend on how many migration
      * directories the framework itself happens to ship.
      *
-     * @param list<string> $paths
+     * Values only: `resolve()` keys each path by the name of the source that ships it,
+     * and the assertions below are about which directories are contributed and in what
+     * order. The names get their own tests.
+     *
+     * @param array<string, string> $paths
      *
      * @return list<string>
      */
     private function fromProjectPath(array $paths, string $projectPath): array
     {
+        $paths = array_values($paths);
         $index = array_search($projectPath, $paths, true);
 
         if (!is_int($index)) {
@@ -211,6 +220,88 @@ final class MigrationPathResolverTest extends TestCase
         }
 
         return array_values(array_slice($paths, $index));
+    }
+
+    /**
+     * Every path is keyed by the name of the source that ships it.
+     *
+     * The name is not decoration: {@see MigrationRepository} hashes it into the
+     * qualifier of every sequential version that source contributes, and that
+     * qualifier is recorded in the migrations table. A key derived from the directory
+     * instead would change the moment the checkout moved, which is the whole reason
+     * the resolver hands out names at all.
+     */
+    #[Test]
+    public function everyResolvedPathIsKeyedByItsSourceName(): void
+    {
+        $config = $this->createDatabaseConfig('database/migrations');
+        $registry = $this->createRegistryWithExtension(
+            'pulsar/cms',
+            '/framework/extensions/cms',
+            ['src/Migration'],
+        );
+
+        $paths = new MigrationPathResolver($config, $registry)->resolve();
+
+        self::assertSame('database/migrations', $paths['project'] ?? null);
+        self::assertSame(
+            '/framework/extensions/cms' . DIRECTORY_SEPARATOR . 'src/Migration',
+            $paths['ext:pulsar/cms'] ?? null,
+        );
+
+        foreach ($paths as $name => $path) {
+            self::assertIsString($name, "path '{$path}' was returned without a source name");
+            self::assertNotSame('', $name);
+        }
+    }
+
+    /**
+     * A framework module's name comes from the module directory, so `src/Auth` is
+     * `core:Auth` on every host — not a hash of wherever the framework is installed.
+     */
+    #[Test]
+    public function frameworkPathsAreKeyedByModuleName(): void
+    {
+        $paths = new MigrationPathResolver($this->createDatabaseConfig('database/migrations'))->resolve();
+
+        $frameworkNames = array_values(array_filter(
+            array_keys($paths),
+            static fn(string $name): bool => str_starts_with($name, 'core:'),
+        ));
+
+        self::assertNotSame([], $frameworkNames, 'the framework ships migrations and none were named');
+
+        foreach ($frameworkNames as $name) {
+            $module = substr($name, 5);
+
+            self::assertStringEndsWith(
+                $module . '/Database/Migration',
+                str_replace('\\', '/', $paths[$name]),
+                "the name '{$name}' does not match the module directory it points at",
+            );
+        }
+    }
+
+    /**
+     * An extension declaring several migration directories needs one name each, and
+     * the extra segment is the relative path from its MANIFEST rather than anything
+     * about where the extension is installed.
+     */
+    #[Test]
+    public function anExtensionWithSeveralDirectoriesNamesEachOne(): void
+    {
+        $config = $this->createDatabaseConfig('database/migrations');
+        $registry = $this->createRegistryWithExtension(
+            'pulsar/cms',
+            '/framework/extensions/cms',
+            ['src/Migration', 'database/migrations'],
+        );
+
+        $paths = new MigrationPathResolver($config, $registry)->resolve();
+
+        self::assertArrayHasKey('ext:pulsar/cms:src/Migration', $paths);
+        self::assertArrayHasKey('ext:pulsar/cms:database/migrations', $paths);
+        self::assertArrayNotHasKey('ext:pulsar/cms', $paths);
     }
 
     private function createDatabaseConfig(string $migrationsPath): DatabaseConfig

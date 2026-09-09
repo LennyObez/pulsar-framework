@@ -24,7 +24,12 @@ final readonly class ReadWriteConfig implements ReportsUnknownKeys
     private const array KNOWN_KEYS = ['read_hosts', 'write_host', 'sticky_duration', 'enabled'];
 
     /**
-     * @param list<string> $readHosts
+     * @param list<string> $readHosts Hosts, or the names of entries under `connections`.
+     *     {@see ReadWriteConnections} resolves them before the manager is built: a name
+     *     that matches a configured connection is used verbatim, anything else is a host
+     *     and gets a connection derived from the primary with the host replaced.
+     * @param string $writeHost The host writes go to, or `''` for the default connection
+     *     exactly as configured. Resolved the same way as a read host.
      * @param string|int $stickyDuration 'request' for request-scoped, or milliseconds
      * @param list<string> $unknownKeys Keys present in the raw `read_write` array that
      *     this DTO does not read — a misspelled `read_hosts` sends every read to the
@@ -61,7 +66,11 @@ final readonly class ReadWriteConfig implements ReportsUnknownKeys
     {
         return new self(
             readHosts: $data['read_hosts'] ?? [],
-            writeHost: $data['write_host'] ?? '127.0.0.1',
+            // Empty, not '127.0.0.1'. `write_host` now selects the connection writes go
+            // to, and a default of localhost would repoint the primary of every
+            // deployment that simply left the key out. Absent means "the default
+            // connection exactly as `connections` configures it".
+            writeHost: $data['write_host'] ?? '',
             stickyDuration: $data['sticky_duration'] ?? 'request',
             enabled: (bool) ($data['enabled'] ?? false),
             unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),

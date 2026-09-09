@@ -87,24 +87,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Connection Pool (Persistent Runtimes Only)
-    |--------------------------------------------------------------------------
-    |
-    | Connection pooling is active only under persistent runtimes (Swoole,
-    | RoadRunner, etc.). Under FPM, these settings are ignored and normal
-    | per-request connections are used.
-    |
-    */
-    'pool' => [
-        'min_connections' => 2,
-        'max_connections' => 10,
-        'idle_timeout_seconds' => 60,
-        'max_lifetime_seconds' => 3600,
-        'health_check_interval_seconds' => 30,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Read/Write Routing
     |--------------------------------------------------------------------------
     |
@@ -143,12 +125,22 @@ return [
     | Query Cache
     |--------------------------------------------------------------------------
     |
-    | Query result caching via PSR-16. Disabled by default in the regulated
-    | preset. Sensitive tables and authorization-shaped queries are never
-    | cached regardless of settings.
+    | Query result caching via PSR-16. Sensitive tables and authorization-shaped
+    | queries are never cached regardless of settings -- SensitivityMetadata
+    | decides that, and `enabled` cannot override it.
+    |
+    | `regulated_preset` is what the sentence "disabled by default in the
+    | regulated preset" means, and it means nothing else: set it true and an
+    | OMITTED `enabled` key reads as false instead of true. Writing `enabled`
+    | down still wins either way, which is how an application that has decided
+    | caching is safe for its workload turns it back on in a line a reviewer can
+    | grep for. It ships false here because switching it on changes the
+    | behaviour of an existing deployment, and that is the operator's decision
+    | rather than an upgrade's.
     |
     */
     'query_cache' => [
+        'regulated_preset' => false,
         'enabled' => true,
         'default_ttl_seconds' => 60,
         'sensitive_table_names' => [],

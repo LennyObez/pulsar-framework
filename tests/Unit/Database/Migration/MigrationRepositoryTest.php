@@ -11,6 +11,7 @@ use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Migration\MigrationFile;
 use Pulsar\Database\Migration\MigrationInterface;
 use Pulsar\Database\Migration\MigrationRepository;
+use Pulsar\Database\Migration\MigrationVersionScheme;
 
 use function file_put_contents;
 use function mkdir;
@@ -366,13 +367,107 @@ final class MigrationRepositoryTest extends TestCase
 
         self::assertCount(2, $files);
 
-        // Sequential versions get a path-scoped prefix: "{hash}_00000000000001"
-        $versions = array_keys($files);
+        // An unlabelled directory has no source name, so a sequential version is the
+        // bare zero-padded number. Nothing about the directory reaches the version.
+        $versions = array_map(strval(...), array_keys($files));
         $names = array_map(static fn(MigrationFile $f): string => $f->name, array_values($files));
-        self::assertStringEndsWith('_00000000000001', (string) $versions[0]);
-        self::assertStringEndsWith('_00000000000002', (string) $versions[1]);
+        self::assertSame('00000000000001', $versions[0]);
+        self::assertSame('00000000000002', $versions[1]);
         self::assertSame('create_users', $names[0]);
         self::assertSame('create_posts', $names[1]);
+    }
+
+    // =========================================================================
+    // Version identity: a version belongs to the migration, not to the checkout
+    // =========================================================================
+
+    /**
+     * The same source shipping the same file produces the same version from two
+     * different directories.
+     *
+     * This is the regression that matters most in this class. Sequential versions used
+     * to be qualified by `crc32b` of the ABSOLUTE migrations directory, so a checkout at
+     * `/home/dev/app` and the same code deployed to `/var/www/app` recorded the same
+     * migration under two different versions. On the deploy host every already-applied
+     * migration then read as pending and `pulsar migrate` re-ran it against the
+     * production database.
+     */
+    #[Test]
+    public function aLabelledSourceKeepsItsVersionsWhenTheCheckoutMoves(): void
+    {
+        $deployDir = $this->createSecondDir();
+
+        $this->createMigrationFile('001_create_cms_contents.php');
+        $this->createMigrationFileIn($deployDir, '001_create_cms_contents.php');
+
+        $onDeveloperMachine = new MigrationRepository(['ext:pulsar/cms' => $this->tempDir]);
+        $onDeployHost = new MigrationRepository(['ext:pulsar/cms' => $deployDir]);
+
+        self::assertSame(
+            $onDeveloperMachine->versions(),
+            $onDeployHost->versions(),
+            'the version changed with the directory, so a deploy would re-run applied migrations',
+        );
+    }
+
+    /**
+     * Two sources shipping `001_` stay distinct, which is the reason a qualifier exists
+     * at all — and the reason removing the path-derived one could not simply drop it.
+     */
+    #[Test]
+    public function twoSourcesShippingTheSameNumberGetDistinctVersions(): void
+    {
+        $forumDir = $this->createSecondDir();
+
+        $this->createMigrationFile('001_create_cms_contents.php');
+        $this->createMigrationFileIn($forumDir, '001_create_forum_threads.php');
+
+        $repo = new MigrationRepository([
+            'ext:pulsar/cms' => $this->tempDir,
+            'ext:pulsar/forum' => $forumDir,
+        ]);
+
+        $versions = $repo->versions();
+
+        self::assertCount(2, $versions);
+        self::assertNotSame($versions[0], $versions[1]);
+
+        foreach ($versions as $version) {
+            self::assertMatchesRegularExpression('/^[0-9a-f]{4}_00000000000001$/', $version);
+        }
+    }
+
+    /**
+     * The qualifier is a function of the source name and of nothing else, so it can be
+     * reproduced anywhere the name is known — including in the `UPDATE` an operator runs
+     * to re-key a table written by an older Pulsar.
+     */
+    #[Test]
+    public function theQualifierIsDerivedFromTheSourceName(): void
+    {
+        $this->createMigrationFile('001_create_cms_contents.php');
+
+        $repo = new MigrationRepository(['ext:pulsar/cms' => $this->tempDir]);
+
+        self::assertSame(
+            [MigrationVersionScheme::prefixForSource('ext:pulsar/cms') . '_00000000000001'],
+            $repo->versions(),
+        );
+    }
+
+    /**
+     * Timestamp versions never took a qualifier and still do not: they are already
+     * globally unique, and qualifying them would have renamed the framework's own
+     * migrations for no gain.
+     */
+    #[Test]
+    public function timestampVersionsAreUnqualifiedEvenUnderALabelledSource(): void
+    {
+        $this->createMigrationFile('20240101120000_create_users.php');
+
+        $repo = new MigrationRepository(['ext:pulsar/analytics' => $this->tempDir]);
+
+        self::assertSame(['20240101120000'], $repo->versions());
     }
 
     #[Test]

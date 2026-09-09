@@ -26,12 +26,13 @@ final class SchemaColumnTypeTest extends TestCase
         self::assertSame(SchemaColumnType::Integer, SchemaColumnType::from('integer'));
         self::assertSame(SchemaColumnType::String, SchemaColumnType::from('string'));
         self::assertSame(SchemaColumnType::Boolean, SchemaColumnType::from('boolean'));
+        self::assertSame(SchemaColumnType::Double, SchemaColumnType::from('double'));
     }
 
     #[Test]
-    public function hasSixteenCases(): void
+    public function hasSeventeenCases(): void
     {
-        self::assertCount(16, SchemaColumnType::cases());
+        self::assertCount(17, SchemaColumnType::cases());
     }
 
     /**

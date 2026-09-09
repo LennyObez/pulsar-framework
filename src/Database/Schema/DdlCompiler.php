@@ -317,6 +317,10 @@ final readonly class DdlCompiler
                 Driver::PostgreSQL => 'DOUBLE PRECISION',
                 default => 'FLOAT',
             },
+            SchemaColumnType::Double => match ($this->driver) {
+                Driver::PostgreSQL => 'DOUBLE PRECISION',
+                default => 'DOUBLE',
+            },
             SchemaColumnType::Decimal => sprintf('DECIMAL(%d, %d)', $column->precision ?? 8, $column->scale ?? 2),
             SchemaColumnType::Boolean => match ($this->driver) {
                 Driver::PostgreSQL => 'BOOLEAN',
@@ -413,6 +417,7 @@ final readonly class DdlCompiler
             SchemaColumnType::SmallInt,
             SchemaColumnType::BigInt,
             SchemaColumnType::Float,
+            SchemaColumnType::Double,
             SchemaColumnType::Decimal,
             SchemaColumnType::Boolean,
             SchemaColumnType::DateTime,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Cache;
 
+use Override;
 use Pulsar\Api\Api;
 
 use function array_keys;
@@ -21,7 +22,7 @@ use function trim;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class TableTagExtractor
+final readonly class TableTagExtractor implements TableTagExtractorInterface
 {
     /**
      * Combined pattern matching all SQL clause types in a single pass.
@@ -41,6 +42,7 @@ final readonly class TableTagExtractor
      * @param array<string, mixed>|null $queryBuilderContext Reserved for future query builder integration
      * @return list<string> Lowercase table names
      */
+    #[Override]
     public function extractTags(string $sql, ?array $queryBuilderContext = null): array
     {
         if (preg_match_all(self::TABLE_PATTERN, $sql, $matches) === 0) {

@@ -57,6 +57,7 @@ final class MySqlSchemaCompilerTest extends TestCase
         yield 'json' => [SchemaColumnType::Json, 'JSON', []];
         yield 'binary' => [SchemaColumnType::Binary, 'BLOB', []];
         yield 'float' => [SchemaColumnType::Float, 'FLOAT', []];
+        yield 'double' => [SchemaColumnType::Double, 'DOUBLE', []];
         yield 'date' => [SchemaColumnType::Date, 'DATE', []];
         yield 'time' => [SchemaColumnType::Time, 'TIME', []];
         yield 'smallint' => [SchemaColumnType::SmallInt, 'SMALLINT', []];

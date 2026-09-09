@@ -12,13 +12,22 @@ use Pulsar\Database\Routing\ReadWriteConfig;
 #[CoversClass(ReadWriteConfig::class)]
 final class ReadWriteConfigTest extends TestCase
 {
+    /**
+     * An omitted `write_host` means the default connection exactly as `connections`
+     * configures it, and is therefore empty.
+     *
+     * It used to default to `'127.0.0.1'`, which was harmless only for as long as
+     * nothing read the value. Now that `write_host` selects the connection writes go
+     * to, that default would silently repoint the primary of every deployment that had
+     * simply left the key out of `config/database.php`.
+     */
     #[Test]
     public function fromArrayWithDefaults(): void
     {
         $config = ReadWriteConfig::fromArray([]);
 
         self::assertSame([], $config->readHosts);
-        self::assertSame('127.0.0.1', $config->writeHost);
+        self::assertSame('', $config->writeHost);
         self::assertSame('request', $config->stickyDuration);
         self::assertFalse($config->enabled);
     }

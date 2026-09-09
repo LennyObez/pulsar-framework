@@ -9,6 +9,8 @@ use Pulsar\Config\DatabaseConfig;
 use Pulsar\Extensibility\ExtensionCatalogInterface;
 use Pulsar\Extensibility\ExtensionLifecycle;
 
+use function basename;
+use function count;
 use function dirname;
 use function glob;
 
@@ -23,6 +25,13 @@ use const GLOB_ONLYDIR;
  * extension ones. Extension paths are appended only for extensions that successfully
  * registered or booted, which keeps a disabled or broken extension from contributing
  * migrations that could conflict with project schemas.
+ *
+ * Each path is keyed by the NAME of the source that ships it — `core:Auth`,
+ * `project`, `ext:pulsar/cms`. {@see MigrationRepository} turns that name into the
+ * qualifier that keeps two extensions' `001_` apart. A name is the only thing here
+ * that is the same on a laptop and on a deploy host, which is precisely why the
+ * qualifier is derived from it and not from the directory it labels: see
+ * {@see MigrationVersionScheme}.
  */
 #[Internal(reason: 'Wired in composition root; use MigrationPathResolverInterface')]
 final readonly class MigrationPathResolver implements MigrationPathResolverInterface
@@ -43,7 +52,7 @@ final readonly class MigrationPathResolver implements MigrationPathResolverInter
         // without anyone remembering to come back here.
         $paths = $this->frameworkMigrationPaths();
 
-        $paths[] = $this->databaseConfig->migrationsPath;
+        $paths['project'] = $this->databaseConfig->migrationsPath;
 
         if ($this->extensionRegistry === null) {
             return $paths;
@@ -58,8 +67,19 @@ final readonly class MigrationPathResolver implements MigrationPathResolverInter
                 continue;
             }
 
-            foreach ($manifest->provides->migrations as $relPath) {
-                $paths[] = $manifest->path . DIRECTORY_SEPARATOR . $relPath;
+            $declared = $manifest->provides->migrations;
+
+            foreach ($declared as $relPath) {
+                // One directory per extension is the shape every manifest in the tree
+                // uses, and it gets the extension's bare name. A manifest declaring
+                // several needs one name each, so the declared relative path — which
+                // lives in the manifest, not in the filesystem layout, and therefore
+                // travels with the extension — distinguishes them.
+                $label = count($declared) === 1
+                    ? 'ext:' . $name
+                    : 'ext:' . $name . ':' . $relPath;
+
+                $paths[$label] = $manifest->path . DIRECTORY_SEPARATOR . $relPath;
             }
         }
 
@@ -67,22 +87,34 @@ final readonly class MigrationPathResolver implements MigrationPathResolverInter
     }
 
     /**
-     * Every `src/<Module>/Database/Migration` directory the framework ships.
+     * Every `src/<Module>/Database/Migration` directory the framework ships, keyed
+     * `core:<Module>`.
      *
      * Order carries no meaning here, and it is worth saying why rather than leaving a
      * reader to assume it does. {@see MigrationRepository::discover()} gives sequential
-     * versions a path-scoped prefix, so those cannot collide across sources at all;
+     * versions a source-scoped prefix, so those cannot collide across sources at all;
      * timestamp versions — which is what the framework's own migrations use — take no
      * prefix, and two paths offering the same timestamp make `discover()` throw. There is
      * no precedence to express: a collision stops the run rather than resolving to
      * anybody's favour.
      *
-     * @return list<string>
+     * @return array<string, string>
      */
     private function frameworkMigrationPaths(): array
     {
         $matches = glob(dirname(__DIR__, 2) . '/*/Database/Migration', GLOB_ONLYDIR);
 
-        return $matches === false ? [] : $matches;
+        if ($matches === false) {
+            return [];
+        }
+
+        $paths = [];
+
+        foreach ($matches as $path) {
+            // dirname(..., 2) strips `/Database/Migration`, leaving `src/<Module>`.
+            $paths['core:' . basename(dirname($path, 2))] = $path;
+        }
+
+        return $paths;
     }
 }

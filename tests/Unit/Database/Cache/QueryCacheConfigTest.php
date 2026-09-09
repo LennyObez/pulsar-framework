@@ -39,8 +39,18 @@ final class QueryCacheConfigTest extends TestCase
         self::assertSame(['org_id'], $config->authorizationColumns);
     }
 
+    /**
+     * An operator who switches caching off keeps their sensitive-table list.
+     *
+     * This method used to be called `regulatedPresetDefaultsDisabled` and asserted
+     * that `'enabled' => false` produced `enabled === false`. It named a preset that
+     * did not exist and would have passed on any tree, which is how the missing
+     * preset stayed missing. The preset now exists and is watched refusing in
+     * {@see QueryCacheRegulatedPresetTest}; what is left here is the ordinary
+     * round-trip this case was actually exercising.
+     */
     #[Test]
-    public function regulatedPresetDefaultsDisabled(): void
+    public function anExplicitlyDisabledCacheKeepsItsSensitiveTableList(): void
     {
         $config = QueryCacheConfig::fromArray([
             'enabled' => false,
@@ -48,6 +58,12 @@ final class QueryCacheConfigTest extends TestCase
         ]);
 
         self::assertFalse($config->enabled);
-        self::assertCount(3, $config->sensitiveTableNames);
+        self::assertSame(['audit_logs', 'credentials', 'sessions'], $config->sensitiveTableNames);
+    }
+
+    #[Test]
+    public function fromArrayReportsTheDefaultPresetAlongsideTheOtherDefaults(): void
+    {
+        self::assertFalse(QueryCacheConfig::fromArray([])->regulatedPreset);
     }
 }

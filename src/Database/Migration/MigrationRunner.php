@@ -17,6 +17,7 @@ use Throwable;
 
 use function array_diff_key;
 use function array_filter;
+use function array_map;
 use function array_values;
 use function fclose;
 use function flock;
@@ -282,6 +283,8 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         $allFiles = $this->repository->discover();
         $applied = $this->getApplied();
 
+        $this->assertVersionsAreRecognised($applied, $allFiles);
+
         $appliedVersions = [];
         foreach ($applied as $record) {
             $appliedVersions[$record->version] = true;
@@ -290,6 +293,79 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         $pending = array_diff_key($allFiles, $appliedVersions);
 
         return array_values($pending);
+    }
+
+    /**
+     * Refuse when the table and the checkout disagree about which migration a version
+     * identifies.
+     *
+     * A version is the whole of a migration's identity in the tracking table — no column
+     * records which source shipped a row — so there are two ways to disagree, and both
+     * end with a migration being run twice or not at all.
+     *
+     * **A version the checkout no longer produces, with that migration on disk
+     * unapplied.** Sequential migration versions used to be qualified by a CRC32 of the
+     * ABSOLUTE migrations directory, so deploying the same code into a different path
+     * renamed every one of them; the renamed migrations then read as pending, and
+     * `runPending()` applied them a second time to a database that already had them.
+     * Re-keying the table is the operator's call to make, in their own maintenance
+     * window — so this stops the run and hands them the statements rather than rewriting
+     * the record of what has been applied to a production database as a side effect of a
+     * deploy.
+     *
+     * **A version whose row names a different migration than the file now at it.** Two
+     * sources shipping one version write to the same row, so whichever ran second reads
+     * as already applied and is dropped from the run: its tables are never created and
+     * `migrate` exits 0 with nothing pending. Measured on this tree, where
+     * `20260327000001` was shipped by `src/Auth/Database/Migration`,
+     * `extensions/analytics` and `extensions/health-status` at once. The `name` column
+     * is what catches it — see {@see MigrationVersionScheme::nameDrift()}.
+     *
+     * Public because `migrate:status` builds its own applied/pending view rather than
+     * calling {@see getPending()}, and a status listing that calls an applied migration
+     * pending is the report an operator acts on. It is handed the two collections the
+     * caller already has, so checking costs no extra query.
+     *
+     * @param list<MigrationRecord> $applied Records read from the migrations table
+     * @param array<string, MigrationFile> $discovered What {@see MigrationRepository::discover()} found
+     * @throws DatabaseException
+     */
+    public function assertVersionsAreRecognised(array $applied, array $discovered): void
+    {
+        $aliases = MigrationVersionScheme::legacyAliases(
+            array_map(static fn(MigrationRecord $r): string => $r->version, $applied),
+            array_map(static fn(MigrationFile $f): string => $f->version, array_values($discovered)),
+        );
+
+        if ($aliases['mapped'] !== [] || $aliases['ambiguous'] !== []) {
+            throw DatabaseException::migrationIdentityMismatch(
+                MigrationVersionScheme::describeMismatch(
+                    $this->tableName,
+                    $aliases['mapped'],
+                    $aliases['ambiguous'],
+                ),
+            );
+        }
+
+        $appliedNames = [];
+        foreach ($applied as $record) {
+            $appliedNames[$record->version] = $record->name;
+        }
+
+        $discoveredNames = [];
+        foreach ($discovered as $file) {
+            $discoveredNames[$file->version] = $file->name;
+        }
+
+        $drift = MigrationVersionScheme::nameDrift($appliedNames, $discoveredNames);
+
+        if ($drift === []) {
+            return;
+        }
+
+        throw DatabaseException::migrationIdentityMismatch(
+            MigrationVersionScheme::describeNameDrift($this->tableName, $drift),
+        );
     }
 
     /**
@@ -354,11 +430,17 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
 
         $allFiles = $this->repository->discover();
 
+        // Pre-flight, before a single down() runs. Throwing from inside the loop below
+        // left the migrations ahead of the offending record already rolled back: a
+        // partial teardown caused by a bookkeeping mismatch, which is the worst possible
+        // moment to discover the checkout and the table disagree.
         foreach ($records as $record) {
             if (!isset($allFiles[$record->version])) {
                 throw DatabaseException::migrationNotFound($record->version);
             }
+        }
 
+        foreach ($records as $record) {
             $file = $allFiles[$record->version];
             $migration = $this->repository->load($file->path);
 
@@ -430,7 +512,7 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
     /**
      * Generate driver-aware DDL for the migration tracking table.
      *
-     * Version column uses VARCHAR(30) to accommodate path-prefixed
+     * Version column uses VARCHAR(30) to accommodate source-qualified
      * sequential versions (e.g., "f827_00000000000042").
      */
     private function createTableDdl(): string

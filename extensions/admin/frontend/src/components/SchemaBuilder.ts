@@ -25,6 +25,7 @@ const COLUMN_TYPES = [
   'smallint',
   'bigint',
   'float',
+  'double',
   'decimal',
   'boolean',
   'datetime',

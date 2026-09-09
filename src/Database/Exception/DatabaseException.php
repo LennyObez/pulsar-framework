@@ -42,6 +42,70 @@ final class DatabaseException extends RuntimeException
     }
 
     /**
+     * Read/write routing was configured on a driver whose DSN carries no host.
+     *
+     * SQLite addresses a file, so a "replica" derived from the primary would open the
+     * same file under a different name. Refused rather than accepted, because routing
+     * that reports replica traffic which is really the primary is a metric an operator
+     * would size their infrastructure on.
+     */
+    #[NoDiscard]
+    public static function readWriteRoutingUnsupportedDriver(string $driver, string $host): self
+    {
+        return new self(sprintf(
+            'Read/write routing lists "%s", but the "%s" driver addresses no host, so no '
+            . 'connection distinct from the primary can be derived from it. Remove the '
+            . 'read_write.read_hosts / read_write.write_host entries, or name a connection '
+            . 'configured under "connections" instead of a host.',
+            $host,
+            $driver,
+        ));
+    }
+
+    /**
+     * Read/write routing is configured with replicas, and something has taken the
+     * routing manager's place.
+     *
+     * Routing needs the statement in order to classify it, and only
+     * {@see \Pulsar\Database\Routing\RoutingConnectionManager::connectionForQuery()}
+     * takes one. Multi-tenancy and failover both decorate
+     * `ConnectionManagerInterface` after the database is wired, and their decorators
+     * offer no such method — so behind one of them every read would go to the primary
+     * while the configuration said replicas were in use. Refused at boot rather than
+     * reported as routing that is not happening.
+     */
+    #[NoDiscard]
+    public static function readWriteRoutingDecoratedAway(string $manager): self
+    {
+        return new self(sprintf(
+            'Read/write routing is enabled with read hosts configured, but the connection '
+            . 'manager in the container is %s rather than the routing manager. Routing '
+            . 'classifies each statement, and that decorator cannot pass a statement '
+            . 'through, so every read would go to the primary. Turn off read_write.enabled, '
+            . 'or turn off the feature that replaced the manager (multi-tenancy, failover).',
+            $manager,
+        ));
+    }
+
+    /**
+     * The query cache was asked for, and there is no PSR-16 cache to put results in.
+     *
+     * Answered with a refusal rather than a runner that silently never caches: an
+     * application resolving the runner has decided caching is safe for its workload,
+     * and a cache that quietly does nothing is the shape of "configured and inert"
+     * this whole subsystem was fixed to stop being.
+     */
+    #[NoDiscard]
+    public static function queryCacheNeedsACacheStore(): self
+    {
+        return new self(
+            'The query cache needs a PSR-16 cache to store results in, and none is registered. '
+            . 'Add config/cache.php so the cache subsystem is wired, or stop resolving '
+            . 'CachedQueryRunner.',
+        );
+    }
+
+    /**
      * Query execution failed.
      */
     #[NoDiscard]
@@ -170,6 +234,19 @@ final class DatabaseException extends RuntimeException
     public static function migrationNotFound(string $version): self
     {
         return new self(sprintf('Migration "%s" not found', $version));
+    }
+
+    /**
+     * The migrations table records versions this checkout no longer produces.
+     *
+     * Raised INSTEAD of running, never alongside it: the migrations the table records
+     * are on disk unapplied under a different version string, so a run would apply
+     * them a second time to a database that already carries them.
+     */
+    #[NoDiscard]
+    public static function migrationIdentityMismatch(string $details): self
+    {
+        return new self('Migration identity mismatch. ' . $details);
     }
 
     /**

@@ -9,37 +9,29 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Pool\PoolConfig;
 
+use function dirname;
+
 #[CoversClass(PoolConfig::class)]
 final class PoolConfigTest extends TestCase
 {
+    /**
+     * `config/database.php` has no `pool` section, and that is the point.
+     *
+     * It carried one until 1.0.0-rc.12. The section was parsed into this object and
+     * then read by nothing: no wiring built a pool from it on any runtime, so an
+     * operator who sized `max_connections` there changed nothing at all. The section,
+     * its parser and its documentation are gone. A pool is constructed by the
+     * application that wants one, which is the only arrangement in which these numbers
+     * take effect — so a `pool` key reappearing in the shipped config is a knob
+     * connected to nothing coming back.
+     */
     #[Test]
-    public function fromArrayWithDefaults(): void
+    public function theShippedConfigFileHasNoPoolSection(): void
     {
-        $config = PoolConfig::fromArray([]);
+        /** @var array<string, mixed> $config */
+        $config = require dirname(__DIR__, 4) . '/config/database.php';
 
-        self::assertSame(2, $config->minConnections);
-        self::assertSame(10, $config->maxConnections);
-        self::assertSame(60, $config->idleTimeoutSeconds);
-        self::assertSame(3600, $config->maxLifetimeSeconds);
-        self::assertSame(30, $config->healthCheckIntervalSeconds);
-    }
-
-    #[Test]
-    public function fromArrayWithCustomValues(): void
-    {
-        $config = PoolConfig::fromArray([
-            'min_connections' => 5,
-            'max_connections' => 20,
-            'idle_timeout_seconds' => 120,
-            'max_lifetime_seconds' => 7200,
-            'health_check_interval_seconds' => 60,
-        ]);
-
-        self::assertSame(5, $config->minConnections);
-        self::assertSame(20, $config->maxConnections);
-        self::assertSame(120, $config->idleTimeoutSeconds);
-        self::assertSame(7200, $config->maxLifetimeSeconds);
-        self::assertSame(60, $config->healthCheckIntervalSeconds);
+        self::assertArrayNotHasKey('pool', $config);
     }
 
     #[Test]
