@@ -69078,6 +69078,7 @@
         "Pulsar\\Auth\\Authorization\\DecisionRecordingState",
         "Pulsar\\Auth\\Internal\\Authorization\\AuthorizationDecisionFlushListener",
         "Pulsar\\Auth\\Internal\\Authorization\\BufferedAuthorizationDecisionSink",
+        "Pulsar\\Auth\\Internal\\Authorization\\BufferedDecisionSinkInterface",
         "Pulsar\\Auth\\Internal\\Persistence\\DatabaseRecoveryCodeStore",
         "Pulsar\\Auth\\Internal\\Persistence\\DatabaseTotpReplayGuard",
         "Pulsar\\Auth\\Internal\\Persistence\\DatabaseTotpSecretStore",

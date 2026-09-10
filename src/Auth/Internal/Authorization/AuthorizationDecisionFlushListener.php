@@ -7,7 +7,7 @@ namespace Pulsar\Auth\Internal\Authorization;
 use Pulsar\Api\Internal;
 
 /**
- * Empties {@see BufferedAuthorizationDecisionSink} at a drain point.
+ * Empties a {@see BufferedDecisionSinkInterface} at a drain point.
  *
  * A drain point is an event that is, by construction, outside every
  * authorization decision: the kernel's `TerminateEvent`, dispatched after the
@@ -32,12 +32,17 @@ use Pulsar\Api\Internal;
  * `AuthWiring` binds the instance under this class name, so the compiled map's
  * `container->get()` returns the listener that holds the configured sink rather
  * than constructing a second one.
+ *
+ * The sink is named by its contract rather than by
+ * {@see BufferedAuthorizationDecisionSink}, which is `final`: a deployment that
+ * batches decisions differently — per transaction, through another store — could
+ * otherwise implement the sink contract and still have nothing able to flush it.
  */
 #[Internal]
 final readonly class AuthorizationDecisionFlushListener
 {
     public function __construct(
-        private BufferedAuthorizationDecisionSink $sink,
+        private BufferedDecisionSinkInterface $sink,
     ) {}
 
     /**

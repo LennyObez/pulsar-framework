@@ -5,21 +5,55 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Auth\Tests\Unit\WebAuthn\Adapter;
 
 use DateTimeImmutable;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\InMemoryAuthenticatorRepository;
 use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorRecord;
 use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorType;
+use Pulsar\Security\Audit\AuditChainVerifier;
+use Pulsar\Security\Audit\AuditEntry;
+use Pulsar\Security\Audit\AuditEvent;
+use Pulsar\Security\Audit\AuditLogger;
+use Pulsar\Security\Audit\AuditOutcome;
+use Pulsar\Security\Audit\ChainableAuditSinkInterface;
+use Pulsar\Security\Crypto\EnvKeyRing;
+use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\MasterKey;
+
+use function array_column;
+use function array_filter;
+use function array_values;
+use function count;
+use function random_bytes;
+use function sodium_bin2hex;
 
 #[CoversClass(InMemoryAuthenticatorRepository::class)]
 final class InMemoryAuthenticatorRepositoryTest extends TestCase
 {
+    private const string SEED_MESSAGE = 'PULSAR_AUDIT_SEED';
+
     private InMemoryAuthenticatorRepository $repo;
+    private CollectingAuditSink $sink;
+    private AuditChainVerifier $verifier;
+    private string $seedHmac;
 
     protected function setUp(): void
     {
-        $this->repo = new InMemoryAuthenticatorRepository();
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $auditKey = $masterKey->deriveSubKey(2, 'audit___');
+
+        $this->sink = new CollectingAuditSink();
+        $this->seedHmac = Hmac::computeHex(self::SEED_MESSAGE, $auditKey);
+        $this->verifier = new AuditChainVerifier(EnvKeyRing::fromMasterKey($masterKey, 2, 'audit___'));
+
+        // A real logger over a real key, not a stub: the point of these tests is
+        // that the revocation lands in the tamper-evident chain and that the
+        // chain still verifies afterwards, and a stub proves neither.
+        $this->repo = new InMemoryAuthenticatorRepository(
+            new AuditLogger($this->sink, $auditKey),
+        );
     }
 
     private function makeRecord(
@@ -187,5 +221,168 @@ final class InMemoryAuthenticatorRepositoryTest extends TestCase
         self::assertSame($record->type, $found->type);
         self::assertSame($record->aaguid, $found->aaguid);
         self::assertFalse($found->active);
+    }
+
+    // --- audit trail for authenticator lifecycle mutations ---
+
+    /**
+     * Revocation removes a second factor. Before this, the repository took no
+     * audit logger at all, so the strongest authentication factor a user had
+     * could be taken away leaving nothing in the HMAC chain — no actor, no
+     * instant, no credential id.
+     */
+    #[Test]
+    public function revokeWritesASecurityEventIntoTheHmacChain(): void
+    {
+        $this->repo->register($this->makeRecord('cred-1', 'user-a', 'YubiKey'));
+
+        $this->repo->revoke('cred-1');
+
+        $revocations = $this->entriesForAction('webauthn.authenticator.revoked');
+        self::assertCount(1, $revocations);
+
+        $entry = $revocations[0];
+        self::assertSame(AuditEvent::SecurityEvent, $entry->event);
+        self::assertSame(AuditOutcome::Success, $entry->outcome);
+        self::assertSame('user-a', $entry->actor);
+        self::assertSame('webauthn:authenticator:cred-1', $entry->resource);
+        self::assertSame('cred-1', $entry->metadata['credential_id']);
+        self::assertSame('YubiKey', $entry->metadata['display_name']);
+        self::assertTrue($entry->metadata['was_active']);
+        self::assertSame(0, $entry->metadata['remaining_active']);
+    }
+
+    /**
+     * An entry that is present but not linked is not evidence. The chain must
+     * still verify end to end with the revocation inside it.
+     */
+    #[Test]
+    public function theChainContainingTheRevocationVerifies(): void
+    {
+        $this->repo->register($this->makeRecord('cred-1', 'user-a'));
+        $this->repo->register($this->makeRecord('cred-2', 'user-a'));
+        $this->repo->rename('cred-1', 'Renamed');
+        $this->repo->revoke('cred-1');
+
+        $result = $this->verifier->verifyChain($this->sink->entries, $this->seedHmac);
+
+        self::assertTrue($result->valid);
+        self::assertSame(4, $result->verifiedCount);
+        self::assertSame([], $result->brokenLinks);
+        self::assertContains(
+            'webauthn.authenticator.revoked',
+            array_column($this->sink->entries, 'action'),
+        );
+    }
+
+    #[Test]
+    public function revokeRecordsHowManyFactorsTheUserHasLeft(): void
+    {
+        $this->repo->register($this->makeRecord('cred-1', 'user-a'));
+        $this->repo->register($this->makeRecord('cred-2', 'user-a'));
+
+        $this->repo->revoke('cred-1');
+
+        $entry = $this->entriesForAction('webauthn.authenticator.revoked')[0];
+        self::assertSame(1, $entry->metadata['remaining_active']);
+    }
+
+    #[Test]
+    public function renameWritesAConfigurationChangeNamingBothDisplayNames(): void
+    {
+        $this->repo->register($this->makeRecord('cred-1', 'user-a', 'Old Name'));
+
+        $this->repo->rename('cred-1', 'New Name');
+
+        $entry = $this->entriesForAction('webauthn.authenticator.renamed')[0];
+        self::assertSame(AuditEvent::ConfigurationChange, $entry->event);
+        self::assertSame(AuditOutcome::Success, $entry->outcome);
+        self::assertSame('user-a', $entry->actor);
+        self::assertSame('Old Name', $entry->metadata['previous_display_name']);
+        self::assertSame('New Name', $entry->metadata['new_display_name']);
+    }
+
+    #[Test]
+    public function registerWritesAnAuthenticationEvent(): void
+    {
+        $this->repo->register($this->makeRecord('cred-1', 'user-a', 'YubiKey'));
+
+        $entry = $this->entriesForAction('webauthn.authenticator.registered')[0];
+        self::assertSame(AuditEvent::Authentication, $entry->event);
+        self::assertSame('user-a', $entry->actor);
+        self::assertSame('cred-1', $entry->metadata['credential_id']);
+        self::assertFalse($entry->metadata['replaced_existing']);
+    }
+
+    /**
+     * A revocation aimed at an unknown credential id is a no-op for the caller
+     * but not a non-event: it is a stale client or someone probing identifiers,
+     * and silence would make the probe invisible.
+     */
+    #[Test]
+    public function revokingAnUnknownCredentialIsRecordedAsAFailure(): void
+    {
+        $this->repo->revoke('nonexistent-cred');
+
+        $entry = $this->entriesForAction('webauthn.authenticator.revoked')[0];
+        self::assertSame(AuditOutcome::Failure, $entry->outcome);
+        self::assertSame('anonymous', $entry->actor);
+        self::assertSame('credential_not_registered', $entry->metadata['reason']);
+    }
+
+    #[Test]
+    public function renamingAnUnknownCredentialIsRecordedAsAFailure(): void
+    {
+        $this->repo->rename('nonexistent-cred', 'New Name');
+
+        $entry = $this->entriesForAction('webauthn.authenticator.renamed')[0];
+        self::assertSame(AuditOutcome::Failure, $entry->outcome);
+        self::assertSame('credential_not_registered', $entry->metadata['reason']);
+    }
+
+    #[Test]
+    public function readsAreNotAudited(): void
+    {
+        $this->repo->register($this->makeRecord('cred-1', 'user-a'));
+
+        self::assertNotNull($this->repo->findByCredentialId('cred-1'));
+        self::assertCount(1, $this->repo->listByUserId('user-a'));
+        self::assertSame(1, $this->repo->countActive('user-a'));
+
+        // Still only the register entry: three reads added nothing.
+        self::assertCount(1, $this->sink->entries);
+    }
+
+    /**
+     * @return list<AuditEntry>
+     */
+    private function entriesForAction(string $action): array
+    {
+        return array_values(array_filter(
+            $this->sink->entries,
+            static fn(AuditEntry $entry): bool => $entry->action === $action,
+        ));
+    }
+}
+
+/**
+ * Chainable sink that keeps every entry in memory so a test can verify the
+ * whole chain, not just the last write.
+ */
+final class CollectingAuditSink implements ChainableAuditSinkInterface
+{
+    /** @var list<AuditEntry> */
+    public array $entries = [];
+
+    #[Override]
+    public function write(AuditEntry $entry): void
+    {
+        $this->entries[] = $entry;
+    }
+
+    #[Override]
+    public function lastHmac(): ?string
+    {
+        return $this->entries === [] ? null : $this->entries[count($this->entries) - 1]->hmac;
     }
 }

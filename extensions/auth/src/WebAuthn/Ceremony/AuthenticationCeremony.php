@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Auth\WebAuthn\Ceremony;
 
+use DateTimeImmutable;
+use DateTimeZone;
+use Psr\Clock\ClockInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\AttestationVerifier;
+use Pulsar\Extension\Auth\WebAuthn\Adapter\InMemoryChallengeStore;
 use Pulsar\Extension\Auth\WebAuthn\Config\WebAuthnConfig;
+use Pulsar\Extension\Auth\WebAuthn\Contract\ChallengeStoreInterface;
 use Pulsar\Extension\Auth\WebAuthn\Contract\CredentialRepositoryInterface;
 use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
 use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
@@ -27,11 +32,28 @@ use function strlen;
 #[Internal(reason: 'WebAuthn ceremony implementation')]
 final readonly class AuthenticationCeremony
 {
+    private ChallengeStoreInterface $challengeStore;
+
+    /**
+     * @param ClockInterface|null $clock Injected so the challenge window is
+     *        testable; the system clock is used when none is given.
+     * @param ChallengeStoreInterface|null $challengeStore Records which challenges
+     *        have been answered, so none is answered twice. Defaults to a
+     *        process-local store sharing this ceremony's clock; a deployment
+     *        running more than one worker MUST bind a shared implementation, or
+     *        a replay routed to another worker finds an empty store. Last in the
+     *        list so the parameter could be added without renumbering the
+     *        positional arguments every existing caller passes.
+     */
     public function __construct(
         private WebAuthnConfig $config,
         private CredentialRepositoryInterface $credentialRepository,
         private AuditLoggerInterface $auditLogger,
-    ) {}
+        private ?ClockInterface $clock = null,
+        ?ChallengeStoreInterface $challengeStore = null,
+    ) {
+        $this->challengeStore = $challengeStore ?? new InMemoryChallengeStore($clock);
+    }
 
     /**
      * Generate authentication options (PublicKeyCredentialRequestOptions).
@@ -40,8 +62,12 @@ final readonly class AuthenticationCeremony
      */
     public function generateOptions(?string $userId = null): AuthenticationOptions
     {
-        $challenge = random_bytes(32);
-        $challengeB64 = $this->base64UrlEncode($challenge);
+        // The challenge carries its own issuance instant, so `verify()` enforces
+        // `challenge_ttl_seconds` without having to look the challenge up. The
+        // store consulted at verification time records only whether a challenge
+        // has been ANSWERED; nothing is written here, because a challenge that is
+        // issued and never used costs nothing and needs no record.
+        $challengeB64 = Challenge::issue($this->now());
 
         $this->auditLogger->log(
             event: AuditEvent::Authentication,
@@ -125,6 +151,7 @@ final readonly class AuthenticationCeremony
             $clientDataJsonB64 = $response['clientDataJSON'] ?? '';
             $clientDataJson = $this->base64UrlDecode($clientDataJsonB64);
             $this->verifyClientData($clientDataJson, $expectedChallenge);
+            $this->consumeChallenge($expectedChallenge);
 
             // Verify authenticator data
             /** @var string $authDataB64 */
@@ -220,6 +247,38 @@ final readonly class AuthenticationCeremony
     }
 
     /**
+     * Claim the challenge, refusing a ceremony that answers one already answered.
+     *
+     * `challenge_ttl_seconds` bounds the replay window; this closes it. Until
+     * this call existed, nothing marked a challenge spent, so a captured response
+     * stayed usable for the whole of its TTL — five minutes by default — against
+     * a relying party that {@see \Pulsar\Extension\Auth\WebAuthn\Contract\WebAuthnServerInterface}
+     * documents as issuing "one-time challenges".
+     *
+     * The claim is made BEFORE the cryptographic checks that follow, so a
+     * challenge is spent by the first response that answers it, whether or not
+     * that response turns out to verify. Consuming only on success would leave a
+     * captured challenge open to unlimited attempts, which is the property the
+     * single-use rule exists to remove.
+     */
+    private function consumeChallenge(string $challenge): void
+    {
+        $expiresAt = Challenge::expiresAt($challenge, $this->config->challengeTtlSeconds);
+
+        if ($expiresAt === null) {
+            // The freshness gate above already refuses a value this server did
+            // not mint, so this is unreachable today. It fails closed rather than
+            // skipping the claim, because a reordering that moved the gate would
+            // otherwise turn single-use off in silence.
+            throw WebAuthnException::expiredChallenge();
+        }
+
+        if (!$this->challengeStore->consume($challenge, $expiresAt)) {
+            throw WebAuthnException::replayedChallenge();
+        }
+    }
+
+    /**
      * Verify the client data JSON (type, challenge, origin).
      */
     private function verifyClientData(string $clientDataJson, string $expectedChallenge): void
@@ -243,6 +302,13 @@ final readonly class AuthenticationCeremony
 
         if (!hash_equals($expectedChallenge, $challenge)) {
             throw WebAuthnException::invalidChallenge();
+        }
+
+        // Freshness is read from the relying party's own copy of the challenge,
+        // never from the client echo: the two are byte-identical at this point,
+        // and only the server copy is trustworthy as a source of the instant.
+        if (!Challenge::isFresh($expectedChallenge, $this->config->challengeTtlSeconds, $this->now())) {
+            throw WebAuthnException::expiredChallenge();
         }
 
         /** @var string $origin */
@@ -313,6 +379,14 @@ final readonly class AuthenticationCeremony
         if ($valid !== 1) {
             throw WebAuthnException::invalidAssertion('Signature verification failed');
         }
+    }
+
+    /**
+     * The current instant, from the injected clock when one is available.
+     */
+    private function now(): DateTimeImmutable
+    {
+        return $this->clock?->now() ?? new DateTimeImmutable('now', new DateTimeZone('UTC'));
     }
 
     private function base64UrlEncode(string $data): string

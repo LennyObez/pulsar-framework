@@ -12,7 +12,6 @@ use stdClass;
 use Throwable;
 use WeakMap;
 
-use function array_shift;
 use function count;
 use function in_array;
 use function microtime;
@@ -259,12 +258,12 @@ final class Gate implements GateInterface
 
         if ($open !== null) {
             if (count($open->nested) < self::MAX_NESTED_DECISIONS) {
-                $open->nested[] = $decision;
+                $open->queue($decision);
 
                 return;
             }
 
-            $open->refused++;
+            $open->refuse();
 
             return;
         }
@@ -276,9 +275,14 @@ final class Gate implements GateInterface
         try {
             $this->decisionSink->record($decision);
 
-            while ($state->nested !== [] && $budget > 0) {
+            while ($budget > 0) {
+                $next = $state->shift();
+
+                if ($next === null) {
+                    break;
+                }
+
                 $budget--;
-                $next = array_shift($state->nested);
                 $this->decisionSink->record($next);
             }
         } catch (Throwable $e) {

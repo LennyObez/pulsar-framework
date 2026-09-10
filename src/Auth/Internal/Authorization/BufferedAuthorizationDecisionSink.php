@@ -11,7 +11,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Authorization\AuthorizationDecision;
-use Pulsar\Auth\Authorization\AuthorizationDecisionSinkInterface;
 use Pulsar\Auth\Authorization\Event\AuthorizationDenied;
 use Pulsar\Auth\Authorization\Event\AuthorizationGranted;
 use Pulsar\Context\CausationId;
@@ -123,7 +122,7 @@ use function max;
  * is reading flush latency.
  */
 #[Internal]
-final class BufferedAuthorizationDecisionSink implements AuthorizationDecisionSinkInterface
+final class BufferedAuthorizationDecisionSink implements BufferedDecisionSinkInterface
 {
     /**
      * Decisions the sink may hold.
@@ -233,6 +232,7 @@ final class BufferedAuthorizationDecisionSink implements AuthorizationDecisionSi
      * the rest: a sink that rejects one record must not cost the trail every
      * record behind it.
      */
+    #[Override]
     public function flush(): void
     {
         if ($this->flushing || $this->buffer === []) {
@@ -274,6 +274,7 @@ final class BufferedAuthorizationDecisionSink implements AuthorizationDecisionSi
     /**
      * Number of decisions captured but not yet written.
      */
+    #[Override]
     public function buffered(): int
     {
         return count($this->buffer);

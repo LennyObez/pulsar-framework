@@ -13,15 +13,19 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
+use Pulsar\Extension\Auth\WebAuthn\Adapter\InMemoryChallengeStore;
+use Pulsar\Extension\Auth\WebAuthn\Ceremony\Challenge;
 use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationCeremony;
 use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationOptions;
 use Pulsar\Extension\Auth\WebAuthn\Config\WebAuthnConfig;
 use Pulsar\Extension\Auth\WebAuthn\Contract\AttestationVerifierInterface;
+use Pulsar\Extension\Auth\WebAuthn\Contract\ChallengeStoreInterface;
 use Pulsar\Extension\Auth\WebAuthn\Contract\CredentialRepositoryInterface;
 use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
 use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+use Pulsar\Testing\Clock\TestClock;
 
 use function assert;
 use function chr;
@@ -30,6 +34,7 @@ use function is_array;
 use function is_int;
 use function is_scalar;
 use function is_string;
+use function str_repeat;
 use function strlen;
 
 #[CoversClass(RegistrationCeremony::class)]
@@ -354,7 +359,7 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnOriginMismatch(): void
     {
-        $challenge = 'test-challenge';
+        $challenge = $this->freshChallenge();
         $clientData = json_encode([
             'type' => 'webauthn.create',
             'challenge' => $challenge,
@@ -375,7 +380,7 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnAuthDataTooShort(): void
     {
-        $challenge = 'test-challenge';
+        $challenge = $this->freshChallenge();
         $clientData = json_encode([
             'type' => 'webauthn.create',
             'challenge' => $challenge,
@@ -399,7 +404,7 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnRpIdHashMismatch(): void
     {
-        $challenge = 'test-challenge';
+        $challenge = $this->freshChallenge();
         $clientData = json_encode([
             'type' => 'webauthn.create',
             'challenge' => $challenge,
@@ -425,7 +430,7 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsWhenUserPresenceFlagNotSet(): void
     {
-        $challenge = 'test-challenge';
+        $challenge = $this->freshChallenge();
         $clientData = json_encode([
             'type' => 'webauthn.create',
             'challenge' => $challenge,
@@ -466,7 +471,7 @@ final class RegistrationCeremonyTest extends TestCase
             $this->auditLogger,
         );
 
-        $challenge = 'test-challenge';
+        $challenge = $this->freshChallenge();
         $clientData = json_encode([
             'type' => 'webauthn.create',
             'challenge' => $challenge,
@@ -494,7 +499,7 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsWhenAttestedCredentialDataFlagNotSet(): void
     {
-        $challenge = 'test-challenge';
+        $challenge = $this->freshChallenge();
         $clientData = json_encode([
             'type' => 'webauthn.create',
             'challenge' => $challenge,
@@ -685,5 +690,265 @@ final class RegistrationCeremonyTest extends TestCase
         assert(is_scalar($value));
 
         return $this->encodeCborText((string) $value);
+    }
+
+    // --- challenge_ttl_seconds enforcement ---
+
+    /**
+     * The config key existed and was parsed into WebAuthnConfig, but no ceremony
+     * read it: an attestation answering a challenge minted an hour earlier was
+     * accepted exactly like one minted a second earlier.
+     */
+    #[Test]
+    public function verifyRefusesAnAttestationAnsweringAChallengePastItsTtl(): void
+    {
+        $clock = TestClock::at('2026-03-01T12:00:00+00:00');
+        $ceremony = $this->ceremonyWithTtl(300, $clock);
+
+        $challenge = $ceremony->generateOptions('user-1', 'User One')->challenge;
+
+        $clock->advance(seconds: 301);
+
+        $credential = $this->buildCredentialJsonWithCbor(
+            clientDataJson: $this->clientDataFor($challenge),
+            authData: str_repeat("\x00", 10),
+            fmt: 'none',
+        );
+
+        try {
+            $ceremony->verify($credential, $challenge, 'user-1');
+            self::fail('An attestation answering an expired challenge must be refused.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('expired_challenge', $e->errorCode());
+        }
+    }
+
+    /**
+     * The boundary is inclusive, and the refusal above is not simply "the
+     * ceremony rejects everything": one second earlier the same response walks
+     * past the challenge gate and is refused for the next reason instead.
+     */
+    #[Test]
+    public function verifyAcceptsAChallengeOnTheFinalSecondOfItsTtl(): void
+    {
+        $clock = TestClock::at('2026-03-01T12:00:00+00:00');
+        $ceremony = $this->ceremonyWithTtl(300, $clock);
+
+        $challenge = $ceremony->generateOptions('user-1', 'User One')->challenge;
+
+        $clock->advance(seconds: 300);
+
+        $credential = $this->buildCredentialJsonWithCbor(
+            clientDataJson: $this->clientDataFor($challenge),
+            authData: str_repeat("\x00", 10),
+            fmt: 'none',
+        );
+
+        try {
+            $ceremony->verify($credential, $challenge, 'user-1');
+            self::fail('The short authenticator data must still be refused.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('invalid_attestation', $e->errorCode());
+            self::assertStringContainsString('Authenticator data too short', $e->getMessage());
+        }
+    }
+
+    /**
+     * A challenge this relying party never minted has no issuance instant, so it
+     * cannot be shown to be inside the window. Treating it as unlimited would
+     * hand any caller a way around the TTL by inventing its own challenge.
+     */
+    #[Test]
+    public function verifyRefusesAChallengeThisServerNeverIssued(): void
+    {
+        $ceremony = $this->ceremonyWithTtl(300, TestClock::at('2026-03-01T12:00:00+00:00'));
+
+        $challenge = 'hand-rolled-challenge';
+
+        $credential = $this->buildCredentialJsonWithCbor(
+            clientDataJson: $this->clientDataFor($challenge),
+            authData: str_repeat("\x00", 10),
+            fmt: 'none',
+        );
+
+        try {
+            $ceremony->verify($credential, $challenge, 'user-1');
+            self::fail('A challenge outside the server-minted format must be refused.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('expired_challenge', $e->errorCode());
+        }
+    }
+
+    #[Test]
+    public function generatedChallengeCarriesItsIssuanceInstant(): void
+    {
+        $clock = TestClock::at('2026-03-01T12:00:00+00:00');
+        $ceremony = $this->ceremonyWithTtl(300, $clock);
+
+        $challenge = $ceremony->generateOptions('user-1', 'User One')->challenge;
+
+        $issuedAt = Challenge::issuedAt($challenge);
+        self::assertNotNull($issuedAt);
+        self::assertSame($clock->timestamp(), $issuedAt->getTimestamp());
+    }
+
+    /**
+     * Registration is replayable on the same terms authentication was: the TTL
+     * bounds how long a captured attestation stays usable and nothing marked the
+     * challenge spent inside that window. It matters as much here as on the
+     * assertion side, because an attestation replayed against a relying party is
+     * an attempt to attach an authenticator a second time.
+     *
+     * The clock moves one second, not past the window, and freshness is asserted
+     * at the second attempt so the refusal cannot be the TTL wearing a new error
+     * code.
+     */
+    #[Test]
+    public function verifyRefusesASecondAttestationAnsweringTheSameChallengeInsideItsTtl(): void
+    {
+        $clock = TestClock::at('2026-03-01T12:00:00+00:00');
+        $ceremony = $this->ceremonyWithTtl(300, $clock);
+
+        $challenge = $ceremony->generateOptions('user-1', 'User One')->challenge;
+
+        $credential = $this->buildCredentialJsonWithCbor(
+            clientDataJson: $this->clientDataFor($challenge),
+            authData: str_repeat("\x00", 10),
+            fmt: 'none',
+        );
+
+        // First answer: past the challenge gate, refused for the next reason.
+        try {
+            $ceremony->verify($credential, $challenge, 'user-1');
+            self::fail('The short authenticator data must be refused.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('invalid_attestation', $e->errorCode());
+        }
+
+        $clock->advance(seconds: 1);
+
+        self::assertTrue(
+            Challenge::isFresh($challenge, 300, $clock->now()),
+            'The replay must be attempted while the challenge is still inside its window.',
+        );
+
+        try {
+            $ceremony->verify($credential, $challenge, 'user-1');
+            self::fail('A challenge that was already answered must be refused the second time.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('replayed_challenge', $e->errorCode());
+        }
+    }
+
+    /**
+     * Spending one challenge must not spend the next. Without this the test above
+     * would also pass against a store that refuses everything.
+     */
+    #[Test]
+    public function spendingOneRegistrationChallengeLeavesTheNextOneUsable(): void
+    {
+        $clock = TestClock::at('2026-03-01T12:00:00+00:00');
+        $ceremony = $this->ceremonyWithTtl(300, $clock);
+
+        $first = $ceremony->generateOptions('user-1', 'User One')->challenge;
+        $second = $ceremony->generateOptions('user-1', 'User One')->challenge;
+
+        self::assertNotSame($first, $second);
+
+        foreach ([$first, $second] as $challenge) {
+            $credential = $this->buildCredentialJsonWithCbor(
+                clientDataJson: $this->clientDataFor($challenge),
+                authData: str_repeat("\x00", 10),
+                fmt: 'none',
+            );
+
+            try {
+                $ceremony->verify($credential, $challenge, 'user-1');
+                self::fail('The short authenticator data must be refused.');
+            } catch (WebAuthnException $e) {
+                self::assertSame('invalid_attestation', $e->errorCode());
+            }
+        }
+    }
+
+    /**
+     * The two ceremonies do not share a store by default, and must not be assumed
+     * to: each holds its own unless a deployment binds one. What they DO share,
+     * when handed the same store, is the namespace of spent challenges — so a
+     * registration challenge cannot be re-presented to the authentication
+     * ceremony either. The `webauthn.create` / `webauthn.get` type check already
+     * separates the two flows; this states that the store does not quietly
+     * re-open a path between them.
+     */
+    #[Test]
+    public function aSharedStoreSpendsAChallengeForBothCeremonies(): void
+    {
+        $clock = TestClock::at('2026-03-01T12:00:00+00:00');
+        $store = new InMemoryChallengeStore($clock);
+
+        $ceremony = $this->ceremonyWithTtl(300, $clock, $store);
+        $other = $this->ceremonyWithTtl(300, $clock, $store);
+
+        $challenge = $ceremony->generateOptions('user-1', 'User One')->challenge;
+
+        $credential = $this->buildCredentialJsonWithCbor(
+            clientDataJson: $this->clientDataFor($challenge),
+            authData: str_repeat("\x00", 10),
+            fmt: 'none',
+        );
+
+        try {
+            $ceremony->verify($credential, $challenge, 'user-1');
+            self::fail('The short authenticator data must be refused.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('invalid_attestation', $e->errorCode());
+        }
+
+        try {
+            $other->verify($credential, $challenge, 'user-1');
+            self::fail('A shared store must refuse the replay at the second ceremony too.');
+        } catch (WebAuthnException $e) {
+            self::assertSame('replayed_challenge', $e->errorCode());
+        }
+    }
+
+    private function ceremonyWithTtl(
+        int $ttlSeconds,
+        TestClock $clock,
+        ?ChallengeStoreInterface $challengeStore = null,
+    ): RegistrationCeremony {
+        return new RegistrationCeremony(
+            new WebAuthnConfig(
+                rpName: 'TestApp',
+                rpId: 'example.com',
+                origin: 'https://example.com',
+                userVerification: 'preferred',
+                attestation: 'none',
+                challengeTtlSeconds: $ttlSeconds,
+                timeout: 60000,
+            ),
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $this->auditLogger,
+            $clock,
+            $challengeStore,
+        );
+    }
+
+    /**
+     * @throws JsonException
+     */
+    private function clientDataFor(string $challenge): string
+    {
+        return json_encode([
+            'type' => 'webauthn.create',
+            'challenge' => $challenge,
+            'origin' => 'https://example.com',
+        ], JSON_THROW_ON_ERROR);
+    }
+
+    private function freshChallenge(): string
+    {
+        return Challenge::issue(new DateTimeImmutable());
     }
 }

@@ -16,7 +16,28 @@ use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationResult;
  * Handles WebAuthn registration (attestation) and authentication (assertion)
  * ceremonies. Implementations wrap a proven WebAuthn library behind this port.
  *
- * All ceremonies use challenge-response pattern with one-time challenges.
+ * All ceremonies use challenge-response pattern with one-time challenges, and
+ * "one-time" is enforced rather than assumed. Two independent controls stand
+ * behind it, and neither is sufficient alone:
+ *
+ * - `challenge_ttl_seconds` bounds how long a challenge is answerable. The
+ *   issuance instant travels inside the challenge itself
+ *   ({@see \Pulsar\Extension\Auth\WebAuthn\Ceremony\Challenge}), so the window
+ *   needs no server-side table and no cooperation from the caller.
+ * - {@see ChallengeStoreInterface} marks a challenge spent on the first response
+ *   that answers it, so a response captured inside the window cannot be
+ *   submitted twice. Without this, the TTL bounded the replay window at its
+ *   configured length instead of closing it.
+ *
+ * The store is bound to a process-local default. A deployment running more than
+ * one worker process must rebind it to a shared implementation; see that
+ * interface for what the port requires.
+ *
+ * Two things remain the application's responsibility and cannot be moved here:
+ * holding the challenge server-side against the caller's session between the two
+ * round trips, and never reading it back out of the request body. The extension
+ * never sees your session.
+ *
  * All ceremony events are audit-logged (Finding D).
  * @api
  */

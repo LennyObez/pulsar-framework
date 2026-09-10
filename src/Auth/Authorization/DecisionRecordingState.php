@@ -6,6 +6,8 @@ namespace Pulsar\Auth\Authorization;
 
 use Pulsar\Api\Internal;
 
+use function array_shift;
+
 /**
  * One call stack's view of {@see Gate::record()}.
  *
@@ -30,6 +32,18 @@ use Pulsar\Api\Internal;
  * within one Fiber, finding a state open can only mean this frame is nested
  * inside another. That is the property the guard needs and the one an instance
  * property cannot have.
+ *
+ * ## Why the queue is not two public fields
+ *
+ * It was, and the Gate reached in and mutated both: it appended to `$nested`,
+ * incremented `$refused`, and `array_shift()`ed the queue it had filled. Three
+ * writes to another object's state, in a class whose whole job is to be correct
+ * about ordering under Fiber interleaving — and `array_shift()` on a foreign
+ * property is a write no static analysis can attribute to an owner, so nothing
+ * could check the invariant that a shifted decision is one that was queued.
+ * The fields stay readable, because the Gate's ceiling test and its
+ * end-of-frame arithmetic are questions about the queue rather than changes to
+ * it, but every write now goes through a method here.
  */
 #[Internal]
 final class DecisionRecordingState
@@ -40,8 +54,39 @@ final class DecisionRecordingState
      *
      * @var list<AuthorizationDecision>
      */
-    public array $nested = [];
+    public private(set) array $nested = [];
 
     /** Nested decisions this outer record's ceiling refused. */
-    public int $refused = 0;
+    public private(set) int $refused = 0;
+
+    /**
+     * Hold a decision reached while this frame's record was open.
+     *
+     * The caller decides whether there is room; {@see refuse()} is the other
+     * half of that decision and the two are deliberately separate, because the
+     * ceiling is the Gate's policy and the queue is this object's state.
+     */
+    public function queue(AuthorizationDecision $decision): void
+    {
+        $this->nested[] = $decision;
+    }
+
+    /**
+     * Record that a nested decision was dropped because the ceiling was reached.
+     */
+    public function refuse(): void
+    {
+        ++$this->refused;
+    }
+
+    /**
+     * Take the decision queued longest, or null when the queue is empty.
+     *
+     * FIFO, because these are audit records of decisions that happened in an
+     * order: draining them last-first would report the sequence backwards.
+     */
+    public function shift(): ?AuthorizationDecision
+    {
+        return array_shift($this->nested);
+    }
 }
