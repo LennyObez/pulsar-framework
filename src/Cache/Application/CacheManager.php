@@ -50,6 +50,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\SubKeyId;
 use Redis;
 
 use function function_exists;
@@ -97,8 +98,20 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
         // other way round made the variable-length cache key the HMAC key, which
         // sodium_crypto_generichash rejects above 64 bytes — so any cache key
         // longer than 64 bytes (well under the 250-char validator limit) threw.
+        //
+        // The key is SubKeyId::CacheKeyObservability, not the encrypted pool's
+        // AAD pair (9, 'app_cobs'). This digest is PUBLISHED — it goes into log
+        // lines and metric labels — while the AAD tag under that pair is what
+        // EncryptedCacheDecorator verifies before decrypting an entry. Sharing
+        // one key across both made this closure an HMAC oracle for that tag:
+        // anyone able to steer a cache key could have the emitter print the
+        // exact AAD of an entry they did not own. ADR-0006 separates keys by the
+        // (id, context) PAIR, so a distinct pair here is the separation.
         $keyHasher = $masterKey !== null
-            ? fn(string $key): string => Hmac::computeHex($key, $masterKey->deriveSubKey(9, 'app_cobs'))
+            ? fn(string $key): string => Hmac::computeHex(
+                $key,
+                $masterKey->deriveSubKey(SubKeyId::CacheKeyObservability->value, 'app_kobs'),
+            )
             : null;
 
         $this->eventEmitter = new CacheEventEmitter($metrics, $logger, $keyHasher);

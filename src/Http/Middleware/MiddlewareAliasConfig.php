@@ -43,7 +43,8 @@ final class MiddlewareAliasConfig
             // legitimate user can exhaust through normal use; this
             // dedicated alias has its own per-IP budget so brute-force
             // on auth endpoints fails fast without affecting other
-            // routes. Wire on the route: `->middleware(['auth-rate-limit'])`.
+            // routes. Wire on the route:
+            // `new Route(..., middleware: ['auth-rate-limit'])`.
             'auth-rate-limit' => AuthenticationRateLimitMiddleware::class,
             'no-cache' => NoCacheMiddleware::class,
             'compression' => CompressionMiddleware::class,

@@ -436,14 +436,13 @@ final class Router implements RouterInterface
         // header matches a route declared against `api.example.com`.
         $host = $host === null ? null : HostNormalizer::stripPort($host);
 
+        $staticRoute = $this->staticRoutes[$method->value][$normalizedPath] ?? null;
+
         // Fast path: O(1) lookup for static routes. Safe when the request carries
         // no host, OR when no route is host-constrained (a Host header then cannot
         // change which route matches) — so real traffic still hits the hash map.
-        if (
-            ($host === null || !$this->hasHostConstrainedRoutes)
-            && isset($this->staticRoutes[$method->value][$normalizedPath])
-        ) {
-            return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
+        if ($staticRoute !== null && ($host === null || !$this->hasHostConstrainedRoutes)) {
+            return new MatchedRoute($staticRoute, []);
         }
 
         // Narrow the dynamic-route scan to the first-segment bucket of the
@@ -463,12 +462,37 @@ final class Router implements RouterInterface
         /** @var list<Route> $candidates */
         $candidates = array_values($candidates);
 
-        // When the request carries a host header, the static-route fast
-        // path may have been skipped above — but a host-less static route can
-        // still be a legitimate fallback. Append it (lowest precedence) so the
-        // host-aware scan finds it after any host-constrained candidate.
-        if ($host !== null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
-            $candidates[] = $this->staticRoutes[$method->value][$normalizedPath];
+        // Reaching here with a static route in hand means the fast path was
+        // skipped for the one reason it can be: the request carries a Host and
+        // some route — anywhere in the table, on any path — is host-constrained.
+        // That fact must not decide which handler owns THIS path. Splicing the
+        // static route in by precedence rather than appending it keeps the
+        // ordering the fast path applies:
+        //
+        //   1. a route constrained to a host matching this request's Host — the
+        //      most specific claim, and the reason the scan runs at all;
+        //   2. the host-less static route — a literal path beats a placeholder,
+        //      exactly as the O(1) table beats the bucket scan;
+        //   3. host-less dynamic routes, first-registered-wins (ADR-0034).
+        //
+        // Appending it to the end put a later-registered `/users/{id}` ahead of
+        // an earlier `/users/profile` for a request carrying a Host header, and
+        // nowhere else — so a client-supplied header, plus one unrelated
+        // host-constrained route, chose the handler. Route attributes carry
+        // authorization metadata, so that is an access-control decision.
+        if ($staticRoute !== null) {
+            $hostConstrained = [];
+            $hostLess = [];
+
+            foreach ($candidates as $candidate) {
+                if ($candidate->host !== null) {
+                    $hostConstrained[] = $candidate;
+                } else {
+                    $hostLess[] = $candidate;
+                }
+            }
+
+            $candidates = [...$hostConstrained, $staticRoute, ...$hostLess];
         }
 
         foreach ($candidates as $route) {

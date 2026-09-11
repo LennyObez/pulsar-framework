@@ -66,6 +66,8 @@ final class StreamedResponseTest extends TestCase
         $source = new ArrayIterator(['a', 'b', 'c']);
         $response = new StreamedResponse($source);
 
+        // Nothing has been materialized, so nothing is buffered: the caller's
+        // own iterator is what streams.
         self::assertSame($source, $response->getSource());
     }
 
@@ -80,6 +82,66 @@ final class StreamedResponseTest extends TestCase
 
         $body = (string) $response->getBody();
         self::assertSame('Hello, World!', $body);
+    }
+
+    #[Test]
+    public function readingTheBodyDoesNotEmptyTheResponse(): void
+    {
+        // A body-reading middleware — compression, the response cache, an audit
+        // frame — used to consume the generator and keep nothing, so the emitter
+        // behind it found a spent source. getSource() did not merely yield
+        // nothing: it THREW, after the headers were already on the wire.
+        $response = StreamedResponse::fromGenerator(static function (): Generator {
+            yield 'Hello';
+            yield ', ';
+            yield 'World!';
+        });
+
+        self::assertSame('Hello, World!', (string) $response->getBody());
+
+        $streamed = '';
+
+        foreach ($response->getSource() as $chunk) {
+            self::assertIsString($chunk, 'A streamed chunk must be a string.');
+            $streamed .= $chunk;
+        }
+
+        self::assertSame('Hello, World!', $streamed);
+    }
+
+    #[Test]
+    public function getBodyIsRepeatable(): void
+    {
+        $response = StreamedResponse::fromGenerator(static function (): Generator {
+            yield 'once';
+        });
+
+        self::assertSame('once', (string) $response->getBody());
+        self::assertSame('once', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function aCloneThatReadsTheBodyDoesNotDrainItsSiblings(): void
+    {
+        // Every with*() call returns a clone that goes on reading the SAME
+        // one-pass iterator. A buffer that did not travel with the clones would
+        // let whichever one a middleware happened to read empty the others.
+        $original = StreamedResponse::fromGenerator(static function (): Generator {
+            yield 'a';
+            yield 'b';
+        });
+
+        $tagged = $original->withHeader('X-Trace-Id', 'abc');
+        self::assertSame('ab', (string) $tagged->getBody());
+
+        $streamed = '';
+
+        foreach ($original->getSource() as $chunk) {
+            self::assertIsString($chunk, 'A streamed chunk must be a string.');
+            $streamed .= $chunk;
+        }
+
+        self::assertSame('ab', $streamed);
     }
 
     #[Test]

@@ -48,6 +48,13 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
         private string $purpose = 'cache',
     ) {
         $this->encryptor = Encryptor::fromDerivedKey($masterKey, 8, 'app_cenc');
+        // (9, 'app_cobs') keys the AAD tag alone. It is verified, never printed:
+        // CacheManager's observability hasher used to derive this same pair and
+        // publish Hmac::computeHex($cacheKey, $key) into logs and metric labels,
+        // which handed out tags under the key that authenticates stored entries.
+        // It now derives SubKeyId::CacheKeyObservability instead. Do not move
+        // this pair — every encrypted entry already written carries an AAD tag
+        // under it, and changing it fails their integrity check on read.
         $this->hmacKey = $masterKey->deriveSubKey(9, 'app_cobs');
         // The AAD MAC key rotates with the master key, so an entry written under
         // the previous key carries an AAD the current key cannot reproduce. Keep

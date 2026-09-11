@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Response;
 
+use ArrayIterator;
 use Generator;
 use Iterator;
 use NoDiscard;
@@ -46,6 +47,17 @@ final class StreamedResponse implements ResponseInterface
     private readonly Iterator $source;
 
     /**
+     * Chunks already pulled off {@see $source}, shared by every clone.
+     *
+     * {@see getBody()} used to consume the single-pass source and keep none of
+     * it, so one body-reading middleware anywhere in the stack left the emitter
+     * with a response whose `getSource()` THREW on the way out: headers already
+     * sent, body empty. {@see StreamedBodyBuffer} explains why the buffer has to
+     * be an object for the clones this class hands out.
+     */
+    private readonly StreamedBodyBuffer $materialized;
+
+    /**
      * @param Iterator|Generator $source Data source to stream
      * @param int $statusCode HTTP status code
      * @param array<string, string|list<string>> $headers Response headers
@@ -56,6 +68,7 @@ final class StreamedResponse implements ResponseInterface
         array $headers = [],
     ) {
         $this->source = $source;
+        $this->materialized = new StreamedBodyBuffer();
         $this->statusCode = $statusCode;
 
         $status = ResponseStatus::tryFrom($statusCode);
@@ -78,11 +91,19 @@ final class StreamedResponse implements ResponseInterface
      * Get the data source iterator.
      *
      * Each yielded value is sent as a chunk. Values must be string-castable.
+     *
+     * Once {@see getBody()} has materialized the response the original iterator
+     * is spent, and replaying it is what throws, so the buffered chunks become
+     * the source from then on: a middleware that read the body no longer empties
+     * the response for the emitter behind it. Until then the caller gets the
+     * iterator it passed in, untouched, and the response streams as before.
      */
     #[NoDiscard]
     public function getSource(): Iterator
     {
-        return $this->source;
+        $chunks = $this->materialized->chunks();
+
+        return $chunks === null ? $this->source : new ArrayIterator($chunks);
     }
 
     /**
@@ -196,20 +217,20 @@ final class StreamedResponse implements ResponseInterface
         return $clone;
     }
 
+    /**
+     * The whole body as a PSR-7 stream.
+     *
+     * Materializing is not free — it buffers the payload this class exists to
+     * avoid buffering — but it is not DESTRUCTIVE either: the source is read
+     * once, kept, and answered from the buffer on every later call, including
+     * {@see getSource()}'s. Callers that need the response to stay streamed read
+     * getSource() and never touch this method.
+     */
     #[Override]
     #[NoDiscard]
     public function getBody(): StreamInterface
     {
-        // For PSR-7 compatibility, materialize the stream content.
-        // Callers that need streaming should use getSource() instead.
-        $content = '';
-
-        /** @var mixed $chunk */
-        foreach ($this->source as $chunk) {
-            $content .= (is_string($chunk) ? $chunk : '');
-        }
-
-        return new StringStream($content);
+        return new StringStream(implode('', $this->chunks()));
     }
 
     #[Override]
@@ -246,5 +267,37 @@ final class StreamedResponse implements ResponseInterface
     public function getReasonPhrase(): string
     {
         return $this->reasonPhrase;
+    }
+
+    /**
+     * Read the source to exhaustion once and keep what it yielded.
+     *
+     * Non-string chunks contribute nothing, which is what the concatenating
+     * version of this loop already did; empty strings are dropped because the
+     * emitter refuses to frame a zero-length chunk anyway — a zero-length chunk
+     * is the terminator in HTTP/1.1 chunked encoding.
+     *
+     * @return list<string>
+     */
+    private function chunks(): array
+    {
+        $cached = $this->materialized->chunks();
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $chunks = [];
+
+        /** @var mixed $chunk */
+        foreach ($this->source as $chunk) {
+            if (is_string($chunk) && $chunk !== '') {
+                $chunks[] = $chunk;
+            }
+        }
+
+        $this->materialized->store($chunks);
+
+        return $chunks;
     }
 }

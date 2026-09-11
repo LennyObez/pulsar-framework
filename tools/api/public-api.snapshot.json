@@ -28563,6 +28563,13 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "forDispatchedRoute": {
+                    "params": [
+                        "Pulsar\\Routing\\MatchedRoute $route"
+                    ],
+                    "return": "Pulsar\\Http\\Middleware\\NoCacheMiddleware",
+                    "static": false
+                },
                 "process": {
                     "params": [
                         "Psr\\Http\\Message\\ServerRequestInterface $request",

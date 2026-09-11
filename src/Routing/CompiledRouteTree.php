@@ -26,6 +26,18 @@ use function trim;
 final class CompiledRouteTree
 {
     /**
+     * Whether any compiled route carries a host constraint.
+     *
+     * Mirrors {@see Router::$hasHostConstrainedRoutes}: when no route is
+     * host-constrained, the request `Host` header cannot change which route
+     * matches, so the O(1) static fast path stays correct with a `Host` present.
+     * Computed once at construction — the tree is built at `pulsar optimize`
+     * time or restored from the preloaded cache, and the scan is one pass over
+     * a list the restore has just walked anyway.
+     */
+    private readonly bool $hasHostConstrainedRoutes;
+
+    /**
      * @param array<string, array<string, CompiledRouteEntry>> $staticTable
      *        method → path → entry (O(1) lookup)
      * @param array<string, list<CompiledDynamicRoute>> $dynamicRoutes
@@ -37,7 +49,9 @@ final class CompiledRouteTree
         private readonly array $staticTable,
         private readonly array $dynamicRoutes,
         private readonly array $namedRoutes,
-    ) {}
+    ) {
+        $this->hasHostConstrainedRoutes = $this->detectHostConstrainedRoutes($dynamicRoutes);
+    }
 
     /**
      * Match a request to a compiled route.
@@ -53,35 +67,52 @@ final class CompiledRouteTree
         // declared against `api.example.com` (shared with the live Router).
         $host = $host === null ? null : HostNormalizer::stripPort($host);
 
-        // Fast path: O(1) static route lookup (no host constraint)
-        if ($host === null && isset($this->staticTable[$methodValue][$normalizedPath])) {
-            $entry = $this->staticTable[$methodValue][$normalizedPath];
+        $staticEntry = $this->staticTable[$methodValue][$normalizedPath] ?? null;
 
-            return new MatchedRoute($entry->toRoute(), []);
+        // Fast path: O(1) static route lookup. Safe when the request carries no
+        // host, OR when no compiled route is host-constrained.
+        if ($staticEntry !== null && ($host === null || !$this->hasHostConstrainedRoutes)) {
+            return new MatchedRoute($staticEntry->toRoute(), []);
         }
 
         // Dynamic route matching: iterate pre-compiled patterns for the method
         $candidates = $this->dynamicRoutes[$methodValue] ?? [];
 
-        foreach ($candidates as $dynamic) {
-            if ($dynamic->host !== null) {
-                // Host-constrained route: matches only when the request carries a
-                // host and that host matches the route's host pattern.
-                if ($host === null || !$this->matchesHost($dynamic->host, $dynamic->hostPattern, $host)) {
+        // Same three-tier precedence as {@see Router::match()} — the two
+        // matchers advertise equivalence, so the order has to be the same one:
+        //
+        //   1. a route constrained to a host matching this request's Host;
+        //   2. the host-less static (literal-path) route;
+        //   3. host-less dynamic routes, first-registered-wins (ADR-0034).
+        //
+        // Reaching here with a static entry means a Host header arrived and the
+        // table holds at least one host-constrained route. Scanning the whole
+        // candidate list first let a later-registered `/users/{id}` answer
+        // `/users/profile` for exactly those requests — the client's own header
+        // choosing the handler, and with it the route's access declaration.
+        if ($staticEntry !== null) {
+            foreach ($candidates as $dynamic) {
+                if ($dynamic->host === null) {
                     continue;
+                }
+
+                $matched = $this->matchDynamicRoute($dynamic, $normalizedPath, $host);
+
+                if ($matched !== null) {
+                    return $matched;
                 }
             }
 
-            if (preg_match($dynamic->pattern, $normalizedPath, $matches)) {
-                $params = $this->extractNamedParams($matches);
+            // Tier 2 beats every tier-3 candidate by definition: a literal path
+            // is the most specific match a placeholder route could contest.
+            return new MatchedRoute($staticEntry->toRoute(), []);
+        }
 
-                if ($host !== null && $dynamic->hostPattern !== null) {
-                    if (preg_match($dynamic->hostPattern, $host, $hostMatches)) {
-                        $params = [...$this->extractNamedParams($hostMatches), ...$params];
-                    }
-                }
+        foreach ($candidates as $dynamic) {
+            $matched = $this->matchDynamicRoute($dynamic, $normalizedPath, $host);
 
-                return new MatchedRoute($dynamic->entry->toRoute(), $params);
+            if ($matched !== null) {
+                return $matched;
             }
         }
 
@@ -131,6 +162,58 @@ final class CompiledRouteTree
         $methods = [...array_keys($this->staticTable), ...array_keys($this->dynamicRoutes)];
 
         return array_values(array_unique($methods));
+    }
+
+    /**
+     * Match one pre-compiled dynamic route against a path and host.
+     *
+     * Returns null when the route's host constraint excludes this request or
+     * the path pattern does not match.
+     */
+    private function matchDynamicRoute(
+        CompiledDynamicRoute $dynamic,
+        string $normalizedPath,
+        ?string $host,
+    ): ?MatchedRoute {
+        if ($dynamic->host !== null) {
+            // Host-constrained route: matches only when the request carries a
+            // host and that host matches the route's host pattern.
+            if ($host === null || !$this->matchesHost($dynamic->host, $dynamic->hostPattern, $host)) {
+                return null;
+            }
+        }
+
+        if (!preg_match($dynamic->pattern, $normalizedPath, $matches)) {
+            return null;
+        }
+
+        $params = $this->extractNamedParams($matches);
+
+        if ($host !== null && $dynamic->hostPattern !== null) {
+            if (preg_match($dynamic->hostPattern, $host, $hostMatches)) {
+                $params = [...$this->extractNamedParams($hostMatches), ...$params];
+            }
+        }
+
+        return new MatchedRoute($dynamic->entry->toRoute(), $params);
+    }
+
+    /**
+     * Whether any route in the compiled dynamic table carries a host constraint.
+     *
+     * @param array<string, list<CompiledDynamicRoute>> $dynamicRoutes
+     */
+    private function detectHostConstrainedRoutes(array $dynamicRoutes): bool
+    {
+        foreach ($dynamicRoutes as $routes) {
+            foreach ($routes as $dynamic) {
+                if ($dynamic->host !== null) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

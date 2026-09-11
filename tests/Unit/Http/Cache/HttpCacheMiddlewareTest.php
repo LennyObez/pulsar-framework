@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Cache;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +16,7 @@ use Pulsar\Http\Cache\HttpCacheMiddleware;
 use Pulsar\Http\Cache\InMemoryCacheStorage;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Response\StreamedResponse;
 
 #[CoversClass(HttpCacheMiddleware::class)]
 #[CoversClass(InMemoryCacheStorage::class)]
@@ -296,9 +298,245 @@ final class HttpCacheMiddlewareTest extends TestCase
         );
     }
 
+    #[Test]
+    public function doesNotServeOneCallersResponseToAnother(): void
+    {
+        // The defect this class was found with: the key is method + path +
+        // query, so an entry produced for a signed-in caller was handed to the
+        // next requester of that URL — cross-account disclosure inside a
+        // middleware an application enables expecting a speedup.
+        $handler = $this->createEchoingHandler();
+
+        $alice = $this->createGetRequest('/account')->withHeader('Cookie', 'PULSARSESSID=alice');
+        $first = $this->middleware->process($alice, $handler);
+        self::assertSame('account of [PULSARSESSID=alice]', (string) $first->getBody());
+
+        $anonymous = $this->createGetRequest('/account');
+        $second = $this->middleware->process($anonymous, $handler);
+
+        self::assertSame('account of []', (string) $second->getBody());
+        self::assertNotSame('HIT', $second->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function doesNotServeAnAuthorizationBearingResponseToAnother(): void
+    {
+        $handler = $this->createEchoingHandler();
+
+        $bearer = $this->createGetRequest('/api/me')->withHeader('Authorization', 'Bearer alice-token');
+        $first = $this->middleware->process($bearer, $handler);
+        self::assertSame('account of []', (string) $first->getBody());
+        self::assertSame('BYPASS', $first->getHeaderLine('X-Cache'));
+
+        $other = $this->createGetRequest('/api/me')->withHeader('Authorization', 'Bearer bob-token');
+        $second = $this->middleware->process($other, $handler);
+
+        self::assertNotSame('HIT', $second->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function doesNotServeAStoredResponseToACallerCarryingIdentity(): void
+    {
+        // The same defect from the other side: an anonymous page handed to a
+        // signed-in caller. The middleware cannot tell which of the two a hit
+        // would be, so a caller-bound request never reads the shared store.
+        $handler = $this->createHandler(new Response(statusCode: 200, body: 'anonymous page'));
+
+        $this->middleware->process($this->createGetRequest('/page'), $handler);
+
+        $signedIn = $this->createGetRequest('/page')->withHeader('Cookie', 'PULSARSESSID=bob');
+        $response = $this->middleware->process($signedIn, $handler);
+
+        self::assertSame('BYPASS', $response->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function neverMarksACallerBoundResponsePubliclyCacheable(): void
+    {
+        // A MISS used to answer `Cache-Control: public, max-age=60`, which tells
+        // every intermediary proxy on the path that it too may keep and reshare
+        // the response it just saw.
+        $handler = $this->createHandler(new Response(statusCode: 200, body: 'Statement'));
+
+        $request = $this->createGetRequest('/statement')->withHeader('Cookie', 'PULSARSESSID=alice');
+        $response = $this->middleware->process($request, $handler);
+
+        self::assertStringNotContainsString('public', $response->getHeaderLine('Cache-Control'));
+    }
+
+    #[Test]
+    public function doesNotStoreAResponseThatMintsACookie(): void
+    {
+        // Storing the response stores the Set-Cookie with it: the next requester
+        // of that URL is handed the first caller's session or CSRF token.
+        $handler = $this->createHandler(new Response(
+            statusCode: 200,
+            headers: ['Set-Cookie' => 'PULSARSESSID=alice; Path=/; HttpOnly'],
+            body: 'Welcome',
+        ));
+
+        $request = $this->createGetRequest('/landing');
+        $first = $this->middleware->process($request, $handler);
+        self::assertSame('BYPASS', $first->getHeaderLine('X-Cache'));
+
+        $second = $this->middleware->process($request, $handler);
+        self::assertNotSame('HIT', $second->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function doesNotStoreAResponseThatVariesOnSomethingTheKeyIgnores(): void
+    {
+        $handler = $this->createHandler(new Response(
+            statusCode: 200,
+            headers: ['Vary' => 'Cookie'],
+            body: 'Varies',
+        ));
+
+        $request = $this->createGetRequest('/varies');
+        $this->middleware->process($request, $handler);
+        $second = $this->middleware->process($request, $handler);
+
+        self::assertNotSame('HIT', $second->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function doesNotStoreAStreamedResponse(): void
+    {
+        // A HIT is replayed as a plain buffered response. Storing the streamed
+        // response's `Transfer-Encoding: chunked` with it would put a chunked
+        // framing header in front of raw bytes on every hit.
+        $handler = $this->createHandler(StreamedResponse::fromGenerator(
+            static function (): Generator {
+                yield 'row-1';
+                yield 'row-2';
+            },
+        ));
+
+        $request = $this->createGetRequest('/export');
+        $first = $this->middleware->process($request, $handler);
+
+        self::assertInstanceOf(StreamedResponse::class, $first);
+        self::assertSame('BYPASS', $first->getHeaderLine('X-Cache'));
+        self::assertSame('chunked', $first->getHeaderLine('Transfer-Encoding'));
+
+        // And the refusal did not consume the stream on the way past.
+        $streamed = '';
+
+        foreach ($first->getSource() as $chunk) {
+            self::assertIsString($chunk);
+            $streamed .= $chunk;
+        }
+
+        self::assertSame('row-1row-2', $streamed);
+    }
+
+    #[Test]
+    public function doesNotStoreAResponseTheOriginMarkedPrivate(): void
+    {
+        $handler = $this->createHandler(new Response(
+            statusCode: 200,
+            headers: ['Cache-Control' => 'private, max-age=300'],
+            body: 'Yours only',
+        ));
+
+        $request = $this->createGetRequest('/mine');
+        $this->middleware->process($request, $handler);
+        $second = $this->middleware->process($request, $handler);
+
+        self::assertNotSame('HIT', $second->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function privateRoutesAreKeptOutOfTheSharedStoreEntirely(): void
+    {
+        // `cache.private` asked for a per-user answer. This middleware has one
+        // shared store and no per-user one, so it declines rather than putting a
+        // "private" response where every caller can be handed it.
+        $handler = $this->createEchoingHandler();
+
+        $request = $this->createGetRequest('/dashboard')->withAttribute('cache.private', true);
+        $first = $this->middleware->process($request, $handler);
+
+        self::assertSame('BYPASS', $first->getHeaderLine('X-Cache'));
+        self::assertStringContainsString('private', $first->getHeaderLine('Cache-Control'));
+
+        $second = $this->middleware->process($this->createGetRequest('/dashboard'), $handler);
+        self::assertNotSame('HIT', $second->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function aPrivateRouteDoesNotOverwriteTheHandlersOwnDirective(): void
+    {
+        // `private, max-age=60` in place of the handler's `no-store` would tell
+        // the browser to keep what the origin just said must be kept nowhere.
+        $handler = $this->createHandler(new Response(
+            statusCode: 200,
+            headers: ['Cache-Control' => 'no-store'],
+            body: 'Secret',
+        ));
+
+        $request = $this->createGetRequest('/dashboard')->withAttribute('cache.private', true);
+        $response = $this->middleware->process($request, $handler);
+
+        self::assertSame('no-store', $response->getHeaderLine('Cache-Control'));
+        self::assertSame('BYPASS', $response->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function shareAcrossClientsLetsAnIdentityBearingRequestUseTheSharedCache(): void
+    {
+        // The explicit, per-route opt-in: the application asserts this route's
+        // answer does not depend on the caller.
+        $handler = $this->createHandler(new Response(statusCode: 200, body: 'Public page'));
+
+        $request = $this->createGetRequest('/pricing')
+            ->withHeader('Cookie', 'analytics=1')
+            ->withAttribute('cache.share_across_clients', true);
+
+        self::assertSame('MISS', $this->middleware->process($request, $handler)->getHeaderLine('X-Cache'));
+        self::assertSame('HIT', $this->middleware->process($request, $handler)->getHeaderLine('X-Cache'));
+    }
+
+    #[Test]
+    public function shareAcrossClientsCannotOverruleTheResponseItself(): void
+    {
+        // The assertion is made before the answer exists. Evidence produced by
+        // the handler still wins: a response minting a cookie is not shareable,
+        // whatever the route declared.
+        $handler = $this->createHandler(new Response(
+            statusCode: 200,
+            headers: ['Set-Cookie' => 'PULSARSESSID=alice; Path=/'],
+            body: 'Welcome',
+        ));
+
+        $request = $this->createGetRequest('/pricing')
+            ->withHeader('Cookie', 'analytics=1')
+            ->withAttribute('cache.share_across_clients', true);
+
+        self::assertSame('BYPASS', $this->middleware->process($request, $handler)->getHeaderLine('X-Cache'));
+        self::assertNotSame('HIT', $this->middleware->process($request, $handler)->getHeaderLine('X-Cache'));
+    }
+
     private function createGetRequest(string $path): ServerRequestInterface
     {
         return $this->createRequest('GET', $path);
+    }
+
+    /**
+     * A handler whose body depends on the caller — the shape every personalised
+     * page has, and the one a shared cache must never be allowed to store.
+     */
+    private function createEchoingHandler(): RequestHandlerInterface
+    {
+        return new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(
+                    statusCode: 200,
+                    body: 'account of [' . $request->getHeaderLine('Cookie') . ']',
+                );
+            }
+        };
     }
 
     private function createRequest(string $method, string $path): ServerRequestInterface
