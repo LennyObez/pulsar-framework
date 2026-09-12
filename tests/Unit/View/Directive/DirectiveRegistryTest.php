@@ -18,7 +18,6 @@ use Pulsar\View\Directive\ExtendsDirective;
 use Pulsar\View\Directive\GuestDirective;
 use Pulsar\View\Directive\I18nDirective;
 use Pulsar\View\Directive\IncludeDirective;
-use Pulsar\View\Directive\MethodDirective;
 use Pulsar\View\Directive\PhpDirective;
 use Pulsar\View\Directive\SectionDirective;
 use Pulsar\View\Directive\SimpleDirective;
@@ -48,7 +47,6 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(GuestDirective::class)]
 #[CoversClass(CanDirective::class)]
 #[CoversClass(CsrfDirective::class)]
-#[CoversClass(MethodDirective::class)]
 #[CoversClass(I18nDirective::class)]
 #[CoversClass(PhpDirective::class)]
 final class DirectiveRegistryTest extends TestCase
@@ -115,7 +113,7 @@ final class DirectiveRegistryTest extends TestCase
             'extends', 'section', 'endsection', 'yield', 'include',
             'component', 'endcomponent', 'slot', 'endslot',
             'auth', 'endauth', 'guest', 'endguest', 'can', 'endcan',
-            'csrf', 'method',
+            'csrf',
             'i18n',
             'pagination',
             'php', 'endphp',
@@ -406,17 +404,14 @@ final class DirectiveRegistryTest extends TestCase
     }
 
     #[Test]
-    public function methodDirectiveOutputsHiddenField(): void
+    public function noMethodDirectiveIsRegistered(): void
     {
-        $directive = new MethodDirective();
-
-        self::assertSame('method', $directive->name());
-
-        $output = $directive->compile("'PUT'");
-
-        self::assertStringContainsString('_method', $output);
-        self::assertStringContainsString('hidden', $output);
-        self::assertStringContainsString('htmlspecialchars', $output);
+        // @method compiled to a hidden `_method` field, and nothing in
+        // src/Http or src/Routing has ever read one — the verb comes off the
+        // request line (docs/security/asvs-l2-matrix.md, ASVS V14.5). The
+        // directive is gone rather than inert; see NoMethodSpoofingTest.
+        self::assertFalse($this->registry->has('method'));
+        self::assertNull($this->registry->get('method'));
     }
 
     // --- i18n Directive Tests ---

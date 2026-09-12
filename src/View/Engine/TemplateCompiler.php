@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\View\Engine;
 
 use NoDiscard;
+use PhpToken;
 use Pulsar\Api\Internal;
 use Pulsar\View\ViewConfig;
 use Pulsar\View\ViewException;
@@ -26,6 +27,7 @@ use function substr;
 use function trim;
 
 use const DIRECTORY_SEPARATOR;
+use const T_INLINE_HTML;
 
 /**
  * Compiles Pulse templates (`.pulse.php`) to cached PHP for trusted template execution.
@@ -79,7 +81,7 @@ final class TemplateCompiler
             return $cached;
         }
 
-        $compiledOutput = $this->compileSource($sourceContent);
+        $compiledOutput = $this->compileSource($sourceContent, $templateName);
 
         $this->sandboxCompiler?->validate($compiledOutput, $templateName);
 
@@ -90,21 +92,31 @@ final class TemplateCompiler
      * Compile a template source string to PHP output.
      *
      * @param string $source Raw template source
+     * @param string $templateName Name used in diagnostics
+     *
+     * @throws ViewException If the source routes a translation to the output unescaped
      */
     #[NoDiscard]
-    public function compileSource(string $source): string
+    public function compileSource(string $source, string $templateName = '<template source>'): string
     {
-        $output = $source;
-
         // Phase 1: Strip comment blocks {{-- comment --}} (before echo compilation)
-        $output = $this->compileComments($output);
+        $output = $this->compileComments($source);
 
-        // Phase 2: Rewrite directives used inside {{ }} / {!! !!} expression
-        // contexts to their function-call equivalents. Directives compile to
-        // PHP echo statements which cannot be nested inside another echo
-        // statement. Inside an expression, @t('key') must become t('key')
-        // so the host expression can consume it as an inline expression.
-        $output = $this->rewriteExpressionDirectives($output);
+        // Phase 2: Refuse the constructs that route a translated string to the
+        // output without escaping it. `@t('k')` escapes in markup and does not
+        // escape inside a PHP tag or inside another directive's argument list,
+        // where the `@` is PHP's error-suppression operator rather than the
+        // directive marker. A form whose escaping depends on its surroundings
+        // cannot be reviewed by reading it, so it is not part of the language.
+        // Built here rather than held as a property: the guard is stateless,
+        // compilation results are cached, so this runs once per template, and a
+        // property typed to a final class is a seam no consumer can reach.
+        $guard = new TranslationOutputGuard();
+        $violations = $guard->violations($source);
+
+        if ($violations !== []) {
+            throw ViewException::compilationFailed($templateName, $guard->describe($violations));
+        }
 
         // Phase 3: Compile directives (registered by the directive system)
         $output = $this->compileDirectives($output);
@@ -114,40 +126,6 @@ final class TemplateCompiler
 
         // Phase 5: Compile escaped output {{ $expr }}
         return $this->compileEscapedEchos($output);
-    }
-
-    /**
-     * Rewrite directives embedded inside {{ }} and {!! !!} expression
-     * contexts to function calls, so the host expression compiles cleanly.
-     *
-     * Only directives that have a matching global helper function
-     * (t, tRaw, trans, __) are rewritten. Other directives left alone
-     * will still produce a compile-time error, surfacing the misuse.
-     */
-    private function rewriteExpressionDirectives(string $source): string
-    {
-        $directivesWithFunctionEquivalent = ['t', 'tRaw', 'trans', '__'];
-        $pattern = '/\{(!!|\{)\s*(.*?)\s*(!!|\})\}/s';
-
-        return (string) preg_replace_callback(
-            $pattern,
-            static function (array $matches) use ($directivesWithFunctionEquivalent): string {
-                $open = $matches[1];
-                $body = $matches[2];
-                $close = $matches[3];
-
-                foreach ($directivesWithFunctionEquivalent as $name) {
-                    $body = preg_replace(
-                        '/@(' . preg_quote($name, '/') . ')\s*\(/',
-                        '$1(',
-                        $body,
-                    ) ?? $body;
-                }
-
-                return '{' . $open . ' ' . $body . ' ' . $close . '}';
-            },
-            $source,
-        );
     }
 
     /**
@@ -299,12 +277,19 @@ final class TemplateCompiler
     }
 
     /**
-     * Compile all registered directives.
+     * Compile all registered directives found in the template's markup.
      *
-     * Matches patterns like @directiveName, @directiveName(...), and block
-     * directives like @enddirectiveName. Uses balanced-parenthesis matching
-     * so that expressions with nested parens (e.g. `@foreach (($a ?? []) as $v)`)
-     * are captured correctly.
+     * Directive expansion is confined to the inline-HTML runs of the template.
+     * Every directive compiles to a `<?php ... ?>` block, so expanding one that
+     * sits inside an already-open PHP tag could only ever emit
+     * `<?= <?php echo ...; ?> ?>`, which does not parse. Inside a PHP tag `@` is
+     * not template syntax at all — it is PHP's error-suppression operator, and
+     * `<?= @t('key') ?>` is a suppressed call to the global `t()` helper that the
+     * compiler must leave alone.
+     *
+     * PHP's own lexer decides where those runs begin and end, so string literals,
+     * comments and heredocs containing `?>` are handled exactly as the runtime
+     * would handle them — no second, weaker tag scanner to keep in agreement.
      */
     private function compileDirectives(string $source): string
     {
@@ -312,6 +297,27 @@ final class TemplateCompiler
             return $source;
         }
 
+        $result = '';
+
+        foreach (PhpToken::tokenize($source) as $token) {
+            $result .= $token->is(T_INLINE_HTML)
+                ? $this->compileDirectivesInMarkup($token->text)
+                : $token->text;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Compile directives inside one inline-HTML run of a template.
+     *
+     * Matches patterns like @directiveName, @directiveName(...), and block
+     * directives like @enddirectiveName. Uses balanced-parenthesis matching
+     * so that expressions with nested parens (e.g. `@foreach (($a ?? []) as $v)`)
+     * are captured correctly.
+     */
+    private function compileDirectivesInMarkup(string $source): string
+    {
         $result = '';
         $offset = 0;
         $len = strlen($source);

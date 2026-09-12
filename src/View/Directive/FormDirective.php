@@ -17,6 +17,17 @@ use function trim;
  *
  * Usage: {@}form($dto)
  *        {@}form($dto, ['action' => '/submit', 'method' => 'POST'])
+ *
+ * `method` accepts only `GET` and `POST` — the two verbs an HTML form can put
+ * on the request line. Pulsar dispatches on the request line alone: no
+ * `_method` body field and no `X-HTTP-Method-Override` header is read anywhere
+ * in `src/Http` or `src/Routing`, which is the ASVS V14.5 property recorded in
+ * `docs/security/asvs-l2-matrix.md`. This directive used to answer
+ * `['method' => 'DELETE']` with `<form method="POST">` plus a hidden
+ * `_method=DELETE` field, so the form POSTed and the author was told otherwise.
+ * Anything but GET or POST is now refused at render time, because turning the
+ * field into a real verb override is a request-smuggling and CSRF decision that
+ * needs its own ADR rather than a directive quietly implying it already exists.
  */
 #[Internal(reason: 'Directive implementation detail')]
 final readonly class FormDirective implements DirectiveInterface
@@ -38,11 +49,10 @@ final readonly class FormDirective implements DirectiveInterface
                 $__form_opts = $__form_args[1] ?? [];
                 $__form_action = $__form_opts['action'] ?? '';
                 $__form_method = strtoupper($__form_opts['method'] ?? 'POST');
-                $__form_html_method = in_array($__form_method, ['GET', 'POST'], true) ? $__form_method : 'POST';
-                echo '<form action="' . htmlspecialchars($__form_action, ENT_QUOTES, 'UTF-8') . '" method="' . $__form_html_method . '">';
                 if ($__form_method !== 'GET' && $__form_method !== 'POST') {
-                    echo '<input type="hidden" name="_method" value="' . htmlspecialchars($__form_method, ENT_QUOTES, 'UTF-8') . '">';
+                    throw \Pulsar\View\ViewException::invalidDirective('form', 'method "' . $__form_method . '" is not one an HTML form can send. Pulsar reads the HTTP verb from the request line only - no _method body field and no X-HTTP-Method-Override header is honoured - so this form would have POSTed. Point it at a route registered for POST, or send the real verb with fetch().');
                 }
+                echo '<form action="' . htmlspecialchars($__form_action, ENT_QUOTES, 'UTF-8') . '" method="' . $__form_method . '">';
                 if ($__form_method !== 'GET' && isset($__csrf)) {
                     echo '<input type="hidden" name="_token" value="' . htmlspecialchars($__csrf, ENT_QUOTES, 'UTF-8') . '">';
                 }

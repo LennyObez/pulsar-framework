@@ -22,7 +22,7 @@ final readonly class EndFormDirective implements DirectiveInterface
         return <<<'PHP'
             <?php
             echo '</form>';
-            unset($__form_args, $__form_dto, $__form_opts, $__form_action, $__form_method, $__form_html_method, $__form_ref, $__form_prop, $__form_name, $__form_value, $__form_type_obj, $__form_type, $__form_input_type);
+            unset($__form_args, $__form_dto, $__form_opts, $__form_action, $__form_method, $__form_ref, $__form_prop, $__form_name, $__form_value, $__form_type_obj, $__form_type, $__form_input_type);
             ?>
             PHP;
     }

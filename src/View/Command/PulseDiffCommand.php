@@ -62,7 +62,7 @@ final class PulseDiffCommand extends Command
                 return ExitCode::Error->value;
             }
 
-            $compiledOutput = $this->compiler->compileSource($sourceContent);
+            $compiledOutput = $this->compiler->compileSource($sourceContent, $templateName);
 
             $output->info(sprintf('Source: %s', $sourcePath));
             $output->info('--- Source ---');

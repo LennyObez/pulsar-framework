@@ -126,8 +126,17 @@ final class DirectiveRegistry
         $this->register(new SimpleDirective('endcan', '<?php endif; ?>'));
 
         // Forms
+        //
+        // There is deliberately no @method directive. It compiled to a hidden
+        // `_method` field, and nothing in src/Http or src/Routing has ever read
+        // one: the verb comes off the request line and an unknown one is
+        // answered 501 (docs/security/asvs-l2-matrix.md, ASVS V14.5). So the
+        // field never changed a request's method — a form carrying it POSTed,
+        // and a route registered for DELETE alone answered 405. Reading it
+        // server-side is a request-smuggling and CSRF decision that needs its
+        // own ADR; until there is one, the framework does not offer the field.
+        // Pinned by tests/Unit/View/Directive/NoMethodSpoofingTest.php.
         $this->register(new CsrfDirective());
-        $this->register(new MethodDirective());
         $this->register(new ShieldDirective());
         $this->register(new TimeTrapDirective());
 

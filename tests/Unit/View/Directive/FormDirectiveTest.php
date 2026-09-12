@@ -45,11 +45,16 @@ final class FormDirectiveTest extends TestCase
     }
 
     #[Test]
-    public function compileHandlesMethodSpoofingForPutPatchDelete(): void
+    public function compileEmitsNoMethodSpoofingFieldForPutPatchDelete(): void
     {
+        // The generated code now refuses those verbs at render time instead of
+        // rendering `<form method="POST">` plus a hidden `_method` field that
+        // nothing on the server reads. See NoMethodSpoofingTest for the
+        // refusal itself.
         $result = $this->directive->compile("\$dto, ['method' => 'PUT']");
 
-        self::assertStringContainsString('_method', $result);
+        self::assertStringNotContainsString('name="_method"', $result);
+        self::assertStringContainsString('ViewException::invalidDirective', $result);
     }
 
     #[Test]

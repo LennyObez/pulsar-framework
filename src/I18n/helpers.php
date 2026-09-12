@@ -27,9 +27,16 @@ if (!function_exists('t')) {
     /**
      * Translate a message key (short alias for __()).
      *
-     * This function exists so that @t() in Pulse templates works correctly
-     * even when nested inside other directive arguments (e.g., @section('title', @t('key'))),
-     * where the compiler cannot recursively process inner directives.
+     * Returns the catalog string as-is. It does NOT escape: in a Pulse template
+     * the escaping belongs to the output site, which is the only place that
+     * knows the context. The one form that may call this helper from a template
+     * is a `{{ }}` expression, which wraps it in `ContextEscaper::html()`.
+     *
+     * Calling it from a PHP tag inside a template, or writing `@t(...)` anywhere
+     * the `@` is PHP's error-suppression operator rather than the directive
+     * marker (inside `{{ }}`, inside `{!! !!}`, or inside another directive's
+     * argument list), routes the catalog string to the response unescaped.
+     * TemplateCompiler refuses all of those; see docs/templating.md.
      *
      * @param string $key Translation key
      * @param array<string, mixed> $parameters ICU parameters
