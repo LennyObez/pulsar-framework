@@ -64,10 +64,70 @@ use const SOL_TCP;
  *
  * Boots the kernel once and handles many requests with strict
  * per-request isolation via RequestSandbox.
+ *
+ * ## Why more than one connection fiber is refused
+ *
+ * {@see RuntimeConfig::$fiberConcurrency} accepts only 0 (synchronous accept
+ * loop) and 1 (one connection fiber at a time). Anything higher is refused by
+ * the constructor with {@see RuntimeException::unsafeFiberConcurrency()}.
+ *
+ * `RequestSandbox` isolates one request from the NEXT one on the same worker.
+ * It does not isolate one request from a CONCURRENT one, and with more than one
+ * fiber the two requests interleave: {@see handleConnection()} runs inside a
+ * fiber, and `Pulsar\Runtime\Fiber\CooperativeSleep` suspends that fiber from
+ * deep inside `kernel->handle()` whenever a cache lock or a stampede poll is
+ * contended. The accept loop then admits the next connection, which runs its
+ * own `beforeRequest()`/`afterRequest()` to completion against state the
+ * suspended request is still holding.
+ *
+ * The state that crosses, established by reading every service the sandbox
+ * touches:
+ *
+ *  - `Pulsar\Container\Scope\ScopeManager` keeps ONE `$requestInstances` pool
+ *    and one `$requestScopeActive` flag for the process. The second request's
+ *    `beginRequestScope()` empties the first request's pool; its
+ *    `endRequestScope()` closes the scope the first request is still inside.
+ *    Its `$currentTenantId` is process-wide too, so a tenant-scoped service
+ *    resolved after the switch belongs to the other tenant.
+ *  - `Pulsar\Security\Session\SessionManager` is a plain singleton: `$started`,
+ *    `$sessionId`, `$data` and `$metadata` have no fiber keying at all. The
+ *    second request finds `$started === true`, skips loading its own session,
+ *    and reads the first caller's data — the account takeover that class's own
+ *    docblock warns about.
+ *  - `Pulsar\Security\SecurityContext` is evicted from the container mid-flight
+ *    by the other request's `afterRequest()`.
+ *  - `Pulsar\FeatureFlag\FlagEvaluationLog` (an audit artifact) and
+ *    `Pulsar\Cache\Application\CacheManager`'s tag memo are cleared under the
+ *    suspended request, and `LeakDetector`'s baseline is re-taken from it.
+ *  - Superglobal and error-state hygiene (`Pulsar\Runtime\Hygiene`) is
+ *    process-global by definition and cannot be fiber-keyed at all.
+ *
+ * The holders that ARE fiber-keyed — `RequestContextHolder`, `TenantContext`,
+ * `AuthenticationState`, `RouteContext`, `CsrfBindingContext`, `ViewComposers`,
+ * `Gate`, `StickinessContext`, `SystemContext` — reset only the calling fiber's
+ * slot and are unaffected. They are not enough on their own.
+ *
+ * Making the rest safe means fiber-keying every `ResettableInterface` singleton
+ * in the framework AND in application code, which is not something this release
+ * can promise. Refusing is therefore the behaviour: an operator who reads
+ * `concurrency: 4` in a config has no way to discover the leak on their own.
+ *
+ * Nothing is lost by refusing. `handleConnection()` blocks in `socket_read()`
+ * and `socket_write()`, so a connection fiber already runs to completion before
+ * the accept loop admits the next one; the extra fibers bought no I/O
+ * concurrency, only the interleave. Scale with worker processes.
  */
 #[Internal]
 final class PersistentRuntime implements ReloadableRuntimeInterface
 {
+    /**
+     * Highest {@see RuntimeConfig::$fiberConcurrency} the runtime will accept.
+     *
+     * One connection fiber never interleaves with another, because
+     * `FiberScheduler::hasCapacity()` refuses to spawn a second one.
+     */
+    private const int MAX_SAFE_FIBER_CONCURRENCY = 1;
+
     private RuntimeStatus $status = RuntimeStatus::Stopped;
     private int $requestCount = 0;
     private int $startedAt = 0;
@@ -87,6 +147,13 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
     ) {
         if (!extension_loaded('sockets')) {
             throw RuntimeException::extensionMissing('sockets');
+        }
+
+        // Refused here rather than at start(): a runtime object that cannot be
+        // run safely must not exist at all, and the factory has no other place
+        // to discover that the configured value is unusable.
+        if ($this->config->fiberConcurrency > self::MAX_SAFE_FIBER_CONCURRENCY) {
+            throw RuntimeException::unsafeFiberConcurrency($this->config->fiberConcurrency);
         }
 
         $this->parser = new HttpRequestParser();

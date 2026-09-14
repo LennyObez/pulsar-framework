@@ -43567,6 +43567,13 @@
                     "return": "Pulsar\\Runtime\\Exception\\RuntimeException",
                     "static": true
                 },
+                "unsafeFiberConcurrency": {
+                    "params": [
+                        "int $requested"
+                    ],
+                    "return": "Pulsar\\Runtime\\Exception\\RuntimeException",
+                    "static": true
+                },
                 "unsupportedType": {
                     "params": [
                         "string $message"
@@ -45308,6 +45315,14 @@
                     "return": "Pulsar\\Scheduler\\Exception\\SchedulerException",
                     "static": true
                 },
+                "invalidOverlapExpiry": {
+                    "params": [
+                        "string $name",
+                        "int $minutes"
+                    ],
+                    "return": "Pulsar\\Scheduler\\Exception\\SchedulerException",
+                    "static": true
+                },
                 "jobNotFound": {
                     "params": [
                         "string $name"
@@ -45318,6 +45333,13 @@
                 "jobNotRunnable": {
                     "params": [
                         "string $jobClass"
+                    ],
+                    "return": "Pulsar\\Scheduler\\Exception\\SchedulerException",
+                    "static": true
+                },
+                "overlapPreventionRequiresLock": {
+                    "params": [
+                        "string $name"
                     ],
                     "return": "Pulsar\\Scheduler\\Exception\\SchedulerException",
                     "static": true
@@ -45760,6 +45782,7 @@
                 },
                 "withoutOverlapping": {
                     "params": [
+                        "Pulsar\\Cache\\Application\\Lock\\LockInterface $lock",
                         "int $expiresAfterMinutes"
                     ],
                     "return": "Pulsar\\Scheduler\\ScheduleBuilder",
@@ -45783,7 +45806,8 @@
                         "bool $runInMaintenanceMode",
                         "?string $outputPath",
                         "bool $appendOutput",
-                        "?string $emailOutputTo"
+                        "?string $emailOutputTo",
+                        "?Pulsar\\Cache\\Application\\Lock\\LockInterface $lock"
                     ],
                     "return": null,
                     "static": false
@@ -45815,15 +45839,15 @@
                     "return": "Pulsar\\Scheduler\\Schedule",
                     "static": false
                 },
+                "lockResource": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
                 "preventsOverlap": {
                     "params": [],
                     "return": "bool",
                     "static": false
-                },
-                "resetLocks": {
-                    "params": [],
-                    "return": "void",
-                    "static": true
                 },
                 "runsInMaintenanceMode": {
                     "params": [],

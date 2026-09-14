@@ -10,10 +10,22 @@ declare(strict_types=1);
  * extension is min(requested_tier, allowed_tier).
  *
  * Trust tiers (highest to lowest):
- *   - core:       First-party framework extensions — full access
- *   - verified:   Audited third-party — all except CryptoKeyAccess, ProcessExec
+ *   - core:       First-party framework extensions — every capability
+ *   - verified:   Audited third-party — every capability except `ContainerWrite`,
+ *                 `CryptoKeyAccess` and `ProcessExec`
  *   - community:  Unaudited third-party — limited capabilities (default for unknown)
  *   - untrusted:  Experimental/sandboxed — read-only container access
+ *
+ * `ContainerWrite` is the exclusion that matters most and the one this docblock used to
+ * omit: without it a verified extension cannot OVERRIDE an existing binding, so it cannot
+ * substitute its own Session, Auth or CsrfGuard for the framework's. An operator reading
+ * the older text would have concluded that raising an extension to verified was the same
+ * decision as granting it core minus two key operations. It is not.
+ *
+ * The authoritative statement of what each tier is granted is the capability matrix in
+ * docs/adr/0023-extension-trust-tiers.md; CapabilityPolicy::defaults() is the code that
+ * grants it, and TrustTierDocumentationTest fails when either this list, that matrix or
+ * the summary in docs/extensions.md stops agreeing with it.
  *
  * To elevate a community extension to verified:
  *   'vendor/extension' => ['tier' => 'verified'],
@@ -160,7 +172,15 @@ return [
         ],
         'pulsar/psr7-bridge' => ['tier' => 'core'],
         'pulsar/releases' => ['tier' => 'verified'],
-        'pulsar/social-sso' => ['tier' => 'core'],
+        // 'pulsar/social-sso' used to sit here at core tier, granting the raw
+        // container and the raw router to an extension that does not exist:
+        // extensions/auth absorbed it, and its manifest says so
+        // ("replaces": ["pulsar/social-sso", "pulsar/oauth2", "pulsar/webauthn"]).
+        // The other two replaced names carry no grant; this one was left behind.
+        // ExtensionSandboxDriftTest could not see it, because it asserted that
+        // every manifest has an entry and never that every entry has a manifest,
+        // so a row naming nothing looked exactly like the thirty-four around it.
+        // It asserts both directions now. See ADR-0070.
         'pulsar/studio' => ['tier' => 'core'],
         'pulsar/subscriptions' => ['tier' => 'verified'],
         'pulsar/tickets' => ['tier' => 'verified'],

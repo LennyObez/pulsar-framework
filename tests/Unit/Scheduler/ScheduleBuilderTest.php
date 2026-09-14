@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Scheduler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Cache\Application\Lock\ArrayLock;
 use Pulsar\Scheduler\ScheduleBuilder;
 use Pulsar\Scheduler\ScheduledJob;
 
@@ -79,7 +80,7 @@ final class ScheduleBuilderTest extends TestCase
     {
         $job = ScheduleBuilder::job('test', static fn() => null)
             ->daily()
-            ->withoutOverlapping(60)
+            ->withoutOverlapping(new ArrayLock(), 60)
             ->build();
 
         self::assertTrue($job->preventsOverlap());
@@ -114,7 +115,7 @@ final class ScheduleBuilderTest extends TestCase
             ->daily()
             ->timezone('UTC')
             ->description('desc')
-            ->withoutOverlapping()
+            ->withoutOverlapping(new ArrayLock())
             ->evenInMaintenanceMode()
             ->appendOutputTo('/tmp/out.log')
             ->emailOutputTo('admin@test.com');

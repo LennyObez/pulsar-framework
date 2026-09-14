@@ -42,8 +42,16 @@ final class ProductionRenderer implements ExceptionRendererInterface
      * that will never see it. The page is self-contained: one inline `<style>`
      * block, no script and no external reference, which is why
      * `style-src 'unsafe-inline'` is the whole of what it needs.
+     *
+     * Public because the kernel needs the same set for an error response it did
+     * NOT render here — one an application exception handler produced for a
+     * failure that never travelled the pipeline. That response would otherwise
+     * ship bare. Reading the list from its one definition is the point: a second
+     * copy in the kernel is a copy that drifts.
+     *
+     * @var array<string, string>
      */
-    private const array LAST_RESORT_HEADERS = [
+    public const array LAST_RESORT_HEADERS = [
         'Content-Type' => 'text/html; charset=utf-8',
         'Cache-Control' => 'no-store',
         'X-Content-Type-Options' => 'nosniff',

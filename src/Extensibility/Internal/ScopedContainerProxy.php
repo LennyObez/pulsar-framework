@@ -181,7 +181,7 @@ final readonly class ScopedContainerProxy implements ContainerInterface
         private string $extensionName = '',
         private array $additionalCapabilities = [],
         private ScopeRegistrations $registrations = new ScopeRegistrations(),
-        private string $extensionPath = '',
+        string $extensionPath = '',
         private ExtensionSurfaces $surfaces = new ExtensionSurfaces(),
     ) {
         $this->ownConfigSections = self::sectionsShippedIn($extensionPath);
@@ -685,9 +685,14 @@ final readonly class ScopedContainerProxy implements ContainerInterface
      * resolution that happens to return one — produce the same object with the
      * same scope. They did not, before: {@see self::contain()} built one and the
      * bootstrap built another, and only one of them knew about this scope.
+     *
+     * Declared as the contract, not as the proxy it builds. Both callers — the
+     * exchange in {@see self::contain()} and {@see \Pulsar\Extensibility\ExtensionBootstrap}
+     * — hand the result straight on as a router, so the concrete return type only
+     * pinned them to a `final` class nothing outside this namespace can wrap.
      */
     #[NoDiscard]
-    public function scopedRouter(RouterInterface $router): ScopedRouterProxy
+    public function scopedRouter(RouterInterface $router): RouterInterface
     {
         return new ScopedRouterProxy($router, $this->tier, $this->extensionName, $this->policy, $this);
     }

@@ -78,6 +78,49 @@ final class SchedulerException extends RuntimeException
     }
 
     /**
+     * Overlap prevention was requested without a lock to enforce it with.
+     *
+     * A job that says `withoutOverlapping()` promises its operator that two
+     * runs cannot overlap. Nothing in a single PHP process can keep that
+     * promise: scheduler ticks arrive as separate `cron` invocations, so an
+     * in-process flag is gone before the next tick can read it. Rather than
+     * accept the request and silently guarantee nothing, the job refuses to be
+     * built without a {@see \Pulsar\Cache\Application\Lock\LockInterface} that
+     * outlives the process.
+     */
+    #[NoDiscard]
+    public static function overlapPreventionRequiresLock(string $name): self
+    {
+        return new self(sprintf(
+            'Job "%s" requests overlap prevention without a lock. Overlap prevention is enforced by a '
+            . 'Pulsar\Cache\Application\Lock\LockInterface shared by every process that runs the '
+            . 'scheduler — pass one to ScheduleBuilder::withoutOverlapping() (FilesystemLock on a shared '
+            . 'volume, RedisLock or DatabaseLock across hosts). Without it the job cannot detect a run '
+            . 'started by another tick or another host, and would report protection it does not have.',
+            $name,
+        ));
+    }
+
+    /**
+     * The overlap lock was given a lifetime that expires before it is taken.
+     *
+     * A non-positive expiry produces a lock that is already stale the instant
+     * it is written, so every competing run finds it free — a control that
+     * cannot be observed holding is indistinguishable from no control at all.
+     */
+    #[NoDiscard]
+    public static function invalidOverlapExpiry(string $name, int $minutes): self
+    {
+        return new self(sprintf(
+            'Job "%s" requests overlap prevention expiring after %d minute(s). The expiry is the lock\'s '
+            . 'lifetime and must be at least 1 minute, and longer than the job\'s worst-case run time: a '
+            . 'lock that expires while the job is still running lets the next tick start a second copy.',
+            $name,
+            $minutes,
+        ));
+    }
+
+    /**
      * Create exception for a scheduled class that is neither a job nor invokable.
      */
     #[NoDiscard]

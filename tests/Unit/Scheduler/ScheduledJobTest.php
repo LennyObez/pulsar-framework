@@ -30,15 +30,8 @@ final class ScheduledJobTest extends TestCase
     /** @var list<string> Temp files created during test — cleaned in tearDown */
     private array $tempFiles = [];
 
-    protected function setUp(): void
-    {
-        ScheduledJob::resetLocks();
-    }
-
     protected function tearDown(): void
     {
-        ScheduledJob::resetLocks();
-
         foreach ($this->tempFiles as $path) {
             if (file_exists($path)) {
                 // Path is always from tempnam() — safe to remove
@@ -95,45 +88,6 @@ final class ScheduledJobTest extends TestCase
 
         self::assertSame(JobStatus::Failure, $result->status);
         self::assertSame('boom', $result->exception?->getMessage());
-    }
-
-    #[Test]
-    public function overlapPreventionSkipsWhenAlreadyRunning(): void
-    {
-        $executionCount = 0;
-        $callback = static function () use (&$executionCount): string {
-            $executionCount++;
-            return 'done';
-        };
-
-        // Create two jobs with the same name, overlap prevention enabled
-        $job1 = new ScheduledJob(
-            name: 'overlap-test',
-            schedule: Schedule::daily(),
-            callback: $callback,
-            preventOverlap: true,
-        );
-
-        // Simulate job1 running by acquiring the lock manually
-        $context = new JobContext(
-            scheduledAt: new DateTimeImmutable(),
-            startedAt: new DateTimeImmutable(),
-        );
-
-        // Job 1 executes successfully
-        $result1 = $job1->execute($context);
-        self::assertSame(JobStatus::Success, $result1->status);
-
-        // After job1 completes, lock is released — job2 should also succeed
-        $job2 = new ScheduledJob(
-            name: 'overlap-test',
-            schedule: Schedule::daily(),
-            callback: $callback,
-            preventOverlap: true,
-        );
-        $result2 = $job2->execute($context);
-        self::assertSame(JobStatus::Success, $result2->status);
-        self::assertSame(2, $executionCount);
     }
 
     #[Test]
@@ -252,20 +206,15 @@ final class ScheduledJobTest extends TestCase
     }
 
     #[Test]
-    public function lockReleasedAfterException(): void
+    public function aJobWithoutOverlapPreventionNeedsNoLock(): void
     {
-        $callCount = 0;
+        // The overlap lock is required only when overlap prevention is asked
+        // for. Overlap behaviour itself is covered by
+        // {@see ScheduledJobOverlapLockTest}, which observes the lock held.
         $job = new ScheduledJob(
-            name: 'exception-lock-test',
+            name: 'unguarded',
             schedule: Schedule::daily(),
-            callback: static function () use (&$callCount): string {
-                $callCount++;
-                if ($callCount === 1) {
-                    throw new RuntimeException('first run fails');
-                }
-                return 'second run succeeds';
-            },
-            preventOverlap: true,
+            callback: static fn(): string => 'ran',
         );
 
         $context = new JobContext(
@@ -273,11 +222,7 @@ final class ScheduledJobTest extends TestCase
             startedAt: new DateTimeImmutable(),
         );
 
-        $result1 = $job->execute($context);
-        self::assertSame(JobStatus::Failure, $result1->status);
-
-        // Lock should be released despite failure — second run should proceed
-        $result2 = $job->execute($context);
-        self::assertSame(JobStatus::Success, $result2->status);
+        self::assertFalse($job->preventsOverlap());
+        self::assertSame(JobStatus::Success, $job->execute($context)->status);
     }
 }

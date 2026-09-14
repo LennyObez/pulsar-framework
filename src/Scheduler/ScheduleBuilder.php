@@ -7,6 +7,7 @@ namespace Pulsar\Scheduler;
 use Closure;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Cache\Application\Lock\LockInterface;
 
 use function sprintf;
 
@@ -16,7 +17,7 @@ use function sprintf;
  * Usage:
  *   $builder = ScheduleBuilder::job('cleanup', fn($ctx) => ...)
  *       ->dailyAt('03:00')
- *       ->withoutOverlapping()
+ *       ->withoutOverlapping($lock)
  *       ->appendOutputTo('/var/log/cleanup.log')
  *       ->evenInMaintenanceMode();
  *
@@ -35,6 +36,7 @@ final class ScheduleBuilder
     private ?string $outputPath = null;
     private bool $appendOutput = false;
     private ?string $emailOutputTo = null;
+    private ?LockInterface $lock = null;
 
     /**
      * @param Closure(JobContext): ?string $callback
@@ -199,12 +201,26 @@ final class ScheduleBuilder
     /**
      * Prevent overlapping executions.
      *
-     * @param int $expiresAfterMinutes Lock expiry in minutes (safety valve)
+     * The lock is not optional and has no default. Each scheduler tick is a
+     * separate process — usually a separate `cron` invocation, often on a
+     * separate host — so the only thing that can observe a run already in
+     * flight is a lock those processes share. Naming it is the caller's job
+     * because only the caller knows what they share: a {@see
+     * \Pulsar\Cache\Application\Lock\FilesystemLock} on a volume mounted by
+     * every scheduler host, or a {@see
+     * \Pulsar\Cache\Application\Lock\RedisLock} / {@see
+     * \Pulsar\Cache\Application\Lock\DatabaseLock} when they share nothing else.
+     * A per-process lock silently protects nothing.
+     *
+     * @param LockInterface $lock Shared by every process that runs this scheduler
+     * @param int $expiresAfterMinutes Lock lifetime, the safety valve for a run that
+     *        dies without releasing. Must exceed the job's worst-case run time.
      */
-    public function withoutOverlapping(int $expiresAfterMinutes = 1440): self
+    public function withoutOverlapping(LockInterface $lock, int $expiresAfterMinutes = 1440): self
     {
         $this->preventOverlap = true;
         $this->overlapExpiresAfter = $expiresAfterMinutes;
+        $this->lock = $lock;
         return $this;
     }
 
@@ -248,6 +264,9 @@ final class ScheduleBuilder
 
     /**
      * Build the configured ScheduledJob instance.
+     *
+     * @throws \Pulsar\Scheduler\Exception\SchedulerException If overlap prevention was
+     *         requested with a lock lifetime that expires before it can be taken
      */
     #[NoDiscard]
     public function build(): ScheduledJob
@@ -263,6 +282,7 @@ final class ScheduleBuilder
             outputPath: $this->outputPath,
             appendOutput: $this->appendOutput,
             emailOutputTo: $this->emailOutputTo,
+            lock: $this->lock,
         );
     }
 }
