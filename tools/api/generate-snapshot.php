@@ -5,8 +5,14 @@ declare(strict_types=1);
 /**
  * Public API Snapshot Generator
  *
- * Scans src/ for classes annotated with #[Api] or #[Internal] and produces
- * a deterministic JSON snapshot at tools/api/public-api.snapshot.json.
+ * Scans every source tree the composer package ships — src/ and extensions/ —
+ * for types annotated with #[Api] or #[Internal] and produces a deterministic
+ * JSON snapshot at tools/api/public-api.snapshot.json.
+ *
+ * extensions/ was outside the scan, which left 1,306 #[Api]-marked types
+ * shipping in the same package with no snapshot entry and therefore no BC gate.
+ * The line between watched and unwatched is not which directory a type sits in;
+ * it is whether the package ships it and marks it stable.
  *
  * The scan itself lives in {@see \Pulsar\Tooling\Api\ApiSnapshotBuilder} so this
  * script and the test that re-verifies the committed file cannot drift apart.
@@ -28,7 +34,10 @@ ExtensionAutoloader::registerForPaths([__DIR__ . '/../../extensions']);
 
 $outputPath = __DIR__ . '/public-api.snapshot.json';
 
-$snapshot = new ApiSnapshotBuilder(__DIR__ . '/../../src')->build();
+$snapshot = new ApiSnapshotBuilder(
+    __DIR__ . '/../../src',
+    __DIR__ . '/../../extensions',
+)->build();
 $counts = ApiSnapshotBuilder::counts($snapshot);
 
 $json = json_encode($snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";

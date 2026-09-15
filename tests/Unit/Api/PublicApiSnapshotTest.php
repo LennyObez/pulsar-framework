@@ -29,7 +29,10 @@ final class PublicApiSnapshotTest extends TestCase
     public function snapshotMatchesCurrentCodebase(): void
     {
         $committed = $this->loadCommittedSnapshot();
-        $current = new ApiSnapshotBuilder(dirname(__DIR__, 3) . '/src')->build();
+        $current = new ApiSnapshotBuilder(
+            dirname(__DIR__, 3) . '/src',
+            dirname(__DIR__, 3) . '/extensions',
+        )->build();
 
         self::assertSame(
             $committed,
@@ -46,7 +49,7 @@ final class PublicApiSnapshotTest extends TestCase
 
         foreach (array_keys($committed['api_classes']) as $class) {
             self::assertTrue(
-                class_exists($class) || interface_exists($class) || enum_exists($class),
+                ApiSnapshotBuilder::typeExists($class),
                 "Snapshot API class {$class} does not exist",
             );
 
@@ -65,7 +68,7 @@ final class PublicApiSnapshotTest extends TestCase
 
         foreach ($committed['internal_classes'] as $class) {
             self::assertTrue(
-                class_exists($class) || interface_exists($class) || enum_exists($class),
+                ApiSnapshotBuilder::typeExists($class),
                 "Snapshot internal class {$class} does not exist",
             );
 
@@ -128,7 +131,7 @@ final class PublicApiSnapshotTest extends TestCase
 
                 // Also guards the snapshot against naming a declaring type that
                 // no longer exists, and narrows the JSON string to a class-string.
-                if (!class_exists($from) && !interface_exists($from)) {
+                if (!ApiSnapshotBuilder::typeExists($from)) {
                     self::fail("Snapshot names {$from} as a declaring type, but it does not exist");
                 }
 
@@ -142,7 +145,63 @@ final class PublicApiSnapshotTest extends TestCase
     }
 
     /**
-     * @return array{api_classes: array<string, array{since: string, methods: list<string>, signatures: array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>, constants: list<string>}>, internal_classes: list<string>}
+     * `#[Api]`-marked traits must be in the snapshot.
+     *
+     * They could not be: the builder's declaration pattern matched
+     * class/interface/enum and nothing else, so a trait was invisible to the
+     * gate however it was annotated. A trait's public methods become public
+     * methods of every consuming class, so renaming one breaks callers exactly
+     * as a removed interface method does.
+     */
+    #[Test]
+    public function apiMarkedTraitsAreInTheSnapshot(): void
+    {
+        $committed = $this->loadCommittedSnapshot();
+        $found = [];
+
+        foreach (array_keys($committed['api_classes']) as $class) {
+            if (trait_exists($class)) {
+                $found[] = $class;
+            }
+        }
+
+        self::assertNotSame([], $found, 'No trait reached the snapshot; the discovery pattern has dropped them again');
+
+        foreach ($found as $trait) {
+            self::assertNotSame(
+                [],
+                $committed['api_classes'][$trait]['signatures'],
+                "Trait {$trait} is in the snapshot with no recorded surface",
+            );
+        }
+    }
+
+    /**
+     * Extension types ship in the same composer package and carry the same
+     * attribute, so they carry the same promise and belong under the same gate.
+     * They were outside it, which made 1,306 stable markers unguarded.
+     */
+    #[Test]
+    public function extensionApiTypesAreInTheSnapshot(): void
+    {
+        $committed = $this->loadCommittedSnapshot();
+        $extensionTypes = 0;
+
+        foreach (array_keys($committed['api_classes']) as $class) {
+            if (str_starts_with($class, 'Pulsar\\Extension\\')) {
+                ++$extensionTypes;
+            }
+        }
+
+        self::assertGreaterThan(
+            0,
+            $extensionTypes,
+            'The snapshot covers src/ only again; every #[Api] type under extensions/ is unguarded',
+        );
+    }
+
+    /**
+     * @return array{api_classes: array<string, array{since: string, stability?: string, methods: list<string>, signatures: array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>, constants: list<string>}>, internal_classes: list<string>}
      */
     private function loadCommittedSnapshot(): array
     {
@@ -151,7 +210,7 @@ final class PublicApiSnapshotTest extends TestCase
         $json = file_get_contents(self::SNAPSHOT_PATH);
         self::assertIsString($json);
 
-        /** @var array{api_classes: array<string, array{since: string, methods: list<string>, signatures: array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>, constants: list<string>}>, internal_classes: list<string>} */
+        /** @var array{api_classes: array<string, array{since: string, stability?: string, methods: list<string>, signatures: array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>, constants: list<string>}>, internal_classes: list<string>} */
         return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     }
 }

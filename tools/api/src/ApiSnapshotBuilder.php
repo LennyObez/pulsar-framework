@@ -14,7 +14,15 @@ use ReflectionClassConstant;
 use ReflectionMethod;
 use SplFileInfo;
 
+use function array_values;
+use function class_exists;
 use function count;
+use function enum_exists;
+use function file_get_contents;
+use function interface_exists;
+use function is_dir;
+use function preg_match;
+use function trait_exists;
 
 /**
  * Builds the public API snapshot: the single source of truth for the BC gate.
@@ -34,10 +42,24 @@ use function count;
  */
 final readonly class ApiSnapshotBuilder
 {
-    public function __construct(private string $sourceDirectory) {}
+    /** @var list<string> */
+    private array $sourceDirectories;
 
     /**
-     * @return array{api_classes: array<string, array{since: string, methods: list<string>, signatures: array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>, constants: list<string>}>, internal_classes: list<string>}
+     * One root per shipped source tree.
+     *
+     * `src/` alone left 1,306 `#[Api]`-marked classes under `extensions/`
+     * outside the gate. They ship inside the same composer package and carry the
+     * same attribute, so a consumer typing against them holds the same promise;
+     * anything shipped, marked stable, and unwatched is a promise with no guard.
+     */
+    public function __construct(string ...$sourceDirectories)
+    {
+        $this->sourceDirectories = array_values($sourceDirectories);
+    }
+
+    /**
+     * @return array{api_classes: array<string, array{since: string, stability?: string, methods: list<string>, signatures: array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>, constants: list<string>}>, internal_classes: list<string>}
      */
     public function build(): array
     {
@@ -53,12 +75,24 @@ final readonly class ApiSnapshotBuilder
                 /** @var Api $apiInstance */
                 $apiInstance = $apiAttrs[0]->newInstance();
 
-                $apiClasses[$class] = [
+                $entry = [
                     'since' => $apiInstance->since,
                     'methods' => $this->annotatedMethods($ref),
                     'signatures' => $this->publicSurface($ref),
                     'constants' => $this->annotatedConstants($ref),
                 ];
+
+                // Recorded only when it departs from the default, which keeps
+                // thousands of identical `"stability": "stable"` lines out of the
+                // file while leaving an experimental grade visible at a glance —
+                // the "clearly marked in the API snapshot" the deprecation policy
+                // promises. BcBreakDetector reads a missing key as stable, which
+                // is what the attribute itself defaults to.
+                if ($apiInstance->stability !== 'stable') {
+                    $entry['stability'] = $apiInstance->stability;
+                }
+
+                $apiClasses[$class] = $entry;
 
                 continue;
             }
@@ -142,14 +176,26 @@ final readonly class ApiSnapshotBuilder
      * `inherited_from` names the declaring type so a snapshot diff points straight
      * at the source of a change instead of at the dozens of types feeling it.
      *
+     * A trait widens the filter to protected, and has to. "Callable on this
+     * type" does not describe a trait: its members are copied into the consuming
+     * class, where a protected one is reachable from every method that class
+     * writes. All five `#[Api]`-marked traits here expose protected members and
+     * nothing else, so a public-only filter records an empty surface for each —
+     * an entry present in the snapshot, watching nothing, which is worse than a
+     * visible absence because it reads as coverage. Private members stay out:
+     * copied too, but not a contract by any convention.
+     *
      * @param ReflectionClass<object> $ref
      * @return array<string, array{params: list<string>, return: string|null, static: bool, inherited_from?: string}>
      */
     private function publicSurface(ReflectionClass $ref): array
     {
         $signatures = [];
+        $visibility = $ref->isTrait()
+            ? ReflectionMethod::IS_PUBLIC | ReflectionMethod::IS_PROTECTED
+            : ReflectionMethod::IS_PUBLIC;
 
-        foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+        foreach ($ref->getMethods($visibility) as $method) {
             $declaring = $method->getDeclaringClass();
 
             if ($declaring->isInternal()) {
@@ -211,47 +257,87 @@ final readonly class ApiSnapshotBuilder
     }
 
     /**
-     * Discover every class/interface/enum FQCN under the source directory.
+     * Discover every class/interface/enum/trait FQCN under the source roots.
+     *
+     * Traits are in scope, and were not. The declaration pattern listed
+     * class/interface/enum only, so five `#[Api]`-marked traits — the testing
+     * concerns and the database helpers an application `use`s directly — were
+     * structurally invisible to the snapshot: not merely absent, but incapable
+     * of appearing however they were annotated. A trait's public methods land in
+     * every consuming class, so renaming one breaks callers exactly as a removed
+     * interface method does.
      *
      * @return list<class-string>
      */
     private function discoverClasses(): array
     {
         $classes = [];
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->sourceDirectory),
-        );
 
-        foreach ($iterator as $file) {
-            // Narrowed with instanceof rather than an inline @var: the iterator is
-            // typed as yielding mixed, and asserting a type is not checking it.
-            if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
+        foreach ($this->sourceDirectories as $directory) {
+            if (!is_dir($directory)) {
                 continue;
             }
 
-            $content = file_get_contents($file->getPathname());
+            foreach ($this->phpFilesUnder($directory) as $file) {
+                $content = file_get_contents($file->getPathname());
 
-            if ($content === false) {
-                continue;
-            }
+                if ($content === false) {
+                    continue;
+                }
 
-            if (preg_match('/namespace\s+([^;]+);/', $content, $nsMatch) !== 1) {
-                continue;
-            }
+                if (preg_match('/namespace\s+([^;]+);/', $content, $nsMatch) !== 1) {
+                    continue;
+                }
 
-            if (preg_match('/^(?:(?:final|readonly|abstract)\s+)*(?:class|interface|enum)\s+(\w+)/m', $content, $classMatch) !== 1) {
-                continue;
-            }
+                if (preg_match('/^(?:(?:final|readonly|abstract)\s+)*(?:class|interface|enum|trait)\s+(\w+)/m', $content, $classMatch) !== 1) {
+                    continue;
+                }
 
-            $fqcn = $nsMatch[1] . '\\' . $classMatch[1];
+                $fqcn = $nsMatch[1] . '\\' . $classMatch[1];
 
-            if (class_exists($fqcn) || interface_exists($fqcn) || enum_exists($fqcn)) {
-                /** @var class-string $fqcn */
-                $classes[] = $fqcn;
+                if (self::typeExists($fqcn)) {
+                    /** @var class-string $fqcn */
+                    $classes[] = $fqcn;
+                }
             }
         }
 
         return $classes;
+    }
+
+    /**
+     * Every `.php` file beneath a root, as SplFileInfo.
+     *
+     * Narrowed with instanceof rather than an inline @var: the iterator is typed
+     * as yielding mixed, and asserting a type is not checking it.
+     *
+     * @return iterable<SplFileInfo>
+     */
+    private function phpFilesUnder(string $directory): iterable
+    {
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+
+        foreach ($iterator as $file) {
+            if ($file instanceof SplFileInfo && $file->getExtension() === 'php') {
+                yield $file;
+            }
+        }
+    }
+
+    /**
+     * Whether the name resolves to a userland type reflection can open.
+     *
+     * `class_exists()` answers false for a trait, which is the single line that
+     * would have kept traits out of the snapshot even once the declaration
+     * pattern matched them. Shared with the test that re-verifies the committed
+     * file so the two cannot disagree about what a snapshot entry may be.
+     *
+     * @phpstan-assert-if-true class-string $name
+     * @psalm-assert-if-true class-string $name
+     */
+    public static function typeExists(string $name): bool
+    {
+        return class_exists($name) || interface_exists($name) || enum_exists($name) || trait_exists($name);
     }
 
     /**
