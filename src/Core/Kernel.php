@@ -99,6 +99,7 @@ use function is_array;
 use function is_callable;
 use function is_string;
 use function is_subclass_of;
+use function realpath;
 use function sprintf;
 
 /**
@@ -628,6 +629,26 @@ final class Kernel implements KernelInterface
      * PULSAR_BASE_PATH from an FPM pool, a systemd unit, or the scaffolded front
      * controller always wins, and this only repairs the entry points that never
      * exported it (a non-scaffolded FPM deployment, the CLI, the dev server).
+     *
+     * ## Why the exported value is resolved and not merely derived
+     *
+     * `dirname()` returns the caller's spelling of the parent, unchanged. A caller
+     * that passes `<somewhere>/Support/../Fixtures/Project/config` therefore gets
+     * `<somewhere>/Support/../Fixtures/Project` exported — a correct directory,
+     * spelled with a traversal still in it — and from that moment every
+     * `base_path()` call builds carries the `..` along. That is not cosmetic:
+     * {@see \Pulsar\Deploy\MaintenanceMode} and
+     * {@see \Pulsar\Filesystem\WritablePathGuard} both refuse a storage path
+     * containing `..`, because a traversal in a path a deployment writes to is the
+     * thing they exist to catch. One caller's spelling would then break every
+     * later consumer in the process, with a message about traversal that names no
+     * traversal anybody wrote. Resolving it here means the value this exports is
+     * the one form of the root that a containment check can be run against.
+     *
+     * An unresolvable parent is left unexported rather than exported anyway: a
+     * directory that does not exist is not a project root, and handing every path
+     * helper a value guaranteed to fail is worse than the documented `getcwd()`
+     * fallback it would replace.
      */
     private function anchorBasePath(): void
     {
@@ -639,9 +660,17 @@ final class Kernel implements KernelInterface
 
         $configPath = $this->configManager?->configPath();
 
-        if ($configPath !== null) {
-            putenv('PULSAR_BASE_PATH=' . dirname($configPath));
+        if ($configPath === null) {
+            return;
         }
+
+        $root = realpath(dirname($configPath));
+
+        if ($root === false) {
+            return;
+        }
+
+        putenv('PULSAR_BASE_PATH=' . $root);
     }
 
     /**
@@ -916,8 +945,49 @@ final class Kernel implements KernelInterface
             // guarded inside dispatchWithErrorHandling(), so its errors are
             // converted to a Response at the innermost handler and flow back
             // out through the pipeline, picking up security headers like any 200.
-            return $this->handleException($e, $request);
+            //
+            // Nothing reaching HERE did. A throw from a global middleware unwinds
+            // every frame outside it, SecurityHeadersMiddleware's included, and a
+            // boot failure happens before that middleware is even wired — so the
+            // response below leaves the kernel with whatever put it together,
+            // which for an application exception handler is routinely no
+            // protective header at all. That made the response most likely to be
+            // probed the one response in the framework with no CSP, no framing
+            // policy and no referrer policy.
+            return $this->hardenOutOfPipelineResponse($this->handleException($e, $request));
         }
+    }
+
+    /**
+     * Give an error response that never travelled the pipeline the protective
+     * headers the pipeline would have put on it.
+     *
+     * The set is {@see ProductionRenderer::LAST_RESORT_HEADERS}, read from its
+     * single definition rather than restated here, because a second copy of a
+     * security control is a copy that goes out of date.
+     *
+     * Only headers the response does not already carry are added. The kernel's
+     * static list is not the application's configured header policy, and
+     * silently replacing an `X-Frame-Options: SAMEORIGIN` the exception handler
+     * chose with `DENY` would be the kernel inventing policy on a path the
+     * operator cannot see. Filling a gap cannot do that; overruling a stated
+     * value can.
+     *
+     * `Content-Type` is skipped outright: it describes the payload whoever built
+     * this response produced, and the last-resort page's `text/html` would
+     * mislabel a JSON error body.
+     */
+    private function hardenOutOfPipelineResponse(ResponseInterface $response): ResponseInterface
+    {
+        foreach (ProductionRenderer::LAST_RESORT_HEADERS as $name => $value) {
+            if ($name === 'Content-Type' || $response->hasHeader($name)) {
+                continue;
+            }
+
+            $response = $response->withHeader($name, $value);
+        }
+
+        return $response;
     }
 
     /**
@@ -961,7 +1031,7 @@ final class Kernel implements KernelInterface
             }
         }
 
-        return $this->renderFallbackError($e, $request);
+        return $this->renderFallbackError($e);
     }
 
     /**
@@ -971,7 +1041,7 @@ final class Kernel implements KernelInterface
      * expected to wire a real handler in normal app boot — this
      * branch only protects pre-bootstrap and misconfigured paths.
      */
-    private function renderFallbackError(Throwable $e, ServerRequestInterface $request): ResponseInterface
+    private function renderFallbackError(Throwable $e): ResponseInterface
     {
         $renderer = new ProductionRenderer();
         $status = match (true) {
@@ -989,10 +1059,13 @@ final class Kernel implements KernelInterface
             error_log(sprintf('[Pulsar] Unhandled %s: %s', $e::class, $e->getMessage()));
         }
 
-        $response = Response::html(
-            $renderer->render($e, $request, $status),
-            $status->value,
-        );
+        // response(), not html(render(...)): identical bytes, plus the protective
+        // headers the page carries for exactly this situation. Reached from
+        // inside the pipeline they are re-stated by SecurityHeadersMiddleware
+        // with the application's configured values; reached from outside it —
+        // a boot failure, a throwing global middleware — they are all this
+        // response is ever going to have.
+        $response = $renderer->response($status);
 
         // RFC 9110 §15.5.6: a 405 response must advertise the permitted methods.
         if ($e instanceof RoutingException && $e->isMethodNotAllowed()) {

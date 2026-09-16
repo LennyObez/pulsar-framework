@@ -50,6 +50,15 @@ final readonly class TemplateRegistry
         return [
             'public/index.php' => $this->indexPhp($appName, $preset),
             'config/app.php' => $this->appConfig($appName),
+            // `security` is one of ConfigManager::REQUIRED_CONFIGS alongside
+            // `app` and `observability`: a project without it cannot complete
+            // ConfigManager::load() and therefore cannot boot. It belongs here,
+            // not in a per-preset list — the Minimal preset used by `init` once
+            // omitted it and produced projects that threw MissingConfigException
+            // on their first command. Which *posture* it ships with still varies
+            // by preset; whether it ships does not.
+            'config/security.php' => $this->securityConfig($preset),
+            'config/extensions.php' => $this->extensionsConfig(),
             'config/database.php' => $this->databaseConfig(),
             'config/observability.php' => $this->observabilityConfig(),
             'config/i18n.php' => $this->i18nConfig(),
@@ -69,8 +78,11 @@ final readonly class TemplateRegistry
     private function webFiles(string $appName): array
     {
         return [
-            'resources/views/welcome.php' => $this->welcomeView($appName),
-            'config/security.php' => $this->securityConfigWeb(),
+            // `.pulse.php`, not `.php`: TemplateCompiler resolves the template
+            // name `welcome` to `welcome.pulse.php` and only to that. Written
+            // as plain `.php` the file was generated into every web project and
+            // could never be rendered by the engine the same project configures.
+            'resources/views/welcome.pulse.php' => $this->welcomeView($appName),
         ];
     }
 
@@ -83,8 +95,24 @@ final readonly class TemplateRegistry
     {
         return [
             'src/Http/Controller/HealthController.php' => $this->healthController(),
-            'config/security.php' => $this->securityConfigApi(),
         ];
+    }
+
+    /**
+     * The security posture a preset ships with.
+     *
+     * Minimal takes the browser-facing posture rather than the API one: a
+     * minimal project serves HTML from `public/index.php`, so it is exposed to
+     * exactly the cross-site request forgery the API posture switches off. A
+     * project that later becomes an API turns CSRF off deliberately; one that
+     * silently started without it never makes that decision at all.
+     */
+    private function securityConfig(ProjectPreset $preset): string
+    {
+        return match ($preset) {
+            ProjectPreset::Api => $this->securityConfigApi(),
+            ProjectPreset::Minimal, ProjectPreset::Web => $this->securityConfigWeb(),
+        };
     }
 
     // ------------------------------------------------------------------
@@ -192,6 +220,14 @@ final readonly class TemplateRegistry
                 extensionBootstrap: \$extensions,
                 configManager: \$configManager,
             );
+
+            // Renders resources/views/welcome.pulse.php through the engine
+            // config/view.php configures. Without a route here the generated
+            // project answered its own "open http://localhost:8000" with a 404
+            // and the welcome view it shipped was never reachable.
+            \$kernel->router()->get('/', static function (): Response {
+                return Response::view('welcome');
+            }, 'home');
 
             \$kernel->run();
             PHP;
@@ -447,6 +483,82 @@ final readonly class TemplateRegistry
             PHP;
     }
 
+    private function extensionsConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            /**
+             * Extension trust tiers.
+             *
+             * Pulsar's ExtensionSandbox reads this file and fails CLOSED: an
+             * extension named nowhere in it runs at the Community cap whatever
+             * tier its own pulsar.json asks for, and the first extension that
+             * then needs a core capability aborts the boot. So this file is not
+             * optional for a project that loads the framework's bundled
+             * extensions — which `vendor/bin/pulsar` does, and so does the Web
+             * and API `public/index.php`.
+             *
+             * The bundled first-party tiers are read from the framework package
+             * instead of copied here, so they cannot drift behind a framework
+             * upgrade that adds an extension. They are already least-privilege:
+             * infrastructure and security extensions at `core`, bundled products
+             * at `verified` — able to register and decorate their own services,
+             * unable to override a core binding, read the master key, or exec.
+             *
+             * Trust for anything YOU install is your decision and belongs below,
+             * one entry at a time:
+             *
+             *   'acme/reporting' => ['tier' => 'verified'],
+             *   'acme/legacy' => ['tier' => 'community', 'additional_capabilities' => ['DatabaseRaw']],
+             *
+             * An extension you say nothing about stays capped at Community.
+             */
+
+            /*
+             * Where the framework is, asked rather than assumed.
+             *
+             * This line used to read `__DIR__ . '/../vendor/pulsar/framework/config/extensions.php'`
+             * and require it unconditionally. That path is a guess about somebody else's
+             * install layout, and it is wrong in three ordinary situations: `init` writes
+             * this file BEFORE `composer install` has created `vendor/` at all (the order
+             * docs/install.md gives), `composer config vendor-dir` renames the directory,
+             * and a monorepo or a path repository puts the package somewhere else entirely.
+             * In each of them the require failed and took the whole boot with it — every
+             * command in the new project exited 1 before running.
+             *
+             * Whatever is reading this file has already loaded the framework, so the
+             * framework's own class file is the one fact available here that is true on
+             * every layout. `Kernel` lives at `src/Core/Kernel.php`, three levels below the
+             * package root.
+             */
+            $kernelFile = (new ReflectionClass(Pulsar\Core\Kernel::class))->getFileName();
+            $bundledFile = $kernelFile === false
+                ? null
+                : dirname($kernelFile, 3) . '/config/extensions.php';
+
+            if ($bundledFile === null || !is_file($bundledFile)) {
+                throw new RuntimeException(
+                    'Could not read the framework\'s bundled extension trust tiers'
+                    . ($bundledFile === null ? '' : " at {$bundledFile}")
+                    . '. Without them every bundled extension is capped at Community and the '
+                    . 'boot stops at the first one needing a core capability. Reinstall '
+                    . 'pulsar/framework, or list the tiers you trust in this file yourself.',
+                );
+            }
+
+            $bundled = require $bundledFile;
+
+            return [
+                'trusted_extensions' => [
+                    ...$bundled['trusted_extensions'],
+                ],
+            ];
+            PHP;
+    }
+
     private function databaseConfig(): string
     {
         return <<<'PHP'
@@ -482,11 +594,16 @@ final readonly class TemplateRegistry
             return [
                 'logging' => [
                     'default_channel' => 'file',
+
+                    // The level belongs to `logging`, not to a channel:
+                    // ObservabilityConfig reads logging.level and the channels
+                    // carry driver/path/stream only. LOG_LEVEL overrides it.
+                    'level' => 'debug',
+
                     'channels' => [
                         'file' => [
                             'driver' => 'file',
                             'path' => __DIR__ . '/../var/logs/app.log',
-                            'level' => $_ENV['LOG_LEVEL'] ?? 'debug',
                         ],
                     ],
                 ],
@@ -512,7 +629,9 @@ final readonly class TemplateRegistry
             return [
                 'default_locale' => 'en',
                 'supported_locales' => ['en'],
-                'fallback_locale' => 'en',
+
+                // Plural, and a list: I18nConfig reads `fallback_locales`.
+                'fallback_locales' => ['en'],
             ];
             PHP;
     }
@@ -525,11 +644,17 @@ final readonly class TemplateRegistry
             declare(strict_types=1);
 
             return [
-                'paths' => [
-                    __DIR__ . '/../resources/views',
+                // `template_paths` and `cache_path` are the keys ViewConfig
+                // reads. Search paths are absolute so a template resolves the
+                // same under the built-in server, FPM and the CLI, none of
+                // which agree on the working directory.
+                'template_paths' => [
+                    dirname(__DIR__) . '/resources/views',
                 ],
 
-                'compiled_path' => __DIR__ . '/../var/cache/views',
+                // Relative on purpose: resolved against the project root and
+                // refused if it lands inside public/.
+                'cache_path' => 'var/cache/views',
             ];
             PHP;
     }
@@ -542,12 +667,22 @@ final readonly class TemplateRegistry
             declare(strict_types=1);
 
             return [
-                'default' => 'file',
+                // Off by default. Switching it on binds the PSR-6/PSR-16 pools
+                // and the tagged cache that duplicate detection and reputation
+                // cooldown need; leaving it off keeps a new project's behaviour
+                // free of a cache tier it has not thought about yet.
+                'enabled' => false,
 
-                'stores' => [
-                    'file' => [
-                        'driver' => 'file',
-                        'path' => __DIR__ . '/../var/cache/data',
+                'default_pool' => 'default',
+                'path' => 'var/cache',
+
+                'pools' => [
+                    'default' => [
+                        'driver' => 'filesystem',
+                        'serializer' => 'json',
+                        'default_ttl_seconds' => null,
+                        'critical' => false,
+                        'encrypted' => false,
                     ],
                 ],
             ];
@@ -562,17 +697,24 @@ final readonly class TemplateRegistry
             declare(strict_types=1);
 
             return [
-                'default' => 'log',
+                // Sending is off until you turn it on, and the driver writes to
+                // the log rather than the network until you pick a real one, so
+                // a project under development cannot mail a live customer by
+                // accident. MAIL_ENABLED / MAIL_DRIVER override both.
+                'enabled' => false,
+                'default_driver' => 'log',
 
-                'mailers' => [
-                    'log' => [
-                        'driver' => 'log',
+                // MAIL_FROM_ADDRESS and MAIL_FROM_NAME override these.
+                'default_from_address' => 'noreply@example.com',
+                'default_from_name' => 'Pulsar App',
+
+                'driver_options' => [
+                    'smtp' => [
+                        'host' => 'localhost',
+                        'port' => 587,
+                        'encryption' => 'tls',
+                        'timeout' => 30,
                     ],
-                ],
-
-                'from' => [
-                    'address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@example.com',
-                    'name' => $_ENV['MAIL_FROM_NAME'] ?? 'Pulsar App',
                 ],
             ];
             PHP;

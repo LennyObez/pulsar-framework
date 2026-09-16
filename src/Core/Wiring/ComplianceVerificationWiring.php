@@ -18,6 +18,7 @@ use Pulsar\Compliance\Evidence\FileEvidenceStore;
 use Pulsar\Compliance\Evidence\InMemoryEvidenceStore;
 use Pulsar\Compliance\Verification\BreachNotificationCheck;
 use Pulsar\Compliance\Verification\CheckStatus;
+use Pulsar\Compliance\Verification\ComplianceCheckInterface;
 use Pulsar\Compliance\Verification\ComplianceVerificationEngine;
 use Pulsar\Compliance\Verification\ConflictDetector;
 use Pulsar\Compliance\Verification\CustomControlRegistry;
@@ -319,12 +320,18 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
      * reason ADR-0045 gives and {@see RuntimeVerifier} follows: the check has to
      * read report timestamps out of it, and a boolean is a verdict somebody else
      * already reached.
+     *
+     * Declared as the contract rather than the class it happens to build: the one
+     * caller puts the result straight into the engine's `checks` list, which is a
+     * list of {@see ComplianceCheckInterface}, so naming the concrete type here
+     * bought nothing and closed the seam a deployment would use to wrap or replace
+     * the check.
      */
     private function breachNotificationCheck(
         ContainerInterface $container,
         ComplianceProfile $profile,
         ComplianceConstraints $constraints,
-    ): BreachNotificationCheck {
+    ): ComplianceCheckInterface {
         return new BreachNotificationCheck(
             profile: $profile,
             constrained: $constraints->breachNotificationHours,

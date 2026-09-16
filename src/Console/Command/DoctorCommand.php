@@ -57,10 +57,28 @@ final class DoctorCommand extends Command
         'intl',
     ];
 
-    /** @var list<string> Directories that must be writable at runtime */
+    /**
+     * Directories the framework writes into at runtime, relative to the project root.
+     *
+     * These are the two roots the shipped configuration names: `config/cache.php`
+     * puts the cache at `var/cache`, `config/observability.php` puts logs and the
+     * audit chain under `var/logs`, `config/integrity.php` puts the manifest at
+     * `var/integrity`, and `config/storage.php` puts the default disk at
+     * `storage/app`.
+     *
+     * The second entry read `cache` until rc.12, naming a directory at the project
+     * root that no configuration file, no command and no service has ever pointed
+     * at. Nothing created it and nothing could, so the check reported
+     * `Directory: cache/ (missing)` on every correct installation and `pulsar
+     * doctor` exited 1 out of the box -- the first command a reader is told to run
+     * to confirm their environment is sound. Its unit test passed the whole time,
+     * because the test made the directory itself before asserting.
+     *
+     * @var list<string>
+     */
     private const array WRITABLE_DIRS = [
         'storage',
-        'cache',
+        'var',
     ];
 
     private int $passCount = 0;

@@ -75,12 +75,12 @@ final readonly class SecureEnvGenerator
                 APP_KEY=%s
                 PULSAR_MASTER_KEY=%s
 
-                DB_CONNECTION=pgsql
-                DB_HOST=127.0.0.1
-                DB_PORT=5432
-                DB_DATABASE=pulsar
-                DB_USERNAME=pulsar
-                DB_PASSWORD=
+                # DB_CONNECTION names a connection defined in config/database.php.
+                # The generated file defines exactly one, `sqlite`, whose database
+                # file is var/database.sqlite. Naming anything else here without
+                # first adding that connection leaves the name unresolvable and
+                # boot fails, so change both together.
+                DB_CONNECTION=sqlite
                 ENV,
             $appName,
             $env->value,

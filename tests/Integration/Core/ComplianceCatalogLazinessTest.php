@@ -38,7 +38,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * What it asserts, in a fresh interpreter:
  *
- *  1. after {@see ComplianceCatalogWiring::wire()}, not one of the sixteen
+ *  1. after {@see ComplianceCatalogWiring::wire()}, not one of the seventeen
  *     framework mapping classes is loaded, no {@see \Pulsar\Compliance\Control\ControlDeclaration}
  *     exists, and even {@see ControlCatalog} itself has not been autoloaded —
  *     the binding is a closure and `has()` is answered from the binding;

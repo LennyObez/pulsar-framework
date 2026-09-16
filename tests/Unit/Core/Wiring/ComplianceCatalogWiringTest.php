@@ -42,7 +42,7 @@ final class ComplianceCatalogWiringTest extends TestCase
      * Bound at boot, built at first read.
      *
      * Boot binds three closures and resolves none of them. The catalog holds one
-     * deferred source; the sixteen mapping classes behind it are not autoloaded
+     * deferred source; the seventeen mapping classes behind it are not autoloaded
      * and not one of the 215 declarations exists until something reads the
      * catalog, which only `compliance:report` and the `compliance:check` gate do.
      * Eager construction cost 0.52 ms warm and roughly 22 ms cold on every boot

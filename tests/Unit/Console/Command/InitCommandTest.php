@@ -110,8 +110,17 @@ final class InitCommandTest extends TestCase
         self::assertArrayHasKey(ComposerJsonGenerator::FRAMEWORK_PACKAGE, $require);
     }
 
+    /**
+     * An existing empty directory is what `init` is for.
+     *
+     * The command's own help offers "Target directory (default: current
+     * directory)", and its default is `getcwd()`, which always exists — so while
+     * the generator refused every existing directory, the bare command could not
+     * succeed from anywhere, and neither could the install guide's flow of
+     * `composer require` followed by `init` in the same directory.
+     */
     #[Test]
-    public function returnsErrorWhenDirectoryAlreadyExists(): void
+    public function fillsAnExistingEmptyDirectory(): void
     {
         $targetDir = $this->tempDir . DIRECTORY_SEPARATOR . 'existing';
         mkdir($targetDir, 0o755, true);
@@ -120,8 +129,35 @@ final class InitCommandTest extends TestCase
         $input = new ArrayInput(arguments: [$targetDir]);
         $exit = $command->execute($input, $this->output);
 
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertFileExists($targetDir . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php');
+    }
+
+    /**
+     * ...and a file already there is never replaced.
+     *
+     * The guard did not disappear, it moved to where the risk actually is. A
+     * composer.json left by `composer require pulsar/framework` is the collision
+     * this meets in practice, and overwriting it would delete the requirement
+     * that put the binary on disk.
+     */
+    #[Test]
+    public function returnsErrorWhenAFileItWouldWriteIsAlreadyThere(): void
+    {
+        $targetDir = $this->tempDir . DIRECTORY_SEPARATOR . 'existing';
+        mkdir($targetDir, 0o755, true);
+        file_put_contents($targetDir . DIRECTORY_SEPARATOR . 'composer.json', '{"name":"acme/mine"}');
+
+        $command = new InitCommand();
+        $input = new ArrayInput(arguments: [$targetDir]);
+        $exit = $command->execute($input, $this->output);
+
         self::assertSame(ExitCode::Error->value, $exit);
-        self::assertStringContainsString('already exists', $this->output->errorBuffer);
+        self::assertStringContainsString('composer.json', $this->output->errorBuffer);
+        self::assertSame(
+            '{"name":"acme/mine"}',
+            file_get_contents($targetDir . DIRECTORY_SEPARATOR . 'composer.json'),
+        );
     }
 
     #[Test]

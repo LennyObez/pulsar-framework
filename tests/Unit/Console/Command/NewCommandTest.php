@@ -150,10 +150,20 @@ final class NewCommandTest extends TestCase
         self::assertFileExists($this->tempDir . DIRECTORY_SEPARATOR . 'composer.json');
     }
 
+    /**
+     * The refusal is about files, not about the directory.
+     *
+     * An existing empty directory holds nothing to protect, and refusing one
+     * made `pulsar init` — which shares this generator and defaults its target
+     * to the current directory — impossible to run at all. What must never be
+     * touched is a file the user already has, so that is what is checked, and a
+     * single collision stops the run before anything is written.
+     */
     #[Test]
-    public function it_returns_error_when_directory_already_exists(): void
+    public function it_returns_error_when_a_file_it_would_write_is_already_there(): void
     {
         mkdir($this->tempDir, 0o755, true);
+        file_put_contents($this->tempDir . DIRECTORY_SEPARATOR . 'composer.json', '{"name":"acme/mine"}');
 
         $command = new NewCommand();
         $dirName = basename($this->tempDir);
@@ -174,6 +184,11 @@ final class NewCommandTest extends TestCase
         }
 
         self::assertSame(ExitCode::Error->value, $result);
+        self::assertSame(
+            '{"name":"acme/mine"}',
+            file_get_contents($this->tempDir . DIRECTORY_SEPARATOR . 'composer.json'),
+            'The existing file was replaced despite the refusal',
+        );
     }
 
     #[Test]

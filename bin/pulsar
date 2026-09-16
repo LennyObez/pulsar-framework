@@ -104,6 +104,9 @@ use Pulsar\Console\Command\Remove\RemoveModuleCommand;
 use Pulsar\Console\Command\Remove\RemovePaymentFlowCommand;
 use Pulsar\Console\Command\Remove\RemovePortCommand;
 use Pulsar\Console\Command\Remove\RemoveWebhookHandlerCommand;
+use Pulsar\Console\Command\BackupRestoreCommand;
+use Pulsar\Console\Command\BackupRunCommand;
+use Pulsar\Console\Command\BackupVerifyCommand;
 use Pulsar\Console\Command\BuildCommand;
 use Pulsar\Console\Command\DbFailoverWatchCommand;
 use Pulsar\Console\Command\DbFreshCommand;
@@ -183,6 +186,10 @@ use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Compliance\ControlCatalog;
 use Pulsar\Compliance\Evidence\EvidenceSourceInterface;
 use Pulsar\Config\AppConfig;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Resilience\Backup\BackupDestination;
+use Pulsar\Resilience\Backup\BackupPlan;
+use Pulsar\Resilience\Backup\BackupServiceInterface;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
@@ -293,11 +300,25 @@ if (is_file($appConfigFile)) {
 // Create kernel with optional extension support
 $extensionBootstrap = null;
 
-// Check for extensions directory
-$extensionPaths = [
+// Check for extensions directory.
+//
+// Gated on the config resolution above, and deliberately so. The config lookup
+// refuses to fall back to the framework's own config/ outside the framework
+// repository; without that symmetry here, a directory with no config/ still
+// loaded every bundled extension from __DIR__/../extensions. Those extensions
+// then boot with no config/extensions.php to read trust tiers from, so
+// ExtensionSandbox fails closed and caps them all at Community — and the first
+// one needing a core capability aborts the whole CLI. That is what made
+// `pulsar init` (step 2 of docs/install.md, run from a directory that is empty
+// by definition) unusable: it died on "Failed to boot extension
+// pulsar/mcp-server" before it could create anything.
+//
+// A directory with no config/ is not an application, it is where one is about
+// to be created. There is nothing to extend yet, so nothing is loaded.
+$extensionPaths = is_dir($configPath) ? [
   getcwd() . '/extensions',
   __DIR__ . '/../extensions',
-];
+] : [];
 
 foreach ($extensionPaths as $path) {
   if (is_dir($path)) {
@@ -552,6 +573,36 @@ if ($kernel->container()->has(RepairRunnerInterface::class)) {
   /** @var RepairRunnerInterface $repairRunner */
   $repairRunner = $kernel->container()->get(RepairRunnerInterface::class);
   $application->add(new RepairCommand($repairRunner));
+}
+
+// Register the sealed backup commands.
+//
+// Guarded on BackupServiceInterface being bound, which is exactly the condition
+// BackupWiring fails closed on: with no PULSAR_MASTER_KEY there is no archive
+// key, nothing is bound, and these commands are absent rather than present and
+// writing an unsealed archive. `pulsar list` therefore shows a deployment that
+// cannot back itself up as one with no backup commands, which is the honest
+// surface.
+//
+// The plan is resolved here because resolving it opens the database connection
+// the DatabaseBackupSource reads through, and that must happen in a CLI process
+// asking for a backup rather than in every request boot.
+if ($kernel->container()->has(BackupServiceInterface::class) && $kernel->container()->has(BackupDestination::class)) {
+  /** @var BackupServiceInterface $backupService */
+  $backupService = $kernel->container()->get(BackupServiceInterface::class);
+  /** @var BackupDestination $backupDestination */
+  $backupDestination = $kernel->container()->get(BackupDestination::class);
+  /** @var BackupPlan $backupPlan */
+  $backupPlan = $kernel->container()->get(BackupPlan::class);
+
+  $backupConnection = $kernel->container()->has(ConnectionInterface::class)
+    ? $kernel->container()->get(ConnectionInterface::class)
+    : null;
+  /** @var ConnectionInterface|null $backupConnection */
+
+  $application->add(new BackupRunCommand($backupService, $backupPlan, $backupDestination));
+  $application->add(new BackupVerifyCommand($backupService, $backupDestination));
+  $application->add(new BackupRestoreCommand($backupService, $backupPlan, $backupConnection));
 }
 
 // Register the security-posture preflight report command

@@ -37,10 +37,12 @@ use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
+use Pulsar\Security\Session\SessionEncryption;
 use Pulsar\Security\Session\SessionInterface;
 use Pulsar\Security\Session\SessionManager;
 use Pulsar\Security\Session\SessionMiddleware;
 use Random\Randomizer;
+use ReflectionProperty;
 use Stringable;
 
 use function bin2hex;
@@ -143,6 +145,87 @@ final class SecurityWiringTest extends TestCase
         self::assertTrue($container->has(MasterKey::class));
         self::assertTrue($container->has(CipherSuiteInterface::class));
         self::assertTrue($container->has(EncryptorInterface::class));
+    }
+
+    /**
+     * A BOUND SESSION CIPHER IS THE ONE THE SESSION MANAGER HOLDS, and the two
+     * used to be able to come apart.
+     *
+     * The cipher was bound at the point of construction, inside the same `try`
+     * that builds the tokenization service and the framework cache. A
+     * `SecurityException` or `SodiumException` from anything AFTER it is caught
+     * below and nulls the local — the catch's own log line says "sessions are
+     * written in cleartext" — while the container kept the instance. The session
+     * manager would then be handed null and write cleartext, and everything that
+     * asks the CONTAINER instead would find a working cipher: the security
+     * posture check, the runtime verifier, and
+     * {@see \Pulsar\Compliance\Evidence\SessionSealObserver}, which seals a
+     * payload with whatever the container holds and reports what came back. A
+     * compliance report is only as true as that identity, so it is asserted here
+     * rather than assumed by the observer.
+     */
+    #[Test]
+    public function theBoundSessionCipherIsTheInstanceTheSessionManagerWritesThrough(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+
+        $configManager = $this->createConfigManager(
+            masterKeyHex: sodium_bin2hex(sodium_crypto_secretbox_keygen()),
+            sessionEncryption: true,
+        );
+        $configManager->load();
+
+        new SecurityWiring()->wire(
+            $container,
+            $configManager,
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        self::assertTrue($container->has(SessionEncryption::class));
+
+        $bound = $container->get(SessionEncryption::class);
+        $manager = $container->get(SessionManager::class);
+        $held = new ReflectionProperty(SessionManager::class, 'encryption')->getValue($manager);
+
+        self::assertSame(
+            $bound,
+            $held,
+            'The container and the session write path must hold the same cipher, or a report '
+                . 'that measures the bound one is measuring something the application does not use.',
+        );
+    }
+
+    /**
+     * And with session encryption off, nothing is bound and nothing is held — so
+     * the absence is visible to a report rather than being a cipher nobody uses.
+     */
+    #[Test]
+    public function noSessionCipherIsBoundWhenSessionEncryptionIsOff(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+
+        $configManager = $this->createConfigManager(
+            masterKeyHex: sodium_bin2hex(sodium_crypto_secretbox_keygen()),
+        );
+        $configManager->load();
+
+        new SecurityWiring()->wire(
+            $container,
+            $configManager,
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        self::assertFalse($container->has(SessionEncryption::class));
+
+        $manager = $container->get(SessionManager::class);
+
+        self::assertNull(new ReflectionProperty(SessionManager::class, 'encryption')->getValue($manager));
     }
 
 
@@ -650,7 +733,7 @@ final class SecurityWiringTest extends TestCase
         }
     }
 
-    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = '', ?string $envFileContent = null, ?string $dataProtectionBody = null): ConfigManager
+    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = '', ?string $envFileContent = null, ?string $dataProtectionBody = null, bool $sessionEncryption = false): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_security_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -668,7 +751,7 @@ final class SecurityWiringTest extends TestCase
 
         file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []], "audit" => ["enabled" => false]];');
-        file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => false, "validators" => []], "csrf" => [], "headers" => [' . $headersBody . '], "rate_limiting" => [], "cors" => ["enabled" => false]];');
+        file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => ' . ($sessionEncryption ? 'true' : 'false') . ', "validators" => []], "csrf" => [], "headers" => [' . $headersBody . '], "rate_limiting" => [], "cors" => ["enabled" => false]];');
 
         // Optionally write a .env file and wire it into the ConfigManager so the
         // Environment repository loads it (mirrors a real deployment whose secrets

@@ -42,6 +42,16 @@ final class MigrateStatusCommand extends Command
             $this->runner->ensureMigrationTable();
             $allFiles = $this->repository->discover();
             $applied = $this->runner->getApplied();
+
+            // A migration recorded under a version string this checkout no longer
+            // produces would be listed below as Pending while the database already
+            // carries it — and the operator would then run it. Refuse to print the
+            // listing instead, with the statements that re-key the table.
+            //
+            // The same call refuses the opposite error: a row written by a DIFFERENT
+            // migration that happens to share this one's version, which would be listed
+            // below as Applied over a table that was never created.
+            $this->runner->assertVersionsAreRecognised($applied, $allFiles);
         } catch (Throwable $e) {
             $output->errorln(sprintf('Failed to read migration status: %s', $e->getMessage()));
             return ExitCode::Error->value;

@@ -250,10 +250,11 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                     return $service;
                 });
 
-                // Session encryption via Keyring (Finding B)
+                // Session encryption via Keyring (Finding B). Constructed here and
+                // BOUND BELOW, once the whole crypto block has come through; see
+                // the binding for why the two steps are separated.
                 if ($securityConfig->session->encryption) {
                     $sessionEncryption = SessionEncryption::fromMasterKey($masterKey);
-                    $container->instance(SessionEncryption::class, $sessionEncryption);
                 }
 
                 // Framework cache (skip if pre-boot, or an application, already
@@ -439,6 +440,20 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                     );
                 }
             }
+        }
+
+        // Bound only now, and only if the local survived. Binding it at the point
+        // of construction let the two come apart: a failure LATER in the same try
+        // — the tokenization service, the framework cache — is caught above and
+        // nulls the local, while the container kept the instance. The session
+        // manager built below would then be handed null and write cleartext, and
+        // everything that asks the container instead — the security posture check,
+        // the runtime verifier, and now SessionSealObserver, which would seal a
+        // payload with it and report a working cipher — would disagree with the
+        // running application. The catch's own log line already says "sessions are
+        // written in cleartext"; this makes the container say the same thing.
+        if ($sessionEncryption !== null) {
+            $container->instance(SessionEncryption::class, $sessionEncryption);
         }
 
         // Security assertions: verify security posture in production mode

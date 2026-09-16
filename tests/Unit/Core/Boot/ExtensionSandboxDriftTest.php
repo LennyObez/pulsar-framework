@@ -9,9 +9,12 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extensibility\ExtensionKind;
 use Pulsar\Extensibility\ExtensionLoader;
 
+use function array_diff;
+use function array_keys;
 use function array_merge;
 use function dirname;
 use function glob;
+use function implode;
 use function in_array;
 use function sprintf;
 
@@ -152,6 +155,67 @@ final class ExtensionSandboxDriftTest extends TestCase
                 ),
             );
         }
+    }
+
+    #[Test]
+    public function everyGrantInTheShippedConfigNamesABundledExtension(): void
+    {
+        // The other direction, and it was blind for the whole RC phase.
+        // The test above asks "does every manifest have an entry", which catches
+        // an extension that would fall to the community cap and fail to boot --
+        // a loud failure. It never asked "does every entry have a manifest", and
+        // that failure is silent: a row granting core tier to a name nothing
+        // ships resolves against no extension, changes no behaviour, and sits in
+        // the file ADR-0023 calls the record an auditor reads to learn what code
+        // was permitted.
+        //
+        // One was there. 'pulsar/social-sso' => core, for an extension
+        // extensions/auth absorbed and declares in its own "replaces" list. It
+        // survived review by looking exactly like the thirty-four rows around it.
+        //
+        // Scope: this reads the FRAMEWORK's shipped config, not an
+        // application's. An operator's own third-party grants are theirs to make.
+        $root = dirname(__DIR__, 4);
+
+        $trusted = $this->trustedExtensions($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'extensions.php');
+        $bundled = $this->bundledExtensionNames($root);
+
+        self::assertNotEmpty($bundled, 'expected bundled extension manifests to exist');
+
+        $orphans = array_diff(array_keys($trusted), $bundled);
+
+        self::assertSame(
+            [],
+            $orphans,
+            sprintf(
+                'config/extensions.php grants a trust tier to %s, which no bundled pulsar.json '
+                . 'declares. A grant that names nothing is a record of a permission that was '
+                . 'never given to anything -- remove the row, or add the extension it was '
+                . 'written for. See ADR-0070.',
+                implode(', ', $orphans),
+            ),
+        );
+    }
+
+    /**
+     * Bundled extension names, from the manifests themselves.
+     *
+     * @return list<string>
+     */
+    private function bundledExtensionNames(string $root): array
+    {
+        $extensions = $root . DIRECTORY_SEPARATOR . 'extensions' . DIRECTORY_SEPARATOR;
+
+        $names = [];
+
+        foreach (array_merge(
+            glob($extensions . '*' . DIRECTORY_SEPARATOR . 'pulsar.json') ?: [],
+            glob($extensions . '*' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'pulsar.json') ?: [],
+        ) as $manifestPath) {
+            $names[] = new ExtensionLoader()->readManifest($manifestPath)->name;
+        }
+
+        return $names;
     }
 
     /**

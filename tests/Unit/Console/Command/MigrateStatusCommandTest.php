@@ -65,6 +65,39 @@ final class MigrateStatusCommandTest extends TestCase
         self::assertStringContainsString('20240102000000', $output->buffer);
     }
 
+    /**
+     * A migration recorded under a version this checkout no longer produces would be
+     * listed as Pending while the database already carries it — and the operator would
+     * then run it. The listing is refused instead, with the statements that re-key the
+     * table.
+     */
+    #[Test]
+    public function refusesToListAMigrationTheTableAlreadyRecordsUnderItsOldVersion(): void
+    {
+        file_put_contents($this->tmpDir . DIRECTORY_SEPARATOR . '001_create_pages.php', '<?php');
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::SQLite);
+        $connection->method('execute')->willReturn(0);
+        $connection->method('query')->willReturn(Result::fromArrays([
+            ['version' => 'a3f2_00000000000001', 'name' => 'create_pages', 'batch' => 1, 'applied_at' => '2024-01-01 12:00:00'],
+        ]));
+
+        $repository = new MigrationRepository(['ext:acme/cms' => $this->tmpDir]);
+        $runner = new MigrationRunner($connection, $repository, 'migrations');
+        $output = new BufferedOutput();
+
+        $exit = new MigrateStatusCommand($runner, $repository)->execute(
+            new ArrayInput('migrate:status'),
+            $output,
+        );
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('Migration identity mismatch', $output->errorBuffer);
+        self::assertStringContainsString('UPDATE migrations SET version', $output->errorBuffer);
+        self::assertStringNotContainsString('Pending', $output->buffer);
+    }
+
     #[Test]
     public function noMigrationFiles(): void
     {

@@ -10,12 +10,22 @@ use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Compliance\ComplianceProfile;
 use Pulsar\Compliance\Control\ControlAssessment;
 use Pulsar\Compliance\ControlCatalog;
+use Pulsar\Compliance\Evidence\AiGovernanceDrillInterface;
+use Pulsar\Compliance\Evidence\AiGovernanceRecordObserver;
+use Pulsar\Compliance\Evidence\AiMonitoringObserver;
+use Pulsar\Compliance\Evidence\AiTransparencyDrillInterface;
+use Pulsar\Compliance\Evidence\AiTransparencyObserver;
+use Pulsar\Compliance\Evidence\BackupRoundTripObserver;
 use Pulsar\Compliance\Evidence\ComplianceScope;
 use Pulsar\Compliance\Evidence\ControlEvidenceGatherer;
 use Pulsar\Compliance\Evidence\DatabaseTlsObserver;
 use Pulsar\Compliance\Evidence\EvidenceSourceInterface;
+use Pulsar\Compliance\Evidence\IncidentRegisterObserver;
+use Pulsar\Compliance\Evidence\PersonalDataSealObserver;
+use Pulsar\Compliance\Evidence\PseudonymizationObserver;
 use Pulsar\Compliance\Evidence\ResolvedBindings;
 use Pulsar\Compliance\Evidence\RouteInventory;
+use Pulsar\Compliance\Evidence\SessionSealObserver;
 use Pulsar\Compliance\Evidence\TokenVaultObserver;
 use Pulsar\Compliance\Frameworks\AiActMapping;
 use Pulsar\Compliance\Frameworks\CcpaMapping;
@@ -46,13 +56,20 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Resilience\Backup\BackupDestination;
+use Pulsar\Resilience\Backup\BackupServiceInterface;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Compliance\Pseudonymization\ForgetServiceInterface;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymizationServiceInterface;
 use Pulsar\Security\Crypto\CipherSuiteInterface;
+use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Crypto\TokenizationServiceInterface;
 use Pulsar\Security\Crypto\TokenStoreInterface;
+use Pulsar\Security\Incident\IncidentReporterInterface;
 use Pulsar\Security\Posture\SecurityPostureReport;
+use Pulsar\Security\Session\SessionEncryption;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Throwable;
@@ -66,8 +83,8 @@ use function is_object;
  * Three bindings, and NONE of them builds anything during boot:
  *
  *  - {@see ControlCatalog} is bound as a lazy singleton holding one deferred
- *    source, {@see declarations()}. The sixteen mapping classes are not
- *    autoloaded and not one of the 193 declarations is constructed until
+ *    source, {@see declarations()}. The seventeen mapping classes are not
+ *    autoloaded and not one of the 215 declarations is constructed until
  *    something reads the catalog, which only `compliance:report` and the
  *    `compliance:check` gate ever do.
  *  - {@see ControlAssessment} is lazy for the same reason and is equally inert
@@ -95,9 +112,13 @@ use function is_object;
  * that enable no compliance framework at all, for a structure no request reads.
  * What is left is four container bindings and no work.
  *
- * The cost did not vanish, it moved: the first read builds 193 declarations in
+ * The cost did not vanish, it moved: the first read builds every declaration in
  * 0.36 ms warm and 75 ms cold (the mapping classes are autoloaded there), once
- * per `compliance:report` or `compliance:check` run.
+ * per `compliance:report` or `compliance:check` run. Both timings were taken over
+ * the 193 declarations of sixteen mappings; the catalog holds 215 from seventeen
+ * since the EU AI Act mapping landed, so they are a floor. They are left as
+ * measured rather than scaled by arithmetic nobody ran, which is the same rule
+ * this subsystem applies to a compliance status.
  *
  * Nothing stays eager. There is no boot-time consumer to keep eager FOR: the
  * request path never touches the catalog, and the boot-time compliance behaviour
@@ -121,10 +142,28 @@ use function is_object;
  *
  * Gathering also has cost and side effects: it opens a database session and
  * queries it, it EXECUTES every registered health check, it recomputes one HMAC
- * per stored evidence record, and it tokenizes one synthetic value through the
- * live token vault and removes it again — the only write in the evidence set,
- * and the only thing that tells a vault that works from one that merely
- * resolves ({@see TokenVaultObserver}). None of that belongs in a request boot.
+ * per stored evidence record, it tokenizes one synthetic value through the live
+ * token vault and removes it again ({@see TokenVaultObserver}), and it declares
+ * one reserved Article 50 surface and mints a synthetic-content mark through the
+ * live transparency subsystem ({@see AiTransparencyObserver}). It also
+ * pseudonymises a synthetic identifier and erases it again
+ * ({@see PseudonymizationObserver}) and records one Low-severity incident it
+ * cannot take back ({@see IncidentRegisterObserver}). It registers one reserved AI
+ * model, opens an impact assessment against it, writes one data quality report and
+ * one explanation, and reads each back through a SECOND store instance
+ * ({@see AiGovernanceRecordObserver}); and it runs every registered monitoring hook
+ * against that model, reads the retained results back the same way, and then
+ * disposes of exactly the records it wrote ({@see AiMonitoringObserver}). Those six
+ * are the writes in the evidence set, and each is the only thing that tells a
+ * subsystem that works from one that merely resolves. None of that belongs in a
+ * request boot.
+ *
+ * TWO OBSERVERS COST WITHOUT WRITING, and they are named here so the list above
+ * is not read as the whole of what runs: {@see SessionSealObserver} seals and
+ * opens a synthetic session payload four times over, and
+ * {@see PersonalDataSealObserver} seals a synthetic personal-data field twice and
+ * opens it twice. Both work on at-rest forms the subsystem RETURNS, so nothing is
+ * persisted and there is no cleanup that can fail.
  *
  * @see \Pulsar\Compliance\Evidence\ControlEvidenceGatherer
  */
@@ -168,6 +207,11 @@ final readonly class ComplianceCatalogWiring implements ServiceWiringInterface
         'Pulsar\DataProtection\Dsar\DsarStoreInterface',
         'Pulsar\DataProtection\RetentionPolicyInterface',
         'Pulsar\Security\Compliance\Pseudonymization\PseudonymizationServiceInterface',
+        // The mapping table under that service, observed as its own fact. The
+        // service and the table fail differently and neither substitutes for the
+        // other: the service is what replaces an identifier, the table is what
+        // makes the replacement survive the request that made it.
+        'Pulsar\Security\Compliance\Pseudonymization\PseudonymLookupInterface',
         'Pulsar\Observability\Tracing\SpanProcessorInterface',
         ControlEvidenceGatherer::BACKUP_SERVICE_CONTRACT,
         'Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface',
@@ -178,6 +222,12 @@ final readonly class ComplianceCatalogWiring implements ServiceWiringInterface
         'Pulsar\Extension\AiGovernance\Contracts\AiLifecycleManagerInterface',
         'Pulsar\Extension\AiGovernance\Contracts\DeploymentGateInterface',
         'Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface',
+        // Absent from this list until now, which made `ai_transparency_resolved`
+        // structurally unreachable: nothing resolved the contract, so the fact read
+        // "nothing answered AiTransparencyInterface" against containers that had
+        // bound it, and ai-act-art-50-capability could reach neither outcome for a
+        // reason that was an omission here rather than a property of any deployment.
+        'Pulsar\Extension\AiGovernance\Contracts\AiTransparencyInterface',
     ];
 
     #[Override]
@@ -235,7 +285,7 @@ final readonly class ComplianceCatalogWiring implements ServiceWiringInterface
      *
      * The catalog's deferred source. Nothing calls this during boot: it runs at
      * the catalog's first read, and it is the single most expensive thing this
-     * wiring can do — the sixteen mapping classes below are autoloaded here and
+     * wiring can do — the seventeen mapping classes below are autoloaded here and
      * nowhere else, and each returns its declarations with their probes already
      * constructed.
      *
@@ -304,7 +354,7 @@ final readonly class ComplianceCatalogWiring implements ServiceWiringInterface
             // deployment encrypts with. Neither question can be answered by has().
             runtimeChecks: $profile === null ? [] : new RuntimeVerifier(
                 profile: $profile,
-                sessionEncryptionActive: $container->has('Pulsar\Security\Session\SessionEncryption'),
+                sessionEncryptionActive: $container->has(SessionEncryption::class),
                 masterKey: $container->has(MasterKey::class)
                     ? $container->get(MasterKey::class)
                     : null,
@@ -322,6 +372,34 @@ final readonly class ComplianceCatalogWiring implements ServiceWiringInterface
             databaseTls: $observer,
             routes: new RouteInventory($router->routes()),
             tokenVault: new TokenVaultObserver(
+                $container->has(Randomizer::class)
+                    ? $container->get(Randomizer::class)
+                    : new Randomizer(new Secure()),
+            ),
+            aiTransparency: new AiTransparencyObserver(),
+            aiGovernanceRecords: new AiGovernanceRecordObserver(),
+            aiMonitoring: new AiMonitoringObserver(),
+            sessionSeal: new SessionSealObserver(
+                $container->has(Randomizer::class)
+                    ? $container->get(Randomizer::class)
+                    : new Randomizer(new Secure()),
+            ),
+            pseudonymization: new PseudonymizationObserver(
+                $container->has(Randomizer::class)
+                    ? $container->get(Randomizer::class)
+                    : new Randomizer(new Secure()),
+            ),
+            incidentRegister: new IncidentRegisterObserver(
+                $container->has(Randomizer::class)
+                    ? $container->get(Randomizer::class)
+                    : new Randomizer(new Secure()),
+            ),
+            personalDataSeal: new PersonalDataSealObserver(
+                $container->has(Randomizer::class)
+                    ? $container->get(Randomizer::class)
+                    : new Randomizer(new Secure()),
+            ),
+            backupRoundTrip: new BackupRoundTripObserver(
                 $container->has(Randomizer::class)
                     ? $container->get(Randomizer::class)
                     : new Randomizer(new Secure()),
@@ -353,6 +431,94 @@ final readonly class ComplianceCatalogWiring implements ServiceWiringInterface
                 : null,
             tokenStore: $container->has(TokenStoreInterface::class)
                 ? $container->get(TokenStoreInterface::class)
+                : null,
+            // The Article 50 seam, and null when no extension answered it. The
+            // ai-governance package is trust tier `verified` and kind `product`, so
+            // it does not load unless an operator enabled it; a deployment without
+            // it must produce an ABSENT transparency fact rather than a false one,
+            // and that is what handing null over does.
+            transparencyDrill: $container->has(AiTransparencyDrillInterface::class)
+                ? $container->get(AiTransparencyDrillInterface::class)
+                : null,
+            // The seam over the AI governance RECORD and its monitoring, and null
+            // when no extension answered it. Same shape and same reason as the
+            // transparency drill above: the package is optional, so a deployment
+            // without it produces ABSENT facts rather than false ones. It reaches
+            // the stores an application's own models are registered in, which is
+            // what lets the report tell a store that retains from one that
+            // remembers without knowing any class's name.
+            governanceDrill: $container->has(AiGovernanceDrillInterface::class)
+                ? $container->get(AiGovernanceDrillInterface::class)
+                : null,
+            // THE SAME OBJECT THE SESSION MANAGER HOLDS, and that is the whole
+            // value of resolving it here rather than building one. SecurityWiring
+            // constructs exactly one SessionEncryption, binds it under this id and
+            // passes that instance to the SessionManager it constructs in the same
+            // block, so what SessionSealObserver seals a payload with is the cipher
+            // in the write path — not an equivalent one built for the report, which
+            // would measure this deployment's libsodium and nothing else about it.
+            // Resolved by the concrete id rather than by the published contract
+            // because that is the id SecurityWiring binds; the contract exists so
+            // Compliance can HOLD the thing, not to add a second binding.
+            sessionCipher: $container->has(SessionEncryption::class)
+                ? $container->get(SessionEncryption::class)
+                : null,
+            // THE SAME ENCRYPTOR EVERY CLASSIFIED FIELD IS SEALED WITH, and
+            // resolved by the published contract rather than by the concrete class
+            // for the reason the session cipher is resolved by its concrete id:
+            // this is the id SecurityWiring binds an application may override, and
+            // an application that binds its own EncryptorInterface is exactly the
+            // deployment whose at-rest protection has to be measured rather than
+            // assumed. Null when PULSAR_MASTER_KEY never loaded, which makes the
+            // fact ABSENT — the whole crypto block is skipped without a key, so
+            // there is nothing sealing anything.
+            encryptor: $container->has(EncryptorInterface::class)
+                ? $container->get(EncryptorInterface::class)
+                : null,
+            // Pseudonymisation, in both halves, and separately for the reason the
+            // vault's two halves are separate: the step that ERASES is the control
+            // Art 17 names, and taking it from the service that minted the mapping
+            // would let a deployment evidence erasure with a service that only says
+            // it erased. SecurityWiring binds both in the same block — a deployment
+            // has both or neither — but "in practice they arrive together" is not a
+            // thing the gatherer should have to assume, and a deployment that
+            // overrides one is expressible.
+            //
+            // The service binding is a deferred singleton because its constructor
+            // derives a subkey; resolving it here is what makes that derivation
+            // happen, which is correct — the report is exactly the moment the
+            // deployment's pseudonymisation is supposed to be exercised.
+            pseudonymizer: $container->has(PseudonymizationServiceInterface::class)
+                ? $container->get(PseudonymizationServiceInterface::class)
+                : null,
+            forgetService: $container->has(ForgetServiceInterface::class)
+                ? $container->get(ForgetServiceInterface::class)
+                : null,
+            // The register that receives incidents from the threat-detection
+            // engine, the audit anomaly detector, the access-pattern monitor and
+            // the break-the-glass middleware. It is the one the application would
+            // write a real breach into, which is the only register whose behaviour
+            // says anything about a notification deadline.
+            incidentReporter: $container->has(IncidentReporterInterface::class)
+                ? $container->get(IncidentReporterInterface::class)
+                : null,
+            // THE SERVICE THAT WOULD TAKE THIS DEPLOYMENT'S BACKUPS, and the
+            // directory its archives actually land in. Both are resolved rather
+            // than constructed, and that is the whole value: a round trip against
+            // a service the report built for itself, writing to a temporary
+            // directory, would establish that libsodium works — the mistake
+            // ADR-0061 removed — while an unwritable backup destination or a
+            // deployment that never bound the primitive would still read clean.
+            //
+            // Null when PULSAR_MASTER_KEY never loaded. BackupWiring binds nothing
+            // in that case rather than writing an unsealed archive, and the
+            // round-trip fact is then ABSENT, which fails the three recovery
+            // controls exactly as it should.
+            backupService: $container->has(BackupServiceInterface::class)
+                ? $container->get(BackupServiceInterface::class)
+                : null,
+            backupDestination: $container->has(BackupDestination::class)
+                ? $container->get(BackupDestination::class)
                 : null,
         );
     }

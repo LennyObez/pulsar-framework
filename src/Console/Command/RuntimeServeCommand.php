@@ -13,6 +13,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Runtime\Exception\RuntimeException;
 use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeCollectorInterface;
 use Pulsar\Runtime\RuntimeResolver;
@@ -54,7 +55,7 @@ final class RuntimeServeCommand extends Command
         $this->addOption('max-requests', 'Maximum requests before recycling');
         $this->addOption('memory', 'Memory threshold in MB');
         $this->addOption('timeout', 'Time limit in seconds');
-        $this->addOption('concurrency', 'Fiber concurrency (0 = synchronous)');
+        $this->addOption('concurrency', 'Fiber concurrency: 0 (synchronous) or 1. Higher is refused');
         $this->addOption('public', 'Allow binding to non-loopback address');
         $this->addOption('runtime', 'Runtime type (fpm, persistent, frankenphp, roadrunner)');
     }
@@ -76,6 +77,16 @@ final class RuntimeServeCommand extends Command
                 'The "sockets" PHP extension is required for the persistent runtime. '
                 . 'Install or enable it in php.ini.',
             );
+
+            return ExitCode::Error->value;
+        }
+
+        // The persistent runtime refuses to isolate interleaved requests, so it
+        // refuses to interleave them. Reported here as a command error rather
+        // than an uncaught exception from the runtime constructor, which is the
+        // authoritative guard — see PersistentRuntime's class docblock.
+        if ($runtimeType === RuntimeType::Persistent && $config->fiberConcurrency > 1) {
+            $output->error(RuntimeException::unsafeFiberConcurrency($config->fiberConcurrency)->getMessage());
 
             return ExitCode::Error->value;
         }
@@ -127,6 +138,18 @@ final class RuntimeServeCommand extends Command
         return ExitCode::Success->value;
     }
 
+    /**
+     * Apply the command-line overrides on top of the configured runtime.
+     *
+     * Every field the DTO carries is either overridden from an option or copied
+     * from the base config. Rebuilding it while omitting a field does not leave
+     * that field alone — it silently reinstates the constructor default, so a
+     * `drain_timeout_seconds` of 90 became 30 the moment `runtime:serve` ran,
+     * and the operator had no way to see it happen. `driver`,
+     * `drainTimeoutSeconds`, `healthEndpoint` and `unknownKeys` are copied here
+     * for that reason; `unknownKeys` because a rebuilt config that reports no
+     * unknown keys tells the ADR-0036 sweep the file was clean when it was not.
+     */
     private function resolveConfig(InputInterface $input): RuntimeConfig
     {
         $base = $this->runtimeConfig ?? new RuntimeConfig();
@@ -145,6 +168,10 @@ final class RuntimeServeCommand extends Command
             maxHeaderSize: $base->maxHeaderSize,
             maxBodySize: $base->maxBodySize,
             addDateHeader: $base->addDateHeader,
+            driver: $base->driver,
+            drainTimeoutSeconds: $base->drainTimeoutSeconds,
+            healthEndpoint: $base->healthEndpoint,
+            unknownKeys: $base->unknownKeys,
         );
     }
 

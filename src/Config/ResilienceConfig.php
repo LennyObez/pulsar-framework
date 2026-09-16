@@ -17,13 +17,21 @@ use Pulsar\Api\Api;
 final readonly class ResilienceConfig implements ReportsUnknownKeys
 {
     /** Keys recognised in config/resilience.php. */
-    private const array KNOWN_KEYS = ['enabled', 'circuit_breaker', 'retry', 'health_check'];
+    private const array KNOWN_KEYS = ['enabled', 'circuit_breaker', 'retry', 'health_check', 'backup'];
 
+    /**
+     * @param bool $enabled Gates the circuit breakers, retry policies and health
+     *        checks below. It deliberately does NOT gate {@see $backup}: recovery
+     *        is not a resilience feature a deployment opts into, and
+     *        {@see \Pulsar\Core\Wiring\BackupWiring} reads `backup.enabled`
+     *        directly for the reason {@see BackupConfig} states.
+     */
     public function __construct(
         public bool $enabled = false,
         public RetryConfig $retry = new RetryConfig(),
         public CircuitBreakerConfig $circuitBreaker = new CircuitBreakerConfig(),
         public HealthCheckConfig $healthCheck = new HealthCheckConfig(),
+        public BackupConfig $backup = new BackupConfig(),
         /** @var list<string> */
         public array $unknownKeys = [],
     ) {}
@@ -42,6 +50,7 @@ final readonly class ResilienceConfig implements ReportsUnknownKeys
      *     retry?: array<string, mixed>,
      *     circuit_breaker?: array<string, mixed>,
      *     health_check?: array<string, mixed>,
+     *     backup?: array<string, mixed>,
      * } $data Raw array from config/resilience.php
      */
     #[NoDiscard]
@@ -54,17 +63,20 @@ final readonly class ResilienceConfig implements ReportsUnknownKeys
         $retry = RetryConfig::fromArray($data['retry'] ?? []);
         $circuitBreaker = CircuitBreakerConfig::fromArray($data['circuit_breaker'] ?? []);
         $healthCheck = HealthCheckConfig::fromArray($data['health_check'] ?? []);
+        $backup = BackupConfig::fromArray($data['backup'] ?? [], $environment);
 
         return new self(
             enabled: $enabled,
             retry: $retry,
             circuitBreaker: $circuitBreaker,
             healthCheck: $healthCheck,
+            backup: $backup,
             unknownKeys: [
                 ...UnknownKeys::collect($data, self::KNOWN_KEYS),
                 ...UnknownKeys::nested('retry', $retry),
                 ...UnknownKeys::nested('circuit_breaker', $circuitBreaker),
                 ...UnknownKeys::nested('health_check', $healthCheck),
+                ...UnknownKeys::nested('backup', $backup),
             ],
         );
     }

@@ -11,7 +11,6 @@ use Pulsar\Database\Cache\QueryCacheConfig;
 use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Failover\FailoverConfig;
 use Pulsar\Database\Monitor\MonitorConfig;
-use Pulsar\Database\Pool\PoolConfig;
 use Pulsar\Database\Routing\ReadWriteConfig;
 use Pulsar\Database\Schema\SchemaException;
 use Pulsar\Database\Schema\SchemaIdentifier;
@@ -22,6 +21,14 @@ use function sprintf;
  * Top-level typed configuration DTO for `config/database.php`.
  *
  * Composes per-connection DTOs and migration settings.
+ *
+ * There is no `pool` section. `config/database.php` carried one until
+ * 1.0.0-rc.12, parsed into a {@see \Pulsar\Database\Pool\PoolConfig} that nothing
+ * ever read: no wiring built a {@see \Pulsar\Database\Pool\ConnectionPool}, on any
+ * runtime, so every value in it — `max_connections` included — governed nothing while
+ * looking like a tuning knob an operator could size their database around. The pool
+ * itself is still shipped and still works; an application that wants one constructs it,
+ * which is now the only way the settings can take effect. See `docs/database.md`.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -29,7 +36,7 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
 {
     /** Keys recognised in config/database.php. */
     private const array KNOWN_KEYS = [
-        'default', 'connections', 'read_write', 'pool', 'query_cache', 'migrations', 'failover', 'monitor',
+        'default', 'connections', 'read_write', 'query_cache', 'migrations', 'failover', 'monitor',
     ];
 
     /** Keys read from the `migrations` sub-array, which has no DTO of its own. */
@@ -43,7 +50,6 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
         public array $connections,
         public string $migrationsTable,
         public string $migrationsPath,
-        public PoolConfig $pool = new PoolConfig(),
         public ReadWriteConfig $readWrite = new ReadWriteConfig(),
         public FailoverConfig $failover = new FailoverConfig(),
         public QueryCacheConfig $queryCache = new QueryCacheConfig(),
@@ -67,7 +73,6 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
      *     default?: string,
      *     connections?: array<string, array<string, mixed>>,
      *     migrations?: array{table?: string, path?: string},
-     *     pool?: array<string, mixed>,
      *     read_write?: array<string, mixed>,
      *     failover?: array<string, mixed>,
      *     query_cache?: array<string, mixed>,
@@ -103,13 +108,11 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
             );
         }
 
-        $poolData = $data['pool'] ?? [];
         $readWriteData = $data['read_write'] ?? [];
         $failoverData = $data['failover'] ?? [];
         $queryCacheData = $data['query_cache'] ?? [];
         $monitorData = $data['monitor'] ?? [];
 
-        $pool = $poolData !== [] ? PoolConfig::fromArray($poolData) : new PoolConfig();
         $readWrite = $readWriteData !== [] ? ReadWriteConfig::fromArray($readWriteData) : new ReadWriteConfig();
         $failover = $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig();
         $queryCache = $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig();
@@ -120,7 +123,6 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
             connections: $connections,
             migrationsTable: $migrationsTable,
             migrationsPath: $migrationsPath,
-            pool: $pool,
             readWrite: $readWrite,
             failover: $failover,
             queryCache: $queryCache,
@@ -134,7 +136,6 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
                     'migrations',
                     UnknownKeys::collect($migrationsData, self::KNOWN_MIGRATIONS_KEYS),
                 ),
-                ...UnknownKeys::nested('pool', $pool),
                 ...UnknownKeys::nested('read_write', $readWrite),
                 ...UnknownKeys::nested('failover', $failover),
                 ...UnknownKeys::nested('query_cache', $queryCache),

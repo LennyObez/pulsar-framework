@@ -16,6 +16,7 @@ use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use RuntimeException;
 
 use function count;
+use function realpath;
 use function sprintf;
 
 /**
@@ -54,10 +55,35 @@ final class BootBenchmarkKernel
      * bootstrap has already anchored the variable at the repository root, which
      * `assertWiringsRan()` covers from the other side by refusing a boot that
      * loaded a framework cache.
+     *
+     * ## Why it is resolved rather than written as `__DIR__ . '/../Fixtures/...'`
+     *
+     * Because the value does not stay here. When PULSAR_BASE_PATH is unset — which
+     * is the whole point of the anchoring above — the kernel EXPORTS the parent of
+     * this path into the process environment, and a literal `Support/../Fixtures`
+     * exports a root with `..` still in it. `MaintenanceMode` and
+     * `WritablePathGuard` both refuse a storage path containing `..`, so every
+     * later boot in the same process dies on a traversal nobody wrote. That is not
+     * hypothetical: it took out nine tests of `BundledExtensionContractTest`, which
+     * runs in a different suite, has nothing to do with benchmarks, and passed on
+     * its own the whole time.
+     *
+     * @throws RuntimeException when the fixture project is missing, because a
+     *                          benchmark with no project to boot measures nothing
      */
     public static function configPath(): string
     {
-        return __DIR__ . '/../Fixtures/BootProject/config';
+        $path = realpath(__DIR__ . '/../Fixtures/BootProject/config');
+
+        if ($path === false) {
+            throw new RuntimeException(
+                'The boot benchmark fixture project is gone: no directory at '
+                . __DIR__ . '/../Fixtures/BootProject/config. Every kernel these benchmarks '
+                . 'measure is booted against it, so there is nothing left to measure.',
+            );
+        }
+
+        return $path;
     }
 
     /**

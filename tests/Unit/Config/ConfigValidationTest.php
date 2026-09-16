@@ -71,7 +71,7 @@ final class ConfigValidationTest extends TestCase
         // Assert
         $this->expectException(MissingConfigException::class);
         $this->expectExceptionMessageIsOrContains('config/app.php');
-        $this->expectExceptionMessageIsOrContains('pulsar new:config');
+        $this->expectExceptionMessageIsOrContains('Copy the stub Pulsar ships at');
 
         // Act
         $manager->validateRequiredConfigs();
@@ -185,7 +185,36 @@ final class ConfigValidationTest extends TestCase
 
         // Assert
         self::assertStringContainsString('config/security.php', $exception->getMessage());
-        self::assertStringContainsString('pulsar new:config security', $exception->getMessage());
+        self::assertStringContainsString('Copy the stub Pulsar ships at', $exception->getMessage());
+    }
+
+    /**
+     * The recovery instruction has to survive being followed.
+     *
+     * The message used to end with "or run 'pulsar new:config security'" — a
+     * command `pulsar list` has never registered — so the single line handed to
+     * an operator whose boot had just failed pointed at a dead end. This pins
+     * the replacement to the filesystem: whatever path the message names must be
+     * a file that is really there.
+     */
+    #[Test]
+    public function theRecoveryInstructionNamesAStubThatExists(): void
+    {
+        foreach (ConfigManager::REQUIRED_CONFIGS as $required) {
+            $message = MissingConfigException::forFile($required)->getMessage();
+
+            self::assertStringNotContainsString(
+                'new:config',
+                $message,
+                'The message names a console command that does not exist',
+            );
+
+            if (preg_match('#Copy the stub Pulsar ships at (.+) into#', $message, $matches) !== 1) {
+                self::fail("No usable recovery path in: {$message}");
+            }
+
+            self::assertFileExists($matches[1], 'The stub the message names is not on disk');
+        }
     }
 
     #[Test]
@@ -207,7 +236,8 @@ final class ConfigValidationTest extends TestCase
         $exception = MissingConfigException::forFiles(['app']);
 
         // Assert -- should produce single-file format
-        self::assertStringContainsString('pulsar new:config app', $exception->getMessage());
+        self::assertStringContainsString('config/app.php', $exception->getMessage());
+        self::assertStringContainsString('Copy the stub Pulsar ships at', $exception->getMessage());
     }
 
     // ── Helpers ────────────────────────────────────────────────────────

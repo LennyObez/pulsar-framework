@@ -44,7 +44,7 @@ final class TemplateRegistryTest extends TestCase
         self::assertArrayHasKey('composer.json', $files);
 
         // Web-specific files
-        self::assertArrayHasKey('resources/views/welcome.php', $files);
+        self::assertArrayHasKey('resources/views/welcome.pulse.php', $files);
         self::assertArrayHasKey('config/security.php', $files);
     }
 
@@ -69,8 +69,44 @@ final class TemplateRegistryTest extends TestCase
     {
         $files = $this->registry->getFiles('my-app', ProjectPreset::Minimal);
 
-        self::assertArrayNotHasKey('resources/views/welcome.php', $files);
-        self::assertArrayNotHasKey('config/security.php', $files);
+        self::assertArrayNotHasKey('resources/views/welcome.pulse.php', $files);
+    }
+
+    /**
+     * `security` is one of ConfigManager::REQUIRED_CONFIGS, so a preset that
+     * omits it produces a project that cannot finish loading its own config.
+     * The Minimal preset — the one `pulsar init` uses — did exactly that, and
+     * this file used to assert the omission as if it were the intent.
+     */
+    #[Test]
+    public function everyPresetIncludesTheRequiredSecurityConfig(): void
+    {
+        foreach (ProjectPreset::cases() as $preset) {
+            $files = $this->registry->getFiles('my-app', $preset);
+
+            self::assertArrayHasKey(
+                'config/security.php',
+                $files,
+                "Preset {$preset->value} must include the required security.php",
+            );
+        }
+    }
+
+    /**
+     * Minimal serves HTML from public/index.php, so it takes the browser-facing
+     * posture: CSRF stays on unless a preset deliberately turns it off.
+     */
+    #[Test]
+    public function theMinimalPresetShipsTheBrowserFacingSecurityPosture(): void
+    {
+        $minimal = $this->registry->getFiles('my-app', ProjectPreset::Minimal)['config/security.php'];
+
+        self::assertSame(
+            $this->registry->getFiles('my-app', ProjectPreset::Web)['config/security.php'],
+            $minimal,
+            'Minimal must ship the same posture as Web, not the CSRF-off API one',
+        );
+        self::assertStringContainsString("'enabled' => true", $minimal);
     }
 
     #[Test]
@@ -94,7 +130,7 @@ final class TemplateRegistryTest extends TestCase
     {
         $files = $this->registry->getFiles('my-app', ProjectPreset::Api);
 
-        self::assertArrayNotHasKey('resources/views/welcome.php', $files);
+        self::assertArrayNotHasKey('resources/views/welcome.pulse.php', $files);
     }
 
     #[Test]
@@ -119,7 +155,7 @@ final class TemplateRegistryTest extends TestCase
         self::assertStringContainsString('ConfigManager', $indexPhp);
         // The welcome view is generated as its own file; index.php wires the
         // kernel + extensions rather than referencing the view directly.
-        self::assertArrayHasKey('resources/views/welcome.php', $files);
+        self::assertArrayHasKey('resources/views/welcome.pulse.php', $files);
     }
 
     #[Test]
@@ -228,7 +264,7 @@ final class TemplateRegistryTest extends TestCase
     {
         $files = $this->registry->getFiles('my-web-app', ProjectPreset::Web);
 
-        $welcomeView = $files['resources/views/welcome.php'];
+        $welcomeView = $files['resources/views/welcome.pulse.php'];
         self::assertStringContainsString('my-web-app', $welcomeView);
         self::assertStringContainsString('<title>', $welcomeView);
         self::assertStringContainsString('Welcome to', $welcomeView);
@@ -329,10 +365,13 @@ final class TemplateRegistryTest extends TestCase
 
             self::assertArrayHasKey('config/observability.php', $files, "Preset {$preset->value} must include observability.php");
 
+            // The level is a `logging` key. Nested under a channel it was
+            // parsed and discarded, and the log ran at the default level while
+            // the generated file appeared to set one.
             $content = $files['config/observability.php'];
-            self::assertStringContainsString('logging', $content);
+            self::assertStringContainsString("'logging' => [", $content);
             self::assertStringContainsString('app.log', $content);
-            self::assertStringContainsString('LOG_LEVEL', $content);
+            self::assertStringContainsString("'level' => 'debug'", $content);
         }
     }
 
@@ -344,9 +383,12 @@ final class TemplateRegistryTest extends TestCase
 
             self::assertArrayHasKey('config/i18n.php', $files, "Preset {$preset->value} must include i18n.php");
 
+            // Plural: I18nConfig reads `fallback_locales`, and the singular
+            // spelling this template carried was collected as unknown.
             $content = $files['config/i18n.php'];
             self::assertStringContainsString("'default_locale' => 'en'", $content);
             self::assertStringContainsString("'supported_locales'", $content);
+            self::assertStringContainsString("'fallback_locales' => ['en']", $content);
         }
     }
 
@@ -358,9 +400,11 @@ final class TemplateRegistryTest extends TestCase
 
             self::assertArrayHasKey('config/view.php', $files, "Preset {$preset->value} must include view.php");
 
+            // The key names ViewConfig actually reads. `paths`/`compiled_path`
+            // parsed fine and were discarded, leaving an empty search path.
             $content = $files['config/view.php'];
-            self::assertStringContainsString('paths', $content);
-            self::assertStringContainsString('compiled_path', $content);
+            self::assertStringContainsString("'template_paths'", $content);
+            self::assertStringContainsString("'cache_path'", $content);
         }
     }
 
@@ -372,9 +416,11 @@ final class TemplateRegistryTest extends TestCase
 
             self::assertArrayHasKey('config/cache.php', $files, "Preset {$preset->value} must include cache.php");
 
+            // CacheConfig reads enabled/default_pool/path/pools; the older
+            // `default`/`stores` pair was collected as unknown and ignored.
             $content = $files['config/cache.php'];
-            self::assertStringContainsString("'default' => 'file'", $content);
-            self::assertStringContainsString('stores', $content);
+            self::assertStringContainsString("'default_pool' => 'default'", $content);
+            self::assertStringContainsString("'pools'", $content);
         }
     }
 
@@ -386,9 +432,11 @@ final class TemplateRegistryTest extends TestCase
 
             self::assertArrayHasKey('config/mail.php', $files, "Preset {$preset->value} must include mail.php");
 
+            // MailConfig reads default_driver/default_from_address, not the
+            // `default`/`mailers`/`from` trio this template used to emit.
             $content = $files['config/mail.php'];
-            self::assertStringContainsString("'default' => 'log'", $content);
-            self::assertStringContainsString('MAIL_FROM_ADDRESS', $content);
+            self::assertStringContainsString("'default_driver' => 'log'", $content);
+            self::assertStringContainsString("'default_from_address'", $content);
         }
     }
 
@@ -413,9 +461,9 @@ final class TemplateRegistryTest extends TestCase
         $files = $this->registry->getFiles('my-app', ProjectPreset::Minimal);
 
         $content = $files['config/mail.php'];
-        self::assertStringContainsString("'log'", $content);
-        self::assertStringContainsString('MAIL_FROM_NAME', $content);
-        self::assertStringContainsString('noreply@example.com', $content);
+        self::assertStringContainsString("'default_driver' => 'log'", $content);
+        self::assertStringContainsString("'default_from_name' => 'Pulsar App'", $content);
+        self::assertStringContainsString("'default_from_address' => 'noreply@example.com'", $content);
     }
 
     #[Test]
@@ -425,6 +473,8 @@ final class TemplateRegistryTest extends TestCase
 
         $configFiles = [
             'config/app.php',
+            'config/security.php',
+            'config/extensions.php',
             'config/database.php',
             'config/observability.php',
             'config/i18n.php',

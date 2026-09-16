@@ -3,19 +3,32 @@
 declare(strict_types=1);
 
 /**
- * Benchmark runner that measures Pulsar against baseline results.
+ * Benchmark runner that measures Pulsar against a recorded baseline.
  *
- * Compares current performance against stored baselines and reports
- * regressions. Used by CI to gate PRs that degrade performance by >5%.
+ * Used by benchmark-regression.yml to gate a pull request that degrades
+ * performance by more than 5%. The baseline is recorded by that workflow from
+ * the merge base, on the runner about to do the comparing, and NOT read from a
+ * committed file: ops-per-second is a property of the machine that measured it,
+ * so a figure recorded elsewhere is hardware noise with a threshold attached.
+ * `tools/php/benchmark-baseline.json` remains the default `--baseline` path
+ * because that is where `--update-baseline` writes, and .gitignore refuses it —
+ * a committed copy of it held nothing but a `_comment` key for the whole
+ * release-candidate phase.
  *
- * Every input is validated before it is compared. This is a gate: a baseline
- * file that decoded to an unexpected shape used to flow straight into the
- * arithmetic, where a missing `ops_per_sec` reads as null, a comparison against
- * null passes, and a real regression ships. Failing loudly on a malformed
- * baseline is the only useful behaviour.
+ * Every input is validated before it is compared, and every way of comparing
+ * nothing is a refusal rather than a pass. Three of them exist:
+ *
+ *   - a baseline file that decoded to an unexpected shape used to flow straight
+ *     into the arithmetic, where a missing `ops_per_sec` reads as null and a
+ *     comparison against null passes;
+ *   - a baseline path that is not there used to print the current numbers and
+ *     exit 0, so a workflow with a typo in a path got a green check;
+ *   - a baseline that matches no benchmark — the committed placeholder, or a
+ *     baseline naming benchmarks that have since been renamed — used to print a
+ *     full table of NEW/OK and exit 0.
  *
  * Usage:
- *   php benchmarks/Comparative/RunBenchmarks.php [--baseline=tools/php/benchmark-baseline.json] [--update-baseline] [--threshold=5]
+ *   php benchmarks/Comparative/RunBenchmarks.php [--baseline=PATH] [--update-baseline] [--threshold=5]
  */
 
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -57,8 +70,11 @@ $decodeResults = static function (string $json, string $source): array {
             throw new RuntimeException("{$source} has a non-string benchmark name.");
         }
 
-        // The committed baseline carries an `_comment` key explaining how to
-        // regenerate it; underscore-prefixed keys are metadata, not measurements.
+        // Underscore-prefixed keys are metadata, not measurements. The committed
+        // baseline used to carry an `_comment` key explaining how to regenerate
+        // it, and nothing else -- which is how a document that skipped every key
+        // it held could still be read as a baseline. Skipping metadata is right;
+        // what was missing is the count asserted after the comparison loop.
         if (str_starts_with($name, '_')) {
             continue;
         }
@@ -146,10 +162,15 @@ if ($updateBaseline) {
 
 // Compare against baseline
 if (!is_file($baselinePath)) {
+    // Exit 1, not 0. This branch used to print the current numbers and report
+    // success, so a workflow whose recording step wrote the baseline somewhere
+    // else -- a renamed temp directory, a typo in the path -- got a green check
+    // from a comparison that never happened. A gate handed a baseline that is not
+    // there has verified nothing, and "nothing" is not "within threshold".
     fwrite(STDERR, "No baseline found at {$baselinePath}. Run with --update-baseline first.\n");
     echo json_encode($asBaselineDocument($currentResults), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
 
-    exit(0);
+    exit(1);
 }
 
 $baselineJson = file_get_contents($baselinePath);
@@ -167,6 +188,12 @@ $regressions = [];
 /** @var list<array{name: string, change: float}> $improvements */
 $improvements = [];
 
+// How many benchmarks were actually measured against a recorded figure. Counted
+// rather than inferred from the baseline's size, because the two differ in the
+// case that matters: a baseline full of entries under names no benchmark answers
+// to any more compares nothing while printing a full-width table.
+$compared = 0;
+
 echo "\nPerformance Comparison vs Baseline\n";
 echo str_repeat('=', 70) . "\n";
 echo sprintf("%-30s %12s %12s %8s %6s\n", 'Benchmark', 'Baseline', 'Current', 'Change', 'Status');
@@ -179,6 +206,7 @@ foreach ($currentResults as $name => $currentOps) {
         continue;
     }
 
+    ++$compared;
     $baseOps = $baseline[$name];
 
     // A zero baseline is not a 0%-change measurement, it is an unusable one:
@@ -213,6 +241,31 @@ foreach ($currentResults as $name => $currentOps) {
 }
 
 echo str_repeat('=', 70) . "\n";
+
+// A comparison in which nothing was compared is not a comparison that passed.
+//
+// tools/php/benchmark-baseline.json held nothing but its own `_comment` key for
+// the whole of the release-candidate phase. Every benchmark therefore printed
+// NEW/OK, the table looked exactly like a comparison, and the script exited 0 --
+// so benchmark-regression.yml reported a green performance check on every pull
+// request while measuring nothing at all. The count is asserted here rather than
+// inferred from the file being present and parseable, because a renamed benchmark
+// produces the identical shape, silently, on the day of the rename.
+if ($compared === 0) {
+    fwrite(STDERR, sprintf(
+        "Nothing was compared.\n\n"
+        . 'The baseline at %s named %d benchmark(s), none of which matched the %d measured on this '
+        . "run, so every row above says NEW and the exit code would have said OK.\n\n"
+        . 'Either the baseline holds no measurements -- record one with --update-baseline -- or a '
+        . 'benchmark has been renamed while the baseline still names the old one, in which case '
+        . "re-record it in the change that renames the benchmark.\n",
+        $baselinePath,
+        count($baseline),
+        count($currentResults),
+    ));
+
+    exit(1);
+}
 
 if ($regressions !== []) {
     echo "\nREGRESSIONS DETECTED (>{$threshold}% slower):\n";

@@ -78,6 +78,13 @@ final readonly class WiringList
             // this entry existed.
             new DataRetentionWiring(),
             new ResilienceWiring(),
+            // Immediately after it, because backup lives in the Resilience module —
+            // and after DatabaseWiring and SecurityWiring, which is where the
+            // connection it archives and the key provider it seals with come from.
+            // It reads `resilience.backup` rather than `resilience.enabled`: recovery
+            // is not a resilience feature a deployment opts into, and no deployment
+            // can assert that recovery does not apply to it.
+            new BackupWiring(),
             new QueueWiring(),
             new CacheWiring(),
             new FailoverWiring(),
@@ -104,6 +111,15 @@ final readonly class WiringList
             new DocumentationWiring(),
             new EdgeWiring(),
             new ProfilerWiring(),
+            // Near the end, and the position carries the whole guarantee. It wraps
+            // whatever is bound to AiClientInterface in the auditing decorator, so
+            // it must run AFTER anything that binds or decorates that id — an
+            // egress control included, because the auditor has to be outside the
+            // control to see what the control decided. It must also run after
+            // SecurityWiring, which is what binds the audit logger and key provider
+            // it demands. Before SecurityPostureWiring, so the preflight below
+            // judges the container with the audited client already in it.
+            new AiAuditWiring(),
             // Last: the security-posture preflight evaluates the fully wired
             // container (so inert security features are detected) and, when
             // enforcement is enabled in production, aborts boot.

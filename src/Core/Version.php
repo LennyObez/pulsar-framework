@@ -27,7 +27,19 @@ final class Version
     /** Pre-release suffix including the leading hyphen, or '' for stable releases. */
     public const string PRERELEASE_SUFFIX = '-rc.12';
 
-    private const string PACKAGE_NAME = 'pulsar/framework';
+    /**
+     * The Composer package name of the framework itself.
+     *
+     * The single place this repository spells its own package name. Anything that
+     * has to name it -- the runtime version lookup below, the `composer.json` that
+     * `pulsar init` writes for a new project -- derives it from here rather than
+     * restating it. It was restated once, in
+     * {@see \Pulsar\Console\Command\NewProject\ComposerJsonGenerator}, and the copy
+     * was still the pre-rename `lennyobez/pulsar` long after this one was right:
+     * every project the scaffolder produced required a package that has never
+     * existed under that name, and nothing compared the two strings.
+     */
+    public const string PACKAGE_NAME = 'pulsar/framework';
 
     /**
      * Get the full version string (e.g. "1.2.3-rc.4" or "1.2.3").
