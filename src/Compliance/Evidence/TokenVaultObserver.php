@@ -51,8 +51,16 @@ use function strlen;
  * unreadable* where it is stored (2), by *index tokens* (1) backed by *strong
  * cryptography* that its holder can still reverse (3).
  *
- * THIS MEASUREMENT WRITES, and it is the only one in the evidence set that does.
- * That is deliberate and it is bounded:
+ * THIS MEASUREMENT WRITES. It was the only one in the evidence set that did, and
+ * it is now the first of four — {@see AiTransparencyObserver} declares one
+ * reserved Article 50 surface, {@see PseudonymizationObserver} mints one mapping
+ * and erases it, and {@see IncidentRegisterObserver} records one incident it
+ * cannot take back. The shape below is the pattern the other three follow, and
+ * this one is the only one that removes what it wrote AND had somewhere to put
+ * the removal: erasure is Art 17 for the pseudonym, and an incident register that
+ * could delete a row would evidence nothing.
+ *
+ * The write is deliberate and it is bounded:
  *
  *  - the value is 32 random hex characters from the framework's CSPRNG, never a
  *    PAN and never anything derived from the deployment's data;

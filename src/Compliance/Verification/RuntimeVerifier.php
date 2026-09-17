@@ -485,12 +485,27 @@ final readonly class RuntimeVerifier
         );
     }
 
+    /**
+     * Whether this PHP build provides libsodium at all.
+     *
+     * A PASS HERE SAYS NOTHING ABOUT THIS DEPLOYMENT, and the message says so
+     * rather than leaving the reader to infer it. The old wording — "libsodium
+     * extension is loaded and operational" — was printed under nine controls
+     * across seven frameworks that the fact carried to Satisfied, and
+     * "operational" is not something `extension_loaded()` and `function_exists()`
+     * can establish: nothing is encrypted, decrypted or hashed here. The
+     * consumer now grades it {@see \Pulsar\Compliance\Control\ObservationGrade::Available}
+     * so it can carry nothing, and the sentence it prints matches the grade.
+     */
     private function checkSodiumExtension(): CheckResult
     {
         if (extension_loaded('sodium') && function_exists('sodium_crypto_generichash')) {
             return CheckResult::pass(
                 'runtime.sodium_extension',
-                'libsodium extension is loaded and operational.',
+                'This PHP build provides libsodium: ext-sodium is loaded and '
+                    . 'sodium_crypto_generichash() is defined. No cryptography was performed '
+                    . 'to establish it, and the answer would be the same on a deployment that '
+                    . 'encrypts nothing.',
                 ComplianceCheckDomain::Encryption,
                 ['extension: sodium'],
             );

@@ -145,6 +145,53 @@ final class InadmissibleEvidenceException extends LogicException
     }
 
     /**
+     * A not-applicable verdict offered a scope assertion about a different estate.
+     *
+     * The A6 defect as a refusal rather than as a convention: `DataErasureProbe`
+     * carries CCPA 1798.105, which is about personal data, and SOC 2 C1.2, which
+     * is about confidential information, and `scope.processes_personal_data =
+     * false` was retiring both. Checked on the value, beside
+     * {@see forNotApplicable()}, so a second decision table added later meets the
+     * same bar as the one in {@see ProbeVerdict::reach()}.
+     */
+    #[NoDiscard]
+    public static function forUnrelatedScope(
+        string $summary,
+        ControlSubject $control,
+        Observation $scope,
+    ): self {
+        return new self(sprintf(
+            'A verdict reached NotApplicable ("%s") for a control about %s from an operator '
+                . 'assertion about %s. Offered: %s. An assertion retires a control only when '
+                . 'what the operator put out of scope IS what the control regulates; an entity '
+                . 'that processes no personal data still holds confidential information, and '
+                . 'still has to dispose of it.',
+            $summary,
+            $control->value,
+            $scope->id->subject()->value,
+            self::describe([$scope]),
+        ));
+    }
+
+    /**
+     * A declaration was asked for the estate it regulates and has none.
+     *
+     * Only reachable for an operator-responsibility control, which carries no
+     * probe and is never assessed. Surfaced rather than defaulted: an estate
+     * invented here would go on to decide which facts may prove the control.
+     */
+    #[NoDiscard]
+    public static function forUnassessedSubject(string $id): self
+    {
+        return new self(sprintf(
+            'Control "%s" was asked which estate it regulates and declares none. Only a probed '
+                . 'declaration carries an estate, because only a probed declaration is assessed '
+                . 'against facts; a checklist item names an assessor artefact instead.',
+            $id,
+        ));
+    }
+
+    /**
      * A control that requires nothing.
      */
     #[NoDiscard]

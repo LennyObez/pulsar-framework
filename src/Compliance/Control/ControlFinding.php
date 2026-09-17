@@ -88,7 +88,11 @@ final readonly class ControlFinding
             );
         }
 
-        $verdict = ProbeVerdict::reach($probe->requirement(), $evidence);
+        // The declaration supplies the estate, the probe supplies the facts, and
+        // the engine supplies the evidence. Three sources, none of which can
+        // choose an outcome on its own: a probe cannot widen a control's estate to
+        // fit the facts it already has, and a mapping cannot name facts.
+        $verdict = ProbeVerdict::reach($probe->requirement(), $evidence, $declaration->assessedSubject());
 
         return new self(
             declaration: $declaration,

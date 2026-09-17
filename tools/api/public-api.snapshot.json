@@ -7800,6 +7800,11 @@
                     "return": "void",
                     "static": false
                 },
+                "assessedSubject": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlSubject",
+                    "static": false
+                },
                 "isProbed": {
                     "params": [],
                     "return": "bool",
@@ -7822,7 +7827,8 @@
                         "Pulsar\\Compliance\\ComplianceFramework $framework",
                         "string $title",
                         "string $requirement",
-                        "Pulsar\\Compliance\\Control\\ControlProbeInterface $probe"
+                        "Pulsar\\Compliance\\Control\\ControlProbeInterface $probe",
+                        "Pulsar\\Compliance\\Control\\ControlSubject $subject"
                     ],
                     "return": "Pulsar\\Compliance\\Control\\ControlDeclaration",
                     "static": true
@@ -8030,6 +8036,39 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\Control\\ControlSubject": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "covers": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ControlSubject $part"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\Control\\CoverageSummary": {
             "since": "1.0.0-rc.12",
             "methods": [],
@@ -8208,6 +8247,22 @@
                     "params": [
                         "string $summary",
                         "array $required"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forUnassessedSubject": {
+                    "params": [
+                        "string $id"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
+                    "static": true
+                },
+                "forUnrelatedScope": {
+                    "params": [
+                        "string $summary",
+                        "Pulsar\\Compliance\\Control\\ControlSubject $control",
+                        "Pulsar\\Compliance\\Control\\Observation $scope"
                     ],
                     "return": "Pulsar\\Compliance\\Control\\InadmissibleEvidenceException",
                     "static": true
@@ -8408,6 +8463,15 @@
                     "return": "Pulsar\\Compliance\\Control\\Observation",
                     "static": true
                 },
+                "available": {
+                    "params": [
+                        "Pulsar\\Compliance\\Control\\ObservationId $id",
+                        "Pulsar\\Compliance\\Control\\PlatformCapability $capability",
+                        "string $observedBy"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": true
+                },
                 "cite": {
                     "params": [],
                     "return": "string",
@@ -8522,11 +8586,72 @@
                     "return": "static",
                     "static": true
                 },
+                "subject": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlSubject",
+                    "static": false
+                },
                 "tryFrom": {
                     "params": [
                         "string|int $value"
                     ],
                     "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Control\\PlatformCapability": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__clone": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
+                "__set_state": {
+                    "params": [
+                        "array $state"
+                    ],
+                    "return": "never",
+                    "static": true
+                },
+                "__unserialize": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "__wakeup": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "absent": {
+                    "params": [
+                        "string $capability",
+                        "string $why"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\PlatformCapability",
+                    "static": true
+                },
+                "notInspected": {
+                    "params": [
+                        "string $capability",
+                        "string $why"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\PlatformCapability",
+                    "static": true
+                },
+                "offered": {
+                    "params": [
+                        "string $capability",
+                        "array $primitives",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\PlatformCapability",
                     "static": true
                 }
             },
@@ -8563,7 +8688,8 @@
                 "reach": {
                     "params": [
                         "Pulsar\\Compliance\\Control\\ControlRequirement $requirement",
-                        "Pulsar\\Compliance\\Control\\ControlEvidence $evidence"
+                        "Pulsar\\Compliance\\Control\\ControlEvidence $evidence",
+                        "Pulsar\\Compliance\\Control\\ControlSubject $subject"
                     ],
                     "return": "Pulsar\\Compliance\\Control\\ProbeVerdict",
                     "static": true
@@ -8671,6 +8797,13 @@
                     "return": "Pulsar\\Compliance\\Control\\UnmeasuredSubjectException",
                     "static": true
                 },
+                "nothingNamed": {
+                    "params": [
+                        "string $capability"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\UnmeasuredSubjectException",
+                    "static": true
+                },
                 "nothingRan": {
                     "params": [
                         "string $subject"
@@ -8692,6 +8825,196 @@
                     ],
                     "return": "Pulsar\\Compliance\\DuplicateControlException",
                     "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\AiGovernanceDrillInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "configuredStores": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "openAssessment": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "purgeRetainedMonitoring": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "int",
+                    "static": false
+                },
+                "readAssessmentBack": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "readExplanationBack": {
+                    "params": [
+                        "string $decisionId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "readModelBack": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "readQualityReportBack": {
+                    "params": [
+                        "string $datasetId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "readRetainedMonitoringBack": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "recordExplanation": {
+                    "params": [
+                        "string $decisionId",
+                        "string $modelId",
+                        "string $summary",
+                        "float $confidence",
+                        "int $generatedAt",
+                        "string $factorName",
+                        "float $factorWeight",
+                        "string $factorDescription"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "recordModel": {
+                    "params": [
+                        "string $modelId",
+                        "string $name",
+                        "string $version",
+                        "string $provider",
+                        "string $type",
+                        "string $riskLevel",
+                        "string $status",
+                        "int $registeredAt"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "recordQualityReport": {
+                    "params": [
+                        "string $datasetId",
+                        "int $assessedAt",
+                        "float $completeness",
+                        "float $accuracy",
+                        "float $consistency",
+                        "int $totalRecords",
+                        "int $invalidRecords"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "runMonitoring": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\AiGovernanceRecordObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Compliance\\Evidence\\AiGovernanceDrillInterface $drill"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\AiMonitoringObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Compliance\\Evidence\\AiGovernanceDrillInterface $drill"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\AiTransparencyDrillInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "declareSurface": {
+                    "params": [
+                        "string $surfaceId",
+                        "string $notice",
+                        "string $locale",
+                        "string $kind"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "declaredSurfaces": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "mark": {
+                    "params": [
+                        "string $surfaceId",
+                        "string $kind",
+                        "string $modelId",
+                        "int $generatedAt"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "policyFor": {
+                    "params": [
+                        "string $surfaceId"
+                    ],
+                    "return": "?array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\AiTransparencyObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Compliance\\Evidence\\AiTransparencyDrillInterface $transparency"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
                 }
             },
             "constants": []
@@ -9231,6 +9554,70 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\Evidence\\IncidentRegisterObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Random\\Randomizer $randomizer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Security\\Incident\\IncidentReporterInterface $register"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\PersonalDataSealObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Random\\Randomizer $randomizer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Security\\Crypto\\EncryptorInterface $encryptor"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\PseudonymizationObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Random\\Randomizer $randomizer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymizationServiceInterface $service",
+                        "?Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetServiceInterface $erasure"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\Evidence\\ResolvedBindings": {
             "since": "1.0.0-rc.12",
             "methods": [],
@@ -9283,6 +9670,27 @@
                 "observe": {
                     "params": [
                         "Pulsar\\Compliance\\Verification\\DataPathVerifier $verifier"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Evidence\\SessionSealObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Random\\Randomizer $randomizer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Security\\Session\\SessionPayloadCipherInterface $cipher"
                     ],
                     "return": "Pulsar\\Compliance\\Control\\Observation",
                     "static": false
@@ -10578,6 +10986,20 @@
                     "params": [],
                     "return": "Pulsar\\Compliance\\Verification\\ComplianceVerificationEngine",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Compliance\\Verification\\ConcurrentEvidenceAppendException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "refusingToInterleave": {
+                    "params": [
+                        "int $position"
+                    ],
+                    "return": "Pulsar\\Compliance\\Verification\\ConcurrentEvidenceAppendException",
+                    "static": true
                 }
             },
             "constants": []

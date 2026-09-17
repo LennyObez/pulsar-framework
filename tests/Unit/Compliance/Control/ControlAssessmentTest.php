@@ -13,6 +13,7 @@ use Pulsar\Compliance\Control\ControlDeclaration;
 use Pulsar\Compliance\Control\ControlEvidence;
 use Pulsar\Compliance\Control\ControlFinding;
 use Pulsar\Compliance\Control\ControlOutcome;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Control\CoverageSummary;
 use Pulsar\Compliance\Control\ObservationGrade;
 use Pulsar\Compliance\Control\ObservationId;
@@ -200,6 +201,7 @@ final class ControlAssessmentTest extends TestCase
                 title: 'PAN at rest',
                 requirement: 'Render PAN unreadable anywhere it is stored.',
                 probe: new PanAtRestProbe(),
+                subject: ControlSubject::CardholderData,
             ),
             ControlDeclaration::probed(
                 id: 'probed-gap',
@@ -207,6 +209,7 @@ final class ControlAssessmentTest extends TestCase
                 title: 'Recovery',
                 requirement: 'Restoration activities are performed.',
                 probe: new RecoveryCapabilityProbe(),
+                subject: ControlSubject::BusinessContinuity,
             ),
             ControlDeclaration::probed(
                 id: 'probed-crypto',
@@ -214,6 +217,7 @@ final class ControlAssessmentTest extends TestCase
                 title: 'Cryptography',
                 requirement: 'Rules for the effective use of cryptography shall be implemented.',
                 probe: new CryptographicControlProbe(),
+                subject: ControlSubject::CryptographicPlatform,
             ),
             ControlDeclaration::operatorResponsibility(
                 id: 'operator',
@@ -272,9 +276,20 @@ final class ControlAssessmentTest extends TestCase
                 // in noControlIsSatisfiedByResolvedIdentityAlone() below, and useless
                 // as the baseline for the arithmetic.
                 $isScope ? ObservationGrade::Asserted : ObservationGrade::Measured,
-                // The backup contract is the one fact nothing can supply, so it
-                // stays absent and gives the fixture a genuine gap to count.
-                $id === ObservationId::BackupPrimitiveResolved || in_array($id, $absent, true)
+                // Recovery is the control this fixture keeps as a genuine gap, and
+                // the fact that decides it is the ROUND TRIP -- a real archive
+                // sealed, refused when altered, and restored. `probed-gap` above
+                // runs RecoveryCapabilityProbe, which required
+                // `backup_primitive_resolved` until the primitive existed and now
+                // requires `backup_round_trip_verified`; leaving only the resolved
+                // fact absent would leave the control SATISFIED off the round trip
+                // this fixture marks Measured, and the catalogue would count two
+                // satisfied controls instead of the one the arithmetic below is
+                // about. Both are absent, which is also what a deployment with no
+                // backup primitive actually reports.
+                $id === ObservationId::BackupRoundTripVerified
+                || $id === ObservationId::BackupPrimitiveResolved
+                || in_array($id, $absent, true)
                     ? false
                     : ($isScope ? $inScope : $present),
                 'a fact under test',

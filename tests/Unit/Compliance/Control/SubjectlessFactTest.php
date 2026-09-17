@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Compliance\Control\ControlOutcome;
 use Pulsar\Compliance\Control\ControlRequirement;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Control\InadmissibleEvidenceException;
 use Pulsar\Compliance\Control\ObservationGrade;
 use Pulsar\Compliance\Control\ObservationId;
@@ -54,6 +55,7 @@ final class SubjectlessFactTest extends TestCase
             EvidenceFixture::nothingObservedWithNoSubjectFor(
                 ObservationId::DatabaseTransportEncrypted,
             )->gather(),
+            ControlSubject::DataInTransit,
         );
 
         self::assertSame(ControlOutcome::NotApplicable, $verdict->outcome);
@@ -80,6 +82,7 @@ final class SubjectlessFactTest extends TestCase
             EvidenceFixture::everythingObservedWithNoSubjectFor(
                 ObservationId::DatabaseTransportEncrypted,
             )->gather(),
+            ControlSubject::DataInTransit,
         );
 
         self::assertSame(ControlOutcome::NotApplicable, $verdict->outcome);
@@ -98,6 +101,10 @@ final class SubjectlessFactTest extends TestCase
             EvidenceFixture::everythingObservedWithNoSubjectFor(
                 ObservationId::DatabaseTransportEncrypted,
             )->gather(),
+            // The live requirement is the platform capability, so that is the
+            // estate the control has to be about; the subjectless neighbour is
+            // dropped before the estate join is ever consulted.
+            ControlSubject::CryptographicPlatform,
         );
 
         self::assertSame(
@@ -129,6 +136,7 @@ final class SubjectlessFactTest extends TestCase
             EvidenceFixture::nothingObservedWithNoSubjectFor(
                 ObservationId::DatabaseTransportEncrypted,
             )->gather(),
+            ControlSubject::DataInTransit,
         );
 
         self::assertSame(ControlOutcome::Unsatisfied, $verdict->outcome);

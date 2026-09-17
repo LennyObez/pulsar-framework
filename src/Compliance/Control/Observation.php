@@ -44,6 +44,11 @@ use Pulsar\Api\Api;
  *  - {@see measured()}  takes a {@see Measurement}, which cannot exist without
  *                       naming at least one subject that ran. The only grade that
  *                       proves behaviour.
+ *  - {@see available()} takes a {@see PlatformCapability}, which reads what the
+ *                       platform underneath the process offers and cannot exist
+ *                       without naming a primitive that answered. CONTEXT: the
+ *                       answer is identical on a deployment that uses the
+ *                       primitive and on one that never touches it.
  *  - {@see resolved()}  takes a {@see ContractResolution}, which reads the class
  *                       that answered and matches it against an accept list.
  *                       CONTEXT, not proof; see {@see ObservationGrade::provesBehaviour()}.
@@ -127,6 +132,42 @@ final readonly class Observation
             ObservationGrade::Measured,
             $measurement->succeeded(),
             $measurement->detail,
+            $observedBy,
+        );
+    }
+
+    /**
+     * A capability the platform offers, which nothing here was seen using.
+     *
+     * Grade {@see ObservationGrade::Available}, and present only when the platform
+     * was asked and named at least one primitive that answered. NOT PROOF, and the
+     * distance from proof is larger than it looks: the same answer comes back on a
+     * deployment that encrypts every field and on one that encrypts nothing, so
+     * the fact cannot discriminate between the two deployments a control is asked
+     * to tell apart. It reached this factory from
+     * {@see ObservationGrade::Measured}, where it satisfied nine controls across
+     * seven frameworks on `extension_loaded('sodium')` alone.
+     *
+     * What it is still worth publishing: an assessor reading "libsodium is loaded
+     * and sodium_crypto_generichash answers" learns that the gap is not a missing
+     * build, which is a different remediation from the one a missing extension
+     * needs. It is context, printed with its grade beside it.
+     *
+     * @param class-string $observedBy
+     *
+     * @throws InadmissibleEvidenceException when the caller is not the component
+     *         that measures this deployment
+     */
+    #[NoDiscard]
+    public static function available(ObservationId $id, PlatformCapability $capability, string $observedBy): self
+    {
+        MeasuringComponent::assertProducing(self::class, __FUNCTION__);
+
+        return new self(
+            $id,
+            ObservationGrade::Available,
+            $capability->offered,
+            $capability->detail,
             $observedBy,
         );
     }

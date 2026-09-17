@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
 use Pulsar\Compliance\Control\ControlProbeInterface;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\PanAtRestProbe;
 use ReflectionClass;
 use ReflectionNamedType;
@@ -94,6 +95,7 @@ final class ControlDeclarationTest extends TestCase
             title: 'Render PAN Unreadable',
             requirement: 'Render PAN unreadable anywhere it is stored.',
             probe: new PanAtRestProbe(),
+            subject: ControlSubject::CardholderData,
         );
 
         self::assertTrue($declaration->isProbed());

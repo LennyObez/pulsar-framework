@@ -11,15 +11,16 @@ use Pulsar\Api\Api;
 use function sprintf;
 
 /**
- * Thrown when something claims to have measured or inspected nothing.
+ * Thrown when something claims to have measured, inspected or found nothing.
  *
  * {@see ObservationGrade::Measured} is the only grade that can carry a control to
  * Satisfied, so the material behind it is checked rather than trusted — and the
- * same check is kept over {@see ObservationGrade::Resolved}, which decides nothing
- * any more but is still printed for an assessor to read. A {@see Measurement} with
- * no executed subject and an {@see Inspection} whose population is empty are the
- * same mistake: a conclusion drawn over nothing, which reads in a report exactly
- * like a conclusion drawn over everything.
+ * same check is kept over {@see ObservationGrade::Resolved} and
+ * {@see ObservationGrade::Available}, which decide nothing any more but are still
+ * printed for an assessor to read. A {@see Measurement} with no executed subject,
+ * an {@see Inspection} whose population is empty and a {@see PlatformCapability}
+ * that names no primitive are the same mistake: a conclusion drawn over nothing,
+ * which reads in a report exactly like a conclusion drawn over everything.
  *
  * A LogicException on purpose. Reaching here is a defect in the code that gathers
  * facts, never a property of the deployment being assessed, and printing it as a
@@ -57,6 +58,23 @@ final class UnmeasuredSubjectException extends LogicException
                 . 'coverage of a real estate. Report it with Inspection::nothingToInspect(), which '
                 . 'observes absent and says why.',
             $population,
+        ));
+    }
+
+    /**
+     * @param string $capability
+     */
+    #[NoDiscard]
+    public static function nothingNamed(string $capability): self
+    {
+        return new self(sprintf(
+            'The platform was reported as offering "%s" without naming one primitive that '
+                . 'answered. Grade %s already claims nothing was exercised; a capability that '
+                . 'additionally names nothing found claims nothing at all, and prints in the '
+                . 'report exactly like a platform that was inspected. Report it with '
+                . 'PlatformCapability::absent() or ::notInspected(), which observe absent.',
+            $capability,
+            ObservationGrade::Available->value,
         ));
     }
 }

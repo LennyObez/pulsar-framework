@@ -50,6 +50,12 @@ final readonly class ReportVocabulary
      * subject does not exist has a grade the reader must not be shown, because it
      * would read as an answer to a question nothing was there to answer.
      *
+     * Five words, not four, and the fifth is load-bearing for a reader rather than
+     * for the decision table: `available` says the platform offers a primitive and
+     * nothing here was seen using it. It reads next to `resolved` — which says
+     * which class is bound — and the two are not interchangeable in a document an
+     * assessor signs.
+     *
      * @return non-empty-string
      */
     #[NoDiscard]
@@ -57,6 +63,7 @@ final readonly class ReportVocabulary
     {
         return match ($grade) {
             ObservationGrade::Measured => 'measured',
+            ObservationGrade::Available => 'available',
             ObservationGrade::Resolved => 'resolved',
             ObservationGrade::Declared => 'declared',
             ObservationGrade::Asserted => 'asserted',

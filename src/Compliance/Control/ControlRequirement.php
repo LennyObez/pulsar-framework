@@ -26,13 +26,23 @@ use function in_array;
  *
  * The table, and the two rules in it that came out of review:
  *
- *   scope asserted out of play .................... NotApplicable
+ *   scope asserted out of play, ABOUT THIS ESTATE . NotApplicable
  *   EVERY required fact has no subject here ....... NotApplicable (nothing to be about)
- *   all required present, one REQUIRED measured ... Satisfied
- *   all required present, none measured ........... Unsatisfied  (claimed, unobserved)
+ *   all required present, one REQUIRED measured
+ *     ON THE CONTROL'S OWN ESTATE ................. Satisfied
+ *   all required present, none measured there ..... Unsatisfied  (claimed, unobserved)
  *   an essential fact missing ..................... Unsatisfied  (whatever else holds)
- *   other required missing, one measured .......... Partial
- *   other required missing, none measured ......... Unsatisfied
+ *   other required missing, one measured there .... Partial
+ *   other required missing, none measured there ... Unsatisfied
+ *
+ * The two clauses in capitals are the estate joins, and the estate belongs to the
+ * CONTROL rather than to this type. A probe names facts; what those facts have to
+ * be ABOUT is declared per control on {@see ControlDeclaration::probed()}, because
+ * one probe serves controls about different estates — `DataErasureProbe` answers
+ * CCPA 1798.105, which is about personal data, and SOC 2 C1.2, which is about
+ * confidential information. A requirement carrying the estate would make those two
+ * controls indistinguishable, which is how one scope assertion came to retire
+ * both. See {@see ControlSubject}.
  *
  * "Measured" in that table used to read "measured or resolved", and the change is
  * not a tightening of a threshold — it is the removal of a second, weaker way to

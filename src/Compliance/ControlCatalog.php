@@ -37,9 +37,12 @@ use function sprintf;
  * a control declaration is an input to an assessment, and an assessment only
  * happens when someone asks for one. Building it at boot therefore charged every
  * request of every application for a data structure that request would never
- * look at: sixteen mapping classes autoloaded and 193 declarations plus their
- * probes constructed, measured at 0.52 ms warm and 21.7 ms cold per boot — the
- * eighth most expensive of the framework's 51 wirings. The measurement and its
+ * look at: every mapping class autoloaded and every declaration plus its probe
+ * constructed, measured at 0.52 ms warm and 21.7 ms cold per boot — the eighth
+ * most expensive of the framework's 51 wirings. That reading was taken when the
+ * catalog held 193 declarations from sixteen mappings; it holds 215 from
+ * seventeen now, so the figure is a floor rather than a current measurement, and
+ * it is left as measured rather than rescaled by arithmetic nobody ran. The
  * conditions are recorded in {@see \Pulsar\Core\Wiring\ComplianceCatalogWiring}.
  *
  * {@see contribute()} therefore takes a SOURCE — a callable that produces

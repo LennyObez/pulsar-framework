@@ -17,6 +17,7 @@ use Pulsar\Compliance\Control\Inspection;
 use Pulsar\Compliance\Control\Measurement;
 use Pulsar\Compliance\Control\Observation;
 use Pulsar\Compliance\Control\ObservationId;
+use Pulsar\Compliance\Control\PlatformCapability;
 use Pulsar\Compliance\Verification\CheckResult;
 use Pulsar\Compliance\Verification\CheckStatus;
 use Pulsar\Compliance\Verification\DataPathVerifier;
@@ -25,13 +26,20 @@ use Pulsar\Compliance\Verification\EvidenceChainVerdict;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Core\Wiring\Contract\DegradedFeature;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Resilience\Backup\BackupDestination;
+use Pulsar\Resilience\Backup\BackupServiceInterface;
 use Pulsar\Resilience\HealthCheck\HealthCheckResult;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\HealthCheck\HealthStatus;
+use Pulsar\Security\Compliance\Pseudonymization\ForgetServiceInterface;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymizationServiceInterface;
+use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\TokenizationServiceInterface;
 use Pulsar\Security\Crypto\TokenStoreInterface;
+use Pulsar\Security\Incident\IncidentReporterInterface;
 use Pulsar\Security\Posture\SecurityPostureReport;
 use Pulsar\Security\Posture\SecurityPostureStatus;
+use Pulsar\Security\Session\SessionPayloadCipherInterface;
 use Throwable;
 
 use function array_map;
@@ -55,7 +63,19 @@ use function sprintf;
  * across two hundred controls — so the reviewable surface is small and stable.
  * And every {@see Observation} carries the class that produced it, printed beside
  * its grade in the report, so `measured … (SecurityPostureCheck)` reads wrong on
- * the page.
+ * the page. That exact line was on the page: `master_key` was graded Measured
+ * here for years because the posture check reads it from the environment. It is
+ * Declared now; see {@see POSTURE_FACTS}.
+ *
+ * THE TEST A GRADE HAS TO PASS, applied per call site rather than per method,
+ * because one method used to grade three unlike checks the same way: could this
+ * fact come back differently on two deployments that differ in the thing the
+ * control is about? `extension_loaded('sodium')` cannot, so it is Available.
+ * Which cipher suite is bound can, but only by naming a class rather than by
+ * running one, so it is Resolved. Running the KDF against the key in service can,
+ * and does, so it is Measured. See {@see cryptographicCapability()},
+ * {@see fipsValidatedCryptography()} and {@see keyDerivation()}, which are the
+ * three halves of what was a single `fromRuntimeCheck()`.
  *
  * Three constraints shaped this class:
  *
@@ -74,14 +94,32 @@ use function sprintf;
  *    database exists, and the report would then measure — and truthfully,
  *    chain-signed, record — a vault that the running application does not use.
  *
- * GATHERING HAS SIDE EFFECTS, and one of them writes. It opens a database
- * session and queries it, it EXECUTES every registered health check, it
- * recomputes one HMAC per stored evidence record, and — through
- * {@see TokenVaultObserver} — it tokenizes one synthetic value, reads it back,
- * detokenizes it and removes it again. That last one is the only write, and it
- * is what separates a token vault that works from one that merely resolves; see
- * that class for what it writes and why nothing weaker would do. None of this
- * belongs in a request boot, which is the other half of why the binding is lazy.
+ * GATHERING HAS SIDE EFFECTS, and two of them write. It opens a database
+ * session and queries it, it EXECUTES every registered health check, and it
+ * recomputes one HMAC per stored evidence record. Then, through
+ * {@see TokenVaultObserver}, it tokenizes one synthetic value, reads it back,
+ * detokenizes it and removes it again; and through {@see AiTransparencyObserver}
+ * it declares one reserved Article 50 surface, reads the policy back and mints a
+ * synthetic-content mark. Each write is what separates a subsystem that works
+ * from one that merely resolves, and nothing weaker distinguishes them; see those
+ * two classes for what each leaves behind. The vault's row is removed, and the
+ * transparency declaration cannot be — `AiTransparencyInterface` has no
+ * withdrawal — so it is bounded to one entry under one reserved surface id
+ * instead, and the observer proves that bound rather than asserting it.
+ *
+ * TWO MORE WRITE, both added to close the GDPR controls ADR-0046 deliberately
+ * left failing, and they land on opposite sides of the same trade.
+ * {@see PseudonymizationObserver} creates one pseudonym mapping and then ERASES
+ * it — and the erasure is not tidying borrowed from elsewhere, it is Art 17,
+ * which is the control `ForgetService` exists to perform, so what is left behind
+ * is a table holding no mapping the check created. {@see IncidentRegisterObserver} records one
+ * Low-severity incident and CANNOT take it back: `IncidentReporterInterface` has
+ * no removal, and it should not grow one, because a register whose entries can be
+ * deleted evidences nothing. That row is permanent, it says so about itself in
+ * its own title, and the observer's docblock argues why it is worth writing.
+ *
+ * None of this belongs in a request boot, which is the other half of why the
+ * binding is lazy.
  */
 #[Internal(reason: 'Built by the composition root; probes receive only its output')]
 final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
@@ -286,6 +324,25 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
             'accepts' => ['Pulsar\Security\Compliance\Pseudonymization\PseudonymizationService'],
             'inert' => [],
         ],
+        // The table the mappings rest in, and the fact no in-process measurement
+        // can produce. {@see PseudonymizationObserver} mints a pseudonym, resolves
+        // it and erases it against whatever lookup is bound, and all four of its
+        // subjects pass over `InMemoryPseudonymLookup` — which has forgotten every
+        // mapping by the next request, so the pseudonymised records it produced can
+        // never be re-identified for an Art 15 answer and there is nothing left for
+        // Art 17 to erase. This is the TokenVaultPersistence pattern applied to the
+        // one other subsystem in the tree with the same shape.
+        ObservationId::PseudonymTablePersistence->value => [
+            'contract' => 'Pulsar\Security\Compliance\Pseudonymization\PseudonymLookupInterface',
+            'role' => 'holds the mappings between subject identifiers and their pseudonyms',
+            'accepts' => ['Pulsar\Security\Compliance\Pseudonymization\FilePseudonymLookup'],
+            'inert' => [
+                'Pulsar\Security\Compliance\Pseudonymization\InMemoryPseudonymLookup' =>
+                    'its own #[Internal] reason reads "Test/dev pseudonym lookup implementation" — the '
+                    . 'mappings are held in process memory, so a pseudonymised record cannot be '
+                    . 'resolved back after a restart and an erasure request has nothing to erase',
+            ],
+        ],
         ObservationId::ObservabilityExporterResolved->value => [
             'contract' => 'Pulsar\Observability\Tracing\SpanProcessorInterface',
             'role' => 'exports traces off the box, where detection can act on them',
@@ -307,13 +364,25 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         ObservationId::BackupPrimitiveResolved->value => [
             'contract' => self::BACKUP_SERVICE_CONTRACT,
             'role' => 'takes and restores backups, which recovery depends on',
-            'accepts' => [],
+            // The accept list stopped being empty when the framework grew the
+            // primitive. It stays a list rather than "anything bound", for the
+            // reason every accept list in this table does: an implementation this
+            // release has not assessed reads as unassessed instead of as adequate.
+            //
+            // And it decides nothing on its own. This fact is SUPPORTING in
+            // {@see \Pulsar\Compliance\Probe\RecoveryCapabilityProbe} and required
+            // by nothing — what carries the three recovery controls is
+            // {@see ObservationId::BackupRoundTripVerified}, which runs a real
+            // round trip. Promoting this one back to required would restore the
+            // exact shape ADR-0041 recorded, in the control that shipped without
+            // any carrier at all.
+            'accepts' => ['Pulsar\Resilience\Backup\SealedArchiveBackupService'],
             'inert' => [],
         ],
         ObservationId::AiModelRegistryResolved->value => [
             'contract' => 'Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface',
             'role' => 'records the AI models in service and their lifecycle state',
-            'accepts' => [],
+            'accepts' => ['Pulsar\Extension\AiGovernance\Internal\Store\DbModelRegistry'],
             'inert' => [
                 'Pulsar\Extension\AiGovernance\Internal\Store\InMemoryModelRegistry' =>
                     'the extension ships it as a development store; the model inventory is held in '
@@ -324,7 +393,7 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         ObservationId::AiImpactAssessmentResolved->value => [
             'contract' => 'Pulsar\Extension\AiGovernance\Contracts\AiImpactAssessmentInterface',
             'role' => 'assesses an AI system\'s impact on individuals and groups',
-            'accepts' => [],
+            'accepts' => ['Pulsar\Extension\AiGovernance\Internal\Store\DbImpactAssessmentStore'],
             'inert' => [
                 'Pulsar\Extension\AiGovernance\Internal\Store\InMemoryImpactAssessmentStore' =>
                     'a development store whose assess() performs no assessment — it creates an empty '
@@ -341,7 +410,7 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         ObservationId::AiDataGovernanceResolved->value => [
             'contract' => 'Pulsar\Extension\AiGovernance\Contracts\AiDataGovernanceInterface',
             'role' => 'tracks training-data provenance, quality and consent',
-            'accepts' => [],
+            'accepts' => ['Pulsar\Extension\AiGovernance\Internal\Store\DbDataGovernanceStore'],
             'inert' => [
                 'Pulsar\Extension\AiGovernance\Internal\Store\InMemoryDataGovernanceStore' =>
                     'a development store; provenance and quality reports are held in process memory '
@@ -349,13 +418,14 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
                 'Pulsar\Extension\AiGovernance\Internal\ConsentEnforcingDataGovernance' =>
                     'a decorator that rejects provenance recorded without consent — a real guarantee, '
                     . 'but one about the boundary and not about the record. What it wraps is invisible '
-                    . 'from here, and what it wraps in this release is the in-memory store',
+                    . 'from here, and it is the store underneath that decides whether the record '
+                    . 'survives the process; ai_governance_records_durable is the fact that reaches it',
             ],
         ],
         ObservationId::AiExplainabilityResolved->value => [
             'contract' => 'Pulsar\Extension\AiGovernance\Contracts\ExplainabilityInterface',
             'role' => 'explains a model decision to the person it affected',
-            'accepts' => [],
+            'accepts' => ['Pulsar\Extension\AiGovernance\Internal\Store\DbExplainabilityStore'],
             'inert' => [
                 'Pulsar\Extension\AiGovernance\Internal\Store\InMemoryExplainabilityStore' =>
                     'a development store; the explanation a data subject is entitled to is held in '
@@ -380,7 +450,13 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         ObservationId::AiMonitoringHookResolved->value => [
             'contract' => 'Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface',
             'role' => 'runs production monitoring checks against a deployed model',
-            'accepts' => [],
+            // The contract that had ZERO implementations anywhere in the tree until
+            // rc.12, which is why this list was empty and why Clause 9.1 could not be
+            // satisfied by any deployment. The shipped hook is named here, and it is
+            // deliberately NOT what carries the clause: this fact is a resolution, and
+            // {@see ObservationId::AiMonitoringExercised} — a hook having RUN and its
+            // result having been retained — is what the mapping reads now.
+            'accepts' => ['Pulsar\Extension\AiGovernance\Internal\Monitoring\GovernanceConformityHook'],
             'inert' => [],
         ],
         ObservationId::AiTransparencyResolved->value => [
@@ -396,11 +472,25 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
      * The security-posture items whose value is a compliance fact, and the
      * observation each becomes.
      *
-     * All Declared but one: these read `SecurityConfig`, so on their own they can
-     * never carry a control to Satisfied. The exception is `master_key`, which
-     * {@see \Pulsar\Security\Posture\SecurityPostureCheck} reads from the process
-     * environment rather than from a config file — that is a property of the
-     * running process, so it grades Measured.
+     * ALL DECLARED, WITHOUT AN EXCEPTION. There used to be one: `master_key` was
+     * graded Measured because {@see \Pulsar\Security\Posture\SecurityPostureCheck}
+     * reads it from the process environment rather than from a config file, and
+     * the docblock called that "a property of the running process". Where a
+     * configured value is read from does not change what reading it establishes.
+     * Follow what that check does — it reads PULSAR_MASTER_KEY, confirms the
+     * string parses into a key, and reads two booleans saying whether the wiring
+     * bound a MasterKey and an encryptor. A parse is a validation of a
+     * configured value, and binding presence is the claim
+     * {@see \Pulsar\Compliance\Control\ObservationGrade} deliberately has no
+     * case for. Nothing there encrypts anything, so Declared is the grade, and
+     * Declared already means exactly this.
+     *
+     * The fact this moves — {@see ObservationId::MasterKeyMaterial} — is
+     * SUPPORTING in every probe that names it and required by none, so the regrade
+     * moves no control in any direction. What it changes is the evidence column: an
+     * assessor stops reading "(measured)" under seven controls that measured no
+     * cryptography. The one fact in this area that IS measured is
+     * {@see keyDerivation()}, which runs the KDF against the key in service.
      *
      * @var array<string, string> posture item name => ObservationId value
      */
@@ -428,6 +518,19 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
      *        apart from an inspection that never happened: "no security feature is inert" over a
      *        population nobody enumerated is a pass produced by the absence of a measurement
      * @param list<string>          $activeExtensions  Extension ids, read from the registry by the composition root
+     * @param AiTransparencyDrillInterface|null $transparencyDrill The seam an AI governance
+     *        extension binds so its Article 50 subsystem can be exercised. Nullable because the
+     *        extension is optional at trust tier `verified`, and null is the whole point: the
+     *        observer then reports that nothing was exercised, which is a gap, rather than
+     *        reporting false. Typed against a contract this module DECLARES rather than against
+     *        `AiTransparencyInterface`, which belongs to the extension and is named nowhere in
+     *        `src/`; see {@see AiTransparencyDrillInterface} for why the arrow points this way
+     * @param AiGovernanceDrillInterface|null $governanceDrill The seam the same extension binds so
+     *        that its model registry, impact assessment store, data governance store,
+     *        explainability store and monitoring record store can be EXERCISED. Before it existed,
+     *        thirteen ISO 42001 controls rested on {@see IDENTITY_FACTS} entries that grade a store
+     *        by recognising its class name, which says nothing about a store the list has not been
+     *        told about and nothing about what any store actually does
      * @param int                   $chainVerificationLimit How many of the most recent evidence records to
      *        recompute the signature of. Bounded on purpose: that part of verification is one HMAC
      *        per record, and "verified 500 of 40,000 records" is a materially different claim from
@@ -445,6 +548,37 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         private DatabaseTlsObserver $databaseTls,
         private RouteInventory $routes,
         private TokenVaultObserver $tokenVault,
+        // THE OBSERVERS ARE CONCRETE ON PURPOSE, and the substitutability gate is
+        // told so rather than argued with: three of the parameters in this
+        // constructor already sit in tools/php/substitutability-baseline.json for
+        // this reason, and AiTransparencyObserver joined them. An injectable seam
+        // here would be a hole in the seal ADR-0050 built — MeasuringComponent lets
+        // only a class declared inside src/Compliance/Evidence/ produce an
+        // Observation, so a substitute from outside could not produce one at all
+        // and a substitute from inside is a new producer rather than a decoration.
+        // The only reason the five observers beside it escape the gate and this
+        // one does not is that they hold a Randomizer and it holds nothing: its
+        // probe material is fixed, deliberately, because the generation instant it
+        // hands in and demands back IS the measurement.
+        private AiTransparencyObserver $aiTransparency,
+        // The two that took the ISO 42001 mapping off resolutions. They are
+        // concrete for the same reason every observer above is, and they hold
+        // nothing for the same reason AiTransparencyObserver holds nothing: the
+        // records they write are fixed values, because the instants they hand in
+        // and demand back are part of the measurement.
+        private AiGovernanceRecordObserver $aiGovernanceRecords,
+        private AiMonitoringObserver $aiMonitoring,
+        private SessionSealObserver $sessionSeal,
+        private PseudonymizationObserver $pseudonymization,
+        private IncidentRegisterObserver $incidentRegister,
+        private PersonalDataSealObserver $personalDataSeal,
+        // The seventh observer, and the one that closed a control with no carrier
+        // at all rather than one with a weak carrier: `backup_primitive_resolved`
+        // named a contract nothing in `src/` answered, so NIST CSF RC.RP, SOC 2
+        // A1.3 and HIPAA 164.308(a)(7) reported a primitive the framework did not
+        // have. It holds a Randomizer, like the five beside it, and for the same
+        // reason: the payload it seals and demands back IS the measurement.
+        private BackupRoundTripObserver $backupRoundTrip,
         private ?DataPathVerifier $dataPaths = null,
         private ?ComplianceProfile $profile = null,
         private ?DatabaseConfig $databaseConfig = null,
@@ -453,6 +587,33 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         private ?HealthCheckRunnerInterface $health = null,
         private ?TokenizationServiceInterface $tokenizer = null,
         private ?TokenStoreInterface $tokenStore = null,
+        private ?AiTransparencyDrillInterface $transparencyDrill = null,
+        // The seam the same extension binds so its governance RECORD and its
+        // monitoring can be exercised, rather than recognised by class name.
+        // Nullable for the reason the transparency drill is: the package is
+        // optional, and a deployment without it must produce an ABSENT fact rather
+        // than a false one.
+        private ?AiGovernanceDrillInterface $governanceDrill = null,
+        private ?SessionPayloadCipherInterface $sessionCipher = null,
+        // The encryptor every subsystem that seals a classified value at rest is
+        // handed. Held so that {@see PersonalDataSealObserver} can put the
+        // deployment's own at-rest RULE through its work — see that class for why
+        // the fact it produces is about personal data and not about this object.
+        private ?EncryptorInterface $encryptor = null,
+        // The two halves of pseudonymisation, resolved SEPARATELY for the reason
+        // the vault's two halves are: the step that erases is the control Art 17
+        // names, and taking it from the service that minted would let a deployment
+        // evidence erasure with a service that only claims to erase.
+        private ?PseudonymizationServiceInterface $pseudonymizer = null,
+        private ?ForgetServiceInterface $forgetService = null,
+        private ?IncidentReporterInterface $incidentReporter = null,
+        // The backup service that would take this deployment's backups, and the
+        // destination its archives actually go to. Both null on a deployment with
+        // no master key: BackupWiring fails closed rather than binding a service
+        // that would write an unsealed archive, and the round-trip fact is then
+        // ABSENT — which is the correct answer, not a pass with a footnote.
+        private ?BackupServiceInterface $backupService = null,
+        private ?BackupDestination $backupDestination = null,
         private array $inspectedWiringContracts = [],
         private int $chainVerificationLimit = 500,
     ) {}
@@ -478,6 +639,7 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         }
 
         $observations[] = $this->sessionCipherResolved();
+        $observations[] = $this->sessionSeal->observe($this->sessionCipher);
         $observations[] = $this->cookieHardening();
         $observations[] = $this->complianceProfile();
         $observations[] = $this->securityFeaturesIntact();
@@ -487,6 +649,13 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         $observations[] = $this->databaseTls->observe($this->databaseConfig, $this->connection);
         $observations[] = $this->tokenVault->observe($this->tokenizer, $this->tokenStore);
         $observations[] = $this->aiGovernanceExtension();
+        $observations[] = $this->aiTransparency->observe($this->transparencyDrill);
+        $observations[] = $this->aiGovernanceRecords->observe($this->governanceDrill);
+        $observations[] = $this->aiMonitoring->observe($this->governanceDrill);
+        $observations[] = $this->pseudonymization->observe($this->pseudonymizer, $this->forgetService);
+        $observations[] = $this->incidentRegister->observe($this->incidentReporter);
+        $observations[] = $this->personalDataSeal->observe($this->encryptor);
+        $observations[] = $this->backupRoundTrip->observe($this->backupService, $this->backupDestination);
         $observations[] = $this->cryptographicCapability();
         $observations[] = $this->fipsValidatedCryptography();
         $observations[] = $this->keyDerivation();
@@ -547,18 +716,30 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
      * Satisfied in this very repository.
      *
      * It could not be fixed the way {@see ObservationId::MasterKeyResolved} was,
-     * by naming the interface instead: there is no interface. Nor can it be
-     * measured from here — exercising the cipher means holding one, and
-     * `SessionEncryption` is #[Internal] to the Security module, so importing it
-     * would break the boundary the composition root exists to keep. What CAN be
-     * said honestly is what the deployment asked for, and that is what this says.
+     * by naming an interface instead. There is one NOW —
+     * {@see SessionPayloadCipherInterface} — and naming it here would change
+     * nothing that matters: the Security module has exactly one implementation of
+     * it, so the resolution would still carry the single bit "did the container
+     * build one", dressed in a longer sentence. So this stays a config read, and
+     * the two sentences it prints stay the two things that were actually
+     * established.
      *
-     * The binding is not nothing: SecurityWiring constructs it only when
-     * `security.session.encryption` is true AND the master key loaded, so its
-     * absence is a real gap and is reported as one. But it records an intention
-     * that was acted on, not a payload observed encrypted, and Declared is the
-     * grade for that. The controls resting on it now reach "configured and
-     * unobserved" instead of Satisfied, which is the true state of affairs.
+     * WHAT THE INTERFACE DID CHANGE is the sentence that used to follow: "nor can
+     * it be measured from here". Exercising the cipher means holding one, and
+     * `SessionEncryption` is #[Internal] to the Security module, so Compliance
+     * could not — and the control had nowhere else to go. The contract publishes
+     * sealing and opening without publishing a key, an algorithm or a key id, and
+     * {@see SessionSealObserver} exercises it: see
+     * {@see ObservationId::SessionPayloadsSealed}, which is the fact that can
+     * actually carry a control about session payloads. This one no longer has to.
+     *
+     * The binding is not nothing, and it is not redundant beside the measurement
+     * either. SecurityWiring constructs the cipher only when
+     * `security.session.encryption` is true AND the master key loaded, and it
+     * hands THAT instance to the session manager, so this fact is what says the
+     * cipher measured beside it is the cipher in the write path. It still records
+     * an intention that was acted on rather than a payload observed sealed, and
+     * Declared is the grade for that.
      */
     private function sessionCipherResolved(): Observation
     {
@@ -730,21 +911,53 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
         );
     }
 
-    // -- Measured behaviour ---------------------------------------------------
+    // -- What the platform offers, what was bound, and what actually ran ------
 
     /**
-     * Whether the cryptography the framework depends on is actually available.
+     * Whether the cryptography the framework depends on EXISTS on this platform.
      *
-     * Measured: {@see \Pulsar\Compliance\Verification\RuntimeVerifier} calls
-     * `extension_loaded('sodium')` and `function_exists('sodium_crypto_generichash')`
-     * — the algorithms answer for themselves rather than a setting answering for them.
+     * Available, and it used to say Measured with the sentence "the algorithms
+     * answer for themselves rather than a setting answering for them". They do
+     * not. {@see \Pulsar\Compliance\Verification\RuntimeVerifier::verify()} calls
+     * `extension_loaded('sodium')` and `function_exists('sodium_crypto_generichash')`,
+     * and both answer out of the PHP build: identically on a deployment that
+     * encrypts every field and on one that encrypts nothing. A fact that cannot
+     * differ between those two deployments cannot be evidence about either, and
+     * for as long as it was graded Measured it was the sole admissible proof under
+     * nine controls across seven frameworks.
+     *
+     * WHAT THIS COST, and what closing it looked like. Two probes require this
+     * fact, and for a while no other fact either of them required could reach
+     * Measured: {@see \Pulsar\Compliance\Probe\CryptographicControlProbe} paired
+     * it with a resolved MasterKey and
+     * {@see \Pulsar\Compliance\Probe\DataProtectionAtRestProbe} with a Declared
+     * session cipher, so five controls — GDPR Art 32, NIS2 Art 21(h), CCPA
+     * 1798.150, GDPR Art 5(1)(f), NIST CSF PR.DS — could not reach Satisfied on
+     * any deployment at all. A control that can never pass is the same class of
+     * broken instrument as one that can never fail, so it was named here rather
+     * than left for a reader to discover from a report that is always red.
+     *
+     * THREE OF THE FIVE ARE CLOSED and the other two are not, which is the shape
+     * to keep. Both probes now also require
+     * {@see ObservationId::PersonalDataFieldSealed}, which
+     * {@see PersonalDataSealObserver} produces by handing the deployment a field
+     * classified as personal data and reading back what it would store — so GDPR
+     * Art 32, GDPR Art 5(1)(f) and CCPA 1798.150 reach Satisfied when that holds
+     * and fail when it does not. NIS2 Art 21(h) regulates the cryptographic
+     * PLATFORM, whose only fact is this one, and NIST CSF PR.DS regulates
+     * confidential information; neither estate has been exercised by anything, so
+     * both stay stuck and say so. The remedy is the one that worked here: an
+     * observer for the estate, never a wider name for a fact that already exists.
      */
     private function cryptographicCapability(): Observation
     {
-        return $this->fromRuntimeCheck(
+        return $this->platformCapability(
             'runtime.sodium_extension',
             ObservationId::CryptographicCapability,
-            'libsodium was never checked, so no cryptographic capability was established.',
+            'the AEAD and hashing primitives libsodium provides',
+            ['ext-sodium', 'sodium_crypto_generichash'],
+            'libsodium was never checked, so nothing is established about what this platform '
+                . 'offers.',
         );
     }
 
@@ -758,12 +971,17 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
      * algorithms are the ones actually running. It graded true on every
      * mainstream OpenSSL before that, including the default deployment, which
      * encrypts with XChaCha20-Poly1305.
+     *
+     * Graded Resolved rather than Available, which is where it differs from the
+     * fact above: what decides it is which suite this deployment bound.
+     * {@see boundModuleResolution()} carries the argument in full.
      */
     private function fipsValidatedCryptography(): Observation
     {
-        return $this->fromRuntimeCheck(
+        return $this->boundModuleResolution(
             'runtime.fips_mode',
             ObservationId::FipsValidatedCryptography,
+            'the cipher suite this deployment bound and the module that executes it',
             'The FIPS check did not run for this profile, so nothing was established about '
                 . 'the cryptography the deployment performs.',
         );
@@ -772,19 +990,26 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
     /**
      * Whether the key hierarchy this deployment encrypts under actually derives.
      *
-     * `runtime.master_key_derived` runs `sodium_crypto_kdf_derive_from_key`
-     * against the key in service and asserts three properties of what came back:
-     * the requested length, reproducibility for the same (subkey id, context),
-     * and different material for a different context. That last one is the
-     * domain separation ADR-0006 has every subsystem relying on, and it is the
-     * only key-management property in the whole evidence set that is established
-     * by running the KDF rather than by observing that a `MasterKey` object
-     * exists. ISO 27001 A.8.24 says "including cryptographic key management" and
-     * this is the half of that sentence software can answer.
+     * THE ONE RUNTIME CHECK THAT KEEPS GRADE MEASURED, and it earns it by taking
+     * the key that is in service and running it. `runtime.master_key_derived` calls
+     * `sodium_crypto_kdf_derive_from_key` against that key and asserts three
+     * properties of what came back: the requested length, reproducibility for the
+     * same (subkey id, context), and different material for a different context.
+     * That last one is the domain separation ADR-0006 has every subsystem relying
+     * on. Read it against the two above: the sodium check would answer the same on
+     * a deployment holding no key at all, and the FIPS check would answer the same
+     * whether or not any key ever derived — this one cannot answer at all without
+     * a key, and answers differently for a key that is broken. ISO 27001 A.8.24
+     * says "including cryptographic key management" and this is the half of that
+     * sentence software can answer.
+     *
+     * It is also why the old `fromRuntimeCheck()` had to be split per call site
+     * rather than regraded in one edit: a blanket demotion would have thrown away
+     * the one legitimate measurement in the group.
      */
     private function keyDerivation(): Observation
     {
-        return $this->fromRuntimeCheck(
+        return $this->runtimeMeasurement(
             'runtime.master_key_derived',
             ObservationId::KeyDerivationVerified,
             'Key derivation was never exercised, so nothing is established about the key '
@@ -966,13 +1191,19 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
 
     // -- Declared configuration ----------------------------------------------
 
+    /**
+     * One security-posture item, reported as the configuration read it is.
+     *
+     * There is no per-item branch left here. There was one — `master_key` reached
+     * {@see Observation::measured()} and every other item reached
+     * {@see Observation::declaredMet()} — and it is gone for the reason
+     * {@see POSTURE_FACTS} gives: reading a value out of the environment instead
+     * of out of a file establishes nothing more about what the deployment did with
+     * it. One grade for the whole family also means the method can no longer drift
+     * item by item.
+     */
     private function fromPosture(string $item, ObservationId $id): Observation
     {
-        // master_key is read from the process environment, not from a config file,
-        // so it is a property of the running process rather than a request. It is
-        // the one posture item that reaches a measurement rather than a config read.
-        $measured = $item === 'master_key';
-
         foreach ($this->posture->items as $posture) {
             if ($posture->name !== $item) {
                 continue;
@@ -991,30 +1222,16 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
             // {@see \Pulsar\Security\Posture\SecurityPostureItem::relaxed()}.
             $ok = $posture->status === SecurityPostureStatus::Ok && !$posture->relaxed;
 
-            if ($measured) {
-                return Observation::measured(
-                    $id,
-                    Measurement::completed(
-                        $item,
-                        [$ok
-                            ? ExecutedSubject::passed($item, $detail)
-                            : ExecutedSubject::failed($item, $detail)],
-                        $detail,
-                    ),
-                    SecurityPostureReport::class,
-                );
-            }
-
             return $ok
                 ? Observation::declaredMet($id, $detail, SecurityPostureReport::class)
                 : Observation::declaredUnmet($id, $detail, SecurityPostureReport::class);
         }
 
-        $absent = sprintf('The security posture preflight produced no "%s" item.', $item);
-
-        return $measured
-            ? Observation::measured($id, Measurement::couldNotRun($item, $absent), self::class)
-            : Observation::declaredUnmet($id, $absent, self::class);
+        return Observation::declaredUnmet(
+            $id,
+            sprintf('The security posture preflight produced no "%s" item.', $item),
+            self::class,
+        );
     }
 
     /**
@@ -1160,50 +1377,193 @@ final readonly class ControlEvidenceGatherer implements EvidenceSourceInterface
     // -- Shared adapters ------------------------------------------------------
 
     /**
-     * Adapt one of {@see \Pulsar\Compliance\Verification\RuntimeVerifier}'s
-     * results, keyed by the check id it already publishes.
+     * What one of {@see \Pulsar\Compliance\Verification\RuntimeVerifier}'s checks
+     * reported, in the four states the three adapters below have to tell apart.
      *
      * The verifier is reused whole rather than reimplemented: it is the single
      * implementation of these facts in the tree and simply acquires a consumer.
-     * A skipped check is NOT a pass — it means the question was never asked.
+     * A NULL STATUS IS THE FOURTH STATE and is not a pass: it means the check is
+     * not in this run's results at all, which is a different fact from Skip and a
+     * very different one from Fail. A skipped check is likewise not a pass, and the
+     * sentence says so before the verifier's own message, because the two read
+     * identically in a summary and only one of them is evidence.
+     *
+     * Returns a shaped array rather than the {@see CheckResult} itself, which reads
+     * as a detour and is not one: handing back the result would make this method a
+     * seam typed on a final class that no consumer can decorate, and the substitutability
+     * gate refuses that. What the callers actually need is the status and the
+     * sentence, and deriving the sentence here is what keeps the four states worded
+     * the same way under all three grades.
+     *
+     * @param non-empty-string $whenMissing What to say when the check is not in the results
+     *
+     * @return array{status: ?CheckStatus, detail: non-empty-string}
      */
-    /**
-     * @param non-empty-string $whenMissing
-     */
-    private function fromRuntimeCheck(string $checkId, ObservationId $id, string $whenMissing): Observation
+    #[NoDiscard]
+    private function runtimeReading(string $checkId, string $whenMissing): array
     {
         foreach ($this->runtimeChecks as $check) {
             if ($check->checkId !== $checkId) {
                 continue;
             }
 
-            $detail = match (true) {
-                $check->status === CheckStatus::Skip => sprintf(
-                    'Not established — the check was skipped: %s',
-                    $check->message,
-                ),
-                $check->message !== '' => $check->message,
-                default => sprintf('Check %s reported %s with no message.', $checkId, $check->status->value),
-            };
-
-            // A skipped check did not run, so it is reported as a run that did not
-            // happen rather than as one that returned nothing: the two read the same
-            // in a summary and only one of them is evidence.
-            return Observation::measured(
-                $id,
-                $check->status === CheckStatus::Skip
-                    ? Measurement::couldNotRun($checkId, $detail)
-                    : Measurement::completed(
-                        $checkId,
-                        [$check->status === CheckStatus::Pass
-                            ? ExecutedSubject::passed($checkId, $detail)
-                            : ExecutedSubject::failed($checkId, $detail)],
-                        $detail,
+            return [
+                'status' => $check->status,
+                'detail' => match (true) {
+                    $check->status === CheckStatus::Skip => sprintf(
+                        'Not established — the check was skipped: %s',
+                        $check->message,
                     ),
-                self::class,
-            );
+                    $check->message !== '' => $check->message,
+                    default => sprintf(
+                        'Check %s reported %s with no message.',
+                        $checkId,
+                        $check->status->value,
+                    ),
+                },
+            ];
         }
 
-        return Observation::measured($id, Measurement::couldNotRun($checkId, $whenMissing), self::class);
+        return ['status' => null, 'detail' => $whenMissing];
+    }
+
+    /**
+     * A runtime check that asked the PLATFORM what it has.
+     *
+     * The first of the three adapters this method used to be. It was a single
+     * `fromRuntimeCheck()` wrapping every runtime check in
+     * {@see Observation::measured()}, on the argument that a check which executes
+     * is a measurement — and that argument is wrong twice over. It is wrong about
+     * what "runs" means: `extension_loaded('sodium')` runs, and answers about the
+     * build PHP was compiled with rather than about anything this deployment did.
+     * And it is wrong about the consequence: `runtime.sodium_extension` at grade
+     * Measured was admissible proof, and it carried nine controls across seven
+     * frameworks — CCPA 1798.150, GDPR Art 5(1)(f) and Art 32, HIPAA
+     * 164.312(a)(2)(iv) and its 2026 twin, ISO 27001 A.8.24, NIS2 Art 21(h), NIST
+     * CSF PR.DS and PCI DSS Req 3.4 — to Satisfied on a loaded extension.
+     *
+     * A blanket regrade of the old method would have been the mirror mistake:
+     * `runtime.master_key_derived` genuinely exercises this deployment's own key,
+     * and its Measured grade is earned. So the split is per call site, and each
+     * site states which of the three kinds of thing its check touched.
+     *
+     * @param non-empty-string $capability  The primitive family, for the report
+     * @param list<string>     $primitives  What a passing check proves is present, named one
+     *        by one: {@see PlatformCapability} cannot be built claiming a capability and
+     *        naming nothing, for the reason a {@see Measurement} cannot name nothing that ran
+     * @param non-empty-string $whenMissing
+     */
+    #[NoDiscard]
+    private function platformCapability(
+        string $checkId,
+        ObservationId $id,
+        string $capability,
+        array $primitives,
+        string $whenMissing,
+    ): Observation {
+        ['status' => $status, 'detail' => $detail] = $this->runtimeReading($checkId, $whenMissing);
+
+        return Observation::available(
+            $id,
+            match ($status) {
+                CheckStatus::Pass => PlatformCapability::offered($capability, $primitives, $detail),
+                CheckStatus::Fail => PlatformCapability::absent($capability, $detail),
+                CheckStatus::Skip, null => PlatformCapability::notInspected($capability, $detail),
+            },
+            self::class,
+        );
+    }
+
+    /**
+     * A runtime check whose answer is decided by WHAT THIS DEPLOYMENT BOUND.
+     *
+     * The second adapter, and the one where the brief that ordered this work and a
+     * design review disagreed. The brief said to grade `runtime.fips_mode`
+     * {@see \Pulsar\Compliance\Control\ObservationGrade::Available} beside the
+     * sodium check; review said FIPS 140 validation is a property of a module
+     * build rather than an exercisable behaviour, and that resolution of the bound
+     * suite is its honest ceiling. Review is right, and the deciding argument is
+     * the one that justifies the Available case existing at all — what the word
+     * tells the reader.
+     *
+     * Follow what the check reads. {@see \Pulsar\Compliance\Verification\RuntimeVerifier::verify()}
+     * asks which {@see \Pulsar\Security\Crypto\CipherSuiteInterface} is bound and
+     * whether that suite is on an approved list; that is a resolution, and it is
+     * the only input that can produce a pass. The platform introspection beside it
+     * — the OpenSSL provider, the version banner, whether the suite executes
+     * through libsodium — can only ever take a pass away. So a present observation
+     * here means "this deployment bound an approved suite and the module running
+     * it is validated", and printing `(available)` beside that would tell an
+     * assessor FIPS was on offer and unused when in fact it is in use.
+     *
+     * The material is an {@see Inspection} rather than a {@see ContractResolution}
+     * because the verifier hands back its own finding, not a class name this class
+     * could look up: a pass is a scan that found nothing wrong with the bound
+     * suite, a failure is that scan naming what it found, and a skip is the scan
+     * not having happened. Presence is derived from the finding in every branch
+     * and is never passed in. Note the one seam that is imprecise and is left
+     * imprecise rather than papered over: {@see CheckStatus::Skip} covers both
+     * "the profile requires no encryption, so nobody looked" and "the bound suite
+     * is not approved, so FIPS is not established", which are an absence and a
+     * finding. Both observe absent and both reproduce the verifier's own sentence
+     * verbatim, so no reader is misled; separating them means splitting the status
+     * enum, which is not this change.
+     *
+     * @param non-empty-string $population
+     * @param non-empty-string $whenMissing
+     */
+    #[NoDiscard]
+    private function boundModuleResolution(
+        string $checkId,
+        ObservationId $id,
+        string $population,
+        string $whenMissing,
+    ): Observation {
+        ['status' => $status, 'detail' => $detail] = $this->runtimeReading($checkId, $whenMissing);
+
+        return Observation::inspected(
+            $id,
+            match ($status) {
+                CheckStatus::Pass => Inspection::defectScan($population, [], $detail),
+                CheckStatus::Fail => Inspection::defectScan($population, [$detail], $detail),
+                CheckStatus::Skip, null => Inspection::nothingToInspect($population, $detail),
+            },
+            self::class,
+        );
+    }
+
+    /**
+     * A runtime check that put this deployment through the work and read what came
+     * back.
+     *
+     * The third adapter, and the one that keeps {@see \Pulsar\Compliance\Control\ObservationGrade::Measured}.
+     * A skipped check, and one absent from the results altogether, are both
+     * reported as a run that did not happen rather than as one that returned
+     * nothing: the two read the same in a summary and only one of them is evidence.
+     *
+     * @param non-empty-string $whenMissing
+     */
+    #[NoDiscard]
+    private function runtimeMeasurement(string $checkId, ObservationId $id, string $whenMissing): Observation
+    {
+        ['status' => $status, 'detail' => $detail] = $this->runtimeReading($checkId, $whenMissing);
+
+        return Observation::measured(
+            $id,
+            match ($status) {
+                CheckStatus::Pass => Measurement::completed(
+                    $checkId,
+                    [ExecutedSubject::passed($checkId, $detail)],
+                    $detail,
+                ),
+                CheckStatus::Fail => Measurement::completed(
+                    $checkId,
+                    [ExecutedSubject::failed($checkId, $detail)],
+                    $detail,
+                ),
+                CheckStatus::Skip, null => Measurement::couldNotRun($checkId, $detail),
+            },
+            self::class,
+        );
     }
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Compliance\Verification;
 
 use DateTimeImmutable;
-use Fiber;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -106,12 +105,19 @@ use const JSON_UNESCAPED_UNICODE;
  * process; two processes that resume from the same tail both append a record
  * claiming the same position, and {@see verify()} reports that as
  * {@see EvidenceChainVerdict::Reordered} — a position that appears twice — rather
- * than absorbing it. Within a process the cooperative mutex in {@see record()}
- * makes fibers serial, which is as far as a chain over a plain append-only store
- * can go: the same limit {@see \Pulsar\Security\Audit\AuditLogger} works within,
- * and a second, different answer to it here would be worse than the limit. The
+ * than absorbing it. That is as far as a chain over a plain append-only store can
+ * go: the same limit {@see \Pulsar\Security\Audit\AuditLogger} works within, and
+ * a second, different answer to it here would be worse than the limit. The
  * scheduler runs one instance of {@see EvidenceCollectionJob} per tick, which is
  * what supplies the single writer.
+ *
+ * Within a process, {@see record()} is exclusive: a second call that reaches it
+ * while one is inside is refused with
+ * {@see ConcurrentEvidenceAppendException}, not made to wait. It used to spin on a
+ * bare `Fiber::suspend()`, which under {@see \Pulsar\Runtime\Fiber\FiberScheduler}
+ * means "resume me when my connection socket becomes readable" — an unrelated
+ * condition — and which skipped the wait entirely for a caller that was not inside
+ * a fiber, leaving the nested-call case it most needed to cover uncovered.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -198,8 +204,17 @@ final class EvidenceChain
 
     private bool $resumed = false;
 
-    /** Cooperative fiber mutex, for the reason {@see AuditLogger} holds one. */
-    private bool $chainLocked = false;
+    /**
+     * Raised for exactly as long as one call is inside the append, for the
+     * reason {@see \Pulsar\Security\Audit\AuditLogger} raises its own flag.
+     *
+     * A second entrant reads the same {@see height} and the same
+     * {@see previousSignature}, and both records claim position N.
+     * {@see ConcurrentEvidenceAppendException} carries the argument for refusing
+     * rather than waiting; the short version is that the flag is held by a call
+     * this one cannot wake, on any execution path where it could be set at all.
+     */
+    private bool $appending = false;
 
     private readonly Randomizer $randomizer;
 
@@ -233,21 +248,23 @@ final class EvidenceChain
      * @throws JsonException when the report's own counters cannot be encoded
      * @throws UnverifiableEvidenceChainException when the stored chain cannot be
      *         verified under the key in service — see {@see appendRefusal()}
+     * @throws ConcurrentEvidenceAppendException when a second call reaches this
+     *         method while one is still inside it — see {@see $appending}
      * @throws \Pulsar\Compliance\Evidence\EvidenceWriteFailedException when the
      *         record or the anchor cannot be persisted
      */
     public function record(VerificationReport $report): EvidenceRecord
     {
-        // Cooperative mutex, exactly as AuditLogger holds one over its chain
-        // advance: two fibers that read the same previousSignature write two
-        // records claiming the same predecessor and the same position, and one of
-        // them is broken forever after. Only suspend inside a Fiber; main-thread
-        // calls are inherently serial. Held across the resume as well as the
-        // append, because the resume is what sets the position they would share.
-        while ($this->chainLocked && Fiber::getCurrent() !== null) {
-            Fiber::suspend();
+        // Exclusive, exactly as AuditLogger's chain advance is: two calls that
+        // read the same previousSignature write two records claiming the same
+        // predecessor and the same position, and one of them is broken forever
+        // after. Raised before the resume as well as the append, because the
+        // resume is what sets the position they would share.
+        if ($this->appending) {
+            throw ConcurrentEvidenceAppendException::refusingToInterleave($this->height);
         }
-        $this->chainLocked = true;
+
+        $this->appending = true;
 
         try {
             $refusal = $this->appendRefusal();
@@ -266,7 +283,7 @@ final class EvidenceChain
 
             return $record;
         } finally {
-            $this->chainLocked = false;
+            $this->appending = false;
         }
     }
 

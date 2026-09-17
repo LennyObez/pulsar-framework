@@ -31,33 +31,62 @@ return [
     | The list below is therefore not "the frameworks Pulsar supports". It is the
     | frameworks this deployment is subject to and is prepared to be held to.
     |
-    |   ComplianceFramework::Gdpr — 4 probed controls, TWO of them observed since
-    |       ADR-0050, and `composer compliance:check` fails on a default
-    |       installation because of the other two. That is the gate working, and
-    |       the failure is left standing rather than configured away:
+    |   ComplianceFramework::Gdpr — 4 probed controls, ALL FOUR observed on a
+    |       default installation that has a master key, so
+    |       `composer compliance:check` passes. It did not always, and the way each
+    |       of them was closed is the only thing that makes the pass worth
+    |       anything: every one rests on a subsystem being put through its work,
+    |       and none of them on a class being bound. Unset PULSAR_MASTER_KEY and
+    |       three of the four go red — Art 25, Art 32 and Art 5(1)(f), because
+    |       SecurityWiring builds the pseudonymisation service and the encryptor
+    |       inside the block the key opens. Art 33 stays green, correctly: the
+    |       incident register is bound whether or not there is a key, and it still
+    |       records a breach and gives it back:
     |
-    |       Art 5(1)(f), Art 32  observed. libsodium is exercised and the key
-    |           hierarchy actually derives; both are measurements.
-    |       Art 25  CLAIMED AND NOT OBSERVED. It used to pass on
-    |           PseudonymizationServiceInterface resolving to
-    |           PseudonymizationService — which class would serve, never that a
-    |           direct identifier was ever replaced. Nothing in this release puts
-    |           a value through it.
-    |       Art 33  CLAIMED AND NOT OBSERVED. Same shape: IncidentReporterInterface
-    |           resolving to FileIncidentReporter, a register that would survive a
-    |           restart with nothing ever written to it.
+    |       Art 25  observed since ADR-0065. PseudonymizationObserver puts a
+    |           synthetic identifier through the live service — replaced,
+    |           recorded, resolved back byte for byte, then ERASED through the
+    |           Article 17 service, which is both the control and the reason the
+    |           check can write to a re-identification table at all. It used to
+    |           rest on PseudonymizationServiceInterface resolving to
+    |           PseudonymizationService: which class would serve, never that an
+    |           identifier was replaced.
+    |       Art 33  observed since ADR-0065. IncidentRegisterObserver records an
+    |           incident through the live register and reads it back by id with
+    |           its severity, title, metadata and timestamp intact — the clock the
+    |           72-hour deadline runs from. It used to rest on
+    |           IncidentReporterInterface resolving to FileIncidentReporter: a
+    |           register that would survive a restart, with nothing ever written
+    |           to it. NOTE that this one leaves a row: an incident register has
+    |           no removal, deliberately, so each report run appends one
+    |           Low-severity record under source
+    |           `compliance.incident_register_probe` that says in its own title
+    |           that it is not a security event.
+    |       Art 5(1)(f), Art 32  observed since ADR-0066, and they are the two
+    |           that went red first before they went green. ADR-0061 regraded
+    |           `extension_loaded('sodium')` from Measured to Available and
+    |           ADR-0062 then required a fact to be about the control's own estate,
+    |           which left both articles — declared over PERSONAL DATA — resting
+    |           on nothing, since the key derivation is about the key hierarchy and
+    |           the session seal is about session payloads. PersonalDataSealObserver
+    |           closed them by measuring that estate: it hands the deployment a
+    |           field classified as personal data and reads back what would be
+    |           stored, requiring the stored form to conceal the value, to open to
+    |           it byte for byte, to REFUSE a copy with one byte changed, and not
+    |           to seal two equal values alike. What varies between deployments is
+    |           which EncryptorInterface answered, and that is the contract an
+    |           application overrides — so bind an unauthenticated cipher and both
+    |           articles fail while every binding inspection still reads clean.
+    |           Nothing is written: the at-rest form is returned, not stored.
     |       Art 30  operator artefact, as it always was.
     |
-    |       Two ways to close it, and one of them is not available. An observer
-    |       may pseudonymise a synthetic identifier and read it back, exactly as
-    |       TokenVaultObserver already exercises the token vault for PCI Req 3.4 —
-    |       that is a real measurement and a real piece of work. Writing something
-    |       that "exercises" the service by constructing it would be ADR-0041's
-    |       defect wearing this file's approval, and is refused. Until one of them
-    |       is built, a deployment subject to GDPR reads a report with two observed
-    |       controls, two named gaps and one artefact, which is a more useful
-    |       document than the four green lines it replaces and the first one that
-    |       is true.
+    |       WHAT NONE OF THE FOUR ESTABLISHES, said here because a passing gate is
+    |       exactly where it stops being read: Pulsar knows its own subsystems
+    |       work. It does not know whether your application puts its identifiers
+    |       through the pseudonymisation service, classifies its personal data, or
+    |       reports its breaches to the register — and nothing in this tree could
+    |       find out. A green report is evidence about the framework under your
+    |       application, and the controller's obligations are yours.
     |
     | An empty list is not the way out: `compliance:report` refuses to produce a
     | report when nothing is enabled, because "nothing to assess" printed as green
@@ -82,12 +111,17 @@ return [
     |              manager that persists, a trace exporter that leaves the box.
     |              Twenty-four more are operator artefacts. SOC 2 is an
     |              attestation about an organisation; the software is a part of it.
-    |   Nis2       Art 21(i) needs classified routes, as above. Of the other four,
-    |              three are observed and one is partial with its residual gap
-    |              named — so the gate would pass, and the report would still
-    |              show you what is open.
-    |   Iso27001   A.8.3 needs classified routes, as above. Of the other five,
-    |              three are observed and two are partial.
+    |   Nis2       Art 21(i) needs classified routes, as above. Art 23, incident
+    |              reporting, is observed since ADR-0065 — it cites the same
+    |              register measurement GDPR Art 33 does, because one deployment
+    |              cannot have two answers to "can a breach be recorded and
+    |              produced again". The remaining three rest on facts this release
+    |              does not measure; enable it and read the report rather than
+    |              trusting a count written here, which is exactly the drift this
+    |              subsystem exists to remove.
+    |   Iso27001   A.8.3 needs classified routes, as above. A.8.24 is observed on
+    |              the key derivation running against the key in service. For the
+    |              rest, enable it and read the report.
     |   Iso42001   Every control depends on the `pulsar/ai-governance` extension,
     |              which is a bundled product extension and off by default. A
     |              deployment that operates no AI system has no subject for any of

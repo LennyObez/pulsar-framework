@@ -19,6 +19,7 @@ use Pulsar\Compliance\Control\ControlEvidence;
 use Pulsar\Compliance\Control\ControlFinding;
 use Pulsar\Compliance\Control\ControlOutcome;
 use Pulsar\Compliance\Control\ControlRequirement;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Control\CoverageSummary;
 use Pulsar\Compliance\Control\ExecutedSubject;
 use Pulsar\Compliance\Control\InadmissibleEvidenceException;
@@ -28,6 +29,7 @@ use Pulsar\Compliance\Control\MeasuringComponent;
 use Pulsar\Compliance\Control\Observation;
 use Pulsar\Compliance\Control\ObservationGrade;
 use Pulsar\Compliance\Control\ObservationId;
+use Pulsar\Compliance\Control\PlatformCapability;
 use Pulsar\Compliance\Control\ProbeVerdict;
 use Pulsar\Compliance\Control\RequiredFact;
 use Pulsar\Compliance\Control\SubjectAbsence;
@@ -135,6 +137,7 @@ use const T_DOC_COMMENT;
 #[CoversClass(MeasuringComponent::class)]
 #[CoversClass(Observation::class)]
 #[CoversClass(ObservationGrade::class)]
+#[CoversClass(PlatformCapability::class)]
 #[CoversClass(ProbeVerdict::class)]
 #[CoversClass(RequiredFact::class)]
 #[CoversClass(SubjectAbsence::class)]
@@ -206,12 +209,16 @@ final class OutcomeSealTest extends TestCase
         'Measurement::couldNotRun' => self::SEALED,
         'Observation::assertedInScope' => self::SEALED,
         'Observation::assertedOutOfScope' => self::SEALED,
+        'Observation::available' => self::SEALED,
         'Observation::declaredMet' => self::SEALED,
         'Observation::declaredUnmet' => self::SEALED,
         'Observation::inspected' => self::SEALED,
         'Observation::measured' => self::SEALED,
         'Observation::noSubject' => self::SEALED,
         'Observation::resolved' => self::SEALED,
+        'PlatformCapability::absent' => self::SEALED,
+        'PlatformCapability::notInspected' => self::SEALED,
+        'PlatformCapability::offered' => self::SEALED,
         'ProbeVerdict::reach' => self::COMPUTED,
         'RequiredFact::contributing' => self::DECLARED,
         'RequiredFact::essential' => self::DECLARED,
@@ -250,6 +257,7 @@ final class OutcomeSealTest extends TestCase
         Measurement::class,
         Observation::class,
         ObservationGrade::class,
+        PlatformCapability::class,
         ProbeVerdict::class,
         SubjectAbsence::class,
     ];
@@ -787,7 +795,45 @@ final class OutcomeSealTest extends TestCase
 
         $this->expectException(InadmissibleEvidenceException::class);
 
-        $satisfied->invokeArgs(null, ['Observed working.', [], []]);
+        $satisfied->invokeArgs(null, ['Observed working.', [], [], ControlSubject::CardholderData]);
+    }
+
+    /**
+     * The same factory, reached the same way, and handed a real MEASURED
+     * observation — refused because it is about another estate.
+     *
+     * This is the A2 rule proved where it is hardest to argue with: not in the
+     * decision table, which a second table could be written beside, but on the
+     * value itself. The observation offered is admissible in every earlier sense —
+     * present, graded Measured, produced by the component that measures — and it
+     * interrogated the compliance evidence register while the control regulates
+     * the PAN estate.
+     */
+    #[Test]
+    public function reachingThePrivateVerdictFactoryWithAMeasurementOfAnotherEstateIsRefused(): void
+    {
+        $satisfied = new ReflectionMethod(ProbeVerdict::class, 'satisfied');
+
+        $measuredElsewhere = SyntheticObservation::of(
+            ObservationId::AuditChainVerified,
+            ObservationGrade::Measured,
+            true,
+            'the compliance evidence register verifies',
+        );
+
+        self::assertTrue(
+            $measuredElsewhere->isAdmissibleAsProof(),
+            'The fixture must offer a fact that every earlier rule accepts.',
+        );
+
+        $this->expectException(InadmissibleEvidenceException::class);
+
+        $satisfied->invokeArgs(null, [
+            'Observed working.',
+            [$measuredElsewhere],
+            [$measuredElsewhere],
+            ControlSubject::CardholderData,
+        ]);
     }
 
     /**
@@ -1061,6 +1107,12 @@ final class OutcomeSealTest extends TestCase
             UnmeasuredSubjectException::class,
         ];
 
+        yield 'the platform offers it, and nothing was named' => [
+            PlatformCapability::class,
+            ['the AEAD primitives libsodium provides', [], true, 'Implemented.', true],
+            UnmeasuredSubjectException::class,
+        ];
+
         yield 'no subject, over an estate holding two' => [
             SubjectAbsence::class,
             ['networked database connections', 'This deployment has none.', 2],
@@ -1101,6 +1153,26 @@ final class OutcomeSealTest extends TestCase
         self::assertStringContainsString('(resolved)', $finding->summary);
     }
 
+    /**
+     * And the third: a platform primitive being installed is not behaviour either.
+     *
+     * The sibling of {@see resolvedIdentityAloneCannotSatisfyAControl()}, and the
+     * one this repository needed most recently. Every required fact present, every
+     * one of them a capability the PHP build happens to ship, and the control is
+     * still not satisfied — because the same answer comes back on a deployment
+     * that uses the primitive and on one that never touches it, and a fact that
+     * cannot tell those two apart cannot decide a control about either.
+     */
+    #[Test]
+    public function platformAvailabilityAloneCannotSatisfyAControl(): void
+    {
+        $finding = ControlFinding::assess(self::declaration(), self::deployment(ObservationGrade::Available, true));
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('Claimed and not observed', $finding->summary);
+        self::assertStringContainsString('(available)', $finding->summary);
+    }
+
     // --- Machinery ------------------------------------------------------------
 
     /**
@@ -1138,6 +1210,7 @@ final class OutcomeSealTest extends TestCase
                 $verdict = ProbeVerdict::reach(
                     new PanAtRestProbe()->requirement(),
                     self::deployment(ObservationGrade::Measured, false),
+                    ControlSubject::CardholderData,
                 );
 
                 self::assertNotSame(
@@ -1344,6 +1417,7 @@ final class OutcomeSealTest extends TestCase
             Measurement::class => self::instanceOf(Measurement::class),
             ContractResolution::class => self::instanceOf(ContractResolution::class),
             Inspection::class => self::instanceOf(Inspection::class),
+            PlatformCapability::class => self::instanceOf(PlatformCapability::class),
             SubjectAbsence::class => self::instanceOf(SubjectAbsence::class),
             default => self::fail(sprintf(
                 'The attack cannot bring a %s for %s::$%s. Teach it how, so the door is tried '
@@ -1391,6 +1465,10 @@ final class OutcomeSealTest extends TestCase
                 Measurement::class,
                 ['a subject', [], 'a fact under test', false],
             ),
+            PlatformCapability::class => ReflectedVocabulary::construct(
+                PlatformCapability::class,
+                ['a capability', [], false, 'a fact under test', false],
+            ),
             Observation::class => SyntheticObservation::of(
                 ObservationId::AuditChainVerified,
                 ObservationGrade::Measured,
@@ -1400,6 +1478,7 @@ final class OutcomeSealTest extends TestCase
             ProbeVerdict::class => ProbeVerdict::reach(
                 new PanAtRestProbe()->requirement(),
                 self::deployment(ObservationGrade::Measured, true),
+                ControlSubject::CardholderData,
             ),
             RequiredFact::class => RequiredFact::essential(
                 ObservationId::MasterKeyResolved,
@@ -1540,6 +1619,7 @@ final class OutcomeSealTest extends TestCase
             title: 'Render PAN Unreadable Anywhere It Is Stored',
             requirement: 'Render primary account numbers unreadable anywhere they are stored.',
             probe: new PanAtRestProbe(),
+            subject: ControlSubject::CardholderData,
         );
     }
 

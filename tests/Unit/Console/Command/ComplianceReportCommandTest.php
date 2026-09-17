@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Control\ObservationId;
 use Pulsar\Compliance\ControlCatalog;
 use Pulsar\Compliance\Evidence\EvidenceSourceInterface;
@@ -215,6 +216,7 @@ final class ComplianceReportCommandTest extends TestCase
             title: 'Render PAN Unreadable Anywhere It Is Stored',
             requirement: 'Render PAN unreadable anywhere it is stored.',
             probe: new PartialProbe(),
+            subject: ControlSubject::CardholderData,
         ));
 
         $lenient = new BufferedOutput();
@@ -395,6 +397,7 @@ final class ComplianceReportCommandTest extends TestCase
                     ObservationId::TokenVaultPersistence,
                     'Configure a durable token store.',
                 ),
+                subject: ControlSubject::CardholderData,
             ),
             ControlDeclaration::operatorResponsibility(
                 id: 'Req6.5',

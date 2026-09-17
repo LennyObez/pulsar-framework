@@ -12,6 +12,7 @@ use Pulsar\Compliance\ComplianceProfileResolver;
 use Pulsar\Compliance\Control\ControlAssessment;
 use Pulsar\Compliance\Control\ControlEvidence;
 use Pulsar\Compliance\Control\ControlFinding;
+use Pulsar\Compliance\Evidence\AiTransparencyDrillInterface;
 use Pulsar\Compliance\Evidence\ControlEvidenceGatherer;
 use Pulsar\Compliance\Evidence\EvidenceStoreInterface;
 use Pulsar\Compliance\Evidence\InMemoryEvidenceStore;
@@ -24,11 +25,19 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Wiring\ComplianceCatalogWiring;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\WiringList;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Dialect\DialectInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\DriverVariant;
 use Pulsar\Database\PdoConnection;
+use Pulsar\Database\Result;
+use Pulsar\Database\Statement;
+use Pulsar\Database\Transaction;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
+use Pulsar\Extension\AiGovernance\Internal\Compliance\AiTransparencyDrill;
+use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryAiTransparency;
 use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -40,21 +49,43 @@ use Pulsar\Resilience\HealthCheck\HealthStatus;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
+use Pulsar\Security\Audit\AuditFileSink;
+use Pulsar\Security\Audit\AuditLogger;
+use Pulsar\Security\Compliance\Pseudonymization\FilePseudonymLookup;
+use Pulsar\Security\Compliance\Pseudonymization\ForgetService;
+use Pulsar\Security\Compliance\Pseudonymization\ForgetServiceInterface;
+use Pulsar\Security\Compliance\Pseudonymization\InMemoryPseudonymLookup;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymizationService;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymizationServiceInterface;
+use Pulsar\Security\Compliance\Pseudonymization\PseudonymLookupInterface;
 use Pulsar\Security\Crypto\DatabaseTokenStore;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Crypto\TokenizationService;
+use Pulsar\Security\Incident\FileIncidentReporter;
+use Pulsar\Security\Incident\IncidentReporterInterface;
+use Pulsar\Security\Incident\InMemoryIncidentReporter;
+use Pulsar\Security\Posture\SecurityPostureItem;
+use Pulsar\Security\Posture\SecurityPostureReport;
+use Pulsar\Security\Session\SessionEncryption;
+use Pulsar\Security\Session\SessionPayloadCipherInterface;
+use Pulsar\Tests\Support\Compliance\UnauthenticatedFieldEncryptor;
 use ReflectionClass;
 use ReflectionNamedType;
 use RuntimeException;
 use stdClass;
 
 use function array_map;
+use function base64_decode;
+use function base64_encode;
 use function bin2hex;
 use function file_put_contents;
 use function implode;
 use function mkdir;
 use function random_bytes;
 use function sprintf;
+use function str_contains;
 use function sys_get_temp_dir;
 use function var_export;
 
@@ -100,7 +131,11 @@ final class DeploymentUnderAssessment
 
     private bool $withChain = false;
 
+    private bool $networkedDatabase = false;
+
     private bool $withProfile = true;
+
+    private ?string $stateDirectory = null;
 
     private ?ControlEvidence $gathered = null;
 
@@ -143,15 +178,13 @@ final class DeploymentUnderAssessment
         return self::withNothing($frameworks)
             ->withWorkingTokenVault()
             ->resolving('Pulsar\Security\Audit\AuditSinkInterface', 'Pulsar\Security\Audit\AuditFileSink')
-            ->resolving('Pulsar\Security\Session\SessionEncryption', 'Pulsar\Security\Session\SessionEncryption')
+            ->withWorkingSessionSeal()
+            ->withFieldEncryption()
             ->resolving('Pulsar\Auth\TwoFactor\TwoFactorManagerInterface', 'Pulsar\Auth\TwoFactor\TwoFactorManager')
-            ->resolving('Pulsar\Security\Incident\IncidentReporterInterface', 'Pulsar\Security\Incident\FileIncidentReporter')
+            ->withWorkingIncidentRegister()
             ->resolving('Pulsar\DataProtection\DataPurgeInterface', 'Pulsar\DataProtection\DataPurgeOrchestrator')
             ->resolving('Pulsar\DataProtection\RetentionPolicyInterface', 'Pulsar\DataProtection\DefaultRetentionPolicy')
-            ->resolving(
-                'Pulsar\Security\Compliance\Pseudonymization\PseudonymizationServiceInterface',
-                'Pulsar\Security\Compliance\Pseudonymization\PseudonymizationService',
-            )
+            ->withWorkingPseudonymization()
             ->resolving(
                 'Pulsar\Observability\Tracing\SpanProcessorInterface',
                 'Pulsar\Extension\OpenTelemetry\Bridge\OtlpTracerBridge',
@@ -186,6 +219,7 @@ final class DeploymentUnderAssessment
                 'Pulsar\Extension\AiGovernance\Contracts\DeploymentGateInterface',
                 'Pulsar\Extension\AiGovernance\Internal\Gate\ImpactAssessmentGate',
             )
+            ->withArticle50Transparency()
             // The two optional bindings whose absence makes a security feature
             // inert; without them the wiring-contract detector vetoes every
             // control that requires nothing to be silently disabled.
@@ -196,12 +230,48 @@ final class DeploymentUnderAssessment
     }
 
     /**
+     * An Article 50 transparency subsystem that actually works.
+     *
+     * Built for real rather than {@see hollow()}, for the reason the token vault
+     * is: {@see \Pulsar\Compliance\Evidence\AiTransparencyObserver} declares a
+     * surface through the subsystem, reads the policy back and mints a mark, so an
+     * object of the right class establishes nothing. Both the contract and the
+     * compliance seam over it are bound from ONE store, which is what a booted
+     * ai-governance extension produces — the drill must reach the same subsystem an
+     * application's own surfaces reach, or the assessment measures a second copy
+     * nobody uses.
+     */
+    public function withArticle50Transparency(): self
+    {
+        $store = new InMemoryAiTransparency();
+
+        return $this
+            ->resolvingInstance('Pulsar\Extension\AiGovernance\Contracts\AiTransparencyInterface', $store)
+            ->resolvingInstance(AiTransparencyDrillInterface::class, new AiTransparencyDrill($store));
+    }
+
+    /**
+     * A deployment whose transparency seam is whatever the test hands it.
+     *
+     * For the shapes a working subsystem cannot produce: one that forgets a
+     * declaration, one that mints a mark for a surface nobody declared. The
+     * assessment then runs unchanged over it, which is the only way to establish
+     * that the control can reach the outcome it is supposed to.
+     */
+    public function withTransparencySeam(AiTransparencyDrillInterface $drill): self
+    {
+        return $this->resolvingInstance(AiTransparencyDrillInterface::class, $drill);
+    }
+
+    /**
      * A token vault that actually works, and a key hierarchy that actually derives.
      *
-     * These three bindings are the only ones in the fixture built for real rather
-     * than {@see hollow()}, and the reason is the whole of ADR-0041's second
-     * lesson. Every other fact in the evidence set is about which class answered a
-     * contract, so an object of the right class is all a test needs. PAN-at-rest
+     * These three bindings are built for real rather than {@see hollow()} — as is
+     * the session cipher, in {@see withWorkingSessionSeal()} — and the reason is
+     * the whole of ADR-0041's second lesson. Every fact in the evidence set that
+     * is about which class answered a contract needs an object of the right class
+     * and nothing more; every fact that is a MEASUREMENT needs a subsystem that
+     * can actually be put to work, and those are the ones built here. PAN-at-rest
      * is not: {@see \Pulsar\Compliance\Evidence\TokenVaultObserver} puts a value
      * through the vault and reads the persisted bytes back, and a
      * `DatabaseTokenStore` conjured without its constructor would throw on the
@@ -229,6 +299,267 @@ final class DeploymentUnderAssessment
     public function withUnusableTokenVault(): self
     {
         return $this->withTokenVault(tableExists: false);
+    }
+
+    /**
+     * A session cipher that actually seals, built from a real key.
+     *
+     * Built for real rather than {@see hollow()}, as the token vault's bindings
+     * above are, and for the same reason:
+     * {@see \Pulsar\Compliance\Evidence\SessionSealObserver} puts a payload
+     * through the cipher, opens it, modifies a byte and offers it as another
+     * session. A `SessionEncryption` conjured without its constructor holds an
+     * empty key and a key ring that was never initialised, so it would throw on
+     * the first seal — correctly, because a cipher with no key seals nothing. A
+     * test that wants to claim SWIFT CSP 2.6 now has to build a deployment whose
+     * sessions could genuinely be sealed, which is the point.
+     *
+     * The key is the one the deployment already holds when there is one, so the
+     * fixture matches what SecurityWiring does — the session cipher is derived
+     * from the master key, not from a key of its own. When there is none, a
+     * throwaway key is derived and NOT bound: this method's job is to give the
+     * deployment a working cipher, not to quietly give it a key hierarchy that
+     * other facts would then read.
+     */
+    public function withWorkingSessionSeal(): self
+    {
+        $bound = $this->bindings['Pulsar\Security\Crypto\MasterKey'] ?? null;
+        $masterKey = $bound instanceof MasterKey ? $bound : MasterKey::fromHex(bin2hex(random_bytes(32)));
+
+        return $this->resolvingInstance(
+            'Pulsar\Security\Session\SessionEncryption',
+            SessionEncryption::fromMasterKey($masterKey),
+        );
+    }
+
+    /**
+     * The encryptor every field this deployment classifies at rest is sealed with.
+     *
+     * Built for real, like the vault, the session cipher and the pseudonymisation
+     * services, and for the same reason: {@see \Pulsar\Compliance\Evidence\PersonalDataSealObserver}
+     * puts a field classified as personal data through
+     * {@see \Pulsar\Workflow\Storage\ClassifiedContext} and reads the at-rest form
+     * back, so an object of the right class establishes nothing at all. An
+     * `Encryptor` conjured without its constructor holds no derived key and would
+     * throw on the first seal — correctly, because a cipher with no key seals
+     * nothing.
+     *
+     * The key is the one the deployment already holds when there is one, so the
+     * fixture matches {@see \Pulsar\Core\Wiring\SecurityWiring}, which derives the
+     * default encryption subkey from the master key inside the same block that
+     * binds it.
+     */
+    public function withFieldEncryption(): self
+    {
+        $bound = $this->bindings['Pulsar\Security\Crypto\MasterKey'] ?? null;
+        $masterKey = $bound instanceof MasterKey ? $bound : MasterKey::fromHex(bin2hex(random_bytes(32)));
+
+        return $this->resolvingInstance(EncryptorInterface::class, Encryptor::fromMasterKey($masterKey));
+    }
+
+    /**
+     * A deployment whose at-rest protection is opaque and nothing more.
+     *
+     * The shape a custom binding actually takes. `EncryptorInterface` is `#[Api]`
+     * and the composition root binds it BY CONTRACT, so an application can answer
+     * it with a legacy cipher, an HSM shim or a wrapper someone wrote to carry a
+     * key id — and none of those is necessarily authenticated or randomised. This
+     * deployment conceals the value and gives it back, which is what most people
+     * check, and lets whoever can write the row choose what the application reads
+     * back about a data subject.
+     *
+     * It is the counter-shape to {@see withFieldEncryption()}: without it, a
+     * control resting on the personal-data seal would be an instrument stuck at
+     * Satisfied whenever any encryptor is bound at all.
+     */
+    public function withUnauthenticatedFieldEncryption(): self
+    {
+        return $this->resolvingInstance(EncryptorInterface::class, new UnauthenticatedFieldEncryptor());
+    }
+
+    /**
+     * A pseudonymisation subsystem that actually replaces, resolves and erases.
+     *
+     * Built for real rather than {@see hollow()}, for the reason the token vault
+     * and the session cipher are: {@see \Pulsar\Compliance\Evidence\PseudonymizationObserver}
+     * mints a pseudonym, reads the mapping back, resolves it and then erases it
+     * through the live services, so an object of the right class establishes
+     * nothing. A `PseudonymizationService` conjured without its constructor holds
+     * no derived key and no lookup, and would throw on the first call — correctly,
+     * because a service with no key replaces nothing.
+     *
+     * All three bindings come from ONE lookup, which is what SecurityWiring
+     * produces: the service that stores a mapping and the erasure service that
+     * deletes it have to reach the same table, or the check would erase from a
+     * second copy nobody uses and report success.
+     *
+     * The audit logger is real too, and it is not incidental — `resolve()` and
+     * `forget()` both record what they did, and a stub that swallowed those calls
+     * would let a deployment pass this check with no evidence of the erasure it
+     * performed.
+     */
+    public function withWorkingPseudonymization(): self
+    {
+        return $this->withPseudonymization(new FilePseudonymLookup(
+            $this->stateDirectory() . DIRECTORY_SEPARATOR . 'pseudonyms.json',
+        ));
+    }
+
+    /**
+     * The mapping table this framework shipped for years: the development stub.
+     *
+     * Every subject of the measurement passes over it — a pseudonym is minted,
+     * recorded, resolved and erased, all inside one process — and the mappings are
+     * gone at the end of the request. The pseudonymised records it produced can
+     * never be resolved for an Article 15 answer and an Article 17 request has
+     * nothing to erase. This is the deployment that makes an in-process
+     * measurement insufficient on its own, and a test that cannot express it
+     * cannot guard against it.
+     */
+    public function withNonDurablePseudonymTable(): self
+    {
+        return $this->withPseudonymization(new InMemoryPseudonymLookup());
+    }
+
+    /**
+     * The durable table, bound, holding a document nothing can read.
+     *
+     * Every identity fact reads clean — `PseudonymLookupInterface` resolves to
+     * `FilePseudonymLookup`, the implementation this release accepts — and the
+     * first `pseudonymize()` throws, because that class refuses to treat an
+     * unreadable table as an empty one: answering "no mapping" from a corrupt
+     * document would report an erasure as already done and a live pseudonym as
+     * unknown. So no identifier is ever replaced, and no resolution can tell.
+     *
+     * The pseudonymisation analogue of {@see withUnusableTokenVault()}, and the
+     * shape that shows the measurement failing where the resolutions cannot. A
+     * corrupt document rather than an unwritable path, because every way of making
+     * a path unwritable raises a PHP warning from inside the code under test, and
+     * this suite fails on warnings.
+     */
+    public function withCorruptPseudonymTable(): self
+    {
+        $path = $this->stateDirectory() . DIRECTORY_SEPARATOR . 'corrupt_pseudonyms.json';
+        file_put_contents($path, '{ this is not a mapping table');
+
+        return $this->withPseudonymization(new FilePseudonymLookup($path));
+    }
+
+    /**
+     * An incident register that actually retains what it is given.
+     *
+     * Real, over a real file, for the reason the token vault is real:
+     * {@see \Pulsar\Compliance\Evidence\IncidentRegisterObserver} records an
+     * incident and reads it back by id, and on the file register that read goes to
+     * disk — which is the only thing that distinguishes a register that survives
+     * the process from one that answers out of an array.
+     */
+    public function withWorkingIncidentRegister(): self
+    {
+        return $this->resolvingInstance(
+            IncidentReporterInterface::class,
+            new FileIncidentReporter($this->stateDirectory() . DIRECTORY_SEPARATOR . 'incidents.jsonl'),
+        );
+    }
+
+    /**
+     * The register that empties on restart.
+     *
+     * It passes every subject of the measurement — recorded, found, intact — and
+     * has forgotten the incident by the next request, so no notification deadline
+     * it holds can be evidenced. The reason
+     * {@see \Pulsar\Compliance\Control\ObservationId::IncidentReporterResolved}
+     * stays an essential fact beside the measurement.
+     */
+    public function withNonDurableIncidentRegister(): self
+    {
+        return $this->resolvingInstance(IncidentReporterInterface::class, new InMemoryIncidentReporter());
+    }
+
+    /**
+     * The three pseudonymisation bindings, over whichever table the caller chose.
+     *
+     * The key is the one the deployment already holds when there is one, so the
+     * fixture matches SecurityWiring: the pseudonymisation subkey is derived from
+     * the master key rather than from a key of its own. When there is none, a
+     * throwaway is derived and NOT bound, for the reason
+     * {@see withWorkingSessionSeal()} gives.
+     */
+    private function withPseudonymization(PseudonymLookupInterface $lookup): self
+    {
+        $bound = $this->bindings['Pulsar\Security\Crypto\MasterKey'] ?? null;
+        $masterKey = $bound instanceof MasterKey ? $bound : MasterKey::fromHex(bin2hex(random_bytes(32)));
+
+        $auditLogger = new AuditLogger(
+            new AuditFileSink($this->stateDirectory() . DIRECTORY_SEPARATOR . 'audit.log'),
+            bin2hex(random_bytes(32)),
+        );
+
+        return $this
+            ->resolvingInstance(PseudonymLookupInterface::class, $lookup)
+            ->resolvingInstance(PseudonymizationServiceInterface::class, new PseudonymizationService(
+                $masterKey,
+                $lookup,
+                Encryptor::fromMasterKey($masterKey),
+                $auditLogger,
+            ))
+            ->resolvingInstance(ForgetServiceInterface::class, new ForgetService($lookup, $auditLogger));
+    }
+
+    /**
+     * A writable directory this deployment's stateful subsystems share.
+     *
+     * One per fixture, created lazily, and shared on purpose: SecurityWiring puts
+     * the pseudonym table, the incident register and the audit trail beside each
+     * other under the audit log's directory, and a fixture that scattered them
+     * would not be building the deployment it claims to.
+     */
+    private function stateDirectory(): string
+    {
+        if ($this->stateDirectory !== null) {
+            return $this->stateDirectory;
+        }
+
+        $path = sys_get_temp_dir() . '/pulsar_compliance_state_' . bin2hex(random_bytes(6));
+        @mkdir($path, 0o700, true);
+
+        return $this->stateDirectory = $path;
+    }
+
+    /**
+     * A session cipher that is bound, constructible, and seals nothing.
+     *
+     * The deployment `session_encryption_resolved` cannot tell from a working
+     * one: the class is right, the container built it, and every identity fact
+     * reads clean. What it does is return the payload base64-encoded, which is
+     * opaque enough to pass a naive "the output is not the input" check and is
+     * cleartext to anyone who can read the session store. It is here so the
+     * measurement can be shown to FAIL on a deployment the configuration read
+     * cannot fault — the session-payload analogue of
+     * {@see withUnusableTokenVault()}.
+     */
+    public function withCiphertextThatIsNotSealed(): self
+    {
+        return $this->resolvingInstance(
+            'Pulsar\Security\Session\SessionEncryption',
+            new class implements SessionPayloadCipherInterface {
+                #[Override]
+                public function encrypt(string $data, string $sessionId, string $handlerType, string $domain): string
+                {
+                    return base64_encode($data);
+                }
+
+                #[Override]
+                public function decrypt(
+                    string $encrypted,
+                    string $sessionId,
+                    string $handlerType,
+                    string $domain,
+                ): string {
+                    return (string) base64_decode($encrypted, true);
+                }
+            },
+        );
     }
 
     private function withTokenVault(bool $tableExists): self
@@ -416,6 +747,145 @@ final class DeploymentUnderAssessment
         $this->gathered = null;
 
         return $this;
+    }
+
+    /**
+     * A deployment whose database is reached over a network, and whose server was
+     * asked what the live session negotiated.
+     *
+     * The only shape in which `database_transport_encrypted` is MEASURED. It needs
+     * three things together and none of them alone: a `config/database.php` naming
+     * a connection whose engine crosses a network, a host that is not a unix socket
+     * — {@see \Pulsar\Compliance\Evidence\DatabaseTlsObserver::isLocalIpcConnection()}
+     * excludes those, which is the whole reason HIPAA 164.312(e)(1) used to
+     * evaporate — and a live connection that answers the `pg_stat_ssl` catalogue
+     * read.
+     *
+     * The connection is a double rather than a real server: what is under test is
+     * the decision table, and standing up PostgreSQL to prove that an encrypted
+     * session satisfies a transmission-security control would make the test
+     * unrunnable in the one place it has to run.
+     */
+    public function withNetworkedDatabase(bool $sessionEncrypted): self
+    {
+        $this->networkedDatabase = true;
+        $this->gathered = null;
+
+        return $this->resolvingInstance(
+            ConnectionInterface::class,
+            self::postgresReporting($sessionEncrypted),
+        );
+    }
+
+    /**
+     * A deployment whose security preflight found HSTS asserted with a sufficient
+     * max-age.
+     *
+     * Bound as the posture REPORT the preflight produced, because that is what the
+     * composition root reads. Without one, every posture fact records that the
+     * preflight produced no such item — which is what the bare fixture is, and why
+     * `transport_security_enforced` reads as a gap there.
+     */
+    public function withHstsEnforced(): self
+    {
+        return $this->resolvingInstance(
+            SecurityPostureReport::class,
+            new SecurityPostureReport([
+                SecurityPostureItem::ok('https_hsts', 'HSTS is enabled with a sufficient max-age'),
+            ]),
+        );
+    }
+
+    /**
+     * A connection that answers the catalogue read `TransportSecurity` puts to
+     * PostgreSQL, and nothing else.
+     *
+     * Every other method throws rather than returning a benign default: a double
+     * that quietly answers a question the code under test was not supposed to ask
+     * is how a test stops testing what it claims to.
+     */
+    private static function postgresReporting(bool $encrypted): ConnectionInterface
+    {
+        return new class ($encrypted) implements ConnectionInterface {
+            public function __construct(private readonly bool $encrypted) {}
+
+            #[Override]
+            public function query(string $sql, array $bindings = []): Result
+            {
+                if (!str_contains($sql, 'pg_stat_ssl')) {
+                    throw new RuntimeException('Unexpected query in the transport fixture: ' . $sql);
+                }
+
+                return Result::fromArrays([[
+                    'ssl' => $this->encrypted ? 't' : 'f',
+                    'version' => 'TLSv1.3',
+                    'cipher' => 'TLS_AES_256_GCM_SHA384',
+                ]]);
+            }
+
+            #[Override]
+            public function driver(): Driver
+            {
+                return Driver::PostgreSQL;
+            }
+
+            #[Override]
+            public function name(): string
+            {
+                return 'primary';
+            }
+
+            #[Override]
+            public function execute(string $sql, array $bindings = []): int
+            {
+                throw new RuntimeException('The transport fixture does not execute statements.');
+            }
+
+            #[Override]
+            public function prepare(string $sql): Statement
+            {
+                throw new RuntimeException('The transport fixture does not prepare statements.');
+            }
+
+            #[Override]
+            public function beginTransaction(): Transaction
+            {
+                throw new RuntimeException('The transport fixture does not open transactions.');
+            }
+
+            #[Override]
+            public function transaction(callable $callback): mixed
+            {
+                throw new RuntimeException('The transport fixture does not open transactions.');
+            }
+
+            #[Override]
+            public function lastInsertId(): string
+            {
+                throw new RuntimeException('The transport fixture writes nothing.');
+            }
+
+            #[Override]
+            public function variant(): DriverVariant
+            {
+                throw new RuntimeException('The transport fixture reports no server variant.');
+            }
+
+            #[Override]
+            public function dialect(): DialectInterface
+            {
+                throw new RuntimeException('The transport fixture writes no SQL.');
+            }
+
+            #[Override]
+            public function inTransaction(): bool
+            {
+                return false;
+            }
+
+            #[Override]
+            public function disconnect(): void {}
+        };
     }
 
     /**
@@ -607,6 +1077,20 @@ final class DeploymentUnderAssessment
             $path . '/security.php',
             '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];',
         );
+
+        // Written only when the test asked for it. A deployment with no
+        // config/database.php has no database transport at all, which is a
+        // different fact from one whose transport is unencrypted, and the bare
+        // fixture has to keep expressing the first.
+        if ($this->networkedDatabase) {
+            file_put_contents(
+                $path . '/database.php',
+                '<?php return ["default" => "primary", "connections" => ["primary" => ['
+                    . '"driver" => "pgsql", "host" => "db.internal", "port" => 5432, '
+                    . '"database" => "app", "username" => "app", "password" => "", '
+                    . '"options" => ["sslmode" => "require"]]]];',
+            );
+        }
 
         $frameworks = implode(', ', array_map(
             static fn(ComplianceFramework $framework): string => var_export($framework->value, true),

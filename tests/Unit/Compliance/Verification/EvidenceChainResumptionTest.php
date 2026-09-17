@@ -432,7 +432,6 @@ final class EvidenceChainResumptionTest extends TestCase
 
         declare(strict_types=1);
 
-        use DateTimeImmutable;
         use Pulsar\Compliance\ComplianceFramework;
         use Pulsar\Compliance\ComplianceProfileResolver;
         use Pulsar\Compliance\Evidence\FileEvidenceStore;
@@ -466,7 +465,7 @@ final class EvidenceChainResumptionTest extends TestCase
             evidenceChain: new EvidenceChain($store, $argv[3]),
         );
 
-        $now = new DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $result = new EvidenceCollectionJob($engine, $store, 0, Schedule::everyMinute())
             ->execute(new JobContext($now, $now));
 
