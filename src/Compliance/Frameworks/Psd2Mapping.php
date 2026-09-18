@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\MultiFactorAuthenticationProbe;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
@@ -37,6 +38,7 @@ final class Psd2Mapping
                     . 'electronic payment transaction, or carries out any action through a '
                     . 'remote channel implying a risk of fraud.',
                 probe: new MultiFactorAuthenticationProbe(),
+                subject: ControlSubject::Authentication,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -116,6 +118,7 @@ final class Psd2Mapping
                     . 'sufficient to evidence authentication, execution and any fraud, and '
                     . 'retain them for the period national law prescribes.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
         ];
     }

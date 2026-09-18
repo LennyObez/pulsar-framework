@@ -80,15 +80,30 @@ final class Iso27001MappingTest extends TestCase
         self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
     }
 
+    /**
+     * A.8.15 is about LOGGING — the record of activity the application writes —
+     * and a deployment with a resolved sink and a verified evidence chain does not
+     * satisfy it.
+     *
+     * This test asserted Satisfied until {@see \Pulsar\Compliance\Control\ControlSubject}
+     * arrived, and the assertion was wrong in a way no grade rule could see. The
+     * chain verification is a genuine cryptographic measurement, at the strongest
+     * grade in the vocabulary — of the COMPLIANCE EVIDENCE REGISTER, the framework's
+     * signed log of its own verification runs. Nothing here reads the audit trail
+     * A.8.15 regulates, so the finding now says so and names the estate each fact
+     * interrogated.
+     */
     #[Test]
-    public function loggingIsSatisfiedWhenTheSinkResolvesAndTheChainVerifies(): void
+    public function loggingIsNotSatisfiedByAVerifiedComplianceRegister(): void
     {
         $finding = self::bare()
             ->resolving(self::AUDIT_SINK, AuditFileSink::class)
             ->withVerifiedEvidenceChain()
             ->finding(ComplianceFramework::Iso27001, 'A.8.15');
 
-        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('compliance_evidence_register', $finding->summary);
+        self::assertStringContainsString('audit_trail', $finding->summary);
     }
 
     /**

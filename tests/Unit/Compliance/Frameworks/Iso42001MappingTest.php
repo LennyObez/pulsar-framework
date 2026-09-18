@@ -57,7 +57,14 @@ final class Iso42001MappingTest extends TestCase
         $finding = self::bare()->finding(ComplianceFramework::Iso42001, 'ISO42001-7.5');
 
         self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
-        self::assertSame('probe.ai_model_registry', $finding->probeId);
+
+        // The probe changed in rc.12 and the change is the point of this
+        // assertion. Clause 7.5 asks for DOCUMENTED information and was carried by
+        // `probe.ai_model_registry`, which asks which class answered the registry
+        // contract — a question an in-memory store answers as well as a durable
+        // one. `probe.ai_governance_record` asks whether a record written through
+        // the deployment's own stores is still there when a second instance looks.
+        self::assertSame('probe.ai_governance_record', $finding->probeId);
     }
 
     /**
@@ -131,8 +138,15 @@ final class Iso42001MappingTest extends TestCase
         );
     }
 
+    /**
+     * Clause 9.2 audits the AI MANAGEMENT SYSTEM, and the one measurement this
+     * deployment offers interrogates the framework's own compliance evidence
+     * register. Wiring an AI audit logger says which class is bound; verifying the
+     * chain says the register is intact; neither is an internal audit of the AI
+     * system, and the finding now names both estates instead of conflating them.
+     */
     #[Test]
-    public function internalAuditIsSatisfiedWithAnAiLoggerAndAVerifiedChain(): void
+    public function internalAuditIsNotSatisfiedByAVerifiedComplianceRegister(): void
     {
         $finding = self::bare()
             ->withExtension(self::EXTENSION)
@@ -141,7 +155,9 @@ final class Iso42001MappingTest extends TestCase
             ->withVerifiedEvidenceChain()
             ->finding(ComplianceFramework::Iso42001, 'ISO42001-9.2');
 
-        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('compliance_evidence_register', $finding->summary);
+        self::assertStringContainsString('ai_system_governance', $finding->summary);
     }
 
     // --- Clause 9.1: the control the audit named ------------------------------
@@ -175,7 +191,12 @@ final class Iso42001MappingTest extends TestCase
             ->withHealthCheck(DeploymentUnderAssessment::passingHealthCheck('model-serving'))
             ->finding(ComplianceFramework::Iso42001, 'ISO42001-9.1');
 
-        self::assertSame(ControlOutcome::Partial, $finding->outcome);
+        // It used to be Partial, and the "part observed" was the deployment's own
+        // liveness checks answering — a fact about whether the process is up, not
+        // about whether an AI system is monitored. With the estate join that fact
+        // no longer speaks for this control, so the whole of Clause 9.1 is
+        // unobserved rather than half of it.
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
         self::assertStringContainsString(
             'MonitoringHookInterface',
             self::details($finding->evidence),

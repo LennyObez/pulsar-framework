@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AccessRestrictionProbe;
 use Pulsar\Compliance\Probe\AssetInventoryProbe;
 use Pulsar\Compliance\Probe\HealthDataProtectionProbe;
@@ -43,6 +44,7 @@ final class HipaaMapping
                     . 'access only to those persons or software programs that have been granted '
                     . 'access rights.',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::probed(
@@ -52,6 +54,7 @@ final class HipaaMapping
                 requirement: 'Implement a mechanism to encrypt and decrypt electronic protected health '
                     . 'information.',
                 probe: new HealthDataProtectionProbe(),
+                subject: ControlSubject::HealthData,
             ),
 
             ControlDeclaration::probed(
@@ -62,6 +65,7 @@ final class HipaaMapping
                     . 'examine activity in information systems that contain or use electronic '
                     . 'protected health information.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::probed(
@@ -71,6 +75,7 @@ final class HipaaMapping
                 requirement: 'Implement policies and procedures to protect electronic protected health '
                     . 'information from improper alteration or destruction.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::probed(
@@ -81,6 +86,7 @@ final class HipaaMapping
                     . 'access to electronic protected health information that is being '
                     . 'transmitted over an electronic communications network.',
                 probe: new TransportSecurityProbe(),
+                subject: ControlSubject::DataInTransit,
             ),
 
             ControlDeclaration::probed(
@@ -91,6 +97,7 @@ final class HipaaMapping
                     . 'electronic protected health information is the one claimed; the 2026 '
                     . 'rulemaking requires multi-factor authentication.',
                 probe: new MultiFactorAuthenticationProbe(),
+                subject: ControlSubject::Authentication,
             ),
 
             ControlDeclaration::probed(
@@ -101,6 +108,7 @@ final class HipaaMapping
                     . 'information mandatory both at rest and in transit, rather than '
                     . 'addressable.',
                 probe: new HealthDataProtectionProbe(),
+                subject: ControlSubject::HealthData,
             ),
 
             ControlDeclaration::probed(
@@ -110,6 +118,7 @@ final class HipaaMapping
                 requirement: 'Establish and implement procedures to restore any loss of data; the 2026 '
                     . 'rulemaking requires restoration of critical systems within 72 hours.',
                 probe: new RecoveryCapabilityProbe(),
+                subject: ControlSubject::BusinessContinuity,
             ),
 
             ControlDeclaration::probed(
@@ -120,6 +129,7 @@ final class HipaaMapping
                     . 'assets that create, receive, maintain or transmit electronic protected '
                     . 'health information, and a network map of how it moves.',
                 probe: new AssetInventoryProbe(),
+                subject: ControlSubject::RouteInventory,
             ),
         ];
     }

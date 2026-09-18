@@ -233,15 +233,25 @@ final class PciDssMappingTest extends TestCase
         self::assertSame('probe.tamper_evident_audit', $finding->probeId);
     }
 
+    /**
+     * Req 10.2 asks for automated audit trails for all system components, and a
+     * verified compliance evidence register is not one.
+     *
+     * The chain verification still runs, is still the strongest measurement in the
+     * subsystem, and is still printed with its counts — an assessor who wants to
+     * know whether the register is intact gets the answer. What it no longer does
+     * is stand in for the audit trail. See {@see Iso27001MappingTest} for the
+     * argument; the two controls cite one probe.
+     */
     #[Test]
-    public function auditTrailIsSatisfiedWhenASinkResolvesAndTheChainVerifies(): void
+    public function theAuditTrailIsNotSatisfiedByAVerifiedComplianceRegister(): void
     {
         $finding = self::bare()
             ->resolving(self::AUDIT_SINK, AuditFileSink::class)
             ->withVerifiedEvidenceChain()
             ->finding(ComplianceFramework::PciDss, 'Req10.2');
 
-        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
 
         $evidence = self::evidenceText($finding->evidence);
 
@@ -250,6 +260,11 @@ final class PciDssMappingTest extends TestCase
         // that used to be printed over a truncated register.
         self::assertStringContainsString('register is INTACT', $evidence);
         self::assertStringContainsString('attested by the anchor', $evidence);
+
+        // And the finding says which estate was interrogated, so the operator is
+        // not sent to redo the work that produced that INTACT.
+        self::assertStringContainsString('compliance_evidence_register', $finding->summary);
+        self::assertStringContainsString('Do not re-do that work', implode(' ', $finding->remediations));
     }
 
     /**

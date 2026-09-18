@@ -40,6 +40,13 @@ final readonly class AiExplainabilityProbe extends CapabilityProbe
         return [
             ObservationId::AiGovernanceExtensionActive,
             ObservationId::AiExplainabilityResolved,
+            // Added in rc.12, and this is the control where durability is the
+            // whole substance. A person contesting an automated decision asks
+            // days or weeks later; an explanation held in the memory of the
+            // worker that produced the decision is gone before they ask, so a
+            // bound explainability store proves nothing about whether the
+            // explanation can still be given.
+            ObservationId::AiGovernanceRecordsDurable,
         ];
     }
 
@@ -65,6 +72,11 @@ final readonly class AiExplainabilityProbe extends CapabilityProbe
         return [
             'Install and enable the pulsar/ai-governance extension and bind an '
                 . 'ExplainabilityInterface implementation.',
+            'Point the ai_governance store keys at a durable implementation. The extension ships '
+                . 'one for each store — "database" is the default in config/ai-governance.php since '
+                . 'rc.12 — and `pulsar migrate` creates the tables. An in-memory store loses the '
+                . 'record at the next restart, which is a gap this check reports rather than '
+                . 'assumes.',
             'If this deployment operates no AI system, remove Iso42001 from '
                 . 'enabled_frameworks.',
         ];

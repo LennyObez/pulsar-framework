@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\GovernanceProfileProbe;
 use Pulsar\Compliance\Probe\IncidentResponseProbe;
 use Pulsar\Compliance\Probe\RecoveryCapabilityProbe;
@@ -40,6 +41,7 @@ final class DoraMapping
                     . 'framework that ensures effective and prudent management of ICT risk '
                     . '(Articles 5 to 16).',
                 probe: new RiskAssessmentProbe(),
+                subject: ControlSubject::RiskGovernance,
             ),
 
             ControlDeclaration::probed(
@@ -50,6 +52,7 @@ final class DoraMapping
                     . 'incident management process to detect, manage and notify ICT-related '
                     . 'incidents (Articles 17 to 23).',
                 probe: new IncidentResponseProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
 
             ControlDeclaration::probed(
@@ -60,6 +63,7 @@ final class DoraMapping
                     . 'significant cyber threats, and retain the records for the period '
                     . 'required by the competent authority.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -104,6 +108,7 @@ final class DoraMapping
                     . 'and associated response and recovery plans, including backup and '
                     . 'restoration procedures (Article 11).',
                 probe: new RecoveryCapabilityProbe(),
+                subject: ControlSubject::BusinessContinuity,
             ),
 
             ControlDeclaration::probed(
@@ -114,6 +119,7 @@ final class DoraMapping
                     . 'and be accountable for the implementation of the ICT risk management '
                     . 'framework (Article 5).',
                 probe: new GovernanceProfileProbe(),
+                subject: ControlSubject::RiskGovernance,
             ),
         ];
     }

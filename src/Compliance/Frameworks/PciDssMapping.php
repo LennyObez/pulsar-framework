@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\MultiFactorAuthenticationProbe;
 use Pulsar\Compliance\Probe\PanAtRestProbe;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
@@ -110,6 +111,7 @@ final class PciDssMapping
                     . 'elsewhere. Req 1.1.3 carries that question and is an operator '
                     . 'responsibility.',
                 probe: new PanAtRestProbe(),
+                subject: ControlSubject::CardholderData,
             ),
 
             // v4.0.1: 6.2.4. A property of the BUILD, not of the deployment. Static
@@ -155,6 +157,7 @@ final class PciDssMapping
                     . 'remote access to the cardholder data environment using multi-factor '
                     . 'authentication.',
                 probe: new MultiFactorAuthenticationProbe(),
+                subject: ControlSubject::Authentication,
             ),
 
             // v4.0.1: 10.2.1 / 10.3.2.
@@ -167,6 +170,7 @@ final class PciDssMapping
                     . 'time, success or failure indication, origination, and the identity or name '
                     . 'of affected data, system component, resource, or service.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
         ];
     }

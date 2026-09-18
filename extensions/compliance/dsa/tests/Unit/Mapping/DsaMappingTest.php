@@ -74,14 +74,29 @@ final class DsaMappingTest extends TestCase
         self::assertSame('probe.tamper_evident_audit', $finding->probeId);
     }
 
+    /**
+     * Article 17 requires the statement of reasons to be RETAINED, so the control
+     * is about the audit trail this application writes — and a resolved sink plus
+     * a verified compliance evidence register is not that trail.
+     *
+     * This asserted Satisfied until ADR-0062 gave every control the estate it
+     * regulates. The chain verification is real and is still printed; what it
+     * interrogates is the framework's own signed log of its verification runs, and
+     * a measurement of one estate is not evidence about another. The finding names
+     * both, so an operator whose sink is bound is not told to bind a sink.
+     */
     #[Test]
-    public function statementsOfReasonsAreSatisfiedWhenTheTrailIsDurableAndVerifiable(): void
+    public function statementsOfReasonsAreNotSatisfiedByAVerifiedComplianceRegister(): void
     {
         $deployment = DeploymentUnderAssessment::withNothing([ComplianceFramework::Dsa])
             ->resolving(self::AUDIT_SINK, AuditFileSink::class)
             ->withVerifiedEvidenceChain();
 
-        self::assertSame(ControlOutcome::Satisfied, self::finding('dsa-art-17', $deployment)->outcome);
+        $finding = self::finding('dsa-art-17', $deployment);
+
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('compliance_evidence_register', $finding->summary);
+        self::assertStringContainsString('audit_trail', $finding->summary);
     }
 
     #[Test]

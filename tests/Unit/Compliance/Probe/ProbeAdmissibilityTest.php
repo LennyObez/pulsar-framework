@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Compliance\Control\ControlEvidence;
 use Pulsar\Compliance\Control\ControlOutcome;
 use Pulsar\Compliance\Control\ControlProbeInterface;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Control\ObservationGrade;
 use Pulsar\Compliance\Control\ObservationId;
 use Pulsar\Compliance\Control\ProbeVerdict;
@@ -49,12 +50,10 @@ final class ProbeAdmissibilityTest extends TestCase
     #[DataProvider('everyProbe')]
     public function noProbeIsSatisfiedByAnEmptyDeployment(ControlProbeInterface $probe): void
     {
-        $verdict = ProbeVerdict::reach($probe->requirement(), self::evidenceWhereNothingHolds());
-
-        self::assertNotSame(
-            ControlOutcome::Satisfied,
-            $verdict->outcome,
-            sprintf('%s satisfied a control from a deployment that has nothing.', $probe->id()),
+        self::assertNeverSatisfied(
+            $probe,
+            self::evidenceWhereNothingHolds(),
+            'satisfied a control from a deployment that has nothing',
         );
     }
 
@@ -62,16 +61,11 @@ final class ProbeAdmissibilityTest extends TestCase
     #[DataProvider('everyProbe')]
     public function noProbeIsSatisfiedByConfigurationAlone(ControlProbeInterface $probe): void
     {
-        $verdict = ProbeVerdict::reach($probe->requirement(), self::evidenceThatIsOnlyConfigured());
-
-        self::assertNotSame(
-            ControlOutcome::Satisfied,
-            $verdict->outcome,
-            sprintf(
-                '%s satisfied a control from configuration alone. A Declared observation records '
-                    . 'what an operator asked for, never what the deployment did.',
-                $probe->id(),
-            ),
+        self::assertNeverSatisfied(
+            $probe,
+            self::evidenceThatIsOnlyConfigured(),
+            'satisfied a control from configuration alone. A Declared observation records what '
+                . 'an operator asked for, never what the deployment did',
         );
     }
 
@@ -90,16 +84,11 @@ final class ProbeAdmissibilityTest extends TestCase
     #[DataProvider('everyProbe')]
     public function noProbeIsSatisfiedByResolvedIdentityAlone(ControlProbeInterface $probe): void
     {
-        $verdict = ProbeVerdict::reach($probe->requirement(), self::evidenceThatOnlyResolves());
-
-        self::assertNotSame(
-            ControlOutcome::Satisfied,
-            $verdict->outcome,
-            sprintf(
-                '%s satisfied a control from resolved identity alone. A Resolved observation '
-                    . 'records which class answered a contract, never that anything ran.',
-                $probe->id(),
-            ),
+        self::assertNeverSatisfied(
+            $probe,
+            self::evidenceThatOnlyResolves(),
+            'satisfied a control from resolved identity alone. A Resolved observation records '
+                . 'which class answered a contract, never that anything ran',
         );
     }
 
@@ -110,13 +99,40 @@ final class ProbeAdmissibilityTest extends TestCase
     #[DataProvider('everyProbe')]
     public function everyProbeNamesARemediationWhenItReportsAGap(ControlProbeInterface $probe): void
     {
-        $verdict = ProbeVerdict::reach($probe->requirement(), self::evidenceWhereNothingHolds());
+        foreach (ControlSubject::cases() as $subject) {
+            $verdict = ProbeVerdict::reach($probe->requirement(), self::evidenceWhereNothingHolds(), $subject);
 
-        if ($verdict->outcome === ControlOutcome::NotApplicable) {
-            return;
+            if ($verdict->outcome === ControlOutcome::NotApplicable) {
+                continue;
+            }
+
+            self::assertNotSame([], $verdict->remediations, $probe->id() . ' / ' . $subject->value);
         }
+    }
 
-        self::assertNotSame([], $verdict->remediations, $probe->id());
+    /**
+     * Every probe, against every estate a mapping could declare it for.
+     *
+     * The estate dimension is enumerated rather than fixed, and that is what keeps
+     * this test total after {@see ControlSubject} arrived. A mapping author chooses
+     * the estate, so a probe that can be satisfied by configuration for SOME estate
+     * is a probe that can be satisfied by configuration — and picking one estate
+     * here would have decided which of those the test was allowed to see.
+     */
+    private static function assertNeverSatisfied(
+        ControlProbeInterface $probe,
+        ControlEvidence $evidence,
+        string $complaint,
+    ): void {
+        foreach (ControlSubject::cases() as $subject) {
+            $verdict = ProbeVerdict::reach($probe->requirement(), $evidence, $subject);
+
+            self::assertNotSame(
+                ControlOutcome::Satisfied,
+                $verdict->outcome,
+                sprintf('%s (declared for %s) %s.', $probe->id(), $subject->value, $complaint),
+            );
+        }
     }
 
     #[Test]

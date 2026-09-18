@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AccessRestrictionProbe;
 use Pulsar\Compliance\Probe\ConfigurationManagementProbe;
 use Pulsar\Compliance\Probe\DataLeakagePreventionProbe;
@@ -82,6 +83,7 @@ final class Iso27001Mapping
                     . 'restricted in accordance with the established topic-specific policy on '
                     . 'access control.',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::probed(
@@ -92,6 +94,7 @@ final class Iso27001Mapping
                     . 'implemented based on information access restrictions and the '
                     . 'topic-specific policy on access control.',
                 probe: new MultiFactorAuthenticationProbe(),
+                subject: ControlSubject::Authentication,
             ),
 
             ControlDeclaration::probed(
@@ -102,6 +105,7 @@ final class Iso27001Mapping
                     . 'software, services and networks shall be established, documented, '
                     . 'implemented, monitored and reviewed.',
                 probe: new ConfigurationManagementProbe(),
+                subject: ControlSubject::DeploymentConfiguration,
             ),
 
             ControlDeclaration::probed(
@@ -112,6 +116,7 @@ final class Iso27001Mapping
                     . 'networks and any other devices that process, store or transmit sensitive '
                     . 'information.',
                 probe: new DataLeakagePreventionProbe(),
+                subject: ControlSubject::ConfidentialInformation,
             ),
 
             ControlDeclaration::probed(
@@ -121,6 +126,7 @@ final class Iso27001Mapping
                 requirement: 'Logs that record activities, exceptions, faults and other relevant '
                     . 'events shall be produced, stored, protected and analysed.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             // "Including cryptographic key management" — and it was probed for
@@ -144,6 +150,7 @@ final class Iso27001Mapping
                     . 'generation through rotation to destruction, are documents; A.5.1 carries '
                     . 'them and is an operator responsibility.',
                 probe: new KeyManagementProbe(),
+                subject: ControlSubject::KeyHierarchy,
             ),
 
             // A property of how the software was BUILT. The static analysers, the

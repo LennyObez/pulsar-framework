@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
@@ -93,6 +94,7 @@ final class DsaMapping
                     . 'statement of reasons to any affected recipient for any restriction '
                     . 'imposed, and retain it (Article 17).',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::operatorResponsibility(

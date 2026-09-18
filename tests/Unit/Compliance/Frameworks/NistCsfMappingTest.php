@@ -141,15 +141,22 @@ final class NistCsfMappingTest extends TestCase
         );
     }
 
+    /**
+     * DE.AE analyses adverse events in the AUDIT TRAIL, and a verified compliance
+     * evidence register is not that trail. See the equivalent test on
+     * {@see Iso27001MappingTest} for the full argument; the two controls cite one
+     * probe, so they cannot disagree about one deployment.
+     */
     #[Test]
-    public function adverseEventAnalysisIsSatisfiedWhenTheChainVerifies(): void
+    public function adverseEventAnalysisIsNotSatisfiedByAVerifiedComplianceRegister(): void
     {
         $finding = self::bare()
             ->resolving(self::AUDIT_SINK, AuditFileSink::class)
             ->withVerifiedEvidenceChain()
             ->finding(ComplianceFramework::NistCsf, 'NIST-DE.AE');
 
-        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('compliance_evidence_register', $finding->summary);
     }
 
     // --- GV.OC: organizational context ---------------------------------------
@@ -192,14 +199,61 @@ final class NistCsfMappingTest extends TestCase
         self::assertNotSame(ControlOutcome::Satisfied, $finding->outcome);
     }
 
+    /**
+     * Binding the encrypter does not satisfy PR.DS, and this test used to assert
+     * that it did.
+     *
+     * What carried it was never the encrypter — that fact is Declared and has been
+     * for as long as {@see \Pulsar\Compliance\Control\ObservationGrade::provesBehaviour()}
+     * has meant Measured alone. It was `cryptographic_capability`, the probe's
+     * other requirement, which was graded Measured while being
+     * `extension_loaded('sodium')`. Regraded to Available, nothing PR.DS requires
+     * can be exercised, so the honest report is that the deployment has the parts
+     * and nobody ran them.
+     *
+     * THE DEPLOYMENT NOW SEALS TWO ESTATES FOR REAL, and PR.DS is still claimed
+     * and not observed. That is the sharper version of this test rather than a
+     * weakening of it: the fixture no longer hands the probe parts conjured
+     * without a key, so the finding cannot be dismissed as "the parts were
+     * broken". {@see \Pulsar\Compliance\Evidence\SessionSealObserver} puts a
+     * payload through the live cipher, and
+     * {@see \Pulsar\Compliance\Evidence\PersonalDataSealObserver} puts a field
+     * classified as personal data through the live at-rest rule; both come back
+     * sealed, opened and refusing a modified copy — and the control stays red,
+     * because what PR.DS regulates is CONFIDENTIAL INFORMATION and what was
+     * exercised is a session and a personal-data field. The summary names both
+     * estates, and this test asserts both.
+     *
+     * SAY THE UNCOMFORTABLE HALF TOO: PR.DS still reaches Satisfied on no
+     * deployment at all, and it is now the LAST of the five controls in that
+     * position — GDPR Art 5(1)(f), Art 32 and CCPA 1798.150 left it when the
+     * personal-data estate was measured. A control that can never pass is as
+     * broken an instrument as one that can never fail, and the remedy is the same
+     * as it was for those three: an observer for the estate this control is about
+     * — not a grade adjusted, and not an estate renamed to something wide enough
+     * to cover it, which is how nine controls came to rest on a loaded extension.
+     */
     #[Test]
-    public function dataSecurityIsSatisfiedWhenTheEncrypterResolves(): void
+    public function dataSecurityIsClaimedAndNotObservedEvenWhenTheEncrypterSealsForReal(): void
     {
         $finding = self::bare()
-            ->resolving(self::SESSION_ENCRYPTION, SessionEncryption::class)
+            ->withWorkingSessionSeal()
+            ->withFieldEncryption()
             ->finding(ComplianceFramework::NistCsf, 'NIST-PR.DS');
 
-        self::assertSame(ControlOutcome::Satisfied, $finding->outcome);
+        self::assertSame(ControlOutcome::Unsatisfied, $finding->outcome);
+        self::assertStringContainsString('Claimed and not observed', $finding->summary);
+        self::assertStringContainsString('(available)', $finding->summary);
+        self::assertStringContainsString(
+            'session_payloads_sealed was exercised and interrogated session_payloads',
+            $finding->summary,
+        );
+        self::assertStringContainsString(
+            'personal_data_field_sealed was exercised and interrogated personal_data',
+            $finding->summary,
+        );
+        self::assertStringContainsString('regulates confidential_information', $finding->summary);
+        self::assertNotSame([], $finding->remediations);
     }
 
     // --- RS.MA: incident management -------------------------------------------

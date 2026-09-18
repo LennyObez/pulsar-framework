@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AccessRestrictionProbe;
 use Pulsar\Compliance\Probe\ContinuousMonitoringProbe;
 use Pulsar\Compliance\Probe\IncidentResponseProbe;
@@ -84,6 +85,7 @@ final class SwiftCspMapping
                 requirement: 'Detect anomalous activity on systems or transaction records within the '
                     . 'customer connector environment.',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             // The subject is the link between the SWIFT-related applications and
@@ -121,6 +123,7 @@ final class SwiftCspMapping
                 requirement: 'Reduce the cyber attack surface of SWIFT-related components by '
                     . 'performing system hardening.',
                 probe: new PlatformHardeningProbe(),
+                subject: ControlSubject::DeploymentConfiguration,
             ),
 
             // Back-office to SWIFT infrastructure. Same substitution as 2.1: the
@@ -156,6 +159,7 @@ final class SwiftCspMapping
                 requirement: 'Protect the confidentiality and integrity of interactive operator '
                     . 'sessions that connect to the local or remote SWIFT infrastructure.',
                 probe: new SecureSessionProbe(),
+                subject: ControlSubject::SessionPayloads,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -216,6 +220,7 @@ final class SwiftCspMapping
                 requirement: 'Prevent that a compromise of a single authentication factor allows '
                     . 'access into SWIFT systems, by implementing multi-factor authentication.',
                 probe: new MultiFactorAuthenticationProbe(),
+                subject: ControlSubject::Authentication,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -235,6 +240,7 @@ final class SwiftCspMapping
                 requirement: 'Enforce the security principles of need-to-know access, least privilege '
                     . 'and separation of duties for operator accounts.',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -312,6 +318,7 @@ final class SwiftCspMapping
                 requirement: 'Record security events and detect anomalous actions and operations '
                     . 'within the local SWIFT environment.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::probed(
@@ -321,6 +328,7 @@ final class SwiftCspMapping
                 requirement: 'Detect and contain anomalous network activity into and within the local '
                     . 'or remote SWIFT environment.',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::probed(
@@ -330,6 +338,7 @@ final class SwiftCspMapping
                 requirement: 'Ensure a consistent and effective approach for the management of cyber '
                     . 'incidents.',
                 probe: new IncidentResponseProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
 
             ControlDeclaration::operatorResponsibility(

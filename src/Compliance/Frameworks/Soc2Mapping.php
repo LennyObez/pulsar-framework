@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AccessRestrictionProbe;
 use Pulsar\Compliance\Probe\ApplicationHardeningProbe;
 use Pulsar\Compliance\Probe\AssetInventoryProbe;
@@ -64,6 +65,7 @@ final class Soc2Mapping
                     . 'and architectures over protected information assets to protect them from '
                     . 'security events.',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::probed(
@@ -74,6 +76,7 @@ final class Soc2Mapping
                     . 'functions and other protected information assets based on roles, '
                     . 'responsibilities or the system design and changes.',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::probed(
@@ -84,6 +87,7 @@ final class Soc2Mapping
                     . 'components for anomalies indicative of malicious acts, natural disasters '
                     . 'and errors.',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -177,6 +181,7 @@ final class Soc2Mapping
                 requirement: 'The entity specifies objectives with sufficient clarity to enable the '
                     . 'identification and assessment of risks relating to those objectives.',
                 probe: new RiskAssessmentProbe(),
+                subject: ControlSubject::RiskGovernance,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -207,6 +212,7 @@ final class Soc2Mapping
                     . 'including threats, that could significantly impact the system of '
                     . 'internal control.',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::probed(
@@ -217,6 +223,7 @@ final class Soc2Mapping
                     . 'evaluations to ascertain whether the components of internal control are '
                     . 'present and functioning.',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -247,6 +254,7 @@ final class Soc2Mapping
                 requirement: 'The entity selects and develops general control activities over '
                     . 'technology to support the achievement of objectives.',
                 probe: new ApplicationHardeningProbe(),
+                subject: ControlSubject::DeploymentConfiguration,
             ),
 
             ControlDeclaration::probed(
@@ -256,6 +264,7 @@ final class Soc2Mapping
                 requirement: 'The entity deploys control activities through policies that establish '
                     . 'what is expected and procedures that put those policies into action.',
                 probe: new ConfigurationManagementProbe(),
+                subject: ControlSubject::DeploymentConfiguration,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -288,6 +297,7 @@ final class Soc2Mapping
                     . 'assets only after the ability to read or recover data and software from '
                     . 'those assets has been diminished.',
                 probe: new DataErasureProbe(),
+                subject: ControlSubject::ConfidentialInformation,
             ),
 
             ControlDeclaration::probed(
@@ -297,6 +307,7 @@ final class Soc2Mapping
                 requirement: 'The entity implements logical access security measures to protect '
                     . 'against threats from sources outside its system boundaries.',
                 probe: new PlatformHardeningProbe(),
+                subject: ControlSubject::DeploymentConfiguration,
             ),
 
             ControlDeclaration::probed(
@@ -307,6 +318,7 @@ final class Soc2Mapping
                     . 'information to authorized users and processes, and protects it during '
                     . 'transmission, movement and removal.',
                 probe: new TransportSecurityProbe(),
+                subject: ControlSubject::DataInTransit,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -328,6 +340,7 @@ final class Soc2Mapping
                     . 'vulnerabilities, and susceptibilities to newly discovered '
                     . 'vulnerabilities.',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::probed(
@@ -338,6 +351,7 @@ final class Soc2Mapping
                     . 'have resulted in a failure to meet its objectives, and if so takes '
                     . 'action to prevent or address such failures.',
                 probe: new IncidentResponseProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
 
             ControlDeclaration::probed(
@@ -353,6 +367,7 @@ final class Soc2Mapping
                 // what happened and starts the notification clock is the mechanism the
                 // criterion actually names, and CC7.3 beside it already cites it.
                 probe: new IncidentResponseProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -416,6 +431,7 @@ final class Soc2Mapping
                 requirement: 'The entity tests recovery plan procedures supporting system recovery to '
                     . 'meet its objectives.',
                 probe: new RecoveryCapabilityProbe(),
+                subject: ControlSubject::BusinessContinuity,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -447,6 +463,7 @@ final class Soc2Mapping
                 requirement: 'The entity identifies and maintains confidential information to meet its '
                     . 'objectives related to confidentiality.',
                 probe: new AssetInventoryProbe(),
+                subject: ControlSubject::ConfidentialInformation,
             ),
 
             ControlDeclaration::probed(
@@ -456,6 +473,7 @@ final class Soc2Mapping
                 requirement: 'The entity disposes of confidential information to meet its objectives '
                     . 'related to confidentiality.',
                 probe: new DataErasureProbe(),
+                subject: ControlSubject::ConfidentialInformation,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -476,6 +494,7 @@ final class Soc2Mapping
                     . 'retention, disclosure and disposal of personal information, and obtains '
                     . 'consent where required.',
                 probe: new ConsentManagementProbe(),
+                subject: ControlSubject::PersonalData,
             ),
         ];
     }

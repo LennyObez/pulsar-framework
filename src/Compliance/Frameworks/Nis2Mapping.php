@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AccessRestrictionProbe;
 use Pulsar\Compliance\Probe\BreachNotificationProbe;
 use Pulsar\Compliance\Probe\CryptographicControlProbe;
@@ -34,6 +35,7 @@ final class Nis2Mapping
                 requirement: 'Entities shall take measures covering policies on risk analysis and '
                     . 'information system security (Article 21(2)(a)).',
                 probe: new RiskAssessmentProbe(),
+                subject: ControlSubject::RiskGovernance,
             ),
 
             ControlDeclaration::probed(
@@ -43,6 +45,7 @@ final class Nis2Mapping
                 requirement: 'Entities shall take measures covering incident handling (Article '
                     . '21(2)(b)).',
                 probe: new IncidentResponseProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -85,6 +88,7 @@ final class Nis2Mapping
                     . 'the use of cryptography and, where appropriate, encryption (Article '
                     . '21(2)(h)).',
                 probe: new CryptographicControlProbe(),
+                subject: ControlSubject::CryptographicPlatform,
             ),
 
             ControlDeclaration::probed(
@@ -94,6 +98,7 @@ final class Nis2Mapping
                 requirement: 'Entities shall take measures covering human resources security, access '
                     . 'control policies and asset management (Article 21(2)(i)).',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::probed(
@@ -104,6 +109,7 @@ final class Nis2Mapping
                     . 'having a significant impact, with an early warning within 24 hours and '
                     . 'an incident notification within 72 hours (Article 23).',
                 probe: new BreachNotificationProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
         ];
     }

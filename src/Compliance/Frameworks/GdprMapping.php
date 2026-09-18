@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\BreachNotificationProbe;
 use Pulsar\Compliance\Probe\CryptographicControlProbe;
 use Pulsar\Compliance\Probe\DataProtectionAtRestProbe;
@@ -34,6 +35,7 @@ final class GdprMapping
                     . 'security, including protection against unauthorised or unlawful '
                     . 'processing and against accidental loss, destruction or damage.',
                 probe: new DataProtectionAtRestProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::probed(
@@ -45,6 +47,7 @@ final class GdprMapping
                     . 'data-protection principles and to integrate the necessary safeguards '
                     . 'into the processing.',
                 probe: new PseudonymizationProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -68,6 +71,7 @@ final class GdprMapping
                     . 'the ability to ensure the ongoing confidentiality, integrity, '
                     . 'availability and resilience of processing systems.',
                 probe: new CryptographicControlProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::probed(
@@ -78,6 +82,7 @@ final class GdprMapping
                     . 'authority without undue delay and, where feasible, not later than 72 '
                     . 'hours after having become aware of it.',
                 probe: new BreachNotificationProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
         ];
     }

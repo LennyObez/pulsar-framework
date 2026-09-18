@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AiModelRegistryProbe;
 use Pulsar\Compliance\Probe\AiTransparencyProbe;
 
@@ -43,11 +44,21 @@ use Pulsar\Compliance\Probe\AiTransparencyProbe;
  * later by grading configuration as compliance.
  *
  * Article 50 is the one place where a framework carries real weight, because the
- * duty is discharged in what a response contains. Even there the split is kept
- * strict: ai-act-art-50-capability observes that the transparency contract
- * resolved; ai-act-art-50-1 and ai-act-art-50-2 remain operator artefacts,
- * because whether a person actually saw the notice and whether real output
- * actually carried the mark happen where Pulsar cannot look.
+ * duty is discharged in what a response contains. It is also the only control in
+ * this file that a deployment can be OBSERVED discharging any part of:
+ * ai-act-art-50-capability rests on the transparency subsystem having been
+ * exercised — a surface declared, the policy read back owing both duties, a
+ * synthetic-content mark minted and its machine-readable form checked. It used to
+ * rest on the contract having resolved, which is a class name, and this mapping
+ * therefore satisfied nothing on any deployment. See
+ * {@see \Pulsar\Compliance\Evidence\AiTransparencyObserver}.
+ *
+ * The split around it is kept exactly where it was, and the count moved by ONE.
+ * ai-act-art-50-1 and ai-act-art-50-2 remain operator artefacts, because whether
+ * a person actually saw the notice and whether real output actually carried the
+ * mark happen where Pulsar cannot look — and a framework that graded either from
+ * the subsystem being able to produce them would be inflating the very number
+ * this repair exists to make trustworthy.
  */
 #[Internal(reason: 'Framework-internal control declaration; the catalog is the public surface')]
 final class AiActMapping
@@ -100,20 +111,25 @@ final class AiActMapping
                     . 'establishes is that the mechanism is in place; whether every system in service '
                     . 'has been classified correctly is ai-act-art-5, and no code can decide it.',
                 probe: new AiModelRegistryProbe(),
+                subject: ControlSubject::AiSystemGovernance,
             ),
 
             ControlDeclaration::probed(
                 id: 'ai-act-art-50-capability',
                 framework: ComplianceFramework::AiAct,
                 title: 'Article 50 positions can be declared and generated output marked',
-                requirement: 'Observes that the AI governance extension is active and a transparency '
-                    . 'contract resolved, so every surface can declare whether it interacts with '
-                    . 'natural persons, what it generates, and which Article 50 exemption if any it '
-                    . 'relies on — and so generated output can be given a machine-readable mark. '
-                    . 'Article 50 has applied since 2 August 2026. This control does not establish '
-                    . 'that any person was informed or that any output was marked; see '
-                    . 'ai-act-art-50-1 and ai-act-art-50-2.',
+                requirement: 'The transparency subsystem in service is EXERCISED, not merely '
+                    . 'resolved: a surface is declared through it, the position is read back owing '
+                    . 'both the Article 50(1) notice and the Article 50(2) marking, a '
+                    . 'synthetic-content mark is minted, and its machine-readable form is checked '
+                    . 'to carry the content kind, the model, the surface and the generation instant '
+                    . 'it was minted for. A mark is also demanded for a surface that was never '
+                    . 'declared, and must be refused — a mark that traces to no declared policy '
+                    . 'asserts nothing an assessor can corroborate. Article 50 has applied since '
+                    . '2 August 2026. This control does not establish that any person was informed '
+                    . 'or that any output was marked; see ai-act-art-50-1 and ai-act-art-50-2.',
                 probe: new AiTransparencyProbe(),
+                subject: ControlSubject::AiSystemGovernance,
             ),
 
             ControlDeclaration::operatorResponsibility(

@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\ContinuousMonitoringProbe;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
@@ -80,6 +81,7 @@ final class Iso13485Mapping
                     . 'retain records that permit a device to be traced to the components and '
                     . 'conditions of its production (Section 7.5.9).',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -100,6 +102,7 @@ final class Iso13485Mapping
                     . 'demonstrate conformity of the product and the effectiveness of the '
                     . 'quality management system (Section 8.2).',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::operatorResponsibility(

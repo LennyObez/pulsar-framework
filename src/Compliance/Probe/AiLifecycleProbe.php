@@ -45,6 +45,12 @@ final readonly class AiLifecycleProbe extends CapabilityProbe
             ObservationId::AiGovernanceExtensionActive,
             ObservationId::AiLifecycleManagerResolved,
             ObservationId::AiDeploymentGateResolved,
+            // Added in rc.12. A life cycle is a sequence, and a manager whose
+            // registry forgets which stage a model reached cannot govern one: the
+            // gates would re-run against an inventory that starts empty at every
+            // restart, and a model recorded as retired would come back unknown
+            // rather than retired.
+            ObservationId::AiGovernanceRecordsDurable,
         ];
     }
 
@@ -71,6 +77,11 @@ final readonly class AiLifecycleProbe extends CapabilityProbe
             'Install and enable the pulsar/ai-governance extension.',
             'Bind at least one DeploymentGateInterface implementation; a lifecycle '
                 . 'with no gate cannot refuse an unsafe deployment.',
+            'Point the ai_governance store keys at a durable implementation. The extension ships '
+                . 'one for each store — "database" is the default in config/ai-governance.php since '
+                . 'rc.12 — and `pulsar migrate` creates the tables. An in-memory store loses the '
+                . 'record at the next restart, which is a gap this check reports rather than '
+                . 'assumes.',
             'If this deployment operates no AI system, remove Iso42001 from '
                 . 'enabled_frameworks.',
         ];

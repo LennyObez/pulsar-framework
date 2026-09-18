@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\ContinuousMonitoringProbe;
 use Pulsar\Compliance\Probe\IncidentResponseProbe;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
@@ -59,6 +60,7 @@ final class MdrMapping
                     . 'surveillance system proportionate to the risk class and appropriate to '
                     . 'the type of device (Articles 83 to 86).',
                 probe: new ContinuousMonitoringProbe(),
+                subject: ControlSubject::OperationalMonitoring,
             ),
 
             ControlDeclaration::probed(
@@ -69,6 +71,7 @@ final class MdrMapping
                     . 'actions to the competent authorities within the deadlines set by the '
                     . 'Regulation (Article 87).',
                 probe: new IncidentResponseProbe(),
+                subject: ControlSubject::IncidentResponse,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -101,6 +104,7 @@ final class MdrMapping
                     . 'devices and from whom they were supplied, for the period the Regulation '
                     . 'prescribes (Article 25).',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::operatorResponsibility(

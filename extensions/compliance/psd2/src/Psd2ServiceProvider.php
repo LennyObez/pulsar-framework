@@ -38,6 +38,18 @@ use Pulsar\Security\Crypto\SubKeyId;
 #[Internal(reason: 'Wiring only; use the public contracts')]
 final class Psd2ServiceProvider implements ServiceProviderInterface
 {
+    /**
+     * KDF context for the SCA dynamic-linking secret.
+     *
+     * `sodium_crypto_kdf_derive_from_key` takes a context of exactly
+     * SODIUM_CRYPTO_KDF_CONTEXTBYTES (8) bytes and
+     * {@see MasterKey::deriveSubKey()} rejects any other length, so the label is
+     * written at that width here instead of being spelled out and rejected at
+     * boot. Paired with {@see SubKeyId::Psd2ScaDynamicLinking}, it is unique
+     * across the framework's KDF call sites (ADR-0006).
+     */
+    private const string SCA_KDF_CONTEXT = 'psd2_sca';
+
     public function register(ContainerInterface $container): void
     {
         // Config
@@ -107,7 +119,7 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
             $masterKey = $container->get(MasterKey::class);
             $secretKey = $masterKey->deriveSubKey(
                 SubKeyId::Psd2ScaDynamicLinking->value,
-                'psd2-sca-dynamic-linking',
+                self::SCA_KDF_CONTEXT,
             );
 
             return new ScaDynamicLinkingService($store, $config->sca, $secretKey, $auditLogger);

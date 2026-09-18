@@ -41,6 +41,13 @@ final readonly class AiDataGovernanceProbe extends CapabilityProbe
         return [
             ObservationId::AiGovernanceExtensionActive,
             ObservationId::AiDataGovernanceResolved,
+            // Added in rc.12. Provenance, quality and the basis on which data was
+            // obtained are all statements about how a dataset came to be, and a
+            // store that loses them at the next restart answers "unknown" to
+            // every one of them. The resolved fact says a store is bound; this
+            // one says a record written through it is still there when a
+            // different instance looks.
+            ObservationId::AiGovernanceRecordsDurable,
         ];
     }
 
@@ -66,6 +73,11 @@ final readonly class AiDataGovernanceProbe extends CapabilityProbe
         return [
             'Install and enable the pulsar/ai-governance extension and bind an '
                 . 'AiDataGovernanceInterface implementation.',
+            'Point the ai_governance store keys at a durable implementation. The extension ships '
+                . 'one for each store — "database" is the default in config/ai-governance.php since '
+                . 'rc.12 — and `pulsar migrate` creates the tables. An in-memory store loses the '
+                . 'record at the next restart, which is a gap this check reports rather than '
+                . 'assumes.',
             'If this deployment operates no AI system, remove Iso42001 from '
                 . 'enabled_frameworks.',
         ];

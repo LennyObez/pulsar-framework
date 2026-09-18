@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\AccessRestrictionProbe;
 
 /**
@@ -58,6 +59,7 @@ final class DataActMapping
                     . 'purposes and under the conditions agreed with the user, and shall delete '
                     . 'it when no longer necessary (Article 6).',
                 probe: new AccessRestrictionProbe(),
+                subject: ControlSubject::AccessControl,
             ),
 
             ControlDeclaration::operatorResponsibility(

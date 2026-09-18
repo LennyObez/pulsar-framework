@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
 
 /**
@@ -110,6 +111,7 @@ final class Hl7FhirMapping
                     . 'interactions the implementation guide requires, and retain them so they '
                     . 'can be examined.',
                 probe: new TamperEvidentAuditProbe(),
+                subject: ControlSubject::AuditTrail,
             ),
 
             ControlDeclaration::operatorResponsibility(

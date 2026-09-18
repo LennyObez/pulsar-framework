@@ -9826,6 +9826,29 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\Probe\\AiGovernanceRecordProbe": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "requirement": {
+                    "params": [],
+                    "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
+                    "static": false,
+                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\Probe\\AiImpactAssessmentProbe": {
             "since": "1.0.0-rc.12",
             "methods": [],
@@ -10004,8 +10027,7 @@
                 "requirement": {
                     "params": [],
                     "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
-                    "static": false,
-                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                    "static": false
                 }
             },
             "constants": []
@@ -10395,8 +10417,7 @@
                 "requirement": {
                     "params": [],
                     "return": "Pulsar\\Compliance\\Control\\ControlRequirement",
-                    "static": false,
-                    "inherited_from": "Pulsar\\Compliance\\Probe\\CapabilityProbe"
+                    "static": false
                 }
             },
             "constants": []

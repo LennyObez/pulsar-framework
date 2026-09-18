@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Compliance\CatalogAlreadyBuiltException;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\ControlCatalog;
 use Pulsar\Compliance\DuplicateControlException;
 use Pulsar\Compliance\Probe\TamperEvidentAuditProbe;
@@ -266,6 +267,7 @@ final class ControlCatalogTest extends TestCase
             title: 'A control under test',
             requirement: 'Logs shall be produced, stored, protected and analysed.',
             probe: new TamperEvidentAuditProbe(),
+            subject: ControlSubject::AuditTrail,
         );
     }
 }

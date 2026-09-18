@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\ConsentManagementProbe;
 use Pulsar\Compliance\Probe\DataErasureProbe;
 use Pulsar\Compliance\Probe\DataProtectionAtRestProbe;
@@ -39,6 +40,7 @@ final class CcpaMapping
                     . 'categories and specific pieces of personal information it has collected '
                     . 'about them.',
                 probe: new SubjectRightsProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::probed(
@@ -49,6 +51,7 @@ final class CcpaMapping
                     . 'information the business has collected from them, subject to the '
                     . 'statutory exceptions.',
                 probe: new DataErasureProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::probed(
@@ -58,6 +61,7 @@ final class CcpaMapping
                 requirement: 'A consumer has the right, at any time, to direct a business that sells '
                     . 'or shares personal information about them to third parties not to do so.',
                 probe: new ConsentManagementProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -80,6 +84,7 @@ final class CcpaMapping
                     . 'and practices appropriate to the nature of the personal information it '
                     . 'holds.',
                 probe: new DataProtectionAtRestProbe(),
+                subject: ControlSubject::PersonalData,
             ),
 
             ControlDeclaration::probed(
@@ -90,6 +95,7 @@ final class CcpaMapping
                     . 'reasonably necessary for the disclosed purpose for which it was '
                     . 'collected.',
                 probe: new DataRetentionProbe(),
+                subject: ControlSubject::PersonalData,
             ),
         ];
     }

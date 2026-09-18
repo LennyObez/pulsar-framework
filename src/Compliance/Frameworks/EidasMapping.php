@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\MultiFactorAuthenticationProbe;
 use Pulsar\Compliance\Probe\RiskAssessmentProbe;
 
@@ -37,6 +38,7 @@ final class EidasMapping
                     . 'substantial or high for the electronic identification means it issues '
                     . '(Article 8).',
                 probe: new MultiFactorAuthenticationProbe(),
+                subject: ControlSubject::Authentication,
             ),
 
             ControlDeclaration::operatorResponsibility(
@@ -92,6 +94,7 @@ final class EidasMapping
                     . 'organisational measures to manage the risks posed to the security of the '
                     . 'trust services they provide (Article 19).',
                 probe: new RiskAssessmentProbe(),
+                subject: ControlSubject::RiskGovernance,
             ),
 
             ControlDeclaration::operatorResponsibility(
