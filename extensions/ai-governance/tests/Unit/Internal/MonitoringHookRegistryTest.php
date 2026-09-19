@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface;
 use Pulsar\Extension\AiGovernance\Internal\MonitoringHookRegistry;
+use Pulsar\Extension\AiGovernance\Internal\MonitoringHookRegistryInterface;
 
 #[CoversClass(MonitoringHookRegistry::class)]
 final class MonitoringHookRegistryTest extends TestCase
@@ -34,6 +35,15 @@ final class MonitoringHookRegistryTest extends TestCase
 
         self::assertFalse($registry->isEmpty());
         self::assertSame([$first, $second], $registry->all());
+    }
+
+    /**
+     * The shipped registry is one implementation of a contract, not the contract.
+     */
+    #[Test]
+    public function isReachableAsAContractRatherThanOnlyAsItself(): void
+    {
+        self::assertInstanceOf(MonitoringHookRegistryInterface::class, new MonitoringHookRegistry());
     }
 
     private function hook(string $name): MonitoringHookInterface

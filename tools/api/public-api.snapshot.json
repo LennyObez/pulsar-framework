@@ -29287,8 +29287,13 @@
                         "bool $requireConsentForTrainingData",
                         "float $impactRiskThreshold",
                         "string $registryStore",
+                        "string $impactAssessmentStore",
                         "string $dataGovernanceStore",
-                        "string $explainabilityStore"
+                        "string $explainabilityStore",
+                        "string $monitoringRecordStore",
+                        "string $transparencyStore",
+                        "string $oversightStore",
+                        "?Pulsar\\Extension\\AiGovernance\\Enum\\AiActorRole $actorRole"
                     ],
                     "return": null,
                     "static": false
@@ -29620,6 +29625,56 @@
             },
             "constants": []
         },
+        "Pulsar\\Extension\\AiGovernance\\Contracts\\HumanOversightInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "assign": {
+                    "params": [
+                        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightAssignment $assignment"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "assignmentsFor": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "interventionsFor": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "isOverseen": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "recordIntervention": {
+                    "params": [
+                        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightIntervention $intervention"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "withdraw": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Extension\\AiGovernance\\Contracts\\MonitoringHookInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -29635,6 +29690,42 @@
                 "name": {
                     "params": [],
                     "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Contracts\\MonitoringRecordStoreInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "countForModel": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "int",
+                    "static": false
+                },
+                "forModel": {
+                    "params": [
+                        "string $modelId",
+                        "int $limit"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "purgeForModel": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "int",
+                    "static": false
+                },
+                "record": {
+                    "params": [
+                        "Pulsar\\Extension\\AiGovernance\\Dto\\MonitoringRecord $record"
+                    ],
+                    "return": "void",
                     "static": false
                 }
             },
@@ -29671,9 +29762,24 @@
                         "Pulsar\\Extension\\AiGovernance\\Enum\\AiModelRiskLevel $riskLevel",
                         "Pulsar\\Extension\\AiGovernance\\Enum\\AiModelStatus $status",
                         "DateTimeImmutable $registeredAt",
-                        "?Pulsar\\Extension\\AiGovernance\\Dto\\ModelCard $card"
+                        "?Pulsar\\Extension\\AiGovernance\\Dto\\ModelCard $card",
+                        "?Pulsar\\Extension\\AiGovernance\\Enum\\AiActorRole $actorRole"
                     ],
                     "return": null,
+                    "static": false
+                },
+                "actorRoleOr": {
+                    "params": [
+                        "?Pulsar\\Extension\\AiGovernance\\Enum\\AiActorRole $deploymentRole"
+                    ],
+                    "return": "?Pulsar\\Extension\\AiGovernance\\Enum\\AiActorRole",
+                    "static": false
+                },
+                "withActorRole": {
+                    "params": [
+                        "Pulsar\\Extension\\AiGovernance\\Enum\\AiActorRole $actorRole"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Dto\\AiModel",
                     "static": false
                 },
                 "withCard": {
@@ -29821,6 +29927,75 @@
                     ],
                     "return": null,
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Dto\\MonitoringRecord": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $modelId",
+                        "string $hookName",
+                        "bool $healthy",
+                        "string $message",
+                        "array $metrics",
+                        "DateTimeImmutable $observedAt"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "of": {
+                    "params": [
+                        "string $modelId",
+                        "Pulsar\\Extension\\AiGovernance\\Contracts\\MonitoringResult $result",
+                        "DateTimeImmutable $observedAt"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Dto\\MonitoringRecord",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Enum\\AiActorRole": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "bearsDeployerObligations": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "bearsProviderObligations": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "obligationBasis": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
                 }
             },
             "constants": []
@@ -29976,6 +30151,14 @@
                     "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
                     "static": true
                 },
+                "corruptGovernanceRecord": {
+                    "params": [
+                        "string $table",
+                        "string $column"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
                 "deploymentBlocked": {
                     "params": [
                         "string $modelId",
@@ -30001,9 +30184,53 @@
                     "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
                     "static": true
                 },
+                "durableStoreNeedsConnection": {
+                    "params": [
+                        "string $configKey"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
                 "exemptionCarvedBack": {
                     "params": [
                         "string $surfaceId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "interventionCapabilityNotConferred": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId",
+                        "string $capability"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "interventionDecisionBlank": {
+                    "params": [
+                        "string $interventionId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "interventionIdRequired": {
+                    "params": [],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "interventionRationaleRequired": {
+                    "params": [
+                        "string $interventionId",
+                        "string $modelId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "interventionWithoutAssignment": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId"
                     ],
                     "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
                     "static": true
@@ -30038,6 +30265,42 @@
                     "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
                     "static": true
                 },
+                "oversightAuthorityRequired": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "oversightCompetenceRequired": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "oversightConfersNoAction": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "oversightModelRequired": {
+                    "params": [],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
+                "oversightOverseerRequired": {
+                    "params": [
+                        "string $modelId"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                },
                 "prohibitedPractice": {
                     "params": [
                         "string $modelId"
@@ -30064,6 +30327,132 @@
                     ],
                     "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
                     "static": true
+                },
+                "unknownActorRole": {
+                    "params": [
+                        "string $value",
+                        "array $known"
+                    ],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Exception\\AiGovernanceException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightAction": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "exercises": {
+                    "params": [],
+                    "return": "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightCapability",
+                    "static": false
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightAssignment": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $modelId",
+                        "string $overseerId",
+                        "string $competenceBasis",
+                        "string $authorityBasis",
+                        "array $capabilities",
+                        "DateTimeImmutable $assignedAt"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "confers": {
+                    "params": [
+                        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightCapability $capability"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "confersAnyAction": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightCapability": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "exercisable": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "mustBeExercisable": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightIntervention": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $interventionId",
+                        "string $modelId",
+                        "string $overseerId",
+                        "Pulsar\\Extension\\AiGovernance\\Oversight\\OversightAction $action",
+                        "string $rationale",
+                        "DateTimeImmutable $occurredAt",
+                        "?string $decisionId"
+                    ],
+                    "return": null,
+                    "static": false
                 }
             },
             "constants": []
@@ -117738,17 +118127,31 @@
         "Pulsar\\Extension\\AiGovernance\\AiGovernanceServiceProvider",
         "Pulsar\\Extension\\AiGovernance\\Internal\\AiAuditLogger",
         "Pulsar\\Extension\\AiGovernance\\Internal\\AiLifecycleManager",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Compliance\\AiGovernanceDrill",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Compliance\\AiTransparencyDrill",
         "Pulsar\\Extension\\AiGovernance\\Internal\\ConsentEnforcingDataGovernance",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Gate\\HighRiskObligationsGate",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Gate\\ImpactAssessmentGate",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Gate\\ModelCardGate",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Gate\\ProhibitedPracticeGate",
         "Pulsar\\Extension\\AiGovernance\\Internal\\MonitoringHookRegistry",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\MonitoringHookRegistryInterface",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Monitoring\\GovernanceConformityHook",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbAiTransparency",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbDataGovernanceStore",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbExplainabilityStore",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbHumanOversight",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbImpactAssessmentStore",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbModelRegistry",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\DbMonitoringRecordStore",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryAiTransparency",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryDataGovernanceStore",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryExplainabilityStore",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryHumanOversight",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryImpactAssessmentStore",
         "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryModelRegistry",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\InMemoryMonitoringRecordStore",
+        "Pulsar\\Extension\\AiGovernance\\Internal\\Store\\StoredValue",
         "Pulsar\\Extension\\Analytics\\AnalyticsRouteRegistrar",
         "Pulsar\\Extension\\Analytics\\AnalyticsServiceProvider",
         "Pulsar\\Extension\\Analytics\\Consent\\AnalyticsConsentBanner",

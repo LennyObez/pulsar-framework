@@ -20,6 +20,7 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Internal\AiLifecycleManager;
 use Pulsar\Extension\AiGovernance\Internal\MonitoringHookRegistry;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryModelRegistry;
+use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryMonitoringRecordStore;
 
 #[CoversClass(AiLifecycleManager::class)]
 final class AiLifecycleManagerTest extends TestCase
@@ -27,6 +28,7 @@ final class AiLifecycleManagerTest extends TestCase
     private InMemoryModelRegistry $registry;
     private AiAuditLoggerInterface&Stub $auditLogger;
     private MonitoringHookRegistry $monitoringHooks;
+    private InMemoryMonitoringRecordStore $monitoringRecords;
     private AiLifecycleManager $manager;
 
     protected function setUp(): void
@@ -34,7 +36,13 @@ final class AiLifecycleManagerTest extends TestCase
         $this->registry = new InMemoryModelRegistry();
         $this->auditLogger = $this->createStub(AiAuditLoggerInterface::class);
         $this->monitoringHooks = new MonitoringHookRegistry();
-        $this->manager = new AiLifecycleManager($this->registry, $this->auditLogger, $this->monitoringHooks);
+        $this->monitoringRecords = new InMemoryMonitoringRecordStore();
+        $this->manager = new AiLifecycleManager(
+            $this->registry,
+            $this->auditLogger,
+            $this->monitoringHooks,
+            $this->monitoringRecords,
+        );
     }
 
     public function testDeployWithNoGatesSucceeds(): void
@@ -123,7 +131,12 @@ final class AiLifecycleManagerTest extends TestCase
                 ['reason' => 'EU AI Act Article 5 prohibits this practice.'],
             );
 
-        $manager = new AiLifecycleManager($this->registry, $auditLogger, new MonitoringHookRegistry());
+        $manager = new AiLifecycleManager(
+            $this->registry,
+            $auditLogger,
+            new MonitoringHookRegistry(),
+            new InMemoryMonitoringRecordStore(),
+        );
         $manager->addDeploymentGate($gate);
 
         $this->expectException(InvalidArgumentException::class);
@@ -151,6 +164,19 @@ final class AiLifecycleManagerTest extends TestCase
 
         self::assertCount(1, $results);
         self::assertSame('bias-check', $results[0]->hookName);
+
+        // ISO 42001 Clause 9.1 ends by requiring documented information to be
+        // retained as evidence of the results, and until rc.12 monitor() returned
+        // them to a caller free to drop them. Retaining is the manager's job
+        // rather than each hook's, so a hook registered out of band — as this one
+        // is — is retained without knowing anything about storage.
+        $retained = $this->monitoringRecords->forModel('m1');
+
+        self::assertCount(1, $retained);
+        self::assertSame('bias-check', $retained[0]->hookName);
+        self::assertSame('m1', $retained[0]->modelId);
+        self::assertTrue($retained[0]->healthy);
+        self::assertSame('No bias detected', $retained[0]->message);
     }
 
     public function testDeployThrowsForUnknownModel(): void

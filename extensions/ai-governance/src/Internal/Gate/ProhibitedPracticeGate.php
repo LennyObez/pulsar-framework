@@ -20,6 +20,12 @@ use Pulsar\Extension\AiGovernance\Dto\AiModel;
  * own: the registry holds the invariant, and this gate is what produces the
  * audit record — a `DeploymentGateFailed` event naming the article — before the
  * registry is ever reached.
+ *
+ * IT DOES NOT CONSULT THE ACTOR ROLE, and that is a finding rather than an
+ * omission. Article 5 prohibits "the placing on the market, the putting into
+ * service or the USE" of these systems, so it binds a provider and a deployer
+ * alike; there is no role a deployment can declare that makes the practice
+ * permitted. Passing a role into this gate would suggest one might.
  */
 #[Internal]
 final readonly class ProhibitedPracticeGate implements DeploymentGateInterface

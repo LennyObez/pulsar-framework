@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\AiGovernance\Internal;
 
 use NoDiscard;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface;
 
@@ -20,11 +21,12 @@ use Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface;
  * without either class reaching into the other.
  */
 #[Internal(reason: 'Shared hook collection; register hooks via AiLifecycleManagerInterface::addMonitoringHook()')]
-final class MonitoringHookRegistry
+final class MonitoringHookRegistry implements MonitoringHookRegistryInterface
 {
     /** @var list<MonitoringHookInterface> */
     private array $hooks = [];
 
+    #[Override]
     public function add(MonitoringHookInterface $hook): void
     {
         $this->hooks[] = $hook;
@@ -34,12 +36,14 @@ final class MonitoringHookRegistry
      * @return list<MonitoringHookInterface>
      */
     #[NoDiscard]
+    #[Override]
     public function all(): array
     {
         return $this->hooks;
     }
 
     #[NoDiscard]
+    #[Override]
     public function isEmpty(): bool
     {
         return $this->hooks === [];

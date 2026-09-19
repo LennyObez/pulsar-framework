@@ -43,6 +43,10 @@ final class InMemoryImpactAssessmentStore implements AiImpactAssessmentInterface
 
     /**
      * Add a finding for a model. Used by tests and manual assessments.
+     *
+     * @param non-empty-string $modelId The model the finding is against, matching
+     *        {@see DbImpactAssessmentStore::addFinding()} so the two stores accept
+     *        the same ids
      */
     public function addFinding(string $modelId, ImpactFinding $finding): void
     {

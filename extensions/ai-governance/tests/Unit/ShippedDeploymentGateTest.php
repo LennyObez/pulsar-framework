@@ -13,6 +13,7 @@ use Pulsar\Audit\NullAuditLogger;
 use Pulsar\Config\TrustedExtensionsConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Boot\ExtensionSandbox;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\TrustTier;
@@ -29,6 +30,7 @@ use Pulsar\Extension\AiGovernance\Dto\ModelCard;
 use Pulsar\Extension\AiGovernance\Enum\AiModelRiskLevel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Exception\AiGovernanceException;
+use Pulsar\Extension\AiGovernance\Tests\Support\AiGovernanceSchema;
 
 use function array_column;
 use function array_slice;
@@ -172,10 +174,50 @@ final class ShippedDeploymentGateTest extends TestCase
         $this->manager($container)->deploy('m1');
     }
 
+    /**
+     * The shipped config file alone does not let a high-risk system deploy, and
+     * that is the posture rc.12 chose.
+     *
+     * Every provider artefact is on record here — assessment, model card, hook —
+     * and the boot reads `config/ai-governance.php` unmodified, where `actor_role`
+     * ships COMMENTED OUT. So the refusal is about the one thing the file
+     * deliberately does not answer for an operator: whether this deployment is
+     * the provider of the system or its deployer. The EU AI Act attaches
+     * different obligations to each, and a default would have been the framework
+     * answering a legal question on the operator's behalf.
+     */
+    #[Test]
+    public function aHighRiskSystemIsRefusedUntilTheDeploymentDeclaresItsRole(): void
+    {
+        $container = $this->bootThroughTheSandbox();
+        $this->registerModel($container, AiModelRiskLevel::High, $this->card());
+
+        /** @var AiImpactAssessmentInterface $assessments */
+        $assessments = $container->get(AiImpactAssessmentInterface::class);
+        $assessments->assess('m1');
+
+        $manager = $this->manager($container);
+        $manager->addMonitoringHook($this->hook());
+
+        $this->expectException(AiGovernanceException::class);
+        $this->expectExceptionMessageIsOrContains('declared neither role');
+
+        $manager->deploy('m1');
+    }
+
+    /**
+     * With the role declared, the sandboxed boot deploys.
+     *
+     * This is the one case that overrides the extension's own section rather than
+     * reading the file unmodified, because the thing being measured is what
+     * happens once an operator has answered the question the file leaves to them.
+     * The store keys are not restated: the config DTO defaults every one of them
+     * to `database`, so this still boots against the real connection.
+     */
     #[Test]
     public function aHighRiskSystemCarryingItsObligationsDeploysAfterASandboxedBoot(): void
     {
-        $container = $this->bootThroughTheSandbox();
+        $container = $this->bootThroughTheSandbox(['actor_role' => 'provider']);
         $this->registerModel($container, AiModelRiskLevel::High, $this->card());
 
         /** @var AiImpactAssessmentInterface $assessments */
@@ -226,6 +268,13 @@ final class ShippedDeploymentGateTest extends TestCase
 
         $container = new Container();
         $container->instance(AuditLoggerInterface::class, new NullAuditLogger());
+
+        // A real connection, carrying the schema the shipped migration creates.
+        // The extension's own config file — which this boot reads, unmodified —
+        // sets every store key to `database` since rc.12, and the provider refuses
+        // to fall back to memory when nothing is bound. Booting without one would
+        // measure a deployment nobody runs.
+        $container->instance(ConnectionInterface::class, AiGovernanceSchema::connection());
 
         // What ExtensionConfigPublisher publishes at boot: every bundled
         // extension's config file, under its section name, in ONE registry.

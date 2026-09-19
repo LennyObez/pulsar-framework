@@ -21,6 +21,19 @@ use function sprintf;
  * threshold. A never-assessed model fails (distinct from "assessed with no
  * adverse findings", which passes with a 0.0 score). Wired when
  * AiGovernanceConfig::$requireImpactAssessment is enabled.
+ *
+ * IT DOES NOT CONSULT THE ACTOR ROLE, deliberately, and there are two distinct
+ * assessments not to confuse it with. The EU AI Act Article 9 risk management
+ * system is a PROVIDER duty and is enforced against providers by
+ * {@see HighRiskObligationsGate}, which does consult the role; the Article 27
+ * fundamental rights impact assessment is a DEPLOYER duty owed only by public
+ * bodies, private entities providing public services, and deployers of the
+ * creditworthiness and insurance-pricing use cases, and it remains an operator
+ * responsibility in the AI Act mapping because no container can observe which of
+ * those a deployment is. What this gate enforces is neither: it is the ISO 42001
+ * Clause 6.1.2 assessment an operator chooses to require of every model in its
+ * management system, and a house rule that lapsed when a deployment declared
+ * itself a deployer would not be a house rule.
  */
 #[Internal]
 final readonly class ImpactAssessmentGate implements DeploymentGateInterface

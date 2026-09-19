@@ -7,6 +7,7 @@ namespace Pulsar\Extension\AiGovernance\Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Compliance\Evidence\AiTransparencyDrillInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extension\AiGovernance\AiGovernanceServiceProvider;
 use Pulsar\Extension\AiGovernance\Config\AiGovernanceConfig;
@@ -15,6 +16,7 @@ use Pulsar\Extension\AiGovernance\Contracts\AiDataGovernanceInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiImpactAssessmentInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiLifecycleManagerInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface;
+use Pulsar\Extension\AiGovernance\Contracts\AiTransparencyInterface;
 use Pulsar\Extension\AiGovernance\Contracts\ExplainabilityInterface;
 
 use function sprintf;
@@ -35,6 +37,12 @@ final class AiGovernanceServiceProviderTest extends TestCase
         self::assertContains(AiDataGovernanceInterface::class, $provides);
         self::assertContains(ExplainabilityInterface::class, $provides);
         self::assertContains(AiLifecycleManagerInterface::class, $provides);
+        self::assertContains(AiTransparencyInterface::class, $provides);
+        // A FRAMEWORK contract, answered here. The compliance assessor cannot call
+        // AiTransparencyInterface itself, so an extension that bound the Article 50
+        // subsystem and not this seam would leave `ai_transparency_exercised`
+        // reporting that nothing ran on a deployment where everything works.
+        self::assertContains(AiTransparencyDrillInterface::class, $provides);
     }
 
     /**
@@ -53,7 +61,7 @@ final class AiGovernanceServiceProviderTest extends TestCase
     public function registerBindsEverythingProvidesAnnounces(): void
     {
         $bindings = [];
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('bind')
             ->willReturnCallback(function (string $id) use (&$bindings): void {
                 $bindings[] = $id;
