@@ -12,6 +12,7 @@ use Pulsar\AI\Exception\AiException;
 use Pulsar\AI\Provider\AnthropicProvider;
 use Pulsar\AI\Provider\OllamaProvider;
 use Pulsar\AI\Provider\OpenAiProvider;
+use Pulsar\Tests\Unit\AI\Provider\Support\RefusingHttpClient;
 
 /**
  * Tests SSRF protection (CWE-918) across all AI providers.
@@ -185,33 +186,29 @@ final class ProviderUrlValidationTest extends TestCase
     #[Test]
     public function ollamaAllowsLocalhostByDefault(): void
     {
-        // Arrange — default allowLocalhost=true
-        $provider = new OllamaProvider(
-            baseUrl: 'http://127.0.0.1:11434',
-        );
+        $client = new RefusingHttpClient();
+        $provider = new OllamaProvider(baseUrl: 'http://127.0.0.1:11434', httpClient: $client);
 
-        // Act — will fail connection but should NOT throw SSRF exception
         $response = $provider->complete('Hello');
 
-        // Assert
-        self::assertTrue($response->isError());
-        self::assertStringContainsString('Failed to connect', $response->content);
+        // The guard let the URL through to the transport, which refused it as an unreachable server would.
+        self::assertCount(1, $client->requested);
+        self::assertStringStartsWith('http://127.0.0.1:11434/', $client->requested[0]);
+        self::assertSame('Failed to connect to Ollama', $response->content);
     }
 
     #[Test]
     public function ollamaAllowsLocalhostNameByDefault(): void
     {
-        // Arrange — using "localhost" hostname
-        $provider = new OllamaProvider(
-            baseUrl: 'http://localhost:11434',
-        );
+        $client = new RefusingHttpClient();
+        $provider = new OllamaProvider(baseUrl: 'http://localhost:11434', httpClient: $client);
 
-        // Act
         $response = $provider->complete('Hello');
 
-        // Assert
-        self::assertTrue($response->isError());
-        self::assertStringNotContainsString('SSRF', $response->content);
+        // The guard let the URL through to the transport, which refused it as an unreachable server would.
+        self::assertCount(1, $client->requested);
+        self::assertStringStartsWith('http://localhost:11434/', $client->requested[0]);
+        self::assertSame('Failed to connect to Ollama', $response->content);
     }
 
     #[Test]
@@ -265,18 +262,15 @@ final class ProviderUrlValidationTest extends TestCase
     #[Test]
     public function ollamaAllowsPrivateNetworkWhenAllowLocalhostEnabled(): void
     {
-        // Arrange — 10.x.x.x is private but allowLocalhost allows all private networks
-        $provider = new OllamaProvider(
-            baseUrl: 'http://10.0.0.5:11434',
-            allowLocalhost: true,
-        );
+        $client = new RefusingHttpClient();
+        $provider = new OllamaProvider(baseUrl: 'http://10.0.0.5:11434', httpClient: $client);
 
-        // Act
         $response = $provider->complete('Hello');
 
-        // Assert — connection error but NOT SSRF block
-        self::assertTrue($response->isError());
-        self::assertStringNotContainsString('SSRF', $response->content);
+        // The guard let the URL through to the transport, which refused it as an unreachable server would.
+        self::assertCount(1, $client->requested);
+        self::assertStringStartsWith('http://10.0.0.5:11434/', $client->requested[0]);
+        self::assertSame('Failed to connect to Ollama', $response->content);
     }
 
     #[Test]

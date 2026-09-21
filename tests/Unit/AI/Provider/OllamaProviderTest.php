@@ -14,6 +14,9 @@ use Pulsar\AI\Provider\OllamaProvider;
 #[CoversClass(OllamaProvider::class)]
 final class OllamaProviderTest extends TestCase
 {
+    /** `.invalid` never resolves (RFC 6761): the request fails before any socket opens, on every machine. */
+    private const string UNREACHABLE = 'http://ollama.invalid:11434';
+
     #[Test]
     public function providerNameIsOllama(): void
     {
@@ -26,7 +29,7 @@ final class OllamaProviderTest extends TestCase
     public function completeReturnsErrorOnConnectionFailure(): void
     {
         $provider = new OllamaProvider(
-            baseUrl: 'http://0.0.0.0:1',
+            baseUrl: self::UNREACHABLE,
         );
 
         $response = $provider->complete('Hello');
@@ -39,7 +42,7 @@ final class OllamaProviderTest extends TestCase
     public function chatWithSystemPromptInOptions(): void
     {
         $provider = new OllamaProvider(
-            baseUrl: 'http://0.0.0.0:1',
+            baseUrl: self::UNREACHABLE,
         );
 
         $response = $provider->chat(
@@ -54,7 +57,7 @@ final class OllamaProviderTest extends TestCase
     public function embedReturnsEmptyOnConnectionFailure(): void
     {
         $provider = new OllamaProvider(
-            baseUrl: 'http://0.0.0.0:1',
+            baseUrl: self::UNREACHABLE,
         );
 
         $result = $provider->embed(['Hello world']);
@@ -66,7 +69,7 @@ final class OllamaProviderTest extends TestCase
     public function structuredOutputUsesJsonFormat(): void
     {
         $provider = new OllamaProvider(
-            baseUrl: 'http://0.0.0.0:1',
+            baseUrl: self::UNREACHABLE,
         );
 
         $schema = ['type' => 'object', 'properties' => ['name' => ['type' => 'string']]];
@@ -95,7 +98,7 @@ final class OllamaProviderTest extends TestCase
     #[Test]
     public function chatAllRolesAreHandled(): void
     {
-        $provider = new OllamaProvider(baseUrl: 'http://0.0.0.0:1');
+        $provider = new OllamaProvider(baseUrl: self::UNREACHABLE);
 
         $response = $provider->chat([
             ChatMessage::system('System msg'),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\AI\Provider;
 
+use Generator;
 use Override;
 use Pulsar\AI\AiClientInterface;
 use Pulsar\AI\AiResponse;
@@ -12,6 +13,13 @@ use Pulsar\AI\ChatRole;
 use Pulsar\AI\Config\AiRequestOptions;
 use Pulsar\AI\Embedding\EmbeddingResult;
 use Pulsar\AI\Exception\AiException;
+use Pulsar\AI\Exception\AiStreamException;
+use Pulsar\AI\Streaming\AiStream;
+use Pulsar\AI\Streaming\AiStreamAccumulator;
+use Pulsar\AI\Streaming\AiStreamDelta;
+use Pulsar\AI\Streaming\AnthropicStreamParser;
+use Pulsar\AI\Streaming\StreamContextTransport;
+use Pulsar\AI\Streaming\StreamTransportInterface;
 use Pulsar\AI\ToolCall;
 use Pulsar\AI\ToolDefinition;
 use Pulsar\Api\Api;
@@ -48,6 +56,7 @@ final readonly class AnthropicProvider implements AiClientInterface
         string $model = 'claude-sonnet-4-6',
         private string $baseUrl = 'https://api.anthropic.com/v1',
         private ?HttpClientInterface $httpClient = null,
+        private ?StreamTransportInterface $streamTransport = null,
     ) {
         $this->defaultModel = $model;
     }
@@ -56,6 +65,47 @@ final readonly class AnthropicProvider implements AiClientInterface
     public function chat(array $messages, AiRequestOptions $options = new AiRequestOptions()): AiResponse
     {
         $model = $options->model ?? $this->defaultModel;
+
+        return $this->sendRequest(
+            '/messages',
+            $this->buildChatPayload($messages, $options, $model),
+            $model,
+            $options->timeoutSeconds,
+        );
+    }
+
+    #[Override]
+    public function streamChat(array $messages, AiRequestOptions $options = new AiRequestOptions()): AiStream
+    {
+        $model = $options->model ?? $this->defaultModel;
+        $payload = $this->buildChatPayload($messages, $options, $model);
+        $payload['stream'] = true;
+
+        $url = rtrim($this->baseUrl, '/') . '/messages';
+
+        // Validated here rather than inside the generator so an SSRF refusal is
+        // raised by the call that asked for the stream, not by whoever happens
+        // to iterate it later.
+        $this->validateUrl($url);
+
+        $body = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        return new AiStream(
+            $this->readStream($url, $body, $model, $options->timeoutSeconds),
+            'anthropic',
+        );
+    }
+
+    /**
+     * Build the Messages API request body shared by the streamed and unstreamed
+     * paths, so the two cannot drift into asking for different things.
+     *
+     * @param list<ChatMessage> $messages
+     *
+     * @return array<string, mixed>
+     */
+    private function buildChatPayload(array $messages, AiRequestOptions $options, string $model): array
+    {
         $systemPrompt = $options->systemPrompt;
         $apiMessages = [];
 
@@ -97,7 +147,45 @@ final readonly class AnthropicProvider implements AiClientInterface
             ];
         }
 
-        return $this->sendRequest('/messages', $payload, $model, $options->timeoutSeconds);
+        return $payload;
+    }
+
+    /**
+     * @return Generator<int, AiStreamDelta, mixed, AiResponse>
+     *
+     * @throws AiStreamException
+     */
+    private function readStream(string $url, string $body, string $model, int $idleTimeoutSeconds): Generator
+    {
+        $transport = $this->streamTransport ?? new StreamContextTransport('anthropic');
+        $accumulator = new AiStreamAccumulator('anthropic', $model);
+        $parser = new AnthropicStreamParser();
+
+        $chunks = $transport->postStream(
+            $url,
+            $body,
+            [
+                'Content-Type' => 'application/json',
+                'Accept' => 'text/event-stream',
+                'x-api-key' => $this->apiKey,
+                'anthropic-version' => '2023-06-01',
+            ],
+            $idleTimeoutSeconds,
+        );
+
+        try {
+            foreach ($parser->deltas($chunks) as $delta) {
+                $accumulator->accept($delta);
+
+                yield $delta;
+            }
+        } catch (AiStreamException $failure) {
+            // The transport knows the socket died; only the accumulator knows
+            // what had already been produced. Re-throw with both.
+            throw $failure->withPartialContent($accumulator->partialContent());
+        }
+
+        return $accumulator->finish();
     }
 
     #[Override]

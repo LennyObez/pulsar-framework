@@ -33,6 +33,14 @@
                     "return": "string",
                     "static": false
                 },
+                "streamChat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStream",
+                    "static": false
+                },
                 "structuredOutput": {
                     "params": [
                         "string $prompt",
@@ -390,6 +398,80 @@
             },
             "constants": []
         },
+        "Pulsar\\AI\\Exception\\AiStreamException": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "didNotComplete": {
+                    "params": [
+                        "string $provider",
+                        "?Throwable $previous"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "httpError": {
+                    "params": [
+                        "string $provider",
+                        "int $status",
+                        "string $body"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "malformedToolCall": {
+                    "params": [
+                        "string $provider",
+                        "string $name",
+                        "string $raw"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "providerError": {
+                    "params": [
+                        "string $provider",
+                        "string $message"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "stalled": {
+                    "params": [
+                        "string $provider",
+                        "int $idleTimeoutSeconds",
+                        "string $partialContent"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "transportFailure": {
+                    "params": [
+                        "string $provider",
+                        "string $url",
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "truncated": {
+                    "params": [
+                        "string $provider",
+                        "string $partialContent"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": true
+                },
+                "withPartialContent": {
+                    "params": [
+                        "string $partialContent"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiStreamException",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\AI\\ModelCard": {
             "since": "1.0.0",
             "methods": [],
@@ -601,7 +683,8 @@
                         "string $apiKey",
                         "string $model",
                         "string $baseUrl",
-                        "?Pulsar\\Http\\Client\\HttpClientInterface $httpClient"
+                        "?Pulsar\\Http\\Client\\HttpClientInterface $httpClient",
+                        "?Pulsar\\AI\\Streaming\\StreamTransportInterface $streamTransport"
                     ],
                     "return": null,
                     "static": false
@@ -633,6 +716,14 @@
                 "providerName": {
                     "params": [],
                     "return": "string",
+                    "static": false
+                },
+                "streamChat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStream",
                     "static": false
                 },
                 "structuredOutput": {
@@ -657,7 +748,8 @@
                         "string $model",
                         "string $baseUrl",
                         "string $organization",
-                        "?Pulsar\\Http\\Client\\HttpClientInterface $httpClient"
+                        "?Pulsar\\Http\\Client\\HttpClientInterface $httpClient",
+                        "?Pulsar\\AI\\Streaming\\StreamTransportInterface $streamTransport"
                     ],
                     "return": null,
                     "static": false
@@ -691,6 +783,14 @@
                     "return": "string",
                     "static": false
                 },
+                "streamChat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStream",
+                    "static": false
+                },
                 "structuredOutput": {
                     "params": [
                         "string $prompt",
@@ -698,6 +798,183 @@
                         "Pulsar\\AI\\Config\\AiRequestOptions $options"
                     ],
                     "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\AiStream": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Generator $deltas",
+                        "string $providerName"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "getIterator": {
+                    "params": [],
+                    "return": "Generator",
+                    "static": false
+                },
+                "response": {
+                    "params": [],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\AiStreamAccumulator": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $provider",
+                        "string $model"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "accept": {
+                    "params": [
+                        "Pulsar\\AI\\Streaming\\AiStreamDelta $delta"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
+                "finish": {
+                    "params": [],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                },
+                "isFinished": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "partialContent": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\AiStreamDelta": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "finish": {
+                    "params": [
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStreamDelta",
+                    "static": true
+                },
+                "text": {
+                    "params": [
+                        "string $text"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStreamDelta",
+                    "static": true
+                },
+                "toolCall": {
+                    "params": [
+                        "Pulsar\\AI\\Streaming\\ToolCallDelta $fragment"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStreamDelta",
+                    "static": true
+                },
+                "usage": {
+                    "params": [
+                        "Pulsar\\AI\\Streaming\\AiTokenUsage $usage"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStreamDelta",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\AiStreamEventType": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\AiTokenUsage": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "?int $inputTokens",
+                        "?int $outputTokens"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "isEmpty": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\StreamTransportInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "postStream": {
+                    "params": [
+                        "string $url",
+                        "string $body",
+                        "array $headers",
+                        "int $idleTimeoutSeconds"
+                    ],
+                    "return": "iterable",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Streaming\\ToolCallDelta": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "int $index",
+                        "?string $id",
+                        "?string $name",
+                        "string $argumentsFragment"
+                    ],
+                    "return": null,
                     "static": false
                 }
             },
@@ -117738,6 +118015,16 @@
     },
     "internal_classes": [
         "Pulsar\\AI\\Provider\\OllamaProvider",
+        "Pulsar\\AI\\Streaming\\AnthropicStreamParser",
+        "Pulsar\\AI\\Streaming\\HttpStreamOpenerInterface",
+        "Pulsar\\AI\\Streaming\\NdJsonReader",
+        "Pulsar\\AI\\Streaming\\OllamaStreamParser",
+        "Pulsar\\AI\\Streaming\\OpenAiStreamParser",
+        "Pulsar\\AI\\Streaming\\OpenedHttpStream",
+        "Pulsar\\AI\\Streaming\\SseEvent",
+        "Pulsar\\AI\\Streaming\\SseReader",
+        "Pulsar\\AI\\Streaming\\StreamContextOpener",
+        "Pulsar\\AI\\Streaming\\StreamContextTransport",
         "Pulsar\\AI\\VectorStore\\MySqlVectorStore",
         "Pulsar\\AI\\VectorStore\\PgVectorStore",
         "Pulsar\\AI\\VectorStore\\SqliteVecStore",
@@ -119144,6 +119431,7 @@
         "Pulsar\\Http\\RateLimit\\CacheRateLimiter",
         "Pulsar\\Http\\RateLimit\\RateLimiter",
         "Pulsar\\Http\\RateLimit\\SqliteRateLimiter",
+        "Pulsar\\Http\\Response\\StreamedBodyBuffer",
         "Pulsar\\Http\\RouteContext",
         "Pulsar\\Http\\Validation\\CustomStringRule",
         "Pulsar\\I18n\\Catalog\\ChainCatalog",
