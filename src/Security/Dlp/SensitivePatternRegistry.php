@@ -40,34 +40,74 @@ final class SensitivePatternRegistry
 
     /**
      * Scan content for sensitive data matches.
+     *
+     * The result distinguishes three outcomes that used to look alike, and the
+     * distinction is the reason {@see DlpScanStatus} exists:
+     *
+     *  - DLP is off, so nothing was read ({@see DlpScanStatus::Disabled});
+     *  - every pattern ran ({@see DlpScanStatus::Completed}), whether or not it
+     *    matched;
+     *  - a pattern's match attempt failed inside PCRE
+     *    ({@see DlpScanStatus::Failed}), so what it would have caught is unknown.
+     *
+     * The third used to be silent. `preg_match_all()` answers `false` when the
+     * engine gives up — the backtrack limit is the reachable case, and an
+     * application-registered pattern is the reachable route to it — and this
+     * method compared that answer against `> 0`, where `false` lands on the same
+     * side as "no match". The scan reported a clean bill of health for content it
+     * had failed to examine.
+     *
+     * A validator is application code and may throw; that is deliberately not
+     * caught here. A classifier cannot report on bytes whose verdict raised, and
+     * inventing a status for it would let a caller continue past a failure this
+     * class is not the one to interpret.
      */
     public function scan(string $content): DlpScanResult
     {
-        if (!$this->config->enabled || $content === '') {
+        if (!$this->config->enabled) {
+            return DlpScanResult::disabled($content);
+        }
+
+        if ($content === '') {
             return DlpScanResult::clean($content);
         }
 
         $matches = [];
+        $engineFailed = false;
 
         foreach ($this->patterns as $pattern) {
-            if (preg_match_all($pattern->regex, $content, $found, PREG_OFFSET_CAPTURE) > 0) {
-                foreach ($found[0] as $match) {
-                    $value = $match[0];
-                    $offset = $match[1];
+            $found = [];
+            $count = preg_match_all($pattern->regex, $content, $found, PREG_OFFSET_CAPTURE);
 
-                    if ($pattern->validator !== null && !($pattern->validator)($value)) {
-                        continue;
-                    }
+            if ($count === false) {
+                // The engine gave up on this pattern — backtrack or recursion
+                // limit, or a pattern that does not compile. Whatever it would
+                // have matched is unknown, and the remaining patterns still run
+                // so that what IS known is reported.
+                $engineFailed = true;
+                continue;
+            }
 
-                    $masked = $this->mask($value);
-                    $matches[] = new DlpMatch(
-                        type: $pattern->type,
-                        pattern: $pattern->regex,
-                        offset: $offset,
-                        length: strlen($value),
-                        maskedValue: $masked,
-                    );
+            if ($count === 0) {
+                continue;
+            }
+
+            foreach ($found[0] as $match) {
+                $value = $match[0];
+                $offset = $match[1];
+
+                if ($pattern->validator !== null && !($pattern->validator)($value)) {
+                    continue;
                 }
+
+                $masked = $this->mask($value);
+                $matches[] = new DlpMatch(
+                    type: $pattern->type,
+                    pattern: $pattern->regex,
+                    offset: $offset,
+                    length: strlen($value),
+                    maskedValue: $masked,
+                );
             }
         }
 
@@ -77,6 +117,13 @@ final class SensitivePatternRegistry
 
         foreach ($matches as $dlpMatch) {
             $redacted = substr_replace($redacted, $dlpMatch->maskedValue, $dlpMatch->offset, $dlpMatch->length);
+        }
+
+        if ($engineFailed) {
+            // The redacted form covers only the patterns that completed, so it
+            // is returned as-is rather than presented as a safe rendering of the
+            // content. The status says which it is.
+            return DlpScanResult::failed($redacted, $matches, $this->config->defaultAction);
         }
 
         if ($matches === []) {

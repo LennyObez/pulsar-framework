@@ -106,6 +106,154 @@
             },
             "constants": []
         },
+        "Pulsar\\AI\\Audit\\AuditingAiClient": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\AI\\AiClientInterface $inner",
+                        "Pulsar\\Audit\\AuditLoggerInterface $auditLogger",
+                        "string $contentDigestKey",
+                        "?Pulsar\\AI\\Audit\\EgressDecisionSourceInterface $egress"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "chat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                },
+                "complete": {
+                    "params": [
+                        "string $prompt",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                },
+                "embed": {
+                    "params": [
+                        "array $inputs",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Embedding\\EmbeddingResult",
+                    "static": false
+                },
+                "providerName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "streamChat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStream",
+                    "static": false
+                },
+                "structuredOutput": {
+                    "params": [
+                        "string $prompt",
+                        "array $schema",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Audit\\EgressDecision": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "categoryCount": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "passed": {
+                    "params": [],
+                    "return": "Pulsar\\AI\\Audit\\EgressDecision",
+                    "static": true
+                },
+                "redacted": {
+                    "params": [
+                        "int $spanCount",
+                        "array $categories"
+                    ],
+                    "return": "Pulsar\\AI\\Audit\\EgressDecision",
+                    "static": true
+                },
+                "refusal": {
+                    "params": [
+                        "string $reason",
+                        "array $categories"
+                    ],
+                    "return": "Pulsar\\AI\\Audit\\EgressDecision",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Audit\\EgressDecisionSinkInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "report": {
+                    "params": [
+                        "Pulsar\\AI\\Audit\\EgressDecision $decision"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Audit\\EgressDecisionSourceInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "takeEgressDecision": {
+                    "params": [],
+                    "return": "?Pulsar\\AI\\Audit\\EgressDecision",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Audit\\InferenceOperation": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\AI\\ChatMessage": {
             "since": "1.0.0",
             "methods": [],
@@ -254,6 +402,220 @@
             },
             "constants": []
         },
+        "Pulsar\\AI\\Egress\\AiDestination": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "fromBaseUrl": {
+                    "params": [
+                        "string $providerName",
+                        "string $baseUrl"
+                    ],
+                    "return": "Pulsar\\AI\\Egress\\AiDestination",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Egress\\AiEgressDecision": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressOutcome $outcome",
+                        "Pulsar\\AI\\Egress\\AiDestination $destination",
+                        "string $operation",
+                        "array $matches",
+                        "string $reasonCode",
+                        "string $reason"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "categoryLabels": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "sensitiveDataTypes": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "toAuditDecision": {
+                    "params": [],
+                    "return": "Pulsar\\AI\\Audit\\EgressDecision",
+                    "static": false
+                },
+                "toAuditMetadata": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Egress\\AiEgressObserverInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "decided": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Egress\\AiEgressOutcome": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Egress\\AiEgressPolicy": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $allowedHosts",
+                        "Pulsar\\Security\\Dlp\\DlpAction $onSensitiveData"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\AI\\Egress\\AiEgressPolicy",
+                    "static": true
+                },
+                "permits": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiDestination $destination"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Egress\\AuditingAiEgressObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Audit\\AuditLoggerInterface $auditLogger"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "decided": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Egress\\GuardedAiClient": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\AI\\AiClientInterface $inner",
+                        "Pulsar\\AI\\Egress\\AiDestination $destination",
+                        "Pulsar\\AI\\Egress\\AiEgressPolicy $policy",
+                        "Pulsar\\Security\\Dlp\\SensitivePatternRegistry $classifier",
+                        "Pulsar\\AI\\Egress\\AiEgressObserverInterface $observer",
+                        "?Pulsar\\AI\\Audit\\EgressDecisionSinkInterface $auditSink"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "chat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                },
+                "complete": {
+                    "params": [
+                        "string $prompt",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                },
+                "embed": {
+                    "params": [
+                        "array $inputs",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Embedding\\EmbeddingResult",
+                    "static": false
+                },
+                "providerName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "streamChat": {
+                    "params": [
+                        "array $messages",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\Streaming\\AiStream",
+                    "static": false
+                },
+                "structuredOutput": {
+                    "params": [
+                        "string $prompt",
+                        "array $schema",
+                        "Pulsar\\AI\\Config\\AiRequestOptions $options"
+                    ],
+                    "return": "Pulsar\\AI\\AiResponse",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\AI\\Embedding\\EmbeddingInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -332,6 +694,58 @@
                     "params": [],
                     "return": "float",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\AI\\Exception\\AiEgressRefusedException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "classifierUnavailable": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision",
+                        "string $detail"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiEgressRefusedException",
+                    "static": true
+                },
+                "destinationMismatch": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision",
+                        "string $reportedProviderName"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiEgressRefusedException",
+                    "static": true
+                },
+                "destinationNotPermitted": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiEgressRefusedException",
+                    "static": true
+                },
+                "sensitiveDataBlocked": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiEgressRefusedException",
+                    "static": true
+                },
+                "sensitiveDataInStructuredField": {
+                    "params": [
+                        "Pulsar\\AI\\Egress\\AiEgressDecision $decision"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiEgressRefusedException",
+                    "static": true
+                },
+                "undeterminableDestination": {
+                    "params": [
+                        "string $providerName",
+                        "string $baseUrl"
+                    ],
+                    "return": "Pulsar\\AI\\Exception\\AiEgressRefusedException",
+                    "static": true
                 }
             },
             "constants": []
@@ -100435,7 +100849,8 @@
                         "bool $detected",
                         "Pulsar\\Security\\Dlp\\DlpAction $actionTaken",
                         "array $matches",
-                        "string $redactedContent"
+                        "string $redactedContent",
+                        "Pulsar\\Security\\Dlp\\DlpScanStatus $status"
                     ],
                     "return": null,
                     "static": false
@@ -100445,6 +100860,53 @@
                         "string $content"
                     ],
                     "return": "Pulsar\\Security\\Dlp\\DlpScanResult",
+                    "static": true
+                },
+                "disabled": {
+                    "params": [
+                        "string $content"
+                    ],
+                    "return": "Pulsar\\Security\\Dlp\\DlpScanResult",
+                    "static": true
+                },
+                "failed": {
+                    "params": [
+                        "string $content",
+                        "array $matches",
+                        "Pulsar\\Security\\Dlp\\DlpAction $actionTaken"
+                    ],
+                    "return": "Pulsar\\Security\\Dlp\\DlpScanResult",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Dlp\\DlpScanStatus": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "isConclusive": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
                     "static": true
                 }
             },
@@ -118014,6 +118476,7 @@
         }
     },
     "internal_classes": [
+        "Pulsar\\AI\\Audit\\Internal\\PendingEgressDecision",
         "Pulsar\\AI\\Provider\\OllamaProvider",
         "Pulsar\\AI\\Streaming\\AnthropicStreamParser",
         "Pulsar\\AI\\Streaming\\HttpStreamOpenerInterface",
@@ -118222,6 +118685,7 @@
         "Pulsar\\Core\\Controller\\HandlerDescriptor",
         "Pulsar\\Core\\Controller\\ReflectionControllerResolver",
         "Pulsar\\Core\\Kernel",
+        "Pulsar\\Core\\Wiring\\AiAuditWiring",
         "Pulsar\\Core\\Wiring\\AntiSpamWiring",
         "Pulsar\\Core\\Wiring\\ApiWiring",
         "Pulsar\\Core\\Wiring\\AssetWiring",

@@ -7,6 +7,8 @@ namespace Pulsar\Security\Dlp;
 use Pulsar\Api\Api;
 use Pulsar\Support\Html\Html5Parser;
 
+use function implode;
+
 /**
  * HTML-aware DLP scanner using PHP 8.4's native HTML5 parser.
  *
@@ -72,11 +74,25 @@ final readonly class HtmlAwareDlpScanner
 
     /**
      * Merge text and attribute scan results.
+     *
+     * The merged status is the less conclusive of the two. Reporting the pair as
+     * {@see DlpScanStatus::Completed} because neither half detected anything
+     * would be the exact laundering {@see DlpScanStatus} exists to stop: with DLP
+     * switched off both halves examine nothing, and the merge would have turned
+     * two "did not look" answers into one "looked and found nothing".
      */
     private function mergeResults(string $originalHtml, DlpScanResult $textResult, DlpScanResult $attrResult): DlpScanResult
     {
+        $status = self::worseOf($textResult->status, $attrResult->status);
+
         if (!$textResult->detected && !$attrResult->detected) {
-            return DlpScanResult::clean($originalHtml);
+            return new DlpScanResult(
+                detected: false,
+                actionTaken: DlpAction::Alert,
+                matches: [],
+                redactedContent: $originalHtml,
+                status: $status,
+            );
         }
 
         $allMatches = [...$textResult->matches, ...$attrResult->matches];
@@ -87,6 +103,24 @@ final readonly class HtmlAwareDlpScanner
             actionTaken: $action,
             matches: $allMatches,
             redactedContent: $originalHtml,
+            status: $status,
         );
+    }
+
+    /**
+     * The status that concedes the most, so that one half's ignorance is not
+     * covered by the other half's confidence.
+     */
+    private static function worseOf(DlpScanStatus $left, DlpScanStatus $right): DlpScanStatus
+    {
+        if ($left === DlpScanStatus::Failed || $right === DlpScanStatus::Failed) {
+            return DlpScanStatus::Failed;
+        }
+
+        if ($left === DlpScanStatus::Disabled || $right === DlpScanStatus::Disabled) {
+            return DlpScanStatus::Disabled;
+        }
+
+        return DlpScanStatus::Completed;
     }
 }
