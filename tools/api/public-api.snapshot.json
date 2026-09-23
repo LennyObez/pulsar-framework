@@ -9710,6 +9710,28 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\Evidence\\BackupRoundTripObserver": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Random\\Randomizer $randomizer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "observe": {
+                    "params": [
+                        "?Pulsar\\Resilience\\Backup\\BackupServiceInterface $backups",
+                        "?Pulsar\\Resilience\\Backup\\BackupDestination $destination"
+                    ],
+                    "return": "Pulsar\\Compliance\\Control\\Observation",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\Evidence\\ComplianceScope": {
             "since": "1.0.0-rc.12",
             "methods": [],
@@ -12485,6 +12507,36 @@
                         "array $data"
                     ],
                     "return": "Pulsar\\Config\\AuthorizationConfig",
+                    "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Config\\BackupConfig": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "string $destination",
+                        "array $trees",
+                        "array $unknownKeys"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data",
+                        "Pulsar\\Config\\Environment $environment"
+                    ],
+                    "return": "Pulsar\\Config\\BackupConfig",
                     "static": true
                 },
                 "unknownConfigKeys": {
@@ -90701,6 +90753,653 @@
             },
             "constants": []
         },
+        "Pulsar\\Resilience\\Backup\\ArchiveSeal": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\Crypto\\KeyProviderInterface $keys"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "keyId": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "withArchiveKey": {
+                    "params": [
+                        "callable $work"
+                    ],
+                    "return": "mixed",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\ArchivedEntry": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $name",
+                        "int $bytes",
+                        "string $digestHex"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupDestination": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $directory"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "nextArchive": {
+                    "params": [
+                        "?DateTimeImmutable $at"
+                    ],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupEntry": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $name",
+                        "iterable $chunks"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "isSafeName": {
+                    "params": [
+                        "string $name"
+                    ],
+                    "return": "bool",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "archiveTruncated": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "archiveUnreadable": {
+                    "params": [
+                        "string $path",
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "destinationOccupied": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "destinationUnwritable": {
+                    "params": [
+                        "string $path",
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "entryDigestMismatch": {
+                    "params": [
+                        "string $path",
+                        "string $entry"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "malformedPayload": {
+                    "params": [
+                        "string $path",
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "notAnArchive": {
+                    "params": [
+                        "string $path",
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "restoreFailed": {
+                    "params": [
+                        "string $entry",
+                        "string $reason",
+                        "?Throwable $previous"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "sealBroken": {
+                    "params": [
+                        "string $path",
+                        "int $chunk"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "sealedUnderAnotherKey": {
+                    "params": [
+                        "string $path",
+                        "string $archiveKeyId",
+                        "string $deploymentKeyId"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "sourceUnreadable": {
+                    "params": [
+                        "string $source",
+                        "string $reason",
+                        "?Throwable $previous"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                },
+                "unsafeEntryName": {
+                    "params": [
+                        "string $entry"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupManifest": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $archivePath",
+                        "DateTimeImmutable $createdAt",
+                        "string $keyId",
+                        "array $entries",
+                        "array $sourceIds",
+                        "int $sealedBytes"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "contentBytes": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "covers": {
+                    "params": [
+                        "string $sourceId"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "entryCount": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupPlan": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $sources",
+                        "array $targets"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "coverage": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "includes": {
+                    "params": [
+                        "string $sourceId"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupServiceInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "backUp": {
+                    "params": [
+                        "string $archivePath",
+                        "iterable $sources"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupManifest",
+                    "static": false
+                },
+                "keyId": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "restore": {
+                    "params": [
+                        "string $archivePath",
+                        "array $targets"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\RestoreReport",
+                    "static": false
+                },
+                "verify": {
+                    "params": [
+                        "string $archivePath"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupVerification",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupSourceInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "entries": {
+                    "params": [],
+                    "return": "iterable",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\BackupVerification": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "entryCount": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "intact": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "readBack": {
+                    "params": [
+                        "string $archivePath",
+                        "DateTimeImmutable $createdAt",
+                        "string $keyId",
+                        "array $entries",
+                        "int $bytesRead"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupVerification",
+                    "static": true
+                },
+                "refused": {
+                    "params": [
+                        "string $archivePath",
+                        "string $reason",
+                        "string $keyId"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupVerification",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\DatabaseBackupSource": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Database\\ConnectionInterface $connection",
+                        "Pulsar\\Database\\Introspection\\DatabaseIntrospectorInterface $introspector"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "entries": {
+                    "params": [],
+                    "return": "iterable",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\DatabaseRestoreTarget": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Database\\ConnectionInterface $connection",
+                        "bool $replaceExisting"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "accepts": {
+                    "params": [
+                        "string $entryName"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "restore": {
+                    "params": [
+                        "string $entryName",
+                        "iterable $chunks"
+                    ],
+                    "return": "int",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\FileTreeBackupSource": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $id",
+                        "string $root",
+                        "string $description"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "entries": {
+                    "params": [],
+                    "return": "iterable",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "skipped": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\FileTreeRestoreTarget": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $id",
+                        "string $root",
+                        "bool $overwriteExisting"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "accepts": {
+                    "params": [
+                        "string $entryName"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "restore": {
+                    "params": [
+                        "string $entryName",
+                        "iterable $chunks"
+                    ],
+                    "return": "int",
+                    "static": false
+                },
+                "withOverwrite": {
+                    "params": [
+                        "bool $overwrite"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\FileTreeRestoreTarget",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\InMemoryRestoreTarget": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $id",
+                        "?string $prefix"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "accepts": {
+                    "params": [
+                        "string $entryName"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "contentOf": {
+                    "params": [
+                        "string $entryName"
+                    ],
+                    "return": "?string",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "restore": {
+                    "params": [
+                        "string $entryName",
+                        "iterable $chunks"
+                    ],
+                    "return": "int",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\RestoreReport": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $archivePath",
+                        "array $restored",
+                        "array $skipped"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "complete": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "restoredCount": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\RestoreTargetInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "accepts": {
+                    "params": [
+                        "string $entryName"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "id": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "restore": {
+                    "params": [
+                        "string $entryName",
+                        "iterable $chunks"
+                    ],
+                    "return": "int",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\RestoredEntry": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $name",
+                        "string $targetId",
+                        "int $bytes"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Resilience\\Backup\\SealedArchiveBackupService": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Resilience\\Backup\\ArchiveSeal $seal"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "backUp": {
+                    "params": [
+                        "string $archivePath",
+                        "iterable $sources"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupManifest",
+                    "static": false
+                },
+                "keyId": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "restore": {
+                    "params": [
+                        "string $archivePath",
+                        "array $targets"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\RestoreReport",
+                    "static": false
+                },
+                "verify": {
+                    "params": [
+                        "string $archivePath"
+                    ],
+                    "return": "Pulsar\\Resilience\\Backup\\BackupVerification",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Resilience\\BulkheadLimiter": {
             "since": "1.0.0",
             "methods": [],
@@ -118690,6 +119389,7 @@
         "Pulsar\\Core\\Wiring\\ApiWiring",
         "Pulsar\\Core\\Wiring\\AssetWiring",
         "Pulsar\\Core\\Wiring\\AuthWiring",
+        "Pulsar\\Core\\Wiring\\BackupWiring",
         "Pulsar\\Core\\Wiring\\BroadcastWiring",
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
@@ -120016,6 +120716,9 @@
         "Pulsar\\Queue\\Tenant\\TenantJobMiddleware",
         "Pulsar\\Queue\\Tenant\\TenantRateLimiter",
         "Pulsar\\Rendering\\CachedPage",
+        "Pulsar\\Resilience\\Backup\\ArchiveFormat",
+        "Pulsar\\Resilience\\Backup\\EntryDigest",
+        "Pulsar\\Resilience\\Backup\\SealedArchiveWriter",
         "Pulsar\\Routing\\Binding\\BindingAuthorization",
         "Pulsar\\Routing\\Binding\\BindingProvenance",
         "Pulsar\\Routing\\Binding\\BindingResolver",
