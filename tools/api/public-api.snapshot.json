@@ -67746,9 +67746,21 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "aggregateOverGroupedQuery": {
+                    "params": [],
+                    "return": "Pulsar\\Extension\\Orm\\Exception\\QueryBuilderException",
+                    "static": true
+                },
                 "aliasConflict": {
                     "params": [
                         "string $alias"
+                    ],
+                    "return": "Pulsar\\Extension\\Orm\\Exception\\QueryBuilderException",
+                    "static": true
+                },
+                "duplicateBinding": {
+                    "params": [
+                        "string $name"
                     ],
                     "return": "Pulsar\\Extension\\Orm\\Exception\\QueryBuilderException",
                     "static": true

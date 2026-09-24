@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Orm\Features\Relation;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
+use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Domain\RawExpression;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Domain\RelationType;
@@ -90,6 +91,7 @@ final readonly class WithCountLoader
                 $relation->foreignKey,
             )),
         ]);
+        $this->excludeTrashed($builder, $targetMetadata);
         $builder->whereIn($relation->foreignKey, $parentIds);
         $builder->groupBy($relation->foreignKey);
 
@@ -103,6 +105,26 @@ final readonly class WithCountLoader
         }
 
         return $countMap;
+    }
+
+    /**
+     * Scope a count to the rows the relation would actually hand back.
+     *
+     * These builders are configured with from() rather than forEntity(), because
+     * a count needs no hydrator and no entity mapping. The cost is that
+     * SelectBuilder has no metadata to read a soft-delete column from, so its
+     * automatic scope filter never fires — and `withCount('comments')` reported
+     * a number `with('comments')` could not produce, the badge saying 12 beside
+     * a list of 9. RelationLoader's queries go through forEntity() and are
+     * already scoped; this restores the same predicate here.
+     */
+    private function excludeTrashed(SelectBuilder $builder, EntityMetadata $metadata): void
+    {
+        if (!$metadata->hasSoftDelete || $metadata->softDeleteColumn === null) {
+            return;
+        }
+
+        $builder->whereNull($metadata->softDeleteColumn);
     }
 
     /**
@@ -127,6 +149,7 @@ final readonly class WithCountLoader
                 $relation->morphIdColumn,
             )),
         ]);
+        $this->excludeTrashed($builder, $targetMetadata);
         $builder->where($relation->morphTypeColumn, $parentClass);
         $builder->whereIn($relation->morphIdColumn, $parentIds);
         $builder->groupBy($relation->morphIdColumn);

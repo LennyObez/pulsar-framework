@@ -29,7 +29,8 @@ use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 use Pulsar\Pagination\CursorPaginator;
 use Pulsar\Pagination\PaginationResult;
 
-use function array_merge;
+use function array_key_exists;
+use function array_keys;
 use function assert;
 use function count;
 use function implode;
@@ -47,8 +48,16 @@ use function sprintf;
 final class SelectBuilder implements EntityQueryBuilderInterface
 {
     private readonly IdentifierQuoter $quoter;
-    private readonly ExpressionCompiler $exprCompiler;
-    private readonly BindingCounter $bindingCounter;
+
+    /**
+     * Not readonly, and deliberately so: {@see subqueryBuilder()} replaces both
+     * of these on a freshly constructed sub-builder so that the subquery draws
+     * its placeholder names from THIS builder's sequence. Nothing else may
+     * reassign them — they are private to a final class, written in the
+     * constructor and in that one factory.
+     */
+    private ExpressionCompiler $exprCompiler;
+    private BindingCounter $bindingCounter;
 
     /** @var list<string|RawExpression> */
     private array $columns = ['*'];
@@ -172,7 +181,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         );
 
         $this->joins[] = new JoinClause($type, $tableExpr, $compiled['sql'], $compiled['bindings']);
-        $this->bindings = array_merge($this->bindings, $compiled['bindings']);
+        $this->addBindings($compiled['bindings']);
 
         return $this;
     }
@@ -211,7 +220,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         $this->guardEncryptedWhere($column);
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), '=', $value);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -222,7 +231,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         $this->guardEncryptedWhere($column);
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), $operator, $value);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -249,7 +258,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         $this->guardEncryptedWhere($column);
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -259,7 +268,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values, true);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -269,7 +278,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->between($this->qualifyColumn($column), $low, $high);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -279,7 +288,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->like($this->qualifyColumn($column), $pattern);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -289,7 +298,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -339,17 +348,24 @@ final class SelectBuilder implements EntityQueryBuilderInterface
                 ? $prevSqls[0]
                 : '(' . implode(' AND ', $prevSqls) . ')';
 
+            $merged = self::mergeBindings($previousBindings, $orBindings);
+
             $combined = new Expression(
                 sprintf('(%s OR %s)', $prevClause, $orClause),
-                array_merge($previousBindings, $orBindings),
+                $merged,
             );
 
             $this->wheres = [$combined];
-            $this->bindings = array_merge($previousBindings, $orBindings);
+            $this->bindings = $merged;
         } else {
-            // No previous wheres: just add the OR group conditions
+            // No previous WHERE to OR against, so the group's conditions stand
+            // alone — but "no previous WHERE" is not "no previous binding". A
+            // JOIN ON clause that compares a column to a value contributes one
+            // with no WHERE anywhere near it, and adopting the group's map
+            // wholesale used to drop it: the SQL still named :p0 while the map
+            // no longer carried it, and the driver rejected the statement.
             $this->wheres = $orGroup;
-            $this->bindings = $orBindings;
+            $this->bindings = self::mergeBindings($previousBindings, $orBindings);
         }
 
         return $this;
@@ -405,8 +421,11 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         }
 
         $targetMetadata = $metadataRegistry->get($relation->targetEntity);
-        $subBuilder = new self($this->connection);
-        $subBuilder->from($targetMetadata->tableName, 'sub0');
+        $subBuilder = $this->subqueryBuilder();
+        // qualifiedTableName(), not tableName: a bare "posts" resolves against
+        // whatever the connection's search path names, which on a multi-schema
+        // deployment is a different table from the one the relation points at.
+        $subBuilder->from($targetMetadata->qualifiedTableName(), 'sub0');
         $subBuilder->select([RawExpression::of('1')]);
 
         // Build the correlation condition based on relation type
@@ -438,7 +457,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
                     $this->quoter->quote($relation->morphTypeColumn ?? ''),
                     $morphBinding,
                 )));
-                $this->bindings[$morphBinding] = $this->metadata->entityClass;
+                $this->addBindings([$morphBinding => $this->metadata->entityClass]);
             })(),
             default => throw QueryBuilderException::invalid(sprintf(
                 'whereHas does not support relation type "%s"',
@@ -457,9 +476,74 @@ final class SelectBuilder implements EntityQueryBuilderInterface
             $subSql['bindings'],
         );
         $this->wheres[] = $existsExpr;
-        $this->bindings = array_merge($this->bindings, $subSql['bindings']);
+        $this->addBindings($subSql['bindings']);
 
         return $this;
+    }
+
+    /**
+     * Create a builder for a correlated subquery of this query.
+     *
+     * The sub-builder shares this builder's placeholder counter, and that
+     * sharing is the whole mechanism: one monotonic sequence per compiled
+     * statement means no two clauses — at any nesting depth, in the outer query
+     * or in any subquery under it — can ever draw the same parameter name.
+     *
+     * A sub-builder holding a counter of its own would begin again at `:p0`.
+     * The SQL still reads correctly, and the outer query still says
+     * `t0.name = :p0`, but merging the two binding maps replaces the outer
+     * value with the subquery's. The query then executes without error against
+     * a filter nobody wrote, and returns the wrong rows.
+     */
+    private function subqueryBuilder(): self
+    {
+        $sub = new self($this->connection);
+        $sub->bindingCounter = $this->bindingCounter;
+        $sub->exprCompiler = new ExpressionCompiler($sub->quoter, $this->bindingCounter);
+
+        return $sub;
+    }
+
+    /**
+     * Bind freshly compiled parameters into this query's binding map.
+     *
+     * @param array<string, mixed> $incoming
+     *
+     * @throws QueryBuilderException If a name is already bound.
+     */
+    private function addBindings(array $incoming): void
+    {
+        $this->bindings = self::mergeBindings($this->bindings, $incoming);
+    }
+
+    /**
+     * Merge two binding maps, refusing any name that both sides claim.
+     *
+     * Builder-generated names cannot repeat — {@see subqueryBuilder()} keeps the
+     * whole statement on one counter. A repeat therefore means a
+     * {@see RawExpression} chose a name some other clause already owns, which is
+     * the one remaining way a value can be silently rebound. Refusing turns that
+     * into a build-time error instead of wrong rows at runtime.
+     *
+     * @param array<string, mixed> $existing
+     * @param array<string, mixed> $incoming
+     * @return array<string, mixed>
+     *
+     * @throws QueryBuilderException If a name is bound on both sides.
+     */
+    private static function mergeBindings(array $existing, array $incoming): array
+    {
+        foreach (array_keys($incoming) as $name) {
+            if (array_key_exists($name, $existing)) {
+                throw QueryBuilderException::duplicateBinding($name);
+            }
+        }
+
+        // Union, not array_merge: array_merge renumbers integer-like keys, and a
+        // renamed placeholder is precisely the failure this method exists to
+        // prevent. The loop above has already ruled out a collision, so the
+        // union's left-wins rule can never discard anything.
+        return $existing + $incoming;
     }
 
     #[Override]
@@ -500,7 +584,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->havings[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -586,10 +670,37 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         return $this->hydrator->hydrate($this->entityClass, $row);
     }
 
+    /**
+     * Build an aggregate query over the same rows this query selects.
+     *
+     * {@see AggregateBuilder} emits its own statement rather than reusing
+     * {@see toSql()}, so the two can only agree if every predicate that decides
+     * WHICH ROWS MATCH is reproduced here. That means the WHERE expressions and
+     * — the part that used to be missed — the soft-delete filter, which lives in
+     * {@see compileSoftDeleteFilters()} and never enters `$this->wheres`.
+     * Omitting it made `paginate()` count rows the page could not show ("127
+     * results" over 119 reachable ones) and made
+     * `GenericRepository::exists()` answer true for a trashed entity that
+     * `find()` returns null for.
+     *
+     * ORDER BY, LIMIT, OFFSET and the lock mode are deliberately not carried
+     * over: they shape or reserve a result set without changing which rows
+     * satisfy the query, and an aggregate is asked about all of them.
+     *
+     * GROUP BY and HAVING do change the answer, and an aggregate statement has
+     * nowhere to put them, so a grouped query is refused rather than silently
+     * counted flat.
+     *
+     * @throws QueryBuilderException If the query carries GROUP BY or HAVING.
+     */
     #[Override]
     public function aggregate(): AggregateBuilder
     {
-        $compiledWheres = [];
+        if ($this->groupBys !== [] || $this->havings !== []) {
+            throw QueryBuilderException::aggregateOverGroupedQuery();
+        }
+
+        $compiledWheres = $this->compileSoftDeleteFilters();
         foreach ($this->wheres as $expr) {
             $compiledWheres[] = $expr->sql;
         }
@@ -612,9 +723,16 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     /**
      * Execute a count + paginated query, returning a PaginationResult.
      *
+     * The total comes from {@see aggregate()}, which is scoped to exactly the
+     * rows this page can reach — the soft-delete filter included — so the
+     * headline figure and the list below it always agree.
+     *
      * @param int $page Current page (1-based)
      * @param int $perPage Items per page
      * @return PaginationResult<Row>
+     *
+     * @throws QueryBuilderException If the query carries GROUP BY or HAVING,
+     *                               which no aggregate statement can express.
      */
     public function paginate(int $page = 1, int $perPage = 15): PaginationResult
     {
