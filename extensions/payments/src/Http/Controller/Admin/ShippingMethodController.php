@@ -401,8 +401,7 @@ final readonly class ShippingMethodController
                         <td>{$enabledCount} / {$methodCount}</td>
                         <td>
                             <a href="/admin/shipping/{$safeId}/edit" class="pui-btn pui-btn--sm">Edit</a>
-                            <form method="post" action="/admin/shipping/{$safeId}" class="pui-inline">
-                                <input type="hidden" name="_method" value="DELETE">
+                            <form method="post" action="/admin/shipping/{$safeId}/delete" class="pui-inline">
                                 <button type="submit" class="pui-btn pui-btn--sm pui-btn--danger"
                                         onclick="return confirm('Delete this shipping zone?')">Delete</button>
                             </form>
@@ -467,7 +466,6 @@ final readonly class ShippingMethodController
         $isEdit = $zone !== null;
         $title = $isEdit ? 'Edit Shipping Zone' : 'Create Shipping Zone';
         $action = $isEdit ? '/admin/shipping/' . htmlspecialchars($zone->id, ENT_QUOTES, 'UTF-8') : '/admin/shipping';
-        $methodHidden = $isEdit ? '<input type="hidden" name="_method" value="PUT">' : '';
         $nameValue = $isEdit ? htmlspecialchars($zone->name, ENT_QUOTES, 'UTF-8') : '';
         $countriesValue = $isEdit ? htmlspecialchars(implode(', ', $zone->countries), ENT_QUOTES, 'UTF-8') : '';
 
@@ -515,7 +513,6 @@ final readonly class ShippingMethodController
                     <main class="pui-container">
                         <h1>{$title}</h1>
                         <form method="post" action="{$action}">
-                            {$methodHidden}
                             <div class="pui-form-group">
                                 <label for="name" class="pui-label">Zone Name</label>
                                 <input type="text" id="name" name="name" value="{$nameValue}"

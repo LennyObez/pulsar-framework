@@ -50,9 +50,8 @@ $csrf = $__csrf_token ?? '';
         <div class="forum-card">
             <div class="forum-card-header"><h3 data-t="forum.admin.actions"><?= @t('forum.admin.actions') ?></h3></div>
             <div class="forum-card-body" style="display:flex;flex-direction:column;gap:var(--space-2)">
-                <form method="post" action="/admin/forum/posts/<?= $e($post['id']) ?>">
+                <form method="post" action="/admin/forum/posts/<?= $e($post['id']) ?>/delete">
                     <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                    <input type="hidden" name="_method" value="DELETE">
                     <button type="submit" class="forum-btn forum-btn--danger" style="width:100%" data-t="forum.admin.posts.delete_post" onclick="return confirm('<?= @t('forum.admin.posts.confirm_delete') ?>')"><?= @t('forum.admin.posts.delete_post') ?></button>
                 </form>
             </div>

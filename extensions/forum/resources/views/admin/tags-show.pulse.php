@@ -23,7 +23,6 @@ $csrf = $__csrf_token ?? '';
         <div class="forum-card-body">
             <form method="post" action="/admin/forum/tags/<?= $e($tag['id']) ?>">
                 <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                <input type="hidden" name="_method" value="PUT">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
                     <div class="forum-form-group">
                         <label for="tag-name" class="forum-label">Name</label>
@@ -56,9 +55,8 @@ $csrf = $__csrf_token ?? '';
         <div class="forum-card">
             <div class="forum-card-header"><h3>Actions</h3></div>
             <div class="forum-card-body">
-                <form method="post" action="/admin/forum/tags/<?= $e($tag['id']) ?>">
+                <form method="post" action="/admin/forum/tags/<?= $e($tag['id']) ?>/delete">
                     <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                    <input type="hidden" name="_method" value="DELETE">
                     <button type="submit" class="forum-btn forum-btn--danger" style="width:100%" onclick="return confirm('Delete this tag?')">Delete Tag</button>
                 </form>
             </div>

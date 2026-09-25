@@ -95,9 +95,8 @@ foreach ($category['translations'] as $t) {
     <div class="forum-card" style="align-self:start">
         <div class="forum-card-header"><h3>Actions</h3></div>
         <div class="forum-card-body" style="display:flex;flex-direction:column;gap:var(--space-2)">
-            <form method="post" action="/admin/forum/categories/<?= $e($category['id']) ?>">
+            <form method="post" action="/admin/forum/categories/<?= $e($category['id']) ?>/delete">
                 <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                <input type="hidden" name="_method" value="DELETE">
                 <button type="submit" class="forum-btn forum-btn--danger" style="width:100%" onclick="return confirm('Delete this category?')">Delete Category</button>
             </form>
         </div>

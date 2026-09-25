@@ -102,8 +102,19 @@ final class PaymentsExtension implements ExtensionInterface, PostBootExtensionIn
         $router->get('/admin/shipping/create', [Http\Controller\Admin\ShippingMethodController::class, 'create'], 'payments.admin.shipping.create');
         $router->post('/admin/shipping', [Http\Controller\Admin\ShippingMethodController::class, 'store'], 'payments.admin.shipping.store');
         $router->get('/admin/shipping/{id}/edit', [Http\Controller\Admin\ShippingMethodController::class, 'edit'], 'payments.admin.shipping.edit');
-        $router->put('/admin/shipping/{id}', [Http\Controller\Admin\ShippingMethodController::class, 'update'], 'payments.admin.shipping.update');
-        $router->delete('/admin/shipping/{id}', [Http\Controller\Admin\ShippingMethodController::class, 'delete'], 'payments.admin.shipping.delete');
+        // The edit form posts here: a browser cannot emit PUT and there is no
+        // method-spoofing reader, so the route answers POST for the form and
+        // keeps PUT for the API clients the controller PHPDoc points at it.
+        $router->add(new Route(
+            methods: [Method::POST, Method::PUT],
+            path: '/admin/shipping/{id}',
+            handler: [Http\Controller\Admin\ShippingMethodController::class, 'update'],
+            name: 'payments.admin.shipping.update',
+        ));
+        $router->delete('/admin/shipping/{id}', [Http\Controller\Admin\ShippingMethodController::class, 'destroy'], 'payments.admin.shipping.delete');
+        // POST twin of the DELETE route. It cannot share the resource path with
+        // the update route above, so the destructive action is named in the URL.
+        $router->post('/admin/shipping/{id}/delete', [Http\Controller\Admin\ShippingMethodController::class, 'destroy'], 'payments.admin.shipping.delete.post');
     }
 
     /**

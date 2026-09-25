@@ -101,9 +101,8 @@ $csrf = $__csrf_token ?? '';
 
                 <a href="/admin/forum/threads/<?= $e($thread['id']) ?>/posts" class="forum-btn forum-btn--ghost" style="width:100%;justify-content:center" data-t="forum.admin.threads.view_posts"><?= @t('forum.admin.threads.view_posts') ?></a>
 
-                <form method="post" action="/admin/forum/threads/<?= $e($thread['id']) ?>" style="margin-top:var(--space-4)">
+                <form method="post" action="/admin/forum/threads/<?= $e($thread['id']) ?>/delete" style="margin-top:var(--space-4)">
                     <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                    <input type="hidden" name="_method" value="DELETE">
                     <button type="submit" class="forum-btn forum-btn--danger" style="width:100%" data-t="forum.admin.threads.delete_thread" onclick="return confirm('<?= @t('forum.admin.threads.confirm_delete') ?>')"><?= @t('forum.admin.threads.delete_thread') ?></button>
                 </form>
             </div>

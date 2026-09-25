@@ -93,9 +93,8 @@ $csrf = $__csrf_token ?? '';
                         <td style="padding:var(--space-2) var(--space-6);text-align:center;color:var(--color-text-muted)"><?= count($cat['translations']) ?></td>
                         <td style="padding:var(--space-2) var(--space-6);text-align:right">
                             <a href="/admin/forum/categories/<?= $e($cat['id']) ?>" class="forum-btn forum-btn--ghost forum-btn--sm" data-t="forum.admin.edit"><?= @t('forum.admin.edit') ?></a>
-                            <form method="post" action="/admin/forum/categories/<?= $e($cat['id']) ?>" style="display:inline">
+                            <form method="post" action="/admin/forum/categories/<?= $e($cat['id']) ?>/delete" style="display:inline">
                                 <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                                <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="forum-btn forum-btn--danger forum-btn--sm" data-t="forum.admin.delete" onclick="return confirm('<?= @t('forum.admin.categories.confirm_delete') ?>')"><?= @t('forum.admin.delete') ?></button>
                             </form>
                         </td>

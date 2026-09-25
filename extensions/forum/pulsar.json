@@ -1,17 +1,17 @@
 {
   "name": "pulsar/forum",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.12",
   "description": "Community forum extension with threaded discussions, Q&A, reputation, voting, moderation, and badges for regulated domains",
   "trust_tier": "core",
   "kind": "product",
   "extension_class": "Pulsar\\Extension\\Forum\\ForumExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.11"
+    "min_version": "1.0.0-rc.12"
   },
   "suggests": {
-    "pulsar/admin": ">=1.0.0-rc.10",
-    "pulsar/orm": ">=1.0.0-rc.10",
-    "pulsar/cms": ">=1.0.0-rc.11"
+    "pulsar/admin": ">=1.0.0-rc.12",
+    "pulsar/orm": ">=1.0.0-rc.12",
+    "pulsar/cms": ">=1.0.0-rc.12"
   },
   "provides": {
     "services": [

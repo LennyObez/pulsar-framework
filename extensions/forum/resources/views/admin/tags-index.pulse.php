@@ -67,9 +67,8 @@ $csrf = $__csrf_token ?? '';
                         <td style="padding:var(--space-2) var(--space-6);text-align:right;color:var(--color-text-muted)"><?= (int) $tag['usage_count'] ?></td>
                         <td style="padding:var(--space-2) var(--space-6);text-align:right">
                             <a href="/admin/forum/tags/<?= $e($tag['id']) ?>" class="forum-btn forum-btn--ghost forum-btn--sm">Edit</a>
-                            <form method="post" action="/admin/forum/tags/<?= $e($tag['id']) ?>" style="display:inline">
+                            <form method="post" action="/admin/forum/tags/<?= $e($tag['id']) ?>/delete" style="display:inline">
                                 <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
-                                <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="forum-btn forum-btn--danger forum-btn--sm" onclick="return confirm('Delete this tag?')">Delete</button>
                             </form>
                         </td>

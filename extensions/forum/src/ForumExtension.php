@@ -69,7 +69,9 @@ use Pulsar\Extension\Forum\Http\Controller\Page\UserProfilePageController;
 use Pulsar\Extension\Forum\ImportExport\ForumImportExportProvider;
 use Pulsar\Extension\Forum\Internal\Notification\BadgeEvaluator;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
+use Pulsar\Http\Method;
 use Pulsar\ImportExport\ImportExportRegistry;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 
 use function is_array;
@@ -350,6 +352,42 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
      * the framework's admin middleware stack, which applies CSRF validation
      * to all state-changing requests under the /admin prefix automatically.
      */
+    /**
+     * Register an update route that the admin HTML form can actually reach.
+     *
+     * A browser form emits GET or POST and nothing else, and Pulsar carries no
+     * server-side method-spoofing reader, so a PUT-only route is unreachable
+     * from the admin UI: every save button on it answers 405. The route serves
+     * POST for the form and keeps PUT for the API clients the controller
+     * PHPDoc already points at it, so widening is additive.
+     *
+     * @param mixed $handler
+     */
+    private function formUpdatable(RouterInterface $router, string $path, mixed $handler, string $name): void
+    {
+        $router->add(new Route(
+            methods: [Method::POST, Method::PUT],
+            path: $path,
+            handler: $handler,
+            name: $name,
+        ));
+    }
+
+    /**
+     * Register the POST twin of a DELETE route, on a `/delete` sub-path.
+     *
+     * The bare DELETE route stays as documented for API clients. The admin HTML
+     * form cannot emit DELETE, and POSTing to the resource path would claim the
+     * verb that an update form needs there, so the destructive action is spelled
+     * out in the URL — the shape `/lock`, `/pin` and `/ban` already use here.
+     *
+     * @param mixed $handler
+     */
+    private function formDeletable(RouterInterface $router, string $path, mixed $handler, string $name): void
+    {
+        $router->post($path . '/delete', $handler, $name . '.post');
+    }
+
     private function registerAdminRoutes(RouterInterface $router): void
     {
         $prefix = '/admin/forum';
@@ -363,12 +401,14 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         $router->get("$prefix/categories/{id}", [AdminCategoryController::class, 'show'], 'forum.admin.categories.show');
         $router->put("$prefix/categories/{id}", [AdminCategoryController::class, 'update'], 'forum.admin.categories.update');
         $router->delete("$prefix/categories/{id}", [AdminCategoryController::class, 'delete'], 'forum.admin.categories.delete');
+        $this->formDeletable($router, "$prefix/categories/{id}", [AdminCategoryController::class, 'delete'], 'forum.admin.categories.delete');
 
         // Threads
         $router->get("$prefix/threads", [AdminThreadController::class, 'index'], 'forum.admin.threads.index');
         $router->get("$prefix/threads/{id}", [AdminThreadController::class, 'show'], 'forum.admin.threads.show');
         $router->put("$prefix/threads/{id}", [AdminThreadController::class, 'update'], 'forum.admin.threads.update');
         $router->delete("$prefix/threads/{id}", [AdminThreadController::class, 'delete'], 'forum.admin.threads.delete');
+        $this->formDeletable($router, "$prefix/threads/{id}", [AdminThreadController::class, 'delete'], 'forum.admin.threads.delete');
         $router->post("$prefix/threads/{id}/lock", [AdminThreadController::class, 'lock'], 'forum.admin.threads.lock');
         $router->post("$prefix/threads/{id}/unlock", [AdminThreadController::class, 'unlock'], 'forum.admin.threads.unlock');
         $router->post("$prefix/threads/{id}/pin", [AdminThreadController::class, 'pin'], 'forum.admin.threads.pin');
@@ -378,6 +418,7 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         $router->get("$prefix/posts", [AdminPostController::class, 'index'], 'forum.admin.posts.index');
         $router->get("$prefix/posts/{id}", [AdminPostController::class, 'show'], 'forum.admin.posts.show');
         $router->delete("$prefix/posts/{id}", [AdminPostController::class, 'delete'], 'forum.admin.posts.delete');
+        $this->formDeletable($router, "$prefix/posts/{id}", [AdminPostController::class, 'delete'], 'forum.admin.posts.delete');
 
         // Moderation (reports)
         $router->get("$prefix/moderation", [AdminModerationController::class, 'index'], 'forum.admin.moderation.index');
@@ -389,8 +430,9 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         // Tags
         $router->get("$prefix/tags", [AdminTagController::class, 'index'], 'forum.admin.tags.index');
         $router->post("$prefix/tags", [AdminTagController::class, 'create'], 'forum.admin.tags.create');
-        $router->put("$prefix/tags/{id}", [AdminTagController::class, 'update'], 'forum.admin.tags.update');
+        $this->formUpdatable($router, "$prefix/tags/{id}", [AdminTagController::class, 'update'], 'forum.admin.tags.update');
         $router->delete("$prefix/tags/{id}", [AdminTagController::class, 'delete'], 'forum.admin.tags.delete');
+        $this->formDeletable($router, "$prefix/tags/{id}", [AdminTagController::class, 'delete'], 'forum.admin.tags.delete');
 
         // Users
         $router->get("$prefix/users", [AdminUserController::class, 'index'], 'forum.admin.users.index');
