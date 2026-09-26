@@ -149,7 +149,6 @@
                                     @endif
                                     <form method="POST" action="/admin/cms/newsletter/subscribers/{{ $subscriber['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Permanently delete this subscriber? This cannot be undone.">
                                         @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                     </form>
                                 @endcan

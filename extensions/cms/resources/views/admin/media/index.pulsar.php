@@ -215,7 +215,6 @@
                                 @can('cms.media.delete')
                                     <form method="POST" action="/admin/cms/media/{{ $item['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this media asset? This cannot be undone." data-cms-confirm-reason>
                                         @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                     </form>
                                 @endcan

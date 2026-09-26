@@ -73,7 +73,7 @@
             <h2 class="cms-theme-install__section-title" id="upload-heading">Upload Theme Package</h2>
 
             <form method="POST"
-                  action="/admin/cms/themes/install"
+                  action="/admin/cms/themes"
                   enctype="multipart/form-data"
                   class="cms-form">
                 @csrf

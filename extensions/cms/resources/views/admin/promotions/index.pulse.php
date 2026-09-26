@@ -92,9 +92,8 @@
                                 <a href="/admin/cms/promotions/{{ $promotion['id'] }}/edit" class="cms-btn cms-btn--sm cms-btn--outline" title="Edit">Edit</a>
                             @endcan
                             @can('cms.commerce.promotions.delete')
-                                <form method="POST" action="/admin/cms/promotions/{{ $promotion['id'] }}" class="cms-inline-form" data-cms-confirm="Are you sure you want to deactivate this promotion?">
+                                <form method="POST" action="/admin/cms/promotions/{{ $promotion['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Are you sure you want to deactivate this promotion?">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger" title="Delete">Delete</button>
                                 </form>
                             @endcan

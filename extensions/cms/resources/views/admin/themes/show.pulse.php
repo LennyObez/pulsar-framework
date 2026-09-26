@@ -40,9 +40,8 @@
 
             @if (!($theme['is_active'] ?? false))
                 @can('cms.themes.delete')
-                    <form method="POST" action="/admin/cms/themes/{{ $theme['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this theme? This cannot be undone." data-cms-confirm-reason>
+                    <form method="POST" action="/admin/cms/themes/{{ $theme['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Delete this theme? This cannot be undone." data-cms-confirm-reason>
                         @csrf
-                        @method('DELETE')
                         <button type="submit" class="cms-btn cms-btn--danger">Delete</button>
                     </form>
                 @endcan

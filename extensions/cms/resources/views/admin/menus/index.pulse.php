@@ -48,9 +48,8 @@
                         <div class="cms-action-group" role="group" aria-label="Menu actions">
                             <a href="/admin/cms/menus/{{ $menu['location'] }}/edit" class="cms-btn cms-btn--sm cms-btn--outline">Edit</a>
                             @can('cms.menus.manage')
-                                <form method="POST" action="/admin/cms/menus/{{ $menu['location'] }}" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this menu?">
+                                <form method="POST" action="/admin/cms/menus/{{ $menu['location'] }}/delete" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this menu?">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                 </form>
                             @endcan

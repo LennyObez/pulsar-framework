@@ -8,9 +8,6 @@
           action="{{ isset($product) ? '/admin/cms/products/' . $product['id'] : '/admin/cms/products' }}"
           class="cms-content-form__form">
         @csrf
-        @if (isset($product))
-            @method('PUT')
-        @endif
 
         <header class="cms-content-list__header">
             <h1 class="cms-content-list__title">{{ isset($product) ? 'Edit Product' : 'Create Product' }}</h1>

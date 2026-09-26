@@ -34,7 +34,6 @@
 
     <form method="POST" action="/admin/cms/settings/{{ $group ?? 'general' }}" class="cms-settings__form">
         @csrf
-        @method('PUT')
 
         <input type="hidden" name="locale" value="{{ $activeLocale ?? '' }}">
 

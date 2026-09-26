@@ -56,7 +56,6 @@
                             @can('cms.taxonomy.manage')
                                 <form method="POST" action="/admin/cms/taxonomy/{{ $taxonomy['slug'] }}" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this taxonomy and all its terms?">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                 </form>
                             @endcan

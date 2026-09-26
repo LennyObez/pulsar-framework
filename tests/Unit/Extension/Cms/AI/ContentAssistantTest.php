@@ -339,6 +339,14 @@ final class ContentAssistantTest extends TestCase
                 return $this->response;
             }
 
+            public function streamChat(array $messages, AiRequestOptions $options = new AiRequestOptions()): \Pulsar\AI\Streaming\AiStream
+            {
+                // This double answers whole responses; nothing under test here
+                // reads a stream, and saying so is more honest than emitting a
+                // one-delta stream that never exercises anything.
+                throw new RuntimeException('Not implemented');
+            }
+
             public function providerName(): string
             {
                 return 'test';
@@ -387,6 +395,14 @@ final class ContentAssistantTest extends TestCase
             public function structuredOutput(string $prompt, array $schema, AiRequestOptions $options = new AiRequestOptions()): AiResponse
             {
                 return new AiResponse('test response', 10, 20, 'stop');
+            }
+
+            public function streamChat(array $messages, AiRequestOptions $options = new AiRequestOptions()): \Pulsar\AI\Streaming\AiStream
+            {
+                // This double answers whole responses; nothing under test here
+                // reads a stream, and saying so is more honest than emitting a
+                // one-delta stream that never exercises anything.
+                throw new RuntimeException('Not implemented');
             }
 
             public function providerName(): string

@@ -185,7 +185,6 @@
 @include('cms::admin._partials.confirm-destructive', [
     'actionDescription' => 'rollback to a previous CSS version',
     'formAction' => '/admin/cms/live-css/rollback',
-    'formMethod' => 'POST',
     'csrfToken' => $csrfToken ?? '',
 ])
 
@@ -230,9 +229,6 @@
             btn.addEventListener('click', function () {
                 if (destructiveForm) {
                     destructiveForm.action = '/admin/cms/live-css/rollback';
-                    var methodInput = destructiveForm.querySelector('input[name="_method"]');
-                    if (methodInput) methodInput.value = 'POST';
-
                     var existingId = destructiveForm.querySelector('input[name="override_id"]');
                     if (existingId) {
                         existingId.value = btn.getAttribute('data-cms-rollback-id');

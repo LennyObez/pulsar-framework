@@ -89,9 +89,8 @@
                     <td class="cms-table__td cms-table__td--actions">
                         <div class="cms-action-group" role="group" aria-label="Asset actions">
                             @can('cms.commerce.products.edit')
-                                <form method="POST" action="/admin/cms/products/{{ $productId }}/digital-assets/{{ $asset['id'] }}" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this asset?">
+                                <form method="POST" action="/admin/cms/products/{{ $productId }}/digital-assets/{{ $asset['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this asset?">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger" title="Delete">Delete</button>
                                 </form>
                             @endcan

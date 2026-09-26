@@ -66,7 +66,7 @@
     @can('cms.seo.manage')
         <section class="cms-seo-redirects__import" aria-labelledby="bulk-import-heading">
             <h2 class="cms-seo-redirects__section-title" id="bulk-import-heading">Bulk Import</h2>
-            <form method="POST" action="/admin/cms/seo/redirects/import" enctype="multipart/form-data" class="cms-form">
+            <form method="POST" action="/admin/cms/seo/redirects/bulk-import" enctype="multipart/form-data" class="cms-form">
                 @csrf
                 <div class="cms-form__row">
                     <div class="cms-form-group">
@@ -136,9 +136,8 @@
                     </td>
                     <td class="cms-table__td cms-table__td--actions">
                         @can('cms.seo.manage')
-                            <form method="POST" action="/admin/cms/seo/redirects/{{ $redirect['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this redirect? This cannot be undone.">
+                            <form method="POST" action="/admin/cms/seo/redirects/{{ $redirect['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Delete this redirect? This cannot be undone.">
                                 @csrf
-                                @method('DELETE')
                                 <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                             </form>
                         @endcan

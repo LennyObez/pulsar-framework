@@ -706,6 +706,48 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         }
     }
 
+    /**
+     * Register an update route that the admin HTML form can actually reach.
+     *
+     * A browser form emits GET or POST and nothing else, and Pulsar carries no
+     * server-side method-spoofing reader, so a PUT-only route is unreachable
+     * from the admin UI: every save button on it answers 405. The route serves
+     * POST for the form and keeps PUT for the API clients the documentation
+     * already points at it, so widening is additive.
+     *
+     * POST on a resource path means "apply this representation" and nothing
+     * else — deletion gets its own `/delete` segment (see
+     * {@see self::formDeletable()}) rather than a second meaning for the same
+     * verb on the same path.
+     *
+     * @param mixed $handler
+     */
+    private function formUpdatable(RouterInterface $router, string $path, mixed $handler, string $name): void
+    {
+        $router->add(new Route(
+            methods: [Method::POST, Method::PUT],
+            path: $path,
+            handler: $handler,
+            name: $name,
+        ));
+    }
+
+    /**
+     * Register the POST twin of a DELETE route, on a `/delete` sub-path.
+     *
+     * The bare DELETE route stays exactly as documented for API clients. The
+     * admin HTML form cannot emit DELETE, and it cannot POST to the resource
+     * path either without colliding with that path's update route, so the
+     * destructive action is spelled out in the URL — the same shape the
+     * `/publish`, `/archive` and `/break-lock` actions already use.
+     *
+     * @param mixed $handler
+     */
+    private function formDeletable(RouterInterface $router, string $path, mixed $handler, string $name): void
+    {
+        $router->post($path . '/delete', $handler, $name . '.post');
+    }
+
     private function registerAdminRoutes(RouterInterface $router, ContainerInterface $container): void
     {
         $prefix = '/admin/cms';
@@ -722,15 +764,20 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Dashboard
         $router->get($prefix, [AdminDashboardController::class, 'index'], 'cms.admin.dashboard');
 
-        // Bulk content operations (must precede /content/{id} to avoid route conflict)
+        // Bulk content operations (must precede /content/{id} to avoid route conflict).
+        // The admin list form has no way to put its `<select>` value in the path,
+        // so the unparameterised route is registered too and the controller reads
+        // the action from the body when the path does not name one.
         $router->post("$prefix/content/bulk/{action}", [BulkOperationsController::class, 'execute'], 'cms.admin.content.bulk');
+        $router->post("$prefix/content/bulk", [BulkOperationsController::class, 'execute'], 'cms.admin.content.bulk.form');
 
         // Content CRUD
         $router->get("$prefix/content", [AdminContentController::class, 'index'], 'cms.admin.content.index');
         $router->post("$prefix/content", [AdminContentController::class, 'create'], 'cms.admin.content.create');
         $router->get("$prefix/content/{id}", [AdminContentController::class, 'show'], 'cms.admin.content.show');
-        $router->put("$prefix/content/{id}", [AdminContentController::class, 'update'], 'cms.admin.content.update');
+        $this->formUpdatable($router, "$prefix/content/{id}", [AdminContentController::class, 'update'], 'cms.admin.content.update');
         $router->delete("$prefix/content/{id}", [AdminContentController::class, 'delete'], 'cms.admin.content.delete');
+        $this->formDeletable($router, "$prefix/content/{id}", [AdminContentController::class, 'delete'], 'cms.admin.content.delete');
 
         // Content locale translations
         $router->post("$prefix/content/{id}/translations", [AdminContentController::class, 'addTranslation'], 'cms.admin.content.add_translation');
@@ -772,14 +819,16 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/menus", [AdminMenuController::class, 'index'], 'cms.admin.menus.index');
         $router->post("$prefix/menus", [AdminMenuController::class, 'create'], 'cms.admin.menus.create');
         $router->get("$prefix/menus/{location}", [AdminMenuController::class, 'show'], 'cms.admin.menus.show');
-        $router->put("$prefix/menus/{location}", [AdminMenuController::class, 'update'], 'cms.admin.menus.update');
+        $this->formUpdatable($router, "$prefix/menus/{location}", [AdminMenuController::class, 'update'], 'cms.admin.menus.update');
         $router->delete("$prefix/menus/{location}", [AdminMenuController::class, 'delete'], 'cms.admin.menus.delete');
+        $this->formDeletable($router, "$prefix/menus/{location}", [AdminMenuController::class, 'delete'], 'cms.admin.menus.delete');
 
         // Media
         $router->get("$prefix/media", [AdminMediaController::class, 'index'], 'cms.admin.media.index');
         $router->post("$prefix/media", [AdminMediaController::class, 'upload'], 'cms.admin.media.upload');
         $router->get("$prefix/media/{id}", [AdminMediaController::class, 'show'], 'cms.admin.media.show');
         $router->delete("$prefix/media/{id}", [AdminMediaController::class, 'delete'], 'cms.admin.media.delete');
+        $this->formDeletable($router, "$prefix/media/{id}", [AdminMediaController::class, 'delete'], 'cms.admin.media.delete');
         $router->get("$prefix/media/{id}/variants", [AdminMediaController::class, 'variants'], 'cms.admin.media.variants');
 
         // Comments (moderation queue + CRUD)
@@ -798,6 +847,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("$prefix/fields/{contentType}", [FieldController::class, 'create'], 'cms.admin.fields.create');
         $router->put("$prefix/fields/{contentType}/{fieldId}", [FieldController::class, 'update'], 'cms.admin.fields.update');
         $router->delete("$prefix/fields/{contentType}/{fieldId}", [FieldController::class, 'delete'], 'cms.admin.fields.delete');
+        $this->formDeletable($router, "$prefix/fields/{contentType}/{fieldId}", [FieldController::class, 'delete'], 'cms.admin.fields.delete');
 
         // Business profile settings (must precede /settings/{group} to avoid route conflict)
         $router->get("$prefix/settings/business", [Http\Controller\Admin\BusinessProfileSettingsController::class, 'edit'], 'cms.admin.settings.business');
@@ -816,6 +866,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             $router->post("$prefix/themes/{id}/deactivate", [ThemeController::class, 'deactivate'], 'cms.admin.themes.deactivate');
             $router->post("$prefix/themes/{id}/preview", [ThemeController::class, 'preview'], 'cms.admin.themes.preview');
             $router->delete("$prefix/themes/{id}", [ThemeController::class, 'delete'], 'cms.admin.themes.delete');
+            $this->formDeletable($router, "$prefix/themes/{id}", [ThemeController::class, 'delete'], 'cms.admin.themes.delete');
         }
 
         // Plugins
@@ -823,8 +874,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("$prefix/plugins", [PluginController::class, 'install'], 'cms.admin.plugins.install');
         $router->post("$prefix/plugins/{id}/toggle", [PluginController::class, 'toggle'], 'cms.admin.plugins.toggle');
         $router->get("$prefix/plugins/{id}/settings", [PluginController::class, 'settings'], 'cms.admin.plugins.settings');
-        $router->put("$prefix/plugins/{id}/settings", [PluginController::class, 'updateSettings'], 'cms.admin.plugins.update_settings');
+        $this->formUpdatable($router, "$prefix/plugins/{id}/settings", [PluginController::class, 'updateSettings'], 'cms.admin.plugins.update_settings');
         $router->delete("$prefix/plugins/{id}", [PluginController::class, 'delete'], 'cms.admin.plugins.delete');
+        $this->formDeletable($router, "$prefix/plugins/{id}", [PluginController::class, 'delete'], 'cms.admin.plugins.delete');
 
         // Users
         $router->get("$prefix/users", [UserController::class, 'index'], 'cms.admin.users.index');
@@ -843,6 +895,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/seo/redirects", [AdminRedirectController::class, 'index'], 'cms.admin.redirects.index');
         $router->post("$prefix/seo/redirects", [AdminRedirectController::class, 'create'], 'cms.admin.redirects.create');
         $router->delete("$prefix/seo/redirects/{id}", [AdminRedirectController::class, 'delete'], 'cms.admin.redirects.delete');
+        $this->formDeletable($router, "$prefix/seo/redirects/{id}", [AdminRedirectController::class, 'delete'], 'cms.admin.redirects.delete');
         $router->post("$prefix/seo/redirects/bulk-import", [AdminRedirectController::class, 'bulkImport'], 'cms.admin.redirects.bulk_import');
         $router->get("$prefix/seo/redirects/export", [AdminRedirectController::class, 'export'], 'cms.admin.redirects.export');
 
@@ -872,8 +925,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/products/create", [ProductController::class, 'create'], 'cms.admin.products.create');
         $router->post("$prefix/products", [ProductController::class, 'store'], 'cms.admin.products.store');
         $router->get("$prefix/products/{id}/edit", [ProductController::class, 'edit'], 'cms.admin.products.edit');
-        $router->put("$prefix/products/{id}", [ProductController::class, 'update'], 'cms.admin.products.update');
+        $this->formUpdatable($router, "$prefix/products/{id}", [ProductController::class, 'update'], 'cms.admin.products.update');
         $router->delete("$prefix/products/{id}", [ProductController::class, 'delete'], 'cms.admin.products.delete');
+        $this->formDeletable($router, "$prefix/products/{id}", [ProductController::class, 'delete'], 'cms.admin.products.delete');
 
         // Orders (commerce)
         $router->get("$prefix/orders", [OrderController::class, 'index'], 'cms.admin.orders.index');
@@ -886,13 +940,15 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/promotions/create", [PromotionController::class, 'create'], 'cms.admin.promotions.create');
         $router->post("$prefix/promotions", [PromotionController::class, 'store'], 'cms.admin.promotions.store');
         $router->get("$prefix/promotions/{id}/edit", [PromotionController::class, 'edit'], 'cms.admin.promotions.edit');
-        $router->put("$prefix/promotions/{id}", [PromotionController::class, 'update'], 'cms.admin.promotions.update');
+        $this->formUpdatable($router, "$prefix/promotions/{id}", [PromotionController::class, 'update'], 'cms.admin.promotions.update');
         $router->delete("$prefix/promotions/{id}", [PromotionController::class, 'delete'], 'cms.admin.promotions.delete');
+        $this->formDeletable($router, "$prefix/promotions/{id}", [PromotionController::class, 'delete'], 'cms.admin.promotions.delete');
 
         // Digital assets (commerce): nested under products since assets belong to a product
         $router->get("$prefix/products/{productId}/digital-assets", [DigitalAssetController::class, 'index'], 'cms.admin.digital_assets.index');
         $router->post("$prefix/products/{productId}/digital-assets", [DigitalAssetController::class, 'upload'], 'cms.admin.digital_assets.upload');
         $router->delete("$prefix/products/{productId}/digital-assets/{assetId}", [DigitalAssetController::class, 'delete'], 'cms.admin.digital_assets.delete');
+        $this->formDeletable($router, "$prefix/products/{productId}/digital-assets/{assetId}", [DigitalAssetController::class, 'delete'], 'cms.admin.digital_assets.delete');
 
         // Invoices (commerce)
         $router->get("$prefix/invoices/{id}", [InvoiceController::class, 'show'], 'cms.admin.invoices.show');
@@ -961,7 +1017,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/newsletter/campaigns/create", [AdminNewsletterController::class, 'campaignForm'], 'cms.admin.newsletter.campaign_create');
         $router->post("$prefix/newsletter/campaigns", [AdminNewsletterController::class, 'createCampaign'], 'cms.admin.newsletter.campaign_store');
         $router->get("$prefix/newsletter/campaigns/{id}/edit", [AdminNewsletterController::class, 'campaignForm'], 'cms.admin.newsletter.campaign_edit');
-        $router->put("$prefix/newsletter/campaigns/{id}", [AdminNewsletterController::class, 'updateCampaign'], 'cms.admin.newsletter.campaign_update');
+        $this->formUpdatable($router, "$prefix/newsletter/campaigns/{id}", [AdminNewsletterController::class, 'updateCampaign'], 'cms.admin.newsletter.campaign_update');
         $router->delete("$prefix/newsletter/campaigns/{id}", [AdminNewsletterController::class, 'deleteCampaign'], 'cms.admin.newsletter.campaign_delete');
         $router->post("$prefix/newsletter/campaigns/{id}/send", [AdminNewsletterController::class, 'sendCampaign'], 'cms.admin.newsletter.campaign_send');
         $router->get("$prefix/newsletter/campaigns/{id}/analytics", [AdminNewsletterController::class, 'campaignAnalytics'], 'cms.admin.newsletter.campaign_analytics');

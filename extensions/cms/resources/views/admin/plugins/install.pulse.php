@@ -123,7 +123,7 @@
             <h2 class="cms-plugin-install__section-title" id="upload-heading">Upload Plugin Package</h2>
 
             <form method="POST"
-                  action="/admin/cms/plugins/install"
+                  action="/admin/cms/plugins"
                   enctype="multipart/form-data"
                   class="cms-form"
                   data-cms-plugin-upload>

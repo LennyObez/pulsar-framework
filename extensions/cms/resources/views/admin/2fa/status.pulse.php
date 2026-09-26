@@ -30,7 +30,6 @@
 
             <form method="POST" action="/admin/cms/2fa/disable" class="cms-inline-form" data-cms-confirm="Disable two-factor authentication? This will reduce the security of your account." data-cms-confirm-reason>
                 @csrf
-                @method('DELETE')
                 <button type="submit" class="cms-btn cms-btn--danger" data-cms-step-up>Disable 2FA</button>
             </form>
         </section>

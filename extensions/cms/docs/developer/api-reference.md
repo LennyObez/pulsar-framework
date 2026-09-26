@@ -63,6 +63,49 @@ Enabled only when `commerce` is configured in `CmsConfig`.
 
 All admin endpoints use the prefix `/admin/cms` and require authentication.
 
+### Browser-form access
+
+An HTML form can emit `GET` or `POST` and nothing else, and Pulsar has no
+server-side method-spoofing reader, so the admin UI cannot reach a route
+registered only for `PUT` or `DELETE`. The routes the admin UI submits to are
+therefore reachable by `POST` as well; the `PUT`/`DELETE` spellings documented
+in the tables below are unchanged and stay available to API clients.
+
+These `PUT` routes also accept `POST`, under the same route name:
+
+| Path                                   | Route Name                             |
+| -------------------------------------- | -------------------------------------- |
+| `/admin/cms/content/{id}`              | `cms.admin.content.update`             |
+| `/admin/cms/menus/{location}`          | `cms.admin.menus.update`               |
+| `/admin/cms/newsletter/campaigns/{id}` | `cms.admin.newsletter.campaign_update` |
+| `/admin/cms/plugins/{id}/settings`     | `cms.admin.plugins.update_settings`    |
+| `/admin/cms/products/{id}`             | `cms.admin.products.update`            |
+| `/admin/cms/promotions/{id}`           | `cms.admin.promotions.update`          |
+
+`POST` on a resource path means "apply this representation", so deletion cannot
+share it. Each `DELETE` route below has a `POST` twin on a `/delete` sub-path,
+named after the `DELETE` route with a `.post` suffix, running the same handler
+and requiring the same permission:
+
+| POST path                                                         | Route Name                             |
+| ----------------------------------------------------------------- | -------------------------------------- |
+| `/admin/cms/content/{id}/delete`                                  | `cms.admin.content.delete.post`        |
+| `/admin/cms/fields/{contentType}/{fieldId}/delete`                | `cms.admin.fields.delete.post`         |
+| `/admin/cms/media/{id}/delete`                                    | `cms.admin.media.delete.post`          |
+| `/admin/cms/menus/{location}/delete`                              | `cms.admin.menus.delete.post`          |
+| `/admin/cms/plugins/{id}/delete`                                  | `cms.admin.plugins.delete.post`        |
+| `/admin/cms/products/{id}/delete`                                 | `cms.admin.products.delete.post`       |
+| `/admin/cms/products/{productId}/digital-assets/{assetId}/delete` | `cms.admin.digital_assets.delete.post` |
+| `/admin/cms/promotions/{id}/delete`                               | `cms.admin.promotions.delete.post`     |
+| `/admin/cms/seo/redirects/{id}/delete`                            | `cms.admin.redirects.delete.post`      |
+| `/admin/cms/themes/{id}/delete`                                   | `cms.admin.themes.delete.post`         |
+
+Bulk content operations name the action in the path
+(`POST /admin/cms/content/bulk/{action}`, `cms.admin.content.bulk`). A
+`<select>` cannot put its value there, so `POST /admin/cms/content/bulk`
+(`cms.admin.content.bulk.form`) reads the action from the `bulk_action` body
+field instead. Both run the same handler and accept the same action names.
+
 ### Dashboard
 
 | Method | Path         | Route Name            | Permission           | Description     |

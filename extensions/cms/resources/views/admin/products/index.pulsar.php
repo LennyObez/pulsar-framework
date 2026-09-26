@@ -94,7 +94,6 @@
                             @can('cms.commerce.products.delete')
                                 <form method="POST" action="/admin/cms/products/{{ $product['id'] }}" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this product?">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger" title="Delete">Delete</button>
                                 </form>
                             @endcan

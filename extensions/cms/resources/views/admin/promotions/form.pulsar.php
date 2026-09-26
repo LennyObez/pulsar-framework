@@ -8,9 +8,6 @@
           action="{{ isset($promotion) ? '/admin/cms/promotions/' . $promotion['id'] : '/admin/cms/promotions' }}"
           class="cms-content-form__form">
         @csrf
-        @if (isset($promotion))
-            @method('PUT')
-        @endif
 
         <header class="cms-content-list__header">
             <h1 class="cms-content-list__title">{{ isset($promotion) ? 'Edit Promotion' : 'Create Promotion' }}</h1>

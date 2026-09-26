@@ -257,9 +257,8 @@
                             <div class="cms-action-group" role="group" aria-label="Media actions">
                                 <a href="/admin/cms/media/{{ $item['id'] }}" class="cms-btn cms-btn--sm cms-btn--outline">View</a>
                                 @can('cms.media.delete')
-                                    <form method="POST" action="/admin/cms/media/{{ $item['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this media asset? This cannot be undone." data-cms-confirm-reason>
+                                    <form method="POST" action="/admin/cms/media/{{ $item['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Delete this media asset? This cannot be undone." data-cms-confirm-reason>
                                         @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                     </form>
                                 @endcan

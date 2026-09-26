@@ -14,9 +14,6 @@
           action="{{ isset($menu) ? '/admin/cms/menus/' . $menu['location'] : '/admin/cms/menus' }}"
           class="cms-menu-form__settings">
         @csrf
-        @if (isset($menu))
-            @method('PUT')
-        @endif
 
         @if (isset($locales) && count($locales) > 1)
             @include('cms::admin._partials.locale-tabs', [

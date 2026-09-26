@@ -73,11 +73,10 @@
                                         data-cms-field-sortable="{{ ($field['sortable'] ?? false) ? '1' : '0' }}"
                                         data-cms-field-sort-order="{{ $field['sort_order'] ?? 0 }}">Edit</button>
                                 <form method="POST"
-                                      action="/admin/cms/fields/{{ $contentType }}/{{ $field['id'] }}"
+                                      action="/admin/cms/fields/{{ $contentType }}/{{ $field['id'] }}/delete"
                                       class="cms-inline-form"
                                       data-cms-confirm="Delete this custom field? All stored values will be lost.">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                 </form>
                             @endcan

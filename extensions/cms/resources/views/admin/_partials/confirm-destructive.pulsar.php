@@ -2,7 +2,6 @@
      Expects:
        $actionDescription (string) — e.g. "delete this plugin"
        $formAction (string) — form POST target URL
-       $formMethod (string, optional) — HTTP method override (default: DELETE)
        $csrfToken (string) — CSRF token value
 --}}
 <div class="cms-modal cms-modal--destructive" data-cms-destructive-modal role="dialog" aria-modal="true" aria-labelledby="cms-destructive-title" hidden>
@@ -14,7 +13,6 @@
         </header>
         <form method="POST" action="{{ $formAction ?? '' }}" data-cms-destructive-form>
             <input type="hidden" name="_token" value="{{ $csrfToken ?? '' }}">
-            <input type="hidden" name="_method" value="{{ $formMethod ?? 'DELETE' }}">
 
             <div class="cms-modal__body">
                 <div class="cms-modal__warning-icon" aria-hidden="true">&#9888;</div>

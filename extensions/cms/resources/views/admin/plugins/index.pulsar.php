@@ -90,7 +90,6 @@
                             @can('cms.plugins.delete')
                                 <form method="POST" action="/admin/cms/plugins/{{ $plugin['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this plugin? All plugin data will be permanently removed." data-cms-confirm-reason>
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                 </form>
                             @endcan

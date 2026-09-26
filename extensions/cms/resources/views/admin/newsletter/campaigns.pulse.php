@@ -116,7 +116,6 @@
                                 @if (in_array($campaign['status'] ?? '', ['draft', 'cancelled'], true))
                                     <form method="POST" action="/admin/cms/newsletter/campaigns/{{ $campaign['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Delete this campaign? This cannot be undone.">
                                         @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                     </form>
                                 @endif

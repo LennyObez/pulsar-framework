@@ -47,15 +47,23 @@ final readonly class BulkOperationsController extends AbstractAdminController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.content.edit');
 
-        /** @var string $action */
-        $action = $request->getAttribute('action', '');
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
+        // API clients name the action in the path (`/content/bulk/publish`).
+        // The admin list picks it from a `<select>`, which a browser can only
+        // submit in the body, so the body carries it when the path does not.
+        /** @var mixed $routeAction */
+        $routeAction = $request->getAttribute('action', '');
+        /** @var mixed $bodyAction */
+        $bodyAction = $body['bulk_action'] ?? '';
+        $action = is_string($routeAction) && $routeAction !== ''
+            ? $routeAction
+            : (is_string($bodyAction) ? $bodyAction : '');
 
         if (!in_array($action, self::VALID_ACTIONS, true)) {
             return Response::json(['error' => 'Invalid bulk action', 'valid_actions' => self::VALID_ACTIONS], 400);
         }
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         /** @var mixed $rawIds */
         $rawIds = $body['ids'] ?? [];

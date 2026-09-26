@@ -9,9 +9,6 @@
           class="cms-content-form__form"
           data-cms-autosave>
         @csrf
-        @if (isset($content))
-            @method('PUT')
-        @endif
 
         {{-- Lock indicator --}}
         @if (isset($lock))

@@ -176,7 +176,6 @@
 @include('cms::admin._partials.confirm-destructive', [
     'actionDescription' => 'delete this backup',
     'formAction' => '',
-    'formMethod' => 'DELETE',
     'csrfToken' => $csrfToken ?? '',
 ])
 

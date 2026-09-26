@@ -138,7 +138,6 @@
                         @can('cms.seo.manage')
                             <form method="POST" action="/admin/cms/seo/redirects/{{ $redirect['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this redirect? This cannot be undone.">
                                 @csrf
-                                @method('DELETE')
                                 <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                             </form>
                         @endcan
