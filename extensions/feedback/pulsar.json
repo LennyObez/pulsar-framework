@@ -1,13 +1,13 @@
 {
   "name": "pulsar/feedback",
-  "version": "1.0.0",
+  "version": "1.0.0-rc.12",
   "description": "User feedback collection with admin triage and GitHub integration",
   "trust_tier": "core",
   "kind": "product",
   "type": "extension_class",
   "namespace": "Pulsar\\Extension\\Feedback",
   "pulsar": {
-    "min_version": "1.0.0-rc.11"
+    "min_version": "1.0.0-rc.12"
   },
   "extension_class": "Pulsar\\Extension\\Feedback\\FeedbackExtension",
   "providers": ["Pulsar\\Extension\\Feedback\\FeedbackServiceProvider"],

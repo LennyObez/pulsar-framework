@@ -8,11 +8,10 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use SodiumException;
 
-use function bin2hex;
 use function hash;
-use function sodium_crypto_kdf_derive_from_key;
 
 use const SODIUM_CRYPTO_KDF_KEYBYTES;
 
@@ -68,27 +67,39 @@ final class HashChain
     }
 
     /**
-     * Derive a chain seed from the master key via sodium KDF.
+     * Derive a chain seed from the master key through the key-provider seam.
      *
      * Call this at boot and store the result in studio_meta('chain_seed').
      * Subsequent calls to seedHash() should pass this derived value.
      *
-     * @param string $masterKeyRaw Raw 32-byte master key
+     * Takes a {@see KeyProviderInterface} rather than the raw 32 bytes, and that
+     * is the whole point of the parameter type. The previous signature was
+     * `deriveSeedFromMasterKey(string $masterKeyRaw)`: it obliged every caller to
+     * unwrap the master key into a plain string and called
+     * `sodium_crypto_kdf_derive_from_key()` itself, so the root key travelled
+     * through a variable that {@see \Pulsar\Security\Crypto\MasterKey}'s
+     * destructor never sees and cannot zero, and the derivation could not be
+     * redirected to an HSM- or KMS-backed provider. Nothing about the derived
+     * bytes changes — same sub-key id, same context, same 32-byte length, same
+     * hex encoding — so seeds already stored in `studio_meta` stay valid.
+     *
+     * `tests/Unit/Security/Crypto/KdfSeamTest.php` keeps the primitive inside the
+     * crypto module, so this cannot quietly revert to a direct call.
+     *
+     * @param KeyProviderInterface $keyProvider The seam that holds and scrubs the master key
+     *
      * @return string Hex-encoded derived seed
      *
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function deriveSeedFromMasterKey(string $masterKeyRaw): string
+    public static function deriveSeedFromMasterKey(KeyProviderInterface $keyProvider): string
     {
-        $derived = sodium_crypto_kdf_derive_from_key(
-            SODIUM_CRYPTO_KDF_KEYBYTES,
+        return $keyProvider->deriveSubKeyHex(
             self::CHAIN_SEED_SUB_KEY_ID,
             self::CHAIN_SEED_CONTEXT,
-            $masterKeyRaw,
+            SODIUM_CRYPTO_KDF_KEYBYTES,
         );
-
-        return bin2hex($derived);
     }
 
     /**

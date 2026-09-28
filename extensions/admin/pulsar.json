@@ -1,15 +1,15 @@
 {
   "name": "pulsar/admin",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.12",
   "description": "Admin panel extension with resource management, audit-logged CRUD, export, and dashboard widgets",
   "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\Admin\\AdminExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.11"
+    "min_version": "1.0.0-rc.12"
   },
   "requires": {},
   "suggests": {
-    "pulsar/studio": ">=1.0.0-rc.10"
+    "pulsar/studio": ">=1.0.0-rc.12"
   },
   "provides": {
     "services": ["AdminGateway", "ResourceRegistryInterface", "AdminConfig"],

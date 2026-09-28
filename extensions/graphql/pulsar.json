@@ -1,15 +1,15 @@
 {
   "name": "pulsar/graphql",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.12",
   "description": "GraphQL API for Pulsar CMS content",
   "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\Graphql\\GraphqlExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.11"
+    "min_version": "1.0.0-rc.12"
   },
   "requires": {},
   "suggests": {
-    "pulsar/cms": ">=1.0.0-rc.11"
+    "pulsar/cms": ">=1.0.0-rc.12"
   },
   "provides": {
     "services": [],

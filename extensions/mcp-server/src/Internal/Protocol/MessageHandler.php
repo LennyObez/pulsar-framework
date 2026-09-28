@@ -6,6 +6,7 @@ namespace Pulsar\Extension\McpServer\Internal\Protocol;
 
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Core\Version;
 use Pulsar\Extension\McpServer\Config\McpConfig;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Contracts\McpToolRegistryInterface;
@@ -36,7 +37,6 @@ use function sprintf;
 final readonly class MessageHandler
 {
     private const string SERVER_NAME = 'pulsar-mcp';
-    private const string SERVER_VERSION = '1.0.0-rc.9';
     private const int METHOD_NOT_FOUND = -32601;
     private const int INVALID_PARAMS = -32602;
 
@@ -132,9 +132,16 @@ final readonly class MessageHandler
                     'listChanged' => false,
                 ],
             ],
+            // Computed, never written down. This was a private constant holding a
+            // literal, and it went three releases without being touched: every MCP
+            // client that completed a handshake was told the server was a version the
+            // framework had already left behind, and nothing could notice, because a
+            // stale string is still correct PHP. Bundled extensions ship in lockstep
+            // with the framework (docs/extension-versioning.md), so the framework's
+            // version is this server's version by definition rather than by upkeep.
             'serverInfo' => [
                 'name' => self::SERVER_NAME,
-                'version' => self::SERVER_VERSION,
+                'version' => Version::full(),
             ],
         ]);
     }
