@@ -29,3 +29,6 @@ scripts/* text eol=lf
 *.ttf binary
 *.eot binary
 *.pdf binary
+
+# Upstream licence texts, kept byte for byte: fonts.manifest.json records their sha256.
+resources/ui/fonts/OFL-*.txt -whitespace
