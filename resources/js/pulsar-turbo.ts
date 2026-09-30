@@ -10,6 +10,11 @@
  * include same-origin credentials and CORS applies. This follows
  * the same security model as Hotwire Turbo.
  *
+ * That "exclusively" is enforced, not assumed: a stream socket writes into the
+ * live DOM, so connectWebSocket() refuses any endpoint that is not the
+ * document's own host — the same bound the shipped default policy draws with
+ * `connect-src 'self'`.
+ *
  * Usage:
  *   <!-- Frame: independently navigable section -->
  *   <pulsar-frame id="comments" src="/comments?page=1">
@@ -37,6 +42,19 @@ const DEFAULT_CONFIG: TurboConfig = {
 };
 
 type StreamAction = 'append' | 'prepend' | 'replace' | 'update' | 'remove' | 'before' | 'after';
+
+/**
+ * The URL schemes a stream endpoint may be written with, mapped to the scheme
+ * the socket ends up speaking. `new WebSocket()` accepts a relative or an
+ * http(s) URL and performs this same mapping, so the guard has to do it too or
+ * it would reject the form most callers write.
+ */
+const STREAM_SCHEMES: Record<string, string | undefined> = {
+  'ws:': 'ws:',
+  'wss:': 'wss:',
+  'http:': 'ws:',
+  'https:': 'wss:',
+};
 
 const VALID_STREAM_ACTIONS = new Set<string>([
   'append',
@@ -304,7 +322,20 @@ class PulsarTurbo {
     }
   }
 
+  /**
+   * Open a stream socket and apply every `<pulsar-stream>` it delivers.
+   *
+   * Whatever is on the other end of this socket writes into the live document:
+   * stream payloads are parsed as HTML and their nodes imported into the page.
+   * The endpoint is therefore held to the document's own host, which is what
+   * makes the module's trust note true rather than merely stated.
+   *
+   * @throws {Error} when `url` is not a ws:/wss: endpoint on this document's
+   *     host, or downgrades a page served over https to an insecure socket.
+   */
   connectWebSocket(url: string): WebSocket {
+    this.assertSameOriginStream(url);
+
     const ws = new WebSocket(url);
 
     ws.addEventListener('message', (event: MessageEvent) => {
@@ -315,6 +346,36 @@ class PulsarTurbo {
     });
 
     return ws;
+  }
+
+  /**
+   * Refuse a stream endpoint that is not on this document's host.
+   *
+   * A cross-origin socket would be a DOM-write channel handed to a third party,
+   * which no amount of escaping on our own server can defend against. The check
+   * runs before the socket is constructed so a rejected endpoint never opens.
+   */
+  private assertSameOriginStream(url: string): void {
+    const resolved = new URL(url, location.href);
+    const scheme = STREAM_SCHEMES[resolved.protocol];
+
+    if (scheme === undefined) {
+      throw new Error(
+        `Pulsar Turbo: a stream endpoint speaks ws: or wss:, not "${resolved.protocol}".`,
+      );
+    }
+
+    if (resolved.host !== location.host) {
+      throw new Error(
+        `Pulsar Turbo: stream endpoint host "${resolved.host}" is not the document host "${location.host}".`,
+      );
+    }
+
+    if (location.protocol === 'https:' && scheme !== 'wss:') {
+      throw new Error(
+        'Pulsar Turbo: a page served over https opens its stream socket over wss:, not ws:.',
+      );
+    }
   }
 
   private processStreamHtml(html: string): void {

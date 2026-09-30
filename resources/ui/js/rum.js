@@ -16,6 +16,10 @@
  * - Page load timing (navigationStart to loadEventEnd)
  * - Unhandled JavaScript errors
  *
+ * Requires the Web Crypto API: the session identifier is drawn from
+ * crypto.getRandomValues, and a browser that cannot supply one is left
+ * unmonitored rather than monitored under a guessable name.
+ *
  * @license MIT
  */
 (function () {
@@ -24,10 +28,47 @@
   var ENDPOINT = '/_pulsar/rum/collect';
   var BATCH_INTERVAL = 5000;
   var MAX_QUEUE = 50;
+  var SESSION_BYTES = 16;
+
+  /**
+   * Draw a session identifier from the platform CSPRNG.
+   *
+   * The identifier is the only thing tying one browser's batches together on
+   * the collector, so a guessable one lets a third party graft batches onto a
+   * session that is not theirs and skew what the collector reports.
+   * Math.random() is seeded per page and its stream is recoverable from a
+   * handful of observed outputs; crypto.getRandomValues is not.
+   *
+   * There is deliberately no fallback. A browser with no Web Crypto API gets no
+   * identifier, and the caller below leaves the page unmonitored instead of
+   * monitoring it under a predictable name.
+   *
+   * @returns {string} `rum_` followed by 32 hex characters, or '' when the
+   *     platform has no CSPRNG.
+   */
+  function newSessionId() {
+    if (typeof crypto === 'undefined' || typeof crypto.getRandomValues !== 'function') {
+      return '';
+    }
+
+    var bytes = new Uint8Array(SESSION_BYTES);
+    crypto.getRandomValues(bytes);
+
+    var id = 'rum_';
+    for (var i = 0; i < bytes.length; i++) {
+      id += (bytes[i] + 0x100).toString(16).slice(1);
+    }
+
+    return id;
+  }
+
+  var sessionId = newSessionId();
+  if (sessionId === '') {
+    return;
+  }
 
   /** @type {Array<Object>} */
   var queue = [];
-  var sessionId = 'rum_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 
   /**
    * Enqueue a metric for sending.
