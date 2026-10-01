@@ -124,6 +124,54 @@ final class CachedBootTest extends TestCase
         self::assertSame($this->basePath, getenv('PULSAR_BASE_PATH'));
     }
 
+    /**
+     * The exported anchor must be a resolved path, not the caller's spelling of one.
+     *
+     * `dirname()` hands back whatever it was given, so a config path written with a
+     * parent segment in it — `<root>/src/../config`, which is how a fixture laid
+     * out relative to a helper file spells itself — used to export
+     * `<root>/src/..` as the project root. Every path built on it then carried the
+     * `..`, and both `MaintenanceMode` and `WritablePathGuard` refuse a storage path
+     * containing one: the process poisoned itself with a traversal nobody wrote.
+     *
+     * That is not a hypothetical spelling. `tests/Benchmark/Support/BootBenchmarkKernel`
+     * pointed at `__DIR__ . '/../Fixtures/BootProject/config'`, and the first kernel
+     * booted from it after any test had cleared PULSAR_BASE_PATH took nine tests of
+     * `BundledExtensionContractTest` down with it, in a different suite, with a
+     * message naming a path that appears in no source file.
+     */
+    #[Test]
+    public function bootAnchorsBasePathToAResolvedRootNotTheSpellingItWasGiven(): void
+    {
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $this->writeMinimalConfigs($configPath);
+
+        // Same directory, spelled through its sibling. setUp() created src/, so this
+        // resolves; what matters is that the kernel is handed a traversal to export.
+        $spelledWithATraversal = $this->basePath
+            . DIRECTORY_SEPARATOR . 'src'
+            . DIRECTORY_SEPARATOR . '..'
+            . DIRECTORY_SEPARATOR . 'config';
+
+        $this->withEnv('PULSAR_BASE_PATH', null);
+        $this->withEnv('APP_ENV', 'local');
+
+        $kernel = new Kernel(configManager: new ConfigManager(configPath: $spelledWithATraversal));
+        $kernel->boot();
+
+        $exported = getenv('PULSAR_BASE_PATH');
+
+        self::assertIsString($exported, 'boot() exported no base path at all');
+        self::assertStringNotContainsString(
+            '..',
+            $exported,
+            'boot() exported a base path with a traversal segment still in it. Every path '
+            . 'helper in the process now returns that traversal, and the guards that refuse '
+            . 'one will refuse paths the deployment never wrote.',
+        );
+        self::assertSame($this->basePath, $exported);
+    }
+
     #[Test]
     public function bootDoesNotOverrideAnExplicitBasePath(): void
     {

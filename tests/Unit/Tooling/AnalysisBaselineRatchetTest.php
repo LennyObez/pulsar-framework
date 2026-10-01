@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Tooling;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Tests\Support\Gates\GuardsGate;
+use Pulsar\Tests\Unit\Tooling\Support\BaselineCeilingRecord;
 use Pulsar\Tests\Unit\Tooling\Support\BaselineCensus;
 use Pulsar\Tests\Unit\Tooling\Support\PlantsDefectsForGates;
 use RuntimeException;
@@ -14,15 +15,19 @@ use RuntimeException;
 use function array_keys;
 use function file_get_contents;
 use function glob;
+use function implode;
 use function is_int;
 use function is_string;
 use function json_decode;
+use function json_encode;
 use function sprintf;
 use function str_replace;
 use function strlen;
 use function substr;
 
+use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * The ratchet the analysis baselines never had, and the negative tests that prove it
@@ -38,6 +43,16 @@ use const JSON_THROW_ON_ERROR;
  *
  * The number is now written down in tools/php/analysis-baseline-ceiling.json and
  * compared on every run. Raising a ceiling is a line in a diff that says so.
+ *
+ * AND THE NUMBER ITSELF IS HELD TO SOMETHING
+ *
+ * Comparing the count against the file was half a ratchet. The file said whatever its
+ * last editor typed, so raising `findings` from 1286 to 1295 with `why` and
+ * `raisedFrom` untouched passed here with exit 0 — observed on 2026-09-02, seven tests
+ * and 126 assertions green over nine buried findings. {@see BaselineCeilingRecord}
+ * closes it: a ceiling has to name what it replaced, and its reason has to contain the
+ * current figure, so the number cannot move without the prose moving with it. The
+ * plants below are that rule's negative tests, and ADR-0077 is the record.
  *
  * WHY GROWTH FAILS AND SHRINKAGE DOES NOT
  *
@@ -63,6 +78,17 @@ final class AnalysisBaselineRatchetTest extends TestCase
      * refuses a ceiling padded to leave room for future suppressions.
      */
     private const int PERMITTED_SLACK = 25;
+
+    /**
+     * The reason the real file carried for its ceiling of 1286, quoted as it stood.
+     *
+     * It argues from 1254 and 1292 and never names 1286 — which is why raising the
+     * number to 1295 left it reading as though it still explained the file.
+     */
+    private const string REASON_FOR_1286 = '1254 was never a position anyone held. It was copied from a '
+        . 'baseline produced against a tree that is not HEAD and left unchanged through the commits '
+        . 'that followed. Running the gate in a clean worktree at HEAD on 2026-08-26 measured 1292 '
+        . 'findings, so composer class-shape was already failing at HEAD by 90.';
 
     protected function tearDown(): void
     {
@@ -92,6 +118,164 @@ final class AnalysisBaselineRatchetTest extends TestCase
                 ),
             );
         }
+    }
+
+    /**
+     * The other half of the ratchet, and the half that was missing.
+     *
+     * A recorded ceiling is only a control if the number cannot move on its own. Until
+     * 2026-09-02 it could: the count above was compared against whatever the file said,
+     * and what the file said was whatever the last editor typed. {@see
+     * BaselineCeilingRecord} binds each number to prose that has to name it.
+     */
+    #[Test]
+    public function everyCeilingIsANumberTheFileItselfAccountsFor(): void
+    {
+        $complaints = BaselineCeilingRecord::unjustifiedCeilings(
+            $this->repositoryRoot() . '/' . self::CEILING_FILE,
+        );
+
+        self::assertSame(
+            [],
+            $complaints,
+            sprintf(
+                "%s holds a number nothing in it argues for:\n\n%s\n",
+                self::CEILING_FILE,
+                implode("\n\n", $complaints),
+            ),
+        );
+    }
+
+    /**
+     * The negative test the ratchet never had: raise a ceiling, touch nothing else.
+     *
+     * This is the exact edit that passed on 2026-09-02 — `findings` 1286 to 1295, nine
+     * findings buried, `why` and `raisedFrom` untouched — reproduced against the rule
+     * that now reads the file.
+     */
+    #[Test]
+    #[GuardsGate(
+        gate: 'tools/php/substitutability-baseline.json ratchet',
+        plants: 'a ceiling raised from 1286 to 1295 with its `why` and `raisedFrom` left exactly as they were',
+    )]
+    public function aCeilingRaisedWithoutTouchingItsReasonIsRefused(): void
+    {
+        $tree = $this->plantTree('ceiling-unexplained');
+        $planted = $this->plantFile($tree, 'unexplained.json', self::ceilingFile(
+            findings: 1295,
+            raisedFrom: 1254,
+            why: self::REASON_FOR_1286,
+        ));
+
+        $complaints = BaselineCeilingRecord::unjustifiedCeilings($planted);
+
+        self::assertNotSame(
+            [],
+            $complaints,
+            "the ceiling moved to 1295 and every word explaining it still described 1286, and the\n"
+            . "ratchet was content. Nine findings would have stopped being reported with nothing in\n"
+            . 'the diff a reviewer could disagree with.',
+        );
+        self::assertStringContainsString(
+            '1295',
+            implode("\n", $complaints),
+            'the refusal does not name the number it refuses, so a reader cannot tell which ceiling moved',
+        );
+    }
+
+    /**
+     * The positive control. A rule that refuses everything is not a ratchet either, and
+     * an exit code cannot tell the two apart.
+     */
+    #[Test]
+    public function aCeilingRaisedWithItsReasonRewrittenIsAccepted(): void
+    {
+        $tree = $this->plantTree('ceiling-explained');
+        $planted = $this->plantFile($tree, 'explained.json', self::ceilingFile(
+            findings: 1295,
+            raisedFrom: 1286,
+            why: 'The nine findings between 1286 and 1295 are the ones this commit measured and chose '
+                . 'to record: two #[Override] implementations of an already-recorded interface pair, '
+                . 'three observers sealed by ADR-0050, and four properties of the archive writer. Each '
+                . 'is argued per item in the ADR this entry names.',
+        ));
+
+        self::assertSame(
+            [],
+            BaselineCeilingRecord::unjustifiedCeilings($planted),
+            'a raise whose reason names both figures and argues for the difference was refused, so the '
+            . 'rule refuses every raise and the file can never be corrected',
+        );
+    }
+
+    /**
+     * A raise recorded as no raise at all: the number moved, the record says it did not.
+     */
+    #[Test]
+    public function aRaiseRecordThatRecordsNoRaiseIsRefused(): void
+    {
+        $tree = $this->plantTree('ceiling-flat');
+        $planted = $this->plantFile($tree, 'flat.json', self::ceilingFile(
+            findings: 1295,
+            raisedFrom: 1295,
+            why: 'Measured at 1295 on the tree this commit ships, and 1295 before it, so nothing was '
+                . 'recorded here that was not already reported by the gate on the previous tree.',
+        ));
+
+        $complaints = BaselineCeilingRecord::unjustifiedCeilings($planted);
+
+        self::assertNotSame(
+            [],
+            $complaints,
+            'a record claiming a raise from 1295 to 1295 was accepted, so the fields can be made to '
+            . 'agree with each other without agreeing with what happened',
+        );
+    }
+
+    /**
+     * The escape the prose rule alone would leave open: drop the raise record and the
+     * only number left is the one being raised.
+     */
+    #[Test]
+    public function aCeilingWithNoRaiseRecordAtAllIsRefused(): void
+    {
+        $tree = $this->plantTree('ceiling-bare');
+        $planted = $this->plantFile($tree, 'bare.json', <<<'JSON'
+            {
+              "ceilings": {
+                "tools/php/substitutability-baseline.json": {
+                  "findings": 1295,
+                  "unit": "entries recorded by --generate-baseline, one per accepted finding",
+                  "owner": "composer class-shape"
+                }
+              },
+              "notRatchetedHere": {}
+            }
+            JSON);
+
+        self::assertNotSame(
+            [],
+            BaselineCeilingRecord::unjustifiedCeilings($planted),
+            'a ceiling with no record of what it replaced was accepted, so how much a raise buried '
+            . 'is recoverable from nothing in the file',
+        );
+    }
+
+    #[Test]
+    public function aCeilingFileWithNoCeilingsIsRefusedRatherThanReadAsSatisfied(): void
+    {
+        $tree = $this->plantTree('ceiling-empty');
+        $planted = $this->plantFile($tree, 'empty.json', '{"ceilings":{},"notRatchetedHere":{}}');
+
+        try {
+            BaselineCeilingRecord::unjustifiedCeilings($planted);
+        } catch (RuntimeException $refusal) {
+            self::assertStringContainsString('holds no ceilings at all', $refusal->getMessage());
+
+            return;
+        }
+
+        self::fail('an empty ceilings map read as a file whose every ceiling is justified');
     }
 
     #[Test]
@@ -250,6 +434,26 @@ final class AnalysisBaselineRatchetTest extends TestCase
         }
 
         self::fail('the census counted it anyway, so an unmeasurable baseline reads as a small one');
+    }
+
+    /**
+     * A ceiling file holding one entry, in the shape the real one uses.
+     */
+    private static function ceilingFile(int $findings, ?int $raisedFrom, string $why): string
+    {
+        return json_encode([
+            'ceilings' => [
+                'tools/php/substitutability-baseline.json' => [
+                    'findings' => $findings,
+                    'unit' => 'entries recorded by --generate-baseline, one per accepted finding',
+                    'owner' => 'composer class-shape',
+                    'raisedFrom' => $raisedFrom,
+                    'raisedOn' => '2026-09-02',
+                    'why' => $why,
+                ],
+            ],
+            'notRatchetedHere' => [],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     }
 
     private static function phpstanBaseline(int ...$counts): string

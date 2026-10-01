@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Core\Version;
 use Pulsar\Extension\McpServer\Config\McpConfig;
 use Pulsar\Extension\McpServer\Config\McpSecurityConfig;
 use Pulsar\Extension\McpServer\Config\McpToolsConfig;
@@ -428,7 +429,13 @@ final class MessageHandlerComprehensiveTest extends TestCase
         $serverInfo = $result['serverInfo'];
         assert(is_array($serverInfo));
         self::assertSame('pulsar-mcp', $serverInfo['name']);
-        self::assertArrayHasKey('version', $serverInfo);
+
+        // Every client that completes a handshake is told this. It read `1.0.0-rc.9`
+        // for three releases because it was a literal, and assertArrayHasKey — which
+        // is all that stood here — is satisfied by any string at all, including a
+        // version the framework left behind. The value is the claim, so the value is
+        // what gets asserted.
+        self::assertSame(Version::full(), $serverInfo['version']);
 
         $capabilities = $result['capabilities'];
         assert(is_array($capabilities));

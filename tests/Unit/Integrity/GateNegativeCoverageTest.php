@@ -55,12 +55,14 @@ final class GateNegativeCoverageTest extends TestCase
         'OverrideCorrectnessTest::override_coverage_is_not_empty' =>
             'a vacuity floor, as above: it measures that the scan reached the code, not a property '
             . 'of the code.',
-        'TrustTierDocumentationTest::everyCapabilityRowMatchesThePolicy' =>
-            'PENDING: this ratchet is new and untracked on this branch, being written by a '
-            . 'concurrent workstream. Adding a negative test means lifting its scan out of the '
-            . 'test class, which would collide with that work. It needs one.',
-        'TrustTierDocumentationTest::theTableNamesNoCapabilityThatDoesNotExist' =>
-            'PENDING, for the same reason as the row above.',
+        'DocumentedInstallCommandsTest::theScanFindsTheInstallCommandsTheDocumentationActuallyCarries' =>
+            'a vacuity floor over THIS checkout: it asserts the scan still finds the `composer require '
+            . 'pulsar/framework` that docs/install.md and docs/getting-started.md carry, which is what '
+            . 'stops the sibling rule passing over a corpus it stopped reading. Planting its defect '
+            . 'means deleting that command from the real documentation. Whether the scan can read a '
+            . 'tree it is pointed at is watched separately, by the planted fixture in '
+            . 'itReportsAnInstallCommandNamingAPackageThatDoesNotExist -- which is a different claim, '
+            . 'and is not allowed to stand in for this one.',
     ];
 
     #[Test]

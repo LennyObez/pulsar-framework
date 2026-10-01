@@ -114,6 +114,37 @@ function semgrep_normalise_snippet(string $snippet): string
     return trim(is_string($collapsed) ? $collapsed : $snippet);
 }
 
+/** What Semgrep prints in place of the matched lines when the CLI is not logged in. */
+const SEMGREP_REDACTED_LINES = 'requires login';
+
+/**
+ * The matched source lines. A redacted match is read from the file instead, so the
+ * fingerprint does not depend on a login; one the file cannot supply is refused.
+ *
+ * @param array<mixed> $result
+ */
+function semgrep_snippet(array $result, string $root, string $path): string
+{
+    $extra = is_array($result['extra'] ?? null) ? $result['extra'] : [];
+    $lines = is_string($extra['lines'] ?? null) ? $extra['lines'] : '';
+
+    if ($lines !== SEMGREP_REDACTED_LINES) {
+        return semgrep_normalise_snippet($lines);
+    }
+
+    $start = is_array($result['start'] ?? null) ? $result['start'] : [];
+    $end = is_array($result['end'] ?? null) ? $result['end'] : [];
+    $first = is_int($start['line'] ?? null) ? $start['line'] : 0;
+    $last = is_int($end['line'] ?? null) ? $end['line'] : $first;
+    $source = is_file($root . '/' . $path) ? file($root . '/' . $path, FILE_IGNORE_NEW_LINES) : false;
+
+    if ($first < 1 || $last < $first || !is_array($source) || count($source) < $last) {
+        throw new RuntimeException(sprintf('Semgrep redacted the match at %s:%d and the file cannot supply it.', $path, $first));
+    }
+
+    return semgrep_normalise_snippet(implode("\n", array_slice($source, $first - 1, $last - $first + 1)));
+}
+
 /**
  * Identity of a finding, deliberately excluding the line number.
  *
@@ -282,7 +313,7 @@ function semgrep_collect_findings(array $report, string $root, string $severity)
 
         $rule = is_string($result['check_id'] ?? null) ? $result['check_id'] : '(unnamed rule)';
         $path = semgrep_normalise_path(is_string($result['path'] ?? null) ? $result['path'] : '', $root);
-        $snippet = semgrep_normalise_snippet(is_string($extra['lines'] ?? null) ? $extra['lines'] : '');
+        $snippet = semgrep_snippet($result, $root, $path);
         $start = is_array($result['start'] ?? null) ? $result['start'] : [];
         $line = is_int($start['line'] ?? null) ? $start['line'] : 0;
 
@@ -561,7 +592,14 @@ if ($report === null) {
     exit(2);
 }
 
-$findings = semgrep_collect_findings($report, $root, $severity);
+try {
+    $findings = semgrep_collect_findings($report, $root, $severity);
+} catch (RuntimeException $e) {
+    fwrite(STDERR, 'semgrep-gate: ' . $e->getMessage() . '
+');
+
+    exit(2);
+}
 $unparsed = semgrep_collect_unparsed($report, $root);
 
 if ($generateBaseline) {

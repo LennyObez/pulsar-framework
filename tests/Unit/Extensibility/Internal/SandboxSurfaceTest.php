@@ -464,9 +464,23 @@ final class SandboxSurfaceTest extends TestCase
         self::assertNotContains(SurfaceProbeController::class, $container->getBindings());
     }
 
+    /**
+     * The scoped router a scope hands back, narrowed to the proxy this file drives
+     * by reflection.
+     *
+     * `scopedRouter()` is declared as `RouterInterface`, which is what its two
+     * production callers need. The narrowing is asserted rather than assumed
+     * because the tests below reflect over {@see ScopedRouterProxy}'s own methods:
+     * a scope that started handing back some other router would make every one of
+     * them pass while proving nothing about the proxy.
+     */
     private static function routerProxy(Router $router): ScopedRouterProxy
     {
-        return self::scope()->scopedRouter($router);
+        $proxy = self::scope()->scopedRouter($router);
+
+        self::assertInstanceOf(ScopedRouterProxy::class, $proxy);
+
+        return $proxy;
     }
 
     /**

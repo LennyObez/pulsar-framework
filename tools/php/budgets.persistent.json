@@ -1,5 +1,5 @@
 {
-  "description": "Performance budgets for persistent runtimes (RoadRunner, FrankenPHP — warm container, amortized bootstrap)",
+  "description": "REFERENCE TABLE, NOT ENFORCEMENT — no code reads this file, and no benchmark asserts these numbers. Persistent-runtime targets (RoadRunner, FrankenPHP — warm container, amortized bootstrap) for the request classes, recorded so the warm-path expectation is written down somewhere; tests/Benchmark measures the FPM-shaped path only. See ADR-0072.",
   "runtime": "persistent",
   "inherits": "performance-budgets.json",
   "overrides": {

@@ -90,9 +90,215 @@ final class ClassShapeGateTest extends TestCase
         }
         PHP;
 
+    /**
+     * A property whose only post-construction write goes through a by-reference
+     * argument — the shape the gate could not see.
+     *
+     * `parse_str()` and every libsodium streaming primitive write through their
+     * argument. Until the gate asked reflection instead of consulting two hand-written
+     * lists of thirty-two names, none of them counted, so this property came back
+     * "written only during construction and never again" with the recommendation
+     * `readonly` — which PHP rejects for a by-reference argument at runtime.
+     */
+    private const string ACCUMULATOR = <<<'PHP'
+        <?php
+
+        declare(strict_types=1);
+
+        namespace PulsarGateProbe;
+
+        final class Accumulator
+        {
+            /** @var array<string, mixed> */
+            private array $parsed = [];
+
+            public function absorb(string $query): void
+            {
+                \parse_str($query, $this->parsed);
+            }
+        }
+        PHP;
+
+    /** A first-party callee that takes its first parameter by reference. */
+    private const string FILLER = <<<'PHP'
+        <?php
+
+        declare(strict_types=1);
+
+        namespace PulsarGateProbe;
+
+        class Filler
+        {
+            /**
+             * @param list<string> $rows
+             */
+            public function fill(array &$rows, string $value): void
+            {
+                $rows[] = $value;
+            }
+        }
+        PHP;
+
+    /** The same call shape, by value: nothing comes back. */
+    private const string FORMATTER = <<<'PHP'
+        <?php
+
+        declare(strict_types=1);
+
+        namespace PulsarGateProbe;
+
+        class Formatter
+        {
+            /**
+             * @param list<string> $rows
+             */
+            public function render(array $rows): string
+            {
+                return \implode(',', $rows);
+            }
+        }
+        PHP;
+
+    private const string LEDGER = <<<'PHP'
+        <?php
+
+        declare(strict_types=1);
+
+        namespace PulsarGateProbe;
+
+        final class Ledger
+        {
+            /** @var list<string> */
+            private array $rows = [];
+
+            public function __construct(private readonly Filler $filler) {}
+
+            public function add(string $value): void
+            {
+                $this->filler->fill($this->rows, $value);
+            }
+        }
+        PHP;
+
+    private const string REPORT = <<<'PHP'
+        <?php
+
+        declare(strict_types=1);
+
+        namespace PulsarGateProbe;
+
+        final class Report
+        {
+            /** @var list<string> */
+            private array $rows = [];
+
+            /**
+             * @param list<string> $rows
+             */
+            public function __construct(private readonly Formatter $formatter, array $rows)
+            {
+                $this->rows = $rows;
+            }
+
+            public function render(): string
+            {
+                return $this->formatter->render($this->rows);
+            }
+        }
+        PHP;
+
     protected function tearDown(): void
     {
         $this->assertNothingWasLeftBehind();
+    }
+
+    /**
+     * The blind spot, measured: before the gate asked reflection for a global
+     * function's signature, this fixture produced one finding and the finding was wrong.
+     */
+    #[Test]
+    public function aPropertyWrittenThroughAByReferenceArgumentIsNotToldToBecomeReadonly(): void
+    {
+        $tree = $this->plantTree('class-shape-by-ref-builtin');
+        $this->plantFile($tree, 'Accumulator.php', self::ACCUMULATOR);
+
+        [$status, $stdout, $stderr] = $this->analyse($tree, $tree . '/no-baseline.json');
+
+        self::assertSame(
+            0,
+            $status,
+            "the gate reports a finding against a property that parse_str() writes on every call.\n"
+            . "Its recommendation is `readonly`, and PHP refuses a readonly property as a\n"
+            . "by-reference argument at runtime, so the advice cannot be taken.\n" . $stdout . $stderr,
+        );
+        self::assertSame(
+            ['should-be-private-set'],
+            $this->propertyVerdicts($this->report($tree, $tree . '/no-baseline.json')),
+            'the property is not reported as written after construction, so a by-reference argument '
+            . 'still reads as a call that touches nothing',
+        );
+    }
+
+    /**
+     * The same question for a callee declared in the tree being analysed, whose
+     * signature the index holds and no list could.
+     */
+    #[Test]
+    public function aPropertyPassedToAFirstPartyByReferenceParameterIsSeenAsWritten(): void
+    {
+        $tree = $this->plantTree('class-shape-by-ref-method');
+        $this->plantFile($tree, 'Filler.php', self::FILLER);
+        $this->plantFile($tree, 'Ledger.php', self::LEDGER);
+
+        [$status, $stdout, $stderr] = $this->analyse($tree, $tree . '/no-baseline.json');
+
+        self::assertSame(
+            0,
+            $status,
+            "the gate reports a finding against a property that `fill(array &\$rows)` appends to.\n" . $stdout . $stderr,
+        );
+        self::assertContains(
+            'should-be-private-set',
+            $this->propertyVerdicts($this->report($tree, $tree . '/no-baseline.json')),
+            'a property handed to a by-reference parameter of a class in the same tree is still not '
+            . 'seen as written',
+        );
+    }
+
+    /**
+     * The control, and the more important half: the same call shape with a by-value
+     * parameter must still be refused.
+     *
+     * Without this, "every argument is a write" would pass both tests above and would
+     * silence the immutability question wholesale — a fix indistinguishable from
+     * deleting the rule.
+     */
+    #[Test]
+    #[GuardsGate(
+        gate: 'composer class-shape',
+        plants: 'a write-once property handed to a by-value parameter of a class in the same tree, which must still be reported',
+    )]
+    public function aPropertyPassedByValueIsStillReportedAsWriteOnce(): void
+    {
+        $tree = $this->plantTree('class-shape-by-value');
+        $this->plantFile($tree, 'Formatter.php', self::FORMATTER);
+        $this->plantFile($tree, 'Report.php', self::REPORT);
+
+        [$status, $stdout, $stderr] = $this->analyse($tree, $tree . '/no-baseline.json');
+
+        self::assertSame(
+            1,
+            $status,
+            "a property that nothing writes after construction is accepted as long as it is passed to\n"
+            . "a method somewhere, so modelling by-reference arguments has turned into treating every\n"
+            . 'argument as a write.' . $stdout . $stderr,
+        );
+        self::assertContains(
+            'should-be-readonly',
+            $this->propertyVerdicts($this->report($tree, $tree . '/no-baseline.json')),
+            'the by-value call is credited as a write, so the two parameter kinds are no longer '
+            . 'distinguished',
+        );
     }
 
     #[Test]

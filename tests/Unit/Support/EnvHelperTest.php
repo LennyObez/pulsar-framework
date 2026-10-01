@@ -12,6 +12,8 @@ use Pulsar\Config\Environment;
 
 use function bin2hex;
 use function file_put_contents;
+use function getenv;
+use function putenv;
 use function random_bytes;
 use function sys_get_temp_dir;
 use function unlink;
@@ -30,8 +32,29 @@ use function unlink;
 #[CoversFunction('public_path')]
 final class EnvHelperTest extends TestCase
 {
+    /**
+     * PULSAR_BASE_PATH as this test found it, so it can be put back exactly.
+     *
+     * The tests below clear it on purpose: `base_path()` re-reads the variable on
+     * every call, so unsetting it is the only way to exercise the `getcwd()`
+     * branch. What was wrong was clearing it and stopping there. The suite
+     * bootstrap anchors this variable at the repository root for the whole run,
+     * and `Kernel::boot()` claims it whenever nothing else has — so leaving it
+     * unset handed the next kernel boot in the process the right to re-point every
+     * later test's path helpers at whatever fixture project it happened to load.
+     * It did: nine tests of `BundledExtensionContractTest`, in another suite,
+     * failed on a storage path chosen here.
+     *
+     * `RestoresBasePathAnchorExtension` now makes that leak impossible for every
+     * test rather than only this one. This restore stays regardless, because a
+     * test that clears a variable it did not set is a defect on its own terms.
+     */
+    private string|false $basePath = false;
+
     protected function setUp(): void
     {
+        $this->basePath = getenv('PULSAR_BASE_PATH');
+
         // The getenv-path tests below require no active environment bound.
         Environment::resetActive();
     }
@@ -41,7 +64,13 @@ final class EnvHelperTest extends TestCase
         // Clean up env vars set during tests
         putenv('PULSAR_TEST_ENV_KEY');
         putenv('PULSAR_TEST_BOOL');
-        putenv('PULSAR_BASE_PATH');
+
+        if ($this->basePath === false || $this->basePath === '') {
+            putenv('PULSAR_BASE_PATH');
+        } else {
+            putenv('PULSAR_BASE_PATH=' . $this->basePath);
+        }
+
         Environment::resetActive();
     }
 

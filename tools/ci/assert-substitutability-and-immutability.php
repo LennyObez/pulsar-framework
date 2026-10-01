@@ -100,6 +100,105 @@ if (class_exists(Pulsar\Extensibility\ExtensionAutoloader::class)) {
 }
 
 // ---------------------------------------------------------------------------
+// By-reference signatures — asked of the engine, never guessed
+// ---------------------------------------------------------------------------
+
+/**
+ * Which parameters a callee takes by reference, as the engine itself reports them.
+ *
+ * `$positions` are zero-based; `$names` maps parameter names to positions so a named
+ * argument lands where it belongs; `$variadicFrom`, when set, is the position from
+ * which every further argument is by reference (`sscanf()`, `array_multisort()`).
+ *
+ * @return array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}
+ */
+function byReferenceSignature(ReflectionFunctionAbstract $callee): array
+{
+    $positions = [];
+    $names = [];
+    $variadicFrom = null;
+
+    foreach ($callee->getParameters() as $position => $parameter) {
+        $names[$parameter->getName()] = $position;
+
+        if (!$parameter->isPassedByReference()) {
+            continue;
+        }
+
+        $positions[$position] = true;
+
+        if ($parameter->isVariadic()) {
+            $variadicFrom = $position;
+        }
+    }
+
+    return ['positions' => $positions, 'names' => $names, 'variadicFrom' => $variadicFrom];
+}
+
+/**
+ * The signature of a global function, or null when this process cannot see it.
+ *
+ * Null is not "takes nothing by reference". It is "unknown", and the caller reports it
+ * rather than assuming, because the assumption is what {@see FileVisitor} was making
+ * until 2026-09-02: two hand-written lists holding thirty-two array and string mutators
+ * between them stood in for every by-reference function in PHP, so
+ * `sodium_crypto_secretstream_xchacha20poly1305_push($this->state, ...)` — a write to
+ * that property on every chunk of every sealed archive — read as a call that touched
+ * nothing, and the property came back "written only during construction, make it
+ * readonly". PHP rejects a readonly property as a by-reference argument at runtime, so
+ * the gate was recommending a fatal error. Reflection cannot go stale that way.
+ *
+ * @return array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}|null
+ */
+function globalFunctionSignature(string $name): ?array
+{
+    /** @var array<string, array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}|null> $cache */
+    static $cache = [];
+
+    if (array_key_exists($name, $cache)) {
+        return $cache[$name];
+    }
+
+    if (!function_exists($name)) {
+        return $cache[$name] = null;
+    }
+
+    try {
+        return $cache[$name] = byReferenceSignature(new ReflectionFunction($name));
+    } catch (ReflectionException) {
+        return $cache[$name] = null;
+    }
+}
+
+/**
+ * The signature of a method on a class this process can load — vendor code and PHP
+ * core, the two populations the AST index does not contain.
+ *
+ * @return array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}|null
+ */
+function externalMethodSignature(string $class, string $method): ?array
+{
+    /** @var array<string, array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}|null> $cache */
+    static $cache = [];
+
+    $key = $class . '::' . $method;
+
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+
+    if (!class_exists($class) && !interface_exists($class) && !trait_exists($class)) {
+        return $cache[$key] = null;
+    }
+
+    try {
+        return $cache[$key] = byReferenceSignature(new ReflectionMethod($class, $method));
+    } catch (ReflectionException) {
+        return $cache[$key] = null;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Facts — the distilled per-file record the analysis runs on
 // ---------------------------------------------------------------------------
 
@@ -295,6 +394,32 @@ final class PendingWrite
     ) {}
 }
 
+/**
+ * A call that hands a property to a callee whose signature is not yet known.
+ *
+ * The by-reference parameters of a first-party callee are a fact about a file that may
+ * not have been parsed yet, so the decision waits for the index. Everything the write
+ * would need is computed here, while the scope that produced it is still on the stack;
+ * only whether to keep it is deferred.
+ */
+final class PendingByRefCall
+{
+    /**
+     * @param string                                          $calleeKind method|static|function
+     * @param string|null                                     $receiverType FQCN, null when it could not be inferred
+     * @param list<array{position: int, name: string|null, writes: list<PendingWrite>}> $arguments
+     */
+    public function __construct(
+        public readonly string $calleeKind,
+        public readonly ?string $receiverType,
+        public readonly string $callee,
+        public readonly array $arguments,
+        public readonly string $file,
+        public readonly int $line,
+        public readonly ?string $inClass,
+    ) {}
+}
+
 // ---------------------------------------------------------------------------
 // Collector — shared mutable state filled by the per-file visitor
 // ---------------------------------------------------------------------------
@@ -316,6 +441,30 @@ final class Collector
     /** @var list<array{file:string,detail:string}> */
     public array $parseErrors = [];
 
+    /**
+     * Signatures of every first-party function-like the index has seen, keyed
+     * `Fqcn::method` (method name lowercased) or `function:name`.
+     *
+     * @var array<string, array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}>
+     */
+    public array $calleeSignatures = [];
+
+    /**
+     * How many declarations of each method name exist, and how many of them take each
+     * position by reference.
+     *
+     * The answer for a call whose receiver could not be typed. When every declaration
+     * of `fill()` in the tree takes its first parameter by reference, a call to
+     * `fill($this->rows)` writes that property whichever class the receiver turns out
+     * to be; when only some do, no answer is available and the call is reported instead.
+     *
+     * @var array<string, array{declarations: int, byRef: array<int, int>}>
+     */
+    public array $methodNameCensus = [];
+
+    /** @var list<PendingByRefCall> */
+    public array $byRefCalls = [];
+
     public int $fileCount = 0;
 }
 
@@ -336,30 +485,6 @@ final class FileVisitor extends NodeVisitorAbstract
         'int', 'float', 'string', 'bool', 'array', 'object', 'mixed', 'callable',
         'iterable', 'void', 'never', 'null', 'false', 'true', 'static', 'self',
         'parent', 'resource', '$this',
-    ];
-
-    /**
-     * Global functions that write through their first argument.
-     *
-     * There is no way to know the by-reference signature of an arbitrary callee from
-     * the AST, so this covers the mutators that actually appear in PHP code and the
-     * limitation is reported rather than hidden.
-     */
-    private const array BY_REF_FIRST_ARG = [
-        'sort', 'rsort', 'usort', 'uasort', 'uksort', 'ksort', 'krsort', 'asort',
-        'arsort', 'natsort', 'natcasesort', 'shuffle', 'array_push', 'array_pop',
-        'array_shift', 'array_unshift', 'array_splice', 'array_walk',
-        'array_walk_recursive', 'array_multisort', 'settype', 'reset', 'end',
-        'next', 'prev', 'each', 'sscanf',
-    ];
-
-    /** Functions that write through a later argument, keyed by zero-based position. */
-    private const array BY_REF_OTHER_ARG = [
-        'preg_match' => 2,
-        'preg_match_all' => 2,
-        'str_replace' => 3,
-        'str_ireplace' => 3,
-        'preg_replace' => 4,
     ];
 
     /**
@@ -408,6 +533,14 @@ final class FileVisitor extends NodeVisitorAbstract
 
     /** @var list<string> Name of the property whose hook body is being walked. */
     private array $hookStack = [];
+
+    /**
+     * Where writes go while a call's arguments are being built, or null when writes go
+     * straight to the collector.
+     *
+     * @var list<PendingWrite>|null
+     */
+    private ?array $writeSink = null;
 
     /**
      * Name of the property or parameter currently being declared.
@@ -487,6 +620,26 @@ final class FileVisitor extends NodeVisitorAbstract
 
         if ($node instanceof Node\Expr\StaticCall) {
             $this->recordStaticCall($node);
+            $this->recordDeferredByRefCall(
+                'static',
+                $node->class instanceof Node\Name ? $this->resolveClassName($node->class->toString()) : null,
+                $node->name instanceof Node\Identifier ? $node->name->toString() : null,
+                $node->args,
+                $node->getStartLine(),
+            );
+
+            return null;
+        }
+
+        if ($node instanceof Node\Expr\MethodCall || $node instanceof Node\Expr\NullsafeMethodCall) {
+            $viaThis = $node->var instanceof Node\Expr\Variable && $node->var->name === 'this';
+            $this->recordDeferredByRefCall(
+                'method',
+                $viaThis ? $this->currentClass()?->fqcn : $this->inferType($node->var),
+                $node->name instanceof Node\Identifier ? $node->name->toString() : null,
+                $node->args,
+                $node->getStartLine(),
+            );
 
             return null;
         }
@@ -659,10 +812,14 @@ final class FileVisitor extends NodeVisitorAbstract
                 default => 'method',
             };
             $this->funcStack[] = ['name' => $name, 'isStatic' => $isStatic, 'isClosure' => false, 'context' => $context];
+            // array_values(): the positions this records ARE parameter indexes, so the
+            // list-ness has to be true rather than assumed of whatever the parser handed back.
+            $this->recordCalleeSignature(array_values($node->params), $name);
             $this->recordReturnTypeSite($node->returnType, $name, $node->getStartLine());
         } elseif ($node instanceof Node\Stmt\Function_) {
             $name = $node->name->toString();
             $this->funcStack[] = ['name' => $name, 'isStatic' => false, 'isClosure' => false, 'context' => 'function'];
+            $this->recordCalleeSignature(array_values($node->params), $name, isFunction: true);
             $this->recordReturnTypeSite($node->returnType, $name, $node->getStartLine());
         } elseif ($node instanceof Node\PropertyHook) {
             $hookName = $node->name->toString();
@@ -674,6 +831,65 @@ final class FileVisitor extends NodeVisitorAbstract
 
         $this->scopeTypes[] = [];
         $this->scopeFresh[] = [];
+    }
+
+    /**
+     * Record which parameters a first-party callee takes by reference.
+     *
+     * Recorded for every declaration, not only the ones with a by-reference parameter:
+     * "this callee is known and takes nothing by reference" and "this callee is not
+     * known here" are different answers, and only the census below can tell them apart
+     * once a receiver turns out to be untypable.
+     *
+     * @param list<Node\Param> $params
+     */
+    private function recordCalleeSignature(array $params, string $name, bool $isFunction = false): void
+    {
+        $positions = [];
+        $names = [];
+        $variadicFrom = null;
+
+        foreach ($params as $position => $param) {
+            if ($param->var instanceof Node\Expr\Variable && is_string($param->var->name)) {
+                $names[$param->var->name] = $position;
+            }
+
+            if (!$param->byRef) {
+                continue;
+            }
+
+            $positions[$position] = true;
+
+            if ($param->variadic) {
+                $variadicFrom = $position;
+            }
+        }
+
+        $signature = ['positions' => $positions, 'names' => $names, 'variadicFrom' => $variadicFrom];
+        $lower = strtolower($name);
+
+        if ($isFunction) {
+            $this->collector->calleeSignatures['function:' . $lower] = $signature;
+
+            return;
+        }
+
+        $class = $this->currentClass();
+
+        if ($class === null) {
+            return;
+        }
+
+        $this->collector->calleeSignatures[$class->fqcn . '::' . $lower] = $signature;
+
+        $census = $this->collector->methodNameCensus[$lower] ?? ['declarations' => 0, 'byRef' => []];
+        $census['declarations']++;
+
+        foreach (array_keys($positions) as $position) {
+            $census['byRef'][$position] = ($census['byRef'][$position] ?? 0) + 1;
+        }
+
+        $this->collector->methodNameCensus[$lower] = $census;
     }
 
     // -- property declarations ----------------------------------------------
@@ -956,31 +1172,213 @@ final class FileVisitor extends NodeVisitorAbstract
 
         // PHP 8.5 clone-with parses as a call to `clone`; its second argument names
         // the properties being re-initialised on the cloned object.
-        if ($name === 'clone' && count($node->args) >= 2) {
-            $this->recordCloneWith($node);
+        if ($name === 'clone') {
+            if (count($node->args) >= 2) {
+                $this->recordCloneWith($node);
+            }
+
+            // `clone $this->subject` is the operator, not a call: it reads the property
+            // and writes nothing, and asking reflection about a keyword would report it
+            // as a callee nobody can load.
+            return;
+        }
+
+        $signature = globalFunctionSignature($name);
+
+        if ($signature !== null) {
+            $this->applyByReferenceSignature($node->args, $signature, $node->getStartLine());
 
             return;
         }
 
-        if (in_array($name, self::BY_REF_FIRST_ARG, true) && isset($node->args[0])) {
-            $argument = $node->args[0];
+        // Not a function this process can load: either one declared in the tree being
+        // analysed, or one belonging to an extension the deployment has and this
+        // machine does not. The index answers the first case; the second is reported
+        // rather than assumed harmless, once the index has failed to answer it.
+        $this->recordDeferredByRefCall('function', null, $name, $node->args, $node->getStartLine());
+    }
 
-            if ($argument instanceof Node\Arg) {
-                $this->collectWriteTargets($argument->value, 'by-ref-arg', $node->getStartLine());
+    /**
+     * Record the writes a call performs through its by-reference arguments.
+     *
+     * @param array<Node\Arg|Node\VariadicPlaceholder>                                        $args
+     * @param array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null} $signature
+     */
+    private function applyByReferenceSignature(array $args, array $signature, int $line): void
+    {
+        if ($signature['positions'] === []) {
+            return;
+        }
+
+        foreach (array_values($args) as $index => $argument) {
+            // `f(...)` — a first-class callable reference. Nothing is passed and
+            // nothing is written; the call happens wherever the closure ends up.
+            if (!$argument instanceof Node\Arg) {
+                return;
+            }
+
+            if ($argument->unpack) {
+                if ($this->expressionReachesAProperty($argument->value)) {
+                    $class = $this->currentClass();
+                    $this->collector->dynamic[] = [
+                        'file' => $this->file,
+                        'line' => $line,
+                        'class' => $class->fqcn ?? '(function scope)',
+                        'detail' => 'a property is spread into a call that takes an argument by reference, '
+                            . 'so which parameter it lands on cannot be determined here',
+                    ];
+                }
+
+                return;
+            }
+
+            $position = $argument->name === null
+                ? $index
+                : ($signature['names'][$argument->name->toString()] ?? null);
+
+            if ($position === null) {
+                continue;
+            }
+
+            $byReference = isset($signature['positions'][$position])
+                || ($signature['variadicFrom'] !== null && $position >= $signature['variadicFrom']);
+
+            if ($byReference && !$this->isValueNotATarget($argument->value)) {
+                $this->collectWriteTargets($argument->value, 'by-ref-arg', $line);
+            }
+        }
+    }
+
+    /**
+     * Hold on to a call that passes a property to a callee declared in this tree.
+     *
+     * @param array<Node\Arg|Node\VariadicPlaceholder> $args
+     */
+    private function recordDeferredByRefCall(
+        string $calleeKind,
+        ?string $receiverType,
+        ?string $callee,
+        array $args,
+        int $line,
+    ): void {
+        if ($callee === null) {
+            // `$object->{$name}($this->rows)`. The callee is chosen at runtime, so its
+            // signature is not a fact about this file at all.
+            if ($this->argumentsReachAProperty($args)) {
+                $class = $this->currentClass();
+                $this->collector->dynamic[] = [
+                    'file' => $this->file,
+                    'line' => $line,
+                    'class' => $class->fqcn ?? '(function scope)',
+                    'detail' => 'a property is passed to a call whose callee is named at runtime, so '
+                        . 'whether that argument is taken by reference is unknown',
+                ];
             }
 
             return;
         }
 
-        $position = self::BY_REF_OTHER_ARG[$name] ?? null;
+        $captured = [];
 
-        if ($position !== null && isset($node->args[$position])) {
-            $argument = $node->args[$position];
+        foreach (array_values($args) as $index => $argument) {
+            if (!$argument instanceof Node\Arg || $argument->unpack) {
+                return;
+            }
 
-            if ($argument instanceof Node\Arg) {
-                $this->collectWriteTargets($argument->value, 'by-ref-arg', $node->getStartLine());
+            if ($this->isValueNotATarget($argument->value) || !$this->expressionReachesAProperty($argument->value)) {
+                continue;
+            }
+
+            $writes = $this->captureWrites($argument->value, $line);
+
+            if ($writes === []) {
+                continue;
+            }
+
+            $captured[] = [
+                'position' => $index,
+                'name' => $argument->name?->toString(),
+                'writes' => $writes,
+            ];
+        }
+
+        if ($captured === []) {
+            return;
+        }
+
+        $this->collector->byRefCalls[] = new PendingByRefCall(
+            $calleeKind,
+            $receiverType,
+            strtolower($callee),
+            $captured,
+            $this->file,
+            $line,
+            $this->currentClass()?->fqcn,
+        );
+    }
+
+    /**
+     * Build the writes an argument would perform, without committing them.
+     *
+     * The scope that types `$rows` and knows whether `$item` was constructed here is on
+     * the stack now and gone by the time the callee's signature is known, so the write
+     * is built now and kept aside.
+     *
+     * @return list<PendingWrite>
+     */
+    private function captureWrites(Node\Expr $value, int $line): array
+    {
+        $previous = $this->writeSink;
+        $this->writeSink = [];
+
+        $this->collectWriteTargets($value, 'by-ref-arg', $line);
+
+        $captured = $this->writeSink;
+        $this->writeSink = $previous;
+
+        // The sink is set to [] above and only ever appended to while it is open, so
+        // null here would mean something closed it mid-capture -- for which "no writes
+        // were captured" is the answer, not a type error thrown at the caller.
+        return $captured ?? [];
+    }
+
+    /**
+     * @param array<Node\Arg|Node\VariadicPlaceholder> $args
+     */
+    private function argumentsReachAProperty(array $args): bool
+    {
+        foreach ($args as $argument) {
+            if ($argument instanceof Node\Arg && $this->expressionReachesAProperty($argument->value)) {
+                return true;
             }
         }
+
+        return false;
+    }
+
+    /**
+     * An argument that receives nothing, however the callee declares the parameter.
+     *
+     * `[$this->page, $this->total]` on the left of an assignment destructures, and
+     * {@see collectWriteTargets()} is right to walk into it. The same node as an
+     * argument is a value being built: `extract(['page' => $result->page])` reads that
+     * property and writes an array, and crediting it as a write to `$page` makes an
+     * immutable record look mutable — which is how two dependency sites on a value
+     * object turned into findings the first time this was measured.
+     */
+    private function isValueNotATarget(Node\Expr $value): bool
+    {
+        return $value instanceof Node\Expr\Array_ || $value instanceof Node\Expr\List_;
+    }
+
+    private function expressionReachesAProperty(Node\Expr $expression): bool
+    {
+        return $this->finder->findFirst(
+            [$expression],
+            static fn(Node $node): bool => $node instanceof Node\Expr\PropertyFetch
+                || $node instanceof Node\Expr\NullsafePropertyFetch
+                || $node instanceof Node\Expr\StaticPropertyFetch,
+        ) !== null;
     }
 
     private function recordCloneWith(Node\Expr\FuncCall $node): void
@@ -1141,7 +1539,7 @@ final class FileVisitor extends NodeVisitorAbstract
             $kind = 'hook-backing';
         }
 
-        $this->collector->writes[] = new PendingWrite(
+        $write = new PendingWrite(
             $property,
             $receiverType,
             $viaThis,
@@ -1154,6 +1552,17 @@ final class FileVisitor extends NodeVisitorAbstract
             $line,
             $receiverIsFresh,
         );
+
+        // A write built for a callee whose signature is not known yet goes to the sink,
+        // and only reaches the collector if that callee turns out to take the argument
+        // by reference. {@see captureWrites()}.
+        if ($this->writeSink !== null) {
+            $this->writeSink[] = $write;
+
+            return;
+        }
+
+        $this->collector->writes[] = $write;
     }
 
     private function insideClosure(): bool
@@ -1420,6 +1829,181 @@ final class Index
     public function get(string $fqcn): ?ClassFact
     {
         return $this->collector->classes[ltrim($fqcn, '\\')] ?? null;
+    }
+
+    /**
+     * Decide, for every call that handed a property to a callee, whether that argument
+     * was taken by reference — and keep the write if it was.
+     *
+     * Runs before {@see attributeWrites()} because the writes it keeps are attributed
+     * with the rest. Three answers, in order of how much they are worth:
+     *
+     *  1. The receiver is typed and the callee is declared here or loadable — the
+     *     signature is a fact and the write is kept or dropped on it.
+     *  2. The receiver could not be typed, but every declaration of that method name in
+     *     the tree agrees about the position. The answer is the same whichever class
+     *     the receiver is, so it is used.
+     *  3. Declarations disagree, or the callee is nowhere. Nothing is credited and the
+     *     call is reported as undecidable, because silently treating it as by-value is
+     *     how a mutated property comes back "written only during construction".
+     *
+     * The census in case 2 records exact positions only; a callee whose by-reference
+     * parameter is variadic is resolved in case 1 and falls to case 3 without one.
+     */
+    public function resolveByReferenceCalls(): void
+    {
+        foreach ($this->collector->byRefCalls as $call) {
+            $signature = $this->signatureOfCallee($call);
+
+            foreach ($call->arguments as $argument) {
+                $position = $argument['position'];
+
+                if ($signature !== null) {
+                    if ($argument['name'] !== null) {
+                        $position = $signature['names'][$argument['name']] ?? null;
+                    }
+
+                    if ($position !== null && $this->isByReference($signature, $position)) {
+                        foreach ($argument['writes'] as $write) {
+                            $this->collector->writes[] = $write;
+                        }
+                    }
+
+                    continue;
+                }
+
+                // The census counts METHOD declarations. A global function shares a
+                // namespace with nothing, so a class that happens to declare a method
+                // of the same name says nothing about it: an unresolved function is
+                // unresolved, and it is reported rather than answered by a homonym.
+                $verdict = $call->calleeKind === 'function'
+                    ? null
+                    : $this->censusVerdict($call->callee, $position, $argument['name']);
+
+                if ($verdict === true) {
+                    foreach ($argument['writes'] as $write) {
+                        $this->collector->writes[] = $write;
+                    }
+
+                    continue;
+                }
+
+                if ($verdict === null) {
+                    $this->collector->dynamic[] = [
+                        'file' => $call->file,
+                        'line' => $call->line,
+                        'class' => $call->inClass ?? '(function scope)',
+                        'detail' => $call->calleeKind === 'function'
+                            ? sprintf(
+                                'a property is passed to %s(), which this process cannot load and this '
+                                . 'tree does not declare, so whether it is taken by reference is unknown',
+                                $call->callee,
+                            )
+                            : sprintf(
+                                'a property is passed to %s(), whose by-reference signature could not be '
+                                . 'resolved from %s',
+                                $call->callee,
+                                $call->receiverType ?? 'an untyped receiver',
+                            ),
+                    ];
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null} $signature
+     */
+    private function isByReference(array $signature, int $position): bool
+    {
+        return isset($signature['positions'][$position])
+            || ($signature['variadicFrom'] !== null && $position >= $signature['variadicFrom']);
+    }
+
+    /**
+     * @return array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}|null
+     */
+    private function signatureOfCallee(PendingByRefCall $call): ?array
+    {
+        if ($call->calleeKind === 'function') {
+            return $this->collector->calleeSignatures['function:' . $call->callee] ?? null;
+        }
+
+        if ($call->receiverType === null) {
+            return null;
+        }
+
+        return $this->declaredSignature($call->receiverType, $call->callee, [])
+            ?? externalMethodSignature($call->receiverType, $call->callee);
+    }
+
+    /**
+     * The signature a class or anything it inherits from declares for a method.
+     *
+     * @param array<string, true> $seen
+     *
+     * @return array{positions: array<int, true>, names: array<string, int>, variadicFrom: int|null}|null
+     */
+    private function declaredSignature(string $fqcn, string $method, array $seen): ?array
+    {
+        $fqcn = ltrim($fqcn, '\\');
+
+        if (isset($seen[$fqcn])) {
+            return null;
+        }
+
+        $seen[$fqcn] = true;
+        $signature = $this->collector->calleeSignatures[$fqcn . '::' . $method] ?? null;
+
+        if ($signature !== null) {
+            return $signature;
+        }
+
+        $class = $this->get($fqcn);
+
+        if ($class === null) {
+            return null;
+        }
+
+        foreach ([...$class->traits, ...($class->parent === null ? [] : [$class->parent]), ...$class->interfaces] as $ancestor) {
+            $inherited = $this->declaredSignature($ancestor, $method, $seen);
+
+            if ($inherited !== null) {
+                return $inherited;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * What every declaration of a method name says about one position.
+     *
+     * True when they all take it by reference, false when none does, null when they
+     * disagree or the name is declared nowhere in the tree.
+     */
+    private function censusVerdict(string $method, int $position, ?string $argumentName): ?bool
+    {
+        $census = $this->collector->methodNameCensus[$method] ?? null;
+
+        if ($census === null || $census['declarations'] === 0) {
+            return null;
+        }
+
+        // A named argument lands wherever the callee's own parameter list puts it, and
+        // the census does not hold parameter names — only the declaration that turned
+        // out to be the callee could answer, and it is exactly what is missing here.
+        if ($argumentName !== null) {
+            return null;
+        }
+
+        $byRef = $census['byRef'][$position] ?? 0;
+
+        if ($byRef === 0) {
+            return false;
+        }
+
+        return $byRef === $census['declarations'] ? true : null;
     }
 
     /**
@@ -2730,8 +3314,20 @@ foreach ($indexFiles as $file) {
 
     $collector->fileCount++;
 
+    // TWO PASSES, NOT TWO VISITORS ON ONE. `NameResolver` rewrites a class name
+    // when the traversal reaches the node carrying it, so a second visitor sharing
+    // the pass sees resolved names on the node it is ON and UNRESOLVED names on
+    // every child below it. FileVisitor reads children from their parent -- the
+    // `new X()` on the right of an assignment is read while entering the
+    // assignment -- and got the short name back, so `$form = new SignupForm();`
+    // recorded the local as `SignupForm` and every later write through `$form`
+    // failed to attribute to a declaring class. Resolving the whole file first
+    // means every name FileVisitor reads is fully qualified, wherever it reads it.
+    $resolver = new NodeTraverser();
+    $resolver->addVisitor(new NameResolver());
+    $statements = $resolver->traverse($statements);
+
     $traverser = new NodeTraverser();
-    $traverser->addVisitor(new NameResolver());
     $traverser->addVisitor(new FileVisitor($collector, relativePath($file, $rootDir), $finder));
     $traverser->traverse($statements);
 }
@@ -2739,6 +3335,7 @@ foreach ($indexFiles as $file) {
 $phase('parse + collect');
 
 $index = new Index($collector);
+$index->resolveByReferenceCalls();
 $index->attributeWrites();
 
 $phase('attribute writes');

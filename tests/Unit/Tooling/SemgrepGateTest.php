@@ -149,6 +149,30 @@ final class SemgrepGateTest extends TestCase
         self::assertSame(0, $status, $stdout);
     }
 
+    /** Logged out, Semgrep prints "requires login" instead of the match; the file supplies it. */
+    #[Test]
+    public function itReadsARedactedMatchFromTheSourceFile(): void
+    {
+        $report = $this->report([$this->finding('tools/security/assert-semgrep-clean.php', 1, 'requires login')]);
+        $baseline = $this->baseline([$this->baselineEntry('tools/security/assert-semgrep-clean.php', '<?php')]);
+
+        [$status, $stdout] = $this->invoke($report, $baseline);
+
+        self::assertSame(0, $status, $stdout);
+    }
+
+    #[Test]
+    public function itRefusesARedactedMatchTheFileCannotSupply(): void
+    {
+        $report = $this->report([$this->finding('src/Absent.php', 3, 'requires login')]);
+        $baseline = $this->baseline([$this->baselineEntry('src/Absent.php', 'requires login')]);
+
+        [$status, , $stderr] = $this->invoke($report, $baseline);
+
+        self::assertSame(2, $status);
+        self::assertStringContainsString('redacted the match at src/Absent.php:3', $stderr);
+    }
+
     #[Test]
     public function itFailsOnAFileSemgrepCouldNotParseAtAll(): void
     {

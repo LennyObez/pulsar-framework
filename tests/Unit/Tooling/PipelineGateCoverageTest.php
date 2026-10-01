@@ -142,6 +142,17 @@ final class PipelineGateCoverageTest extends TestCase
             'PENDING: referenced by no composer script and no workflow, so tools/php/'
             . 'boundary-baseline.json can grow freely. The negative test is a baseline that grew '
             . 'by one entry, and it should be written as part of giving this script a caller.',
+        'scripts/build-fonts.sh' =>
+            'PENDING: the font provenance builder, and it does carry a real verdict -- the '
+            . 'conversion refuses to write a face whose cmap lost a codepoint against the source '
+            . 'it came from, which is the exact defect this bundle was repaired for (a latin-ext '
+            . 'slice shipped as the whole code face). Watching that refusal needs the toolchain '
+            . 'the script runs on: curl against the commit-pinned google/fonts URLs, python3 with '
+            . 'fontTools and brotli, and node. The two literal `exit 1`s a reader finds first are '
+            . 'prerequisite bail-outs, not that verdict, so planting against them would prove '
+            . 'nothing. What blocks a merge today is BundledFontAssetGateTest, which audits the '
+            . 'files actually in resources/ui/fonts/ against the manifest and is itself guarded '
+            . '-- the shipped artefact is covered; the builder that produced it is not.',
         'scripts/generate_sbom.php' =>
             'PENDING, and probably a deletion rather than a test: provenance.yml runs '
             . 'tools/sbom/generate-sbom.php instead. A second SBOM generator no gate exercises '
@@ -154,15 +165,6 @@ final class PipelineGateCoverageTest extends TestCase
             'PENDING: needs a recorded baseline and a profile median 10% below it. '
             . 'BenchmarkProfilesTest asserts the profile matrix is coherent, not that a '
             . 'regression fails, and must not be counted as this.',
-        'tools/ci/assert-no-advisories.php' =>
-            'PENDING: the script already takes the report path as an argument, so this is the '
-            . 'cheapest entry here. Plant an advisory report and an unparseable one -- the '
-            . 'second is the defect the script was written to remove, an unreadable report '
-            . 'being summed to zero and reported as a clean tree.',
-        'tools/version/sync-version.php' =>
-            'PENDING: needs one additive --composer= option to point the check at a fixture '
-            . 'pair, matching the precedent six other scripts already set. Then plant a '
-            . 'src/Core/Version.php constant that disagrees with composer.json.',
         'scripts/check_compliance_claims.php' =>
             'PENDING: needs a booted deployment claiming a control it does not exhibit. This is '
             . 'the script from the original finding -- it used to read a nonexistent file and '
@@ -211,18 +213,29 @@ final class PipelineGateCoverageTest extends TestCase
     /**
      * Steps that carry `continue-on-error: true`, and so cannot fail the build.
      *
-     * Both are Tier B nightly benchmarks. That is a defensible design choice -- a nightly
-     * report is not a merge gate -- but the job is named "Tier B: Nightly Performance
-     * Benchmarks" and reads like one, so the exclusion is written down rather than left to
-     * whoever next greps for the budget. If a step ever joins this list, something that
-     * used to block stopped blocking, which is exactly the audited finding arriving by a
-     * different route.
+     * The first two are Tier B nightly benchmarks. That is a defensible design choice -- a
+     * nightly report is not a merge gate -- but the job is named "Tier B: Nightly
+     * Performance Benchmarks" and reads like one, so the exclusion is written down rather
+     * than left to whoever next greps for the budget. If a step ever joins this list,
+     * something that used to block stopped blocking, which is exactly the audited finding
+     * arriving by a different route.
+     *
+     * The third is the `benchmarks/` component suite, and it joined this list by being
+     * REPAIRED rather than relaxed. It piped PHPBench into `tee` in a job that never set
+     * `shell: bash`, so without pipefail the step's exit status was tee's -- always 0. It
+     * could not fail and could not report; the `#[Assert]` budgets in that tree were
+     * discarded by the shell before anything read them. `shell: bash` is set now, and this
+     * entry is the declaration that follows: docs/performance.md has always said the
+     * `benchmarks/` tree is not a merge gate, and those budgets were never calibrated on
+     * shared CI hardware, so a breach marks the step failed-but-tolerated instead of
+     * blocking. See ADR-0072.
      *
      * @var list<string>
      */
     private const array TOLERATED_STEPS = [
         'benchmark-nightly.yml "Tier B: Run all benchmarks (broader tolerance)"',
         'benchmark-nightly.yml "Tier B: Run memory peak benchmarks"',
+        'ci.yml "Run benchmarks/ suite"',
     ];
 
     #[Test]

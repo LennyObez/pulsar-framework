@@ -112,6 +112,19 @@ final class PlantedGitRepository
         return trim($this->git('rev-parse', 'HEAD'));
     }
 
+    /**
+     * Put a tag on HEAD.
+     *
+     * A release tag is the one artefact that can disagree with composer.json in a way
+     * consumers resolve rather than read, so the version gate compares the two whenever
+     * a tag points at HEAD. Watching that comparison refuse needs a tag to exist, and
+     * signing is already pinned off on every git invocation below.
+     */
+    public function tag(string $name): void
+    {
+        $this->git('tag', $name);
+    }
+
 
     /**
      * Delete the tree. A verification fixture left on disk is an incident of its own.

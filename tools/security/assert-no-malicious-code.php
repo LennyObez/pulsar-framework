@@ -293,6 +293,14 @@ const REVIEWED = [
                 . 'line. No interpolation at all.',
         ],
     ],
+    'tools/ci/assert-mutation-thresholds.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Asks git for the Markdown corpus the gate judges, rather than walking a '
+                . 'synced filesystem. proc_open is given an ARRAY, normalised with array_values() so '
+                . 'a named argument cannot turn it into a map; no shell is involved.',
+        ],
+    ],
     'tools/bench/run.php' => [
         'shell-command' => [
             'count' => 3,
@@ -301,8 +309,52 @@ const REVIEWED = [
                 . 'escapeshellarg()-quoted; the string form is kept for the `2>&1` merge.',
         ],
     ],
+    'tools/version/sync-version.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'One `git` invocation, in the array form, so no shell parses anything. '
+                . 'The gate reads the tree through git rather than walking it because the walk '
+                . 'would have to re-implement .gitignore; see the docblock on '
+                . 'version_gate_git(). Every argv element is a literal written in this file '
+                . 'except the repository root and the version string, and both are separate '
+                . 'elements: the root comes from the developer\'s own --root= option, and the '
+                . 'version is read out of composer.json and passed to `git grep -F` as a fixed '
+                . 'string, never as a pattern. Developer and CI command, not request-reachable.',
+        ],
+    ],
+
+    'tools/api/assert-no-bc-breaks.php' => [
+        'shell-command' => [
+            'count' => 2,
+            'reason' => 'Two `git` reads that give the BC gate its base: `git -C <root> show '
+                . '<ref>:tools/api/public-api.snapshot.json`, and `git -C <root> merge-base HEAD '
+                . '<ref>` when --base names a branch rather than HEAD. Both interpolated values '
+                . 'are escapeshellarg()-quoted at the call, and both come from the argv of '
+                . 'whoever ran the gate (--root=, --base=) rather than from a request; the '
+                . 'string form is kept only for the `2>&1` merge, which is what puts the git '
+                . 'error text into the refusal message a contributor reads. `git show` rather '
+                . 'than a checkout because the gate runs inside `composer qa` beside a tree '
+                . 'the contributor is still editing. A reviewer who wants to disagree should '
+                . 'start with escapeshellarg() on Windows: it double-quotes and strips %, so '
+                . 'a ref carrying a percent sign is silently altered rather than injected — '
+                . 'a wrong answer, not execution.',
+        ],
+    ],
 
     // --- Tests that drive a real process or a real compiler ---
+    'tests/Integration/Cli/ComposerRequireInstallBootsTest.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Runs `bin/pulsar` through a hand-written Composer bin proxy in a '
+                . 'throwaway workspace, which is the only way to assert that an installed package '
+                . 'boots the CLI the way Composer wires it. Array form, and built by appending '
+                . 'rather than spreading — a variadic can carry string keys and proc_open takes a '
+                . 'list — so no element reaches a shell. Every element is PHP_BINARY, the proxy '
+                . 'path this test just wrote under its own temp workspace, or a literal argument '
+                . 'written beside the assertion; stdin is not piped and no environment is '
+                . 'constructed for the child.',
+        ],
+    ],
     'tests/Benchmark/Support/MemoryProfileRunner.php' => [
         'process-spawn' => [
             'count' => 1,
@@ -416,6 +468,15 @@ const REVIEWED = [
                 . 'fixed expression literal, never from input.',
         ],
     ],
+    'tests/Unit/View/Directive/NoMethodSpoofingTest.php' => [
+        'eval' => [
+            'count' => 2,
+            'reason' => 'Executes the @form directive own compiler output to assert it REFUSES a verb '
+                . 'an HTML form cannot send, and renders the ones it can. Same shape as '
+                . 'ForeachDirectiveTest above: the evaluated string is a compiler artefact built '
+                . 'from a literal in the data provider, never from input.',
+        ],
+    ],
     'tests/Unit/Compliance/Control/OutcomeSealTest.php' => [
         'unserialize-unbounded' => [
             'count' => 1,
@@ -439,6 +500,14 @@ const REVIEWED = [
                 . 'Extracted here from DriverDispatchRatchetTest, which no longer shells out itself.',
         ],
     ],
+    'tests/Unit/Integrity/Support/DocumentedStructureScanner.php' => [
+        'shell-command' => [
+            'count' => 2,
+            'reason' => 'Asks git which paths are tracked and which are ignored, so the ratchet '
+                . 'judges the same tree a reviewer sees. Both calls quote the root and the path with '
+                . 'escapeshellarg(); the rest of each command is a literal.',
+        ],
+    ],
     'tests/Unit/Integrity/Support/PlantsFiles.php' => [
         'shell-command' => [
             'count' => 2,
@@ -453,6 +522,22 @@ const REVIEWED = [
             'reason' => 'Asks `git ls-files` what is committed at the repository root. Root is '
                 . 'escapeshellarg()-quoted. Extracted here from RootCleanlinessTest, which no longer '
                 . 'shells out itself.',
+        ],
+    ],
+    'tests/Unit/Integrity/DocumentedInstallCommandsTest.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Asks `git ls-files` which Markdown the tree carries, so a doc written but '
+                . 'not yet committed is still judged. proc_open is given an ARRAY whose only '
+                . 'non-literal element is the root, so no shell parses any of it.',
+        ],
+    ],
+    'tests/Integration/Cli/ScaffoldedProjectBootsTest.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Runs `bin/pulsar init` as a real child process, which is the only way to '
+                . 'observe that the scaffolder boots from an empty directory rather than aborting. '
+                . 'proc_open is given an ARRAY of literals and PHP_BINARY, so no shell is involved.',
         ],
     ],
     'tests/Unit/Tooling/Support/PlantsDefectsForGates.php' => [

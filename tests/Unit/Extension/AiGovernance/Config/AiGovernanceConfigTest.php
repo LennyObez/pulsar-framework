@@ -12,6 +12,16 @@ use Pulsar\Extension\AiGovernance\Config\AiGovernanceConfig;
 #[CoversClass(AiGovernanceConfig::class)]
 final class AiGovernanceConfigTest extends TestCase
 {
+    /**
+     * EVERY STORE DEFAULTS TO THE DURABLE ONE, and that is the assertion this case
+     * exists for since rc.12. The default was `memory` for every key, so a
+     * deployment that enabled this extension and configured nothing got a model
+     * inventory, impact assessments, provenance and explanations that lived in one
+     * worker's memory -- thirteen ISO 42001 controls resting on a record that was
+     * gone at the next restart. Asserted key by key rather than on the registry
+     * alone: they moved together, and one left behind on `memory` is the shape
+     * nobody would notice.
+     */
     #[Test]
     public function defaultsAreSecureByDefault(): void
     {
@@ -21,7 +31,11 @@ final class AiGovernanceConfigTest extends TestCase
         self::assertTrue($config->requireImpactAssessment);
         self::assertFalse($config->requireModelCard);
         self::assertTrue($config->requireConsentForTrainingData);
-        self::assertSame('memory', $config->registryStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->registryStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->impactAssessmentStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->dataGovernanceStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->explainabilityStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->monitoringRecordStore);
     }
 
     #[Test]
@@ -53,7 +67,7 @@ final class AiGovernanceConfigTest extends TestCase
 
         self::assertTrue($config->auditInvocations);
         self::assertTrue($config->requireImpactAssessment);
-        self::assertSame('memory', $config->registryStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->registryStore);
     }
 
     #[Test]
@@ -77,8 +91,12 @@ final class AiGovernanceConfigTest extends TestCase
             'explainability_store' => ['invalid'],
         ]);
 
-        self::assertSame('memory', $config->registryStore);
-        self::assertSame('memory', $config->dataGovernanceStore);
-        self::assertSame('memory', $config->explainabilityStore);
+        // A value of the wrong type falls back to the DEFAULT, which is the durable
+        // store. Falling back to `memory` would turn a typo in one config key into
+        // a store that silently forgets, which is the failure the default moved to
+        // stop.
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->registryStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->dataGovernanceStore);
+        self::assertSame(AiGovernanceConfig::DATABASE, $config->explainabilityStore);
     }
 }

@@ -11,8 +11,8 @@
   // the initial run executes.
   //
   // These three trees are where mutation testing earns its keep in a framework
-  // built for banking, healthcare and legal work, and the 3,753 tests that cover
-  // them fit in about 4 GB. Widening the scope means widening the initial run,
+  // built for banking, healthcare and legal work, and the tests that cover them
+  // — 3,712 at rc.12 — fit in about 4 GB. Widening the scope means widening the initial run,
   // which puts the gate back where it was: failing every time, and therefore
   // enforcing nothing while looking like it enforces something.
   source: {

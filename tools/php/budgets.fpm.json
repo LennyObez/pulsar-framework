@@ -1,5 +1,5 @@
 {
-  "description": "Performance budgets for PHP-FPM runtime (per-request process, cold bootstrap)",
+  "description": "REFERENCE TABLE, NOT ENFORCEMENT — no code reads this file. FPM-runtime targets (per-request process, cold bootstrap) for the request classes; the ones that gate a merge are the #[Assert] attributes in tests/Benchmark/EndToEndBench.php and the byte budgets in tests/Benchmark/MemoryProfileBench.php. See ADR-0072.",
   "runtime": "fpm",
   "inherits": "performance-budgets.json",
   "overrides": {

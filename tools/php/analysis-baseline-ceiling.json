@@ -1,23 +1,28 @@
 {
-  "note": "High-water marks for the suppression baselines the static-analysis gates read. A baseline is a promise that a number goes down; until this file existed nothing read the number, so an entry added to silence a new finding changed a file and nothing else. tests/Unit/Tooling/AnalysisBaselineRatchetTest.php compares each count against its ceiling on every `composer test` run and fails when one has grown. Raising a ceiling is therefore a deliberate, reviewable line in a diff that says so, rather than a silent side effect of running a --generate-baseline command.",
-  "measured": "2026-08-22",
+  "note": "High-water marks for the suppression baselines the static-analysis gates read. A baseline is a promise that a number goes down; until this file existed nothing read the number, so an entry added to silence a new finding changed a file and nothing else. tests/Unit/Tooling/AnalysisBaselineRatchetTest.php compares each count against its ceiling on every `composer test` run and fails when one has grown. That was not enough on its own: until 2026-09-02 the number here could be raised with nothing else in the diff, because the only comparison anything made was the measured count against whatever the last editor typed. Every ceiling now has to be a number this file itself accounts for — `raisedFrom` says what it replaced, `raisedOn` when, and `why` has to CONTAIN the current figure, so a number cannot move without its reason being rewritten in the same commit. tests/Unit/Tooling/Support/BaselineCeilingRecord.php holds that rule and ADR-0077 records why.",
+  "measured": "2026-09-02",
   "ceilings": {
     "tools/php/phpstan-baseline.neon": {
       "findings": 10,
       "unit": "sum of `count:` across every ignoreErrors block, because one block can hide many errors",
-      "owner": "composer phpstan, via includes: phpstan-baseline.neon in tools/php/phpstan.neon"
+      "owner": "composer phpstan, via includes: phpstan-baseline.neon in tools/php/phpstan.neon",
+      "raisedFrom": null,
+      "raisedOn": "2026-08-26",
+      "why": "Never raised: 10 is the figure the file held when it was first counted, and it is five blocks, each enumerated with a rationale in the baseline's own header. All 10 are Category A — assertions PHPStan proves tautological because the production return type is narrowed to a literal (AnonymousIdentity::isAuthenticated() is typed false, an authenticated Identity::isAuthenticated() is typed true). The tests still defend the contract: widen the return type and the assertion becomes meaningful again. The four Category B entries that used to sit beside them are gone — they suppressed class.notFound on Psy\\Configuration and Psy\\Shell only because tools/php/stubs/PsySH.php had never been wired into phpstan.neon's scanFiles, and wiring it made the suppressions unnecessary."
     },
     "tools/php/substitutability-baseline.json": {
-      "findings": 1254,
+      "findings": 1292,
       "unit": "entries recorded by --generate-baseline, one per accepted finding",
-      "owner": "composer class-shape, tools/ci/assert-substitutability-and-immutability.php"
+      "owner": "composer class-shape, tools/ci/assert-substitutability-and-immutability.php",
+      "raisedFrom": 1286,
+      "raisedOn": "2026-09-02",
+      "why": "1286 was measured on 2026-08-26 by ADR-0068 and was correct for the analyser as it then stood. Two things moved it. First, the analyser was repaired: it could not see a property written through a by-reference argument, so `sodium_memzero($this->derivedKey)` and `sodium_crypto_secretstream_xchacha20poly1305_push($this->state, ...)` read as calls that touched nothing, and both properties were reported as findings whose recommended fix — readonly — PHP rejects at runtime. Running the unfixed and the fixed script over the same tree at the same moment measured 1294 and 1292: two findings disappeared, none appeared, and both are named in ADR-0077. Second, the tree moved: of the difference from 1286, thirty-two entries are the same findings at addresses that shifted when a file grew, thirty-three are addresses that no longer produce a finding and were dropped, and SEVEN are new. Those seven are recorded, each for its own stated reason: three observers of ControlEvidenceGatherer sealed by ADR-0050 alongside four siblings already recorded on the same constructor; two #[Override] returns in RoutingConnection matching nineteen accepted entries of the identical shape, where the alternative is changing an #[Api] interface across ten implementations during RC; SealedArchiveBackupService on ArchiveSeal, which owns SubKeyId::BackupArchiveSeal and whose real substitution seam is the KeyProviderInterface inside it; and SealedArchiveWriter::$handle, a promoted stream resource for which PHP has no type, so the readonly the gate asks for is unreachable by declaration. Per-item argument: docs/adr/0077-a-ceiling-is-a-ratchet-only-while-its-reason-names-the-number.md."
     }
   },
   "notRatchetedHere": {
     "tools/php/analysis-baseline-ceiling.json": "This file. It is the ratchet rather than a thing ratcheted: it suppresses nothing and holds only the counts the other baselines must not exceed.",
     "tools/php/boundary-baseline.json": "scripts/boundary_ratchet.php exists to ratchet it; that script is referenced by no composer script and no workflow, so the ratchet does not run. Recorded as a known gap rather than claimed as covered.",
     "tools/php/wiring-baseline.json": "read by scripts/wiring_check.php, which is declared as `composer wiring:check` and invoked by nothing.",
-    "tools/php/benchmark-baseline.json": "not a suppression list: it holds measured timings that the comparative benchmark in benchmark-regression.yml compares against, so it moves in both directions by design.",
     "tools/php/deptrac-baseline.yaml": "orphaned. No configuration, script or workflow references this file; tools/php/deptrac.yaml declares no `baseline:` key. It suppresses nothing because nothing reads it.",
     "tools/security/semgrep-baseline.json": "read by tools/security/assert-semgrep-clean.php, which has its own negative tests in tests/Unit/Tooling/SemgrepGateTest.php covering a second occurrence of a baselined match."
   }

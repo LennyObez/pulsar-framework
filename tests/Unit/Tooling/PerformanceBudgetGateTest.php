@@ -160,6 +160,48 @@ final class PerformanceBudgetGateTest extends TestCase
     }
 
     /**
+     * The fixture path the benchmarks hand the kernel must be one the kernel can export.
+     *
+     * `Kernel::boot()` takes ownership of PULSAR_BASE_PATH whenever nothing else has
+     * set it, exporting the parent of the config directory it was given — into the
+     * PROCESS, for everything that runs afterwards. So the spelling of this path is
+     * not private to the benchmark: written as `__DIR__ . '/../Fixtures/BootProject/config'`
+     * it exported a project root with a `..` segment still in it, and
+     * `MaintenanceMode` and `WritablePathGuard` both refuse a storage path containing
+     * one. Nine tests of `BundledExtensionContractTest` — a different suite, nothing
+     * to do with benchmarks, green in isolation — died on it, reporting a path that
+     * appears in no source file.
+     *
+     * `RestoresBasePathAnchorExtension` now stops the anchor going missing in the
+     * first place, and `Kernel::anchorBasePath()` resolves what it exports. This is
+     * the third lock: the value handed in is already the resolved one, so none of the
+     * above is being relied on to hold.
+     */
+    #[Test]
+    public function theBenchmarkFixturePathIsResolvedBeforeAnyKernelCanExportIt(): void
+    {
+        $configPath = BootBenchmarkKernel::configPath();
+
+        self::assertDirectoryExists(
+            $configPath,
+            'the boot benchmark fixture project is gone, so the benchmarks measure a kernel '
+            . 'with no configuration to load',
+        );
+        self::assertStringNotContainsString(
+            '..',
+            $configPath,
+            'the boot benchmark hands the kernel a config path spelled with a parent segment. '
+            . 'boot() exports the parent of that path as PULSAR_BASE_PATH for the whole process, '
+            . 'so the traversal outlives the benchmark and every later path helper carries it.',
+        );
+        self::assertSame(
+            realpath($configPath),
+            $configPath,
+            'the fixture config path is not its own resolved form',
+        );
+    }
+
+    /**
      * The control: the kernel the benchmarks really build passes the same check.
      *
      * Without it, the refusal above is equally explained by a check that refuses
