@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       rc_version:
-        description: 'RC version being validated (e.g. 1.0.0-rc.11)'
+        description: 'RC version being validated (e.g. 1.0.0-rc.12)'
         required: true
         type: string
 

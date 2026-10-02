@@ -15,6 +15,12 @@ composer.lock
 # boundary checker consumes; Prettier must not reformat it or the two tools
 # fight over the file.
 tools/api/public-api.snapshot.json
+# Same reason: the table between the BEGIN/END GENERATED INDEX markers is written
+# by tools/ci/build-adr-index.php, whose --check mode compares byte-for-byte and
+# is asserted by AdrIndexGateTest. Prettier pads the column separators, the
+# generator writes `| --- |`, and whichever tool ran last leaves the other one
+# failing.
+docs/adr/README.md
 
 # IDE and editor
 .idea/

@@ -67,7 +67,6 @@ coverage/
 # Deptrac cache
 .deptrac.cache
 
-# Internal / local-only agent instructions (keep out of GitHub)
 CLAUDE.md
 .claude/
 .agents/
@@ -91,3 +90,6 @@ docs/internal/
 # checks out clean, never sees it — so the two disagree about a file nobody owns.
 preload.generated.php
 preload.generated.php.meta.json
+
+# Machine-specific; benchmark-regression.yml records its own baseline from the merge base.
+tools/php/benchmark-baseline.json

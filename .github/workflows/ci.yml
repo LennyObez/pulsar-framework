@@ -59,14 +59,43 @@ jobs:
       - name: Local gate and CI gate are the same gate
         run: composer qa:parity
 
-      # Assert that the version reported by Pulsar\Core\Version matches
-      # composer.json, so a release PR cannot bump one without the other.
-      # This used to be tools/ci/check-version-consistency.sh, a bash
-      # re-implementation of the same assertion that `composer version:check`
-      # already made. Two copies of one policy drift, and the copy CI ran was not
-      # the copy contributors ran. The bash script is gone; this is the one check.
-      - name: Version constants consistency
+      # Assert that every declared version in the repository agrees with
+      # composer.json: the Pulsar\Core\Version constants, all 34 bundled extension
+      # manifests, the supported-versions table in SECURITY.md, the README status
+      # line, the issue template's version dropdown, and every other sentence that
+      # states which release this is. It also refuses a release tag on HEAD naming a
+      # version composer.json does not.
+      #
+      # It used to assert only the constants, and everything it did not cover drifted
+      # for a whole release: SECURITY.md told reporters that fixes went to rc.11 while
+      # the current release was rc.12. See tools/version/sync-version.php for what is
+      # derived, what is merely narrated, and why composer.json keeps a `version`
+      # field rather than deferring to the git tag.
+      - name: Every declared version agrees with composer.json
         run: composer version:check
+
+      # docs/adr/README.md is generated from the records themselves, and the
+      # generator has had a --check mode since it was written. Nothing ran it: it
+      # was a leaf of no composer script and no workflow step, so a drifted index
+      # was refused only inside the PHPUnit suite, after the contributor had
+      # already pushed. Its own header warns about exactly this shape -- a --check
+      # nobody runs leaves the same stale table behind (ADR-0060).
+      #
+      # `adr:check` rather than `adr:index -- --check`: `adr:index` WRITES the file
+      # it would be checking, so a gate leaf spelled that way cannot fail, and
+      # composer's `@name` references cannot carry a `--` argument. Same split as
+      # version:sync/version:check and bench:manifest:record/bench:manifest:check.
+      - name: The ADR index matches the records it describes
+        run: composer adr:check
+
+      # infection.json5 enforces covered MSI at 90 and sets no plain-MSI floor at
+      # all. docs/testing.md said "MSI ... Minimum: 80%" and docs/prd-1.0.0.md said
+      # "Infection MSI >= 80", both describing a gate that has never existed, while
+      # ADR-0042 said the opposite and was right. Three sources, no agreement, and
+      # nothing that could notice. This compares every mutation threshold stated in
+      # the repository's Markdown against the configuration that actually runs.
+      - name: Documented mutation thresholds match infection.json5
+        run: composer mutation:thresholds
 
       - run: composer cs:check
 
@@ -116,6 +145,30 @@ jobs:
       - name: Boundary enforcement (API targeting, full scan)
         if: github.event_name != 'pull_request'
         run: php scripts/boundary_check.php
+
+      # The #[Api] SemVer promise, enforced. tools/api/public-api.snapshot.json is
+      # committed, so a removal shows up as a diff -- visible to a reviewer, not
+      # blocking without one. Pulsar\Api\BcBreakDetector existed to close that and
+      # was run by nothing but its own unit test, while docs/deprecation-policy.md
+      # told readers "CI runs this automatically on every pull request".
+      #
+      # Two conditions, one gate, so only one annotation. On a pull request the base
+      # is the merge base with the target branch, which catches a break made anywhere
+      # on the branch -- including one committed and snapshot-regenerated several
+      # commits ago. Everywhere else the base is HEAD, which is what `composer
+      # bc:check` does locally. Comparing the committed snapshot against a fresh
+      # build of the same tree would be a tautology: PublicApiSnapshotTest already
+      # asserts those two are equal, so the comparison has to cross a commit.
+      # qa-gate: bc:check
+      - name: API backward-compatibility check
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: php -d memory_limit=1G tools/api/assert-no-bc-breaks.php --base="origin/$BASE_REF"
+
+      - name: API backward-compatibility check (against HEAD)
+        if: github.event_name != 'pull_request'
+        run: composer bc:check
 
       # Baselined: it fails on findings that are NEW relative to
       # tools/php/substitutability-baseline.json, not on the 1237 already there.
@@ -341,14 +394,14 @@ jobs:
   #
   # php-code-coverage appends the id of every test to every line it covers, with
   # no way to turn that off, so memory grows with the test count. Measured on this
-  # runner: killed by a signal at 13,457 of 42,579 tests, about 1.1 MB per test —
-  # 44,544 tests would need over 40 GB against the runner's 16. Recycling the
-  # process every ~4,400 tests is the only lever, the growth being inside the
-  # library. Time was never the constraint: 0.036 s per test puts the suite at
-  # ~26 minutes.
+  # runner: killed by a signal at 13,457 of the Unit suite's 42,588 tests, about
+  # 1.1 MB per test. At rc.12 the whole configuration lists 46,745 tests, which
+  # would need over 50 GB against the runner's 16. Recycling the process every
+  # ~4,675 tests is the only lever, the growth being inside the library. Time was
+  # never the constraint: 0.036 s per test puts the suite at ~28 minutes.
   #
   # PCOV records lines only. Branch data is Xdebug's alone, and Xdebug costs 0.87 s
-  # per test here — 10.6 hours, past GitHub's six-hour job ceiling. So the gate
+  # per test here — over 11 hours, past GitHub's six-hour job ceiling. So the gate
   # enforces statements and methods, and reports Conditions as not measured rather
   # than as 0%.
   php-coverage:
@@ -624,11 +677,22 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
+      # This step used to compute the digest, echo it, and compare it to nothing,
+      # while docs/performance.md and the manifest's own header both described it
+      # as a gate that fails the build on an unauthorized change. It now compares
+      # the manifest against tools/php/bench-pipeline.manifest.sha256 and exits
+      # non-zero when the two disagree -- see the script's header for what that
+      # does and does not buy, and BenchPipelineManifestGateTest for the planted
+      # changes it has been watched refusing.
+      #
+      # The summary line is read back out of the digest file rather than
+      # recomputed: after the gate passes those are the same number, and taking it
+      # from the file means the summary cannot report a digest the gate never
+      # checked.
       - name: Verify pipeline manifest integrity
         run: |
-          MANIFEST_HASH=$(php -r "echo hash_file('sha256', 'tools/php/bench-pipeline.manifest.php');")
-          echo "Pipeline manifest hash: $MANIFEST_HASH"
-          echo "manifest_hash=$MANIFEST_HASH" >> "$GITHUB_ENV"
+          composer bench:manifest:check
+          echo "manifest_hash=$(cut -d' ' -f1 tools/php/bench-pipeline.manifest.sha256)" >> "$GITHUB_ENV"
 
       - name: 'Tier A: Run PHPBench with assertions (hard gate)'
         # Two things in tools/php/phpbench.json make this step mean something, and
@@ -769,6 +833,18 @@ jobs:
     timeout-minutes: 20
     needs: php-quality
 
+    defaults:
+      run:
+        # Same reason as the Tier A job above: the run step below pipes into
+        # `tee`, and without pipefail the step's exit status is tee's — always 0.
+        # Every #[Assert] in benchmarks/ was therefore unenforceable AND
+        # unreportable here: a breached budget exits phpbench non-zero, tee threw
+        # it away, and the job reported green having noticed nothing. The
+        # benchmarks/ tree is deliberately not a merge gate (docs/performance.md
+        # says so), but "not a gate" has to mean an advisory result someone can
+        # see, not a result the shell discards before anyone looks.
+        shell: bash
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -795,6 +871,13 @@ jobs:
       - run: composer install --no-interaction --no-progress
 
       - name: Run benchmarks/ suite
+        # Advisory by declaration, now that pipefail lets a breach reach the
+        # runner at all. These budgets were never calibrated on shared CI
+        # hardware, and this tree is the component harness rather than the
+        # request-class contract — Tier A is what blocks a merge. A breach here
+        # marks the step failed-but-tolerated in the UI, which is the signal the
+        # swallowed exit code used to destroy.
+        continue-on-error: true
         run: |
           vendor/bin/phpbench run benchmarks/ \
             --bootstrap=vendor/autoload.php \

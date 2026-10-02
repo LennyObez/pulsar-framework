@@ -3,24 +3,24 @@ name: 'Nightly Branch Coverage'
 # One job. No matrix, no legs, no merge.
 #
 # Branch and condition data comes from Xdebug alone — PCOV has no notion of a
-# branch — and Xdebug costs 0.87 s per test on this runner. Over the full
-# 44,544-test suite that is 10.75 hours against GitHub's hard six-hour ceiling for
-# a single job. Splitting it would fit each piece and change nothing about the
+# branch — and Xdebug costs 0.87 s per test on this runner. Over the whole
+# configuration — 46,745 tests at rc.12 — that is over 11 hours against GitHub's hard
+# six-hour ceiling for a single job. Splitting it would fit each piece and change nothing about the
 # total, so a single job means the SCOPE has to shrink. That is arithmetic, not a
 # preference.
 #
 # The scope it shrinks to is one that already exists and is already guarded:
 # tools/php/mutation/phpunit.xml pairs src/Auth, src/Security and src/Audit with
-# the 3,625 tests that cover them, and tests/Unit/Tooling/MutationConfigTest
+# the tests that cover them — 3,712 at rc.12 — and tests/Unit/Tooling/MutationConfigTest
 # compares it against the shared configuration on every setting they share, so it
 # cannot loosen in silence. Mutation testing is scoped there for the same reason
 # (ADR-0042); measuring both on the same slice means the two figures describe the
 # same code.
 #
-# Cost at the measured rate: ~3,625 tests at ~1 s each, so around an hour, and
+# Cost at the measured rate: ~3,712 tests at ~1 s each, so around an hour, and
 # roughly 5 GB against the runner's 16.
 #
-# What this does NOT do: measure branch coverage for the other 2,109 files under
+# What this does NOT do: measure branch coverage for the other 2,247 files under
 # src/. Nothing can, in one job, until PCOV learns branches or the suite shrinks by
 # an order of magnitude. ADR-0042 records that.
 #

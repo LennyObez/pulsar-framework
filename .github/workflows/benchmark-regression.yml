@@ -1,5 +1,27 @@
 name: Benchmark Regression
 
+# Measures the merge base and the pull request on the SAME runner, in the SAME
+# job, and refuses anything more than 5% slower.
+#
+# It used to compare against tools/php/benchmark-baseline.json, a committed file
+# that held one `_comment` key and never held a measurement. Every benchmark
+# therefore printed NEW, the table looked exactly like a comparison, and the job
+# went green having compared nothing — for the whole of the release-candidate
+# phase, under a check named "Performance Regression Check", while README.md told
+# readers that benchmarks were "compared against stored baselines in CI".
+#
+# Populating that file would not have fixed it. Ops-per-second is a property of
+# the machine that measured it: a figure recorded on a maintainer's laptop and
+# compared on a shared GitHub runner is not a regression signal, it is hardware
+# noise with a threshold attached, and a gate that fails for reasons nobody can
+# act on is a gate that gets switched off. So the baseline is recorded here, from
+# the base commit, on the runner about to do the comparing. Both halves run under
+# the same CPU, the same PHP build and the same load, which is the only
+# arrangement in which a 5% threshold means what it says.
+#
+# The cost is a second benchmark run, about two and a half minutes. That is the
+# price of the check existing at all.
+
 on:
   pull_request:
     paths:
@@ -23,6 +45,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Both commits have to exist locally. A shallow clone leaves the base
+          # unreachable, `git checkout` fails, and the job would be red for a
+          # reason unrelated to performance.
           fetch-depth: 0
           persist-credentials: false
 
@@ -44,15 +69,40 @@ jobs:
           key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
-      - run: composer install --no-interaction --no-progress
+      # `composer install` is run again after each checkout rather than once up
+      # front: the base and the head can disagree about composer.lock, and
+      # benchmarking the head's dependencies against the base's code would
+      # attribute a dependency's regression to this pull request, or hide one.
+      - name: Record the base commit as the baseline
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          # The baseline lives in RUNNER_TEMP, outside the working tree: the checkout
+          # back to the pull request would remove or overwrite it under tools/.
+          # Whatever actions/checkout produced — on a pull_request that is the
+          # merge commit, not the branch tip, and it is the code the rest of CI
+          # tests. Recovered from git rather than from github.event.*.head.sha,
+          # which names the tip and would benchmark something no other job ran.
+          HEAD_SHA="$(git rev-parse HEAD)"
+          git checkout --quiet --force --detach "$BASE_SHA"
+          composer install --no-interaction --no-progress
+          php benchmarks/Comparative/RunBenchmarks.php --baseline="$RUNNER_TEMP/benchmark-baseline.json" --update-baseline
+          git checkout --quiet --force --detach "$HEAD_SHA"
+          composer install --no-interaction --no-progress
 
-      - name: Run benchmarks
-        run: php benchmarks/Comparative/RunBenchmarks.php --baseline=tools/php/benchmark-baseline.json --threshold=5
+      # No continue-on-error, deliberately. RunBenchmarks.php exits non-zero on a
+      # regression past the threshold, on a baseline it cannot parse, on a
+      # baseline file that is not there, and on a run in which no benchmark
+      # matched the baseline at all — that last one is what the committed
+      # placeholder used to produce, and it now fails instead of passing.
+      - name: Compare this pull request against it
+        run: php benchmarks/Comparative/RunBenchmarks.php --baseline="$RUNNER_TEMP/benchmark-baseline.json" --threshold=5
 
-      - name: Upload benchmark results
+      - name: Upload benchmark baseline
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: benchmark-results
-          path: tools/php/benchmark-baseline.json
-          if-no-files-found: ignore
+          name: benchmark-baseline
+          path: ${{ runner.temp }}/benchmark-baseline.json
+          if-no-files-found: warn
