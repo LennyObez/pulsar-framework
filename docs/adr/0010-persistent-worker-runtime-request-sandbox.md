@@ -28,7 +28,7 @@ Ship an optional persistent worker runtime (`runtime:serve`) as a built-in comma
 - **Execution order is deterministic:** (1) evict, (2) reset, (3) leak check.
 
 4. **Graceful recycling.** Workers shut down gracefully after configurable thresholds (request count, memory usage, uptime) and are restarted by a process supervisor.
-5. **Optional Fiber concurrency.** The `--concurrency N` flag enables Fiber-based connection multiplexing for accepting multiple connections. Individual request handling remains sequential (see ADR-0005).
+5. **Optional Fiber concurrency.** The `--concurrency` flag chooses whether the connection handler runs inside a Fiber: `0` is a synchronous accept loop, `1` is one connection Fiber at a time. Values above 1 are **refused** at construction, because the runtime does not isolate per-request state across interleaved Fibers — a request parked inside a contended cache lock would resume holding the next request's session ([ADR-0071](0071-a-fiber-keyed-map-is-not-concurrency.md)). Connections are therefore accepted one at a time, and individual request handling is sequential (see ADR-0005 for the execution model).
 
 ### What depends on requests being handled one at a time
 

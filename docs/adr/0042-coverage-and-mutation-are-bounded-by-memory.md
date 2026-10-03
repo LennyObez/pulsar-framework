@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Records a permanent reduction in what two quality gates verify, which
-[ADR-0001](0001-architecture-decision-records.md) asks us to write down rather than
+[ADR-0001](0001-ci-gates-and-adr-discipline.md) asks us to write down rather than
 absorb quietly. Continues the argument of
 [ADR-0041](0041-the-token-vault-takes-a-connection.md): a control that reports itself
 green on the strength of never having run is worth less than no control at all.
@@ -27,13 +27,19 @@ library works. Memory therefore grows with the number of tests, without bound.
 
 Measured on `ubuntu-latest`, which has 16 GB:
 
-| Observation                                  | Value                                           |
-| -------------------------------------------- | ----------------------------------------------- |
-| Tests executed before the process was killed | 13,457 of 42,579                                |
-| Wall time to that point                      | ~8 minutes                                      |
-| Exit code Infection reported                 | `-1` (terminated by signal, not a failing test) |
-| Implied cost                                 | ~1.1 MB per test                                |
-| Requirement for the full 44,544-test suite   | > 40 GB                                         |
+| Observation                                     | Value                                           |
+| ----------------------------------------------- | ----------------------------------------------- |
+| Tests executed before the process was killed    | 13,457 of the Unit suite's 42,588               |
+| Wall time to that point                         | ~8 minutes                                      |
+| Exit code Infection reported                    | `-1` (terminated by signal, not a failing test) |
+| Implied cost                                    | ~1.1 MB per test                                |
+| Implied requirement, Unit suite (42,588)        | > 45 GB                                         |
+| Implied requirement, whole config (44,544 then) | > 48 GB                                         |
+
+Those two suite sizes are what they were on the commit that measured this. Every count
+in this record that describes the tree **now** is marked as measured at rc.12, because a
+number in prose rots and the difference between a historical observation and a live one is
+the whole reason this table was inconsistent with itself.
 
 The exit code is the part that misled us for several runs. Infection reports a signal
 kill as `-1` and prints "Project tests must be in a passing state", which reads as a
@@ -57,8 +63,8 @@ Two dead ends are worth recording so they are not re-explored:
 
 **Coverage runs in one job whose process is recycled.** `php-coverage` has no matrix and
 no fan-out. Inside it, `tools/ci/partition-tests.php` cuts PHPUnit's own test listing
-into ten contiguous parts of about 4,450 tests each — roughly 5 GB apiece — and the job
-runs them in sequence. `tools/ci/merge-clover.php` then merges the ten Clover reports at
+into ten contiguous parts — about 4,675 tests each at rc.12, roughly 5 GB apiece — and the
+job runs them in sequence. `tools/ci/merge-clover.php` then merges the ten Clover reports at
 line level: a line is covered if any part covered it, and file and project metrics are
 recomputed from the merged lines rather than summed from the parts, because summing
 would count a line covered by two parts twice.
@@ -75,8 +81,8 @@ and methods and has no notion of branches, so Conditions arrives as 0/0. Printin
 and methods only.
 
 **Mutation testing is scoped to the security-critical core.** `infection.json5` mutates
-`src/Auth`, `src/Security` and `src/Audit`, and its initial run executes only the 3,625
-tests that cover them, through a PHPUnit configuration of its own at
+`src/Auth`, `src/Security` and `src/Audit`, and its initial run executes only the tests that
+cover them — 3,712, measured at rc.12 — through a PHPUnit configuration of its own at
 `tools/php/mutation/phpunit.xml`. Covered MSI is enforced at 90; plain MSI is not,
 because it counts mutants no test reaches and the test scope is narrowed on purpose.
 
@@ -89,7 +95,7 @@ Three narrower mechanisms were tried first and rejected on evidence:
 
 - A second `<testsuite>` naming those paths makes `composer test` run all of them twice.
 - Carving them out of the `Unit` suite drops them from `composer test:all`, which selects
-  that suite by name — a silent loss of 3,625 tests.
+  that suite by name — a silent loss of all 3,712 of them.
 - A `--filter` regex has to survive JSON5 unescaping and then per-platform argument
   escaping. On Windows the anchor arrived as `"^^"` and the run matched nothing. A gate
   should not rest on that.
@@ -106,7 +112,7 @@ full suite against GitHub's six-hour ceiling for one job, and splitting the work
 each piece without changing the total. So the nightly measures the slice a single job can
 reach — `src/Auth`, `src/Security` and `src/Audit`, through the same
 `tools/php/mutation/phpunit.xml` that scopes mutation testing, so both figures describe
-the same code. Branch coverage for the other 2,109 files under `src/` is measured
+the same code. Branch coverage for the other 2,247 files under `src/` (rc.12) is measured
 nowhere, and will not be until PCOV learns branches.
 
 That figure is reported, not gated, and the distinction is deliberate. Branch coverage
@@ -118,8 +124,8 @@ decide the outcome — while leaving statements and methods gated exactly as the
 pull request. Setting the floor is the follow-up to the first green nightly run, and it
 is a decision that belongs to whoever reads that number.
 
-Mutation testing covers 483 of the 2,592 files under `src/`. Everything outside
-those three trees has no mutation gate. This is a real reduction, and it is the honest
+Mutation testing covers 495 of the 2,742 files under `src/`, measured at rc.12. Everything
+outside those three trees has no mutation gate. This is a real reduction, and it is the honest
 one: before this change the gate failed on every run, which enforced nothing while
 appearing to enforce something.
 
@@ -136,4 +142,6 @@ parts is counted once. A slip in either would move the enforced figure without m
 single line of covered code, so neither ships untested.
 
 If the suite keeps growing, `COVERAGE_PARTS` in `ci.yml` is the dial. At the measured
-1.1 MB per test, keep parts under about 5,000 tests.
+1.1 MB per test, keep parts under about 5,000 tests. At rc.12 the whole configuration lists
+46,745 tests and the Unit suite 44,510, so ten parts sit at about 4,675 — one more part is
+due at roughly 50,000.

@@ -2,6 +2,21 @@
 
 ## Status
 
+**Superseded by [ADR-0071](0071-a-fiber-keyed-map-is-not-concurrency.md).**
+The synchronous execution model below is unchanged and still governs. The Fiber rule is
+not: thirteen files under `src/` and `extensions/` call the Fiber API, in three roles this
+record does not distinguish, and ten of them do so purely to keep per-execution state
+from bleeding between fibers. Exactly one suspends a fiber, and it is not either of the
+two hash chains that used to. `--concurrency N` above 1 is now refused at construction
+rather than approved; extensions are told to key request state by `Fiber::getCurrent()`
+rather than forbidden the API; and the "architecture tests" this record claimed as
+enforcement did not exist until ADR-0071 added one. Read ADR-0071 for what is in force
+and `docs/async-model.md` for the full inventory.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted
 
 ## Context

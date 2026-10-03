@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Narrows types carrying `#[Api(since: '1.0.0-rc.12')]` during the RC phase,
-which [ADR-0001](0001-architecture-decision-records.md) asks us to justify rather than
+which [ADR-0001](0001-ci-gates-and-adr-discipline.md) asks us to justify rather than
 avoid. Continues [ADR-0045](0045-a-control-status-is-observed-not-written.md), which
 made a control status impossible to write as a literal, and closes the two holes three
 adversarial reviews found in it.

@@ -98,7 +98,19 @@ If an extension is not in the host's allow-list, its effective tier defaults to 
 
 ### Capability model
 
-Each tier grants a deterministic set of capabilities:
+Each tier grants a deterministic set of capabilities.
+
+**This matrix is the single owner of that fact.** Three other places used to state the
+same model — the tier summary in `docs/extensions.md`, a tier table in
+`docs/contributing/extensions.md`, and the header docblock of `config/extensions.php` —
+and only this one was checked, so only this one stayed right: the config stub had been
+telling operators that `verified` gets everything except `CryptoKeyAccess` and
+`ProcessExec`, omitting `ContainerWrite`, which is the exclusion that stops a verified
+extension substituting its own `Session`, `Auth` or `CsrfGuard`. The contributing-guide
+copy is now a pointer here. The other two are derived views, and
+`TrustTierDocumentationTest` fails when any of them stops agreeing with
+`CapabilityPolicy::defaults()` — in both directions, so a capability with no row fails and
+a row naming a capability that no longer exists fails too.
 
 | Capability            | Core | Verified | Community | Untrusted |
 | --------------------- | ---- | -------- | --------- | --------- |

@@ -68,13 +68,29 @@ the operator sees them all at once rather than one failed boot at a time.
 
 ## Consequences
 
-- Migrated so far: `CacheConfig` (adopted; its bespoke `CacheWiring` log
-  removed to avoid double-reporting), `SessionConfig`, `SecurityConfig`.
-- Remaining root config sections are migrated incrementally; because the
-  default is warn and unmigrated sections simply are not swept, partial
-  coverage is safe and additive.
+- **The migration is complete for every root section.** Measured at rc.12: 69 config DTOs
+  implement `ReportsUnknownKeys`, and all 23 sections `ConfigManager::load()` puts in the
+  repository are among them — `AppConfig`, `SecurityConfig`, `ObservabilityConfig`,
+  `DatabaseConfig`, `CacheConfig`, `QueueConfig`, `RoutingConfig`, `RuntimeConfig`,
+  `MailConfig`, `StorageConfig`, `ViewConfig`, `SchedulerConfig`, `TenancyConfig`,
+  `ResilienceConfig`, `I18nConfig`, `EventConfig`, `ApiConfig`, `DeployConfig`,
+  `IntegrityConfig`, `NotificationConfig`, `SupervisorConfig`, `FeatureFlagConfig` and
+  `BusinessProfileConfig`. The remaining implementors are nested children and
+  extension-loaded sections, which roll up through their parents. This bullet read
+  "Migrated so far: `CacheConfig`, `SessionConfig`, `SecurityConfig`" and "remaining root
+  config sections are migrated incrementally" long after both had stopped being true.
+- `CacheConfig` was the reference implementation and its bespoke `CacheWiring` log was
+  removed on adoption, to avoid double-reporting.
+- Two drift guards keep it complete, and they check different gaps.
+  `UnknownKeyAuditTest::theShippedDefaultConfigHasNoUnknownKeys` loads the framework's own
+  `config/*.php` and asserts zero unknown keys, which catches a `KNOWN_KEYS` list that has
+  fallen behind its section. `NestedUnknownKeyCoverageTest` asserts that every child of a
+  reporting DTO also reports — the quieter gap, because a silent child contributes nothing
+  and the typo it was meant to catch resolves to a default with no warning anywhere. That
+  is how `EventConfig`, `TenancyConfig` and five sub-sections of `config/security.php` went
+  unaudited after the mechanism was already in place.
 - Adding a section to the mechanism is: implement `ReportsUnknownKeys`, declare
-  `KNOWN_KEYS`, collect in `fromArray()`, and extend the drift test.
+  `KNOWN_KEYS`, collect in `fromArray()`, and let the two drift guards above pick it up.
 
 ## Alternatives considered
 

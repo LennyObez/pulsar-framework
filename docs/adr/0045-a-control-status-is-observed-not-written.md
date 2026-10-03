@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Deletes and reshapes types carrying `#[Api(since: '1.0.0')]` during the RC
-phase, which [ADR-0001](0001-architecture-decision-records.md) asks us to justify rather
+phase, which [ADR-0001](0001-ci-gates-and-adr-discipline.md) asks us to justify rather
 than avoid. Closes the gap [ADR-0041](0041-the-token-vault-takes-a-connection.md) left
 open in its own consequences section: "It should be closed by checking which store
 resolved, not by trusting the mapping."

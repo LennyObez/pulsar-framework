@@ -31,7 +31,16 @@ Implement a separate audit logging subsystem with keyed BLAKE2b hash chaining. A
     Sinks that only implement the older `ChainableAuditSinkInterface` retain the legacy seed-on-null fallback for back-compat, but lose the fail-closed guarantee — production deployments should use a state-aware sink (`AuditFileSink` is one).
 - **Verification.** `AuditEntry::verify(auditKey)` validates a single entry's HMAC. Walking the chain from the seed detects any tampering - modifying any entry invalidates all subsequent entries.
 - **Append-only sink.** `AuditFileSink` writes JSON Lines with `LOCK_EX` for safe concurrent appends. The sink interface (`AuditSinkInterface`) allows alternative backends.
-- **Derived audit key.** The HMAC key is derived from the master key via KDF with the `pulsar__audit_hmac` context (see ADR-0006). It is never stored in configuration files.
+- **Derived audit key.** The HMAC key is derived from the master key by
+  `MasterKey::deriveSubKey()` with subkey id `2` (`SubKeyId::AuditChain`) and the KDF
+  context `audit___`, in `src/Core/Wiring/SecurityWiring.php`. It is never stored in
+  configuration files. The same `(2, 'audit___')` pair builds the `EnvKeyRing` that
+  `AuditChainVerifier` verifies with, so the writer and the verifier cannot drift apart.
+  The context is eight bytes because libsodium requires exactly
+  `SODIUM_CRYPTO_KDF_CONTEXTBYTES`, and `MasterKey::normalizeContext()` throws rather than
+  padding or truncating — this line previously named an eighteen-byte context, which is a
+  string no key in this framework has ever been derived under. See ADR-0006 for the
+  derivation scheme and `SubKeyId` for why every subsystem gets an id of its own.
 
 ### Separation from general logging
 

@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Changes how the kernel invokes every controller in every application, and what a
-nested route path means, which [ADR-0001](0001-architecture-decision-records.md) requires an
+nested route path means, which [ADR-0001](0001-ci-gates-and-adr-discipline.md) requires an
 ADR for. Adds four types under `#[Api(since: '1.0.0-rc.11')]` in `Pulsar\Core\Controller` and
 two more in `Pulsar\Routing\Binding` (`BindingScope`, `BindingPreset`) — additive, as the RC
 phase prefers.

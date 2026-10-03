@@ -51,7 +51,11 @@ mission-critical framework must never ship.
 This is a change to a core-architecture path and is therefore governed by
 [ADR-0001](0001-ci-gates-and-adr-discipline.md); the extension obligation in point 4
 extends the extension lifecycle contract in
-[ADR-0004](0004-extension-first-architecture.md).
+[ADR-0004](0004-extension-first-architecture.md), which
+[ADR-0070](0070-the-extension-api-is-shared-the-trust-that-ships-with-it-is-not.md)
+has since superseded. The lifecycle this point extends is the part ADR-0070 kept
+verbatim; what it retracted is ADR-0004's claim about the default trust posture
+bundled extensions ship with, which point 4 does not rely on.
 
 ## Consequences
 

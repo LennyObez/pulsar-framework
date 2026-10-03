@@ -2,6 +2,19 @@
 
 ## Status
 
+**Superseded by [ADR-0069](0069-a-dependency-you-require-is-not-a-dependency-you-avoided.md).**
+The core implements PSR-7, PSR-15 and PSR-17: `Kernel::handle()` takes a
+`ServerRequestInterface`, the middleware pipeline is a PSR-15 pipeline, all six PSR-17
+factories ship under `src/Http/Factory/`, and `composer.json` requires eleven PSR
+packages. The central argument below — **zero PSR dependencies** — is false against the
+tree, and two of the Consequences it produced (no PSR-15 interop, no PSR packages to
+track) are false with it. The `readonly` value objects survive as a second surface
+reached through a bridge. Read ADR-0069 for what is in force.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted
 
 ## Context

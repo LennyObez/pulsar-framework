@@ -52,7 +52,7 @@ Even after the library swap, the extension's adapter layer (challenge persistenc
 - attestation verification policy (which formats are accepted, which are rejected),
 - key material lifecycle through `KeyRingInterface` (ADR-0025 driver 4).
 
-The audit deliverable is a memo signed by the external engineer, archived under `docs/audit/` with the ADR cross-reference.
+The audit deliverable is a memo signed by the external engineer, archived under `docs/security/` with the ADR cross-reference. It was previously to be filed under `docs/audit/`, which `.gitignore` excludes from every clone — a location that would have made the deliverable invisible to the reviewers it exists for.
 
 ### 3. W3C conformance vectors MUST be in CI.
 
@@ -96,5 +96,23 @@ The library's natural extension points are:
 - `Webauthn\AuthenticatorAttestationResponseValidator` — replaces `Ceremony\RegistrationCeremony`'s attestation logic.
 - `Webauthn\AuthenticatorAssertionResponseValidator` — replaces `Ceremony\AuthenticationCeremony`'s signature verification.
 - Challenge persistence stays a Pulsar responsibility (Redis/DB/session-backed) but must be HMAC-bound to the active session via `KeyRingInterface`-derived signing keys.
+
+  > **Update, 1.0.0-rc.12.** The freshness half of this now ships, ahead of the library
+  > swap and independently of it. `Pulsar\Extension\Auth\WebAuthn\Ceremony\Challenge`
+  > mints a challenge as `version(1) || 7-byte big-endian issuance second || 24 random
+bytes`, and `challenge_ttl_seconds` is enforced by both ceremonies: past the window
+  > `verify()` throws `WebAuthnException::expiredChallenge()` and the failure is audited.
+  > Carrying the instant inside the challenge is what makes the TTL un-forgettable — it
+  > needs no server-side challenge store and no caller cooperation — and a challenge not
+  > in that format is refused rather than treated as unexpiring, so there is no
+  > downgrade path.
+  >
+  > The session HMAC binding this consequence calls for is **outstanding**. It was left
+  > out deliberately rather than forgotten: the issuance instant is only ever read back
+  > from the server's own copy of the challenge, so a MAC over it would authenticate the
+  > server to itself. Binding the challenge to the _session_ is a different and still
+  > wanted property, and the format carries a version byte precisely so it can land as
+  > version 2 without a flag day. See the reasoning in `Challenge`'s own docblock. This
+  > note records what ships; it does not change this record's decision.
 
 Do not import `Webauthn\…` symbols outside the `pulsar/webauthn` extension. The extension's own contracts remain the framework-public surface; the library is an internal implementation detail (ADR-0025 driver 3, "Swappability").

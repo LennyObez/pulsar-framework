@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Breaks a signature marked `#[Api(since: '1.0.0')]` during the RC phase, which
-[ADR-0001](0001-architecture-decision-records.md) asks us to justify rather than avoid.
+[ADR-0001](0001-ci-gates-and-adr-discipline.md) asks us to justify rather than avoid.
 Continues the argument of [ADR-0040](0040-tls-intent-belongs-in-the-dsn.md): a control
 that reports itself implemented on the strength of code existing is worth less than no
 control at all.

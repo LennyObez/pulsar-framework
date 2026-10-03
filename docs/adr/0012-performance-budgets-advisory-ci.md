@@ -2,6 +2,20 @@
 
 ## Status
 
+**Superseded by [ADR-0072](0072-a-budget-is-the-assertion-that-runs.md).**
+Every operative statement of the Decision below is false against the shipped CI. The
+budget JSON files are read by no code; the budgets that fail a build are `#[Assert]`
+attributes in `tests/Benchmark`. The retry threshold is 20, not 5. The job is
+`php-benchmark-tier-a`, is named "Hard Gate", and blocks — it is not advisory. No
+coefficient-of-variation logic exists, so nothing is promoted or demoted. And the
+budgets are absolute wall-clock numbers, not relative to a baseline; relative detection
+exists in `benchmark-regression.yml` with a different design. Read ADR-0072 for what is
+in force.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted
 
 ## Context

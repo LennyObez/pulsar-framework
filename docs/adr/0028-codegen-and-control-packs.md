@@ -79,7 +79,7 @@ Scaffolding packs are domain-specific starter kits stored in `resources/packs/{n
 - `config/`: Configuration stubs for the domain (encryption, audit, logging, etc.)
 - `src/`: Entity stubs with `{{project_name}}`, `{{namespace}}`, `{{project_slug}}` placeholders.
 - `tests/`: Test stubs for the entity scaffolds.
-- `docs/setup-guide.md`: Getting started documentation.
+- `docs/setup-guide.md`: Getting started documentation. (Every path in this list is relative to the pack root, `resources/packs/{name}/` — this one is not `docs/setup-guide.md` at the repository root, which has never existed. All five shipped packs carry the file.)
 - `SCAFFOLDING.md`: Scaffolding coverage report using "supports controls for" language.
 - `NOT-CERTIFIED.md`: Prominent disclaimer that the pack is not a compliance certification.
 

@@ -26,10 +26,26 @@ recording anywhere", which is the same question as "is this call stack inside a
 record" only in a process that runs one call stack.
 
 Pulsar does not. `FiberScheduler` interleaves Fibers on one worker, and the sink
-`AuthWiring` binds reaches `AuditLogger`, which spins cooperatively on its chain
+`AuthWiring` binds reaches `AuditLogger`, which spun cooperatively on its chain
 lock — `while ($this->chainLocked && Fiber::getCurrent() !== null)`. A sink that
-suspends inside `record()` is not hypothetical; it is what the shipped sink does
+suspended inside `record()` was not hypothetical; it was what the shipped sink did
 under contention.
+
+> **Note, 1.0.0-rc.12.** That mechanism is gone. `AuditLogger` no longer touches the
+> Fiber API at all: it refuses a second entrant outright with
+> `SecurityException::auditChainAdvanceReentered()` instead of waiting for the first
+> to finish. [ADR-0071](0071-a-fiber-keyed-map-is-not-concurrency.md) section 2 records
+> why — a bare `Fiber::suspend()` is not a scheduling primitive, and the guard skipped
+> the wait entirely for non-fiber callers, which is every caller in every deployment
+> that is not running the persistent runtime.
+>
+> **The decision below is unaffected and does not change.** The Gate's `WeakMap` guard
+> is still keyed by call rather than by instance, and still must be: a sink can still
+> throw, and can still be re-entered by a nested authorization check inside a single
+> call stack. The argument for call scope never depended on this particular sink
+> suspending — that was the sharpest illustration available at the time, not the
+> premise. What follows is the record as written, with the illustration now in the past
+> tense.
 
 With the guard on the instance, a decision reached by Fiber B while Fiber A's
 sink was suspended read as B re-entering A's record. Measured by execution, with
@@ -327,8 +343,12 @@ that.
 
 - [ADR-0052](0052-an-authorization-decision-does-not-run-the-application.md) —
   the decisions this amends
-- [ADR-0005](0005-synchronous-core-controlled-fiber-usage.md) — why per-Fiber
-  state is keyed the way it is
+- [ADR-0071](0071-a-fiber-keyed-map-is-not-concurrency.md) — why per-Fiber state
+  is keyed the way it is, and the record that governs it. It superseded
+  [ADR-0005](0005-synchronous-core-controlled-fiber-usage.md), which this bullet
+  used to name on its own: ADR-0005 permitted Fibers in two named subsystems and
+  said nothing at all about the fiber-keyed holders, of which the `Gate` guard
+  decided on here is one
 - [docs/authorization.md](../authorization.md#decision-audit-trail)
 - `tests/Unit/Auth/Authorization/GateDecisionRecordingTest.php`
 - `tests/Unit/Auth/Internal/Authorization/BufferedAuthorizationDecisionSinkTest.php`

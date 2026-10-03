@@ -184,7 +184,7 @@ reasoning above.
 Removed with it: `ApiException::entitySerializationBanned()` (`#[Api]`),
 `ApiConfig::$entitySerializationBanEnabled` (`#[Api]` constructor parameter), and the
 `entity_serialization_ban` key from `config/api.php`. All three are breaking changes to
-1.0.0-marked surface during RC, which [ADR-0001](0001-architecture-decision-records.md)
+1.0.0-marked surface during RC, which [ADR-0001](0001-ci-gates-and-adr-discipline.md)
 asks us to justify rather than avoid. The justification is the same in each case: they
 exist only to configure a class that was never asked a question, and carrying them to GA
 would freeze a switch that governs nothing until the next major version.

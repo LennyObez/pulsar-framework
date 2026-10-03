@@ -1,8 +1,19 @@
 # ADR-0026: Database Enhancements
 
-- **Status**: Accepted
+- **Status**: Accepted, with the connection-pooling configuration retracted
 - **Date**: 2026-02-12
 - **Plan**: RC11-12
+
+> **Amendment.** The "Connection pooling" decision below says pooling "is enabled only
+> in persistent runtimes". It was never enabled in any runtime: no wiring built a
+> `ConnectionPool`, so the `pool` section of `config/database.php` was parsed into a
+> typed object that nothing read, and `max_connections` was a number an operator could
+> size a database around while it governed nothing. That section, its parser and its
+> documentation have been removed; `ConnectionPool`, `PoolConfig` and
+> `NullConnectionPool` remain as components an application constructs itself. Nothing
+> else in this ADR is affected — read/write routing, failover, the query cache and the
+> SQL logging safety rules stand as decided. The original text is preserved below for
+> the record.
 
 ## Context
 

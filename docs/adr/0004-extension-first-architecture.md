@@ -2,6 +2,20 @@
 
 ## Status
 
+**Superseded by [ADR-0070](0070-the-extension-api-is-shared-the-trust-that-ships-with-it-is-not.md).**
+The mechanism below is intact and still governs; two statements about it are not.
+"No privileged access" and "no blessed extensions with special access" are contradicted
+by the shipped `config/extensions.php`, which pre-grants Core tier — the tier that
+bypasses `ScopedContainerProxy` and `ScopedRouterProxy` entirely — to 21 first-party
+extensions and `verified` to 13 more. The lifecycle has five phases, not four:
+`ExtensionBootstrap` runs Register, PreBoot, Boot, PostBoot and Shutdown. Read ADR-0070
+for what is in force, and [ADR-0023](0023-extension-trust-tiers.md) for the tier system
+that replaced the flat model this record describes.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted
 
 ## Context
