@@ -7,9 +7,7 @@ namespace Pulsar\Tests\Unit\Documentation;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
+use Pulsar\Tests\Unit\Documentation\Support\TrackedFiles;
 
 use function array_count_values;
 use function array_map;
@@ -23,7 +21,6 @@ use function preg_replace;
 use function sort;
 use function str_replace;
 use function str_starts_with;
-use function strlen;
 use function strtolower;
 use function substr;
 use function trim;
@@ -50,9 +47,11 @@ use const DIRECTORY_SEPARATOR;
  * `control-packs.md` for months after the file was renamed, and nothing noticed.
  *
  * Code spans and fenced blocks are stripped before links are read, because markdown does
- * not render a link inside them and neither should this. The audit records under
- * `docs/audit/` quote a broken link as evidence; a checker that could not tell a quoted
- * link from a live one would demand the record be falsified to stay green.
+ * not render a link inside them and neither should this: a page quoting a broken link as
+ * evidence must not have to falsify the quote to stay green.
+ *
+ * The corpus is what git ships ({@see TrackedFiles}), so a gitignored local page can neither
+ * pass the index here nor be linked from it.
  */
 #[CoversNothing]
 final class DocsIndexTest extends TestCase
@@ -114,6 +113,17 @@ final class DocsIndexTest extends TestCase
     /**
      * One page, one entry. A page listed under two headings has no home.
      */
+    /** A link to a gitignored page resolves on the disk that has it and nowhere else. */
+    #[Test]
+    public function theIndexLinksNoPageGitIgnores(): void
+    {
+        self::assertSame(
+            [],
+            TrackedFiles::ignored($this->repositoryRoot(), array_map(static fn(string $t): string => 'docs/' . $t, $this->indexTargets())),
+            'docs/README.md links pages .gitignore keeps out of every clone',
+        );
+    }
+
     #[Test]
     public function noPageIsListedTwiceInTheIndex(): void
     {
@@ -268,23 +278,7 @@ final class DocsIndexTest extends TestCase
      */
     private function allMarkdownFiles(): array
     {
-        $root = $this->repositoryRoot();
-        $docs = $root . DIRECTORY_SEPARATOR . 'docs';
-        self::assertDirectoryExists($docs);
-
-        $files = [];
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($docs));
-
-        foreach ($iterator as $file) {
-            if (!$file instanceof SplFileInfo || $file->getExtension() !== 'md') {
-                continue;
-            }
-
-            $path = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
-            $files[] = $path;
-        }
-
-        sort($files);
+        $files = TrackedFiles::under($this->repositoryRoot(), '.md', 'docs');
 
         self::assertNotSame([], $files, 'No markdown was found under docs/');
 

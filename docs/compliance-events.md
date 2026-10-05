@@ -345,16 +345,29 @@ use Pulsar\Observability\Log\Compliance\PciDssLogFormatter;
 use Pulsar\Observability\Log\Compliance\GdprLogFormatter;
 use Pulsar\Observability\Log\Compliance\HipaaLogFormatter;
 use Pulsar\Observability\Log\Compliance\SoxLogFormatter;
+use Pulsar\Security\Crypto\MasterKey;
+
+// The GDPR and HIPAA formatters pseudonymize with a KEYED hash and take the key
+// as a required constructor argument. Derive it the way the framework's own
+// wiring does -- subkey 18, context 'cmp_logs' -- so a manually assembled sink
+// produces the same pseudonyms as the config-driven one.
+$hmacKey = $masterKey->deriveSubKey(18, 'cmp_logs');
 
 $complianceSink = new ComplianceLogSink(
     underlyingSink: $fileSink,
     encryptor: $encryptor,       // optional, encrypts full entry
     new PciDssLogFormatter(),
-    new GdprLogFormatter(),
-    new HipaaLogFormatter(),
+    new GdprLogFormatter($hmacKey),
+    new HipaaLogFormatter($hmacKey),
     new SoxLogFormatter(),
 );
 ```
+
+`GdprLogFormatter` and `HipaaLogFormatter` reject a key shorter than
+`SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN` (16 bytes) with an
+`InvalidArgumentException` rather than pseudonymizing weakly. `PciDssLogFormatter`
+and `SoxLogFormatter` take no key: masking a PAN and classifying a snapshot are
+not keyed operations.
 
 ### PCI-DSS: card masking
 
@@ -368,14 +381,19 @@ Masking is applied to both the log message and all context values recursively.
 
 ### GDPR: pseudonymization
 
-`GdprLogFormatter` replaces personal data fields with SHA-256 based pseudonyms (truncated to 16 hex characters, prefixed with `pseudonym_`). Default fields: `user_id`, `email`, `subject_id`, `name`, `ip_address`. Custom field lists can be provided via the constructor.
+`GdprLogFormatter` replaces personal data fields with **keyed BLAKE2b** pseudonyms — `Hmac::computeHex($value, $hmacKey)` truncated to 16 hex characters and prefixed with `pseudonym_`. Default fields: `user_id`, `email`, `subject_id`, `name`, `ip_address`; a custom list is the second constructor argument, matched case-insensitively, and only string values are replaced.
+
+The key is not optional and the hash is not plain SHA-256, which is the difference that matters: an unkeyed digest of a low-entropy identifier — an email address, an IPv4 address, a sequential user id — is re-identifiable by exhaustive search in seconds, so it would not be pseudonymization within the meaning of GDPR Art. 4(5) at all. Earlier revisions of this page described it as SHA-256 based; the code has never been.
+
+It rewrites the **context only**. `format()` returns the entry with its `message` unchanged, so a personal identifier interpolated into the message string reaches the file in the clear. Pass identifiers as context values — `$logger->info('subject exported', ['subject_id' => $id])`, not `$logger->info("subject $id exported")`. Only `PciDssLogFormatter` rewrites the message, and only for Luhn-valid PANs.
 
 ### HIPAA: PHI markers
 
 `HipaaLogFormatter` detects PHI categories in log context and:
 
 - Adds a `phi_access: true` flag when any PHI key is present
-- Pseudonymizes patient identifier fields (`patient_id`, `patient_name`, `ssn`, `mrn`, `health_plan_id`) using SHA-256 hashing with a `patient_` prefix
+- Pseudonymizes patient identifier fields (`patient_id`, `patient_name`, `ssn`, `mrn`, `health_plan_id`) with the same **keyed BLAKE2b** construction the GDPR formatter uses, truncated to 16 hex characters and prefixed with `patient_`. It is keyed for the same reason and more sharply: an SSN has under 30 bits of entropy, so an unkeyed digest of one is a lookup table away from the number itself. Earlier revisions of this page said SHA-256; the key is a required constructor argument and a short one is refused.
+- The `phi_access` flag is added to the context; the log **message** is left untouched by this formatter, so PHI interpolated into a message string is not masked. Put identifiers in the context, not the message
 
 ### SOX: snapshot handling
 

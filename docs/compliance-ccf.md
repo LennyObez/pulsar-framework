@@ -21,6 +21,7 @@ A mapping returns declarations. There are exactly two kinds, and each fixes what
 ```php
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\Control\ControlDeclaration;
+use Pulsar\Compliance\Control\ControlSubject;
 use Pulsar\Compliance\Probe\PanAtRestProbe;
 
 ControlDeclaration::probed(
@@ -30,6 +31,7 @@ ControlDeclaration::probed(
     requirement: 'Render PAN unreadable anywhere it is stored by using strong one-way '
         . 'hash functions, truncation, index tokens, or strong cryptography.',
     probe: new PanAtRestProbe(),
+    subject: ControlSubject::CardholderData,
 );
 ```
 
@@ -74,22 +76,49 @@ A control whose only available facts are about a _different_ subject does not be
 
 Moving a control to the checklist removes it from the coverage denominator. That is the point: it stops a colour being reported about something else.
 
+#### The estate a control regulates
+
+The table above is a list of controls somebody caught. What catches the rest is `ControlSubject`: every probed declaration names the **estate** it regulates, every fact names the estate it interrogated, and a fact whose estate the control's does not contain cannot carry it. See [ADR-0062](adr/0062-proof-must-be-about-the-control-subject.md).
+
+The estate goes on the **declaration**, not on the probe, for two reasons:
+
+- A probe naming its own estate would be self-certifying — it would name the estate of the facts it already requires, and then agree with itself.
+- One probe serves controls about different estates. `DataErasureProbe` answers CCPA 1798.105, which is about personal data, and SOC 2 C1.2, which is about confidential information. Nothing on the probe can tell those two apart, because it is the same probe — and before the estate existed, `scope.processes_personal_data = false` retired both.
+
+The vocabulary is deliberately narrow, and narrowness is the property that makes it work: `SessionPayloads` is a case and "data at rest" is not, because an estate one level too broad lets "the session cipher resolved" answer for cardholder data. For the same reason the data classes do **not** nest — health data _is_ personal data, and a containment relation saying so would let one line of config silence HIPAA and PCI as well.
+
+One estate has parts, and it earns them: `DataInTransit` contains `DatabaseTransport` and `HttpTransport`, so HIPAA 164.312(e)(1) can be carried by the negotiated database session without any fact having to be named "data in transit".
+
+The estate is joined twice, and both joins are refusals:
+
+| Join  | Rule                                                                    |
+| ----- | ----------------------------------------------------------------------- |
+| Proof | A fact carries a control only if the control's estate covers the fact's |
+| Scope | An operator assertion retires a control only if it covers the control's |
+
 ### Observations, and how they were obtained
 
 A probe never touches the container. It reads a frozen set of already-gathered facts, each carrying its **grade** — how the fact was obtained.
 
-| Grade      | Meaning                                                                                                         |
-| ---------- | --------------------------------------------------------------------------------------------------------------- |
-| `measured` | The behaviour was exercised: an algorithm ran, an HMAC chain verified                                           |
-| `resolved` | The concrete implementation that will serve requests was resolved and named. Context in the report; never proof |
-| `declared` | A configuration value was read: what was requested, never what happened                                         |
-| `asserted` | The operator stated a fact about the deployment that no code can observe                                        |
+| Grade       | Meaning                                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `measured`  | The behaviour was exercised: an algorithm ran, an HMAC chain verified                                                                                                                    |
+| `available` | The platform offers a primitive and nothing here was seen using it: `extension_loaded('sodium')` answers the same on a deployment that encrypts everything and one that encrypts nothing |
+| `resolved`  | The concrete implementation that will serve requests was resolved and named. Context in the report; never proof                                                                          |
+| `declared`  | A configuration value was read: what was requested, never what happened                                                                                                                  |
+| `asserted`  | The operator stated a fact about the deployment that no code can observe                                                                                                                 |
 
 **Only `measured` proves behaviour.** `resolved` did too until [ADR-0050](adr/0050-a-fact-is-produced-only-by-the-component-that-measures.md), and that was ADR-0041's defect restated in the vocabulary built to forbid it: what a resolution computes is `in_array($concrete, $accepts)` — which class is bound, and is it on the allow-list — which is "the class exists" with one extra lookup.
 
 `resolved` is still produced and still printed, because a report saying `TokenStoreInterface -> InMemoryTokenStore; tokens are held in process memory` tells an assessor which class to go and look at. It is context, carried with its grade beside it, and never the reason a control holds. Note what is absent from the enum: there is no grade for "the binding exists" either. The vocabulary offers resolved _identity_ and nothing weaker.
 
 Narrowing the grade cost real coverage and the cost was taken rather than engineered around: on a deployment carrying every implementation this release assesses, probed coverage fell from 78/96 to 32/96. None of the 46 that moved got worse — they were passing on which class was wired. Their findings now read "Claimed and not observed", name the class that was found, and carry a remediation saying what would close them.
+
+It fell again, to 25/100, when `extension_loaded('sodium')` was regraded from `measured` to `available` ([ADR-0061](adr/0061-a-loaded-extension-is-not-a-measurement.md)) — nine controls across seven frameworks had been resting on a loaded PHP extension. And to 11/100 when the estate join arrived ([ADR-0062](adr/0062-proof-must-be-about-the-control-subject.md)): twelve controls about the audit trail were being carried by an HMAC recomputation over the framework's own compliance evidence register, two controls about a deployment's configuration by its liveness checks, and three AI-monitoring verdicts by the same. Each of those is a real measurement of something the control does not regulate, and each finding now names both estates so the operator is not sent to redo work that is already done.
+
+**11/100 is the low-water mark and not the standing figure. It is 19/100 now, and every one of the eight it climbed came from measuring a thing rather than from relaxing a rule.** Demoting a false green is half a repair: a report where 89 of 100 controls read "claimed and not observed" carries little more information than one where 32 read a false green, and an operator stops reading an instrument like that. So five observers were written against subsystems that could be exercised and were not — the Article 50 transparency subsystem ([ADR-0063](adr/0063-a-transparency-subsystem-is-exercised-not-resolved.md), `ai_act` 0 → 1), the session cipher ([ADR-0064](adr/0064-a-session-cipher-is-measured-by-sealing-something.md), `swift_csp` 2 → 3), the pseudonymisation service and the incident register ([ADR-0065](adr/0065-an-incident-register-is-measured-by-recording-something.md), `gdpr` 0 → 2 and `nis2` 0 → 1), and the at-rest rule this framework applies to a field classified as personal data ([ADR-0066](adr/0066-personal-data-is-measured-by-classifying-something.md), `gdpr` 2 → 4 and `ccpa` 0 → 1). The per-framework figures are written down in `FrameworkMappingTest::SATISFIED_WHEN_EQUIPPED`, which asserts them against the real assessment rather than describing them.
+
+**What did not climb with them, and why that is the same rule working.** ADR-0066 closed the three controls declared over `personal_data` and left NIST CSF PR.DS and HIPAA's two encryption controls exactly where they were: those regulate `confidential_information` and `health_data`, which are SIBLING estates that deliberately do not nest, so a measurement of one says nothing about the others. Each of their findings now names the estates that WERE exercised, so an operator is not sent to redo work that is done — and the way to close them is another observer, never a wider name for this one.
 
 ### Absence is not presence
 
@@ -113,7 +142,20 @@ A subjectless fact is produced from a `SubjectAbsence`, which **refuses to exist
 
 **And resolved identity is not always enough.** ADR-0041 prescribed checking which store resolved for PCI Req 3.4, and doing exactly that left the next layer open: on the repository this was written in, `TokenStoreInterface` resolves to `DatabaseTokenStore` — the durable implementation the ADR asked for — against a database holding no `token_vault` table, so the first `tokenize()` throws and nothing is ever rendered unreadable. Where a control turns on a subsystem _working_ rather than on which implementation serves it, the fact must be `measured`. `TokenVaultRendersUnreadable` is such a fact: it tokenizes a synthetic value through the live vault, reads the persisted bytes back from the store, checks they conceal the input, detokenizes it, and removes the mapping again.
 
-That measurement **writes**, and it is the only one in the evidence set that does. The value is 32 random hex characters from the CSPRNG, never a PAN; the context is `compliance.vault_probe`, never `pan`; removal runs in a `finally`; and a removal that fails is reported rather than left silent.
+That measurement **writes**. The value is 32 random hex characters from the CSPRNG, never a PAN; the context is `compliance.vault_probe`, never `pan`; removal runs in a `finally`; and a removal that fails is reported rather than left silent.
+
+It is no longer the only writer, and an earlier revision of this page said it was. Four observers write, and they differ in what they leave behind — the distinction matters because two of them cannot take it back:
+
+| Observer                   | What it writes                                                                         | What survives the run                                                                                                                                        |
+| -------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `TokenVaultObserver`       | one synthetic value tokenized through the live vault, read back, detokenized           | nothing — the mapping is removed in a `finally`                                                                                                              |
+| `PseudonymizationObserver` | one pseudonym mapping                                                                  | nothing — erased through `ForgetService`, which is the Art. 17 path the control is about                                                                     |
+| `AiTransparencyObserver`   | one Article 50 declaration under a reserved surface id, and one synthetic-content mark | **the declaration** — `AiTransparencyInterface` has no withdrawal, so it is bounded to one entry rather than one per run, and the observer proves that bound |
+| `IncidentRegisterObserver` | one `Low`-severity incident, read back by id                                           | **the row, permanently** — one per report run. `IncidentReporterInterface` has no removal and should not grow one                                            |
+
+The incident row is deliberate rather than an omission: a register whose entries can be deleted evidences nothing. It is written at the lowest severity the vocabulary has, so that `BreachNotificationCheck` — which reads the register at `High` and above — cannot later fail a deployment over a row the measurement itself created; it carries the source `compliance.incident_register_probe`, so every row the check ever wrote can be found with one string; and its title says in its first words that it describes no security event. See [ADR-0065](adr/0065-an-incident-register-is-measured-by-recording-something.md).
+
+Gathering has other effects that are not writes but are not free either: it opens a database session and queries it, it **executes every registered health check**, and it recomputes one HMAC per stored evidence record. Treat `compliance:report` as an operation against the deployment, not a read of it.
 
 ### Probes
 
@@ -145,16 +187,18 @@ public function requirement(): ControlRequirement
 
 `ProbeVerdict::reach()` then applies one decision table against the evidence set the engine gathered:
 
-| Evidence                                                    | Outcome                             |
-| ----------------------------------------------------------- | ----------------------------------- |
-| the scope assertion puts the subject out of play            | `not_applicable`                    |
-| every required fact present, one of them `measured`         | `satisfied`                         |
-| every required fact present, none of them `measured`        | `unsatisfied` (claimed, unobserved) |
-| an `essential` fact missing                                 | `unsatisfied`                       |
-| another required fact missing, one required fact `measured` | `partial`                           |
-| another required fact missing, none `measured`              | `unsatisfied`                       |
+| Evidence                                                                         | Outcome                             |
+| -------------------------------------------------------------------------------- | ----------------------------------- |
+| the scope assertion puts the subject out of play                                 | `not_applicable`                    |
+| every required fact present, one of them `measured` **on this control's estate** | `satisfied`                         |
+| every required fact present, none of them `measured` on it                       | `unsatisfied` (claimed, unobserved) |
+| an `essential` fact missing                                                      | `unsatisfied`                       |
+| another required fact missing, one required fact `measured` on the estate        | `partial`                           |
+| another required fact missing, none `measured` on it                             | `unsatisfied`                       |
 
 Admissibility is judged over the **required** facts only. Supporting facts are printed with the finding and named in the summary as corroboration; they never decide it.
+
+"On this control's estate" is the join from ["The estate a control regulates"](#the-estate-a-control-regulates) above, and it is not a footnote to the table — it is the row that decides real controls. A fact `measured` on another estate is neither proof nor a gap: it is present, so the operator is not told to go and provide it, and the finding names it and says which estate it interrogated instead. That is why the same measurement can satisfy GDPR Art 5(1)(f) and leave NIST CSF PR.DS red in one report.
 
 Both summaries are generated from the observations that decided the verdict and print the grade each was obtained at, so the sentence at the top of a finding is checkable against the lines under it. There is no per-probe summary constant: a sentence asserting the control holds would be prose no evidence had to support.
 
@@ -203,7 +247,7 @@ Silence means **in scope**. Scoping a control out takes an explicit `false` unde
 
 `ComplianceCatalogWiring` binds the catalog, the assessment and the evidence gatherer, and **none of the three is built at boot**.
 
-The catalog holds deferred _sources_ — the framework's own sixteen mappings, plus one per installed compliance extension — and executes them at its first read. Nothing on the request path reads it, so no request pays for the sixteen mapping classes or the 193 declarations behind them; measured on the reference machine, building it eagerly cost 0.52 ms warm and roughly 22 ms cold on every boot of every application, compliance-enabled or not. The evidence gatherer is lazy for a different and stronger reason: gathering opens a database session, executes every registered health check and tokenizes a value through the live vault, and doing that during wiring would observe services before the wirings that replace them had run.
+The catalog holds deferred _sources_ — the framework's own seventeen mappings, plus one per installed compliance extension — and executes them at its first read. Nothing on the request path reads it, so no request pays for those mapping classes or the 215 declarations behind them; measured on the reference machine when there were sixteen mappings and 193 declarations, building it eagerly cost 0.52 ms warm and roughly 22 ms cold on every boot of every application, compliance-enabled or not — a floor, left as measured rather than rescaled. The evidence gatherer is lazy for a different and stronger reason: gathering opens a database session, executes every registered health check, tokenizes a value through the live vault, pseudonymizes and then erases an identifier, declares one Article 50 surface and records one incident — see [what a report writes](#ok-is-not-the-same-question-as-does-the-control-hold) — and doing that during wiring would observe services before the wirings that replace them had run.
 
 An extension contributes its controls with `contribute()` rather than `register()`, so its mapping is autoloaded at the first read too:
 
@@ -233,7 +277,7 @@ Findings come back worst-first within each framework, each carrying the probe th
 
 ## Supported frameworks
 
-Sixteen mappings ship in `src/Compliance/Frameworks/`, and two more in the DSA and Data Act extensions:
+Seventeen mappings ship in `src/Compliance/Frameworks/`, and two more in the DSA and Data Act extensions:
 
 | Framework | Mapping           | Framework | Mapping           |
 | --------- | ----------------- | --------- | ----------------- |
@@ -245,8 +289,9 @@ Sixteen mappings ship in `src/Compliance/Frameworks/`, and two more in the DSA a
 | ISO 27001 | `Iso27001Mapping` | SWIFT CSP | `SwiftCspMapping` |
 | PSD2      | `Psd2Mapping`     | CCPA      | `CcpaMapping`     |
 | eIDAS     | `EidasMapping`    | NIST CSF  | `NistCsfMapping`  |
+| EU AI Act | `AiActMapping`    |           |                   |
 
-The sixteen core mappings are contributed by `ComplianceCatalogWiring` as a single deferred source. The two extension mappings contribute themselves from their extension's `boot()`, in the form shown under [Running an assessment](#running-an-assessment).
+The seventeen core mappings are contributed by `ComplianceCatalogWiring` as a single deferred source. The two extension mappings contribute themselves from their extension's `boot()`, in the form shown under [Running an assessment](#running-an-assessment).
 
 Boot is the right moment and the only one: `ComplianceCatalogWiring` is the last entry in the wiring list, so the catalog exists by the time extensions boot, and every source is in place before anything can read it. The check on the binding keeps a MicroKernel deployment — which wires no compliance at all — working rather than fatal.
 

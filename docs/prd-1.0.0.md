@@ -38,26 +38,41 @@ See `README.md` "Compliance-ready controls" for the existing disclaimer.
 | W3C WebAuthn conformance vector suite | Imported + green in CI                                          | `extensions/auth/tests/Unit/WebAuthn/Ceremony/W3cConformanceVectorTest.php`; ADR-0032     | ⚠️ (stub shipped, population is 1.0.0 GA blocker)     |
 | OAuth2/OIDC conformance vector suite  | Imported + green in CI                                          | `extensions/auth/tests/Unit/OAuth2/Rfc6749ConformanceTest.php`; ADR-0032                  | ⚠️ (stub shipped, population is 1.0.0 GA blocker)     |
 | JOSE / JWT conformance vector suite   | Imported + green in CI                                          | `extensions/auth/tests/Unit/OAuth2/Oidc/RfcJoseConformanceTest.php`; ADR-0032             | ⚠️ (stub shipped, population is 1.0.0 GA blocker)     |
-| External security audit               | Memo from independent engineer                                  | `docs/audit/`                                                                             | 🔜 (moved to 1.1.0 blocker per ADR-0032)              |
+| External security audit               | Memo from independent engineer                                  | `docs/security/`                                                                          | 🔜 (moved to 1.1.0 blocker per ADR-0032)              |
 
 ## Compliance support claims
 
-Every framework in `README.md` "Compliance-ready controls" must map back to
-the `docs/security/asvs-l2-matrix.md` (ASVS L2 stub) and individual control
-docs (`docs/compliance/<framework>.md`).
+Every framework in `README.md` "Compliance-ready controls" must map back to something a
+reader can open.
 
-| Framework      | Pulsar control delivery                                        | Mapping doc                             |
-| -------------- | -------------------------------------------------------------- | --------------------------------------- |
-| SOC 2          | Audit chain + RBAC + session management                        | `docs/compliance/soc2.md` (TBD ratchet) |
-| HIPAA 2026     | Encryption, MFA, audit trails, access controls, incident hooks | `docs/compliance/hipaa.md` (TBD)        |
-| ISO 27001:2022 | Annex A.8 technical controls                                   | `docs/compliance/iso27001.md` (TBD)     |
-| GDPR           | Consent interfaces (GDPR-DEFAULT: requireConsent=true), audit  | `docs/compliance/gdpr.md` (TBD)         |
-| PCI DSS v4.0.1 | BLAKE2b tokenization, key management, session hardening, audit | `docs/compliance/pci-dss.md` (TBD)      |
-| ISO 42001:2023 | AI governance extension                                        | `docs/compliance/iso42001.md` (TBD)     |
-| NIS2           | Crypto, access controls, incident reporting, monitoring        | `docs/compliance/nis2.md` (TBD)         |
-| eIDAS          | Production gate refuses dev/test defaults (EIDAS-DEFAULT)      | `docs/compliance/eidas.md` (TBD)        |
-| FHIR           | Conformance levels (FHIR-IMPL: persistent repo work pending)   | `docs/compliance/fhir.md` (TBD)         |
-| OWASP ASVS L2  | Per-clause matrix                                              | `docs/security/asvs-l2-matrix.md`       |
+An earlier revision of this section sent them to `docs/compliance/<framework>.md` — nine
+paths under a directory that has never existed, each labelled `(TBD)`. A promise of a
+document is not a mapping, and a table of nine of them reads as a documentation set rather
+than as its absence. The pointer is withdrawn rather than fulfilled: the mapping already
+exists in a form that cannot go stale the way a hand-written page can, because it is code
+the compliance report executes.
+
+Each framework's clause-to-control mapping is a class under `src/Compliance/Frameworks/`
+(or the extension that owns it), read by `pulsar compliance:report`. Prose for the
+capability groups behind them is [Compliance](compliance.md); the cross-framework common
+control set is [Compliance CCF](compliance-ccf.md).
+
+| Framework      | Pulsar control delivery                                        | Mapping                                                         |
+| -------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
+| SOC 2          | Audit chain + RBAC + session management                        | `src/Compliance/Frameworks/Soc2Mapping.php`                     |
+| HIPAA 2026     | Encryption, MFA, audit trails, access controls, incident hooks | `src/Compliance/Frameworks/HipaaMapping.php`                    |
+| ISO 27001:2022 | Annex A.8 technical controls                                   | `src/Compliance/Frameworks/Iso27001Mapping.php`                 |
+| GDPR           | Consent interfaces (GDPR-DEFAULT: requireConsent=true), audit  | `src/Compliance/Frameworks/GdprMapping.php`                     |
+| PCI DSS v4.0.1 | BLAKE2b tokenization, key management, session hardening, audit | `src/Compliance/Frameworks/PciDssMapping.php`                   |
+| ISO 42001:2023 | AI governance extension                                        | `src/Compliance/Frameworks/Iso42001Mapping.php`                 |
+| NIS2           | Crypto, access controls, incident reporting, monitoring        | `src/Compliance/Frameworks/Nis2Mapping.php`                     |
+| eIDAS          | Production gate refuses dev/test defaults (EIDAS-DEFAULT)      | `src/Compliance/Frameworks/EidasMapping.php`                    |
+| FHIR           | Conformance levels (FHIR-IMPL: persistent repo work pending)   | `src/Compliance/Frameworks/Hl7FhirMapping.php`                  |
+| OWASP ASVS L2  | Per-clause matrix                                              | [`docs/security/asvs-l2-matrix.md`](security/asvs-l2-matrix.md) |
+
+A mapping names controls; it does not report on them. What a given deployment achieves is
+whatever `pulsar compliance:report` observes there — [ADR-0045](adr/0045-a-control-status-is-observed-not-written.md)
+is why no status on this page, or any page, is allowed to stand in for that run.
 
 ## Quality gates at GA
 
@@ -68,14 +83,20 @@ docs (`docs/compliance/<framework>.md`).
 - `qa:parity` is what keeps that list honest: it fails the build when
   `.github/workflows/ci.yml` does not run every entry of `qa`. CI may enforce
   more, never less.
-- `composer qa:full` adds `mutation` (Infection MSI ≥ 80, 90 for
-  src/Auth/src/Security/src/Audit) and `test:coverage`.
-- CI gate: line coverage ≥ 80% (ramps to 90 at GA), Infection MSI ≥ 80.
+- `composer qa:full` adds `mutation` and `test:coverage`. Infection is scoped to
+  src/Auth, src/Security and src/Audit for the memory reasons ADR-0042 measures,
+  and enforces covered MSI at 90.
+- CI gate: line coverage ≥ 80% (ramps to 90 at GA).
+- CI gate: Infection covered MSI ≥ 90 over that scope. Plain MSI is reported and
+  not enforced, and `tools/ci/assert-mutation-thresholds.php` fails the build on
+  any document that claims otherwise.
 - PHPStan baseline + Psalm suppressions reduced to documented zero (or ≤ N
   with rationale).
 - Every open security review item is either closed or carries an explicit,
   documented waiver in this PRD.
-- External security audit memo archived under `docs/audit/`.
+- External security audit memo archived under `docs/security/`. (It was first filed
+  under an audit directory that .gitignore excludes, so nothing filed there would ever
+  have reached a reader of this repository.)
 
 ## Out-of-scope for 1.0.0
 

@@ -791,32 +791,18 @@ All 1 repair(s) completed successfully.
 
 ## Observability integration
 
-The resilience system integrates with Pulsar's observability layer to emit structured data for monitoring and compliance.
+What `src/Resilience` emits is PSR-3 log records, and only when a logger was
+handed to the object that emits them. It emits **no metrics and no audit
+events**: nothing under `src/Resilience` touches `MetricRegistry`,
+`AuditLoggerInterface` or `AuditEvent`, and no counter, gauge or histogram is
+registered anywhere in the subsystem. Monitoring built on the retry, breaker,
+health-check or repair paths has to derive its signals from the log stream, or
+from a wrapper the application supplies.
 
-### Metrics emitted
+### Logging emitted
 
-| Metric                        | Type      | Labels                             | Description                            |
-| ----------------------------- | --------- | ---------------------------------- | -------------------------------------- |
-| Retry attempt count           | Counter   | operation                          | Number of retry attempts per operation |
-| Circuit breaker state changes | Counter   | breaker_name, from_state, to_state | State transition events                |
-| Health check results          | Gauge     | check_name, status                 | Latest status per check                |
-| Health check response time    | Histogram | check_name                         | Response time distribution             |
-| Repair job executions         | Counter   | job_name, success                  | Repair execution outcomes              |
-
-### Audit events
-
-For regulated environments, the following events are available for audit trails:
-
-- **Circuit breaker opened:** Records the breaker name, failure count, and timestamp.
-- **Circuit breaker closed:** Records the breaker name, success count, and recovery time.
-- **Health check degraded/unhealthy:** Records the check name, status, message, and response time.
-- **Repair executed:** Records the job name, diagnosis, actions performed, and success/failure status.
-
-These events can be fed into Pulsar's structured logging and audit logging systems.
-
-### Logging levels
-
-**RetryPolicy logging (when logger is provided to `execute()`):**
+**RetryPolicy** - `execute()` takes the logger as an argument, so a call that
+does not pass one logs nothing:
 
 | Level   | Event                               |
 | ------- | ----------------------------------- |
@@ -824,12 +810,57 @@ These events can be fed into Pulsar's structured logging and audit logging syste
 | INFO    | Successful retry on attempt > 1     |
 | ERROR   | All retry attempts exhausted        |
 
-**Scheduler logging (from `Scheduler` class):**
+**CircuitBreaker** - the logger is a constructor argument:
+
+| Level   | Event                     |
+| ------- | ------------------------- |
+| WARNING | Breaker opened            |
+| INFO    | Breaker entered half-open |
+| INFO    | Breaker closed            |
+
+Breakers obtained from `CircuitBreakerRegistry` are **silent**: the registry
+takes no logger and constructs each breaker without one, so nothing framework-
+wired logs a state transition. To get these records, construct the breaker
+directly with a logger rather than resolving it from the registry.
+
+**HealthCheckRunner and RepairRunner** log nothing. Neither class accepts a
+logger. Health and repair outcomes are visible only through the objects they
+return (`HealthReport`, `RepairResult`) and through the `health:check` and
+`health:repair` console output.
+
+**Scheduler** (`Pulsar\Scheduler\Scheduler`, not part of `src/Resilience`):
 
 | Level | Event                                    |
 | ----- | ---------------------------------------- |
 | INFO  | Tick start, job completion with duration |
 | ERROR | Job failure with exception message       |
+
+### Getting metrics out of it
+
+Until the subsystem is instrumented, wrap it at the call site. `HealthReport`
+and `RepairResult` carry everything a gauge or counter would need, and
+`RetryResult` reports the attempt count:
+
+```php
+use Pulsar\Observability\Metrics\LabelSet;
+use Pulsar\Resilience\HealthCheck\HealthStatus;
+
+$report = $runner->runAll();
+
+$status = $registry->gauge('health_check_status', 'Latest health check status');
+$latency = $registry->histogram('health_check_response_ms', 'Health check response time');
+
+foreach ($report->results as $result) {
+    $labels = new LabelSet(['check' => $result->name]);
+
+    $status->set($result->status === HealthStatus::Healthy ? 1.0 : 0.0, $labels);
+    $latency->observe($result->responseTimeMs, $labels);
+}
+```
+
+Do not assume these metrics exist because this page once tabulated them. Nothing
+emits them; a dashboard built against those names would have stayed empty and
+said "healthy" while doing it.
 
 ---
 

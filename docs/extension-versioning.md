@@ -7,9 +7,15 @@ Pulsar extensions follow semantic versioning. This document explains how core an
 Core extensions ship with the framework and are maintained by the Pulsar team. These include:
 
 - `pulsar/admin`, `pulsar/cms`, `pulsar/studio`, `pulsar/orm`, `pulsar/analytics`
-- `pulsar/forum`, `pulsar/graphql`, `pulsar/oauth2`, `pulsar/webauthn`
+- `pulsar/auth`, `pulsar/forum`, `pulsar/graphql`
 - `pulsar/grpc`, `pulsar/mcp-server`, `pulsar/observability`, `pulsar/payments`
 - Other extensions under the `pulsar/` vendor namespace
+
+This list is illustrative, not exhaustive; `php bin/pulsar extension:list` prints
+what your tree actually ships. It used to name `pulsar/oauth2` and
+`pulsar/webauthn`, which were merged into `pulsar/auth` before 1.0.0 and were never
+published under those names — `extensions/auth/pulsar.json` records the merge in its
+`replaces` list.
 
 Core extensions are versioned in lockstep with the framework. When Pulsar releases version 1.0.0, all core extensions also release 1.0.0. When Pulsar releases 1.1.0, core extensions release 1.1.0.
 
@@ -20,12 +26,32 @@ Core extensions set their `min_version` in `pulsar.json` to match the framework 
 ```json
 {
   "name": "pulsar/admin",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.12",
   "pulsar": {
-    "min_version": "1.0.0-rc.11"
+    "min_version": "1.0.0-rc.12"
   }
 }
 ```
+
+### Lockstep is enforced, not asked for
+
+This rule used to be advice, and advice is what it behaved like: at one point 26 bundled
+manifests sat at `1.0.0-rc.11`, seven declared `1.0.0` — a release the framework has not
+made — and one was still at `0.2.0`, all while the framework was at `1.0.0-rc.12`.
+
+`composer version:check` now derives every bundled manifest from `composer.json`'s
+`version` and refuses a tree where any of them disagrees. It covers the manifest's own
+`version`, its `pulsar.min_version`, and any `requires` / `suggests` entry naming a
+`pulsar/*` sibling — bundled extensions ship together, so a floor naming an older release
+advertises a pairing that never existed. `composer version:sync` writes the derived values
+back, so a release bump is one command rather than 34 edits.
+
+The same gate refuses two things a manifest cannot usefully say: a `requires` / `suggests`
+entry naming a package this repository does not ship, and a composer-style `require` key,
+which `ExtensionManifest` does not read at all. Neither is enforced by anything at boot,
+so neither may sit in a manifest looking as though it is.
+
+None of this constrains a community extension, which this gate never sees.
 
 ## Community extensions
 

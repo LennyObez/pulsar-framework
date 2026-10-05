@@ -18,8 +18,8 @@ A Dependabot PR may be closed only in one of three states:
    patch-level bump) addresses the same advisory. The closing comment MUST link
    to the replacement PR with `Closes #N` referencing the original.
 3. **Waived** — the maintainer determines the advisory does not apply (e.g. the
-   vulnerable code path is not reachable from Pulsar). A waiver is added to
-   `docs/security/dependency-waivers.md` with:
+   vulnerable code path is not reachable from Pulsar). A waiver is recorded in
+   [Active waivers](#active-waivers) below with:
    - advisory ID (GHSA / CVE)
    - package name + version range
    - explicit unreachable-path rationale with file:line evidence
@@ -46,6 +46,23 @@ Every Dependabot merge PR must include in its body:
 
 This evidence is part of the SOX ITGC trail for change management and the
 SOC 2 control "vulnerability management — third-party software".
+
+## Active waivers
+
+| Advisory | Package | Affected versions | Unreachable-path rationale (file:line) | Expires |
+| -------- | ------- | ----------------- | -------------------------------------- | ------- |
+| _none_   |         |                   |                                        |         |
+
+The register is empty, and an empty register is a statement: no advisory raised against
+this repository has been closed by declaring it inapplicable. That is worth being able to
+read at a glance, which is why the table is here rather than the sentence "there are no
+waivers" — a row is added by editing this table, so a waiver cannot be granted without
+appearing in the same document that defines what one costs.
+
+Earlier revisions of this page pointed rule 3 at a `dependency-waivers.md` beside this
+file. It has never existed. A waiver process whose register is a dead path is a waiver
+process with no register: nothing to review quarterly, nothing to expire, and no way for a
+reader to tell an empty register from a missing one.
 
 ## See also
 

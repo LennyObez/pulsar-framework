@@ -532,6 +532,14 @@ const REVIEWED = [
                 . 'non-literal element is the root, so no shell parses any of it.',
         ],
     ],
+    'tests/Unit/Documentation/Support/TrackedFiles.php' => [
+        'process-spawn' => [
+            'count' => 1,
+            'reason' => 'Asks `git ls-files` and `git check-ignore` which documentation the tree ships, '
+                . 'so a gitignored local page is judged the way a clean clone sees it. proc_open is '
+                . 'given an ARRAY starting with the literal git, so no shell parses any of it.',
+        ],
+    ],
     'tests/Integration/Cli/ScaffoldedProjectBootsTest.php' => [
         'process-spawn' => [
             'count' => 1,

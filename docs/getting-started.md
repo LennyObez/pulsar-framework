@@ -6,26 +6,62 @@ This guide walks you through installing Pulsar, creating a project, and building
 
 You need two things installed on your system:
 
-- **PHP 8.5 or later** with the `ext-mbstring`, `ext-pdo`, `ext-sodium`, and `ext-json` extensions. These are bundled with most PHP distributions. Run `php -v` to check your version.
-- **Composer 2.6 or later** for dependency management. Run `composer --version` to check.
+- **PHP 8.5.1 or later**. `composer.json` requires `>=8.5.1`, so 8.5.0 will not
+  install. Run `php -v` to check.
+- **Composer 2.2 or later**. `composer.json` declares no explicit minimum; 2.2 is
+  where `config.allow-plugins` arrived, which this repository's own tooling uses.
+  Run `composer --version` to check.
 
-Optional but recommended: `ext-opcache` for JIT compilation and preloading, `ext-apcu` for in-memory config and route caching, and `ext-redis` for Redis-backed sessions and cache.
+Pulsar needs more PHP extensions than a minimal build ships, and Composer refuses
+to install without every one of them. `composer.json` is the authority, and this
+is what it requires today:
+
+```
+ctype  curl  dom  exif  fileinfo  gd  libxml  mbstring
+openssl  pdo  simplexml  sodium  zip  zlib
+```
+
+Check yours in one line:
+
+```bash
+php -r 'foreach (["ctype","curl","dom","exif","fileinfo","gd","libxml","mbstring","openssl","pdo","simplexml","sodium","zip","zlib"] as $e) { if (!extension_loaded($e)) { echo "missing: $e\n"; } }'
+```
+
+The [installation guide](install.md#system-requirements) says what each one is
+for and how to install the missing ones per platform.
+
+Optional but recommended: `ext-opcache` for JIT compilation and preloading,
+`ext-apcu` for in-memory config and route caching, `ext-intl` for ICU message
+formatting, and `ext-redis` for Redis-backed sessions and cache.
 
 ## Installation
 
-Create a new Pulsar project using Composer:
-
-```bash
-composer create-project pulsar/skeleton my-app
-cd my-app
-```
-
-Alternatively, if you want to add Pulsar to an existing project:
+Add Pulsar to a project and let the CLI scaffold the application layout:
 
 ```bash
 composer require pulsar/framework
-php bin/pulsar init my-app
+php vendor/bin/pulsar init my-app
+cd my-app
+composer install
 ```
+
+The binary is `vendor/bin/pulsar`, not `bin/pulsar`: `composer.json` declares
+`"bin": ["bin/pulsar"]`, so Composer installs the proxy under `vendor/bin/` and a
+consuming project has no `bin/` of its own.
+
+`pulsar/framework` is the right package name, but it is not on Packagist yet —
+publication waits for the `1.0.0` tag, so the first command above resolves nothing
+today. Until then, point Composer at the repository first; the
+[installation guide](install.md#while-pulsar-is-a-release-candidate) gives the two
+forms (VCS and path) and what to remove once the tag lands.
+
+There is no `composer create-project` starter template yet. Earlier revisions of
+this page opened with `composer create-project pulsar/skeleton my-app`; no package
+by that name has ever existed, so that command has never worked for anybody who
+tried it. A skeleton repository is planned — it is tracked as
+[issue #360](https://github.com/LennyObez/pulsar-framework/issues/360) — and this
+section will name it when it exists. `pulsar init` is the supported way to start a
+project today, and it writes the same layout described below.
 
 ## Project structure
 
@@ -92,7 +128,7 @@ php -S localhost:8000 -t public
 
 ## Creating your first route
 
-Open `config/app.php` and make sure the `extensions.paths` array includes your application's extension path. For a fresh project, routes are registered in your application's main extension class, but you can also register them directly in the kernel's boot process.
+Extensions are discovered from the `extensions/` directory beside `config/` - a fixed location, not a configured one. There is no `extensions.paths` setting; see [Registering an extension](extensions.md#5-register-the-extension). For a fresh project, routes are registered in your application's main extension class, but you can also register them directly in the kernel's boot process.
 
 The simplest way to add a route is through a controller. Let's build one.
 

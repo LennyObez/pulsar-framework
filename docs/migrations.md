@@ -91,7 +91,15 @@ Migrations are applied in ascending version order. Do not mix timestamp and sequ
 2. **Your project's**, from `migrations.path` in `config/database.php`.
 3. **Each extension's**, from the `provides.migrations` paths in its `pulsar.json`. An extension that failed to register or boot contributes none, so a broken extension cannot alter your schema on the way past.
 
-Sequential versions are prefixed per directory (`a3f2_00000000000001`), which is what keeps CMS `001_` and Forum `001_` from colliding. Timestamp versions take no prefix and are assumed globally unique — two directories offering the same timestamp stops the run rather than picking a winner.
+Sequential versions are prefixed with a qualifier derived from the **name of the source that ships them** (`a3f2_00000000000001`), which is what keeps CMS `001_` and Forum `001_` from colliding. The names are `project`, `core:<Module>` and `ext:<extension>`. Timestamp versions take no prefix and are assumed globally unique — two directories offering the same timestamp stops the run rather than picking a winner.
+
+### A version belongs to the migration, not to the checkout
+
+The qualifier is a hash of that name and of nothing else, so the same migration has the same version on a laptop, in CI and on every deploy host.
+
+Pulsar 1.0.0-rc.12 and earlier hashed the migration directory's **absolute path** instead. The same file was `a3f2_00000000000001` under `/home/dev/app` and `7b1c_00000000000001` under `/var/www/app`, so deploying identical code into a different path made every already-applied sequential migration read as pending — and `migrate:run` applied it a second time to the production database. Re-running a `CREATE TABLE` aborts the deploy; re-running an `ALTER` or a data backfill does worse.
+
+If your database was written by rc.12 or earlier and any of your extensions use sequential filenames, see [Re-keying a table written before the change](#re-keying-a-table-written-before-the-change).
 
 The framework's tables are migrations rather than something the framework creates for itself at start-up, and [ADR-0043](adr/0043-schema-belongs-to-migrations.md) records why: a runtime role that holds `CREATE` is a role that can also `DROP`, and a schema installed at boot leaves no answer to "who changed this, and when". The practical consequence is that **`migrate:run` is a deploy step, not an optional one** — a build that skips it fails at first use of whichever subsystem is missing its table.
 
@@ -175,6 +183,73 @@ Output:
   20260201120000    add_user_avatar                           Pending    -        -
 ```
 
+## Re-keying a table written before the change
+
+`migrate:run` and `migrate:status` both refuse to proceed when the tracking table records a migration under a version this checkout no longer produces **and** the same migration is sitting on disk unapplied. That pairing has one cause — the version scheme changed under the table — and one consequence if ignored: the migration runs twice.
+
+The refusal names every affected row and prints the statement that fixes it:
+
+```
+Migration identity mismatch. The migrations table "pulsar_migrations" records 3 migration(s)
+under version strings this checkout no longer produces, and the same migrations are on disk
+unapplied. Running now would re-apply them.
+
+Sequential migration versions used to be qualified by a CRC32 of the absolute migrations
+directory, so they changed whenever the checkout moved. They are now qualified by the name of
+the source that ships them and are the same on every host.
+
+Re-key these rows in a maintenance window, then re-run the migration:
+
+    UPDATE pulsar_migrations SET version = '9b2c_00000000000001' WHERE version = 'a3f2_00000000000001';
+    UPDATE pulsar_migrations SET version = '9b2c_00000000000002' WHERE version = 'a3f2_00000000000002';
+    UPDATE pulsar_migrations SET version = '9b2c_00000000000003' WHERE version = 'a3f2_00000000000003';
+
+Verify the updated row count against the number of statements before committing.
+```
+
+Run those statements yourself, in a transaction, in a maintenance window, against a database you have just backed up. Pulsar deliberately does not run them for you: re-keying rewrites the record of what has been applied to a production database, which is a reviewed operation and not a side effect of a deploy.
+
+### When the pairing is ambiguous
+
+Two extensions that both start at `001_` produce two rows with the same number, and which old row recorded which migration is not recoverable from the table. Those rows are listed separately, with their candidates:
+
+```
+These rows cannot be re-keyed automatically — several migrations on disk carry the same number,
+so which one each row recorded is not recoverable from the table alone. Match them against the
+source each came from:
+
+    a3f2_00000000000001  ->  one of: 9b2c_00000000000001, 77aa_00000000000001
+```
+
+Resolve it from the `name` column of the same row — it holds the description from the filename (`create_cms_contents`, `create_forum_threads`) — and from `applied_at`, which orders the rows the way the extensions were installed. Then write the `UPDATE` by hand.
+
+### What is not affected
+
+- **Timestamp filenames.** They never carried a qualifier, so their versions are unchanged. A project using only `20260203153000_…` names has nothing to do.
+- **A migration whose file you deleted after applying it.** It has no unapplied twin on disk, so it is not a renamed identity and does not stop the run.
+- **A fresh database.** `db:fresh` drops every table, the tracking table with them, before it migrates — so there is nothing left to reconcile and nothing to refuse.
+
+## Two sources must never ship one version
+
+A timestamp version carries no source qualifier, so a version is the whole of a migration's identity in the tracking table — there is no column recording which source shipped a row. Two sources shipping `20260327000001` therefore write to the same row, and it costs one of two things depending on when they meet:
+
+- **Both enabled at once**: discovery raises `Duplicate migration version: 20260327000001` and every command that discovers — `migrate:run`, `migrate:status`, `migrate:rollback`, `db:fresh` — stops there. Loud, and nothing migrates until it is resolved.
+- **Enabled one after the other**: the row the first one wrote makes the second one's migration read as already applied. It is subtracted from the pending list, its tables are never created, and `migrate:run` reports nothing pending and exits 0.
+
+The second is the dangerous one, so the runner refuses it too. Every applied row carries the `name` from the filename it was written by, and a row whose name is not the name of the migration now sitting at that version was written by a different migration:
+
+```
+Migration identity mismatch. The migrations table "pulsar_migrations" records 1 version(s)
+under a different migration than the one now on disk at that version. Running would treat that
+migration as already applied and never run it.
+
+    20260327000001  recorded as "add_missing_fk_indexes", on disk as "create_health_check_history"
+```
+
+No `UPDATE` is offered, because which of the two migrations the row records decides the repair and only you can know: if it came from a source no longer installed, the migration on disk has never run and needs a version of its own before it can be applied; if you renamed the file after applying it, correct the row's `name` and stop renaming applied migrations.
+
+Inside this repository the situation cannot arise at all: `ShippedMigrationVersionsAreUniqueTest` discovers every migration directory the framework and its bundled extensions ship — resolved, not listed, so a new extension is covered on the run that adds it — and fails on a version that appears twice. Give each migration a timestamp of its own, taken from when it was written; `00:00:01`, `00:00:02` used as sequence numbers is how three unrelated directories ended up on `20260327000001`.
+
 ## Migration tracking table
 
 Pulsar creates a tracking table (default: `pulsar_migrations`) automatically. Schema is driver-aware:
@@ -183,7 +258,9 @@ Pulsar creates a tracking table (default: `pulsar_migrations`) automatically. Sc
 - **MySQL**: `INT UNSIGNED AUTO_INCREMENT PRIMARY KEY` with InnoDB
 - **PostgreSQL**: `SERIAL PRIMARY KEY`
 
-Columns: `id`, `version` (unique), `name`, `batch`, `applied_at`.
+Columns: `id`, `version` (unique), `name`, `batch`, `applied_at`, `schema_version`.
+
+`version` is `VARCHAR(30)`, which fits a 14-digit number and the four-character source qualifier that sequential versions carry.
 
 ## Configuration
 
@@ -210,6 +287,11 @@ $runner = new MigrationRunner($connection, $repository, 'pulsar_migrations');
 // A single path is a deliberate narrowing to that directory. To run what
 // `migrate:run` runs, hand the repository every resolved path instead:
 // new MigrationRepository($container->get(MigrationPathResolverInterface::class)->resolve())
+//
+// `resolve()` returns `source name => directory`, and the repository qualifies the
+// sequential versions it finds under each directory with the name it was given. Passing a
+// bare list of directories instead leaves them unqualified: fine for one directory, a
+// duplicate-version error the moment two of them ship `001_`.
 
 // Run pending
 $applied = $runner->runPending();

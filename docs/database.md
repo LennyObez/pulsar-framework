@@ -217,6 +217,23 @@ $default = $connectionManager->connection();
 
 `PdoConnection` creates the PDO instance on first query, not at construction. This avoids unnecessary database connections at boot time.
 
+### Losing the connection
+
+The handle is cached for the life of the connection object, which under a persistent runtime (RoadRunner, Swoole, FrankenPHP) is the life of the worker. A server restart, a `wait_timeout`, a failover or a dropped packet leaves that handle pointing at a socket that is gone, so it is discarded as soon as an error says so and the next statement opens a new one. Without that, one blip made every later request served by that worker fail.
+
+An error counts as a lost connection when it carries SQLSTATE class `08` (the standard's _connection exception_ class), PostgreSQL `57P01`/`57P02`/`57P03`, or MySQL `2006`, `2013`, `2055`, `4031`. A deadlock, a constraint violation or a syntax error is a statement that failed on a live connection and leaves the handle alone.
+
+What is retried, and what is not:
+
+| Where it failed                     | Behaviour                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prepare()`                         | Reconnect and prepare once more. Preparing parses the SQL and executes none of it, so nothing was applied anywhere.                                                                                                                                                                                                                                 |
+| `execute()`                         | Handle discarded, error raised. PDO cannot say whether the statement reached the server first, and re-sending an INSERT that did arrive would apply it twice.                                                                                                                                                                                       |
+| `beginTransaction()`, outermost     | Reconnect and begin once more: nothing had been opened yet.                                                                                                                                                                                                                                                                                         |
+| Anywhere inside an open transaction | Handle discarded, error raised, transaction depth reset. The server dropped the uncommitted work with the socket; a fresh handle would run the caller's next statement in autocommit, outside the transaction it believes surrounds it. `inTransaction()` reports `false` from that point rather than describing a transaction that exists nowhere. |
+
+A statement that failed because the connection died reaches the caller as a `DatabaseException`. Deciding whether repeating it is safe belongs to the caller, who knows whether it was idempotent.
+
 ## Optional integration
 
 Database config is optional. If `config/database.php` does not exist:
@@ -286,6 +303,8 @@ $schema->create('failed_jobs', function (Blueprint $table) {
 
 Both methods are thin wrappers over `SchemaColumnType::BigText` and `SchemaColumnType::Text`, which is what you name when you build a `SchemaColumn` value directly instead of going through the `Blueprint`.
 
+The same holds for floating point. `SchemaColumnType::Float` is a 4-byte `FLOAT` on MySQL, about seven significant digits; name `SchemaColumnType::Double` on a `SchemaColumn` for an 8-byte `DOUBLE` there, `DOUBLE PRECISION` on PostgreSQL and `DOUBLE` on SQLite. The `Blueprint` has no `double()`: nothing needs it yet.
+
 This is not a hypothetical trap. The framework's own `saga_states`, `workflow_instances`, `workflow_transitions`, `failed_jobs`, `outbox_events` and `saga_step_results` tables were first written against `text()`, and every serialized column in them silently carried a 64 KiB ceiling on MySQL where the hand-written DDL they replaced had used `LONGTEXT`. `BigText` exists because of that narrowing ([ADR-0043](adr/0043-schema-belongs-to-migrations.md)).
 
 ### How a table compares the text it stores
@@ -329,29 +348,49 @@ One thing this is not: the `collation` key in `config/database.php`. A table's c
 
 ## Connection pooling
 
-Connection pooling is active **only in persistent runtimes** (Swoole, RoadRunner). Under PHP-FPM, connections are created per-request as usual.
+Pulsar ships a connection pool. It does **not** wire one, on any runtime, and there is no `pool` section in `config/database.php`.
 
-### Configuration
+There was one until 1.0.0-rc.12. It was parsed into a typed `PoolConfig` that nothing read: no wiring built a `ConnectionPool` from it, so `max_connections` was a number an operator could size their database around while it governed nothing. The section, its parser and this page's description of it are gone rather than left in place looking effective. What is documented below is the pool as it actually exists — a component an application constructs.
+
+Pooling belongs to persistent runtimes (Swoole, RoadRunner) where one process serves many requests. Under PHP-FPM a process serves one request, so there is nothing for a pool to amortise; `ConnectionManager` already caches one connection per name for the life of the process.
+
+### Constructing one
 
 ```php
-// config/database.php
-'pool' => [
-    'min_connections' => 2,
-    'max_connections' => 10,
-    'idle_timeout_seconds' => 60,
-    'max_lifetime_seconds' => 3600,
-    'health_check_interval_seconds' => 30,
-],
+use Pulsar\Database\Pool\ConnectionPool;
+use Pulsar\Database\Pool\PoolConfig;
+
+$pool = new ConnectionPool(
+    new PoolConfig(
+        minConnections: 2,
+        maxConnections: 10,
+        idleTimeoutSeconds: 60,
+        maxLifetimeSeconds: 3600,
+        healthCheckIntervalSeconds: 30,
+    ),
+    $databaseConfig->connection('mysql'),
+    $logger,
+);
+
+$pool->warmUp();
+
+$connection = $pool->checkout();
+try {
+    $connection->query('SELECT 1');
+} finally {
+    $pool->checkin($connection);
+}
 ```
 
 ### Behavior
 
-- Connections are created lazily up to `max_connections`
-- Idle connections are pruned after `idle_timeout_seconds`
-- Connections exceeding `max_lifetime_seconds` are destroyed and replaced
-- Health checks (`SELECT 1`) run on checkout when a connection has been idle longer than `health_check_interval_seconds`
+- Connections are created lazily up to `maxConnections`
+- Idle connections are pruned after `idleTimeoutSeconds`
+- Connections exceeding `maxLifetimeSeconds` are destroyed and replaced
+- Health checks (`SELECT 1`) run on checkout when a connection has been idle longer than `healthCheckIntervalSeconds`
 - If the pool is exhausted, a `DatabaseException::poolExhausted()` is thrown
-- Under FPM, `NullConnectionPool` creates fresh connections per checkout with no pooling overhead
+- A connection returned with an open transaction is destroyed rather than re-idled, so uncommitted state cannot leak into the next checkout
+- `NullConnectionPool` implements the same interface with no pooling, for a runtime where a pool would only add overhead
 
 ## Read/write routing
 
@@ -368,16 +407,51 @@ Route SELECT queries to read replicas and writes to the primary.
 ],
 ```
 
+### How hosts become connections
+
+Each entry in `read_hosts`, and `write_host`, is resolved at boot in one of two ways:
+
+1. **A name under `connections`.** `'read_hosts' => ['reporting']` with a `reporting` entry in the `connections` map uses that entry as written, credentials and all. This is how a replica reached with a read-only user, a different port, or a different database is configured.
+2. **A host.** Anything else is a hostname, and gets a connection derived from the default one with the host replaced — same driver, port, database, credentials, charset and driver options. Derived entries are registered as `read:<host>` and `write:<host>` and joined to `connections`, so anything auditing the configured connections (TLS verification included) sees the replicas too.
+
+An entry naming the default connection's own host resolves to that connection rather than to a derived copy of it, so writing `write_host` down explicitly does not double the connection count.
+
+`write_host` also becomes the **default connection**, which is what makes it govern anything: the connection manager, the migration runner and the seeder all reach the primary through the default. Leave it empty (the shipped value) to use the default connection exactly as `connections` configures it.
+
+SQLite is refused. A `sqlite:` DSN carries a file path and no host, so a derived replica would be the same file under another name — reads reported as replica traffic that are really the primary. Configuring `read_hosts` on a SQLite connection fails at boot with a message naming the host it could not derive.
+
+### Where routing happens
+
+`ConnectionInterface` resolved from the container is a routing connection when `enabled` is true: `query()`, `execute()` and `prepare()` are classified by the SQL they carry, and everything else (`driver()`, `dialect()`, `name()`, `inTransaction()`, `lastInsertId()`) answers from the primary, or from the connection an open transaction has claimed. Asking a connection about itself never consumes a pending `usePrimary()` / `useReplica()` override, so a query builder reading the dialect cannot swallow one.
+
+`beginTransaction()` and `transaction()` are routed as `BEGIN`: the transaction opens on the primary and marks stickiness, so reads after the commit do not go to a replica that has not received the write yet.
+
+Multi-tenancy and failover both replace the connection manager after the database is wired, and their decorators carry no statement-aware method for routing to use. Enabling read/write routing **with read hosts configured** alongside either of them therefore fails at boot with a message naming the manager that took the routing manager's place — rather than running with every read on the primary while the configuration says otherwise. With no read hosts there is nothing to route to and the combination is allowed.
+
 ### Routing rules
 
-| Query Type                          | Routed To |
-| ----------------------------------- | --------- |
-| SELECT, SHOW, DESCRIBE, EXPLAIN     | Replica   |
-| INSERT, UPDATE, DELETE, DDL         | Primary   |
-| Any query inside a transaction      | Primary   |
-| Any query after a write (sticky)    | Primary   |
-| `->usePrimary()` override           | Primary   |
-| `->useReplica()` override (audited) | Replica   |
+Routing needs the statement to classify it, so it happens in `connectionForQuery($sql)`. `connection()` is asked for a connection, not for a query — the caller may write through it or open a transaction on it — so it answers with the primary unless an override says otherwise.
+
+`connection()` is what the manager answers when nobody named a statement, and callers holding the manager stay on the primary until they route one. Application code does not usually hold the manager: what the container hands out as `ConnectionInterface` is the `RoutingConnection` described above, and it passes every `query()`, `execute()` and `prepare()` through `connectionForQuery()`. Enabling `read_write` with read hosts configured therefore offloads reads on its own — the per-statement classification below is what runs — and `useReplica()` is for the cases the classifier cannot decide, not the only way to reach a replica.
+
+| Request                                                    | Routed to                                |
+| ---------------------------------------------------------- | ---------------------------------------- |
+| `connectionForQuery()`: SELECT, SHOW, DESCRIBE, EXPLAIN    | Replica                                  |
+| `connectionForQuery()`: INSERT, UPDATE, DELETE, DDL, BEGIN | Primary                                  |
+| Any statement while a transaction is open                  | The connection the transaction opened on |
+| Any query after a write (sticky)                           | Primary                                  |
+| `connection()` with no override                            | Primary                                  |
+| `connection('name')`                                       | That named connection, unrouted          |
+| `->usePrimary()` override                                  | Primary                                  |
+| `->useReplica()` override (audited)                        | Replica                                  |
+
+### Transactions
+
+A transaction is never split across two connections. Once the routed connection reports an open transaction, every later request for the routed connection — `connection()`, `connectionForQuery()`, and any pending single-query override — is answered with that same connection until it commits or rolls back.
+
+The connection is chosen when the transaction opens, not per statement, because a transaction that opens with a SELECT can still write before it commits. Opening one on the connection the manager hands out therefore starts it on the primary; a transaction deliberately opened on a replica (via `useReplica()` or a `connectionForQuery()` read) keeps its statements on that replica's snapshot rather than migrating them to the primary.
+
+A `useReplica()` override is dropped while a transaction is open: serving one statement of a transaction from a replica is the stale-snapshot split this rule exists to prevent. Named connections are untouched — `connection('archive')` returns that host even mid-transaction, since asking for a host by name is an explicit choice.
 
 ### Primary stickiness
 
@@ -449,21 +523,79 @@ Cache query results via PSR-16 with tag-based invalidation.
 
 ```php
 'query_cache' => [
-    'enabled' => true,          // false by default in regulated preset
+    'regulated_preset' => false,
+    'enabled' => true,
     'default_ttl_seconds' => 60,
     'sensitive_table_names' => ['audit_logs', 'encryption_keys'],
     'authorization_columns' => ['user_id', 'tenant_id'],
 ],
 ```
 
+`regulated_preset` changes exactly one thing: what an **omitted** `enabled` key
+means. With the preset off (the shipped value) an omitted `enabled` reads as
+`true`; with it on, an omitted `enabled` reads as `false`. An `enabled` key that
+is actually written down wins in both directions, so turning caching back on
+under the preset is an explicit line rather than an unreachable state.
+
+| `regulated_preset` | `enabled` written down | Caching |
+| ------------------ | ---------------------- | ------- |
+| `false` (default)  | omitted                | on      |
+| `false`            | `false`                | off     |
+| `true`             | omitted                | **off** |
+| `true`             | `true`                 | on      |
+
+Neither setting can make a sensitive table or an authorization-shaped query
+cacheable; that exclusion is decided by `SensitivityMetadata` and is not
+overridable.
+
 ### Usage
 
-Cache results for a specific duration:
+`CachedQueryRunner` is the service the section above configures. It is bound in the
+container whenever a database and a PSR-16 cache are both configured, and it is what
+reads `enabled`, `default_ttl_seconds`, `sensitive_table_names` and
+`authorization_columns`. Until 1.0.0-rc.12 nothing did: the section was parsed into a
+typed object and never handed to anything, so all four settings were inert.
 
 ```php
-// Via the QueryCache directly
-$cache->put($key, $result, ttlSeconds: 60, tags: ['users', 'orders']);
-$cached = $cache->get($key);
+use Pulsar\Database\Cache\CachedQueryRunner;
+
+$runner = $container->get(CachedQueryRunner::class);
+
+// Cached for default_ttl_seconds, tagged with the tables the SQL names.
+$articles = $runner->query('SELECT * FROM articles WHERE status = :s', ['s' => 'live']);
+
+// Or name the lifetime.
+$articles = $runner->query('SELECT * FROM articles', [], ttlSeconds: 300);
+
+// After writing to a table, drop what was cached from it.
+$connection->execute('UPDATE articles SET status = :s WHERE id = :id', [...]);
+$runner->invalidate('articles');
+```
+
+Caching is asked for per query and never applied behind a caller's back: `$connection`
+still executes every statement against the database. A transparent read cache over
+every `SELECT` would change what an application sees after its own writes, which is not
+something an operator gets by leaving `enabled` at its default.
+
+Resolving the runner with no PSR-16 cache configured fails with a message saying so,
+rather than returning a runner that quietly never caches.
+
+Supply a tenant id and a schema version when the results are not the same for
+everybody, or across a migration:
+
+```php
+use Pulsar\Database\Cache\CachedQueryRunner;
+use Pulsar\Database\Cache\QueryCache;
+use Pulsar\Database\Cache\SensitivityMetadata;
+
+$runner = new CachedQueryRunner(
+    $connection,
+    new QueryCache($psr16Cache),
+    new SensitivityMetadata($config),
+    $config,
+    tenantId: $tenant->id,
+    schemaVersion: $schemaVersion,
+);
 ```
 
 ### Cache key determinism
@@ -476,17 +608,30 @@ Cache keys are built from a hash of:
 - Connection role (read/write)
 - Schema version
 
-This ensures no ambient state leaks into cache keys.
+The tenant id and the schema version are values the caller supplies, not values read
+from ambient state — which is exactly what keeps a key stable: a key assembled from
+whatever happened to be set in the process changes when nothing about the query did.
+Leaving the tenant id null says "this result is the same for every caller", and that is
+a claim the application makes rather than one made on its behalf.
 
 ### Tag-based invalidation
 
-- Cache entries are tagged by table name
-- Write operations on a table invalidate all cached queries for that table
-- Tags are extracted from the query builder AST (all referenced tables including JOINs)
+- Cache entries are tagged by table name. `CachedQueryRunner::query()` reads the tags
+  out of the SQL with `TableTagExtractor`, which matches `FROM`, `JOIN`, `INTO`,
+  `UPDATE` and `DELETE FROM` clauses; `CachedQueryRunner::run()` takes a
+  `CacheableQuery` whose tags the caller supplies, which is what an application built
+  on its own query builder passes instead.
+- `invalidate('articles', ...)` bumps a per-tag version counter, which makes every
+  entry stamped with an older version stale on its next read. Nothing has to enumerate
+  or rewrite the entries.
+- Invalidation is **not** automatic. A write issued through the connection, or by
+  another process, never reaches the runner — so the application calls `invalidate()`
+  after writing. Claiming automatic invalidation would be claiming to see writes that
+  never pass through here.
 
 ### Safety rules
 
-- **Regulated preset**: Query caching disabled by default. Opt-in per query
+- **Regulated preset**: `'regulated_preset' => true` makes an omitted `enabled` key mean "off". Opt in by writing `'enabled' => true`
 - **Sensitive tables**: Never cached regardless of `->cache()` calls
 - **Authorization-shaped queries**: Queries with `WHERE user_id = ?` or `WHERE tenant_id = ?` are excluded by default
 
@@ -545,7 +690,6 @@ return [
     'migrations' => [/* ... */],
 
     // New sections (all optional)
-    'pool' => [/* ... */],
     'read_write' => [/* ... */],
     'failover' => [/* ... */],
     'query_cache' => [/* ... */],

@@ -330,35 +330,76 @@ Pulsar includes TOTP (RFC 6238) generation and verification with recovery codes 
 
 ### Setup flow
 
+Every write and verify method takes the identity id as its **first** argument -
+replay prevention is scoped per identity, and a verifier that could not name the
+identity could not scope anything. This changed in 1.0.0-rc.8; code written
+against the older two-argument signatures does not compile.
+
 ```php
+use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
+use Pulsar\Auth\TwoFactor\VerifyReason;
+
 $manager = $container->get(TwoFactorManagerInterface::class);
 
 // 1. Begin setup - generates secret, provisioning URI, and recovery codes
 $setup = $manager->beginSetup($identity);
-// Returns:
+// Returns exactly these four keys:
 // [
-//     'secret' => '<binary>',
+//     'secret' => '<raw binary>',
 //     'secret_base32' => 'JBSWY3DPEHPK3PXP...',
 //     'provisioning_uri' => 'otpauth://totp/Pulsar:user@example.com?...',
-//     'recovery_codes' => ['A3F2-9B4C', '7D1E-F056', ...],
+//     'recovery_codes' => ['A3F2-9B4C-7D1E-F056', ...],  // plaintext, shown once
 // ]
 
-// 2. Display QR code from provisioning_uri, show recovery codes to user
+// 2. Display QR code from provisioning_uri, show recovery codes to user.
+//    Carry $setup['secret'] through this step - nothing has stored it yet.
 
 // 3. Confirm setup - user enters code from authenticator app
-$confirmed = $manager->confirmSetup($setup['secret'], $userCode);
+$result = $manager->confirmSetup($identity->id(), $setup['secret'], $userCode);
+
+if ($result->confirmed) {
+    // The secret is now stored encrypted via TotpSecretStoreInterface.
+    // Persist the recovery codes yourself - see "Recovery code storage".
+} else {
+    $result->reason; // VerifyReason::InvalidCode or VerifyReason::RateLimited
+}
 ```
+
+`confirmSetup()` returns a `Confirm2faSetupResult` (`confirmed`, `reason`), not a
+boolean: a refusal caused by the rate limiter and a refusal caused by a wrong
+code are different incidents and must not collapse into one `false`.
 
 ### Verification flow
 
 ```php
-// During login, after password verification:
-$valid = $manager->verifyCode($secret, $userCode);
+// During login, after password verification. The secret is loaded from
+// TotpSecretStoreInterface - you do not pass it.
+$result = $manager->verifyCode($identityId, $userCode, TwoFactorPurpose::Login);
+
+$result->verified;          // bool
+$result->reason;            // VerifyReason
+$result->purpose;           // the TwoFactorPurpose that was checked
+$result->acceptedTimeStep;  // ?int - the accepted step, null on failure
 
 // Recovery code fallback:
-$index = $manager->verifyRecoveryCode($userCode, $storedCodes);
+$index = $manager->verifyRecoveryCode($identityId, $userCode);
 // Returns matched index (0-based) or -1 if invalid
 ```
+
+Two failure modes look like a wrong code and are not:
+
+- `VerifyReason::NotEnrolled` - no `TotpSecretStoreInterface` is bound, or the
+  store holds no secret for this identity. Nothing was checked.
+- `VerifyReason::RateLimited` - returned both when the limiter refuses **and**
+  when no `TwoFactorRateLimiterInterface` is bound at all. `verifyCode()` fails
+  closed: an unwired limiter denies every attempt rather than allowing
+  unlimited ones. Dev and test environments bind
+  `AllowAllTwoFactorRateLimiter` explicitly so that the absence of rate
+  limiting is a visible line of wiring.
+
+`verifyCodeWithSecret()` takes an explicit secret instead of consulting the
+store. It is deprecated and scheduled for removal in 2.0; new code uses
+`verifyCode()`.
 
 ### Identity status transitions
 
@@ -641,17 +682,26 @@ Same defaults as production (security by default). Exceptions:
 
 #### Setup flow (detailed)
 
-1. Call `beginSetup()` with the authenticated identity. Returns:
-   - `secret`: raw binary secret (display only once)
+1. Call `beginSetup()` with the authenticated identity. Returns four keys, and
+   only these four:
+   - `secret`: raw binary secret (carry it to step 4, then discard)
    - `secret_base32`: Base32-encoded for manual entry
    - `provisioning_uri`: QR code URI (`otpauth://totp/...`)
    - `recovery_codes`: plaintext codes (display only once, never again)
-   - `recovery_code_set`: `RecoveryCodeSet` with hashed codes for storage
 2. User scans QR code in their authenticator app
 3. User enters a TOTP code to confirm setup
 4. Call `confirmSetup()` with the identity ID, secret, and code
 5. On success, the secret is stored encrypted via `TotpSecretStoreInterface`
 6. On failure, `Confirm2faSetupResult.reason` indicates the cause
+7. Call `rotateRecoveryCodes()` with the identity ID. **This is the step that
+   stores recovery codes.** `beginSetup()` generates a display set and hands it
+   back; it hashes nothing and writes nothing to
+   `RecoveryCodeStoreInterface`, so in the store-backed mode described below
+   the codes shown at step 1 will not verify at login.
+   `rotateRecoveryCodes()` builds a `RecoveryCodeSet`, hashes every code into
+   it, writes it through the store, and returns `RecoveryCodeRotationResult`
+   with `set` (the stored, hashed object) and `plaintextCodes` (what you
+   display). Show those and discard the step-1 list.
 
 #### Verification flow (detailed)
 
@@ -669,10 +719,22 @@ Same defaults as production (security by default). Exceptions:
 #### Recovery code storage
 
 - Codes are hashed with keyed BLAKE2b using a derived subkey (master key id=3, context=`rcvrycod`)
-- Only hashes are stored; plaintext codes are shown exactly once during setup
+- Only hashes are stored; plaintext codes are shown exactly once
 - Input is canonicalized (uppercase, stripped dashes/spaces) before hashing
 - Code format: `XXXX-XXXX-XXXX-XXXX` (64-bit entropy, 16 hex characters)
 - Legacy format: `XXXX-XXXX` (32-bit entropy, detected by canonical length)
+
+`verifyRecoveryCode()` has two modes, and which one runs is decided by what was
+wired, not by an argument:
+
+| Wiring                                                           | Mode         | Behaviour                                                                                                                              |
+| ---------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Both `RecoveryCodeHasher` and `RecoveryCodeStoreInterface` bound | Store-backed | Hashes the input and asks the store to consume it atomically. The third argument is ignored. A replayed code audits as `Denied`.       |
+| Either one missing                                               | Legacy       | Compares the input against the plaintext `$validCodes` list the caller passes as the third argument. Nothing is consumed or persisted. |
+
+Store-backed is the mode to deploy. Legacy mode exists for applications that
+manage their own storage; it cannot detect reuse, because it has nowhere to
+record that a code was spent.
 
 #### Recovery code rotation
 

@@ -456,5 +456,5 @@ new PathValidator(
 
 ## Related Documentation
 
-- [Control Packs](control-packs.md) -- domain-specific starter kits with compliance scaffolding
+- [Scaffolding packs](scaffolding-packs.md) -- domain-specific starter kits with compliance scaffolding
 - [ADR-0028: Codegen Engine & Control Packs](adr/0028-codegen-and-control-packs.md) -- architecture decisions

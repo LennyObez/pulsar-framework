@@ -230,8 +230,14 @@ middleware, and registers the **`throttle`** alias — apply it per route or gro
 ```
 
 ```php
-// route definition
-$router->post('/contact', ContactController::class)->middleware('throttle');
+// route definition — route middleware is attached through the Route
+// constructor; the router exposes no fluent middleware() setter
+$router->add(new Route(
+    methods: [Method::POST],
+    path: '/contact',
+    handler: ContactController::class,
+    middleware: ['throttle'],
+));
 ```
 
 The bound limiter is **cache-backed** (`CacheRateLimiter`, PSR-16) whenever a

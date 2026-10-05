@@ -1,3 +1,18 @@
+> # ARCHIVED — NOT CURRENT POLICY
+>
+> This is a dated snapshot, kept as a record of what was reviewed and when. **Do not act on
+> it.** It assesses two extensions that no longer exist under those names: `pulsar/oauth2`
+> and `pulsar/webauthn` were merged into the bundled `pulsar/auth` extension before 1.0.0
+> (see the `replaces` list in `extensions/auth/pulsar.json`), and it says of itself that the
+> implementations behind the contracts it read were still in progress.
+>
+> Current answers: [`docs/webauthn.md`](../../webauthn.md),
+> [`docs/oauth2-oidc.md`](../../oauth2-oidc.md),
+> [`docs/compliance.md`](../../compliance.md), and
+> [`docs/security/asvs-l2-matrix.md`](../asvs-l2-matrix.md). For what a **deployment**
+> achieves rather than what the framework offers, run `php bin/pulsar compliance:report`.
+> See [the archive README](README.md).
+
 # OAuth2/OIDC + WebAuthn Compliance Gap Analysis
 
 **Reviewer:** Legal & Compliance Specialist

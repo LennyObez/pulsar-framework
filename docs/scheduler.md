@@ -43,13 +43,15 @@ return [
     // Maximum allowed execution time per job in seconds
     'max_execution_time' => 3600,
 
-    // Seconds to hold a job lock to prevent overlapping execution
-    'lock_timeout' => 300,
-
     // Whether to log job output to the application logger
     'log_output' => true,
 ];
 ```
+
+There is no global lock timeout. Overlap prevention is declared per job, and takes
+its lock lifetime from `withoutOverlapping($lock, $expiresAfterMinutes)` — the
+lifetime that is correct for a job is that job's own worst-case runtime. A
+`lock_timeout` key in `config/scheduler.php` is reported as an unknown key.
 
 ### Configuration DTO
 
@@ -62,7 +64,6 @@ readonly class SchedulerConfig
         public bool $enabled = false,
         public string $timezone = 'UTC',
         public int $maxExecutionTime = 3600,
-        public int $lockTimeout = 300,
         public bool $logOutput = true,
     ) {}
 }
@@ -207,6 +208,42 @@ enum JobStatus: string
     case Running = 'running';
 }
 ```
+
+### Preventing overlapping runs
+
+A job that can still be working when its next slot arrives — a nightly reconciliation, a large export — should refuse to start a second copy. `ScheduleBuilder::withoutOverlapping()` does that, and it **requires a lock**:
+
+```php
+use Pulsar\Cache\Application\CacheManager;
+use Pulsar\Scheduler\ScheduleBuilder;
+
+$lock = $container->get(CacheManager::class)->lock(); // the configured cache pool's lock
+
+$registry->register(
+    ScheduleBuilder::job('nightly-reconciliation', $reconcile(...))
+        ->dailyAt('02:00')
+        ->withoutOverlapping($lock, expiresAfterMinutes: 180)
+        ->build(),
+);
+```
+
+A run that finds the lock held returns `JobStatus::Skipped` without invoking the callback. The lock is released when the job finishes, including when it throws.
+
+`CacheManager::lock($pool)` hands back the `LockInterface` for a configured cache pool, so the backing store follows `config/cache.php` — filesystem, Redis, database, Memcached or APCu — and the pool prefix keeps scheduler locks from colliding with anything else using the same backend. Pass a pool name to pick a specific one.
+
+The lock is not optional and there is no default, because only the caller knows what its scheduler processes share. Each `scheduler:tick` is a separate `cron` invocation, and most production installations run the scheduler on more than one host — so the only thing that can observe a run already in flight is a store all of them reach:
+
+| Scheduler runs on                 | Backing pool must be                     |
+| --------------------------------- | ---------------------------------------- |
+| One host                          | Filesystem, database, Redis or Memcached |
+| Several hosts                     | Redis, Memcached, or the shared database |
+| Several hosts with a shared mount | Filesystem on that mount                 |
+
+APCu and the array driver are per-process and cannot see a run started by another tick, so a job locked against either is not protected. Choose the pool deliberately.
+
+Calling `withoutOverlapping()` without a lock is a `TypeError`; constructing a `ScheduledJob` with `preventOverlap: true` and no lock throws `SchedulerException`. Neither can silently report a protection that is absent.
+
+`expiresAfterMinutes` (default `1440`) is the lock's lifetime — the safety valve for a run whose process dies without releasing. Set it above the job's worst-case run time: a lock that expires mid-run lets the next tick start a second copy. When that happens, the release is refused and the job logs a warning naming the job and the expiry.
 
 ---
 
@@ -452,7 +489,7 @@ php C:\path\to\project\bin\pulsar scheduler:tick
 - Run `scheduler:tick` every minute. Jobs with coarser schedules (hourly, daily) will be skipped automatically when they are not due.
 - Direct scheduler output to a log file for post-mortem analysis.
 - Monitor the exit code: a non-zero exit indicates at least one job failure.
-- The `lock_timeout` configuration prevents overlapping execution of long-running jobs when ticks overlap.
+- Give any job that can outrun its slot a shared lock via `withoutOverlapping()` — see [Preventing overlapping runs](#preventing-overlapping-runs). Every tick is a separate process, so nothing else can stop two copies running at once.
 
 ---
 

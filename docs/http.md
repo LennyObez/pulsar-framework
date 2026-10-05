@@ -1,17 +1,53 @@
 # HTTP layer
 
-Pulsar provides immutable value objects for HTTP requests and responses. These are not PSR-7 implementations - they are purpose-built for Pulsar's architecture with a focus on simplicity, immutability, and type safety.
+Pulsar's HTTP core **is** a PSR-7 implementation. `Pulsar\Http\Message\ServerRequest`,
+`Response`, `Uri`, `Stream` and `UploadedFile` implement the `Psr\Http\Message`
+interfaces; all six PSR-17 factories live in `src/Http/Factory/`; the middleware pipeline
+is PSR-15, and `Kernel::handle()` takes a `ServerRequestInterface` and returns a
+`ResponseInterface`.
 
-## PSR-7 non-adoption rationale
+Alongside them sits a second, narrower pair — `Pulsar\Http\Request` and
+`Pulsar\Http\Response`, `readonly` value objects reached through a bridge. Both are
+supported; this page says which to reach for.
 
-Pulsar uses its own HTTP abstractions because:
+## Two request types, and which to use
 
-1. **Simpler API** - PSR-7's `StreamInterface` and message factories add complexity rarely needed in framework internals.
-2. **Readonly by design** - PHP 8.2 `readonly class` provides compile-time immutability guarantees that PSR-7 can only enforce at runtime.
-3. **Reduced dependency surface** - No external packages for HTTP message handling.
-4. **Enum-backed types** - `Method` and `ResponseStatus` are backed enums with domain methods, not string/int constants.
+|                                                                     | `Pulsar\Http\Message\ServerRequest` | `Pulsar\Http\Request`                       |
+| ------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------- |
+| Is a PSR-7 `ServerRequestInterface`                                 | yes                                 | no                                          |
+| What the kernel hands a controller                                  | yes                                 | via `PsrBridge` / `extensions/psr7-bridge/` |
+| Immutability                                                        | PSR-7 `with*()` convention          | `readonly`, enforced by the language        |
+| Convenience helpers (`json()`, `query()`, `input()`, `wantsJson()`) | yes                                 | yes                                         |
+| Backed-enum `Method` / `ResponseStatus`                             | yes                                 | yes                                         |
 
-For interoperability with PSR-7/PSR-15 libraries, Pulsar ships a first-party bridge extension at `extensions/psr7-bridge/` (`pulsar/psr7-bridge`). It provides bidirectional adapters between Pulsar's HTTP objects and PSR-7 interfaces, plus a PSR-15 middleware adapter. See [ADR-0003](adr/0003-non-psr7-http-abstractions.md) for the design rationale.
+**Use `Pulsar\Http\Message\ServerRequest` in controllers.** It is what the pipeline
+carries, so nothing converts. Reach for the `readonly` pair when you want the language to
+enforce immutability at an application boundary, and cross with `PsrBridge`.
+
+### What the value objects are for
+
+1. **`readonly` by design** - `Pulsar\Http\Request` cannot be mutated at all, where a PSR-7
+   message relies on `with*()` discipline. That is a real guarantee and the reason the pair
+   still exists.
+2. **No `StreamInterface` ceremony** - bodies are strings; streaming has a dedicated
+   `StreamedResponse` path.
+3. **Enum-backed types** - `Method` and `ResponseStatus` are backed enums with domain
+   methods rather than string/int constants. These are used on both paths.
+
+### Interoperability
+
+Third-party PSR-7, PSR-15 and PSR-17 code needs no adapter — the core implements all
+three. `extensions/psr7-bridge/` (`pulsar/psr7-bridge`) goes the _other_ way, converting
+PSR-7 messages to and from the `readonly` value objects for code that wants that pair at a
+boundary.
+
+This section used to be headed "PSR-7 non-adoption rationale" and gave "reduced dependency
+surface - no external packages for HTTP message handling" as one of its reasons.
+`composer.json` requires eleven PSR packages, four of them HTTP, and the core implements
+their interfaces. See
+[ADR-0069](adr/0069-a-dependency-you-require-is-not-a-dependency-you-avoided.md) for what is
+in force, and [ADR-0003](adr/0003-non-psr7-http-abstractions.md), which it supersedes, for
+why the non-PSR-7 position looked right at the time.
 
 ## Request
 
@@ -192,6 +228,66 @@ $response->contentLength(); // Content-Length header as int, or null
 $response->contentType();   // Content-Type header value, or null
 ```
 
+### `#[NoCacheResponse]` and `NoCacheMiddleware`
+
+`Pulsar\Http\Attribute\NoCacheResponse` marks a controller method — or a whole controller class — as serving data that must not be cached by browsers or intermediate proxies. Where it is enforced, the response answers with:
+
+```http
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Expires: 0
+```
+
+The attribute is inert on its own. `Pulsar\Http\Middleware\NoCacheMiddleware` (alias `no-cache`) is what enforces it, and it enforces it only on the routes it runs for. Attaching the middleware is not itself a declaration that a route is sensitive: a route whose handler carries no `#[NoCacheResponse]` passes through untouched, which is what lets one application-wide registration coexist with a handful of marked handlers.
+
+**The middleware must be wired where the kernel hands the pipeline the matched route.** It reads the declaration off the dispatched route's handler, which it is given by the kernel through `DispatchedRouteAwareInterface` — not off a request attribute, which every frame between routing and the handler can rewrite. Two positions supply it, and only those two:
+
+```php
+// 1. On the route. Scopes the reflection to the sensitive routes.
+//    Route middleware is attached through the constructor's `middleware:`
+//    argument; the router has no fluent middleware() setter.
+$router->add(new Route(
+    methods: [Method::GET],
+    path: '/accounts/{id}/statement',
+    handler: [StatementController::class, 'show'],
+    middleware: ['no-cache'],
+));
+```
+
+```php
+// 2. In the PostRoutingPipeline. One registration; every #[NoCacheResponse]
+//    in the application is then enforced. Typically from a service provider.
+use Pulsar\Http\Middleware\NoCacheMiddleware;
+use Pulsar\Http\Middleware\PostRoutingPipeline;
+
+$container->get(PostRoutingPipeline::class)->pipe(NoCacheMiddleware::class);
+```
+
+`PostRoutingPipeline` is kernel-owned and marked `#[Internal]`: it is the only registration point that sees the matched route for every route in the application, but it is not covered by the semver guarantees on `#[Api]` types.
+
+Piped into the **global** pipeline it runs before routing, can never learn which handler serves the request, and now throws a `LogicException` naming both supported wirings instead of returning the response unprotected. That is deliberate and is a behaviour change: the alternative — handing back an uncached-but-unmarked response — is the defect this middleware was found in, an operator believing statements of account carried `no-store` while every one of them was cacheable. A `LogicException` on the first request after a deploy is a wiring error you can see; a missing header is not.
+
+This governs what **browsers and proxies** may keep. Pulsar's own shared response cache is a separate, opt-in mechanism with its own refusal rules — see [HTTP response caching](caching.md#http-response-caching-httpcachemiddleware).
+
+### Streaming responses
+
+`Pulsar\Http\Response\StreamedResponse` streams from a generator or iterator with `Transfer-Encoding: chunked`, without buffering the payload.
+
+```php
+return StreamedResponse::fromGenerator(static function (): Generator {
+    foreach ($rows as $row) {
+        yield formatCsvRow($row);
+    }
+}, 200, ['Content-Type' => 'text/csv']);
+```
+
+Two methods reach the payload, and they no longer fight over it:
+
+- `getSource()` returns the iterator to stream. This is what the emitter uses, and what a caller that wants the response to stay streamed should use.
+- `getBody()` returns the whole body as a PSR-7 stream. It **materializes** the source — buffering the payload this class exists to avoid buffering — but it is **not destructive**. The source is read once, kept, and answered from the buffer on every later call, `getSource()`'s included.
+
+That matters to middleware authors. Any frame that inspects `getBody()` — a compressor, a hasher, a response cache, a logger — used to consume the single-pass source and keep nothing, leaving the emitter behind it with headers already sent and an empty body, or a `getSource()` that threw. Reading the body now costs memory and costs the streaming property, and costs nothing else. `withBody()` is still unsupported and throws a `RuntimeException`; use a regular `Response` for a non-streamed body.
+
 ## HeaderBag
 
 `Pulsar\Http\HeaderBag` is a `readonly class` for case-insensitive HTTP header storage (RFC 7230).
@@ -270,6 +366,20 @@ benign duplicate and is ignored. The recorded collisions are available on
 `route:list`.
 
 See [ADR-0034](adr/0034-route-registration-precedence.md) for the full rationale.
+
+### Match precedence
+
+Registration order decides who owns a key. When two _different_ keys can answer
+the same request — a literal path and a placeholder pattern, or a host-constrained
+route and a host-less one — the router resolves them in this order:
+
+1. a route constrained to a host that matches the request `Host` header;
+2. the host-less static (literal-path) route;
+3. host-less dynamic routes, first-registered-wins.
+
+This ordering does not depend on whether the request carries a `Host` header, nor
+on whether some unrelated route elsewhere in the table is host-constrained. Both
+matchers apply it: the live `Router` and the build-time `CompiledRouteTree`.
 
 ## Path canonicalization
 
@@ -387,3 +497,31 @@ ResponseStatus::OK->reasonPhrase();        // "OK"
 ResponseStatus::NotFound->isClientError(); // true
 ResponseStatus::InternalServerError->isServerError(); // true
 ```
+
+## Error responses carry security headers
+
+An error produced while dispatching a route is converted to a response at the innermost pipeline handler, so it travels back out through every global middleware — `SecurityHeadersMiddleware` included — and receives the same header set as a `200`. Nothing to configure there.
+
+Two failures cannot do that, because there is no pipeline left to travel back through:
+
+- **boot failed** — a poisoned config, a failing wiring, an extension that threw during registration. `SecurityHeadersMiddleware` is not wired yet.
+- **a global middleware threw** — the throw unwinds every frame outside it, `SecurityHeadersMiddleware`'s included.
+
+Both used to leave the kernel with whatever the exception handler put together, which for a typical application handler is no protective header at all. That made the response most likely to be probed the one response in the framework with no CSP, no framing policy and no referrer policy.
+
+The kernel now fills the gaps on those two paths from `ProductionRenderer::LAST_RESORT_HEADERS`:
+
+| Header                    | Value                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `Cache-Control`           | `no-store`                                                                                                   |
+| `X-Content-Type-Options`  | `nosniff`                                                                                                    |
+| `X-Frame-Options`         | `DENY`                                                                                                       |
+| `Referrer-Policy`         | `no-referrer`                                                                                                |
+| `Content-Security-Policy` | `default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` |
+
+Two rules govern it, and both matter if you render your own error pages:
+
+- **Only missing headers are added.** A value your exception handler already set is left alone — an `X-Frame-Options: SAMEORIGIN` it chose is not replaced with `DENY`. This static list is not your configured header policy, and the kernel does not overrule a stated value on a path you cannot see.
+- **`Content-Type` is never touched.** It describes the payload whoever built the response produced, and the last-resort page's `text/html` would mislabel a JSON error body.
+
+This is additive on the two out-of-pipeline paths only; a 404, 405 or 500 raised during dispatch is unaffected, because it was already picking up the application's configured headers.

@@ -438,19 +438,42 @@ final class NotificationsServiceProvider implements ServiceProviderInterface
 
 ### 5. Register the extension
 
-Ensure the extension path is included in your `config/app.php`:
+There is nothing to register. Discovery scans a **fixed** location: the
+`extensions/` directory beside `config/`. Put the extension there and it is
+found.
+
+There is no `extensions.paths` setting. `ExtensionDiscovery::discover()` derives
+the project root from the config path, appends `extensions`, and loads every
+`pulsar.json` manifest under it; a `paths` key in `config/app.php` is read by
+nothing and adds no directory. The scaffolded `public/index.php` scans two fixed
+roots - `vendor/pulsar/framework/extensions` for the bundled ones and
+`<project>/extensions` for yours - and to load an extension from anywhere else
+you call `loadFromPaths()` yourself, as shown under
+[Programmatic discovery](#programmatic-discovery).
+
+What `config/app.php` **does** control is which of the discovered extensions
+boot:
 
 ```php
 return [
     'extensions' => [
-        'paths' => [
-            __DIR__ . '/../extensions',
+        // Exclusive allowlist. Present: only these load. Absent: everything
+        // discovered loads, except off-by-default products.
+        'enabled' => [
+            'myapp/notifications',
         ],
+
+        // Additive opt-in for bundled products, which stay off until listed
+        // here whatever 'enabled' says.
+        'enabled_products' => [],
     ],
 ];
 ```
 
-The extension loader discovers all `pulsar.json` manifests under the configured paths automatically.
+Names are the manifest's `name` field. Non-string entries are dropped rather
+than trusted, so a malformed list cannot smuggle a non-name into either control.
+Both keys are optional; omitting `enabled` means "load what you find", and
+omitting `enabled_products` means "load no products".
 
 ### Programmatic discovery
 
@@ -619,20 +642,40 @@ Some capabilities cannot be enforced at the PHP level because PHP has no native 
 
 **Production recommendation**: Set `disable_functions = exec,passthru,shell_exec,system,proc_open,popen` in `php.ini` for application workers. Only CLI console workers that need process execution should have these functions enabled.
 
-### Capabilities that are declared but not enforced
+### Where each capability is enforced
 
-Three capabilities exist in `ExtensionCapability` and are handed out by `CapabilityPolicy`,
-but no code consults them. They are listed here so the table below is not read as promising
-more than it delivers:
+A capability that gates nothing is a claim, and this page is cited for SOX, HIPAA and
+PCI-DSS controls. Three capabilities — `MiddlewareRegister`, `CommandRegister` and
+`AuditWrite` — were in that state: declared in `ExtensionCapability`, granted by
+`CapabilityPolicy`, printed in the tier table, and consulted by no code anywhere in
+`src/`. They now have enforcement sites, each pinned by a test that fails if the check is
+removed:
 
-| Capability           | Actual status                                                                                                                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MiddlewareRegister` | Never checked. Middleware registration is blocked only as a side effect of the middleware pipeline and registry being refused as service dispensers.                             |
-| `CommandRegister`    | Never checked. Command registration is not gated.                                                                                                                                |
-| `AuditWrite`         | Never checked. `AuditLoggerInterface` is on the safe list, so **any** tier — Untrusted included — can resolve the audit logger and write entries without holding the capability. |
+| Capability           | Enforcement site                                                                                                                      | Test that pins it                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MiddlewareRegister` | `ServiceRestrictionMap` prices `MiddlewarePipelineInterface` and `MiddlewareRegistry`, the two ids the Kernel binds (`:149-150`)      | `ServiceRestrictionMapTest::globalMiddlewareCostsMiddlewareRegister`, `SandboxEscapeRoutesTest::middlewareRegisterNowGatesTheGlobalPipeline`                  |
+| `CommandRegister`    | `ExtensionBootstrap::buildCommand()` charges the declaring extension's tier before it constructs the command (`:682-690`)             | `SandboxEscapeRoutesTest::aCommandFromATierWithoutCommandRegisterIsRefused`, `BundledExtensionContractTest::noCommandTheManifestPromisesIsDeniedByItsOwnTier` |
+| `AuditWrite`         | `ServiceRestrictionMap` prices `AuditLoggerInterface` and `AuditLogger` (`:104-105`); both were on the safe list until this was fixed | `ServiceRestrictionMapTest::theAuditLoggerCostsAuditWriteRatherThanBeingSafeListed`, `SandboxEscapeRoutesTest::auditWriteNowGatesTheAuditLogger`              |
 
-`tests/Integration/Extensibility/SandboxOpenGapsTest.php` scans `src/` and fails if any of
-the three gains an enforcement site, so this table cannot quietly go stale.
+The audit sink and the audit logger are priced separately, because they are different
+powers: draining or reconfiguring the sink is `AuditSinkAccess` (Core and Verified),
+appending an entry is `AuditWrite` (down to Community, never Untrusted).
+
+`ProcessExec` still prices nothing, and that is a statement rather than an omission: the
+framework exposes no process-execution service to price — `ServeCommand` calls `proc_open()`
+directly — and the capability is granted to Core alone, which bypasses the restriction map
+entirely. The map used to name `Pulsar\Process\ProcessManagerInterface`, a type that has
+never existed here, which made an inert grant look enforced.
+`ServiceRestrictionMapTest::processExecPricesNothingBecauseThereIsNoProcessService` holds
+the map to that.
+
+An earlier revision of this section said all three were "never checked" and cited
+`tests/Integration/Extensibility/SandboxOpenGapsTest.php` as scanning `src/` to keep the
+claim honest. That test does no such scan: it executes the escapes that remain **open** —
+reflection reaching the unscoped container, an Untrusted extension reading the host route
+table, and forged event dispatch — and has never had anything to do with these three
+capabilities. Those gaps are described under [What the sandbox is not](#what-the-sandbox-is-not)
+and in ADR-0023.
 
 ### What the sandbox is not
 
@@ -650,14 +693,33 @@ on it for a compliance control.
 
 ### Trust tier summary
 
-Every cell below means "may resolve the framework service that does this", because the container is where the check happens. None of them means the extension is prevented from doing it by other means — see the operational table above.
+**[ADR-0023](adr/0023-extension-trust-tiers.md) owns the capability model.** Its matrix is
+the per-capability statement of what each tier is granted, and `CapabilityPolicy::defaults()`
+is the code that grants it. This table is a second view of the same facts for a different
+question — not "which capabilities" but "what can this extension actually reach" — so every
+column names the capability it renders, and `TrustTierDocumentationTest` checks each cell
+against the policy. It cannot drift from the ADR without failing the build.
 
-| Tier      | Container | Routes   | `Environment` service | `Filesystem` service | HTTP client | Process manager |
-| --------- | --------- | -------- | --------------------- | -------------------- | ----------- | --------------- |
-| Core      | Full      | Global   | Yes                   | Yes                  | Yes         | Yes             |
-| Verified  | Most      | Global   | Yes                   | Yes                  | Yes         | No              |
-| Community | Limited   | Prefixed | No                    | No                   | No          | No              |
-| Untrusted | Read-only | No       | No                    | No                   | No          | No              |
+Every cell means "may resolve the framework service that does this", because the container
+is where the check happens. None of them means the extension is prevented from doing it by
+other means — see the operational table above.
+
+| Tier      | Container | Routes   | `EnvRead` | `FilesystemWrite` | `NetworkEgress` | `ProcessExec` |
+| --------- | --------- | -------- | --------- | ----------------- | --------------- | ------------- |
+| Core      | Full      | Global   | yes       | yes               | yes             | yes           |
+| Verified  | Most      | Global   | yes       | yes               | yes             | no            |
+| Community | Limited   | Prefixed | no        | no                | no              | no            |
+| Untrusted | Read-only | No       | no        | no                | no              | no            |
+
+The last four columns are the capabilities gating the `Environment` service, the
+`Filesystem` service, the HTTP client and the process manager. The first two are words
+rather than yes/no because the answer is graded, and each word is one capability:
+
+- **Container** — `Full` may override an existing binding (`ContainerWrite`); `Most` may
+  decorate one (`ServiceDecorate`); `Limited` may register its own (`ServiceRegister`);
+  `Read-only` may only resolve (`ContainerRead`).
+- **Routes** — `Global` may register any path (`RouteRegisterGlobal`); `Prefixed` may
+  register under its own prefix (`RouteRegister`); `No` may not register at all.
 
 The host can grant a specific capability to a specific extension with `additional_capabilities` in `config/extensions.php` without moving it to a higher tier.
 

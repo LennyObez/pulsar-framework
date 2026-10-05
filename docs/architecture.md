@@ -223,7 +223,10 @@ modules/<module-name>/
 
 ## Directory layout
 
-See `docs/repository-structure.md` for the complete directory structure.
+See [repository-structure.md](repository-structure.md) for the top-level directory
+layout and what each directory is for. That page states no module or extension
+inventory on purpose — it names the commands that produce the current one, because a
+transcribed list is wrong from the first commit after it is written.
 
 ## API stability
 
@@ -251,7 +254,10 @@ For the complete public API reference, see [`docs/public-api.md`](public-api.md)
 Pulsar includes a PHPBench-based benchmark suite (`tests/Benchmark/`) with CI-enforced performance budgets.
 
 - **Benchmark suite**: PHPBench benchmarks cover critical hot paths (bootstrap, routing, container resolution, middleware pipeline, response emission).
-- **Budget definitions**: Budgets are declared in `tools/php/performance-budgets.json` and enforced during CI runs.
+- **Budget definitions**: Budgets are the `#[Assert]` attributes on the benchmark subjects;
+  PHPBench exits non-zero on a breach and the Tier A CI job propagates it.
+  `tools/php/performance-budgets.json` is a reference index of those numbers, read by no
+  code — see [ADR-0072](adr/0072-a-budget-is-the-assertion-that-runs.md).
 - **PHPBench configuration**: See `tools/php/phpbench.json` for runner configuration.
 - **CI enforcement**: Performance regressions that exceed the defined budgets will fail the CI pipeline, preventing accidental degradation of framework performance.
 

@@ -322,18 +322,37 @@ Outputs a hidden input with the CSRF token:
 
 Renders: `<input type="hidden" name="_token" value="...">` (value is HTML-escaped).
 
-#### @method
+#### HTTP methods in forms
 
-Outputs a hidden input for HTTP method spoofing:
+There is no `@method` directive, and no method spoofing. Pulsar reads the HTTP
+verb from the request line only: nothing in `src/Http` or `src/Routing` looks at
+a `_method` body field or an `X-HTTP-Method-Override` header, and an
+unrecognised verb is answered `501` rather than dispatched
+(see [ASVS V14.5](security/asvs-l2-matrix.md)). A hidden `_method` field would
+therefore change nothing — the form would POST, and a route registered for
+`DELETE` alone would answer `405`.
+
+An HTML form can send `GET` or `POST`. To reach a `PUT`, `PATCH` or `DELETE`
+route, send the request with `fetch()`:
 
 ```html
-<form method="POST" action="/posts/{{ $post->id }}">
-  @csrf @method('DELETE')
+<form method="POST" action="/posts/{{ $post->id }}" data-delete>
+  @csrf
   <button type="submit">Delete</button>
 </form>
 ```
 
-Renders: `<input type="hidden" name="_method" value="DELETE">`.
+```js
+document.querySelector('[data-delete]').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  await fetch(form.action, { method: 'DELETE', body: new FormData(form) });
+});
+```
+
+Otherwise, register the route for `POST` and let the form post to it directly.
+`@form` refuses any other verb rather than rendering a `POST` form that claims
+to send one.
 
 ### Contact directives (anti-scraping)
 
@@ -380,6 +399,54 @@ Outputs a translated string (HTML-escaped). Use `@t()` as the primary translatio
 ```
 
 `@i18n()` is an alias that works identically but `@t()` is the recommended form used throughout the framework's templates and extensions. Both integrate with the `__()` translation helper from the i18n module.
+
+#### The three sanctioned forms — and nothing else
+
+A translation is not trusted input: catalogs are shipped by extensions, edited by translators, and in some deployments loaded from a database an administrator writes to. Only these three forms may put a translated string on the page.
+
+| Where                              | Write                      | What happens                                                  |
+| ---------------------------------- | -------------------------- | ------------------------------------------------------------- |
+| In markup                          | `@t('key')`                | escaped with `htmlspecialchars(ENT_QUOTES \| ENT_SUBSTITUTE)` |
+| Inside a `{{ }}` expression        | `{{ $value ?? t('key') }}` | escaped with `ContextEscaper::html()`                         |
+| Translation is deliberately markup | `@tRaw('key')`             | emitted verbatim, on purpose, and greppable                   |
+
+Everything else is refused by the compiler, with the file, the line and the replacement in the error message. In particular:
+
+```html
+<!-- REFUSED. Inside a PHP tag the leading @ is PHP's error-suppression
+     operator, not the directive marker, so t() is called directly and its
+     result is never escaped. Dropping the @ changes nothing. -->
+<h1><?= @t('page.title') ?></h1>
+<h1><?= t('page.title') ?></h1>
+<?php echo __('page.title'); ?>
+@php echo t('page.title'); @endphp
+
+<!-- REFUSED. Same @ suppression, one nesting level in. -->
+<p>{{ $name ?? @t('anonymous') }}</p>
+@section('title', @t('page.title'))
+
+<!-- REFUSED. {!! !!} echoes its expression verbatim. -->
+<p>{!! t('page.body') !!}</p>
+```
+
+The rewrites are mechanical:
+
+```html
+<!-- was: <h1><?= @t('page.title') ?></h1> -->
+<h1>@t('page.title')</h1>
+
+<!-- was: <p>{{ $name ?? @t('anonymous') }}</p> -->
+<p>{{ $name ?? t('anonymous') }}</p>
+
+<!-- was: @section('title', @t('page.title')) -->
+@section('title')@t('page.title')@endsection
+```
+
+The `@section` case needs the block form specifically. `@yield` echoes a section verbatim — it has to, because a block section holds already-compiled HTML — so the inline two-argument form would put an unescaped string in the layout. In the block form the `@t` directive escapes on its own, and `@yield` then echoes markup, which is what it is for.
+
+When a translation legitimately contains markup — a link inside a sentence, which cannot be assembled outside the catalog without breaking word order in half the target languages — mark the entry `html_safe => true` in the catalog and render it with `@tRaw('key')`. That is the only raw spelling, so `grep -rn "@tRaw"` lists every place in a codebase where a catalog string reaches the page unescaped.
+
+The rule is enforced twice: `TemplateCompiler` refuses to compile an offending template, and `tools/ci/assert-no-unescaped-translation.php` scans every `*.pulse.php` in the repository, including templates no test renders.
 
 #### Translation key format
 

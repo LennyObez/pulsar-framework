@@ -95,14 +95,56 @@ Both PHPStan and Psalm flag usages of `@deprecated` symbols. Running `composer p
 
 ### BC break detection
 
-The `Pulsar\Api\BcBreakDetector` compares two API snapshots to detect removed classes, removed methods, and changed signatures on stable APIs. CI runs this automatically on every pull request to catch accidental removals:
+`Pulsar\Api\BcBreakDetector` compares two API snapshots and reports removed classes,
+removed methods and changed signatures on stable APIs. Each `BcBreak` carries a type
+(`ClassRemoved`, `MethodRemoved`), the affected symbol, a human-readable message, and a
+severity derived from the symbol's stability grade.
 
 ```php
 $detector = new BcBreakDetector();
 $breaks = $detector->detect($previousSnapshot, $currentSnapshot);
 ```
 
-Each `BcBreak` includes a type (`ClassRemoved`, `MethodRemoved`), the affected symbol, a human-readable message, and a severity based on the symbol's stability grade.
+### The gate
+
+`composer bc:check` runs it. The leaf is `tools/api/assert-no-bc-breaks.php`, it is part of
+`composer qa`, and `.github/workflows/ci.yml` runs it in the `php-quality` job.
+
+For most of the release-candidate phase nothing ran it. This paragraph used to say "CI runs
+this automatically on every pull request to catch accidental removals", and that was true of
+no workflow, no `composer` leaf and no script: the detector's only caller in the tree was its
+own unit test. A reader who trusted the sentence would have believed a removed `#[Api]`
+method could not reach `main` unnoticed. It could, and eleven such changes were sitting in
+the tree unrecorded when the gate was first run.
+
+**What it compares.** The base is a snapshot read out of git; the current side is built from
+the working tree. Locally the base is `HEAD`, so the break is caught before it is committed.
+On a pull request CI passes `--base=origin/<base ref>` and the base becomes the merge base
+with that branch, so a break made anywhere on the branch is caught — including one that was
+committed and had the snapshot regenerated alongside it.
+
+The obvious wiring — diff the committed `tools/api/public-api.snapshot.json` against a
+snapshot rebuilt from the working tree — is deliberately **not** what runs, because it is a
+tautology. `PublicApiSnapshotTest` already asserts the committed file equals a fresh build,
+so on any tree where the suite passes those two documents are equal by construction and the
+comparison reports nothing. The comparison has to cross a commit.
+
+Comparing against a _released_ snapshot is the shape this takes after 1.0.0. Before then
+there is no published prior version to compare with.
+
+**How a deliberate break is accepted.** Pre-GA this repository does remove `#[Api]` symbols
+on purpose. The gate accepts a break when `CHANGELOG.md`'s `## [Unreleased]` section names
+the symbol — which is where such a removal is recorded anyway, with a **Breaking:** note
+saying what went and why. There is no second list to keep in step with the first, and the
+record prunes itself when a release ships. A break the changelog does not mention fails the
+build.
+
+Its own refusal is watched: `tests/Unit/Api/BcBreakGateTest.php` plants a removed method, a
+changed signature, a removed class, an unparseable base snapshot and a changelog entry that
+does acknowledge the break, and asserts the exit code each time.
+
+See also [Public API](public-api.md): the snapshot is committed, so a removal is visible in a
+diff as well as blocking.
 
 ## Migration guides
 

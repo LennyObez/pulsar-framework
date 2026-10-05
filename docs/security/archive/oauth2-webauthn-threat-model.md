@@ -1,3 +1,19 @@
+> # ARCHIVED — NOT CURRENT POLICY
+>
+> This is a dated snapshot, kept because the threat analysis in it is still worth reading.
+> **Its verification half has expired — do not act on the mitigations as written.** It
+> models `pulsar/oauth2` and `pulsar/webauthn`, two extensions that were merged into the
+> bundled `pulsar/auth` extension before 1.0.0, and its citations name classes the tree no
+> longer contains — `LeagueAuthorizationServer` among them, removed when the authorization
+> server was rewritten as a homegrown implementation under
+> [ADR-0032](../../adr/0032-homegrown-auth-with-conformance-vectors-gate.md). Every
+> `file:line` below points into code that has since been replaced.
+>
+> Current answers: [`docs/webauthn.md`](../../webauthn.md),
+> [`docs/oauth2-oidc.md`](../../oauth2-oidc.md), and
+> [`docs/security/asvs-l2-matrix.md`](../asvs-l2-matrix.md).
+> See [the archive README](README.md).
+
 # OAuth2/OIDC + WebAuthn Threat Model
 
 Security red team analysis of the Pulsar Framework OAuth2/OIDC and WebAuthn extensions.

@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Documentation;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Tests\Unit\Documentation\Support\TrackedFiles;
 
 use function count;
 use function dirname;
@@ -64,8 +65,8 @@ final class DocumentedClaimsTest extends TestCase
      * The decision records are out of scope, and deliberately: an ADR is a dated account
      * of a decision, so a path inside one that has since been deleted is a record of what
      * was true when it was written. Rewriting it would falsify the record — the same
-     * reason `tools/ci/assert-mutation-thresholds.php` excludes CHANGELOG.md and
-     * `docs/audit/`. Live pages get no such latitude.
+     * reason `tools/ci/assert-mutation-thresholds.php` excludes CHANGELOG.md. Live pages
+     * get no such latitude.
      */
     #[Test]
     public function everyDocsPathNamedInProseResolves(): void
@@ -437,16 +438,10 @@ final class DocumentedClaimsTest extends TestCase
     private function filesUnder(string $directory, string $extension): array
     {
         $root = $this->repositoryRoot();
-        $base = $root . DIRECTORY_SEPARATOR . $this->native($directory);
-        self::assertDirectoryExists($base);
+        self::assertDirectoryExists($root . DIRECTORY_SEPARATOR . $this->native($directory));
 
-        $files = [];
-
-        foreach ($this->collect($base, '.' . $extension) as $path) {
-            $files[] = str_replace('\\', '/', substr($path, strlen($root) + 1));
-        }
-
-        sort($files);
+        // What git ships, not the disk: a gitignored local page is in no clone.
+        $files = TrackedFiles::under($root, '.' . $extension, $directory);
         self::assertNotSame([], $files, 'No .' . $extension . ' files were found under ' . $directory);
 
         return $files;

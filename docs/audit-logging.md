@@ -269,14 +269,32 @@ $auditLogger = new AuditLogger(
 
 ### Lifecycle
 
-1. On construction, computes the seed HMAC: `Hmac::computeHex('PULSAR_AUDIT_SEED', auditKey)`
+1. On construction, computes the seed HMAC: `Hmac::computeHex('PULSAR_AUDIT_SEED', auditKey)`,
+   then **asks the sink where the chain already stands** and continues from there:
+
+- `AuditFileSink` implements both `ChainableAuditSinkInterface` and `AuditChainStateAware`,
+  so it can distinguish an empty chain from an unreadable one.
+- `AuditChainState::Healthy` — `previousHmac` becomes the sink's `lastHmac()`, and the new
+  process appends to the existing chain.
+- `AuditChainState::Empty` — the seed stands, because there is nothing to continue.
+- `AuditChainState::Corrupted` — **the constructor throws** `SecurityException::auditChainCorrupted()`.
+  Re-seeding over a truncated or malformed last entry would produce a short, perfectly
+  valid chain that says nothing about the records it replaced, so the logger refuses to
+  start instead.
+- A sink that implements `ChainableAuditSinkInterface` **without** `AuditChainStateAware`
+  cannot tell those last two apart: a `null` `lastHmac()` falls back to the seed, and that
+  sink forfeits the corruption-detection guarantee. If you write your own sink, implement
+  both.
+
 2. On each `log()` call:
 
 - Creates an `AuditEntry` with the current `previousHmac`
 - Writes the entry to the sink
 - Updates `previousHmac` to the new entry's HMAC
 
-3. The chain is maintained in memory for the lifetime of the `AuditLogger` instance
+3. Within the process, the chain head is held in memory and guarded by a cooperative fiber
+   mutex, so concurrent fibers cannot interleave two entries onto the same `previousHmac`.
+   Across processes, the head is whatever the sink reports at construction.
 
 ## Kernel registration
 
@@ -288,12 +306,13 @@ When `PULSAR_MASTER_KEY` is set, the kernel automatically:
 4. Creates `AuditLogger` with the sink and derived key
 5. Registers `AuditLogger` in the container
 
-If `PULSAR_MASTER_KEY` is not set, `AuditLogger` is not registered. Application code should check container availability before using it.
+If `PULSAR_MASTER_KEY` is not set, neither `AuditFileSink` nor `AuditLogger` is registered — there is no audit trail, and no file appears at the configured path. The registration is also gated on `observability.audit.enabled`, which defaults to `true`. Application code must test `$container->has(AuditLoggerInterface::class)` before resolving it; every wiring in `src/` does.
 
 ## Security considerations
 
 - **Key protection**: The `PULSAR_MASTER_KEY` must be kept secret. If compromised, an attacker could forge valid audit entries.
 - **Append-only storage**: Use filesystem permissions and/or immutable storage to prevent direct file modification.
-- **Chain gaps**: If the application restarts, the HMAC chain restarts from the seed. For continuous chain verification across restarts, persist the last HMAC.
+- **Chain continuity across restarts**: a restart does **not** re-seed the chain. `AuditLogger`'s constructor reads `lastHmac()` from the sink and resumes from it, so one file verifies end to end across any number of restarts (`src/Security/Audit/AuditLogger.php:70-98`). Earlier revisions of this page told operators the opposite and advised them to persist the last HMAC themselves; `AuditFileSink` already does, in the file. What a restart cannot repair is a corrupt tail — the constructor throws rather than starting a fresh chain over it, which is a fail-closed refusal an operator must resolve, not a gap to work around.
+- **Concurrent writers**: the head is recovered from the sink **once**, at construction. Two processes writing to the same file concurrently will each extend from the head they read, so the chain forks even though `LOCK_EX` keeps the lines intact. For multi-process or distributed deployments, give each process its own trail or implement an `AuditSinkInterface` that serializes the chain centrally.
 - **Clock integrity**: Timestamps use the system clock. Use NTP to ensure accurate, monotonic timestamps.
-- **Distributed deployments**: `AuditFileSink` uses `LOCK_EX` for single-process safety. For multi-process or distributed deployments, implement a custom `AuditSinkInterface` backed by a database or message queue.
+- **Distributed deployments**: `AuditFileSink` uses `LOCK_EX`, which keeps concurrent writes from interleaving within a line. It does not serialize the chain — see **Concurrent writers** above. For multi-process or distributed deployments, implement a custom `AuditSinkInterface` backed by a database or message queue that assigns `previousHmac` at write time.

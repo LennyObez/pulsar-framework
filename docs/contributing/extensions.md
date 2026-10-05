@@ -37,7 +37,7 @@ extensions/my-feature/
     MyFeatureExtension.php
 ```
 
-The extension needs to be in a directory that Pulsar scans for extensions. By default, this is the `extensions/` directory in your project root. You can configure additional scan paths in `config/app.php` under `extensions.paths`.
+The extension needs to be in a directory that Pulsar scans for extensions, and that directory is fixed: `extensions/` in your project root, beside `config/`. There is no `extensions.paths` setting - `ExtensionDiscovery` derives the root from the config path and appends `extensions`, and a `paths` key in `config/app.php` is read by nothing. To load an extension from somewhere else, call `ExtensionBootstrap::loadFromPaths()` in your own entry point; see [Programmatic discovery](../extensions.md#programmatic-discovery).
 
 ## The manifest (pulsar.json)
 
@@ -354,14 +354,17 @@ The extension is discovered automatically if its directory contains a `pulsar.js
 
 ## Trust tiers
 
-Extensions operate under a trust tier system that controls their access to framework internals. The tiers, from most to least privileged:
+Extensions operate under a trust tier system that controls their access to framework
+internals: `Core`, `Verified`, `Community` and `Untrusted`, most to least privileged.
 
-| Tier        | Who uses it                      | Container access | Route registration |
-| ----------- | -------------------------------- | ---------------- | ------------------ |
-| `Core`      | First-party framework extensions | Full             | Global             |
-| `Verified`  | Audited third-party extensions   | Most services    | Global             |
-| `Community` | Unaudited third-party extensions | Limited          | Prefixed only      |
-| `Untrusted` | Experimental or sandboxed        | Read-only        | None               |
+**What each tier is granted is stated in one place**, the capability matrix in
+[ADR-0023](../adr/0023-extension-trust-tiers.md), which `TrustTierDocumentationTest` checks
+against `CapabilityPolicy::defaults()` on every run. The service-level view of the same
+facts — which container, which routes, which of the gated services — is the tier summary in
+[extensions.md](../extensions.md#trust-tier-summary), and it is checked against the same
+policy. This page used to carry a third copy of the table. It is not here any more, because
+a copy nothing checks is a copy that is right until it is not, and the reader has no way to
+tell which one they are looking at.
 
 Your `pulsar.json` declares a requested trust tier, but the host application's configuration determines the effective tier. The effective tier is always the lower of the requested and allowed tiers, and an extension the host has not listed in its `config/extensions.php` is capped at `Community` whatever its manifest asks for.
 
@@ -369,7 +372,7 @@ This asymmetry is deliberate, and it is the only thing that makes an unverified 
 
 For most community extensions, the `Community` tier is appropriate. Extensions that need access to sensitive services (cryptographic keys, raw database connections, audit sinks) should document this requirement clearly and explain why the elevated access is necessary. The host application operator makes the final decision.
 
-See the [extension trust tiers documentation](../extensions.md) and [ADR-0023](../adr/0023-extension-trust-tiers.md) for the full capability model.
+See [ADR-0023](../adr/0023-extension-trust-tiers.md) for the full capability model, and [extensions.md](../extensions.md#trust-tier-enforcement) for how the sandbox enforces it — including what it deliberately does not stop.
 
 ## Common pitfalls
 

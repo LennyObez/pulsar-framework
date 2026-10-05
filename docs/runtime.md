@@ -305,14 +305,16 @@ The built-in persistent runtime provides a full HTTP/1.1 origin server:
 
 ### Fiber concurrency
 
-When `fiber_concurrency > 0`, the runtime uses a cooperative Fiber scheduler:
+`fiber_concurrency` accepts `0` (synchronous accept loop, the default) and `1` (one connection Fiber at a time). **A value above 1 is refused**: the worker throws `RuntimeException::unsafeFiberConcurrency()` at construction and never starts serving.
 
-- One Fiber per accepted connection
+When `fiber_concurrency = 1`, the runtime drives that single connection through a cooperative Fiber scheduler:
+
+- One Fiber for the accepted connection
 - Main loop uses `socket_select()` to find readable sockets
-- Fibers suspend when I/O would block
-- Backpressure: stops accepting when at concurrency limit
+- The Fiber parks on a timer while a contended cache lock is retried, so the accept loop keeps checking signals and recycle thresholds
+- Backpressure: stops accepting while the Fiber is active
 
-Fibers provide I/O concurrency only - PHP remains single-threaded. Blocking DB calls without async drivers do not benefit from Fibers. The value is in concurrent socket I/O (accept + read + write overlap). Set `fiber_concurrency = 0` (default) for a synchronous accept loop, which is simpler and sufficient for most workloads behind a load balancer.
+Higher values are refused because `RequestSandbox` isolates one request from the _next_ one on the worker, not from a _concurrent_ one: a request parked inside `kernel->handle()` can resume holding another request's session, request-scoped container instances, and feature-flag evaluation log. Nothing is lost by the cap — the connection handler blocks on every socket read and write, so extra Fibers bought no I/O concurrency. Scale with multiple worker processes behind a load balancer. [`docs/async-model.md`](async-model.md) has the full inventory of what crosses and why.
 
 ### The `--public` flag
 
@@ -366,7 +368,7 @@ Options:
   --max-requests   Max requests before recycling (default: from config)
   --memory         Memory threshold in MB (default: from config)
   --timeout        Time limit in seconds (default: from config)
-  --concurrency    Fiber concurrency, 0=sync (default: from config)
+  --concurrency    Fiber concurrency: 0=sync or 1; above 1 refused (default: from config)
   --runtime        Runtime driver override (fpm, persistent, frankenphp, roadrunner)
   --public         Required to bind to non-loopback addresses
 ```
@@ -425,7 +427,7 @@ All settings are in `config/runtime.php`. Environment variables override config 
 | `keep_alive_timeout`     | `15`        | --                              | Idle timeout between requests (s)                                        |
 | `header_timeout_seconds` | `15`        | --                              | Slowloris header timeout (s)                                             |
 | `body_timeout_seconds`   | `60`        | --                              | Body receive timeout (s)                                                 |
-| `fiber_concurrency`      | `0`         | `RUNTIME_FIBER_CONCURRENCY`     | Fiber slots (0 = synchronous)                                            |
+| `fiber_concurrency`      | `0`         | `RUNTIME_FIBER_CONCURRENCY`     | `0` sync or `1`; above 1 is refused at startup                           |
 | `max_header_size`        | `8192`      | --                              | Max request header size (bytes)                                          |
 | `max_body_size`          | `10485760`  | --                              | Max request body size (bytes)                                            |
 | `add_date_header`        | `true`      | --                              | Add Date header to responses                                             |

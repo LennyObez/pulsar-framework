@@ -1,12 +1,104 @@
-# Upgrade guide: 0.x to 1.0.0-rc.11
+# Upgrade guide: 0.x to 1.0.0-rc.12
 
-This guide covers the migration path from Pulsar 0.x (pre-alpha/alpha) to 1.0.0-rc.11. The RC series marks the release candidate phase with a formal public API surface and semver guarantees.
+This guide covers the migration path from Pulsar 0.x (pre-alpha/alpha) to 1.0.0-rc.12. The RC series marks the release candidate phase with a formal public API surface and semver guarantees.
 
-## What 1.0.0-rc.11 means
+Coming from rc.11 rather than from 0.x? Read [Upgrading from 1.0.0-rc.11 to 1.0.0-rc.12](#upgrading-from-100-rc11-to-100-rc12) and stop there; the rest of this guide is the 0.x migration.
 
-This is a release candidate. The public API is frozen and covered by semantic versioning guarantees. No breaking changes will be introduced between rc.8 and the final 1.0.0 release unless a critical defect is discovered.
+## What 1.0.0-rc.12 means
+
+This is a release candidate. The public API is frozen and covered by semantic versioning guarantees: `#[Api]` types take additive change during the RC series, and a change that is not additive needs a critical defect behind it.
+
+That exception has been used, and this guide records each use rather than leaving the freeze stated as though it were absolute. Two sections carry them: [Upgrading from 1.0.0-rc.11 to 1.0.0-rc.12](#upgrading-from-100-rc11-to-100-rc12) for this release, and [Behavioural changes admitted under the critical-defect clause](#behavioural-changes-admitted-under-the-critical-defect-clause) for the ones before it.
 
 Bug fixes and documentation improvements may land before 1.0.0 final. New features will not.
+
+## Upgrading from 1.0.0-rc.11 to 1.0.0-rc.12
+
+rc.12 publishes the compliance control engine as public API: `Pulsar\Compliance\Control\*`, `Pulsar\Compliance\Probe\*` and `Pulsar\Compliance\Evidence\*` are marked `#[Api]` since 1.0.0-rc.12. None of those types appear in the rc.11 API snapshot, so **if you are coming from a released rc.11 they are additions, and nothing in the three sections below can break your code**.
+
+They do break code written against an rc.12 pre-release — a `dev-` requirement, or a checkout of the release branch — because the engine changed shape while it was being built. Read on before you pull if you have ever written a `ControlDeclaration::probed(...)` call, called `ProbeVerdict::reach(...)`, or typed anything against `Pulsar\Compliance\Probe\CapabilityProbe`.
+
+Both signature changes fail loudly. PHP raises `ArgumentCountError` at the call site, so a mapping that has not been updated cannot be built at all — it will not quietly assess into a report that looks fine and is not.
+
+### `ControlDeclaration::probed()` requires the estate the control regulates
+
+`probed()` takes a sixth argument, `ControlSubject $subject`: the estate the standard's own text says the control is about.
+
+Without it, a probe's facts were joined to a control by nothing, and the report had no way to notice that a measurement was about something other than what the control protects. The case that forced it: `audit_chain_verified` recomputes HMACs over the compliance evidence register — the compliance subsystem's log of itself — and was carrying twelve controls about the application's audit trail, the one written through `AuditSinkInterface`. See [ADR-0062](adr/0062-proof-must-be-about-the-control-subject.md).
+
+Name the estate from the standard, not from the probe. A probe that named its own subject would agree with itself by construction, which is why the argument sits on the declaration.
+
+```diff
+                 probe: new TamperEvidentAuditProbe(),
++                subject: ControlSubject::AuditTrail,
+```
+
+Add the import alongside it:
+
+```diff
++use Pulsar\Compliance\Control\ControlSubject;
+```
+
+`ControlSubject` enumerates twenty-one estates — `PersonalData`, `AuditTrail`, `ComplianceEvidenceRegister`, `SessionPayloads`, `KeyHierarchy`, `CryptographicPlatform` and the rest. The cases are deliberately narrow and deliberately flat: `HealthData` is not a part of `PersonalData`, so one operator scope assertion retires exactly the controls whose estate it names and no others. `DataInTransit` is the one case with parts, `DatabaseTransport` and `HttpTransport`.
+
+### `ProbeVerdict::reach()` takes the subject to join against
+
+`reach()` takes a third argument, the same `ControlSubject`. It performs the join the declaration now makes possible: a fact may prove a control only if the control's estate covers the fact's.
+
+The engine passes it for you — `ControlFinding` reads it off the declaration — so this reaches you only if you call `reach()` directly, which in practice means a test harness or a custom report renderer.
+
+```diff
+-$verdict = ProbeVerdict::reach($probe->requirement(), $evidence);
++$verdict = ProbeVerdict::reach($probe->requirement(), $evidence, $declaration->assessedSubject());
+```
+
+`ControlDeclaration::assessedSubject(): ControlSubject` is new in rc.12 and is the supported way to read the estate back off a declaration.
+
+### `ResilienceConfig::__construct()` takes the backup configuration
+
+`ResilienceConfig` gains a fifth parameter, `BackupConfig $backup = new BackupConfig()`, and it sits **before** the trailing `$unknownKeys` rather than after it.
+
+That placement is what breaks. A caller passing `$unknownKeys` positionally now passes it where the backup config is expected and fails on the type:
+
+```diff
+-new ResilienceConfig($enabled, $retry, $breaker, $health, $unknownKeys);
++new ResilienceConfig($enabled, $retry, $breaker, $health, unknownKeys: $unknownKeys);
+```
+
+Naming the argument is the whole migration; moving it one position right works too. `$unknownKeys` is last in every config DTO in this framework because it is not configuration -- it is the list of keys the DTO did not read, which [ADR-0036](adr/0036-unknown-config-key-detection.md) reports rather than ignores -- so a new setting is always inserted in front of it.
+
+**Nothing that goes through `ResilienceConfig::fromArray()` is affected**, and that is how the config loader builds it. If you have never constructed a `ResilienceConfig` by hand, there is nothing to do.
+
+The setting behind it is `config/resilience.php`'s new `backup` section, and it defaults to **enabled** -- the only switch in that file that does. Recovery is not a posture a deployment can decline: no deployment can assert that recovery does not apply to it, which is why NIST CSF RC.RP could never be scoped out. Being enabled binds the backup service and the plan so `pulsar backup:run` works and the compliance round trip has something real to exercise; it schedules nothing and takes no backup on its own. With no `PULSAR_MASTER_KEY` the wiring binds **nothing at all** rather than writing an unsealed archive, so `enabled` cannot produce a backup you would not want. See [docs/backup.md](backup.md) for what an archive contains, and for what it deliberately does not.
+
+### `PseudonymizationProbe` and `BreachNotificationProbe` no longer extend `CapabilityProbe`
+
+Both now implement `ControlProbeInterface` directly and build their own `ControlRequirement`.
+
+`CapabilityProbe` grades every fact it is handed the same way, and these two probes have failure modes that must not be interchangeable. A pseudonymisation service that mints but cannot erase, and a mapping table that forgets on restart, are not degrees of one problem; neither are a register that will not accept a record and a register that empties on restart. Grading either pair Partial because the other held would let `composer compliance:check` pass over it, because the gate fails on Unsatisfied and not on Partial. Both probes therefore mark their deciding facts `RequiredFact::essential()`, which `CapabilityProbe` has no way to express.
+
+`CapabilityProbe` itself is unchanged, still `#[Api]`, and still the base class for the other shipped probes and for yours. What breaks is code that treats those two as one:
+
+```diff
+-public function register(CapabilityProbe $probe): void
++public function register(ControlProbeInterface $probe): void
+```
+
+The same applies to a property or return type declared as `CapabilityProbe`, and to `$probe instanceof CapabilityProbe`, which is now false for both classes. `ControlProbeInterface` is the type they and `CapabilityProbe` all satisfy.
+
+### The assessment now exercises subsystems instead of resolving them
+
+Not an API change, but the thing most likely to surprise you the first time you run `composer compliance:check` on rc.12. A fact of the form "`SomeInterface` resolved to `SomeClass`" says which class would serve a request and never that the class did anything, so the controls that rested on those facts now rest on measurements that put a value through the live service:
+
+- **Pseudonymisation.** A synthetic identifier is pseudonymised, resolved back byte for byte, then erased through the same service an Article 17 request would use. The erasure runs in a `finally`, so a failure earlier in the sequence still erases; if the erasure itself fails, the report names the identifier left behind rather than staying quiet about a row added to a re-identification table.
+- **Session payloads.** A synthetic payload is sealed and opened again against the cipher this deployment actually bound, through the new `Pulsar\Security\Session\SessionPayloadCipherInterface`.
+- **Incident register.** A synthetic incident is recorded, then found again by id. **This one cannot be taken back:** `IncidentReporterInterface` has no removal and should not grow one, so each report run leaves one row behind. It is written at `IncidentSeverity::Low`, below the threshold `BreachNotificationCheck` reads, so the probe row can never fail the check it exists to support; and it carries the source `compliance.incident_register_probe`, so every row this ever wrote can be found and filtered with one string. `compliance:report` is run by an operator or a pipeline rather than by a request, so the growth is one line per report, not one per page view.
+- **AI transparency.** The transparency surface is driven rather than resolved.
+- **Personal data at rest.** A field classified `ClassificationLevel::Pii` is put through the at-rest rule this framework applies to that classification, using the `EncryptorInterface` your deployment bound. The stored form must conceal the value, open to it byte for byte, refuse a copy with one byte changed, and differ between two seals of the same value. Nothing is written — the at-rest form is returned rather than stored. **If you bind your own `EncryptorInterface`**, this is the check that will tell you whether it is authenticated and randomised, and GDPR Art. 5(1)(f) and Art. 32 will fail if it is neither.
+
+Read [ADR-0061](adr/0061-a-loaded-extension-is-not-a-measurement.md) through [ADR-0066](adr/0066-personal-data-is-measured-by-classifying-something.md) for why each of these had to become a measurement rather than a configuration read.
+
+Expect your first rc.12 report to show fewer satisfied controls than rc.11 did. That is the change working: a control satisfied by a resolved binding was satisfied by a claim nobody had observed.
 
 ## Breaking changes summary
 
@@ -43,7 +135,7 @@ The following are not covered by semver and may change in minor releases:
 
 ### Namespace changes
 
-No namespaces were renamed in 1.0.0-rc.11. All classes remain under the `Pulsar\` root namespace. If you are upgrading from 0.2.x or earlier, the following namespaces were added in the 0.3.0-0.9.0 series:
+No namespaces were renamed in 1.0.0-rc.12. All classes remain under the `Pulsar\` root namespace. If you are upgrading from 0.2.x or earlier, the following namespaces were added in the 0.3.0-0.9.0 series:
 
 - `Pulsar\Api`: API stability attributes (added in 1.0.0).
 - `Pulsar\Auth`: Authentication, authorization, identity, 2FA (added in 0.8.0).
@@ -178,7 +270,7 @@ PostgreSQL and SQLite need none of this. `Text` and `BigText` both compile to `T
 ### 1. Update Composer dependency
 
 ```bash
-composer require pulsar/framework:^1.0.0-rc.11
+composer require pulsar/framework:^1.0.0-rc.12
 ```
 
 ### 2. Audit internal dependencies
@@ -265,8 +357,8 @@ PHPStan (level max) and Psalm (error level 1) may flag new issues from stricter 
 ## Behavioural changes admitted under the critical-defect clause
 
 The RC series freezes the public API, with one stated exception: a critical defect.
-The following change is behavioural rather than additive, and is recorded here
-because it affects an `#[Api]` type.
+The following changes are behavioural rather than additive, and are recorded here
+because they affect `#[Api]` types.
 
 ### `RetentionPolicy::fromArray()` refuses malformed entries (was: silently defaulted)
 
@@ -297,9 +389,160 @@ or `env()` values that are numeric — those parse as before, or now parse corre
 If boot throws, the message names the exact config path and the reason; fix the
 value rather than restoring the old behaviour, which was silently retaining data.
 
+### `config/database.php` has no `pool` section, and `DatabaseConfig::$pool` is gone
+
+The `pool` section was parsed into a `Pulsar\Database\Pool\PoolConfig` that nothing
+read. No wiring built a `ConnectionPool` from it, on any runtime, so `min_connections`,
+`max_connections`, `idle_timeout_seconds`, `max_lifetime_seconds` and
+`health_check_interval_seconds` were five numbers an operator could size a database
+around while they governed nothing at all.
+
+Removed rather than left in place: a knob connected to nothing is worse than no knob,
+because it is tuned in good faith. `ConnectionPool`, `PoolConfig`, `PooledConnection`
+and `NullConnectionPool` all still ship and still work — an application that wants
+pooling constructs one, which is now the only arrangement in which those numbers take
+effect. See [database.md](database.md#connection-pooling).
+
+**What to do:**
+
+- Delete the `pool` block from `config/database.php`. Leaving it there is harmless but
+  is now reported as an unknown config key.
+- If you construct `DatabaseConfig` yourself, drop the `pool:` argument.
+  `PoolConfig::fromArray()` is gone with the section that called it; construct
+  `PoolConfig` directly. A positional call that passed five or more arguments now
+  raises a `TypeError` at construction rather than binding the wrong parameter.
+- `PoolConfig` no longer implements `ReportsUnknownKeys`, and its
+  `unknownConfigKeys()` method and `$unknownKeys` constructor parameter are gone with
+  it. Unknown-key reporting (ADR-0036) exists to tell an operator that a key in a
+  config **file** was not read; with no `pool` section to parse there is no such key,
+  and a DTO built in PHP reports its own typos as a `TypeError` already. Code that
+  called `unknownConfigKeys()` on a `PoolConfig`, or that collected pool configs
+  through the `ReportsUnknownKeys` interface, needs neither now.
+
+### `read_write.write_host` selects the connection writes go to (was: read by nothing)
+
+`read_hosts` and `write_host` are documented as hosts, and were passed straight to
+`ConnectionManagerInterface::connection($name)`, which looks up connection **names**.
+A deployment configured exactly as documented threw
+`Database connection "replica-1.db.internal" is not configured` the first time a read
+was routed. Nothing ever called the statement-aware routing method either, so with
+`read_write.enabled` set, every read ran on the primary.
+
+Both are fixed together, and the second half changes behaviour for anyone who had
+`read_write.enabled` set: reads now actually reach the replicas.
+
+**What to do:**
+
+- If `write_host` is set in `config/database.php`, check it names the primary you
+  intend. It now selects the default connection; it previously did nothing. An omitted
+  `write_host` no longer defaults to `127.0.0.1` — it means "the default connection
+  exactly as `connections` configures it".
+- Read/write routing on SQLite, and routing with read hosts alongside multi-tenancy or
+  failover, now fail at boot with a message naming the reason. Both configurations
+  previously ran with no routing at all.
+
+### Sequential migration versions are qualified by their source, not by the checkout path
+
+Sequential migration filenames (`001_create_pages.php`) were versioned with a CRC32 of
+the **absolute** migrations directory, so the same migration had a different version on
+a developer machine and on a deploy host. A deploy into a different path made every
+already-applied sequential migration read as pending, and `migrate:run` applied it a
+second time to the production database.
+
+Versions are now qualified by the name of the source that ships the migration, which is
+identical on every host. `migrate:run` and `migrate:status` refuse to proceed when the
+tracking table still holds versions of the old shape, and print the `UPDATE` statements
+that re-key it.
+
+**What to do:** if your database was written by rc.12 or earlier and any extension uses
+sequential filenames, read
+[Re-keying a table written before the change](migrations.md#re-keying-a-table-written-before-the-change)
+before your next deploy. Projects using only timestamp filenames are unaffected.
+
+### `HttpCacheMiddleware` refuses the shared store for anything carrying identity (was: stored it and served it to the next caller)
+
+**This is a behaviour change. A deployment relying on the old caching will see cache misses
+it did not see before.** The reason is the one that matters: the old middleware was serving
+one authenticated caller's response to another caller.
+
+The store is keyed by request method, path and query string and by nothing else, and it has
+no per-user variant. Any entry produced for one caller was therefore an entry handed to
+whoever asked for that key next — a signed-in dashboard, a statement, a page rendered with a
+CSRF token or a `Set-Cookie` on it. The middleware now refuses in both directions instead of
+keying by identity: a request carrying `Cookie`, `Authorization` or `Proxy-Authorization`
+never reads or writes the store, and a response carrying `Set-Cookie`, `Vary`,
+`Transfer-Encoding` or a `private` / `no-cache` / `no-store` directive is never stored. The
+full refusal list is in [caching.md](caching.md#http-response-caching-httpcachemiddleware).
+
+Refusing rather than keying by identity is deliberate. An identity-keyed shared cache
+multiplies the blast radius of any future key defect by the number of users; a refusal costs
+one cache miss.
+
+Alongside it: `cache.private` no longer stores anything at all (the browser may still keep the
+response; the shared store may not), and every decision is now labelled on the wire with
+`X-Cache: HIT | MISS | BYPASS`.
+
+**What to do:**
+
+- Nothing, if you never piped `HttpCacheMiddleware` — it is opt-in and nothing wires it for you.
+- If you did, expect the hit rate on authenticated traffic to go to zero, and read `X-Cache` to
+  tell the two new outcomes apart: `MISS` is a cold cache that warms up, `BYPASS` is a request
+  that will never be served from the store.
+- If a route genuinely is the same for every caller and you want cookie-bearing browsers served
+  from the cache anyway, set the `cache.share_across_clients` request attribute to `true` on it.
+  It waives the three identity **request** headers and nothing else — the response-side refusals
+  run afterwards and still win. It is an assertion the middleware cannot verify: those remaining
+  checks read headers and do not inspect the body, so setting it on a route that renders anything
+  caller-specific re-creates exactly the disclosure this change removed.
+- Do not restore the old behaviour by widening the key with the session id. A shared store keyed
+  on identity is the arrangement this change exists to remove.
+  [ADR-0076](adr/0076-a-shared-cache-refuses-identity-rather-than-keying-on-it.md) records why,
+  and is the record to argue with before reversing this.
+
+### `NoCacheMiddleware` throws when it is wired where it can never see a route (was: added no header, silently)
+
+`NoCacheMiddleware` enforces `#[NoCacheResponse]` on the dispatched route's handler. It used to
+look the handler up in a request attribute that nothing in the framework has ever written, so it
+added its headers to no response in any application while presenting itself — alias, attribute
+and all — as an active control.
+
+It now takes the route from the kernel, and throws a `LogicException` naming both supported
+wirings when no pipeline gave it one. That happens exactly when it is piped into the **global**
+pipeline, which runs before routing.
+
+**What to do:** if you piped it globally, move it — either name the `no-cache` alias in the
+`middleware:` list of the sensitive routes, or register it once in the `PostRoutingPipeline` to
+cover the whole application. Both are shown in
+[http.md](http.md#nocacheresponse-and-nocachemiddleware). A `LogicException` on the first request
+after deploying is the intended outcome for the third, unsupported position: the alternative is
+handing back a response that looks protected and is not.
+
+### `StreamedResponse::getBody()` is non-destructive (was: consumed the response)
+
+`getBody()` read the single-pass source and kept none of it, so one body-reading middleware
+anywhere in the stack left the emitter with a response whose `getSource()` threw — headers
+already sent, empty body. The source is now read once, kept, and answered from the buffer on
+every later call including `getSource()`'s.
+
+**What to do:** nothing. Code that only calls `getSource()` is unchanged. Code that calls
+`getBody()` on a streamed response now buffers the payload in memory, which it always did — it
+just no longer destroys the response as well.
+
+### Out-of-pipeline error responses carry protective headers
+
+An error raised during dispatch already travelled back out through `SecurityHeadersMiddleware`.
+A boot failure or a throw from a global middleware could not, and shipped with whatever the
+exception handler set — routinely no CSP, no framing policy and no referrer policy on the one
+response most likely to be probed. The kernel now fills in the missing entries of
+`ProductionRenderer::LAST_RESORT_HEADERS` on those two paths only, never overwriting a header the
+response already carries and never touching `Content-Type`.
+
+**What to do:** nothing, unless you assert on the exact header set of a boot-failure response in
+your tests. The values are listed in [http.md](http.md#error-responses-carry-security-headers).
+
 ## Deprecation notices
 
-No formal deprecations exist in 1.0.0-rc.11. The `#[Api]` / `#[Internal]` boundary replaces the informal "probably stable" / "probably internal" convention used in 0.x.
+No formal deprecations exist in 1.0.0-rc.12. The `#[Api]` / `#[Internal]` boundary replaces the informal "probably stable" / "probably internal" convention used in 0.x.
 
 Classes that were commonly used in 0.x but are now marked `#[Internal]` should be treated as deprecated for external use. These include `Kernel`, `Version`, and `ConfigManager`. Use the public API surface documented in [public-api.md](public-api.md) instead.
 

@@ -69,12 +69,12 @@ composer test:coverage
 php -d memory_limit=-1 -d pcov.enabled=1 -d pcov.directory=. -d pcov.exclude='~/(vendor|tests)/~'     vendor/bin/phpunit -c tools/php/phpunit.xml     --coverage-clover coverage/clover.xml --coverage-html coverage/html
 ```
 
-> **Both of those run the whole suite in one process, which needs more than 40 GB.**
+> **Both of those run the whole suite in one process, which needs more than 50 GB.**
 > php-code-coverage appends the id of every test to every line it covers, with no way
-> to switch that off, so memory grows at roughly 1.1 MB per test across 44,544 tests.
-> On a machine that cannot hold that the process is killed part-way with no error
-> message. CI does not run it this way: the `PHP Coverage` job recycles its process
-> every ~4,450 tests and merges the reports. See
+> to switch that off, so memory grows at roughly 1.1 MB per test across the 46,745 tests
+> the configuration lists at rc.12. On a machine that cannot hold that the process is
+> killed part-way with no error message. CI does not run it this way: the `PHP Coverage`
+> job recycles its process every ~4,675 tests and merges the reports. See
 > [ADR-0042](adr/0042-coverage-and-mutation-are-bounded-by-memory.md).
 >
 > To reproduce CI locally:
@@ -483,7 +483,9 @@ Key patterns:
 
 ### Performance budgets
 
-Defined in `tools/php/performance-budgets.json`. Tier A budgets are CI-enforced hard gates:
+Declared as `#[Assert]` attributes on the subjects in `tests/Benchmark`, which is what CI
+enforces; `tools/php/performance-budgets.json` is a reference table of the same numbers,
+read by no code. Tier A budgets are hard gates:
 
 | Budget                          | Threshold | Description                               |
 | ------------------------------- | --------- | ----------------------------------------- |
@@ -493,7 +495,7 @@ Defined in `tools/php/performance-budgets.json`. Tier A budgets are CI-enforced 
 | `router.parameterized`          | < 200 us  | Match with parameter extraction           |
 | `middleware.pipeline_5`         | < 10 us   | 5-layer pass-through pipeline             |
 | `request.creation`              | < 5 us    | Request object construction               |
-| `kernel.dispatch`               | < 500 us  | Full dispatch cycle                       |
+| `kernel.dispatch`               | < 400 us  | Dispatch on an already-booted kernel      |
 | `request.anonymous_json_api`    | < 2 ms    | Full anonymous JSON API request           |
 | `request.authenticated_session` | < 3 ms    | Session-authenticated request             |
 | `request.with_audit`            | < 4 ms    | Request with full audit trail             |
@@ -508,7 +510,10 @@ Memory budgets:
 | `memory.peak_authenticated` | < 4 MB    | Authenticated request with audit |
 | `memory.peak_compliance`    | < 6 MB    | Compliance event request         |
 
-For the full list, see `tools/php/performance-budgets.json`. For the ADR explaining the enforcement model, see `docs/adr/0012-performance-budgets-advisory-ci.md`.
+For the full list, read the `#[Assert]` attributes in `tests/Benchmark`;
+`tools/php/performance-budgets.json` indexes them. For the enforcement model — which tier
+blocks, which advises, and why the JSON is not the gate — see
+[ADR-0072](adr/0072-a-budget-is-the-assertion-that-runs.md), which supersedes ADR-0012.
 
 ## Quality gate
 
@@ -610,10 +615,28 @@ over the full 42,588-test Unit suite is killed on a 16 GB runner. `infection.jso
 composer mutation    # Run mutation testing (requires infection/infection)
 ```
 
-Key metrics:
+Two figures come out of a run, and only one of them is a gate:
 
-- **MSI (mutation score indicator)**: percentage of mutations killed by tests. Minimum: 80%.
-- **Covered MSI**: percentage of mutations killed in code that has coverage. Minimum: 90%.
+- **Covered MSI** -- of the mutants the tests actually reach, the share that die. `infection.json5`
+  sets `minCoveredMsi: 90`, so a run below that exits non-zero and the build fails.
+- **Plain MSI** -- the same share counted over every mutant, including the ones no test reaches.
+  This is **reported and not enforced**. `infection.json5` deliberately sets no floor for it,
+  because the source scope is narrowed to three trees for memory reasons and a mutant covered from
+  outside them would drag the figure down for a reason that has nothing to do with test quality.
+  [ADR-0042](adr/0042-coverage-and-mutation-are-bounded-by-memory.md) carries the argument and the
+  measurement behind the scope.
+
+This page said "Minimum: 80%" for the unenforced figure for a whole release, and `docs/prd-1.0.0.md`
+said the same, while the ADR said the opposite and the configuration agreed with the ADR. Three
+sources, no agreement, and nothing that could notice. `tools/ci/assert-mutation-thresholds.php` now
+compares every mutation threshold stated anywhere in this repository's Markdown against
+`infection.json5` on every `composer qa` run, so the next edit that moves one without the other
+fails instead of shipping. State one threshold per line: a sentence that mixes a coverage floor with
+a mutation figure is read as claiming both for mutation, and the fix is to split it.
+
+If a plain-MSI floor is wanted, the honest way to get one is to set `minMsi` in `infection.json5` --
+at which point the gate above requires the documents to say so. What is not available is a number in
+a document that no configuration enforces.
 
 Mutations are applied to temporary copies of source files. Your actual code is never modified.
 
