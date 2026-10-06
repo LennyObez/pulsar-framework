@@ -88,7 +88,7 @@
 
 ### rc.12 → 1.0.0 - GA gating work
 
-The following work stands between rc.11 and the 1.0.0 GA tag. Each item
+The following work stands between rc.12 and the 1.0.0 GA tag. Each item
 has a corresponding entry in `docs/prd-1.0.0.md`.
 
 **Blockers (GA tag cannot be cut while open)** — per **ADR-0032** (2026-05-12,
@@ -122,15 +122,25 @@ supersedes ADR-0025 + ADR-0030):
 
 - CI coverage gate ramp: rc.12 80 (done), rc.13 per-module 95 for
   auth/security/crypto/audit, 1.0.0 GA 90 global.
-- Infection MSI ramp: rc.12 80 (done), rc.13 90 for src/Auth,
-  src/Security, src/Audit.
+- Infection: **covered** MSI is enforced at 90 over `src/Auth`, `src/Security` and
+  `src/Audit` — the value and the scope both live in `infection.json5`, which is the
+  only place either is set. There is no ramp left to run and no plain-MSI floor to
+  reach. This line previously read "MSI ramp: rc.12 80 (done), rc.13 90", which was
+  wrong in both halves: no plain-MSI threshold has ever been configured, so 80 was
+  never enforced and could not have been "done", and the 90 it listed as future work
+  is the covered-MSI figure already in force. Plain MSI counts mutants no test reaches
+  and the mutation scope is narrowed on purpose to fit a runner's memory, so a
+  plain-MSI floor here would fail for reasons unrelated to test quality —
+  [ADR-0042](docs/adr/0042-coverage-and-mutation-are-bounded-by-memory.md) argues
+  that, and `composer mutation:thresholds` refuses any document that restates it
+  otherwise.
 - `composer qa` already runs `@security:lint` (semgrep) as of rc.12;
   `qa:full` adds `@mutation` + `@test:coverage`.
 
 **Documentation and process**
 
-- Final security audit pass evidence published under `docs/audit/`.
-- Release notes + upgrade guide for `rc.11 → 1.0.0`.
+- Final security audit pass evidence published under `docs/security/`.
+- Release notes + upgrade guide for `rc.12 → 1.0.0`.
 - Long-term maintenance and supported-versions policy.
 - Performance baseline documentation for production deployments.
 - All ADRs reviewed for code-vs-doc drift.

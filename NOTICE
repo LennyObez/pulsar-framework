@@ -19,3 +19,23 @@ Third-Party Licenses
 --------------------
 This project uses open source libraries under their respective licenses.
 See composer.json and package.json for dependency information.
+
+Bundled fonts
+-------------
+This distribution redistributes three font families as WOFF2 binaries in
+resources/ui/fonts/, so that no page has to fetch a font from a third-party CDN:
+
+    Montserrat      Copyright The Montserrat Project Authors
+    Overpass        Copyright The Overpass Project Authors
+    JetBrains Mono  Copyright The JetBrains Mono Project Authors
+
+All three are licensed under the SIL Open Font License, Version 1.1, and that
+licence requires its text to be distributed with the fonts. The full text of each
+is therefore bundled beside the binaries:
+
+    resources/ui/fonts/OFL-Montserrat.txt
+    resources/ui/fonts/OFL-Overpass.txt
+    resources/ui/fonts/OFL-JetBrainsMono.txt
+
+resources/ui/fonts/fonts.manifest.json records the upstream source of every file,
+pinned to a commit, along with the coverage each face is verified to have.
