@@ -35,7 +35,7 @@ use function strlen;
 final readonly class DlpScanMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private SensitivePatternRegistry $registry,
+        private SensitiveDataClassifierInterface $registry,
         private DlpConfig $config,
         private AuditLoggerInterface $auditLogger,
     ) {}

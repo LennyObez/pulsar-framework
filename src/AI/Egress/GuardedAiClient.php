@@ -17,7 +17,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Dlp\DlpAction;
 use Pulsar\Security\Dlp\DlpMatch;
 use Pulsar\Security\Dlp\DlpScanResult;
-use Pulsar\Security\Dlp\SensitivePatternRegistry;
+use Pulsar\Security\Dlp\SensitiveDataClassifierInterface;
 use Throwable;
 
 use function array_key_last;
@@ -86,7 +86,7 @@ final readonly class GuardedAiClient implements AiClientInterface
      * @param AiClientInterface          $inner       The client that actually transports
      * @param AiDestination              $destination Where that client was configured to send
      * @param AiEgressPolicy             $policy      What the operator permits
-     * @param SensitivePatternRegistry   $classifier  The one classifier of free text
+     * @param SensitiveDataClassifierInterface $classifier The classifier of free text
      * @param AiEgressObserverInterface  $observer    Told about every rewrite and refusal;
      *                                                required, see the interface
      * @param EgressDecisionSinkInterface|null $auditSink The one-slot channel the
@@ -99,7 +99,7 @@ final readonly class GuardedAiClient implements AiClientInterface
         private AiClientInterface $inner,
         private AiDestination $destination,
         private AiEgressPolicy $policy,
-        private SensitivePatternRegistry $classifier,
+        private SensitiveDataClassifierInterface $classifier,
         private AiEgressObserverInterface $observer,
         private ?EgressDecisionSinkInterface $auditSink = null,
     ) {}

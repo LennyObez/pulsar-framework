@@ -19,6 +19,7 @@ use Pulsar\Security\Dlp\DlpScanMiddleware;
 use Pulsar\Security\Dlp\DlpScanResult;
 use Pulsar\Security\Dlp\SensitiveDataType;
 use Pulsar\Security\Dlp\SensitivePatternRegistry;
+use Pulsar\Tests\Unit\Security\Dlp\Support\ScriptedClassifier;
 
 #[CoversClass(DlpScanMiddleware::class)]
 #[CoversClass(DlpScanResult::class)]
@@ -153,6 +154,24 @@ final class DlpScanMiddlewareTest extends TestCase
 
         // Alert action passes through the original response
         self::assertSame($originalResponse, $result);
+    }
+
+    public function testAnyClassifierDecidesWhatIsBlocked(): void
+    {
+        $classifier = new ScriptedClassifier(new DlpScanResult(
+            detected: true,
+            actionTaken: DlpAction::Block,
+            matches: [new DlpMatch(SensitiveDataType::Custom, '/x/', 0, 1, '*')],
+            redactedContent: '*',
+        ));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn($this->createResponseWithBody('x'));
+
+        $middleware = new DlpScanMiddleware($classifier, new DlpConfig(defaultAction: DlpAction::Block), $this->createStub(AuditLoggerInterface::class));
+        $result = $middleware->process($this->createRequest(), $handler);
+
+        self::assertSame(['x'], $classifier->scanned);
+        self::assertSame(500, $result->getStatusCode());
     }
 
     public function testDlpScanResultClean(): void

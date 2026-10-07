@@ -22,7 +22,7 @@ use function is_string;
 final readonly class LogDlpFilter
 {
     public function __construct(
-        private SensitivePatternRegistry $registry,
+        private SensitiveDataClassifierInterface $registry,
         private DlpConfig $config,
     ) {}
 

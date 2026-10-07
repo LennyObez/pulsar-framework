@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Dlp;
 
+use Override;
 use Pulsar\Api\Api;
 
 use function str_repeat;
@@ -22,7 +23,7 @@ use const PREG_OFFSET_CAPTURE;
  * @api
  */
 #[Api(since: '1.0.0')]
-final class SensitivePatternRegistry
+final class SensitivePatternRegistry implements SensitiveDataClassifierInterface
 {
     /** @var list<SensitivePattern> */
     private array $patterns = [];
@@ -62,6 +63,7 @@ final class SensitivePatternRegistry
      * inventing a status for it would let a caller continue past a failure this
      * class is not the one to interpret.
      */
+    #[Override]
     public function scan(string $content): DlpScanResult
     {
         if (!$this->config->enabled) {

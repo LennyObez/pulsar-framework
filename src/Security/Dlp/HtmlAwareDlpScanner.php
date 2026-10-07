@@ -27,7 +27,7 @@ final readonly class HtmlAwareDlpScanner
     private const array SCANNABLE_ATTRIBUTES = ['href', 'src', 'alt', 'title', 'value', 'placeholder'];
 
     public function __construct(
-        private SensitivePatternRegistry $registry,
+        private SensitiveDataClassifierInterface $registry,
     ) {}
 
     /**

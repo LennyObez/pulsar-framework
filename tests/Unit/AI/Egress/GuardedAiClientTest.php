@@ -21,6 +21,8 @@ use Pulsar\AI\Provider\OllamaProvider;
 use Pulsar\AI\ToolDefinition;
 use Pulsar\Security\Dlp\DlpAction;
 use Pulsar\Security\Dlp\DlpConfig;
+use Pulsar\Security\Dlp\DlpScanResult;
+use Pulsar\Security\Dlp\SensitiveDataClassifierInterface;
 use Pulsar\Security\Dlp\SensitiveDataType;
 use Pulsar\Security\Dlp\SensitivePattern;
 use Pulsar\Security\Dlp\SensitivePatternRegistry;
@@ -28,6 +30,7 @@ use Pulsar\Tests\Unit\AI\Egress\Support\RecordingEgressObserver;
 use Pulsar\Tests\Unit\AI\Egress\Support\RecordingHttpClient;
 use Pulsar\Tests\Unit\AI\Egress\Support\RecordingStreamTransport;
 use Pulsar\Tests\Unit\AI\Egress\Support\WireRecorder;
+use Pulsar\Tests\Unit\Security\Dlp\Support\ScriptedClassifier;
 use RuntimeException;
 
 use function str_repeat;
@@ -193,6 +196,26 @@ final class GuardedAiClientTest extends TestCase
             self::assertStringContainsString('disabled', $refusal->getMessage());
         }
 
+        self::assertTrue($recorder->sentNothing());
+    }
+
+    /** The guard reads the status of any classifier, not only the shipped registry. */
+    #[Test]
+    public function theCallIsRefusedWhenAnyClassifierCouldNotLook(): void
+    {
+        $recorder = new WireRecorder();
+        $classifier = new ScriptedClassifier(DlpScanResult::failed('', [], DlpAction::Block));
+
+        $guard = $this->guardOverHttp($recorder, new RecordingEgressObserver(), $this->blockingPolicy(), $classifier);
+
+        try {
+            $guard->chat([ChatMessage::user('nothing classified here')]);
+            self::fail('the call was not refused');
+        } catch (AiEgressRefusedException $refusal) {
+            self::assertStringContainsString('failed', $refusal->getMessage());
+        }
+
+        self::assertNotSame([], $classifier->scanned);
         self::assertTrue($recorder->sentNothing());
     }
 
@@ -578,7 +601,7 @@ final class GuardedAiClientTest extends TestCase
         WireRecorder $recorder,
         RecordingEgressObserver $observer,
         AiEgressPolicy $policy,
-        ?SensitivePatternRegistry $classifier = null,
+        ?SensitiveDataClassifierInterface $classifier = null,
         ?AiClientInterface $inner = null,
         string $providerName = 'anthropic',
         string $baseUrl = 'https://api.anthropic.com/v1',
@@ -605,7 +628,7 @@ final class GuardedAiClientTest extends TestCase
         RecordingEgressObserver $observer,
         AiEgressPolicy $policy,
         RecordingStreamTransport $transport,
-        ?SensitivePatternRegistry $classifier = null,
+        ?SensitiveDataClassifierInterface $classifier = null,
     ): GuardedAiClient {
         return new GuardedAiClient(
             inner: new AnthropicProvider(

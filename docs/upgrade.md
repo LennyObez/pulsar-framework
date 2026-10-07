@@ -14,7 +14,7 @@ Bug fixes and documentation improvements may land before 1.0.0 final. New featur
 
 ## Upgrading from 1.0.0-rc.11 to 1.0.0-rc.12
 
-rc.12 publishes the compliance control engine as public API: `Pulsar\Compliance\Control\*`, `Pulsar\Compliance\Probe\*` and `Pulsar\Compliance\Evidence\*` are marked `#[Api]` since 1.0.0-rc.12. None of those types appear in the rc.11 API snapshot, so **if you are coming from a released rc.11 they are additions, and nothing in the three sections below can break your code**.
+rc.12 publishes the compliance control engine as public API: `Pulsar\Compliance\Control\*`, `Pulsar\Compliance\Probe\*` and `Pulsar\Compliance\Evidence\*` are marked `#[Api]` since 1.0.0-rc.12. None of those types appear in the rc.11 API snapshot, so **coming from a released rc.11, the sections on `probed()`, `reach()` and `CapabilityProbe` describe additions and cannot break your code**. Two sections do break rc.11 code: the `ResilienceConfig` constructor, if you pass `$unknownKeys` by position, and the removal of `EnvironmentInterface`, if you type-hint it. The section on the assessment changes behaviour, not API.
 
 They do break code written against an rc.12 pre-release — a `dev-` requirement, or a checkout of the release branch — because the engine changed shape while it was being built. Read on before you pull if you have ever written a `ControlDeclaration::probed(...)` call, called `ProbeVerdict::reach(...)`, or typed anything against `Pulsar\Compliance\Probe\CapabilityProbe`.
 
@@ -99,6 +99,14 @@ Not an API change, but the thing most likely to surprise you the first time you 
 Read [ADR-0061](adr/0061-a-loaded-extension-is-not-a-measurement.md) through [ADR-0066](adr/0066-personal-data-is-measured-by-classifying-something.md) for why each of these had to become a measurement rather than a configuration read.
 
 Expect your first rc.12 report to show fewer satisfied controls than rc.11 did. That is the change working: a control satisfied by a resolved binding was satisfied by a claim nobody had observed.
+
+### `Pulsar\Extensibility\EnvironmentInterface` is removed (critical-defect clause)
+
+It was `#[Api(since: '1.0.0')]` in rc.11 and promised extensions scoped access to environment variables. Nothing ever bound it, and a proxy over `getenv()` cannot be a boundary: `getenv()`, `$_ENV` and `$_SERVER` reach the same values from any code in the process ([ADR-0047](adr/0047-a-tier-is-granted-never-claimed.md) §2).
+
+**Affected:** code that type-hints the interface. No application could have received an instance, so nothing that ran behaves differently.
+
+**Instead:** request the `Pulsar\Config\Environment` service, which `ExtensionCapability::EnvRead` gates at the container, and keep secrets out of the environment of any process that loads untrusted extensions.
 
 ## Breaking changes summary
 

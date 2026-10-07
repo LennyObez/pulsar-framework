@@ -6,10 +6,14 @@ namespace Pulsar\Tests\Unit\Security\Dlp;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Security\Dlp\DlpAction;
 use Pulsar\Security\Dlp\DlpConfig;
+use Pulsar\Security\Dlp\DlpMatch;
+use Pulsar\Security\Dlp\DlpScanResult;
 use Pulsar\Security\Dlp\HtmlAwareDlpScanner;
 use Pulsar\Security\Dlp\SensitiveDataType;
 use Pulsar\Security\Dlp\SensitivePatternRegistry;
+use Pulsar\Tests\Unit\Security\Dlp\Support\ScriptedClassifier;
 
 use function count;
 
@@ -22,6 +26,22 @@ final class HtmlAwareDlpScannerTest extends TestCase
     {
         $registry = new SensitivePatternRegistry(new DlpConfig(enabled: true));
         $this->scanner = new HtmlAwareDlpScanner($registry);
+    }
+
+    public function testAnyClassifierReadsOnlyTheVisibleText(): void
+    {
+        $classifier = new ScriptedClassifier(new DlpScanResult(
+            detected: true,
+            actionTaken: DlpAction::Redact,
+            matches: [new DlpMatch(SensitiveDataType::Custom, '/x/', 0, 1, '*')],
+            redactedContent: '*',
+        ));
+
+        $result = new HtmlAwareDlpScanner($classifier)->scan('<p>visible</p><script>hidden()</script>');
+
+        self::assertTrue($result->detected);
+        self::assertStringContainsString('visible', $classifier->scanned[0]);
+        self::assertStringNotContainsString('hidden', $classifier->scanned[0]);
     }
 
     public function testEmptyHtmlReturnsClean(): void

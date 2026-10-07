@@ -46,8 +46,9 @@ replacement everywhere one is accepted — `RagPipeline`, `ToolCalling`,
    before any payload work, so a forbidden endpoint is refused without a request
    ever being constructed.
 3. **Classification.** Every outbound string goes through
-   `SensitivePatternRegistry`. If the classifier did not examine the bytes, for
-   any reason, the call is refused.
+   `SensitivePatternRegistry`, or any other `SensitiveDataClassifierInterface` you
+   supply. If the classifier did not examine the bytes, for any reason, the call
+   is refused.
 4. **Policy.** `AiEgressPolicy::$onSensitiveData` decides what a detection means.
 
 Every method that sends bytes runs all four: `chat()`, `streamChat()`,

@@ -41,7 +41,9 @@ a prompt:
   the only one that applies.
 
 So the seam uses that registry and adds no second notion of personal data. Two
-classifiers that can disagree would be worse than one.
+classifiers that can disagree would be worse than one. The guard depends on
+`SensitiveDataClassifierInterface`, which the registry implements: the seam is the
+interface, the registry its one shipped implementation.
 
 ### The classifier answers "nothing found" in three unrelated situations
 

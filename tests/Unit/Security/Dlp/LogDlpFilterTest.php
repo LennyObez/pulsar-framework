@@ -6,9 +6,12 @@ namespace Pulsar\Tests\Unit\Security\Dlp;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Security\Dlp\DlpAction;
 use Pulsar\Security\Dlp\DlpConfig;
+use Pulsar\Security\Dlp\DlpScanResult;
 use Pulsar\Security\Dlp\LogDlpFilter;
 use Pulsar\Security\Dlp\SensitivePatternRegistry;
+use Pulsar\Tests\Unit\Security\Dlp\Support\ScriptedClassifier;
 
 #[CoversClass(LogDlpFilter::class)]
 final class LogDlpFilterTest extends TestCase
@@ -91,6 +94,14 @@ final class LogDlpFilterTest extends TestCase
         $context = ['ssn' => '123-45-6789'];
         $result = $filter->filterContext($context);
         self::assertSame('123-45-6789', $result['ssn']);
+    }
+
+    public function testAnyClassifierSuppliesTheRedaction(): void
+    {
+        $classifier = new ScriptedClassifier(new DlpScanResult(true, DlpAction::Redact, [], '[withheld]'));
+
+        self::assertSame('[withheld]', new LogDlpFilter($classifier, new DlpConfig())->filter('anything'));
+        self::assertSame(['anything'], $classifier->scanned);
     }
 
     private function createFilter(): LogDlpFilter

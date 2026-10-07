@@ -560,7 +560,7 @@
                         "Pulsar\\AI\\AiClientInterface $inner",
                         "Pulsar\\AI\\Egress\\AiDestination $destination",
                         "Pulsar\\AI\\Egress\\AiEgressPolicy $policy",
-                        "Pulsar\\Security\\Dlp\\SensitivePatternRegistry $classifier",
+                        "Pulsar\\Security\\Dlp\\SensitiveDataClassifierInterface $classifier",
                         "Pulsar\\AI\\Egress\\AiEgressObserverInterface $observer",
                         "?Pulsar\\AI\\Audit\\EgressDecisionSinkInterface $auditSink"
                     ],
@@ -101533,7 +101533,7 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "Pulsar\\Security\\Dlp\\SensitivePatternRegistry $registry",
+                        "Pulsar\\Security\\Dlp\\SensitiveDataClassifierInterface $registry",
                         "Pulsar\\Security\\Dlp\\DlpConfig $config",
                         "Pulsar\\Audit\\AuditLoggerInterface $auditLogger"
                     ],
@@ -101629,7 +101629,7 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "Pulsar\\Security\\Dlp\\SensitivePatternRegistry $registry"
+                        "Pulsar\\Security\\Dlp\\SensitiveDataClassifierInterface $registry"
                     ],
                     "return": null,
                     "static": false
@@ -101650,7 +101650,7 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "Pulsar\\Security\\Dlp\\SensitivePatternRegistry $registry",
+                        "Pulsar\\Security\\Dlp\\SensitiveDataClassifierInterface $registry",
                         "Pulsar\\Security\\Dlp\\DlpConfig $config"
                     ],
                     "return": null,
@@ -101668,6 +101668,20 @@
                         "array $context"
                     ],
                     "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Dlp\\SensitiveDataClassifierInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "scan": {
+                    "params": [
+                        "string $content"
+                    ],
+                    "return": "Pulsar\\Security\\Dlp\\DlpScanResult",
                     "static": false
                 }
             },
