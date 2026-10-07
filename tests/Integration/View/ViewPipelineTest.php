@@ -135,14 +135,21 @@ final class ViewPipelineTest extends TestCase
     }
 
     #[Test]
-    public function rendersTemplateWithMethodDirective(): void
+    public function methodDirectiveIsNotCompiledAtAll(): void
     {
+        // @method was removed: nothing in src/Http or src/Routing reads a
+        // `_method` field, so the directive only ever produced a form that
+        // named a verb it did not send. An unregistered directive passes
+        // through verbatim -- the compiler has to leave `@media` in inline CSS
+        // alone -- so a template still carrying @method now shows the token
+        // instead of shipping the field, which is the signal to delete it.
         $this->writeTemplate('delete-form', '<form>@method(\'DELETE\')</form>');
 
         $result = $this->engine->render('delete-form');
 
-        self::assertStringContainsString('_method', $result);
-        self::assertStringContainsString('DELETE', $result);
+        self::assertStringNotContainsString('_method', $result);
+        self::assertStringNotContainsString('<input', $result);
+        self::assertStringContainsString("@method('DELETE')", $result);
     }
 
     #[Test]
@@ -283,7 +290,7 @@ final class ViewPipelineTest extends TestCase
 
     private function writeTemplate(string $name, string $content): void
     {
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulsar.php';
+        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulse.php';
         $fullPath = $this->templateDir . DIRECTORY_SEPARATOR . $relativePath;
         $dir = dirname($fullPath);
 

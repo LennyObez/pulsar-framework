@@ -16,13 +16,14 @@ use function preg_match;
 /**
  * Heuristic detection of Protected Health Information (PHI) patterns in field values.
  *
- * Advisory only — not a compliance gate. This analyzer detects patterns that may
+ * Advisory only: not a compliance gate. This analyzer detects patterns that may
  * indicate PHI such as SSN-like numbers, date-of-birth patterns, phone numbers,
  * email addresses, and MRN-like identifiers. Results carry confidence scores
  * and should be reviewed by qualified compliance personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class PhiDetector implements PolicyAnalyzerInterface
+final readonly class PhiDetector implements PolicyAnalyzerInterface
 {
     /**
      * @return list<AnalyzerFinding>

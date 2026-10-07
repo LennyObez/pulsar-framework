@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Compiler passes run before the container is compiled (or used in dev mode)
  * and can modify, add, or remove service definitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CompilerPassInterface

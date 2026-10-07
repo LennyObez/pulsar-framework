@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Hidden input field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HiddenField extends AbstractField

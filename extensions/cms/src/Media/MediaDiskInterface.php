@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Storage disk abstraction for media file operations.
+ *
+ * @psalm-api Public binding contract; implemented by LocalDisk (or external
+ *            storage adapters) and consumed by MediaService and import tools.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MediaDiskInterface

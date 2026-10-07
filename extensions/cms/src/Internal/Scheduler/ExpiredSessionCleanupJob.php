@@ -22,6 +22,9 @@ use function sprintf;
  *
  * Runs every 30 minutes to remove stale sessions and locks that were not
  * properly released (e.g., browser closed without saving).
+ *
+ * @psalm-api Registered with the scheduler by the CMS service provider;
+ *            invoked through JobInterface, not instantiated by name.
  */
 #[Internal(reason: 'CMS expired session and lock cleanup')]
 final readonly class ExpiredSessionCleanupJob implements JobInterface

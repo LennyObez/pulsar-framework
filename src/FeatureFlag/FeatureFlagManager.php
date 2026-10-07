@@ -148,7 +148,7 @@ final readonly class FeatureFlagManager implements FeatureFlagManagerInterface
             }
         }
 
-        // No context matched — use default
+        // No context matched: use default
         return new FlagEvaluation(
             flagName: $flag->name,
             result: $this->defaultState,

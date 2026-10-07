@@ -11,14 +11,16 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
 
 use function hash;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
-use function sprintf;
 use function str_starts_with;
 use function time;
 
@@ -32,7 +34,7 @@ use function time;
  * Returns 429 Too Many Requests with Retry-After and X-RateLimit-* headers
  * when the per-minute limit is exceeded.
  */
-#[Internal(reason: 'CMS public rate limiting — middleware implementation')]
+#[Internal(reason: 'CMS public rate limiting; middleware implementation')]
 final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
 {
     private const int WINDOW_SECONDS = 60;
@@ -51,7 +53,7 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
         $group = $this->resolveGroup($request->getUri()->getPath());
         $limit = $this->getLimitForGroup($group);
 
-        $key = sprintf('cms_public_rate:%s:%s:%d', $group, $ipHash, (int) ($now / self::WINDOW_SECONDS));
+        $key = CmsCacheKeys::publicRate($group, $ipHash, (int) ($now / self::WINDOW_SECONDS));
         $count = $this->incrementCounter($key);
 
         if ($count > $limit) {
@@ -94,11 +96,12 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
     /**
      * Resolve a stable hash of the client IP address.
      *
-     * Uses REMOTE_ADDR only — never trusts X-Forwarded-For or similar
+     * Uses REMOTE_ADDR only: never trusts X-Forwarded-For or similar
      * headers which are trivially spoofable.
      */
     private function resolveIpHash(ServerRequestInterface $request): string
     {
+        /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         $raw = is_string($ip) ? $ip : 'unknown';
 
@@ -107,10 +110,13 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
 
     private function incrementCounter(string $key): int
     {
+        /** @var mixed $current */
         $current = $this->cache->get($key);
-        $count = ($current !== null) ? ((int) $current + 1) : 1;
+        $count = (is_string($current) || is_int($current)) && is_numeric($current)
+            ? ((int) $current + 1)
+            : 1;
 
-        $this->cache->set($key, (string) $count, ['cms_public_rate'], self::WINDOW_SECONDS);
+        $this->cache->set($key, (string) $count, [CmsCacheKeys::TAG_PUBLIC_RATE], self::WINDOW_SECONDS);
 
         return $count;
     }

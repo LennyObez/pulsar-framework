@@ -7,13 +7,13 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionHandler;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function is_array;
+use function is_string;
 
 /**
  * Controller for bulk actions on resource records.
@@ -21,32 +21,36 @@ use function is_array;
 #[Internal]
 final readonly class BulkActionController
 {
+    use ExtractsRequestActor;
+
     public function __construct(
         private BulkActionHandler $handler,
     ) {}
 
     public function execute(ServerRequestInterface $request, string $resource): Response
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        /** @var string $action */
-        $action = $body['action'] ?? '';
-        /** @var list<string> $ids */
+        /** @var mixed $actionRaw */
+        $actionRaw = $body['action'] ?? '';
+        $action = is_string($actionRaw) ? $actionRaw : '';
+        /** @var mixed $ids */
         $ids = $body['ids'] ?? [];
-        /** @var array<string, mixed> $parameters */
+        /** @var mixed $parameters */
         $parameters = $body['parameters'] ?? [];
 
         if (!is_array($ids)) {
             $ids = [];
         }
+        /** @var list<string> $ids */
+
         if (!is_array($parameters)) {
             $parameters = [];
         }
+        /** @var array<string, mixed> $parameters */
 
         $context = new MutationContext(
             actor: $actor,

@@ -66,6 +66,22 @@ final class FilesystemLockTest extends TestCase
     }
 
     #[Test]
+    public function releaseKeepsLockFilePersistent(): void
+    {
+        // release() must not unlink the lock file. Deleting it races with
+        // a concurrent acquire on the same inode and lets a later acquire open a
+        // fresh inode at the vacated path — two holders, broken mutual exclusion.
+        // Keeping the file pins the inode across acquire/release cycles.
+        $handle = $this->lock->acquire('test-resource', ttlSeconds: 30);
+        $this->lock->release($handle);
+
+        $files = glob($this->directory . '/*');
+
+        self::assertNotFalse($files);
+        self::assertNotEmpty($files, 'the lock file must persist after release to pin the inode');
+    }
+
+    #[Test]
     public function acquireSucceedsAfterRelease(): void
     {
         $handle = $this->lock->acquire('test-resource', ttlSeconds: 30);

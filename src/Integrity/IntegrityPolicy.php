@@ -11,6 +11,7 @@ use Pulsar\Config\IntegrityPolicyMode;
 
 /**
  * Resolved integrity policy derived from configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IntegrityPolicy

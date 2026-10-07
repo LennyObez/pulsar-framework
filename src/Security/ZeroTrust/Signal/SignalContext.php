@@ -12,9 +12,10 @@ use Pulsar\Api\Api;
  *
  * Carries the HTTP request, session identifier, and identity information
  * needed by signal providers to produce claims about the current request.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class SignalContext
+final readonly class SignalContext
 {
     /**
      * @param ServerRequestInterface $request Current HTTP request

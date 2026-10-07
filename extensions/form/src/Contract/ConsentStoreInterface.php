@@ -12,6 +12,7 @@ use Pulsar\Extension\Form\Field\Regulated\ConsentEvidence;
  *
  * Consent evidence is stored separately from form submission data
  * to support audit and compliance requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConsentStoreInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a shipping calculation: cost, method, and estimated delivery.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShippingResult

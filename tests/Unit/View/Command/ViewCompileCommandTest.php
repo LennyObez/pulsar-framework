@@ -116,7 +116,7 @@ final class ViewCompileCommandTest extends TestCase
 
     private function writeTemplate(string $name, string $content): void
     {
-        $path = $this->templateDir . DIRECTORY_SEPARATOR . $name . '.pulsar.php';
+        $path = $this->templateDir . DIRECTORY_SEPARATOR . $name . '.pulse.php';
         $dir = dirname($path);
 
         if (!is_dir($dir)) {

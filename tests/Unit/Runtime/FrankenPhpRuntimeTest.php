@@ -12,6 +12,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
+use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Http\Message\BodyTooLargeException;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Exception\RuntimeException;
 use Pulsar\Runtime\FrankenPhpRuntime;
 use Pulsar\Runtime\LeakDetector;
@@ -19,9 +22,15 @@ use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Runtime\RuntimeStatus;
 use Pulsar\Runtime\RuntimeType;
-use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
+use ReflectionMethod;
+use Throwable;
+
+use function preg_replace;
+use function strip_tags;
 
 #[CoversClass(FrankenPhpRuntime::class)]
+#[CoversClass(ProductionRenderer::class)]
 final class FrankenPhpRuntimeTest extends TestCase
 {
     private FrankenPhpRuntime $runtime;
@@ -74,7 +83,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     #[Test]
     public function health_status_is_shutting_down_when_stopped(): void
     {
-        self::assertSame(HealthStatus::ShuttingDown, $this->runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $this->runtime->healthStatus());
     }
 
     #[Test]
@@ -82,7 +91,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     {
         $this->runtime->reload();
 
-        self::assertSame(HealthStatus::Draining, $this->runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::Draining, $this->runtime->healthStatus());
     }
 
     #[Test]
@@ -127,7 +136,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     public function start_throws_when_frankenphp_not_available(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('frankenphp');
+        $this->expectExceptionMessageIsOrContains('frankenphp');
 
         $this->runtime->start();
     }
@@ -146,6 +155,72 @@ final class FrankenPhpRuntimeTest extends TestCase
     {
         $this->runtime->stop();
 
-        self::assertSame(HealthStatus::ShuttingDown, $this->runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $this->runtime->healthStatus());
+    }
+
+    /**
+     * `ServerRequest::fromGlobals()` used to run before the try block inside the
+     * worker callback, so a body over the cap escaped the callback and killed
+     * the worker — every in-flight and queued request on that process, from one
+     * request nobody had to authenticate to send. Inside the guard it becomes a
+     * response, and this is the response.
+     */
+    #[Test]
+    public function oversized_body_yields_generic_413_rather_than_killing_the_worker(): void
+    {
+        $response = $this->errorResponse(BodyTooLargeException::exceedsLimit(10_485_761, 10_485_760));
+
+        self::assertSame(ResponseStatus::PayloadTooLarge->value, $response->getStatusCode());
+
+        $body = (string) $response->getBody();
+        self::assertStringNotContainsString('BodyTooLargeException', $body);
+        self::assertStringNotContainsString('10485761', $body);
+        self::assertNoPathSeparatorInText($body);
+    }
+
+    /**
+     * The previous error branch replied with a plain-text `Internal Server
+     * Error` and no headers beyond the status. A response the middleware
+     * pipeline never touched has to bring its own.
+     */
+    #[Test]
+    public function handler_failure_yields_generic_500_with_its_own_security_headers(): void
+    {
+        $response = $this->errorResponse(
+            RuntimeException::fatalError('database at 10.0.0.7 refused the connection'),
+        );
+
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
+        self::assertSame('no-referrer', $response->getHeaderLine('Referrer-Policy'));
+        self::assertSame('no-store', $response->getHeaderLine('Cache-Control'));
+        self::assertStringContainsString("default-src 'none'", $response->getHeaderLine('Content-Security-Policy'));
+
+        $body = (string) $response->getBody();
+        self::assertStringNotContainsString('10.0.0.7', $body);
+        self::assertStringNotContainsString('RuntimeException', $body);
+        self::assertNoPathSeparatorInText($body);
+    }
+
+    private function errorResponse(Throwable $e): ResponseInterface
+    {
+        /** @var ResponseInterface */
+        return new ReflectionMethod($this->runtime, 'errorResponse')->invoke($this->runtime, $e);
+    }
+
+    /**
+     * The closing tags of the generic page are the only slashes it may contain.
+     * Drop the inline stylesheet and the markup, and no separator of either
+     * platform may survive in what is left.
+     */
+    private static function assertNoPathSeparatorInText(string $html): void
+    {
+        $withoutStyle = (string) preg_replace('#<style\b[^>]*>.*?</style>#s', '', $html);
+        $text = strip_tags($withoutStyle);
+
+        self::assertStringNotContainsString('/', $text, 'Rendered error text contains a path separator');
+        self::assertStringNotContainsString('\\', $text, 'Rendered error text contains a path separator');
     }
 }

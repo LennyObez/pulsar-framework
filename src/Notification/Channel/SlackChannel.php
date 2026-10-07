@@ -11,6 +11,7 @@ use Pulsar\Notification\NotifiableInterface;
 use Pulsar\Notification\Notification;
 use Pulsar\Notification\NotificationChannelInterface;
 use Pulsar\Notification\NotificationHttpClientInterface;
+use Pulsar\Security\Validation\UrlSafetyValidator;
 use Throwable;
 
 use function is_string;
@@ -38,6 +39,15 @@ final readonly class SlackChannel implements NotificationChannelInterface
             throw NotificationException::channelNotAvailable(
                 $this->name(),
                 'No Slack webhook URL configured for notifiable ' . $notifiable->getNotifiableId(),
+            );
+        }
+
+        $validation = UrlSafetyValidator::validate($webhookUrl);
+
+        if (!$validation->safe) {
+            throw NotificationException::channelNotAvailable(
+                $this->name(),
+                $validation->reason,
             );
         }
 

@@ -6,6 +6,10 @@ namespace Pulsar\Resilience\HealthCheck;
 
 use DateTimeImmutable;
 use Pulsar\Resilience\Exception\ResilienceException;
+use Throwable;
+
+use function array_keys;
+use function sprintf;
 
 /**
  * Orchestrates health check execution.
@@ -32,7 +36,19 @@ final class HealthCheckRunner implements HealthCheckRunnerInterface
         $worstStatus = HealthStatus::Healthy;
 
         foreach ($this->checks as $check) {
-            $result = $check->check();
+            try {
+                $result = $check->check();
+            } catch (Throwable $e) {
+                // A check is contracted not to throw, but a misbehaving implementation
+                // must not abort the whole report. Record it as unhealthy and continue.
+                // The exception class (not its message) is surfaced to avoid leaking
+                // sensitive details into the report.
+                $result = HealthCheckResult::unhealthy(
+                    $check->getName(),
+                    sprintf('Health check raised %s', $e::class),
+                );
+            }
+
             $results[] = $result;
 
             if ($result->status === HealthStatus::Unhealthy) {

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Data retention periods for analytics data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetentionConfig
@@ -29,9 +31,9 @@ final readonly class RetentionConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            rawDays: (int) ($data['raw_days'] ?? 90),
-            aggregatedDays: (int) ($data['aggregated_days'] ?? 730),
-            hourlyHours: (int) ($data['hourly_hours'] ?? 48),
+            rawDays: Coerce::intFromInput($data['raw_days'] ?? null, 90),
+            aggregatedDays: Coerce::intFromInput($data['aggregated_days'] ?? null, 730),
+            hourlyHours: Coerce::intFromInput($data['hourly_hours'] ?? null, 48),
         );
     }
 }

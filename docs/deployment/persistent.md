@@ -14,8 +14,8 @@ This guide covers deploying a Pulsar application with the built-in persistent HT
 # Start with default settings (127.0.0.1:8080, synchronous)
 php bin/pulsar runtime:serve
 
-# Custom port with Fiber concurrency
-php bin/pulsar runtime:serve --port 3000 --concurrency 64
+# Custom port
+php bin/pulsar runtime:serve --port 3000
 
 # Bind to all interfaces (requires --public flag)
 php bin/pulsar runtime:serve --host 0.0.0.0 --port 8080 --public
@@ -45,7 +45,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/app
 
-ExecStart=/usr/bin/php bin/pulsar runtime:serve --port 8080 --concurrency 64
+ExecStart=/usr/bin/php bin/pulsar runtime:serve --port 8080
 ExecReload=/bin/kill -USR1 $MAINPID
 
 Restart=always
@@ -95,7 +95,7 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/var/www/app
-ExecStart=/usr/bin/php bin/pulsar runtime:serve --port %i --concurrency 64
+ExecStart=/usr/bin/php bin/pulsar runtime:serve --port %i
 ExecReload=/bin/kill -USR1 $MAINPID
 Restart=always
 RestartSec=1
@@ -115,7 +115,7 @@ sudo systemctl start pulsar-runtime@8080 pulsar-runtime@8081 pulsar-runtime@8082
 
 ```ini
 [program:pulsar-runtime]
-command=/usr/bin/php bin/pulsar runtime:serve --port 8080 --concurrency 64
+command=/usr/bin/php bin/pulsar runtime:serve --port 8080
 directory=/var/www/app
 user=www-data
 autostart=true
@@ -134,7 +134,7 @@ For multiple workers:
 
 ```ini
 [program:pulsar-runtime]
-command=/usr/bin/php bin/pulsar runtime:serve --port 80%(process_num)02d --concurrency 64
+command=/usr/bin/php bin/pulsar runtime:serve --port 80%(process_num)02d
 directory=/var/www/app
 user=www-data
 autostart=true
@@ -174,7 +174,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -sf http://localhost:8080/_health || exit 1
 
-CMD ["php", "bin/pulsar", "runtime:serve", "--host", "0.0.0.0", "--port", "8080", "--concurrency", "64", "--public"]
+CMD ["php", "bin/pulsar", "runtime:serve", "--host", "0.0.0.0", "--port", "8080", "--public"]
 ```
 
 ### docker-compose.yml
@@ -274,18 +274,19 @@ example.com {
 }
 ```
 
-## Fiber concurrency tuning
+## Fiber concurrency
 
-The `--concurrency` flag (or `fiber_concurrency` config) controls how many connections the worker handles concurrently using PHP Fibers.
+The `--concurrency` flag (or `fiber_concurrency` config) chooses whether the connection handler runs inside a Fiber. It is **not** a throughput dial.
 
-| Setting       | Behavior                                                |
-| ------------- | ------------------------------------------------------- |
-| `0` (default) | Synchronous accept loop -- one request at a time        |
-| `1-32`        | Low concurrency -- good for CPU-bound workloads         |
-| `64-128`      | Moderate -- good for mixed I/O and CPU                  |
-| `256+`        | High -- for I/O-heavy workloads (API gateways, proxies) |
+| Setting       | Behavior                                                                         |
+| ------------- | -------------------------------------------------------------------------------- |
+| `0` (default) | Synchronous accept loop, one request at a time                                   |
+| `1`           | One connection Fiber at a time; the accept loop keeps running while it is parked |
+| `> 1`         | **Refused** — the worker throws at startup and does not begin serving            |
 
-Fibers provide I/O concurrency only. PHP remains single-threaded. Blocking database calls without async drivers do not benefit from higher concurrency. Monitor `runtime_active_fibers` and request latency to find the right setting.
+Values above 1 are refused because the runtime does not isolate per-request state across interleaved Fibers: a request parked inside a contended cache lock can resume holding the next request's session. They also never delivered I/O concurrency, because the connection handler blocks on every socket read and write. [`docs/async-model.md`](../async-model.md) states the full reasoning.
+
+**Scale with processes, not Fibers.** Run one worker per core (or more, for I/O-bound work) behind the load balancer described above, and give each its own port. That is the supported concurrency model, and it is what every recipe on this page does.
 
 ## Memory threshold configuration
 
@@ -341,4 +342,4 @@ The persistent runtime logs key events to the configured `LoggerInterface`:
 
 **Tenant state leaking between requests**: Framework services that hold per-request state (`TenantContext`, `AuthManager`, `RequestContextHolder`, `FlagEvaluationLog`) implement `ResettableInterface` and are automatically reset by `RequestSandbox` between requests. If you create custom request-scoped services, implement `ResettableInterface` and register them with `RequestResetRegistry`.
 
-**High p99 latency**: If using Fibers, check whether database queries block the event loop. Consider lowering `fiber_concurrency` or using async database drivers.
+**High p99 latency**: A worker serves one request at a time, so a slow request queues everything behind it. Add worker processes behind the load balancer, and profile the slow endpoint — raising `fiber_concurrency` is not an option (values above 1 are refused).

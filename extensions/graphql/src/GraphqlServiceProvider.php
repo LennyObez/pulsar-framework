@@ -22,7 +22,7 @@ use Pulsar\Extension\Graphql\Schema\SchemaBuilder;
 /**
  * Wires GraphQL schema, resolvers, executor, and controller.
  */
-#[Internal(reason: 'GraphQL service wiring — use GraphqlController for public API')]
+#[Internal(reason: 'GraphQL service wiring; use GraphqlController for public API')]
 final class GraphqlServiceProvider implements ServiceProviderInterface
 {
     public function register(ContainerInterface $container): void

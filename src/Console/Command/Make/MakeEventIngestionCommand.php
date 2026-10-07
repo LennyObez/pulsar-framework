@@ -52,7 +52,7 @@ final class MakeEventIngestionCommand extends Command
 
         [$name, $module, $modulePath, $namespace] = $context;
 
-        $events = $this->parseCommaSeparatedOption($input->getOption('events', ''));
+        $events = $this->parseCommaSeparatedOption($input->getStringOption('events'));
 
         $output->writeln(sprintf('Creating event ingestion: %s in %s', $name, $module));
         $output->newLine();
@@ -61,7 +61,7 @@ final class MakeEventIngestionCommand extends Command
         foreach (['Contracts', 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure', 'Controller', 'Config', 'Domain', 'Exception'] as $dir) {
             $fullDir = $modulePath . DIRECTORY_SEPARATOR . $dir;
             if (!is_dir($fullDir)) {
-                mkdir($fullDir, 0o755, true);
+                mkdir($fullDir, 0o750, true);
                 $output->writeln(sprintf('  Created %s/', $dir));
             }
         }

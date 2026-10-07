@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_user_badges (
@@ -22,15 +24,14 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_user_badge
-                ON forum_user_badges (user_id, badge)
-            SQL);
+        $indexes->ensure(
+            'forum_user_badges',
+            'uq_user_badge',
+            ['user_id', 'badge'],
+            unique: true,
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_user_badge_user
-                ON forum_user_badges (user_id)
-            SQL);
+        $indexes->ensure('forum_user_badges', 'idx_user_badge_user', ['user_id']);
     }
 
     public function down(ConnectionInterface $connection): void

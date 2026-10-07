@@ -32,7 +32,19 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
         $stmt->execute(['resource' => $resourceName]);
 
         $views = [];
-        /** @var array<string, mixed> $row */
+        /**
+         * @var array{
+         *     id: string,
+         *     resource_name: string,
+         *     label: string,
+         *     filters: string,
+         *     sort: string,
+         *     per_page: int,
+         *     created_by: string,
+         *     is_default: int,
+         *     created_at: int,
+         * } $row
+         */
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $views[] = $this->hydrate($row);
         }
@@ -47,7 +59,19 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
         $stmt = $this->pdo->prepare('SELECT * FROM admin_saved_views WHERE id = :id');
         $stmt->execute(['id' => $id]);
 
-        /** @var array<string, mixed>|false $row */
+        /**
+         * @var array{
+         *     id: string,
+         *     resource_name: string,
+         *     label: string,
+         *     filters: string,
+         *     sort: string,
+         *     per_page: int,
+         *     created_by: string,
+         *     is_default: int,
+         *     created_at: int,
+         * }|false $row
+         */
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row === false) {
             return null;
@@ -111,25 +135,35 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param array{
+     *     id: string,
+     *     resource_name: string,
+     *     label: string,
+     *     filters: string,
+     *     sort: string,
+     *     per_page: int,
+     *     created_by: string,
+     *     is_default: int,
+     *     created_at: int,
+     * } $row
      */
     private function hydrate(array $row): SavedView
     {
         /** @var array<string, mixed> $filters */
-        $filters = json_decode((string) $row['filters'], true, 512, JSON_THROW_ON_ERROR);
+        $filters = json_decode($row['filters'], true, 512, JSON_THROW_ON_ERROR);
         /** @var array<string, string> $sort */
-        $sort = json_decode((string) $row['sort'], true, 512, JSON_THROW_ON_ERROR);
+        $sort = json_decode($row['sort'], true, 512, JSON_THROW_ON_ERROR);
 
         return new SavedView(
-            id: (string) $row['id'],
-            resourceName: (string) $row['resource_name'],
-            label: (string) $row['label'],
+            id: $row['id'],
+            resourceName: $row['resource_name'],
+            label: $row['label'],
             filters: $filters,
             sort: $sort,
-            perPage: (int) $row['per_page'],
-            createdBy: (string) $row['created_by'],
+            perPage: $row['per_page'],
+            createdBy: $row['created_by'],
             isDefault: (bool) $row['is_default'],
-            createdAt: (int) $row['created_at'],
+            createdAt: $row['created_at'],
         );
     }
 }

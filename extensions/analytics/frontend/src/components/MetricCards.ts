@@ -10,16 +10,25 @@ export function renderMetricCards(container: HTMLElement, stats: AggregateStats)
     { label: 'Events', value: formatNumber(stats.events_count), key: 'events_count' },
   ];
 
-  container.innerHTML = metrics
-    .map(
-      (m) => `
-    <div class="metric-card" data-metric="${m.key}">
-      <div class="metric-card__value">${m.value}</div>
-      <div class="metric-card__label">${m.label}</div>
-    </div>
-  `,
-    )
-    .join('');
+  container.textContent = '';
+
+  for (const m of metrics) {
+    const card = document.createElement('div');
+    card.className = 'metric-card';
+    card.dataset.metric = m.key;
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'metric-card__value';
+    valueEl.textContent = m.value;
+    card.appendChild(valueEl);
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'metric-card__label';
+    labelEl.textContent = m.label;
+    card.appendChild(labelEl);
+
+    container.appendChild(card);
+  }
 }
 
 function formatNumber(n: number): string {

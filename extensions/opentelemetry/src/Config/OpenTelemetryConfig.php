@@ -7,12 +7,10 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Environment;
+use Pulsar\Support\Coerce;
 
 use function explode;
 use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
 use function str_contains;
 use function strpos;
 use function strtolower;
@@ -29,6 +27,7 @@ use function trim;
  * - OTEL_TRACES_SAMPLER → sampler.type
  * - OTEL_TRACES_SAMPLER_ARG → sampler.probability
  * - OTEL_EXPORTER_OTLP_HEADERS → headers (comma-separated key=value)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OpenTelemetryConfig
@@ -46,7 +45,7 @@ final readonly class OpenTelemetryConfig
      * @param OtlpMetricsConfig     $metrics          Metrics signal configuration
      * @param OtlpLogsConfig        $logs             Logs signal configuration
      * @param SamplerConfig         $sampler          Trace sampler configuration
-     * @param list<string>          $propagators      Context propagation formats (reserved — not yet wired to middleware)
+     * @param list<string>          $propagators      Context propagation formats (reserved; not yet wired to middleware)
      * @param BatchConfig           $batch            Batch exporter configuration
      * @param CardinalityConfig     $cardinality      Cardinality limiting configuration
      * @param bool                  $dualExport       Keeps existing span processor (e.g., Studio) active alongside OTLP export
@@ -73,73 +72,53 @@ final readonly class OpenTelemetryConfig
     /**
      * Build config from a raw array with optional environment overrides.
      *
-     * @param array<string, mixed> $data Raw array from config/opentelemetry.php
+     * @param array{
+     *     enabled?: bool,
+     *     endpoint?: string,
+     *     protocol?: string,
+     *     timeout_ms?: int,
+     *     headers?: array<string, string>,
+     *     service_name?: string,
+     *     service_version?: string,
+     *     service_namespace?: string,
+     *     traces?: array<string, mixed>,
+     *     metrics?: array<string, mixed>,
+     *     logs?: array<string, mixed>,
+     *     sampler?: array<string, mixed>,
+     *     propagators?: list<string>,
+     *     batch?: array<string, mixed>,
+     *     cardinality?: array<string, mixed>,
+     *     dual_export?: bool,
+     * } $data Raw array from config/opentelemetry.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, ?Environment $environment = null): self
     {
-        // Sub-configs from file
-        $rawTraces = $data['traces'] ?? [];
-        $rawMetrics = $data['metrics'] ?? [];
-        $rawLogs = $data['logs'] ?? [];
-        $rawSampler = $data['sampler'] ?? [];
-        $rawBatch = $data['batch'] ?? [];
-        $rawCardinality = $data['cardinality'] ?? [];
+        $tracesData = $data['traces'] ?? null;
+        $metricsData = $data['metrics'] ?? null;
+        $logsData = $data['logs'] ?? null;
+        $samplerData = $data['sampler'] ?? null;
+        $batchData = $data['batch'] ?? null;
+        $cardinalityData = $data['cardinality'] ?? null;
+        $headersRaw = $data['headers'] ?? null;
 
-        /** @var array<string, mixed> $tracesArr */
-        $tracesArr = is_array($rawTraces) ? $rawTraces : [];
-        /** @var array<string, mixed> $metricsArr */
-        $metricsArr = is_array($rawMetrics) ? $rawMetrics : [];
-        /** @var array<string, mixed> $logsArr */
-        $logsArr = is_array($rawLogs) ? $rawLogs : [];
-        /** @var array<string, mixed> $samplerArr */
-        $samplerArr = is_array($rawSampler) ? $rawSampler : [];
-        /** @var array<string, mixed> $batchArr */
-        $batchArr = is_array($rawBatch) ? $rawBatch : [];
-        /** @var array<string, mixed> $cardinalityArr */
-        $cardinalityArr = is_array($rawCardinality) ? $rawCardinality : [];
+        $traces = OtlpTracesConfig::fromArray(is_array($tracesData) ? $tracesData : []);
+        $metrics = OtlpMetricsConfig::fromArray(is_array($metricsData) ? $metricsData : []);
+        $logs = OtlpLogsConfig::fromArray(is_array($logsData) ? $logsData : []);
+        $sampler = SamplerConfig::fromArray(is_array($samplerData) ? $samplerData : []);
+        $batch = BatchConfig::fromArray(is_array($batchData) ? $batchData : []);
+        $cardinality = CardinalityConfig::fromArray(is_array($cardinalityData) ? $cardinalityData : []);
 
-        $traces = OtlpTracesConfig::fromArray($tracesArr);
-        $metrics = OtlpMetricsConfig::fromArray($metricsArr);
-        $logs = OtlpLogsConfig::fromArray($logsArr);
-        $sampler = SamplerConfig::fromArray($samplerArr);
-        $batch = BatchConfig::fromArray($batchArr);
-        $cardinality = CardinalityConfig::fromArray($cardinalityArr);
-
-        // Resolve scalar values from file
-        $rawEnabled = $data['enabled'] ?? false;
-        $enabled = is_bool($rawEnabled) ? $rawEnabled : false;
-
-        $rawEndpoint = $data['endpoint'] ?? 'http://localhost:4318';
-        $endpoint = is_string($rawEndpoint) ? $rawEndpoint : 'http://localhost:4318';
-
-        $rawProtocol = $data['protocol'] ?? 'http/protobuf';
-        $protocol = is_string($rawProtocol)
-            ? (OtlpProtocol::tryFrom($rawProtocol) ?? OtlpProtocol::HttpProtobuf)
-            : OtlpProtocol::HttpProtobuf;
-
-        $rawTimeout = $data['timeout_ms'] ?? 5000;
-        $timeoutMs = is_int($rawTimeout) ? $rawTimeout : 5000;
-
-        $rawHeaders = $data['headers'] ?? [];
-        /** @var array<string, string> $headers */
-        $headers = is_array($rawHeaders) ? $rawHeaders : [];
-
-        $rawServiceName = $data['service_name'] ?? '';
-        $serviceName = is_string($rawServiceName) ? $rawServiceName : '';
-
-        $rawServiceVersion = $data['service_version'] ?? '';
-        $serviceVersion = is_string($rawServiceVersion) ? $rawServiceVersion : '';
-
-        $rawServiceNamespace = $data['service_namespace'] ?? '';
-        $serviceNamespace = is_string($rawServiceNamespace) ? $rawServiceNamespace : '';
-
-        $rawPropagators = $data['propagators'] ?? ['tracecontext', 'baggage'];
-        /** @var list<string> $propagators */
-        $propagators = is_array($rawPropagators) ? $rawPropagators : ['tracecontext', 'baggage'];
-
-        $rawDualExport = $data['dual_export'] ?? false;
-        $dualExport = is_bool($rawDualExport) ? $rawDualExport : false;
+        $enabled = Coerce::strictBool($data['enabled'] ?? null);
+        $endpoint = Coerce::string($data['endpoint'] ?? null, 'http://localhost:4318');
+        $protocol = OtlpProtocol::tryFrom(Coerce::string($data['protocol'] ?? null)) ?? OtlpProtocol::HttpProtobuf;
+        $timeoutMs = Coerce::int($data['timeout_ms'] ?? null, 5000);
+        $headers = is_array($headersRaw) ? $headersRaw : [];
+        $serviceName = Coerce::string($data['service_name'] ?? null);
+        $serviceVersion = Coerce::string($data['service_version'] ?? null);
+        $serviceNamespace = Coerce::string($data['service_namespace'] ?? null);
+        $propagators = Coerce::listOfString($data['propagators'] ?? null, ['tracecontext', 'baggage']);
+        $dualExport = Coerce::strictBool($data['dual_export'] ?? null);
 
         // Apply environment variable overrides
         if ($environment !== null) {

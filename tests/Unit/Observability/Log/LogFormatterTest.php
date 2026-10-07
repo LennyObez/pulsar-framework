@@ -216,6 +216,123 @@ final class LogFormatterTest extends TestCase
         self::assertArrayHasKey('file', $serialized);
         self::assertArrayHasKey('line', $serialized);
         self::assertArrayHasKey('trace', $serialized);
+        // Trace must be an array of frames, not a raw string
+        self::assertIsArray($serialized['trace']);
+    }
+
+    #[Test]
+    public function formatSanitizesTraceFramesToPreventPiiLeak(): void
+    {
+        // Create an exception that will have real stack trace frames with arguments
+        $exception = new RuntimeException('test');
+
+        $entry = new LogEntry(
+            level: LogLevel::Error,
+            message: 'failure',
+            context: ['exception' => $exception],
+            channel: 'app',
+            timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),
+        );
+
+        $result = $this->formatter->format($entry);
+        $data = json_decode(trim($result), true);
+
+        self::assertIsArray($data);
+        self::assertIsArray($data['context']);
+        $serialized = $data['context']['exception'];
+        self::assertIsArray($serialized);
+        self::assertIsArray($serialized['trace']);
+
+        // Verify no frame contains 'args' — arguments are stripped to prevent PII leaks
+        foreach ($serialized['trace'] as $frame) {
+            self::assertIsArray($frame);
+            self::assertArrayNotHasKey('args', $frame);
+        }
+    }
+
+    /**
+     * Trace frame `file` entries must be project-relative —
+     * absolute paths (`/var/www/staging/...`, `D:\dev\...`) advertise
+     * the deployment topology to log aggregators. Verifies the
+     * exception's own `file` and every trace frame's `file` start
+     * with one of the project anchors.
+     */
+    #[Test]
+    public function formatRedactsAbsolutePathsInTrace(): void
+    {
+        $exception = new RuntimeException('test');
+
+        $entry = new LogEntry(
+            level: LogLevel::Error,
+            message: 'failure',
+            context: ['exception' => $exception],
+            channel: 'app',
+            timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),
+        );
+
+        $result = $this->formatter->format($entry);
+        $data = json_decode(trim($result), true);
+
+        self::assertIsArray($data);
+        self::assertIsArray($data['context']);
+        $serialized = $data['context']['exception'];
+        self::assertIsArray($serialized);
+        self::assertIsString($serialized['file']);
+
+        // Top-level file should not be absolute (must start with one of
+        // the project anchors after the leading slash is stripped).
+        self::assertMatchesRegularExpression(
+            '#^(src|tests|extensions|vendor)/#',
+            $serialized['file'],
+            'Expected project-relative path, got: ' . $serialized['file'],
+        );
+
+        $trace = $serialized['trace'];
+        self::assertIsArray($trace);
+
+        foreach ($trace as $frame) {
+            self::assertIsArray($frame);
+            if (isset($frame['file'])) {
+                self::assertIsString($frame['file']);
+                self::assertMatchesRegularExpression(
+                    '#^(src|tests|extensions|vendor)/#',
+                    $frame['file'],
+                    'Trace frame leaked absolute path: ' . $frame['file'],
+                );
+            }
+        }
+    }
+
+    #[Test]
+    public function formatTraceFramesContainOnlySafeKeys(): void
+    {
+        $exception = new RuntimeException('test');
+
+        $entry = new LogEntry(
+            level: LogLevel::Error,
+            message: 'failure',
+            context: ['exception' => $exception],
+            channel: 'app',
+            timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),
+        );
+
+        $result = $this->formatter->format($entry);
+        $data = json_decode(trim($result), true);
+
+        self::assertIsArray($data);
+        self::assertIsArray($data['context']);
+        self::assertIsArray($data['context']['exception']);
+        $trace = $data['context']['exception']['trace'];
+        self::assertIsArray($trace);
+
+        $allowedKeys = ['file', 'line', 'class', 'function', 'type'];
+
+        foreach ($trace as $frame) {
+            self::assertIsArray($frame);
+            foreach (array_keys($frame) as $key) {
+                self::assertContains($key, $allowedKeys, "Unexpected key '{$key}' in trace frame");
+            }
+        }
     }
 
     #[Test]

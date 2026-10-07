@@ -22,7 +22,7 @@ use function min;
 /**
  * Public REST API controller for forum user profiles.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ProfileApiController
 {
     public function __construct(
@@ -33,7 +33,7 @@ final readonly class ProfileApiController
     ) {}
 
     /**
-     * GET /api/v1/forum/profiles/{userId} — Show a user's forum profile.
+     * GET /api/v1/forum/profiles/{userId}: Show a user's forum profile.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -50,7 +50,7 @@ final readonly class ProfileApiController
     }
 
     /**
-     * GET /api/v1/forum/profiles/{userId}/threads — List threads by a user.
+     * GET /api/v1/forum/profiles/{userId}/threads: List threads by a user.
      */
     public function threads(ServerRequestInterface $request, string $userId): Response
     {
@@ -76,7 +76,7 @@ final readonly class ProfileApiController
     }
 
     /**
-     * GET /api/v1/forum/profiles/{userId}/posts — List posts by a user.
+     * GET /api/v1/forum/profiles/{userId}/posts: List posts by a user.
      */
     public function posts(ServerRequestInterface $request, string $userId): Response
     {

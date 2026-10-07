@@ -24,7 +24,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Serializes and deserializes {@see JobEnvelope} instances to/from JSON.
  *
  * This serializer handles the full envelope structure including all metadata.
- * It never uses PHP {@see unserialize()} — all data flows through typed JSON.
+ * It never uses PHP {@see unserialize()}: all data flows through typed JSON.
  */
 #[Internal(reason: 'Envelope serialization is an implementation detail of the queue transport')]
 final readonly class EnvelopeSerializer

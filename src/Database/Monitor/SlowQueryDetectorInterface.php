@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Detects queries that exceed the configured duration threshold.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SlowQueryDetectorInterface

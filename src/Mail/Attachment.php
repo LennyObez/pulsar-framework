@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A file attachment for an email message.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Attachment

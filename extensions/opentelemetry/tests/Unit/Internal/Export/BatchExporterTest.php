@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\OpenTelemetry\Internal\Export\BatchExporter;
-use Pulsar\Extension\OpenTelemetry\Internal\Transport\OtlpTransportInterface;
 use Pulsar\Extension\OpenTelemetry\Internal\Transport\TransportResult;
 
 use function implode;
@@ -87,7 +86,7 @@ final class BatchExporterTest extends TestCase
         $exporter->enqueue('c');
         self::assertSame(3, $exporter->queueSize());
 
-        // Enqueue one more — should drop 'a'
+        // Enqueue one more: should drop 'a'
         $exporter->enqueue('d');
         self::assertSame(3, $exporter->queueSize());
 
@@ -109,7 +108,7 @@ final class BatchExporterTest extends TestCase
         $exporter->enqueue('item-1');
         $exporter->shutdown();
 
-        self::assertTrue($exporter->isShutDown());
+        self::assertTrue($exporter->isShutDown);
         self::assertSame(0, $exporter->queueSize());
         self::assertCount(1, $transport->sentPayloads);
 
@@ -128,7 +127,7 @@ final class BatchExporterTest extends TestCase
         $exporter->shutdown();
         $exporter->shutdown();
 
-        self::assertTrue($exporter->isShutDown());
+        self::assertTrue($exporter->isShutDown);
         self::assertCount(1, $transport->sentPayloads);
     }
 
@@ -142,7 +141,7 @@ final class BatchExporterTest extends TestCase
             maxQueueSize: 100,
         );
 
-        // Enqueue first 2 — triggers auto-flush
+        // Enqueue first 2: triggers auto-flush
         $exporter->enqueue('a');
         $exporter->enqueue('b');
         // That's 1 flush so far
@@ -207,7 +206,7 @@ final class BatchExporterTest extends TestCase
     {
         $exporter = $this->createExporter(maxBatchSize: 100);
 
-        self::assertFalse($exporter->isShutDown());
+        self::assertFalse($exporter->isShutDown);
     }
 
     #[Test]
@@ -244,34 +243,5 @@ final class BatchExporterTest extends TestCase
             maxBatchSize: $maxBatchSize,
             maxQueueSize: $maxQueueSize,
         );
-    }
-}
-
-/**
- * Test double that records all send() calls without real I/O.
- */
-final class StubTransport implements OtlpTransportInterface
-{
-    /** @var list<string> */
-    public array $sentPayloads = [];
-
-    /** @var list<string> */
-    public array $sentPaths = [];
-
-    public function __construct(
-        private readonly TransportResult $result = new TransportResult(
-            success: true,
-            httpStatus: 200,
-            errorMessage: '',
-            retryable: false,
-        ),
-    ) {}
-
-    public function send(string $path, string $protobufPayload): TransportResult
-    {
-        $this->sentPaths[] = $path;
-        $this->sentPayloads[] = $protobufPayload;
-
-        return $this->result;
     }
 }

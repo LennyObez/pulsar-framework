@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 /** @var list<array{id: string, label: string, size: string, data: array<string, mixed>}> $widgets */
 $widgets = $templateData['widgets'] ?? [];
 /** @var list<array{name: string, label: string, icon: string}> $resources */
@@ -23,7 +23,7 @@ $resources = $templateData['resources'] ?? [];
     </section>
 
     <section class="admin-resources">
-        <h2>Resources</h2>
+        <h2 data-t="admin.dashboard.resources"><?= __('admin.dashboard.resources') ?></h2>
         <div class="admin-resource-grid">
             <?php foreach ($resources as $resource): ?>
             <a href="/admin/resources/<?= $e($resource['name']) ?>" class="admin-resource-card">

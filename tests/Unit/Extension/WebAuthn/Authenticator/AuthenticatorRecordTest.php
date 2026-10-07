@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Authenticator\AuthenticatorRecord;
-use Pulsar\Extension\WebAuthn\Authenticator\AuthenticatorType;
+use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorRecord;
+use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorType;
 
 #[CoversClass(AuthenticatorRecord::class)]
 final class AuthenticatorRecordTest extends TestCase

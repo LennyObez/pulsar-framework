@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result DTO for listing resource records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ListResourceResult

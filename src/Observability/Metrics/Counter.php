@@ -11,6 +11,7 @@ use Pulsar\Observability\Metrics\Exception\MetricsException;
  * Monotonic counter metric.
  *
  * Counters only go up. Use {@see increment()} to add a non-negative value.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Counter

@@ -11,7 +11,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Analytics\Domain\Goal;
 use Pulsar\Extension\Analytics\Domain\GoalType;
 
-#[Internal(reason: 'Concrete repository — used internally by GoalService')]
+#[Internal(reason: 'Concrete repository; used internally by GoalService')]
 final readonly class DbGoalRepository
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

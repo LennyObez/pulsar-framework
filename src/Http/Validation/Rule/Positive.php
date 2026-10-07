@@ -14,9 +14,10 @@ use function sprintf;
 
 /**
  * Value must be a positive number (greater than zero). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Positive implements RuleInterface
+final readonly class Positive implements RuleInterface
 {
     public function __construct(
         private string $message = '',

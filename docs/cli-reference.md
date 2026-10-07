@@ -26,6 +26,208 @@ Verbosity levels:
 - `-vv`: Very verbose output.
 - `-vvv`: Debug-level output including stack traces on errors.
 
+## Why `pulsar list` is shorter than this page
+
+Most commands are always there. A subsystem's commands are not: they are
+registered only when the subsystem's services are bound, and every subsystem that
+carries operational risk ships **off**. Queue workers, the scheduler, integrity
+manifests, the supervisor and the self-healing runner all begin with
+`'enabled' => false` in their config file, so a clean checkout registers none of
+their commands and `pulsar list` does not show them. That is the intended
+posture, not a missing install: a framework that silently ran a queue worker or
+rewrote an integrity manifest because a config file happened to exist would be
+the worse default.
+
+Each affected section below opens with the switch that turns it on. Turn the
+subsystem on, rerun `php bin/pulsar list`, and the commands appear. If one is
+still absent afterwards, `php bin/pulsar debug:wiring` names the binding that is
+missing and why.
+
+Commands contributed by an extension follow the same rule and additionally
+require that extension to be enabled — bundled products are off until listed in
+`extensions.enabled_products`. `php bin/pulsar extension:list` shows which are
+loaded.
+
+## Scope of this reference
+
+The CLI ships **152 commands**. This page carries a full option-and-behaviour
+section for 52 of them, and the table below names every one of the other 100
+with its description and where it comes from. Nothing is silently omitted: a
+command with no detailed section is still listed, and the "Detailed below"
+column says which is which.
+
+`php bin/pulsar help <command>` prints the arguments and options of any command
+from its own declaration, and is authoritative when this page and the code
+disagree. The index is checked against the code by
+`tests/Unit/Integrity/DocumentedCliCommandsTest`, which fails the build when a
+command exists that this table does not name - so the count above cannot drift
+without someone noticing.
+
+The `Ships with` column says which package declares the command. `core` is the
+framework itself; `ext: <name>` is the bundled extension in
+`extensions/<name>/`, which must be enabled before its commands appear (see
+[Why `pulsar list` is shorter than this page](#why-pulsar-list-is-shorter-than-this-page)).
+
+### Complete command index
+
+| Command                                       | Description                                                                                       | Ships with         | Detailed below                |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------- |
+| `a11y:audit`                                  | Run accessibility audit on template files (dev/CI only)                                           | ext: accessibility | -                             |
+| `admin:serve`                                 | Start the Admin panel development server                                                          | ext: admin         | -                             |
+| `api:routes`                                  | List registered API endpoints                                                                     | core               | -                             |
+| `api:spec`                                    | Generate an OpenAPI v3.1 specification from registered routes                                     | core               | -                             |
+| `asset:publish`                               | Publish resource directories to public/assets via symlinks                                        | core               | -                             |
+| `backup:restore`                              | Restore a sealed archive, or rehearse the restore without writing                                 | core               | -                             |
+| `backup:run`                                  | Take one sealed, tamper-evident backup archive and print its manifest                             | core               | -                             |
+| `backup:verify`                               | Read a sealed archive back and re-digest every entry in it                                        | core               | -                             |
+| `build`                                       | Compile all production artifacts deterministically                                                | core               | -                             |
+| `cache:warmup`                                | Warm config, route, and container caches (alias for optimize)                                     | core               | [yes](#cachewarmup)           |
+| `cms:import`                                  | Import CMS content from a JSON file or directory                                                  | ext: cms           | -                             |
+| `cms:publish-scheduled`                       | Publish scheduled content and archive expired content                                             | ext: cms           | -                             |
+| `cms:serve`                                   | Start the CMS development server                                                                  | ext: cms           | -                             |
+| `cms:theme:activate`                          | Activate an installed CMS theme                                                                   | ext: cms           | -                             |
+| `cms:theme:install`                           | Install a CMS theme from a local directory                                                        | ext: cms           | -                             |
+| `compliance:report`                           | Assess the deployment against its enabled compliance frameworks                                   | core               | [yes](#compliancereport)      |
+| `config:reference`                            | Generate a Markdown reference of all configuration options                                        | core               | -                             |
+| `data:purge`                                  | Apply the retention policies in config/data_protection.php, deleting expired records              | core               | [yes](#datapurge)             |
+| `db:failover:watch`                           | Watch the primary database and fail over to a standby when it becomes unreachable                 | core               | -                             |
+| `db:fresh`                                    | Drop all tables, re-run migrations, and optionally seed                                           | core               | -                             |
+| `db:inspect`                                  | Show database table structure, columns, and metadata                                              | core               | -                             |
+| `db:seed`                                     | Run database seeders                                                                              | core               | -                             |
+| `debug:config`                                | Show resolved configuration values with types                                                     | core               | -                             |
+| `debug:container`                             | Debug container bindings, lifetimes, and scope validation                                         | core               | -                             |
+| `debug:routes`                                | Show routes with full middleware stack and handler details                                        | core               | -                             |
+| `debug:wiring`                                | Show service-wiring contracts and any degraded or unsatisfied bindings                            | core               | -                             |
+| `deploy:check`                                | Run deploy readiness checks for a target environment                                              | core               | [yes](#deploycheck)           |
+| `dev:start`                                   | Generate Docker development environment files                                                     | core               | -                             |
+| `dev:status`                                  | Show the command to check Docker development environment status                                   | core               | -                             |
+| `dev:stop`                                    | Show the command to stop the Docker development environment                                       | core               | -                             |
+| `diagnostics`                                 | Display system diagnostics and health checks                                                      | core               | [yes](#diagnostics)           |
+| `docs`                                        | List or open documentation topics                                                                 | core               | -                             |
+| `doctor`                                      | Check your environment for Pulsar compatibility                                                   | core               | -                             |
+| `export:run`                                  | Export data from registered providers                                                             | core               | -                             |
+| `extension:list`                              | List installed extensions with status and version                                                 | core               | -                             |
+| `extension:validate`                          | Validate an extension manifest and directory structure                                            | core               | -                             |
+| `forum:serve`                                 | Start the Forum standalone development server                                                     | ext: forum         | -                             |
+| `grpc:generate`                               | Generate PHP code from proto files using protoc                                                   | ext: grpc          | -                             |
+| `grpc:serve`                                  | Start the gRPC server                                                                             | ext: grpc          | -                             |
+| `health:check`                                | Run all registered health checks                                                                  | core               | [yes](#healthcheck)           |
+| `health:repair`                               | Run self-healing repair jobs                                                                      | core               | [yes](#healthrepair)          |
+| `help`                                        | Display the help screen                                                                           | core               | -                             |
+| `i18n:extract`                                | Extract translation keys from PHP source files                                                    | core               | -                             |
+| `i18n:lint`                                   | Validate translation catalogs                                                                     | core               | -                             |
+| `i18n:slugs:lint`                             | Validate localized route slugs (completeness + collisions)                                        | core               | -                             |
+| `ide:helper`                                  | Generate IDE helper file for autocompletion                                                       | core               | -                             |
+| `import:run`                                  | Import data from a file via registered providers                                                  | core               | -                             |
+| `init`                                        | Initialize a new Pulsar project                                                                   | core               | [yes](#init)                  |
+| `integrity:build`                             | Build an integrity manifest from configured file paths                                            | core               | [yes](#integritybuild)        |
+| `integrity:repair`                            | Regenerate integrity manifest from current filesystem state                                       | core               | [yes](#integrityrepair)       |
+| `integrity:verify`                            | Verify filesystem integrity against a stored manifest                                             | core               | [yes](#integrityverify)       |
+| `key:generate`                                | Generate a PULSAR_MASTER_KEY for cache integrity                                                  | core               | [yes](#keygenerate)           |
+| `key:rotate`                                  | Rotate the master key (new key + previous key for fallback)                                       | core               | [yes](#keyrotate)             |
+| `list`                                        | List all available commands                                                                       | core               | [yes](#list)                  |
+| `maintenance:disable`                         | Disable maintenance mode and resume normal operation                                              | core               | -                             |
+| `maintenance:enable`                          | Enable maintenance mode with optional bypass secret                                               | core               | -                             |
+| `make:adapter`                                | Generate an adapter implementing a port interface                                                 | core               | [yes](#makeadapter)           |
+| `make:crud`                                   | Generate full CRUD stack for an entity                                                            | core               | -                             |
+| `make:event`                                  | Generate an event class                                                                           | core               | -                             |
+| `make:event-ingestion`                        | Generate an event ingestion pipeline with webhook verification                                    | core               | [yes](#makeevent-ingestion)   |
+| `make:extension`                              | Generate a new extension structure                                                                | core               | [yes](#makeextension)         |
+| `make:feature`                                | Generate a vertical feature slice in a module                                                     | core               | [yes](#makefeature)           |
+| `make:from-schema`                            | Import database tables into entity definitions                                                    | core               | -                             |
+| `make:listener`                               | Generate a listener class for an event                                                            | core               | -                             |
+| `make:migration-diff`                         | Generate migration from entity mapping metadata changes                                           | core               | -                             |
+| `make:module`                                 | Generate a new module with Contracts/Internal separation                                          | core               | [yes](#makemodule)            |
+| `make:payment-flow`                           | Generate a payment flow with idempotency and observability                                        | core               | [yes](#makepayment-flow)      |
+| `make:port`                                   | Generate a new port interface in a module                                                         | core               | [yes](#makeport)              |
+| `make:test`                                   | Generate a test file with method stubs matching source class public methods                       | core               | -                             |
+| `make:webhook-handler`                        | Generate a webhook handler with verification and deduplication                                    | core               | [yes](#makewebhook-handler)   |
+| `mcp:serve`                                   | Start the MCP server (JSON-RPC 2.0 over stdio)                                                    | ext: mcp-server    | -                             |
+| `metadata:export`                             | Export project metadata as JSON                                                                   | core               | -                             |
+| `migrate:create`                              | Create a new migration file                                                                       | core               | [yes](#migratecreate)         |
+| `migrate:rollback`                            | Rollback the last batch of migrations                                                             | core               | [yes](#migraterollback)       |
+| `migrate:run`                                 | Run all pending database migrations                                                               | core               | [yes](#migraterun)            |
+| `migrate:status`                              | Show the status of each migration                                                                 | core               | [yes](#migratestatus)         |
+| `new`                                         | Create a new Pulsar project                                                                       | core               | [yes](#new)                   |
+| `optimize`                                    | Cache configuration, routes, and container for production                                         | core               | [yes](#optimize)              |
+| `optimize:clear`                              | Clear all framework cache files                                                                   | core               | [yes](#optimizeclear)         |
+| `optimize:validate`                           | Validate that framework cache generation succeeds and cache is loadable (CI)                      | core               | [yes](#optimizevalidate)      |
+| `playground:serve`                            | Start the Playground development server                                                           | core               | -                             |
+| `preload:dump`                                | Generate a deterministic OPcache preload script                                                   | core               | [yes](#preloaddump)           |
+| `privacy-pass:keys:refresh`                   | Fetch and cache the Privacy Pass issuer directory token keys                                      | core               | -                             |
+| `pulse:diff`                                  | Show compiled output for a Pulse template                                                         | core               | -                             |
+| `queue:failed`                                | List all failed jobs                                                                              | core               | [yes](#queuefailed)           |
+| `queue:flush`                                 | Purge all jobs from a queue                                                                       | core               | [yes](#queueflush)            |
+| `queue:retry`                                 | Retry a failed job or all failed jobs                                                             | core               | [yes](#queueretry)            |
+| `queue:status`                                | Display queue system status                                                                       | core               | [yes](#queuestatus)           |
+| `queue:work`                                  | Start processing jobs from a queue                                                                | core               | [yes](#queuework)             |
+| `remove:adapter`                              | Remove a scaffolded adapter and its test                                                          | core               | [yes](#removeadapter)         |
+| `remove:event-ingestion`                      | Remove a scaffolded event ingestion pipeline and its files                                        | core               | [yes](#removeevent-ingestion) |
+| `remove:extension`                            | Remove a scaffolded extension                                                                     | core               | [yes](#removeextension)       |
+| `remove:feature`                              | Remove a scaffolded feature slice from a module                                                   | core               | [yes](#removefeature)         |
+| `remove:module`                               | Remove a scaffolded module and its tests                                                          | core               | [yes](#removemodule)          |
+| `remove:payment-flow`                         | Remove a scaffolded payment flow and its files                                                    | core               | [yes](#removepayment-flow)    |
+| `remove:port`                                 | Remove a scaffolded port interface from a module                                                  | core               | [yes](#removeport)            |
+| `remove:webhook-handler`                      | Remove a scaffolded webhook handler and its files                                                 | core               | [yes](#removewebhook-handler) |
+| `repl`                                        | Start an interactive REPL with full framework context                                             | core               | -                             |
+| `routes:cache`                                | Compile routes to a cached file for production                                                    | core               | -                             |
+| `runtime:reload`                              | Send reload signal to the running persistent runtime                                              | core               | -                             |
+| `runtime:serve`                               | Start the HTTP runtime server                                                                     | core               | [yes](#runtimeserve)          |
+| `runtime:status`                              | Show available runtimes and current configuration                                                 | core               | -                             |
+| `schedule:run`                                | Run all due scheduled tasks                                                                       | core               | -                             |
+| `scheduler:list`                              | List all registered scheduled jobs                                                                | core               | [yes](#schedulerlist)         |
+| `scheduler:tick`                              | Run all due scheduled jobs                                                                        | core               | [yes](#schedulertick)         |
+| `secret:get`                                  | Retrieve a decrypted secret from the vault                                                        | core               | -                             |
+| `secret:list`                                 | List all secret keys in the vault                                                                 | core               | -                             |
+| `secret:set`                                  | Store a secret in the encrypted vault                                                             | core               | -                             |
+| `security:check`                              | Report the application security posture (OK / DEGRADED / FAIL)                                    | core               | -                             |
+| `self-update`                                 | Check for and apply Pulsar framework updates                                                      | core               | -                             |
+| `serve`                                       | Start the PHP built-in development server                                                         | core               | -                             |
+| `shell`                                       | Start an interactive REPL with framework context                                                  | core               | [yes](#shell)                 |
+| `show:container`                              | Display container bindings                                                                        | core               | [yes](#showcontainer)         |
+| `show:routes`                                 | Display all registered routes                                                                     | core               | [yes](#showroutes)            |
+| `status`                                      | Show framework status overview                                                                    | core               | -                             |
+| `studio:console:bench`                        | Run performance benchmarks and emit Studio events                                                 | ext: studio        | -                             |
+| `studio:console:evidence:export`              | Export Studio events as evidence archive                                                          | ext: studio        | -                             |
+| `studio:console:evidence:purge`               | Purge all events from evidence store                                                              | ext: studio        | -                             |
+| `studio:console:evidence:redaction:test`      | Test redaction policies against sample data                                                       | ext: studio        | -                             |
+| `studio:console:evidence:retention:apply`     | Apply retention policy to evidence store                                                          | ext: studio        | -                             |
+| `studio:console:evidence:status`              | Display evidence store status                                                                     | ext: studio        | -                             |
+| `studio:console:evidence:verify`              | Verify a Studio evidence archive                                                                  | ext: studio        | -                             |
+| `studio:console:exceptions`                   | Display exception data from Studio                                                                | ext: studio        | -                             |
+| `studio:console:export`                       | Export Studio events as evidence archive                                                          | ext: studio        | -                             |
+| `studio:console:guardian:check`               | Run all guardian checks                                                                           | ext: studio        | -                             |
+| `studio:console:guardian:deploy:check`        | Run deploy readiness checks                                                                       | ext: studio        | -                             |
+| `studio:console:guardian:integrity:build`     | Build an integrity manifest                                                                       | ext: studio        | -                             |
+| `studio:console:guardian:integrity:verify`    | Verify integrity manifest against filesystem                                                      | ext: studio        | -                             |
+| `studio:console:guardian:status`              | Display combined guardian status overview                                                         | ext: studio        | -                             |
+| `studio:console:guardian:supervisor:run-once` | Run a single supervisor evaluation cycle                                                          | ext: studio        | -                             |
+| `studio:console:guardian:supervisor:status`   | Display supervisor configuration status                                                           | ext: studio        | -                             |
+| `studio:console:jobs`                         | Display job processing data from Studio                                                           | ext: studio        | -                             |
+| `studio:console:metrics`                      | Display aggregated Studio metrics                                                                 | ext: studio        | -                             |
+| `studio:console:query`                        | Query Studio events                                                                               | ext: studio        | -                             |
+| `studio:console:routes`                       | Display route performance data from Studio                                                        | ext: studio        | -                             |
+| `studio:console:status`                       | Display Console event store status                                                                | ext: studio        | -                             |
+| `studio:console:tail`                         | Stream Studio events in real-time                                                                 | ext: studio        | -                             |
+| `studio:console:timeline`                     | Display a timeline of recent Studio events                                                        | ext: studio        | -                             |
+| `studio:console:verify`                       | Verify a Studio evidence archive                                                                  | ext: studio        | -                             |
+| `studio:disable`                              | Disable Studio in configuration                                                                   | ext: studio        | -                             |
+| `studio:doctor`                               | Run Studio diagnostic checks                                                                      | ext: studio        | -                             |
+| `studio:enable`                               | Enable Studio in configuration                                                                    | ext: studio        | -                             |
+| `studio:open`                                 | Open Studio in the default browser                                                                | ext: studio        | -                             |
+| `studio:serve`                                | Start the Studio development server                                                               | ext: studio        | -                             |
+| `studio:status`                               | Display Studio status and configuration                                                           | ext: studio        | -                             |
+| `supervisor:check`                            | Run supervisor preflight checks                                                                   | core               | [yes](#supervisorcheck)       |
+| `supervisor:status`                           | Show supervisor configuration and policy info                                                     | core               | [yes](#supervisorstatus)      |
+| `supply-chain:audit-pipeline`                 | Audit CI/CD pipeline configurations for security compliance                                       | core               | -                             |
+| `supply-chain:licenses`                       | Check dependency licenses against the allowlist                                                   | core               | -                             |
+| `supply-chain:sign`                           | Sign release artifacts with Ed25519                                                               | core               | -                             |
+| `supply-chain:verify`                         | Verify release artifact Ed25519 signatures                                                        | core               | -                             |
+| `supply-chain:vex`                            | Generate a VEX document for known vulnerabilities                                                 | core               | -                             |
+| `test:changed`                                | Run tests for files changed since last commit                                                     | core               | -                             |
+| `view:compile`                                | Pre-compile all templates to the cache directory                                                  | core               | -                             |
+| `workflow:check-timeouts`                     | Detect workflow instances whose state timeout expired and dispatch WorkflowTimedOutEvent for each | core               | -                             |
+
 ## Built-in commands
 
 ### General
@@ -43,26 +245,46 @@ php bin/pulsar list --format=json
 | ---------- | ----- | ------- | ------------------------------- |
 | `--format` | `-f`  | `text`  | Output format: `text` or `json` |
 
-The `text` format groups commands by namespace (e.g., `show`, `scaffold`, `migrate`, `scheduler`, `health`). The `json` format outputs a JSON array of command objects with `name`, `namespace`, and `description` fields.
+The `text` format groups commands by namespace - the segment before the first `:` in the command name (e.g. `make`, `migrate`, `queue`, `debug`, `health`). Commands with no colon (`list`, `serve`, `doctor`) are grouped under the empty namespace and printed ungrouped. The `json` format outputs a JSON array of command objects with `name`, `namespace`, and `description` fields.
 
 #### `init`
 
-Initialize a new Pulsar project with a standard directory structure.
+Initialize a new Pulsar project in place. Equivalent to
+[`new`](#new) with `--preset=minimal --env=local`, which is what it delegates to.
 
 ```bash
 php bin/pulsar init my-project
-php bin/pulsar init . --force
+php bin/pulsar init .
 ```
 
 | Argument    | Required | Description                                      |
 | ----------- | -------- | ------------------------------------------------ |
 | `directory` | No       | Target directory (defaults to current directory) |
 
-| Option    | Short | Description              |
-| --------- | ----- | ------------------------ |
-| `--force` | `-f`  | Overwrite existing files |
+`init` declares **no options**. There is no `--force`, and there is no way to
+overwrite: before it writes anything, the generator lists every file it is about
+to create, and if any of them already exists it aborts with the colliding names
+and touches nothing. Point it at a directory that does not have them, or remove
+them first. That refusal is the design - a scaffolder that can overwrite
+`config/security.php` is a scaffolder that can silently disarm a project.
 
-Creates the following structure: `app/` (Controllers, Middleware, Services), `config/`, `public/` (with `index.php`), `extensions/`, `tests/` (Unit, Integration), and `.gitignore`.
+Creates:
+
+```
+config/                  app.php, security.php, extensions.php, database.php,
+                         observability.php, i18n.php, view.php, cache.php, mail.php
+public/index.php
+src/
+var/cache/
+var/logs/
+.env                     generated with a fresh master key
+.gitignore
+composer.json
+```
+
+`config/security.php` ships in every preset, not only this one: it is a required
+config, and a project without it cannot complete `ConfigManager::load()` - so it
+cannot boot, and cannot run a single command.
 
 #### `diagnostics`
 
@@ -97,9 +319,11 @@ php bin/pulsar show:routes --path=/api
 | `--method` | `-m`  | Filter by HTTP method  |
 | `--path`   | `-p`  | Filter by path pattern |
 
-Output columns: Method, Path, Name, Handler, Middleware.
+Output columns: Method, Path, Name, Access, Handler, Middleware.
 
 The handler column displays the class and method (e.g., `UserController::index`) or `Closure` for anonymous handlers. Middleware names are shortened to their class basename.
+
+`Access` is the route's declared `Pulsar\Routing\RouteAccess` — `public`, `operator`, `signed` or `authenticated` — and `-` for a route that declares nothing. A `-` is not "unrestricted": `AuthorizationMiddleware` default-denies an empty permission list, so an undeclared route is reachable by anyone where that middleware is absent from the pipeline and by nobody where it is present. See [Declaring who may reach a route](authorization.md#declaring-who-may-reach-a-route).
 
 #### `show:container`
 
@@ -118,39 +342,9 @@ Output is split into two sections: a table of all bindings (with ID and type: Bi
 
 ### Scaffolding
 
-#### `scaffold:module`
-
-Generate a new HMVC module structure.
-
-```bash
-php bin/pulsar scaffold:module User
-php bin/pulsar scaffold:module blog-posts --path=app/Modules
-```
-
-| Argument | Required | Description                        |
-| -------- | -------- | ---------------------------------- |
-| `name`   | Yes      | Module name (e.g., `User`, `Blog`) |
-
-| Option   | Short | Default       | Description                   |
-| -------- | ----- | ------------- | ----------------------------- |
-| `--path` | `-p`  | `app/Modules` | Base path for module creation |
-
-Creates the following structure for a module named `User`:
-
-```
-app/Modules/User/
-  Controllers/
-    UserController.php
-  Services/
-    UserService.php
-  Models/
-  Middleware/
-  Views/
-  ModuleServiceProvider.php
-  routes.php
-```
-
-The module name is automatically converted to PascalCase. Generated files include a service provider implementing `ServiceProviderInterface`, a controller with `index` and `show` methods, a service class, and a routes file.
+Module scaffolding is [`make:module`](#makemodule). There is no `scaffold:module`
+— this page documented one for several releases, and no release ever registered
+it.
 
 #### `make:extension`
 
@@ -211,6 +405,8 @@ php bin/pulsar migrate:rollback --all
 | ------- | ----- | ------------------------------- |
 | `--all` | --    | Rollback all migrations (reset) |
 
+A failing `down()` stops the run and prints two lines — the version that failed, then `Caused by:` with the reason. The framework's own storage migrations use that reason to refuse dropping a table that still holds rows; see [When a rollback refuses](migrations.md#when-a-rollback-refuses). Returns exit code 0 on success, 1 on failure.
+
 #### `migrate:create`
 
 Create a new migration file.
@@ -237,6 +433,10 @@ Displays a table with columns: Version, Name, Status (Applied/Pending), Batch nu
 
 ### Health and resilience
 
+> Registered only when the resilience subsystem is on: set `'enabled' => true`
+> in `config/resilience.php`. Until then `health:check` and `health:repair` are
+> absent from `pulsar list`.
+
 #### `health:check`
 
 Run all registered health checks.
@@ -256,6 +456,55 @@ php bin/pulsar health:repair
 ```
 
 First diagnoses all registered repair jobs, then runs repairs for any that need attention. Each repair reports status (FIXED or FAILED) and lists the actions performed. Exit code 0 if all repairs succeed, 1 if any fail.
+
+### Compliance
+
+#### `compliance:report`
+
+Assess the running deployment against the controls its enabled frameworks declare, and print the result.
+
+```bash
+php bin/pulsar compliance:report
+php bin/pulsar compliance:report --framework=pci_dss
+php bin/pulsar compliance:report --format=json > compliance.json
+php bin/pulsar compliance:report --format=markdown > compliance.md
+php bin/pulsar compliance:report --strict
+```
+
+Every outcome in the report is computed when the command runs, by a probe reading facts gathered out of the booted application. No control's status is written down anywhere, so none can be edited into passing: the only way to turn a gap green is to change the deployment, or to stop claiming the framework by removing it from `enabled_frameworks` in `config/compliance.php`.
+
+**This command writes.** A control is only observed by being exercised, so gathering evidence opens a database
+session, executes every registered health check, recomputes one HMAC per stored evidence record, and performs four
+writes against the running deployment. Two are undone — a synthetic value tokenized through the live vault and then
+removed, and an identifier pseudonymized and then erased through the Article 17 forget service. Two are not: one
+Article 50 transparency declaration under a reserved surface id (bounded to a single entry however often you run the
+report), and one `Low`-severity row in the incident register per run, carrying the source
+`compliance.incident_register_probe`. See [Compliance](compliance.md) for why the incident row is deliberate and why
+it cannot be taken back. `composer compliance:check` runs the same gathering and has the same effects.
+
+Each finding names the probe that concluded it and every observation it rests on, with that observation's grade — `measured` (something ran), `resolved` (this concrete class answered), `declared` (a config value was read) or `asserted` (the operator's word) — and the class that produced it. Only `measured` and `resolved` evidence can carry a control to satisfied, so a control can never be satisfied by configuration alone.
+
+Options:
+
+| Option                          | Effect                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--framework=<id>`              | Report on one enabled framework. A framework that is not enabled is refused, not assessed.                                                                                |
+| `--format=text\|json\|markdown` | `text` (default) for a terminal, `markdown` for the document an assessor is handed, `json` for a pipeline. Under `--format=json` nothing but the document reaches stdout. |
+| `--strict`                      | Also fail on partially satisfied controls.                                                                                                                                |
+
+Exit codes:
+
+| Code | Meaning                                                                                                                                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Every control an enabled framework claims was observed.                                                                                                                                                                         |
+| 1    | At least one claimed control was not observed, or an enabled framework has no mapping at all.                                                                                                                                   |
+| 2    | The report could not be produced: unknown framework or format, evidence gathering failed, a probe returned a verdict its evidence cannot support, or no framework is enabled. "Nothing to assess" is deliberately never a pass. |
+
+Controls Pulsar cannot observe — an approved policy, a signed breach register, a CI run for the deployed commit — are printed last as an operator checklist with the artefact each assessor should be shown. They are excluded from the coverage arithmetic and never affect the exit code.
+
+The report is a statement about the boot that produced it. Its header records the SAPI for that reason: run it in the deployed image, as the deploying user, or the artefact describes a process that is not the one serving traffic.
+
+`composer compliance:check` runs the same report and fails on any control claimed and not observed.
 
 ### Project creation
 
@@ -359,7 +608,33 @@ php bin/pulsar cache:warmup --strict --encrypt
 | `--strict`  | `-s`  | Fail if any closure-based route is detected      |
 | `--encrypt` | `-e`  | Encrypt cached data (requires PULSAR_MASTER_KEY) |
 
+### Data protection
+
+#### `data:purge`
+
+Apply the retention policies declared in `config/data_protection.php`, deleting the records that have outlived them.
+
+```bash
+php bin/pulsar data:purge
+php bin/pulsar data:purge --dry-run
+```
+
+| Option      | Short | Description                                                                |
+| ----------- | ----- | -------------------------------------------------------------------------- |
+| `--dry-run` | --    | Count expired records without deleting, whatever `purge.dry_run` is set to |
+
+Retention is applied by exactly two things: this command and the `data-protection:purge` scheduled job (`purge.schedule`, default `0 3 * * *`). A category is only examined when it has BOTH a policy in `config/data_protection.php` and a purge implementation in the container — `audit_logs` and `user_sessions` by default. The command says so rather than reporting a silent success when neither is true.
+
+Without the `--dry-run` flag the command obeys `purge.dry_run`, so a console run and a scheduled run are the same operation rather than two policies.
+
 ### Queue
+
+> Registered only when the queue is on: set `'enabled' => true` in
+> `config/queue.php`. `queue:work` additionally needs a bound worker factory
+> rather than a bare driver — a worker built from the driver alone has no
+> dead-letter queue, no retry policy, and no pipeline to decrypt an encrypted
+> payload before a handler sees it — so with a driver configured but no factory,
+> `queue:flush` appears and `queue:work` does not.
 
 #### `queue:work`
 
@@ -445,6 +720,10 @@ Removes all pending jobs from the specified queue.
 
 ### Supervisor
 
+> Registered only when the supervisor is on: set `'enabled' => true` in
+> `config/supervisor.php`. `supervisor:status` appears with the config alone;
+> `supervisor:check` additionally needs the preflight runner bound.
+
 #### `supervisor:check`
 
 Run supervisor preflight checks.
@@ -471,6 +750,10 @@ php bin/pulsar supervisor:status --json
 Displays supervisor configuration including recycle thresholds, stuck job timeout, and registered check counts.
 
 ### File integrity
+
+> Registered only when integrity checking is on: set `'enabled' => true` in
+> `config/integrity.php`. Signing is separate again — `integrity:build` writes an
+> unsigned manifest unless a signer is bound.
 
 #### `integrity:build`
 
@@ -529,15 +812,20 @@ php bin/pulsar deploy:check
 php bin/pulsar deploy:check --env=staging --json
 ```
 
-| Option     | Short | Default      | Description                        |
-| ---------- | ----- | ------------ | ---------------------------------- |
-| `--env`    | `-e`  | `production` | Target environment to check        |
-| `--json`   | `-j`  | --           | Output as JSON                     |
-| `--strict` | `-s`  | --           | Fail on warnings (not just errors) |
+| Option     | Short | Default      | Description                                                  |
+| ---------- | ----- | ------------ | ------------------------------------------------------------ |
+| `--env`    | `-e`  | `production` | Target environment to check                                  |
+| `--json`   | `-j`  | --           | Output as JSON                                               |
+| `--strict` | `-s`  | --           | Also refuse the deploy on warnings (errors always refuse it) |
 
-Runs all registered deploy checks and produces a report with pass/warning/error counts. See [`docs/deployment.md`](deployment.md) for details.
+Runs all registered deploy checks and produces a report with pass/warning/error counts. Exits `1` when any check is error-severity, so the command can be used directly as a deploy gate. See [`docs/deployment.md`](deployment.md) for details.
 
 ### Scheduler
+
+> Registered only when the scheduler is on: set `'enabled' => true` in
+> `config/scheduler.php`. `scheduler:list` needs the job registry bound and
+> `scheduler:tick` needs the scheduler itself, so a half-wired scheduler shows
+> one and not the other.
 
 #### `scheduler:list`
 
@@ -571,7 +859,7 @@ Start the persistent HTTP runtime server.
 
 ```bash
 php bin/pulsar runtime:serve
-php bin/pulsar runtime:serve --port 3000 --concurrency 64
+php bin/pulsar runtime:serve --port 3000
 php bin/pulsar runtime:serve --host 0.0.0.0 --port 8080 --public
 ```
 
@@ -582,7 +870,7 @@ php bin/pulsar runtime:serve --host 0.0.0.0 --port 8080 --public
 | `--max-requests` | --    | `10000`     | Maximum requests before worker recycles    |
 | `--memory`       | --    | `256`       | Memory threshold in MB before recycle      |
 | `--timeout`      | --    | `7200`      | Time limit in seconds before recycle       |
-| `--concurrency`  | --    | `0`         | Fiber concurrency slots (0 = synchronous)  |
+| `--concurrency`  | --    | `0`         | `0` sync or `1`; above 1 is refused        |
 | `--public`       | --    | --          | Required to bind to non-loopback addresses |
 
 Requires `ext-sockets`. See [`docs/runtime.md`](runtime.md) for full details on configuration, safety rules, and deployment.

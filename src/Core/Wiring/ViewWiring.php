@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use Pulsar\Api\Internal;
+use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Runtime\RequestResetRegistry;
+use Pulsar\Security\Escaper\ContextEscaper;
 use Pulsar\View\Command\PlaygroundServeCommand;
 use Pulsar\View\Command\ViewCompileCommand;
 use Pulsar\View\Directive\DirectiveRegistry;
@@ -18,6 +22,7 @@ use Pulsar\View\Engine\TemplateCompiler;
 use Pulsar\View\Engine\TemplateEngine;
 use Pulsar\View\Engine\TemplateEngineInterface;
 use Pulsar\View\Engine\TemplateInheritance;
+use Pulsar\View\Engine\ViewComposers;
 use Pulsar\View\Escaping\AttributeEscaper;
 use Pulsar\View\Escaping\CssEscaper;
 use Pulsar\View\Escaping\EscaperInterface;
@@ -55,8 +60,11 @@ final readonly class ViewWiring implements ServiceWiringInterface
         $config = $repository->get(ViewConfig::class);
         $container->instance(ViewConfig::class, $config);
 
-        // Template cache
-        $cache = new TemplateCache($config->cachePath);
+        // Template cache. The compiled templates are executable PHP written at
+        // runtime, so the path is anchored to the project root and refused if it
+        // resolves inside the document root — the default `var/cache/views` is
+        // relative and would otherwise land compiled code in public/ under FPM.
+        $cache = new TemplateCache(WritablePathGuard::resolveState($config->cachePath, 'view.cache_path'));
         $container->instance(TemplateCache::class, $cache);
 
         // Template compiler
@@ -73,18 +81,46 @@ final readonly class ViewWiring implements ServiceWiringInterface
         $inheritance = new TemplateInheritance();
         $container->instance(TemplateInheritance::class, $inheritance);
 
+        // Shared view data + view composers (request-scoped; applied to every
+        // render, including framework-internal renders such as error pages).
+        $composers = new ViewComposers();
+        $container->instance(ViewComposers::class, $composers);
+
+        // Expose the opt-in "Made with Pulsar" front-end signature to every
+        // render as $pulsarSignature (empty string when disabled). App layouts
+        // and the framework error layout echo it inside <head>. Registered as an
+        // app-lifetime composer('*') per the ViewComposers contract, since the
+        // value is a constant for the process. This is a front-end <meta> signal,
+        // never an HTTP header — see {@see \Pulsar\Config\AppSignature}.
+        $signatureHtml = $repository->has(AppConfig::class)
+            ? $repository->get(AppConfig::class)->signature->toHtml()
+            : '';
+        $composers->composer('*', static fn(): array => ['pulsarSignature' => $signatureHtml]);
+
+        // Reset the per-request shared/composer state between requests. The
+        // registry is built by RuntimeWiring, which runs before ViewWiring.
+        if ($container->has(RequestResetRegistry::class)) {
+            /** @var RequestResetRegistry $resetRegistry */
+            $resetRegistry = $container->get(RequestResetRegistry::class);
+            $resetRegistry->registerResettable(ViewComposers::class);
+        }
+
         // Template engine (public API)
-        $engine = new TemplateEngine($compiler);
+        $engine = new TemplateEngine($compiler, $composers);
         $container->instance(TemplateEngineInterface::class, $engine);
         $container->instance(TemplateEngine::class, $engine);
 
-        // Escapers
+        // Configure Response::view() static engine so controllers can use it directly
+        \Pulsar\Http\Message\Response::setTemplateEngine($engine);
+
+        // Escapers: register both the View-layer escapers and the security ContextEscaper
         $container->instance(EscaperInterface::class, new HtmlEscaper());
         $container->instance(HtmlEscaper::class, new HtmlEscaper());
         $container->instance(UrlEscaper::class, new UrlEscaper());
         $container->instance(AttributeEscaper::class, new AttributeEscaper());
         $container->instance(JsEscaper::class, new JsEscaper());
         $container->instance(CssEscaper::class, new CssEscaper());
+        $container->instance(ContextEscaper::class, new ContextEscaper());
 
         // Sandbox engine for untrusted templates
         $sandboxConfig = SandboxConfig::fromViewConfig($config);

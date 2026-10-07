@@ -16,6 +16,8 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_bool;
+use function is_int;
 use function is_string;
 
 /**
@@ -24,16 +26,16 @@ use function is_string;
  * All actions require CMS commerce permissions checked via GateInterface.
  * State-changing operations require CSRF token validation.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ProductController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ProductController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ProductRepositoryInterface $products,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -41,18 +43,26 @@ final readonly class ProductController
         $this->authorize($identity, 'cms.commerce.products.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
 
-        if (is_string($params['status'] ?? null) && $params['status'] !== '') {
-            $filters['status'] = $params['status'];
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        if (is_string($rawStatus) && $rawStatus !== '') {
+            $filters['status'] = $rawStatus;
         }
 
-        if (is_string($params['type'] ?? null) && $params['type'] !== '') {
-            $filters['digital'] = $params['type'] === 'digital';
+        /** @var mixed $rawType */
+        $rawType = $params['type'] ?? null;
+        if (is_string($rawType) && $rawType !== '') {
+            $filters['digital'] = $rawType === 'digital';
         }
 
         /** @var string|null $tenantId */
@@ -105,9 +115,15 @@ final readonly class ProductController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $sku = (string) ($body['sku'] ?? '');
-        $priceAmount = (int) ($body['price_amount'] ?? 0);
-        $priceCurrency = (string) ($body['price_currency'] ?? '');
+        /** @var mixed $rawSku */
+        $rawSku = $body['sku'] ?? null;
+        $sku = is_string($rawSku) ? $rawSku : '';
+        /** @var mixed $rawPriceAmount */
+        $rawPriceAmount = $body['price_amount'] ?? null;
+        $priceAmount = is_int($rawPriceAmount) ? $rawPriceAmount : 0;
+        /** @var mixed $rawPriceCurrency */
+        $rawPriceCurrency = $body['price_currency'] ?? null;
+        $priceCurrency = is_string($rawPriceCurrency) ? $rawPriceCurrency : '';
 
         if ($sku === '' || $priceCurrency === '') {
             return Response::json(['error' => 'SKU and price currency are required'], 400);
@@ -120,16 +136,24 @@ final readonly class ProductController
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
+        /** @var mixed $rawTaxCategory */
+        $rawTaxCategory = $body['tax_category'] ?? null;
+        /** @var mixed $rawStockQuantity */
+        $rawStockQuantity = $body['stock_quantity'] ?? null;
+        /** @var mixed $rawDigital */
+        $rawDigital = $body['digital'] ?? null;
+        /** @var mixed $rawContentId */
+        $rawContentId = $body['content_id'] ?? null;
         $product = Product::create(
             id: UuidGenerator::v7(),
             sku: $sku,
             priceAmount: $priceAmount,
             priceCurrency: $priceCurrency,
             tenantId: $tenantId,
-            taxCategory: is_string($body['tax_category'] ?? null) ? $body['tax_category'] : null,
-            stockQuantity: max(0, (int) ($body['stock_quantity'] ?? 0)),
-            digital: (bool) ($body['digital'] ?? false),
-            contentId: is_string($body['content_id'] ?? null) ? $body['content_id'] : null,
+            taxCategory: is_string($rawTaxCategory) ? $rawTaxCategory : null,
+            stockQuantity: max(0, is_int($rawStockQuantity) ? $rawStockQuantity : 0),
+            digital: is_bool($rawDigital) ? $rawDigital : false,
+            contentId: is_string($rawContentId) ? $rawContentId : null,
         );
 
         $this->products->save($product);
@@ -186,7 +210,9 @@ final readonly class ProductController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $status = ProductStatus::tryFrom((string) ($body['status'] ?? $product->status->value));
+        /** @var mixed $rawStatus */
+        $rawStatus = $body['status'] ?? null;
+        $status = ProductStatus::tryFrom(is_string($rawStatus) ? $rawStatus : $product->status->value);
 
         if ($status === null) {
             return Response::json(['error' => 'Invalid product status'], 400);
@@ -194,23 +220,36 @@ final readonly class ProductController
 
         if ($status !== $product->status && !$product->status->canTransitionTo($status)) {
             return Response::json([
-                'error' => "Cannot transition from '{$product->status->value}' to '{$status->value}'",
+                'error' => "Cannot transition from '{$product->status->value}' to '$status->value'",
             ], 422);
         }
+
+        /** @var mixed $rawSku */
+        $rawSku = $body['sku'] ?? null;
+        /** @var mixed $rawPriceAmount */
+        $rawPriceAmount = $body['price_amount'] ?? null;
+        /** @var mixed $rawPriceCurrency */
+        $rawPriceCurrency = $body['price_currency'] ?? null;
+        /** @var mixed $rawTaxCategory */
+        $rawTaxCategory = $body['tax_category'] ?? null;
+        /** @var mixed $rawStockQuantity */
+        $rawStockQuantity = $body['stock_quantity'] ?? null;
+        /** @var mixed $rawContentId */
+        $rawContentId = $body['content_id'] ?? null;
 
         $updated = new Product(
             id: $product->id,
             tenantId: $product->tenantId,
-            sku: is_string($body['sku'] ?? null) && $body['sku'] !== '' ? $body['sku'] : $product->sku,
+            sku: is_string($rawSku) && $rawSku !== '' ? $rawSku : $product->sku,
             status: $status,
-            priceAmount: isset($body['price_amount']) ? max(0, (int) $body['price_amount']) : $product->priceAmount,
-            priceCurrency: is_string($body['price_currency'] ?? null) && $body['price_currency'] !== ''
-                ? $body['price_currency']
+            priceAmount: $rawPriceAmount !== null ? max(0, is_int($rawPriceAmount) ? $rawPriceAmount : 0) : $product->priceAmount,
+            priceCurrency: is_string($rawPriceCurrency) && $rawPriceCurrency !== ''
+                ? $rawPriceCurrency
                 : $product->priceCurrency,
-            taxCategory: is_string($body['tax_category'] ?? null) ? $body['tax_category'] : $product->taxCategory,
-            stockQuantity: isset($body['stock_quantity']) ? max(0, (int) $body['stock_quantity']) : $product->stockQuantity,
+            taxCategory: is_string($rawTaxCategory) ? $rawTaxCategory : $product->taxCategory,
+            stockQuantity: $rawStockQuantity !== null ? max(0, is_int($rawStockQuantity) ? $rawStockQuantity : 0) : $product->stockQuantity,
             digital: $product->digital,
-            contentId: is_string($body['content_id'] ?? null) ? $body['content_id'] : $product->contentId,
+            contentId: is_string($rawContentId) ? $rawContentId : $product->contentId,
             createdAt: $product->createdAt,
             updatedAt: new DateTimeImmutable(),
         );

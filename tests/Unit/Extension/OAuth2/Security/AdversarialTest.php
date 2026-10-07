@@ -9,19 +9,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
-use Pulsar\Extension\OAuth2\Client\OAuthClient;
-use Pulsar\Extension\OAuth2\Contract\ScopeRepositoryInterface;
-use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
-use Pulsar\Extension\OAuth2\Grant\AuthorizationCodeGrant;
-use Pulsar\Extension\OAuth2\Grant\ClientCredentialsGrant;
-use Pulsar\Extension\OAuth2\Grant\RefreshTokenGrant;
-use Pulsar\Extension\OAuth2\Token\AccessToken;
-use Pulsar\Extension\OAuth2\Token\AuthorizationCode;
-use Pulsar\Extension\OAuth2\Token\InMemoryAccessTokenRepository;
-use Pulsar\Extension\OAuth2\Token\InMemoryAuthorizationCodeRepository;
-use Pulsar\Extension\OAuth2\Token\InMemoryRefreshTokenRepository;
-use Pulsar\Extension\OAuth2\Token\RefreshToken;
-use Pulsar\Extension\OAuth2\Token\Scope;
+use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\Auth\OAuth2\Contract\ScopeRepositoryInterface;
+use Pulsar\Extension\Auth\OAuth2\Exception\OAuth2Exception;
+use Pulsar\Extension\Auth\OAuth2\Grant\AuthorizationCodeGrant;
+use Pulsar\Extension\Auth\OAuth2\Grant\ClientCredentialsGrant;
+use Pulsar\Extension\Auth\OAuth2\Grant\RefreshTokenGrant;
+use Pulsar\Extension\Auth\OAuth2\Token\AccessToken;
+use Pulsar\Extension\Auth\OAuth2\Token\AuthorizationCode;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAccessTokenRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAuthorizationCodeRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryRefreshTokenRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\RefreshToken;
+use Pulsar\Extension\Auth\OAuth2\Token\Scope;
 
 /**
  * Adversarial security tests for the OAuth2 extension.
@@ -98,7 +98,7 @@ final class AdversarialTest extends TestCase
 
         // Second use: attacker replays the code
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('invalid, expired, or already used');
+        $this->expectExceptionMessageIsOrContains('invalid, expired, or already used');
         $this->authCodeGrant->handleTokenRequest($request, $client);
     }
 
@@ -133,7 +133,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('PKCE code_verifier is invalid');
+        $this->expectExceptionMessageIsOrContains('PKCE code_verifier is invalid');
         $this->authCodeGrant->handleTokenRequest($request, $client);
     }
 
@@ -161,7 +161,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('Missing required parameter: code_verifier');
+        $this->expectExceptionMessageIsOrContains('Missing required parameter: code_verifier');
         $this->authCodeGrant->handleTokenRequest($request, $client);
     }
 
@@ -171,7 +171,7 @@ final class AdversarialTest extends TestCase
         $client = $this->createConfidentialClient('client-a');
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('Only S256');
+        $this->expectExceptionMessageIsOrContains('Only S256');
         $this->authCodeGrant->createAuthorizationCode(
             client: $client,
             subjectId: 'user-42',
@@ -213,7 +213,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('not issued to this client');
+        $this->expectExceptionMessageIsOrContains('not issued to this client');
         $this->authCodeGrant->handleTokenRequest($request, $clientB);
     }
 
@@ -233,7 +233,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('not issued to this client');
+        $this->expectExceptionMessageIsOrContains('not issued to this client');
         $this->refreshTokenGrant->handleTokenRequest($request, $clientB);
     }
 
@@ -304,7 +304,7 @@ final class AdversarialTest extends TestCase
         $client = $this->createConfidentialClient('client-a');
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('Invalid redirect_uri');
+        $this->expectExceptionMessageIsOrContains('Invalid redirect_uri');
         $this->authCodeGrant->createAuthorizationCode(
             client: $client,
             subjectId: 'user-42',
@@ -340,7 +340,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('redirect_uri does not match');
+        $this->expectExceptionMessageIsOrContains('redirect_uri does not match');
         $this->authCodeGrant->handleTokenRequest($request, $client);
     }
 
@@ -376,7 +376,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('not included in the original grant');
+        $this->expectExceptionMessageIsOrContains('not included in the original grant');
         $this->refreshTokenGrant->handleTokenRequest($request, $client);
     }
 
@@ -506,7 +506,7 @@ final class AdversarialTest extends TestCase
         ]);
 
         $this->expectException(OAuth2Exception::class);
-        $this->expectExceptionMessage('Only confidential clients');
+        $this->expectExceptionMessageIsOrContains('Only confidential clients');
         $grant->handleTokenRequest($request, $publicClient);
     }
 

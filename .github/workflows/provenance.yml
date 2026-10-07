@@ -1,0 +1,66 @@
+name: SLSA Provenance
+
+on:
+  release:
+    types: [published]
+
+# Write scopes are granted per job. `attestations: write` used to be here and no
+# step consumed it.
+permissions:
+  contents: read
+
+jobs:
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+
+    # `gh release upload` writes to the release. Nothing else in this job does.
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The upload authenticates through GH_TOKEN, not git.
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          coverage: none
+
+      # Not cached, unlike the other workflows: a cache is writable from pull
+      # requests, and this vendor/ tree is what the signed SBOM describes.
+      - run: composer install --no-interaction --no-progress --ignore-platform-reqs
+
+      - name: Generate SBOM
+        run: php tools/sbom/generate-sbom.php --output=sbom.cdx.json
+
+      - name: Upload SBOM to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Via env, not interpolated: `${{ }}` expands before the shell parses the
+          # line, so a crafted tag name would run as code.
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" sbom.cdx.json --clobber
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: sbom.cdx.json
+
+  provenance:
+    name: SLSA Provenance (Level 3)
+    needs: [sbom]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    # Tag, not SHA: slsa-verifier reads this ref to prove the builder is
+    # unmodified, so a digest pin breaks the attestation. Upstream requires it.
+    # Exception declared in .github/zizmor.yml.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects-as-file: true
+      upload-assets: true

@@ -8,13 +8,24 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheAllowedClasses;
+use Pulsar\Cache\CachedRoute;
+use Pulsar\Cache\CacheException;
+use Pulsar\Cache\RouteHandler;
+use Pulsar\Cache\RouteHandlerType;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\ConfigRepository;
+use Pulsar\View\ViewConfig;
+use ReflectionClass;
+use ReflectionMethod;
 
 use function dirname;
 use function file_put_contents;
 use function json_encode;
 use function mkdir;
+use function serialize;
 use function sys_get_temp_dir;
 use function unlink;
+use function unserialize;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -48,7 +59,7 @@ final class CacheAllowedClassesTest extends TestCase
         $vendorPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'vendor';
         $srcPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'src';
 
-        $result = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        $result = CacheAllowedClasses::scan($vendorPath, [$srcPath]);
 
         // Result is a sorted list — verify every entry is from an eligible namespace
         foreach ($result as $class) {
@@ -69,7 +80,7 @@ final class CacheAllowedClassesTest extends TestCase
         $vendorPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'vendor';
         $srcPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'src';
 
-        $result = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        $result = CacheAllowedClasses::scan($vendorPath, [$srcPath]);
 
         $sorted = $result;
         sort($sorted);
@@ -151,4 +162,157 @@ final class CacheAllowedClassesTest extends TestCase
         // Should not contain forward-slash escaping (unescaped slashes flag)
         self::assertStringNotContainsString('\\/', $content);
     }
+
+    #[Test]
+    public function hasDangerousMethodsDetectsInheritedMagicMethod(): void
+    {
+        // A subclass that inherits __wakeup from its parent is just as
+        // exploitable as the parent, because unserialize() invokes the
+        // inherited method when reconstructing the subclass. The check must
+        // flag it even though the method is declared on the parent.
+        $result = $this->invokeHasDangerousMethods(InheritsWakeupFixture::class);
+
+        self::assertTrue($result);
+    }
+
+    #[Test]
+    public function hasDangerousMethodsDetectsDirectlyDeclaredMagicMethod(): void
+    {
+        $result = $this->invokeHasDangerousMethods(DeclaresWakeupFixture::class);
+
+        self::assertTrue($result);
+    }
+
+    #[Test]
+    public function hasDangerousMethodsAllowsClassWithNoMagicMethods(): void
+    {
+        $result = $this->invokeHasDangerousMethods(SafeFixture::class);
+
+        self::assertFalse($result);
+    }
+
+    /**
+     * @param class-string $className
+     */
+    private function invokeHasDangerousMethods(string $className): bool
+    {
+        /** @var ReflectionClass<object> $ref */
+        $ref = new ReflectionClass($className);
+
+        $method = new ReflectionMethod(CacheAllowedClasses::class, 'hasDangerousMethods');
+
+        /** @var bool $result */
+        $result = $method->invoke(null, $ref);
+
+        return $result;
+    }
+
+    #[Test]
+    public function forCacheCoversTheEntireSerializedConfigGraph(): void
+    {
+        // Regression guard for the namespace-scan gap: a serialized ConfigRepository
+        // reaches config value objects in feature namespaces (Api, Database, Mail,
+        // Tenancy, View, ...) that scan() does not cover. forCache() must derive
+        // those from the data so the file config cache round-trips losslessly
+        // instead of raising a __PHP_Incomplete_Class TypeError at boot.
+        $repoRoot = dirname(__DIR__, 3);
+
+        $manager = new ConfigManager($repoRoot . DIRECTORY_SEPARATOR . 'config');
+        $manager->load();
+        $serialized = serialize($manager->repository());
+
+        $allowed = CacheAllowedClasses::forCache(
+            $repoRoot . DIRECTORY_SEPARATOR . 'vendor',
+            [$repoRoot . DIRECTORY_SEPARATOR . 'src'],
+            $serialized,
+        );
+
+        // A feature-namespace config DTO the namespace scan alone would miss.
+        self::assertContains(ViewConfig::class, $allowed);
+
+        /** @var mixed $restored */
+        $restored = unserialize($serialized, ['allowed_classes' => $allowed]);
+        self::assertInstanceOf(ConfigRepository::class, $restored);
+        self::assertSame(
+            $serialized,
+            serialize($restored),
+            'The cache allowlist must round-trip the real config graph with no __PHP_Incomplete_Class loss.',
+        );
+    }
+
+    #[Test]
+    public function scanCoversTheRouteCacheDtosRegardlessOfClassmapOptimization(): void
+    {
+        // Regression guard for the warm-cache boot crash: the route cache
+        // serializes CachedRoute / RouteHandler / RouteHandlerType, but forCache()
+        // is fed only the config blob, so these must come from scan(). Relying on
+        // Composer's classmap — which is empty of PSR-4 classes when the autoloader
+        // is not optimized (dev, and a plain CI `composer install`) — dropped them
+        // from the allowlist, so every warm-cache boot reconstructed routes as
+        // __PHP_Incomplete_Class and aborted. scan() must find them via the
+        // authoritative src/ directory scan, independent of classmap optimization.
+        $repoRoot = dirname(__DIR__, 3);
+        $allowed = CacheAllowedClasses::scan(
+            $repoRoot . DIRECTORY_SEPARATOR . 'vendor',
+            [$repoRoot . DIRECTORY_SEPARATOR . 'src'],
+        );
+
+        self::assertContains(CachedRoute::class, $allowed);
+        self::assertContains(RouteHandler::class, $allowed);
+        self::assertContains(RouteHandlerType::class, $allowed);
+
+        // The DTOs must reconstruct as real objects under the allowlist, never as
+        // __PHP_Incomplete_Class.
+        $serialized = serialize(new RouteHandler(RouteHandlerType::Invokable, 'App\\Controller'));
+        /** @var mixed $restored */
+        $restored = unserialize($serialized, ['allowed_classes' => $allowed]);
+        self::assertInstanceOf(RouteHandler::class, $restored);
+    }
+
+    #[Test]
+    public function extractFromSerializedReturnsTheSafeClassesInTheBlob(): void
+    {
+        $classes = CacheAllowedClasses::extractFromSerialized(serialize(new SafeFixture()));
+
+        self::assertContains(SafeFixture::class, $classes);
+    }
+
+    #[Test]
+    public function extractFromSerializedRejectsAGadgetClass(): void
+    {
+        // A serialized class carrying a dangerous magic method must never be
+        // silently allow-listed — extractFromSerialized fails closed.
+        $this->expectException(CacheException::class);
+
+        (void) CacheAllowedClasses::extractFromSerialized(serialize(new DeclaresWakeupFixture()));
+    }
+}
+
+/**
+ * Fixture: parent declaring a dangerous magic method.
+ */
+final class DeclaresWakeupFixture
+{
+    public function __wakeup(): void {}
+}
+
+/**
+ * Fixture: parent declaring a dangerous magic method, intended for inheritance.
+ */
+class DangerousParentFixture
+{
+    public function __wakeup(): void {}
+}
+
+/**
+ * Fixture: subclass that inherits (does not declare) a dangerous magic method.
+ */
+final class InheritsWakeupFixture extends DangerousParentFixture {}
+
+/**
+ * Fixture: class with no dangerous magic methods.
+ */
+final class SafeFixture
+{
+    public function harmless(): void {}
 }

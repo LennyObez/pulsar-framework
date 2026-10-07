@@ -24,16 +24,16 @@ use function round;
  * Provides aggregated search analytics data for a configurable date range:
  * top queries, zero-result queries, click-through rates, and totals.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class SearchAnalyticsController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class SearchAnalyticsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private SearchServiceInterface $searchService,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Display search analytics for a date range.
@@ -49,8 +49,12 @@ final readonly class SearchAnalyticsController
 
         $params = $request->getQueryParams();
 
-        $fromStr = is_string($params['from'] ?? null) ? $params['from'] : null;
-        $toStr = is_string($params['to'] ?? null) ? $params['to'] : null;
+        /** @var mixed $rawFrom */
+        $rawFrom = $params['from'] ?? null;
+        $fromStr = is_string($rawFrom) ? $rawFrom : null;
+        /** @var mixed $rawTo */
+        $rawTo = $params['to'] ?? null;
+        $toStr = is_string($rawTo) ? $rawTo : null;
 
         $now = new DateTimeImmutable();
 
@@ -94,8 +98,8 @@ final readonly class SearchAnalyticsController
         $totalSearches = $analytics->totalSearches;
         $uniqueQueries = $analytics->uniqueQueries;
         $zeroResultRate = $totalSearches > 0
-            ? round(count($analytics->zeroResultQueries) / $totalSearches * 100, 1)
-            : 0;
+            ? round((float) count($analytics->zeroResultQueries) / (float) $totalSearches * 100.0, 1)
+            : 0.0;
 
         $data = [
             'filters' => [
@@ -106,7 +110,7 @@ final readonly class SearchAnalyticsController
                 'total_searches' => $totalSearches,
                 'unique_queries' => $uniqueQueries,
                 'zero_result_rate' => $zeroResultRate,
-                'avg_ctr' => $analytics->clickThroughRates['average'] ?? '0.0',
+                'avg_ctr' => $this->computeAverageCtr($analytics->clickThroughRates),
             ],
             'topQueries' => $analytics->topQueries,
             'zeroResultQueries' => $analytics->zeroResultQueries,
@@ -114,5 +118,23 @@ final readonly class SearchAnalyticsController
         ];
 
         return $this->respondWithView($request, 'admin.search-analytics.index', $data);
+    }
+
+    /**
+     * @param list<array{query_text: string, clicks: int, searches: int, ctr: float}> $clickThroughRates
+     */
+    private function computeAverageCtr(array $clickThroughRates): string
+    {
+        if ($clickThroughRates === []) {
+            return '0.0';
+        }
+
+        $totalCtr = 0.0;
+
+        foreach ($clickThroughRates as $entry) {
+            $totalCtr += $entry['ctr'];
+        }
+
+        return (string) round($totalCtr / (float) count($clickThroughRates), 2);
     }
 }

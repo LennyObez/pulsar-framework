@@ -1,0 +1,48 @@
+# actionlint: is the workflow correct (syntax, action inputs, shellcheck on
+# `run:` blocks — which is why there is no separate shellcheck job).
+# zizmor: is it exploitable (script injection, excessive permissions, unpinned
+# actions, cache poisoning).
+name: Workflow Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: workflow-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  workflow-lint:
+    name: Workflow Lint (actionlint, zizmor)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Otherwise the job token stays in .git/config. Nothing here pushes.
+          persist-credentials: false
+
+      # Tool versions pinned too: `latest` would change the finding set without a
+      # commit.
+      - name: actionlint
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+        with:
+          version: 1.7.12
+          fail-on-error: true
+          shellcheck: true
+
+      - name: zizmor
+        uses: zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5 # v0.6.1
+        with:
+          version: 1.28.0
+          # 'pedantic' once these are at zero; raising it now would leave a gate
+          # that cannot go green.
+          persona: regular
+          # No min-severity filter: it would silently drop findings.
+          online-audits: true
+          token: ${{ secrets.GITHUB_TOKEN }}

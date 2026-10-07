@@ -12,6 +12,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * Contract for authentication guards.
  *
  * A guard extracts credentials from a request and resolves them to an identity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GuardInterface

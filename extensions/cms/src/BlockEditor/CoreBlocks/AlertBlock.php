@@ -42,7 +42,9 @@ final readonly class AlertBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $message = htmlspecialchars((string) ($data['message'] ?? ''), ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawMessage */
+        $rawMessage = $data['message'] ?? null;
+        $message = htmlspecialchars(is_string($rawMessage) ? $rawMessage : '', ENT_QUOTES, 'UTF-8');
         $alertType = 'info';
 
         if (isset($data['alertType']) && is_string($data['alertType']) && in_array($data['alertType'], self::VALID_ALERT_TYPES, true)) {
@@ -55,7 +57,11 @@ final readonly class AlertBlock implements BlockTypeInterface
             $dismissAttr = ' data-dismissible="true"';
         }
 
-        return "<div class=\"alert alert--{$alertType}\" role=\"alert\"{$dismissAttr}>{$message}</div>";
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' ' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') : '';
+        $role = $alertType === 'info' ? 'status' : 'alert';
+
+        return "<div class=\"alert alert--$alertType$className\" role=\"$role\"$dismissAttr$anchor>$message</div>";
     }
 
     #[Override]

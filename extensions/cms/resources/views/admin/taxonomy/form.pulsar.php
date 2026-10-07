@@ -16,9 +16,6 @@
                   action="{{ isset($taxonomy) ? '/admin/cms/taxonomy/' . $taxonomy['slug'] : '/admin/cms/taxonomy' }}"
                   class="cms-taxonomy-form__form">
                 @csrf
-                @if (isset($taxonomy))
-                    @method('PUT')
-                @endif
 
                 {{-- Locale tabs --}}
                 @if (isset($locales) && count($locales) > 1)
@@ -148,7 +145,6 @@
                                         <button type="button" class="cms-btn cms-btn--sm cms-btn--outline" data-cms-edit-term="{{ $term['id'] }}">Edit</button>
                                         <form method="POST" action="/admin/cms/taxonomy/{{ $taxonomy['slug'] }}/terms/{{ $term['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this term?">
                                             @csrf
-                                            @method('DELETE')
                                             <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                         </form>
                                     </div>

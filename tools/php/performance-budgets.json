@@ -1,5 +1,5 @@
 {
-  "description": "Performance budgets for Pulsar Framework CI enforcement (Tier A — hard gate, every PR)",
+  "description": "REFERENCE TABLE, NOT ENFORCEMENT. No code in this repository reads this file. The budgets that fail a build are the #[Assert] attributes on the subjects in tests/Benchmark; PHPBench exits non-zero on a breach and the Tier A CI step propagates it. This file is the human-readable index of those budgets and is kept beside them so a reader can find the whole set in one place. See ADR-0072.",
   "version": "2.0.0",
   "budgets": {
     "container.instance_resolution": {
@@ -63,10 +63,16 @@
       "description": "Validation of 5 fields with simple rules"
     },
     "kernel.dispatch": {
-      "max_avg": "500 microseconds",
+      "max_avg": "400 microseconds",
       "tier": "A",
       "enforcement": "hard",
-      "description": "Full kernel request dispatch cycle"
+      "description": "Steady-state dispatch on an already-booted kernel (KernelBench::benchPreBootedKernelHandle)"
+    },
+    "kernel.boot_and_dispatch": {
+      "max_avg": "30 milliseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Cold boot plus one dispatch (KernelBench::benchKernelBootAndHandle)"
     },
     "authorization.gate_check": {
       "max_avg": "50 microseconds",

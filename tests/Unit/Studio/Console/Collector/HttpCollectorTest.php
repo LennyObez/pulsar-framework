@@ -407,7 +407,7 @@ final class HttpCollectorTest extends TestCase
         $request = $this->createRequest();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Test exception');
+        $this->expectExceptionMessageIsOrContains('Test exception');
 
         $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willThrowException(new RuntimeException('Test exception'));

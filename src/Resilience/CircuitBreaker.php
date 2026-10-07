@@ -6,6 +6,7 @@ namespace Pulsar\Resilience;
 
 use Closure;
 use NoDiscard;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Resilience\Exception\ResilienceException;
@@ -17,6 +18,7 @@ use Throwable;
  * Tracks failures and opens the circuit when the failure threshold is exceeded.
  * After a timeout period, allows a limited number of probe requests (half-open state).
  * Resets to closed after sufficient successful probes.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class CircuitBreaker
@@ -31,19 +33,21 @@ final class CircuitBreaker
         private readonly int $failureThreshold,
         private readonly int $successThreshold,
         private readonly int $openTimeoutSeconds,
+        private readonly ?LoggerInterface $logger = null,
     ) {}
 
     /**
      * Create a CircuitBreaker from a config DTO.
      */
     #[NoDiscard]
-    public static function fromConfig(string $name, CircuitBreakerConfig $config): self
+    public static function fromConfig(string $name, CircuitBreakerConfig $config, ?LoggerInterface $logger = null): self
     {
         return new self(
             name: $name,
             failureThreshold: $config->failureThreshold,
             successThreshold: $config->successThreshold,
             openTimeoutSeconds: $config->openTimeoutSeconds,
+            logger: $logger,
         );
     }
 
@@ -61,6 +65,45 @@ final class CircuitBreaker
     {
         if (!$this->isAvailable()) {
             throw ResilienceException::circuitOpen($this->name);
+        }
+
+        try {
+            $result = $operation();
+            $this->recordSuccess();
+
+            return $result;
+        } catch (Throwable $e) {
+            $this->recordFailure();
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Execute the given closure, falling back to a fallback closure when the circuit is open.
+     *
+     * Unlike {@see execute()}, this method never throws when the circuit is open.
+     * Instead, it invokes the fallback closure and returns its result.
+     *
+     * The fallback is invoked ONLY when the circuit is open (fast-fail). When the
+     * circuit is closed or half-open and the operation itself throws, the failure is
+     * recorded and the exception propagates to the caller — the fallback is NOT
+     * invoked in that case. Wrap the call in try/catch if you also need a fallback
+     * for operation-level exceptions.
+     *
+     * @template T
+     * @param Closure(): T $operation
+     * @param Closure(): T $fallback
+     * @return T
+     *
+     * @throws Throwable If the operation throws while the circuit is closed or
+     *                   half-open (the fallback is not invoked in this case), or
+     *                   if the fallback itself throws.
+     */
+    public function executeWithFallback(Closure $operation, Closure $fallback): mixed
+    {
+        if (!$this->isAvailable()) {
+            return $fallback();
         }
 
         try {
@@ -106,9 +149,7 @@ final class CircuitBreaker
             if ($this->successCount >= $this->successThreshold) {
                 $this->transitionTo(CircuitBreakerState::Closed);
             }
-        }
-
-        if ($this->state === CircuitBreakerState::Closed) {
+        } elseif ($this->state === CircuitBreakerState::Closed) {
             $this->failureCount = 0;
         }
     }
@@ -180,6 +221,13 @@ final class CircuitBreaker
             if ($elapsed >= $this->openTimeoutSeconds) {
                 $this->state = CircuitBreakerState::HalfOpen;
                 $this->successCount = 0;
+
+                $this->logger?->info('Circuit breaker entered half-open state', [
+                    'circuit' => $this->name,
+                    'from' => CircuitBreakerState::Open->value,
+                    'to' => CircuitBreakerState::HalfOpen->value,
+                    'open_duration_seconds' => $elapsed,
+                ]);
             }
         }
     }
@@ -189,12 +237,29 @@ final class CircuitBreaker
      */
     private function transitionTo(CircuitBreakerState $newState): void
     {
+        $previousState = $this->state;
         $this->state = $newState;
 
         if ($newState === CircuitBreakerState::Open) {
             $this->openedAt = microtime(true);
             $this->successCount = 0;
+
+            $this->logger?->warning('Circuit breaker opened', [
+                'circuit' => $this->name,
+                'from' => $previousState->value,
+                'to' => CircuitBreakerState::Open->value,
+                'failure_count' => $this->failureCount,
+                'failure_threshold' => $this->failureThreshold,
+            ]);
         } elseif ($newState === CircuitBreakerState::Closed) {
+            $this->logger?->info('Circuit breaker closed', [
+                'circuit' => $this->name,
+                'from' => $previousState->value,
+                'to' => CircuitBreakerState::Closed->value,
+                'success_count' => $this->successCount,
+                'success_threshold' => $this->successThreshold,
+            ]);
+
             $this->failureCount = 0;
             $this->successCount = 0;
             $this->openedAt = null;

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Product;
@@ -22,6 +23,7 @@ final class DbProductRepositoryTest extends TestCase
     public function findByIdReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbProductRepository($db);
@@ -48,6 +50,7 @@ final class DbProductRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbProductRepository($db);
@@ -84,6 +87,7 @@ final class DbProductRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbProductRepository($db);
@@ -97,6 +101,7 @@ final class DbProductRepositoryTest extends TestCase
     public function findByIdsReturnsEmptyForEmptyInput(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
 
         $repo = new DbProductRepository($db);
         $results = $repo->findByIds([]);
@@ -113,6 +118,7 @@ final class DbProductRepositoryTest extends TestCase
         ];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result($rows));
 
         $repo = new DbProductRepository($db);
@@ -128,6 +134,7 @@ final class DbProductRepositoryTest extends TestCase
     public function findByContentIdReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbProductRepository($db);
@@ -141,6 +148,7 @@ final class DbProductRepositoryTest extends TestCase
         $row = $this->createProductRow($this->defaultProductData('prod-content', 'SKU-C'));
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbProductRepository($db);
@@ -154,6 +162,7 @@ final class DbProductRepositoryTest extends TestCase
     public function findByContentIdAppliesTenantScope(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -170,6 +179,7 @@ final class DbProductRepositoryTest extends TestCase
     public function findBySkuReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbProductRepository($db);
@@ -183,6 +193,7 @@ final class DbProductRepositoryTest extends TestCase
         $row = $this->createProductRow($this->defaultProductData('prod-sku', 'UNIQUE-SKU'));
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbProductRepository($db);
@@ -196,6 +207,7 @@ final class DbProductRepositoryTest extends TestCase
     public function findBySkuUsesExplicitTenantOverride(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -216,6 +228,7 @@ final class DbProductRepositoryTest extends TestCase
         ];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result($rows));
 
         $repo = new DbProductRepository($db);
@@ -228,6 +241,7 @@ final class DbProductRepositoryTest extends TestCase
     public function listProductsAppliesStatusFilter(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -244,6 +258,7 @@ final class DbProductRepositoryTest extends TestCase
     public function listProductsAppliesDigitalFilter(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -260,6 +275,7 @@ final class DbProductRepositoryTest extends TestCase
     public function listProductsCalculatesPagination(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -292,10 +308,11 @@ final class DbProductRepositoryTest extends TestCase
         );
 
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
-                self::stringContains('INSERT INTO cms_products'),
+                self::stringContains('INSERT INTO `cms_products`'),
                 self::callback(static function (array $b): bool {
                     return $b['id'] === 'prod-save'
                         && $b['sku'] === 'SAVE-SKU'
@@ -304,6 +321,80 @@ final class DbProductRepositoryTest extends TestCase
                         && $b['price_currency'] === 'EUR'
                         && $b['digital'] === 0;
                 }),
+            );
+
+        $repo = new DbProductRepository($db);
+        $repo->save($product);
+    }
+
+    #[Test]
+    public function saveGeneratesPostgresqlSyntax(): void
+    {
+        $now = new DateTimeImmutable();
+        $product = new Product(
+            id: 'prod-pg',
+            tenantId: null,
+            sku: 'PG-001',
+            status: ProductStatus::Draft,
+            priceAmount: 1000,
+            priceCurrency: 'USD',
+            taxCategory: null,
+            stockQuantity: 10,
+            digital: false,
+            contentId: null,
+            createdAt: $now,
+            updatedAt: $now,
+        );
+
+        $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::PostgreSQL);
+        $db->expects(self::once())
+            ->method('execute')
+            ->with(
+                self::logicalAnd(
+                    self::stringContains('INSERT INTO "cms_products"'),
+                    self::stringContains('ON CONFLICT'),
+                    self::stringContains('DO UPDATE SET'),
+                    self::stringContains('EXCLUDED.'),
+                ),
+                self::callback(static fn(array $b): bool => $b['id'] === 'prod-pg'
+                    && $b['sku'] === 'PG-001'),
+            );
+
+        $repo = new DbProductRepository($db);
+        $repo->save($product);
+    }
+
+    #[Test]
+    public function saveGeneratesSqliteSyntax(): void
+    {
+        $now = new DateTimeImmutable();
+        $product = new Product(
+            id: 'prod-sl',
+            tenantId: null,
+            sku: 'SL-001',
+            status: ProductStatus::Draft,
+            priceAmount: 500,
+            priceCurrency: 'EUR',
+            taxCategory: null,
+            stockQuantity: 5,
+            digital: false,
+            contentId: null,
+            createdAt: $now,
+            updatedAt: $now,
+        );
+
+        $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::SQLite);
+        $db->expects(self::once())
+            ->method('execute')
+            ->with(
+                self::logicalAnd(
+                    self::stringContains('INSERT INTO "cms_products"'),
+                    self::stringContains('ON CONFLICT'),
+                    self::stringContains('DO UPDATE SET'),
+                ),
+                self::anything(),
             );
 
         $repo = new DbProductRepository($db);
@@ -330,6 +421,7 @@ final class DbProductRepositoryTest extends TestCase
         );
 
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -345,6 +437,7 @@ final class DbProductRepositoryTest extends TestCase
     public function reserveStockReturnsTrueWhenSufficientStock(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('execute')->willReturn(1);
 
         $repo = new DbProductRepository($db);
@@ -357,6 +450,7 @@ final class DbProductRepositoryTest extends TestCase
     public function reserveStockReturnsFalseWhenInsufficientStock(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('execute')->willReturn(0);
 
         $repo = new DbProductRepository($db);
@@ -369,6 +463,7 @@ final class DbProductRepositoryTest extends TestCase
     public function restoreStockCallsExecute(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(

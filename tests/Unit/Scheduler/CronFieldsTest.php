@@ -42,7 +42,7 @@ final class CronFieldsTest extends TestCase
     public function parseWithWrongNumberOfFieldsThrowsSchedulerException(): void
     {
         $this->expectException(SchedulerException::class);
-        $this->expectExceptionMessage('expected 5 fields, got 3');
+        $this->expectExceptionMessageIsOrContains('expected 5 fields, got 3');
 
         $_ = CronFields::parse('* * *');
     }
@@ -51,7 +51,7 @@ final class CronFieldsTest extends TestCase
     public function parseWithTooManyFieldsThrowsSchedulerException(): void
     {
         $this->expectException(SchedulerException::class);
-        $this->expectExceptionMessage('expected 5 fields, got 6');
+        $this->expectExceptionMessageIsOrContains('expected 5 fields, got 6');
 
         $_ = CronFields::parse('* * * * * *');
     }
@@ -118,6 +118,40 @@ final class CronFieldsTest extends TestCase
         self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:00:00')));
         self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:02:00')));
         self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:29:00')));
+    }
+
+    #[Test]
+    public function matchesWithCommaSeparatedRange(): void
+    {
+        // Minute field "1,2-5": the single value 1 plus the range 2..5.
+        // Reading the token with intval() would truncate '2-5' to 2 and
+        // silently drop minutes 3, 4 and 5.
+        $fields = CronFields::parse('1,2-5 * * * *');
+
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:01:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:02:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:03:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:04:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:05:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:00:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:06:00')));
+    }
+
+    #[Test]
+    public function matchesWithCommaSeparatedStep(): void
+    {
+        // Minute field "0,20-40/5": minute 0 plus the stepped range 20..40/5
+        // (20, 25, 30, 35, 40). intval('20-40/5') would collapse the whole
+        // stepped-range token to 20.
+        $fields = CronFields::parse('0,20-40/5 * * * *');
+
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:00:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:20:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:25:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:35:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:40:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:22:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:45:00')));
     }
 
     #[Test]

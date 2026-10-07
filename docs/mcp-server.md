@@ -55,9 +55,14 @@ Pulsar ships an optional MCP (Model Context Protocol) server extension that expo
 **Mitigations**:
 
 - Concurrency cap: max 1 concurrent action tool (configurable `max_concurrent_actions`)
-- Rate limiting: default 60 requests/minute per tool, with per-tool overrides
 - Action timeout: subprocess killed after deadline
 - Output cap: stdout/stderr truncated at `max_output_bytes`
+
+Per-tool rate limiting is **not** part of this mitigation. `MessageHandler`
+calls whatever `RateLimiterInterface` the container happens to hold, under a
+per-tool key, and that limiter is the application's HTTP limiter with the
+application's HTTP budget — see [Rate limiting](#rate-limiting) for what is and
+is not enforced. Do not count it as a DoS control until it is one.
 
 ## Enabling safely
 
@@ -81,12 +86,15 @@ return [
     ],
     'security' => [
         'path_allowlist' => ['src/**', 'tests/**', 'extensions/**', 'config/**', 'docs/**'],
-        'rate_limit_per_minute' => 60,
-        'tool_rate_limits' => [],
         'max_concurrent_actions' => 1,
     ],
 ];
 ```
+
+`security.rate_limit_per_minute` and `security.tool_rate_limits` are accepted by
+`McpSecurityConfig::fromArray()` and read by nothing — writing them down changes
+no behaviour. They are omitted from the example above deliberately; see
+[Rate limiting](#rate-limiting).
 
 ### Step 2: set environment variable
 
@@ -130,9 +138,26 @@ Expected response includes `serverInfo.name: "pulsar-mcp"` and the negotiated pr
 
 ### Rate limiting
 
-- Global default: 60 requests/minute per tool
-- Per-tool overrides via `security.tool_rate_limits`
-- Uses framework `RateLimiterInterface` with key format `mcp:tool:{name}`
+There is no MCP-specific rate limit. What exists is this:
+
+- `MessageHandler` resolves `RateLimiterInterface` from the container **if one is
+  bound**, and calls `hit()` on it once per `tools/call` under the key
+  `mcp:tool:{name}` — so each tool gets its own bucket.
+- The framework binds `RateLimiterInterface` only when
+  `rate_limiting.enabled` is true in `config/security.php`. With it off, no
+  limiter is bound, `MessageHandler` skips the check, and MCP tool calls are
+  unlimited.
+- The limit and window are that config's `default_limit` and `default_window`
+  (60 requests / 60 seconds as shipped) — the application's HTTP throttle
+  budget, applied per tool because the key differs, not because MCP configured
+  anything.
+- `security.rate_limit_per_minute` and `security.tool_rate_limits` **in
+  `config/mcp.php`** are parsed into `McpSecurityConfig` and then read by
+  nothing. Setting either changes no limit. They are a defect in the extension,
+  not a control; this page will describe a per-tool limit once one exists.
+
+A `hit()` that reports the bucket exhausted returns a tool error
+(`Rate limited, retry after N seconds`) and audits the call as `Denied`.
 
 ### Concurrency control
 
@@ -141,13 +166,18 @@ Expected response includes `serverInfo.name: "pulsar-mcp"` and the negotiated pr
 
 ### Parameter validation
 
-| Parameter   | Validation                                           |
-| ----------- | ---------------------------------------------------- |
-| `client_id` | `[A-Za-z0-9_-]{1,64}`                                |
-| `--filter`  | Max 256 chars, `[A-Za-z0-9_:.\\\-]` only             |
-| `--path`    | No `..`, realpath + root confinement, glob allowlist |
-| `type`      | Enum: `php` or `js`                                  |
-| `analyzer`  | Enum: `phpstan` or `psalm`                           |
+| Parameter  | Validation                                           | Enforced by                                     |
+| ---------- | ---------------------------------------------------- | ----------------------------------------------- |
+| `--filter` | Max 256 chars, `[A-Za-z0-9_:.\\\-]` only             | `RunTestsTool`                                  |
+| `--path`   | No `..`, realpath + root confinement, glob allowlist | `RunTestsTool`, `RunFormatterTool`, access gate |
+| `type`     | Enum: `php` or `js`                                  | `RunFormatterTool`                              |
+| `analyzer` | Enum: `phpstan` or `psalm`                           | `RunAnalysisTool`                               |
+
+`client_id` is **not** validated. `ParamValidator::validateClientId()` exists and
+enforces `[A-Za-z0-9_-]{1,64}`, but nothing calls it: the value is taken from
+`config/mcp.php` or `MCP_CLIENT_ID` and interpolated straight into the audit
+actor as `mcp-client:{client_id}`. Treat the actor field as operator-supplied
+text, not as a constrained identifier, when parsing audit output.
 
 ### Redaction pipeline
 
@@ -175,40 +205,76 @@ The MCP server is designed for local development. Production and staging environ
 1. Set `MCP_ENABLED=true` in config
 2. Set `MCP_STAGING_CONFIRM=true` or `MCP_PRODUCTION_CONFIRM=true`
 3. Both must be present - config alone is insufficient
-4. All MCP activity is audit-logged regardless of environment
+4. Every `tools/call` is audit-logged regardless of environment, when an audit
+   logger is bound (see below)
 
 ## Audit and monitoring
 
 ### Audit trail
 
-Every `tools/call` invocation is logged via `AuditLoggerInterface`:
+`tools/call` is the only audited method. `initialize`, `ping`, `tools/list` and
+the notification methods produce no audit entry.
 
-| Scenario            | AuditEvent    | AuditOutcome |
-| ------------------- | ------------- | ------------ |
-| Read tool success   | DataAccess    | Success      |
-| Action tool success | SystemEvent   | Success      |
-| Permission denied   | Authorization | Denied       |
-| Rate limited        | SecurityEvent | Denied       |
-| Concurrency limited | SecurityEvent | Denied       |
-| Tool error          | SystemEvent   | Error        |
-| Tool cancelled      | SystemEvent   | Failure      |
+Auditing happens only when the container holds an `AuditLoggerInterface`.
+`MessageHandler` takes it as a nullable dependency, so an application that binds
+no audit logger runs MCP with no audit trail at all and nothing reports that.
 
-**Metadata fields**: `tool`, `category`, `params` (redacted), `duration_ms`, `output_bytes`, `client_id`
+Every audited call is written with the **same** event type — `AuditEvent::DataAccess`.
+The scenario is carried by the outcome and the metadata, not by the event:
 
-**Actor format**: `mcp:{clientId}`
+| Scenario                                    | AuditEvent | AuditOutcome |
+| ------------------------------------------- | ---------- | ------------ |
+| Tool succeeded                              | DataAccess | Success      |
+| Tool returned an error result (`isError`)   | DataAccess | Failure      |
+| Permission denied (`assertAllowed` refused) | DataAccess | Denied       |
+| Rate limited                                | DataAccess | Denied       |
+| Tool threw (`McpException` or any other)    | DataAccess | Error        |
+| Concurrency limited                         | DataAccess | Error        |
+
+Concurrency rejection lands in the `Error` row rather than a `Denied` one
+because `McpSecurityException::concurrencyLimited()` is thrown from inside the
+action tool, after the permission and rate-limit gates have already passed, and
+is caught by the generic handler around tool execution. The client is told
+`Internal tool execution error`; the specific reason survives only in the audit
+entry's `detail`.
+
+**Fields written**:
+
+| Field      | Value                                                       |
+| ---------- | ----------------------------------------------------------- |
+| `actor`    | `mcp-client:{client_id}`                                    |
+| `action`   | `mcp:tools/call:{tool}`                                     |
+| `resource` | the tool name                                               |
+| `metadata` | `{"detail": "..."}` — `OK` on success, otherwise the reason |
+
+**Metadata is one key.** There is no `tool`, `category`, `params`,
+`duration_ms`, `output_bytes` or `client_id` field on the entry — the tool name
+reaches the log through `action` and `resource`, the client id through `actor`,
+and nothing measures duration or output size. Alerting that needs those must
+derive them from the four fields above.
 
 ### Reviewing activity
 
-If Studio is enabled, MCP audit entries appear in the Studio dashboard under the Security Events timeline. Filter by actor prefix `mcp:` to isolate MCP activity.
+If Studio is enabled, MCP audit entries appear in the Studio dashboard under the
+Security Events timeline. Filter by actor prefix `mcp-client:` to isolate MCP
+activity — note the `-client` segment; `mcp:` alone matches nothing in the actor
+field, and matches every entry's `action`.
 
 ### Abuse detection
 
-Watch for:
+What the audit trail supports watching for:
 
-- High rate limit hit counts on action tools
-- Unusual `--path` parameters (even though traversal is blocked, attempts indicate probing)
-- Repeated permission-denied entries for action tools not in the allowlist
-- Concurrent action rejections (may indicate multiple clients sharing a config)
+- Repeated `Denied` entries — a client calling action tools that are not in
+  `allowed_actions`, or hitting the limiter when one is bound
+- Repeated `Error` entries whose `detail` reads
+  `Maximum concurrent MCP action executions reached` (multiple clients sharing
+  one config) or `Path access not allowed` (path probing)
+- A burst of `Success` entries on action tools outside working hours
+
+What it does **not** support: tool arguments are not recorded, so a rejected
+`--path` shows up as the refusal message and never as the path that was tried;
+and neither call duration nor output size is measured, so neither can be
+trended. Both need instrumentation the extension does not yet have.
 
 ## Incident response
 
@@ -223,12 +289,17 @@ Kill any running `mcp:serve` process.
 
 ### 2. Review audit logs
 
-Check audit entries with actor prefix `mcp:` for:
+Check audit entries with actor prefix `mcp-client:` for:
 
-- Which tools were called
-- What parameters were passed
-- Whether any action tools executed
-- Duration and output sizes (unusually large may indicate data exfiltration attempts)
+- Which tools were called (`resource`, and the tail of `action`)
+- Whether any action tools executed, and with what outcome
+- Which calls were refused, and why (`metadata.detail`)
+
+The entries cannot tell you what arguments a call carried, how long it ran, or
+how much output it returned — none of that is recorded. For those, fall back to
+the process-level evidence: the `mcp:serve` process's own stdout/stderr if it
+was captured, and the shell history or CI logs of whatever the action tools
+spawned.
 
 ### 3. Rotate keys
 

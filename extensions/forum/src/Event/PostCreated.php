@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a new post/reply is created in a thread.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostCreated

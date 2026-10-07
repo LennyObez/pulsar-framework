@@ -15,7 +15,7 @@ use Pulsar\Extension\Analytics\Exception\AnalyticsException;
 /**
  * Site CRUD operations and tracking ID generation.
  */
-#[Internal(reason: 'Site management — use SiteServiceInterface')]
+#[Internal(reason: 'Site management; use SiteServiceInterface')]
 final readonly class SiteService implements SiteServiceInterface
 {
     public function __construct(

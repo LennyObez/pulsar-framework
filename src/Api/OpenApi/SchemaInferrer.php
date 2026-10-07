@@ -34,6 +34,7 @@ use function in_array;
  * Designed for build-time use only. Reads class metadata (constructor parameters,
  * public properties, property hooks) to produce OpenAPI-compatible JSON Schema
  * objects, including Pulsar compliance vendor extensions from `#[ApiField]`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaInferrer
@@ -123,6 +124,7 @@ final class SchemaInferrer
     private function inferPropertySchema(ReflectionProperty $property): array
     {
         $type = $property->getType();
+        /** @var array<string, mixed> $schema */
         $schema = $this->typeToSchema($type);
 
         // Apply ApiField compliance metadata
@@ -145,7 +147,7 @@ final class SchemaInferrer
             }
 
             if ($apiField->example !== null) {
-                $schema['example'] = $apiField->example;
+                $schema = [...$schema, 'example' => $apiField->example];
             }
         }
 

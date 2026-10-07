@@ -12,9 +12,10 @@ use Pulsar\I18n\TranslatorInterface;
  *
  * Extends Violation with i18n support. The `translate()` method
  * resolves the key through the translator at render time.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class TranslatableViolation extends Violation
+final readonly class TranslatableViolation extends Violation
 {
     /**
      * @param array<string, mixed> $parameters ICU parameters for the message

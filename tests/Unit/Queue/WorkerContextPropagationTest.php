@@ -16,6 +16,7 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueableInterface;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Queue\Serialization\TypeRegistry;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Random\Engine\Secure;
@@ -31,10 +32,15 @@ final class WorkerContextPropagationTest extends TestCase
 
     private EnvelopeSerializer $serializer;
 
+    private TypeRegistry $typeRegistry;
+
     protected function setUp(): void
     {
         $this->randomizer = new Randomizer(new Secure());
         $this->serializer = new EnvelopeSerializer();
+        $this->typeRegistry = new TypeRegistry();
+        $this->typeRegistry->register(WorkerContextCapture::class);
+        $this->typeRegistry->register(WorkerContextFailingJob::class);
         WorkerContextCapture::$capturedContext = null;
     }
 
@@ -87,7 +93,7 @@ final class WorkerContextPropagationTest extends TestCase
         $driver->method('pop')->willReturn($record);
 
         $holder = new RequestContextHolder();
-        $worker = new Worker($driver, new WorkerOptions(), null, $holder);
+        $worker = new Worker($driver, new WorkerOptions(), null, $holder, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
 
@@ -143,7 +149,7 @@ final class WorkerContextPropagationTest extends TestCase
         $driver->method('pop')->willReturn($record);
 
         $holder = new RequestContextHolder();
-        $worker = new Worker($driver, new WorkerOptions(), null, $holder);
+        $worker = new Worker($driver, new WorkerOptions(), null, $holder, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
 
@@ -195,7 +201,7 @@ final class WorkerContextPropagationTest extends TestCase
         $driver->method('pop')->willReturn($record);
 
         $holder = new RequestContextHolder();
-        $worker = new Worker($driver, new WorkerOptions(), null, $holder);
+        $worker = new Worker($driver, new WorkerOptions(), null, $holder, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
 
@@ -246,7 +252,7 @@ final class WorkerContextPropagationTest extends TestCase
         $driver->method('pop')->willReturn($record);
 
         $holder = new RequestContextHolder();
-        $worker = new Worker($driver, new WorkerOptions(), null, $holder);
+        $worker = new Worker($driver, new WorkerOptions(), null, $holder, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
 
@@ -275,7 +281,7 @@ final class WorkerContextPropagationTest extends TestCase
             ->with('raw-001', self::stringContains('Envelope deserialization failed'));
 
         $holder = new RequestContextHolder();
-        $worker = new Worker($driver, new WorkerOptions(), null, $holder);
+        $worker = new Worker($driver, new WorkerOptions(), null, $holder, typeRegistry: $this->typeRegistry);
 
         $result = $worker->processNextJob('default');
 
@@ -329,7 +335,7 @@ final class WorkerContextPropagationTest extends TestCase
         $driver->method('pop')->willReturn($record);
 
         // No context holder — should still extract and pass context to JobContext
-        $worker = new Worker($driver, new WorkerOptions());
+        $worker = new Worker($driver, new WorkerOptions(), typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
 

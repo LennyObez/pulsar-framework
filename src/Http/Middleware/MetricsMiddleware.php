@@ -14,6 +14,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Throwable;
 
 use function hrtime;
+use function in_array;
 
 /**
  * Middleware that records HTTP request metrics.
@@ -28,6 +29,21 @@ use function hrtime;
  */
 final readonly class MetricsMiddleware implements MiddlewareInterface
 {
+    /**
+     * Paths the middleware refuses to record metrics for. The
+     * scrape endpoint itself (`/metrics`) and the related diagnostics
+     * endpoints would otherwise auto-monitor every Prometheus pull,
+     * producing recursive `pulsar_http_requests_total{route="/metrics"}`
+     * counters that grow once per scrape interval and dwarf real
+     * request signal. Excluding them keeps the time series clean.
+     */
+    private const array EXCLUDED_PATHS = [
+        '/metrics',
+        '/_pulsar/metrics',
+        '/_pulsar/diagnostics',
+        '/_pulsar/health',
+    ];
+
     public function __construct(
         private MetricRegistry $registry,
         private ?RouteContext $routeContext = null,
@@ -36,6 +52,13 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        // Short-circuit before resetting RouteContext + capturing
+        // the start time so the excluded path round-trip is genuinely
+        // metric-free, not just absent from the registry.
+        if (in_array($request->getUri()->getPath(), self::EXCLUDED_PATHS, true)) {
+            return $handler->handle($request);
+        }
+
         $this->routeContext?->reset();
         $start = hrtime(true);
 
@@ -47,11 +70,17 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
             try {
                 $durationSeconds = (hrtime(true) - $start) / 1_000_000_000;
 
-                $label = $this->routeContext?->label() ?? $request->getUri()->getPath();
+                // When no route was matched (404 path, fall-through, or
+                // routeContext not wired), do NOT emit the raw URI as the
+                // metric label. Routes like `/users/{id}` carry an UUID per
+                // request, so the raw path explodes the metric registry's
+                // series count — Prometheus failure mode #1. Bind to the
+                // sentinel `unmatched` instead so unmatched traffic is
+                // visible but bounded.
+                $label = $this->routeContext?->label() ?? 'unmatched';
                 $method = $request->getMethod();
                 $status = (string) (isset($response) ? $response->getStatusCode() : 500);
 
-                // Record request counter
                 $requestLabels = new LabelSet([
                     'method' => $method,
                     'route' => $label,
@@ -61,7 +90,6 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
                     ->counter('pulsar_http_requests_total', 'Total HTTP requests')
                     ->increment($requestLabels);
 
-                // Record duration histogram
                 $durationLabels = new LabelSet([
                     'method' => $method,
                     'route' => $label,
@@ -70,7 +98,6 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
                     ->histogram('pulsar_http_request_duration_seconds', 'HTTP request duration in seconds')
                     ->observe($durationSeconds, $durationLabels);
 
-                // Record error counter on 5xx
                 if (isset($response) && $response->getStatusCode() >= 500) {
                     $errorLabels = new LabelSet([
                         'method' => $method,

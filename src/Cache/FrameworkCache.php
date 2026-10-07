@@ -7,11 +7,13 @@ namespace Pulsar\Cache;
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\Environment;
 use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Support\ProjectSourceRoots;
 use Random\RandomException;
 use ReflectionException;
 use SodiumException;
@@ -23,6 +25,7 @@ use function hash_equals;
 use function implode;
 use function is_dir;
 use function is_file;
+use function serialize;
 use function sort;
 
 use const DIRECTORY_SEPARATOR;
@@ -42,8 +45,8 @@ final class FrameworkCache implements FrameworkCacheInterface
     /** MasterKey KDF context for cache HMAC. */
     private const string HMAC_CONTEXT = 'fw_cache';
 
-    /** Manifest schema version. */
-    private const int SCHEMA_VERSION = 1;
+    /** Manifest schema version (single source of truth: CacheManifest). */
+    private const int SCHEMA_VERSION = CacheManifest::SCHEMA_VERSION;
 
     /** Environment variables that participate in cache invalidation. */
     private const array ENV_INVALIDATION_KEYS = [
@@ -63,6 +66,7 @@ final class FrameworkCache implements FrameworkCacheInterface
 
     private readonly string $cachePath;
     private readonly HmacInterface $hmac;
+    private readonly string $hmacKey;
     private readonly CacheIntegrity $integrity;
     private readonly ConfigCache $configCache;
     private readonly RouteCache $routeCache;
@@ -71,17 +75,18 @@ final class FrameworkCache implements FrameworkCacheInterface
     /** @throws SodiumException */
     public function __construct(
         private readonly string $basePath,
-        private readonly KeyProviderInterface $masterKey,
+        KeyProviderInterface $masterKey,
         HmacInterface $hmac,
         private readonly bool $encrypt = false,
         ?EncryptorInterface $encryptor = null,
+        private readonly ?Environment $environment = null,
     ) {
         $this->hmac = $hmac;
         $this->cachePath = $basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
 
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
+        $this->hmacKey = $masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
 
-        $this->integrity = new CacheIntegrity($this->hmac, $hmacKey, $this->encrypt ? $encryptor : null);
+        $this->integrity = new CacheIntegrity($this->hmac, $this->hmacKey, $this->encrypt ? $encryptor : null);
         $this->configCache = new ConfigCache($this->integrity);
         $this->routeCache = new RouteCache($this->integrity);
         $this->containerCache = new ContainerCache($this->integrity);
@@ -92,6 +97,7 @@ final class FrameworkCache implements FrameworkCacheInterface
      *
      * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
+     * @param list<CachedBinding> $bindings Declarations from `Router::model()`. Omitting them states that the route table declares none — a caller that has them and forgets writes a cache that boots without them
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
      *
      * @throws CacheException
@@ -106,12 +112,13 @@ final class FrameworkCache implements FrameworkCacheInterface
         array $containerHints,
         string $appEnv,
         bool $strict,
+        array $bindings = [],
     ): array {
         $lock = new CacheLock($this->cachePath);
         $lock->acquire();
 
         try {
-            return $this->doWarm($repository, $routes, $containerHints, $appEnv, $strict);
+            return $this->doWarm($repository, $routes, $containerHints, $appEnv, $strict, $bindings);
         } finally {
             $lock->release();
         }
@@ -154,15 +161,17 @@ final class FrameworkCache implements FrameworkCacheInterface
      */
     public function isWarm(): bool
     {
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-
-        return CacheManifest::load($this->hmac, $this->cachePath, $hmacKey) !== null;
+        return CacheManifest::load($this->hmac, $this->cachePath, $this->hmacKey) !== null;
     }
 
     /**
      * Load caches if the manifest is valid and the invalidation key matches.
      *
-     * @return array{manifest: CacheManifest, config: ?ConfigRepository, routes: ?list<CachedRoute>, containerHints: ?array<class-string, list<array{name: string, type: class-string}>>}|null
+     * `bindings` is empty whenever `routes` is null: the two come out of one
+     * payload, so there is no state in which a caller holds cached routes and an
+     * unanswered question about the declarations that qualify them.
+     *
+     * @return array{manifest: CacheManifest, config: ?ConfigRepository, routes: ?list<CachedRoute>, bindings: list<CachedBinding>, containerHints: ?array<class-string, list<array{name: string, type: class-string}>>}|null
      *
      * @throws CacheException
      * @throws JsonException
@@ -180,8 +189,7 @@ final class FrameworkCache implements FrameworkCacheInterface
             return null;
         }
 
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $hmacKey);
+        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $this->hmacKey);
 
         if ($manifest === null) {
             return null;
@@ -213,15 +221,46 @@ final class FrameworkCache implements FrameworkCacheInterface
             return null;
         }
 
+        // Verify each cache file against the per-file SHA-256 + HMAC recorded
+        // in the manifest. The manifest HMAC only proves the manifest text is
+        // authentic — it does NOT prove the cache binaries themselves are
+        // intact. Re-reading and verifying each file here closes the
+        // file-replacement gap (an attacker swapping config.cache.bin while
+        // leaving the manifest untouched).
+        $cacheFiles = [
+            'config' => $this->cachePath . DIRECTORY_SEPARATOR . ConfigCache::FILENAME,
+            'routes' => $this->cachePath . DIRECTORY_SEPARATOR . RouteCache::FILENAME,
+            'container' => $this->cachePath . DIRECTORY_SEPARATOR . ContainerCache::FILENAME,
+        ];
+
+        foreach ($cacheFiles as $name => $file) {
+            $signature = $manifest->caches[$name] ?? null;
+
+            if ($signature === null) {
+                return null;
+            }
+
+            $content = file_get_contents($file);
+
+            if ($content === false) {
+                return null;
+            }
+
+            if (!$this->integrity->verify($content, $signature['sha256'], $signature['hmac'])) {
+                return null;
+            }
+        }
+
         // Load individual caches
         $config = $this->configCache->load($this->cachePath, $allowedClasses);
-        $routes = $this->routeCache->load($this->cachePath, $allowedClasses);
+        $routeTable = $this->routeCache->load($this->cachePath, $allowedClasses);
         $containerHints = $this->containerCache->load($this->cachePath, $allowedClasses);
 
         return [
             'manifest' => $manifest,
             'config' => $config,
-            'routes' => $routes,
+            'routes' => $routeTable?->routes,
+            'bindings' => $routeTable === null ? [] : $routeTable->bindings,
             'containerHints' => $containerHints,
         ];
     }
@@ -263,11 +302,19 @@ final class FrameworkCache implements FrameworkCacheInterface
             }
         }
 
-        // Hash structural env vars
+        // Hash structural env vars. Resolve through the Environment repository
+        // (OS env + .env) when available so a key provided only in .env still
+        // participates in invalidation; fall back to getenv() only when no
+        // Environment was injected (e.g. the dev bootstrap).
         $envParts = [];
         foreach (self::ENV_INVALIDATION_KEYS as $key) {
-            $value = getenv($key);
-            $envParts[] = $key . '=' . ($value !== false ? $value : '');
+            if ($this->environment !== null) {
+                $value = $this->environment->get($key);
+            } else {
+                $osValue = getenv($key);
+                $value = $osValue === false ? null : $osValue;
+            }
+            $envParts[] = $key . '=' . ($value ?? '');
         }
         $parts[] = hash('sha256', implode(':', $envParts));
 
@@ -286,6 +333,7 @@ final class FrameworkCache implements FrameworkCacheInterface
     /**
      * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
+     * @param list<CachedBinding> $bindings
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
      *
      * @throws CacheException
@@ -300,11 +348,35 @@ final class FrameworkCache implements FrameworkCacheInterface
         array $containerHints,
         string $appEnv,
         bool $strict,
+        array $bindings,
     ): array {
-        // Scan allowed classes
+        // Serialize the route table before the allowlist is built, so the
+        // allowlist can be derived from the bytes actually being stored rather
+        // than from a namespace scan alone. The scan is a regex over source
+        // files and covers Pulsar\Cache and Pulsar\Routing by prefix; a class
+        // it happened to miss would come back as __PHP_Incomplete_Class on the
+        // next boot, at which point the only honest answer is to discard the
+        // whole cache. Deriving from the payload removes the guess.
+        $routePayload = $this->routeCache->compile($routes, $bindings);
+
+        // Build the deserialization allowlist. The namespace scan cannot see
+        // config value objects in feature namespaces (Api, Database, Mail,
+        // Tenancy, View, ...), so derive the exact config-graph classes from the
+        // repository being cached and union them in; container hints stay
+        // covered by the scan's Routing/Cache scope. serialize($repository)
+        // here matches exactly what ConfigCache::write() serializes.
         $vendorPath = $this->basePath . DIRECTORY_SEPARATOR . 'vendor';
-        $srcPath = $this->basePath . DIRECTORY_SEPARATOR . 'src';
-        $allowedClasses = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        // Source roots come from the project's composer PSR-4 map, never an
+        // assumed `src/`: a project mapping "App\\": "app/" has no src/ directory,
+        // which previously failed the warm with a directory-open error. The
+        // framework's own src/ is resolved by CacheAllowedClasses itself.
+        $srcPaths = ProjectSourceRoots::discover($this->basePath);
+        $allowedClasses = CacheAllowedClasses::forCache(
+            $vendorPath,
+            $srcPaths,
+            serialize($repository),
+            $routePayload['serialized'],
+        );
         CacheAllowedClasses::save($this->cachePath, $allowedClasses);
 
         // Compute allowed classes hash
@@ -317,8 +389,8 @@ final class FrameworkCache implements FrameworkCacheInterface
             file_get_contents($this->cachePath . DIRECTORY_SEPARATOR . ConfigCache::FILENAME) ?: '',
         );
 
-        // Write route cache
-        $routeResult = $this->routeCache->write($this->cachePath, $routes, $this->encrypt);
+        // Write route cache (routes and binding declarations, one payload)
+        $this->routeCache->writeCompiled($this->cachePath, $routePayload['serialized'], $this->encrypt);
         $routeSig = $this->integrity->sign(
             file_get_contents($this->cachePath . DIRECTORY_SEPARATOR . RouteCache::FILENAME) ?: '',
         );
@@ -334,11 +406,10 @@ final class FrameworkCache implements FrameworkCacheInterface
         $invalidationKey = $this->computeInvalidationKey($configPath);
 
         // Write manifest
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
         CacheManifest::write(
             hmac: $this->hmac,
             cachePath: $this->cachePath,
-            hmacKey: $hmacKey,
+            hmacKey: $this->hmacKey,
             schemaVersion: self::SCHEMA_VERSION,
             frameworkVersion: Version::full(),
             appEnv: $appEnv,
@@ -355,9 +426,9 @@ final class FrameworkCache implements FrameworkCacheInterface
 
         return [
             'configCached' => true,
-            'routesCached' => $routeResult['cached'],
-            'routesSkipped' => $routeResult['skipped'],
-            'skippedRoutes' => $routeResult['skippedRoutes'],
+            'routesCached' => $routePayload['cached'],
+            'routesSkipped' => $routePayload['skipped'],
+            'skippedRoutes' => $routePayload['skippedRoutes'],
             'containerCached' => true,
         ];
     }

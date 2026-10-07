@@ -6,11 +6,11 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\ProductVariant;
 use Pulsar\Extension\Cms\Commerce\ProductVariantRepositoryInterface;
 
-use function array_values;
 use function implode;
 use function json_decode;
 use function json_encode;
@@ -20,6 +20,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed product variant repository querying cms_product_variants.
+ *
+ * @psalm-api Bound to ProductVariantRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ProductVariantRepositoryInterface for public API')]
 final readonly class DbProductVariantRepository implements ProductVariantRepositoryInterface
@@ -32,23 +35,15 @@ final readonly class DbProductVariantRepository implements ProductVariantReposit
         SELECT * FROM cms_product_variants WHERE product_id = :product_id ORDER BY sort_order
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_product_variants (
-            id, product_id, sku_suffix, attribute_values, price_modifier,
-            stock_quantity, media_asset_id, sort_order, is_active
-        ) VALUES (
-            :id, :product_id, :sku_suffix, :attribute_values, :price_modifier,
-            :stock_quantity, :media_asset_id, :sort_order, :is_active
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            sku_suffix = EXCLUDED.sku_suffix,
-            attribute_values = EXCLUDED.attribute_values,
-            price_modifier = EXCLUDED.price_modifier,
-            stock_quantity = EXCLUDED.stock_quantity,
-            media_asset_id = EXCLUDED.media_asset_id,
-            sort_order = EXCLUDED.sort_order,
-            is_active = EXCLUDED.is_active
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'product_id', 'sku_suffix', 'attribute_values', 'price_modifier',
+        'stock_quantity', 'media_asset_id', 'sort_order', 'is_active',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'sku_suffix', 'attribute_values', 'price_modifier', 'stock_quantity',
+        'media_asset_id', 'sort_order', 'is_active',
+    ];
 
     public function __construct(
         private ConnectionInterface $db,
@@ -70,7 +65,7 @@ final readonly class DbProductVariantRepository implements ProductVariantReposit
         $placeholders = [];
         $bindings = [];
 
-        foreach (array_values($ids) as $i => $id) {
+        foreach ($ids as $i => $id) {
             $key = 'id_' . $i;
             $placeholders[] = ':' . $key;
             $bindings[$key] = $id;
@@ -100,7 +95,15 @@ final readonly class DbProductVariantRepository implements ProductVariantReposit
 
     public function save(ProductVariant $variant): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_product_variants',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $variant->id,
             'product_id' => $variant->productId,
             'sku_suffix' => $variant->skuSuffix,

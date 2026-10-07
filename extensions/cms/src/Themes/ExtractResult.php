@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Result of extracting a theme archive.
+ *
+ * @psalm-api Public DTO returned from ThemeArchiveExtractorInterface;
+ *            consumed by ThemeManager during installation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExtractResult

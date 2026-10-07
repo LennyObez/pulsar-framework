@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Order lifecycle status tracking from cart creation through fulfillment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum OrderStatus: string

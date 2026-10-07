@@ -12,7 +12,10 @@ use Pulsar\Container\ServiceDefinition;
 use Pulsar\Container\Tag\TaggedIterator;
 use ReflectionClass;
 use ReflectionNamedType;
+use ReflectionParameter;
+use RuntimeException;
 
+use function array_map;
 use function class_exists;
 use function is_string;
 
@@ -60,38 +63,49 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
             /** @var class-string $concreteClass */
             $concreteClass = $concrete;
             $factory = static function (ContainerInterface $container) use ($concreteClass, $builder): object {
+                /** @var class-string $concreteClass */
+                if (!class_exists($concreteClass)) {
+                    throw new RuntimeException('Class ' . $concreteClass . ' does not exist');
+                }
+
                 $reflector = new ReflectionClass($concreteClass);
                 $constructor = $reflector->getConstructor();
 
                 if ($constructor === null) {
+                    /** @var class-string $concreteClass */
                     return new $concreteClass();
                 }
 
-                $dependencies = [];
+                $dependencies = array_map(
+                    static function (ReflectionParameter $parameter) use ($container, $builder): mixed {
+                        $attrs = $parameter->getAttributes(TaggedIterator::class);
 
-                foreach ($constructor->getParameters() as $parameter) {
-                    $attrs = $parameter->getAttributes(TaggedIterator::class);
+                        if ($attrs !== []) {
+                            /** @var TaggedIterator $taggedIterator */
+                            $taggedIterator = $attrs[0]->newInstance();
+                            $taggedIds = $builder->findTaggedServiceIds($taggedIterator->tag);
 
-                    if ($attrs !== []) {
-                        /** @var TaggedIterator $taggedIterator */
-                        $taggedIterator = $attrs[0]->newInstance();
-                        $taggedIds = $builder->findTaggedServiceIds($taggedIterator->tag);
-                        $services = [];
-                        foreach ($taggedIds as $taggedId) {
-                            $services[] = $container->get($taggedId);
+                            return array_map(
+                                static fn(string $taggedId): mixed => $container->get($taggedId),
+                                $taggedIds,
+                            );
                         }
-                        $dependencies[] = $services;
-                        continue;
-                    }
 
-                    $type = $parameter->getType();
-                    if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
-                        $dependencies[] = $container->get($type->getName());
-                    } elseif ($parameter->isDefaultValueAvailable()) {
-                        $dependencies[] = $parameter->getDefaultValue();
-                    }
-                }
+                        $type = $parameter->getType();
+                        if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                            return $container->get($type->getName());
+                        }
 
+                        if ($parameter->isDefaultValueAvailable()) {
+                            return $parameter->getDefaultValue();
+                        }
+
+                        return null;
+                    },
+                    $constructor->getParameters(),
+                );
+
+                /** @var class-string $concreteClass */
                 return new $concreteClass(...$dependencies);
             };
 

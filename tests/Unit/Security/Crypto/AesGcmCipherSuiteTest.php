@@ -14,19 +14,33 @@ use Pulsar\Security\Exception\SecurityException;
 
 use function chr;
 use function ord;
+use function putenv;
 use function random_bytes;
+use function sprintf;
 use function strlen;
+use function var_export;
 
 #[CoversClass(AesGcmCipherSuite::class)]
 final class AesGcmCipherSuiteTest extends TestCase
 {
+    private const string FORCE_OPENSSL = 'PULSAR_CRYPTO_FORCE_OPENSSL';
+
     private AesGcmCipherSuite $suite;
     private string $key;
 
     protected function setUp(): void
     {
+        // The switch is process-global; start and finish every test without it
+        // so one case cannot decide another's backend.
+        putenv(self::FORCE_OPENSSL);
+
         $this->suite = new AesGcmCipherSuite();
         $this->key = random_bytes(32); // AES-256 requires 32-byte key
+    }
+
+    protected function tearDown(): void
+    {
+        putenv(self::FORCE_OPENSSL);
     }
 
     #[Test]
@@ -172,7 +186,7 @@ final class AesGcmCipherSuiteTest extends TestCase
     public function encryptRejectsWrongKeyLength(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('32-byte key');
+        $this->expectExceptionMessageIsOrContains('32-byte key');
 
         $this->suite->encrypt('test', random_bytes(16));
     }
@@ -183,7 +197,7 @@ final class AesGcmCipherSuiteTest extends TestCase
         $ciphertext = $this->suite->encrypt('test', $this->key);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('32-byte key');
+        $this->expectExceptionMessageIsOrContains('32-byte key');
 
         $this->suite->decrypt($ciphertext, random_bytes(16));
     }
@@ -277,5 +291,91 @@ final class AesGcmCipherSuiteTest extends TestCase
         $this->expectException(SecurityException::class);
 
         $sodiumSuite->decrypt($aesGcmCiphertext, $sharedKey);
+    }
+
+    // ---------------------------------------------------------------
+    // PULSAR_CRYPTO_FORCE_OPENSSL
+    //
+    // The deployment switch a FIPS operator sets to route AES-256-GCM
+    // through a NIST-validated OpenSSL provider instead of libsodium.
+    // ---------------------------------------------------------------
+
+    #[Test]
+    public function forceOpenSslEnvironmentVariableSelectsTheOpenSslPath(): void
+    {
+        $this->requireSodiumAes();
+
+        putenv(self::FORCE_OPENSSL . '=1');
+
+        self::assertFalse(new AesGcmCipherSuite()->isUsingSodium());
+    }
+
+    #[Test]
+    public function forceOpenSslEnvironmentVariableAcceptsTrue(): void
+    {
+        $this->requireSodiumAes();
+
+        putenv(self::FORCE_OPENSSL . '=true');
+
+        self::assertFalse(new AesGcmCipherSuite()->isUsingSodium());
+    }
+
+    #[Test]
+    public function otherValuesLeaveAutoDetectionInCharge(): void
+    {
+        $this->requireSodiumAes();
+
+        foreach (['0', 'false', 'no', 'yes', ''] as $value) {
+            putenv(self::FORCE_OPENSSL . '=' . $value);
+
+            self::assertTrue(
+                new AesGcmCipherSuite()->isUsingSodium(),
+                sprintf('value %s must not switch the backend', var_export($value, true)),
+            );
+        }
+    }
+
+    #[Test]
+    public function explicitPreferenceOutranksTheEnvironmentVariable(): void
+    {
+        $this->requireSodiumAes();
+
+        putenv(self::FORCE_OPENSSL . '=1');
+
+        self::assertTrue(new AesGcmCipherSuite(preferSodium: true)->isUsingSodium());
+    }
+
+    #[Test]
+    public function forcedOpenSslCiphertextStaysReadableOnTheSodiumPath(): void
+    {
+        $this->requireSodiumAes();
+
+        putenv(self::FORCE_OPENSSL . '=1');
+        $forced = new AesGcmCipherSuite();
+
+        putenv(self::FORCE_OPENSSL);
+        $autoDetected = new AesGcmCipherSuite();
+
+        self::assertFalse($forced->isUsingSodium());
+        self::assertTrue($autoDetected->isUsingSodium());
+
+        $key = random_bytes(32);
+        $ciphertext = $forced->encrypt('ledger entry', $key, 'aad');
+
+        // One deployment forcing OpenSSL must not leave data the next one
+        // cannot read: both paths write and read the same wire format.
+        self::assertSame('ledger entry', $autoDetected->decrypt($ciphertext, $key, 'aad'));
+        self::assertSame('ledger entry', $forced->decrypt($autoDetected->encrypt('ledger entry', $key, 'aad'), $key, 'aad'));
+    }
+
+    /**
+     * The switch is only observable where libsodium would otherwise win, so a
+     * CPU without hardware AES has nothing to prove here.
+     */
+    private function requireSodiumAes(): void
+    {
+        if (!AesGcmCipherSuite::isSodiumAesAvailable()) {
+            self::markTestSkipped('libsodium AES-256-GCM is unavailable on this CPU.');
+        }
     }
 }

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Lifecycle status of a queued job record.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum JobRecordStatus: string

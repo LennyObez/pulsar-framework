@@ -12,29 +12,26 @@ use Pulsar\Event\Exception\EventException;
 use Pulsar\Event\ListenerProviderInterface;
 
 use function array_keys;
-use function array_merge;
-use function array_unique;
-use function array_values;
-use function class_implements;
-use function class_parents;
-use function get_class;
+use function array_push;
 use function usort;
 
 /**
  * Read-only listener provider that loads from a compiled event map.
  *
  * Resolves listener classes from the container at dispatch time.
- * Registration methods throw — use ListenerProvider for dynamic registration.
+ * Registration methods throw: use ListenerProvider for dynamic registration.
  */
 #[Internal]
 final class CompiledListenerProvider implements ListenerProviderInterface, ListenerMetadataProviderInterface
 {
+    use ClassHierarchyResolveTrait;
+
     /**
-     * Cache of resolved class hierarchies per event class.
+     * Cache of resolved callables per event class (avoids re-sort + re-resolve).
      *
-     * @var array<class-string, list<class-string>>
+     * @var array<class-string, list<callable>>
      */
-    private array $classHierarchyCache = [];
+    private array $sortedCache = [];
 
     /**
      * @param array<class-string, array{listeners: list<array{class: string, method: string, priority: int, moduleId: string}>, requiresEnvelope: bool, stormOverride: ?int, listenerModuleIds: list<string>}> $compiledMap
@@ -50,19 +47,24 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
     #[Override]
     public function getListenersForEvent(object $event): iterable
     {
-        /** @var class-string $eventClass */
-        $eventClass = get_class($event);
+        $eventClass = $event::class;
+
+        if (isset($this->sortedCache[$eventClass])) {
+            return $this->sortedCache[$eventClass];
+        }
 
         $matchingClasses = $this->resolveMatchingClasses($eventClass);
         $allEntries = [];
 
         foreach ($matchingClasses as $class) {
             if (isset($this->compiledMap[$class])) {
-                $allEntries = array_merge($allEntries, $this->compiledMap[$class]['listeners']);
+                array_push($allEntries, ...$this->compiledMap[$class]['listeners']);
             }
         }
 
         if ($allEntries === []) {
+            $this->sortedCache[$eventClass] = [];
+
             return [];
         }
 
@@ -86,11 +88,13 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
             $callables[] = $callable;
         }
 
+        $this->sortedCache[$eventClass] = $callables;
+
         return $callables;
     }
 
     /**
-     * @throws EventException Always — compiled providers are read-only
+     * @throws EventException Always: compiled providers are read-only
      */
     #[Override]
     public function addListener(string $eventClass, callable $listener, int $priority = 0, string $moduleId = ''): void
@@ -99,7 +103,7 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
     }
 
     /**
-     * @throws EventException Always — compiled providers are read-only
+     * @throws EventException Always: compiled providers are read-only
      */
     #[Override]
     public function addSubscriber(EventSubscriberInterface $subscriber, string $moduleId = ''): void
@@ -115,11 +119,13 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
 
         foreach ($matchingClasses as $class) {
             if (isset($this->compiledMap[$class])) {
-                $moduleIds = array_merge($moduleIds, $this->compiledMap[$class]['listenerModuleIds']);
+                foreach ($this->compiledMap[$class]['listenerModuleIds'] as $id) {
+                    $moduleIds[$id] = true;
+                }
             }
         }
 
-        return array_values(array_unique($moduleIds));
+        return array_keys($moduleIds);
     }
 
     #[Override]
@@ -155,39 +161,4 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
         return array_keys($this->compiledMap);
     }
 
-    /**
-     * Resolve all matching class names for an event (exact + parents + interfaces).
-     *
-     * @param class-string $eventClass
-     * @return list<class-string>
-     */
-    private function resolveMatchingClasses(string $eventClass): array
-    {
-        if (isset($this->classHierarchyCache[$eventClass])) {
-            return $this->classHierarchyCache[$eventClass];
-        }
-
-        $classes = [$eventClass];
-
-        $parents = class_parents($eventClass);
-
-        if ($parents !== false) {
-            /** @var list<class-string> $parentList */
-            $parentList = array_values($parents);
-            $classes = array_merge($classes, $parentList);
-        }
-
-        $interfaces = class_implements($eventClass);
-
-        if ($interfaces !== false) {
-            /** @var list<class-string> $interfaceList */
-            $interfaceList = array_values($interfaces);
-            $classes = array_merge($classes, $interfaceList);
-        }
-
-        /** @var list<class-string> $classes */
-        $this->classHierarchyCache[$eventClass] = $classes;
-
-        return $classes;
-    }
 }

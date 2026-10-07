@@ -10,6 +10,7 @@ use function array_map;
 
 /**
  * Schema for a single configuration DTO class and its properties.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConfigSchemaEntry

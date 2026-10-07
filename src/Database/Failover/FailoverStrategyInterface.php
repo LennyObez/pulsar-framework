@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Strategy for resolving a failover target endpoint.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FailoverStrategyInterface

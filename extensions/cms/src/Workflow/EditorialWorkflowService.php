@@ -21,6 +21,9 @@ use Pulsar\Security\Audit\AuditOutcome;
  *
  * Coordinates content status transitions with editorial review records,
  * audit logging, and reviewer assignment.
+ *
+ * @psalm-api Bound to EditorialWorkflowServiceInterface in the CMS service
+ *            provider; resolved from the DI container, never instantiated by name.
  */
 #[Internal]
 final readonly class EditorialWorkflowService implements EditorialWorkflowServiceInterface
@@ -87,7 +90,7 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             AuditOutcome::Success,
             $requestedBy,
             'cms.workflow.submitted_for_review',
-            "content:{$contentId}",
+            "content:$contentId",
             [
                 'review_id' => $reviewId,
                 'reviewer_id' => $reviewerId,
@@ -136,7 +139,7 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             AuditOutcome::Success,
             $review->reviewerId,
             'cms.workflow.approved',
-            "content:{$review->contentId}",
+            "content:$review->contentId",
             [
                 'review_id' => $reviewId,
                 'decision_reason' => $decisionReason,
@@ -185,7 +188,7 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             AuditOutcome::Success,
             $review->reviewerId,
             'cms.workflow.rejected',
-            "content:{$review->contentId}",
+            "content:$review->contentId",
             [
                 'review_id' => $reviewId,
                 'decision_reason' => $decisionReason,
@@ -212,19 +215,19 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
         $reviews = [];
 
         foreach ($result->rows as $row) {
-            $decidedAt = $row->get('decided_at');
+            $decidedAt = $row->getNullableString('decided_at');
 
             $reviews[] = new EditorialReview(
-                id: (string) $row->get('id'),
-                contentId: (string) $row->get('content_id'),
-                locale: $row->get('locale') !== null ? (string) $row->get('locale') : null,
-                requestedBy: (string) $row->get('requested_by'),
-                reviewerId: $row->get('reviewer_id') !== null ? (string) $row->get('reviewer_id') : null,
-                status: ReviewStatus::from((string) $row->get('status')),
-                comment: $row->get('comment') !== null ? (string) $row->get('comment') : null,
-                decisionReason: $row->get('decision_reason') !== null ? (string) $row->get('decision_reason') : null,
-                createdAt: new DateTimeImmutable((string) $row->get('created_at')),
-                decidedAt: $decidedAt !== null ? new DateTimeImmutable((string) $decidedAt) : null,
+                id: $row->getString('id'),
+                contentId: $row->getString('content_id'),
+                locale: $row->getNullableString('locale'),
+                requestedBy: $row->getString('requested_by'),
+                reviewerId: $row->getNullableString('reviewer_id'),
+                status: ReviewStatus::from($row->getString('status')),
+                comment: $row->getNullableString('comment'),
+                decisionReason: $row->getNullableString('decision_reason'),
+                createdAt: new DateTimeImmutable($row->getString('created_at')),
+                decidedAt: $decidedAt !== null ? new DateTimeImmutable($decidedAt) : null,
             );
         }
 
@@ -291,19 +294,19 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             throw CmsException::contentNotFound($reviewId);
         }
 
-        $decidedAt = $row->get('decided_at');
+        $decidedAt = $row->getNullableString('decided_at');
 
         return new EditorialReview(
-            id: (string) $row->get('id'),
-            contentId: (string) $row->get('content_id'),
-            locale: $row->get('locale') !== null ? (string) $row->get('locale') : null,
-            requestedBy: (string) $row->get('requested_by'),
-            reviewerId: $row->get('reviewer_id') !== null ? (string) $row->get('reviewer_id') : null,
-            status: ReviewStatus::from((string) $row->get('status')),
-            comment: $row->get('comment') !== null ? (string) $row->get('comment') : null,
-            decisionReason: $row->get('decision_reason') !== null ? (string) $row->get('decision_reason') : null,
-            createdAt: new DateTimeImmutable((string) $row->get('created_at')),
-            decidedAt: $decidedAt !== null ? new DateTimeImmutable((string) $decidedAt) : null,
+            id: $row->getString('id'),
+            contentId: $row->getString('content_id'),
+            locale: $row->getNullableString('locale'),
+            requestedBy: $row->getString('requested_by'),
+            reviewerId: $row->getNullableString('reviewer_id'),
+            status: ReviewStatus::from($row->getString('status')),
+            comment: $row->getNullableString('comment'),
+            decisionReason: $row->getNullableString('decision_reason'),
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+            decidedAt: $decidedAt !== null ? new DateTimeImmutable($decidedAt) : null,
         );
     }
 

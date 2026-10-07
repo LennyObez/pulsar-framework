@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Payment provider abstraction for commerce operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PaymentGateway

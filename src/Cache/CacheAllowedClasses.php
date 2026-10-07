@@ -17,16 +17,23 @@ use ReflectionException;
 use Serializable;
 use SplFileInfo;
 
+use function array_fill_keys;
+use function array_filter;
 use function array_is_list;
+use function array_keys;
+use function array_values;
 use function class_exists;
+use function dirname;
 use function enum_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function in_array;
 use function is_array;
+use function is_dir;
 use function is_file;
 use function json_decode;
 use function json_encode;
+use function preg_match_all;
 use function sort;
 use function str_starts_with;
 
@@ -79,14 +86,38 @@ final class CacheAllowedClasses
     /**
      * Scan Pulsar source tree to discover all classes eligible for cache deserialization.
      *
+     * The framework's own src/ is always scanned (it owns every eligible
+     * namespace); `$srcPaths` adds the project's roots, which come from its
+     * composer PSR-4 map rather than an assumed `src/` layout. Non-existent
+     * roots are skipped.
+     *
+     * @param list<string> $srcPaths Additional project source roots to union in.
      * @return list<class-string>
      *
+     * @throws CacheException When an `ALWAYS_ALLOWED` class fails the
+     *                       magic-method or Serializable safety check.
+     *                       Failing closed protects the cache
+     *                       deserialization sink from gaining a gadget
+     *                       chain via a future maintainer adding a
+     *                       dangerous magic method to a whitelisted
+     *                       class.
      * @throws ReflectionException
      */
     #[NoDiscard]
-    public static function scan(string $vendorPath, string $srcPath): array
+    public static function scan(string $vendorPath, array $srcPaths): array
     {
-        $candidates = self::discoverCandidates($vendorPath, $srcPath);
+        $candidates = self::discoverCandidates($vendorPath, $srcPaths);
+
+        // ALWAYS_ALLOWED entries skip candidate discovery, so adding
+        // `__wakeup`, `__destruct`, `__serialize`, or `__unserialize` to
+        // one of these classes (e.g. ConfigRepository) would silently turn
+        // it into a deserialization gadget. Re-apply the magic-method and
+        // Serializable checks here — only the readonly-class restriction
+        // is waived.
+        foreach (self::ALWAYS_ALLOWED as $alwaysAllowedClass) {
+            self::assertAlwaysAllowedSafe($alwaysAllowedClass);
+        }
+
         $allowed = self::ALWAYS_ALLOWED;
 
         foreach ($candidates as $className) {
@@ -98,6 +129,143 @@ final class CacheAllowedClasses
         sort($allowed);
 
         return $allowed;
+    }
+
+    /**
+     * Build the cache deserialization allowlist: the namespace {@see scan()}
+     * baseline unioned with the exact classes/enums present in each serialized
+     * blob that will be written to the cache.
+     *
+     * The scan is namespace-scoped (Config, Cache, Routing, Http), but a
+     * serialized ConfigRepository reaches config value objects that live in
+     * feature namespaces — Api, Database, Mail, Tenancy, View, ... — which no
+     * fixed namespace list reliably covers. Deriving the allowlist from the
+     * actual serialized data makes it exact and complete regardless of
+     * namespace, while the scan keeps a forward-compatible baseline for the
+     * other cached artifacts (routes, container hints).
+     *
+     * @param list<string> $srcPaths Project source roots (composer PSR-4 map).
+     * @return list<class-string>
+     *
+     * @throws CacheException When an ALWAYS_ALLOWED class or a serialized class
+     *                       fails the deserialization-safety check.
+     * @throws ReflectionException
+     */
+    #[NoDiscard]
+    public static function forCache(string $vendorPath, array $srcPaths, string ...$serializedBlobs): array
+    {
+        $allowed = self::scan($vendorPath, $srcPaths);
+        $seen = array_fill_keys($allowed, true);
+
+        foreach ($serializedBlobs as $blob) {
+            foreach (self::extractFromSerialized($blob) as $className) {
+                if (!isset($seen[$className])) {
+                    $seen[$className] = true;
+                    $allowed[] = $className;
+                }
+            }
+        }
+
+        sort($allowed);
+
+        return $allowed;
+    }
+
+    /**
+     * Extract the exact set of classes and backed enums that appear in a
+     * serialized string, verifying each is safe to unserialize.
+     *
+     * Namespace-agnostic and exact — the safe allowlist for what is actually
+     * cached is derived from the data itself rather than guessed from a fixed
+     * namespace list. Unknown classes (e.g. a stale serialization referencing a
+     * removed class) are skipped; a present-but-unsafe class fails closed.
+     *
+     * @return list<class-string>
+     *
+     * @throws CacheException If a serialized class implements Serializable or
+     *                       defines a dangerous magic method (a deserialization
+     *                       gadget must never be silently allow-listed).
+     */
+    #[NoDiscard]
+    public static function extractFromSerialized(string $serialized): array
+    {
+        // PHP emits O:len:"Class":... for objects and E:len:"Enum:case"; for
+        // backed enums; both stop the class token at the closing quote or the
+        // enum ':' separator.
+        preg_match_all('/(?:O|E):\d+:"([^":]++)/', $serialized, $matches);
+
+        $classes = [];
+        $seen = [];
+
+        foreach ($matches[1] as $className) {
+            if (isset($seen[$className])) {
+                continue;
+            }
+
+            $seen[$className] = true;
+
+            if (!class_exists($className) && !enum_exists($className)) {
+                continue;
+            }
+
+            self::assertSafeToDeserialize($className);
+            /** @var class-string $className */
+            $classes[] = $className;
+        }
+
+        sort($classes);
+
+        return $classes;
+    }
+
+    /**
+     * Verify that an `ALWAYS_ALLOWED` class is still safe for cache
+     * deserialization. Mirrors `isEligible()` minus the readonly /
+     * backed-enum check — those classes are explicitly waived from
+     * the readonly requirement, but every other guard still applies.
+     *
+     * @throws CacheException If the class implements Serializable or
+     *                       defines a dangerous magic method.
+     */
+    private static function assertAlwaysAllowedSafe(string $className): void
+    {
+        if (!class_exists($className)) {
+            throw CacheException::alwaysAllowedClassMissing($className);
+        }
+
+        self::assertSafeToDeserialize($className);
+    }
+
+    /**
+     * Verify a class is safe to unserialize under an `allowed_classes` guard:
+     * it must neither implement Serializable (a custom unserialize() codepath)
+     * nor define a magic method that runs on every unserialize() even when the
+     * class is allow-listed. Fails closed — such a class is a deserialization
+     * gadget the moment it is added to any allowlist.
+     *
+     * @param class-string $className Caller guarantees the class/enum exists.
+     *
+     * @throws CacheException
+     */
+    private static function assertSafeToDeserialize(string $className): void
+    {
+        // Callers guarantee the class exists, so ReflectionClass cannot throw.
+        /** @var ReflectionClass<object> $ref */
+        $ref = new ReflectionClass($className);
+
+        if ($ref->implementsInterface(Serializable::class)) {
+            throw CacheException::alwaysAllowedClassUnsafe(
+                $className,
+                'class implements Serializable, which exposes a custom unserialize() codepath outside the allowed-classes guard',
+            );
+        }
+
+        if (self::hasDangerousMethods($ref)) {
+            throw CacheException::alwaysAllowedClassUnsafe(
+                $className,
+                'class defines one of __wakeup, __destruct, __serialize, __unserialize — these run on every unserialize() even with allowed_classes set, so the class can be turned into a deserialization gadget',
+            );
+        }
     }
 
     /**
@@ -161,6 +329,7 @@ final class CacheAllowedClasses
      *
      * @param list<class-string> $classes
      *
+     * @throws CacheException If the allowlist file cannot be written.
      * @throws JsonException
      */
     public static function save(string $cachePath, array $classes): void
@@ -169,27 +338,66 @@ final class CacheAllowedClasses
 
         $json = json_encode($classes, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        file_put_contents($path, $json, LOCK_EX);
+        // A discarded return value would let a disk-full / permission failure
+        // pass silently: doWarm() then hashes a missing (empty-string hash) or
+        // stale file, producing a manifest whose allowed_classes_hash will not
+        // match the file on the next load(). Fail loudly instead.
+        if (file_put_contents($path, $json, LOCK_EX) === false) {
+            throw CacheException::writeFailure($path, 'failed to write allowed-classes file');
+        }
     }
 
     /**
-     * Discover candidate classes from Composer's classmap or PSR-4 scan.
+     * Discover candidate classes from the framework's own source tree, the
+     * project's PSR-4 roots, and Composer's classmap.
      *
+     * @param list<string> $srcPaths
      * @return list<class-string>
      */
-    private static function discoverCandidates(string $vendorPath, string $srcPath): array
+    private static function discoverCandidates(string $vendorPath, array $srcPaths): array
     {
+        // Every ELIGIBLE_NAMESPACES entry (Pulsar\Config|Cache|Routing|Http) is a
+        // FRAMEWORK class, so the authoritative root is the framework's OWN src/,
+        // resolved from this file rather than from the caller's layout. In an
+        // installed application `basePath/src` is the APPLICATION's source dir —
+        // or absent entirely when its PSR-4 root is e.g. `app/` — and contains no
+        // Pulsar\* classes, so deriving the root from the caller would silently
+        // empty the allowlist.
+        //
+        // Scanning the directory (rather than trusting autoload_classmap.php) also
+        // keeps this independent of Composer's autoloader optimization: a
+        // NON-optimized classmap (a plain `composer install` / `dump-autoload`, as
+        // CI and dev use) lists almost no PSR-4 classes, so framework cache DTOs
+        // such as Pulsar\Cache\CachedRoute would be dropped and every warm-cache
+        // boot would fail with __PHP_Incomplete_Class. The classmap is unioned in
+        // only as a defensive supplement for any eligible class shipped outside src/.
+        $frameworkSrc = dirname(__DIR__);
+        $candidates = self::scanDirectory($frameworkSrc);
+
+        // Every caller-supplied project root (from the composer PSR-4 map) is
+        // unioned in when it exists; a declared-but-absent root is skipped.
+        foreach ($srcPaths as $srcPath) {
+            if ($srcPath === '' || $srcPath === $frameworkSrc) {
+                continue;
+            }
+
+            foreach (self::scanDirectory($srcPath) as $className) {
+                $candidates[] = $className;
+            }
+        }
+
         $classmap = $vendorPath . DIRECTORY_SEPARATOR . 'composer' . DIRECTORY_SEPARATOR . 'autoload_classmap.php';
 
         if (is_file($classmap)) {
             /** @var array<class-string, string> $map */
             $map = require $classmap;
 
-            return self::filterEligibleNamespaces(array_keys($map));
+            foreach (self::filterEligibleNamespaces(array_keys($map)) as $className) {
+                $candidates[] = $className;
+            }
         }
 
-        // Fallback: scan src/ directory for PHP files
-        return self::scanDirectory($srcPath);
+        return array_values(array_unique($candidates));
     }
 
     /**
@@ -200,19 +408,14 @@ final class CacheAllowedClasses
      */
     private static function filterEligibleNamespaces(array $classNames): array
     {
-        $eligible = [];
-
-        foreach ($classNames as $className) {
-            foreach (self::ELIGIBLE_NAMESPACES as $namespace) {
-                if (str_starts_with($className, $namespace)) {
-                    /** @var class-string $className */
-                    $eligible[] = $className;
-                    break;
-                }
-            }
-        }
-
-        return $eligible;
+        /** @var list<class-string> */
+        return array_values(array_filter(
+            $classNames,
+            static fn(string $className): bool => array_any(
+                self::ELIGIBLE_NAMESPACES,
+                static fn(string $namespace): bool => str_starts_with($className, $namespace),
+            ),
+        ));
     }
 
     /**
@@ -262,17 +465,16 @@ final class CacheAllowedClasses
      */
     private static function hasDangerousMethods(ReflectionClass $ref): bool
     {
-        foreach (self::DANGEROUS_METHODS as $method) {
-            if ($ref->hasMethod($method)) {
-                $m = $ref->getMethod($method);
-                // Only count it if declared on this class (not inherited from a parent)
-                if ($m->getDeclaringClass()->getName() === $ref->getName()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // A dangerous magic method counts whether declared on this class OR
+        // inherited from a parent: PHP's unserialize() invokes the inherited
+        // __wakeup / __destruct / __serialize / __unserialize when
+        // reconstructing the subclass, so a subclass that merely inherits one
+        // is just as exploitable as the parent. hasMethod() already walks the
+        // inheritance chain.
+        return array_any(
+            self::DANGEROUS_METHODS,
+            static fn(string $method): bool => $ref->hasMethod($method),
+        );
     }
 
     /**
@@ -282,6 +484,13 @@ final class CacheAllowedClasses
      */
     private static function scanDirectory(string $dir): array
     {
+        // A declared-but-absent root must be skipped, not fatal: a project whose
+        // PSR-4 root is not literally `src/` would otherwise abort `pulsar
+        // optimize` with RecursiveDirectoryIterator "Failed to open directory".
+        if (!is_dir($dir)) {
+            return [];
+        }
+
         $classes = [];
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),

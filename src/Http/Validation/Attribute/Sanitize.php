@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  */
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
 #[Api(since: '1.0.0')]
-readonly class Sanitize
+final readonly class Sanitize
 {
     /**
      * @param class-string $filter Fully qualified filter class name

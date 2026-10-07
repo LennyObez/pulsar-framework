@@ -29,6 +29,7 @@ use function trim;
  * Emits spans for query() and execute() calls with privacy-safe attributes.
  * Only exports db.system, db.name, and db.operation by default. Statement
  * export is controlled by DbStatementExport policy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InstrumentedConnection implements ConnectionInterface
@@ -126,6 +127,18 @@ final readonly class InstrumentedConnection implements ConnectionInterface
     public function driver(): Driver
     {
         return $this->inner->driver();
+    }
+
+    #[Override]
+    public function variant(): \Pulsar\Database\DriverVariant
+    {
+        return $this->inner->variant();
+    }
+
+    #[Override]
+    public function dialect(): \Pulsar\Database\Dialect\DialectInterface
+    {
+        return $this->inner->dialect();
     }
 
     #[Override]

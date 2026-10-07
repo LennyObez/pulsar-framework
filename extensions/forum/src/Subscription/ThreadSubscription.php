@@ -8,9 +8,10 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * Thread subscription — indicates a user wants notifications for new replies.
+ * Thread subscription: indicates a user wants notifications for new replies.
  *
- * Unique per (tenant, user, thread) — enforced at the repository/DB level.
+ * Unique per (tenant, user, thread): enforced at the repository/DB level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreadSubscription

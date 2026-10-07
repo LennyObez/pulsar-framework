@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
+use Pulsar\Extension\Cms\Account\AccountSectionRegistry;
 use Pulsar\Extension\Cms\Users\CmsUser;
 use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Http\Message\Response;
@@ -17,30 +18,33 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function is_array;
+use function is_int;
+use function is_scalar;
 use function is_string;
 use function max;
 use function min;
 use function str_starts_with;
 use function strlen;
-use function strval;
 
 /**
  * Admin controller for CMS user management.
  *
- * Lists users with CMS roles, shows user details with role badges
- * and 2FA status, updates roles (with step-up), and resets 2FA.
+ * Lists users with CMS roles, shows user details with role badges,
+ * 2FA status, and extension-contributed tabs (orders, forum activity, etc.).
+ * Updates roles (with step-up) and resets 2FA.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class UserController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class UserController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private CmsUserRepositoryInterface $userRepository,
-        private GateInterface $gate,
         private ?AuditLoggerInterface $auditLogger,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        private ?AccountSectionRegistry $sectionRegistry = null,
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List CMS users with role badges and 2FA status.
@@ -51,9 +55,15 @@ final readonly class UserController
         $this->authorize($identity, 'cms.users.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
-        $role = is_string($params['role'] ?? null) ? $params['role'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawRole */
+        $rawRole = $params['role'] ?? null;
+        $role = is_string($rawRole) ? $rawRole : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -85,7 +95,11 @@ final readonly class UserController
     }
 
     /**
-     * Show detailed user information.
+     * Show detailed user information with extension-contributed tabs.
+     *
+     * When extensions like Forum or Payments are active, their
+     * AccountSectionProviders contribute tabs showing orders,
+     * forum activity, badges, invoices, etc.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -96,6 +110,28 @@ final readonly class UserController
 
         if ($user === null) {
             return Response::json(['error' => 'User not found'], 404);
+        }
+
+        $params = $request->getQueryParams();
+        /** @var mixed $rawSection */
+        $rawSection = $params['section'] ?? null;
+        $activeSection = is_string($rawSection) ? $rawSection : 'details';
+
+        // Collect extension-contributed sections (orders, forum activity, etc.)
+        $sections = $this->sectionRegistry?->getSections($id) ?? [];
+
+        // Render extension section content if a non-built-in section is active
+        $sectionHtml = '';
+
+        if ($activeSection !== 'details' && $this->sectionRegistry !== null) {
+            /** @var array<string, mixed> $sectionParams */
+            $sectionParams = $params;
+
+            $sectionHtml = $this->sectionRegistry->renderBackOffice(
+                $activeSection,
+                $id,
+                $sectionParams,
+            );
         }
 
         $data = [
@@ -112,6 +148,9 @@ final readonly class UserController
                 'created_at' => $user->createdAt->format('c'),
                 'is_locked' => $user->isLocked,
             ],
+            'sections' => $sections,
+            'active_section' => $activeSection,
+            'section_html' => $sectionHtml,
         ];
 
         return $this->respondWithView($request, 'admin.users.edit', $data);
@@ -143,13 +182,13 @@ final readonly class UserController
             }
 
             /** @var list<string> $newRoles */
-            $newRoles = array_map(strval(...), $body['roles']);
+            $newRoles = array_map(static fn(mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $body['roles']);
 
             // Validate that all roles are CMS roles
             foreach ($newRoles as $role) {
                 if (!str_starts_with($role, 'cms.')) {
                     return Response::json([
-                        'error' => "Invalid CMS role: {$role}",
+                        'error' => "Invalid CMS role: $role",
                     ], 400);
                 }
             }
@@ -161,7 +200,7 @@ final readonly class UserController
                 AuditOutcome::Success,
                 $identity->id(),
                 'cms.user.roles_updated',
-                "user:{$id}",
+                "user:$id",
                 [
                     'old_roles' => $user->roles,
                     'new_roles' => $newRoles,
@@ -191,7 +230,9 @@ final readonly class UserController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
@@ -206,7 +247,7 @@ final readonly class UserController
             AuditOutcome::Success,
             $identity->id(),
             'cms.user.2fa_reset',
-            "user:{$id}",
+            "user:$id",
             ['reason' => $reason],
         );
 

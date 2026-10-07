@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Multi-select field allowing multiple selections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MultiSelectField extends AbstractField

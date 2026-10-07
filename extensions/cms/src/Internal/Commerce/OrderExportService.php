@@ -25,6 +25,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Exports order data as CSV or JSON with optional PII redaction and evidence hashing.
+ *
+ * @psalm-api Bound to OrderExportServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use OrderExportServiceInterface for public API')]
 final readonly class OrderExportService implements OrderExportServiceInterface

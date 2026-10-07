@@ -15,11 +15,7 @@ use Pulsar\Event\ListenerProviderInterface;
 use ReflectionClass;
 
 use function array_keys;
-use function array_merge;
-use function array_unique;
-use function array_values;
-use function class_implements;
-use function class_parents;
+use function array_push;
 use function get_class;
 use function is_array;
 use function is_string;
@@ -34,6 +30,7 @@ use function usort;
 #[Internal]
 final class ListenerProvider implements ListenerProviderInterface, ListenerMetadataProviderInterface
 {
+    use ClassHierarchyResolveTrait;
     /**
      * @var array<class-string, list<array{callable: callable, priority: int, sequence: int, fqcn: string, moduleId: string}>>
      */
@@ -47,13 +44,6 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
      * @var array<class-string, list<callable>>
      */
     private array $sortedCache = [];
-
-    /**
-     * Cache of resolved class hierarchies per event class (invalidated on add).
-     *
-     * @var array<class-string, list<class-string>>
-     */
-    private array $classHierarchyCache = [];
 
     /**
      * Cache for storm overrides resolved via reflection.
@@ -82,8 +72,11 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
             'moduleId' => $moduleId,
         ];
 
+        // Only the sorted listener order changes on registration; an event
+        // class's parent/interface hierarchy is intrinsic to the class itself
+        // and never changes when a listener is added, so the hierarchy cache
+        // must not be invalidated here (doing so forced needless re-resolution).
         $this->sortedCache = [];
-        $this->classHierarchyCache = [];
     }
 
     #[Override]
@@ -104,8 +97,7 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
     #[Override]
     public function getListenersForEvent(object $event): iterable
     {
-        /** @var class-string $eventClass */
-        $eventClass = get_class($event);
+        $eventClass = $event::class;
 
         if (isset($this->sortedCache[$eventClass])) {
             return $this->sortedCache[$eventClass];
@@ -116,7 +108,7 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
 
         foreach ($matchingClasses as $class) {
             if (isset($this->listeners[$class])) {
-                $allEntries = array_merge($allEntries, $this->listeners[$class]);
+                array_push($allEntries, ...$this->listeners[$class]);
             }
         }
 
@@ -135,11 +127,7 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
             return $a['fqcn'] <=> $b['fqcn'];
         });
 
-        $callables = [];
-
-        foreach ($allEntries as $entry) {
-            $callables[] = $entry['callable'];
-        }
+        $callables = array_map(static fn(array $entry): callable => $entry['callable'], $allEntries);
 
         $this->sortedCache[$eventClass] = $callables;
 
@@ -159,12 +147,12 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
 
             foreach ($this->listeners[$class] as $entry) {
                 if ($entry['moduleId'] !== '') {
-                    $moduleIds[] = $entry['moduleId'];
+                    $moduleIds[$entry['moduleId']] = true;
                 }
             }
         }
 
-        return array_values(array_unique($moduleIds));
+        return array_keys($moduleIds);
     }
 
     #[Override]
@@ -250,42 +238,6 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
     }
 
     /**
-     * Resolve all matching class names for an event (exact + parents + interfaces).
-     *
-     * @param class-string $eventClass
-     * @return list<class-string>
-     */
-    private function resolveMatchingClasses(string $eventClass): array
-    {
-        if (isset($this->classHierarchyCache[$eventClass])) {
-            return $this->classHierarchyCache[$eventClass];
-        }
-
-        $classes = [$eventClass];
-
-        $parents = class_parents($eventClass);
-
-        if ($parents !== false) {
-            /** @var list<class-string> $parentList */
-            $parentList = array_values($parents);
-            $classes = array_merge($classes, $parentList);
-        }
-
-        $interfaces = class_implements($eventClass);
-
-        if ($interfaces !== false) {
-            /** @var list<class-string> $interfaceList */
-            $interfaceList = array_values($interfaces);
-            $classes = array_merge($classes, $interfaceList);
-        }
-
-        /** @var list<class-string> $classes */
-        $this->classHierarchyCache[$eventClass] = $classes;
-
-        return $classes;
-    }
-
-    /**
      * Resolve the FQCN identifier for a listener callable.
      */
     private function resolveListenerFqcn(callable $listener): string
@@ -295,8 +247,8 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
         }
 
         if (is_array($listener)) {
-            /** @var array{0: object|string, 1: string} $listener */
-            $class = is_string($listener[0]) ? $listener[0] : get_class($listener[0]);
+            $target = $listener[0];
+            $class = is_string($target) ? $target : get_class($target);
 
             return $class . '::' . $listener[1];
         }

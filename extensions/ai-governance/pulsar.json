@@ -1,0 +1,30 @@
+{
+  "name": "pulsar/ai-governance",
+  "version": "1.0.0-rc.12",
+  "description": "AI governance for the EU AI Act and ISO 42001:2023: a durable Article 50 register of transparency declarations and synthetic-content marking, provider and deployer roles that decide which obligations a deployment bears, Article 14 human oversight with a register of the overrides actually exercised, a model registry that refuses an Article 5 prohibited practice into production, impact assessments, audit logging, data governance, and explainability",
+  "trust_tier": "verified",
+  "kind": "product",
+  "extension_class": "Pulsar\\Extension\\AiGovernance\\AiGovernanceExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.12"
+  },
+  "provides": {
+    "services": [
+      "AiModelRegistryInterface",
+      "AiImpactAssessmentInterface",
+      "AiAuditLoggerInterface",
+      "AiDataGovernanceInterface",
+      "ExplainabilityInterface",
+      "AiLifecycleManagerInterface",
+      "AiTransparencyInterface",
+      "AiTransparencyDrillInterface",
+      "HumanOversightInterface",
+      "MonitoringHookInterface",
+      "MonitoringRecordStoreInterface",
+      "AiGovernanceDrillInterface"
+    ],
+    "routes": false,
+    "commands": [],
+    "migrations": ["src/Migration"]
+  }
+}

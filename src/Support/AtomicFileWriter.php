@@ -10,8 +10,8 @@ use RuntimeException;
 
 use function bin2hex;
 use function dirname;
-use function file_exists;
 use function file_put_contents;
+use function is_file;
 use function random_bytes;
 use function rename;
 use function sprintf;
@@ -24,7 +24,8 @@ use const DIRECTORY_SEPARATOR;
  *
  * On Unix, rename() is atomic within the same filesystem.
  * On Windows, rename() fails if the target exists, so we unlink first.
- * A small race window exists on Windows — acceptable for build artifacts.
+ * A small race window exists on Windows: acceptable for build artifacts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AtomicFileWriter
@@ -45,7 +46,7 @@ final class AtomicFileWriter
         }
 
         try {
-            if (PHP_OS_FAMILY === 'Windows' && file_exists($path)) {
+            if (PHP_OS_FAMILY === 'Windows' && is_file($path)) {
                 if (!@unlink($path)) {
                     throw new RuntimeException(sprintf(
                         'Failed to remove existing file on Windows: %s',
@@ -62,10 +63,7 @@ final class AtomicFileWriter
                 ));
             }
         } catch (RuntimeException $e) {
-            // Clean up temp file on any failure
-            if (file_exists($tmp)) {
-                @unlink($tmp);
-            }
+            @unlink($tmp);
 
             throw $e;
         }

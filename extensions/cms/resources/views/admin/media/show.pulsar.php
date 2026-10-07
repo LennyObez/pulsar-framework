@@ -19,7 +19,6 @@
             @can('cms.media.delete')
                 <form method="POST" action="/admin/cms/media/{{ $asset['id'] }}" class="cms-inline-form" data-cms-confirm="Delete this media asset? All derivatives will also be removed." data-cms-confirm-reason>
                     @csrf
-                    @method('DELETE')
                     <button type="submit" class="cms-btn cms-btn--danger">Delete</button>
                 </form>
             @endcan
@@ -71,7 +70,6 @@
                       data-cms-replace-form
                       hidden>
                     @csrf
-                    @method('PUT')
                     <div class="cms-form-group">
                         <label for="replace-file" class="cms-form-group__label">Select Replacement File</label>
                         <input type="file" id="replace-file" name="file" class="cms-form-group__input" required aria-required="true">
@@ -125,7 +123,6 @@
                 <div class="cms-sidebar-panel__body">
                     <form method="POST" action="/admin/cms/media/{{ $asset['id'] }}/translations" data-cms-alt-text-form>
                         @csrf
-                        @method('PUT')
 
                         @if (isset($locales) && count($locales) > 0)
                             <div class="cms-media-show__locale-tabs" role="tablist" aria-label="Alt text by locale">

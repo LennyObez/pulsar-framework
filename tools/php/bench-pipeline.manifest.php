@@ -13,7 +13,16 @@ declare(strict_types=1);
  * GOVERNANCE:
  * - Changes to this file require Performance Engineer sign-off.
  * - Changes that reduce security/compliance coverage also require Architecture sign-off.
- * - This file is content-hashed in CI; unauthorized changes fail the build.
+ * - Its SHA-256 is recorded in bench-pipeline.manifest.sha256 and compared by
+ *   tools/ci/assert-bench-manifest-integrity.php on every Tier A CI run. Editing
+ *   this file without running `composer bench:manifest:record` in the same change
+ *   fails the build. That gate makes a change to the benchmark contract visible;
+ *   it does not perform the sign-offs above.
+ *
+ * The third line used to read "this file is content-hashed in CI; unauthorized
+ * changes fail the build" while CI computed the hash, printed it, and compared it
+ * to nothing. It is written above as what now happens rather than as what was
+ * meant to.
  *
  * @see docs/performance.md
  */

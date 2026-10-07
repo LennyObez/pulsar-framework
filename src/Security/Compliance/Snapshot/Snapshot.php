@@ -16,6 +16,7 @@ use function array_map;
  *
  * Supports controls for SOX Section 302/404 by preserving auditable
  * snapshots of entity state with per-field classification metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Snapshot

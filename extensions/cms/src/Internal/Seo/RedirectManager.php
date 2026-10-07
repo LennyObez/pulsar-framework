@@ -32,6 +32,10 @@ use const PHP_URL_SCHEME;
  * Redirect manager with chain collapse, open redirect protection, and CSV bulk import.
  */
 #[Internal(reason: 'Use RedirectManagerInterface for public API')]
+/**
+ * @psalm-api Bound to RedirectManagerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class RedirectManager implements RedirectManagerInterface
 {
     /** Maximum redirect chain depth to prevent infinite loops. */
@@ -175,9 +179,9 @@ final readonly class RedirectManager implements RedirectManagerInterface
                 continue;
             }
 
-            $fromPath = trim($parts[0]);
-            $toPath = trim($parts[1]);
-            $statusCode = isset($parts[2]) ? (int) trim($parts[2]) : 301;
+            $fromPath = trim($parts[0] ?? '');
+            $toPath = trim($parts[1] ?? '');
+            $statusCode = isset($parts[2]) ? (int) trim($parts[2] ?? '') : 301;
 
             if ($fromPath === '' || $toPath === '') {
                 $errors[] = sprintf('Line %d: empty from_path or to_path', $lineNumber + 1);
@@ -248,8 +252,13 @@ final readonly class RedirectManager implements RedirectManagerInterface
         }
 
         // Block URLs that look like scheme:payload but bypassed parse_url
-        if (preg_match('/^[a-z][a-z0-9+.\-]*:/i', $decoded) === 1) {
+        if (preg_match('/^[a-z][a-z0-9+.-]*:/i', $decoded) === 1) {
             $colonPos = strpos($decoded, ':');
+
+            if ($colonPos === false) {
+                return;
+            }
+
             $candidateScheme = strtolower(substr($decoded, 0, $colonPos));
 
             if (!in_array($candidateScheme, ['http', 'https'], true)) {

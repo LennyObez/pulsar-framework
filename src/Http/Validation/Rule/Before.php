@@ -16,9 +16,10 @@ use function sprintf;
 
 /**
  * Value must be a date before the given boundary date. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Before implements RuleInterface
+final readonly class Before implements RuleInterface
 {
     private DateTimeImmutable $boundary;
 

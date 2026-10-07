@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use SodiumException;
+use Traversable;
 
 /**
  * Verifies audit entry HMACs and chain integrity using a key ring.
@@ -16,6 +17,7 @@ use SodiumException;
  * Supports entries with kid (looks up the specific key) and legacy entries
  * without kid (tries all keys in the ring). Chain verification checks that
  * each entry's previousHmac matches the preceding entry's hmac.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditChainVerifier
@@ -43,14 +45,12 @@ final readonly class AuditChainVerifier
             return Hmac::verifyHex($message, $entry->hmac, $key);
         }
 
-        // Legacy entry without kid — try all keys in the ring.
-        foreach ($this->keyRing->all() as $key) {
-            if (Hmac::verifyHex($message, $entry->hmac, $key)) {
-                return true;
-            }
-        }
+        // Legacy entry without kid: try all keys in the ring.
+        $keys = $this->keyRing->all();
+        /** @var array<string, string> $keysArray */
+        $keysArray = $keys instanceof Traversable ? iterator_to_array($keys) : $keys;
 
-        return false;
+        return array_any($keysArray, static fn(string $key): bool => Hmac::verifyHex($message, $entry->hmac, $key));
     }
 
     /**

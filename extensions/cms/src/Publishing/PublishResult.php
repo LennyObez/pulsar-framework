@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a publish or unpublish operation on a single channel.
+ *
+ * @psalm-api Public DTO returned from PublishingChannelInterface and the
+ *            orchestrator; consumed by user-land code and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PublishResult
@@ -26,6 +30,26 @@ final readonly class PublishResult
             channelName: $channelName,
             externalUrl: $externalUrl,
         );
+    }
+
+    /**
+     * Create a result indicating the publish operation was queued for async processing.
+     */
+    public static function queued(string $channelName): self
+    {
+        return new self(
+            success: true,
+            channelName: $channelName,
+            errorMessage: null,
+        );
+    }
+
+    /**
+     * Whether this result represents a queued (deferred) operation.
+     */
+    public function isQueued(): bool
+    {
+        return $this->success && $this->externalUrl === null && $this->errorMessage === null;
     }
 
     public static function failure(string $channelName, string $error): self

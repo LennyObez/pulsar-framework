@@ -15,16 +15,21 @@ use Throwable;
 
 use function base64_encode;
 use function bin2hex;
+use function chunk_split;
 use function count;
 use function fclose;
 use function fgets;
 use function fwrite;
 use function implode;
+use function in_array;
+use function preg_replace;
+use function quoted_printable_encode;
 use function random_bytes;
 use function sprintf;
 use function str_replace;
 use function str_starts_with;
 use function stream_context_create;
+use function stream_set_timeout;
 use function stream_socket_client;
 use function substr;
 
@@ -94,12 +99,15 @@ final class SmtpTransport implements TransportInterface
         }
 
         $this->socket = $socket;
+        stream_set_timeout($this->socket, $this->config->timeout);
         $this->readResponse('220');
     }
 
     private function ehlo(): void
     {
-        $this->sendCommand('EHLO localhost', '250');
+        $hostname = $this->config->ehloHostname ?? gethostname();
+
+        $this->sendCommand(sprintf('EHLO %s', $hostname !== false ? $hostname : 'localhost'), '250');
     }
 
     private function startTls(): void
@@ -129,6 +137,10 @@ final class SmtpTransport implements TransportInterface
             return;
         }
 
+        if (!in_array($this->config->encryption, ['tls', 'ssl'], true)) {
+            throw MailException::driverError('smtp', 'Cannot authenticate over unencrypted connection');
+        }
+
         $this->sendCommand('AUTH LOGIN', '334');
         $this->sendCommand(base64_encode($this->config->username), '334');
         $this->sendCommand(base64_encode($this->config->password), '235');
@@ -136,7 +148,7 @@ final class SmtpTransport implements TransportInterface
 
     private function mailFrom(Address $from): void
     {
-        $this->sendCommand(sprintf('MAIL FROM:<%s>', $from->email), '250');
+        $this->sendCommand(sprintf('MAIL FROM:<%s>', self::sanitizeHeaderValue($from->email)), '250');
     }
 
     private function rcptTo(Message $message): void
@@ -144,7 +156,7 @@ final class SmtpTransport implements TransportInterface
         $recipients = [...$message->to, ...$message->cc, ...$message->bcc];
 
         foreach ($recipients as $recipient) {
-            $this->sendCommand(sprintf('RCPT TO:<%s>', $recipient->email), '250');
+            $this->sendCommand(sprintf('RCPT TO:<%s>', self::sanitizeHeaderValue($recipient->email)), '250');
         }
     }
 
@@ -155,10 +167,39 @@ final class SmtpTransport implements TransportInterface
         $messageId = sprintf('<%s@%s>', bin2hex(random_bytes(16)), $this->config->host);
         $rawMessage = $this->buildRawMessage($message, $messageId);
 
-        $this->sendRaw($rawMessage . "\r\n.\r\n");
+        $this->sendRaw(self::applyTransparency($rawMessage) . "\r\n.\r\n");
         $this->readResponse('250');
 
         return $messageId;
+    }
+
+    /**
+     * RFC 5321 §4.5.2: escape a line that begins with a period.
+     *
+     * The DATA phase ends at a line containing a single period, so any body line
+     * starting with one has to be doubled or the message terminates early and the
+     * rest of it is read by the server as SMTP commands — on a connection that is
+     * already authenticated. Message bodies routinely carry user-supplied text, and
+     * `quoted_printable_encode()` leaves both the period and the CRLF pairs intact.
+     *
+     * Line endings are normalised first. Without that, a body arriving with bare LFs
+     * would put a period at the start of a line the CRLF-only rule cannot see.
+     */
+    private static function applyTransparency(string $rawMessage): string
+    {
+        $normalised = preg_replace('/\r\n|\r|\n/', "\r\n", $rawMessage);
+
+        if ($normalised === null) {
+            throw MailException::driverError('smtp', 'Could not normalise message line endings');
+        }
+
+        $stuffed = preg_replace('/^\./m', '..', $normalised);
+
+        if ($stuffed === null) {
+            throw MailException::driverError('smtp', 'Could not apply SMTP dot-stuffing to the message body');
+        }
+
+        return $stuffed;
     }
 
     private function quit(): void
@@ -212,7 +253,7 @@ final class SmtpTransport implements TransportInterface
                 $parts[] = 'Content-Type: text/plain; charset=UTF-8';
                 $parts[] = 'Content-Transfer-Encoding: quoted-printable';
                 $parts[] = '';
-                $parts[] = $message->textBody;
+                $parts[] = quoted_printable_encode($message->textBody);
             }
 
             if ($message->htmlBody !== null) {
@@ -220,7 +261,7 @@ final class SmtpTransport implements TransportInterface
                 $parts[] = 'Content-Type: text/html; charset=UTF-8';
                 $parts[] = 'Content-Transfer-Encoding: quoted-printable';
                 $parts[] = '';
-                $parts[] = $message->htmlBody;
+                $parts[] = quoted_printable_encode($message->htmlBody);
             }
 
             foreach ($message->attachments as $attachment) {
@@ -229,9 +270,9 @@ final class SmtpTransport implements TransportInterface
 
             $parts[] = sprintf('--%s--', $boundary);
         } elseif ($message->htmlBody !== null) {
-            $parts[] = $message->htmlBody;
+            $parts[] = quoted_printable_encode($message->htmlBody);
         } elseif ($message->textBody !== null) {
-            $parts[] = $message->textBody;
+            $parts[] = quoted_printable_encode($message->textBody);
         }
 
         return implode("\r\n", $parts);
@@ -258,7 +299,7 @@ final class SmtpTransport implements TransportInterface
         }
 
         $lines[] = '';
-        $lines[] = base64_encode($attachment->content);
+        $lines[] = chunk_split(base64_encode($attachment->content), 76, "\r\n");
 
         return implode("\r\n", $lines);
     }

@@ -11,7 +11,11 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\ContentRevision;
 use Pulsar\Extension\Cms\Content\ContentRevisionRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use ContentRevisionRepositoryInterface for public API')]
+/**
+ * @psalm-api Bound to ContentRevisionRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use ContentRevisionRepositoryInterface for public API')]
 final readonly class DbContentRevisionRepository implements ContentRevisionRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

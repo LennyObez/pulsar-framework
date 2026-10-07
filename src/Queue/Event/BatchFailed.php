@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a batch fails due to a job failure (when failures are not allowed).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BatchFailed

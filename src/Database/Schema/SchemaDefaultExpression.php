@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Only these expressions may appear as raw SQL in DDL default clauses.
  * Prevents arbitrary SQL injection through default value expressions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SchemaDefaultExpression: string
@@ -21,4 +22,6 @@ enum SchemaDefaultExpression: string
     case True = 'TRUE';
     case False = 'FALSE';
     case Null = 'NULL';
+    case PostgresUuid = 'gen_random_uuid()';
+    case MysqlUuid = '(UUID())';
 }

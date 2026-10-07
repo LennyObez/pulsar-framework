@@ -14,6 +14,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides entity mapping, query building, schema management,
  * encrypted columns, tenant scoping, and audit-trail persistence.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final readonly class OrmExtension implements ExtensionInterface
 {

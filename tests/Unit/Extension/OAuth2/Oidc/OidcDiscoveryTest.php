@@ -7,8 +7,8 @@ namespace Pulsar\Tests\Unit\Extension\OAuth2\Oidc;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Oidc\OidcConfig;
-use Pulsar\Extension\OAuth2\Oidc\OidcDiscovery;
+use Pulsar\Extension\Auth\OAuth2\Oidc\OidcConfig;
+use Pulsar\Extension\Auth\OAuth2\Oidc\OidcDiscovery;
 
 #[CoversClass(OidcDiscovery::class)]
 final class OidcDiscoveryTest extends TestCase

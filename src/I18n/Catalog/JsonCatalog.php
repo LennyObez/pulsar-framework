@@ -97,6 +97,7 @@ final class JsonCatalog implements CatalogInterface
 
         $entries = [];
 
+        /** @var mixed $value */
         foreach ($raw as $key => $value) {
             if (!is_string($key)) {
                 continue;

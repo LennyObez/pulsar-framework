@@ -47,12 +47,16 @@ final readonly class ToolPermissionChecker implements ToolPermissionCheckerInter
 
     public function isAllowed(string $toolName): bool
     {
-        try {
-            $this->assertAllowed($toolName);
-
-            return true;
-        } catch (McpSecurityException) {
+        if (!$this->registry->has($toolName)) {
             return false;
         }
+
+        $tool = $this->registry->get($toolName);
+
+        if (in_array($toolName, $this->toolsConfig->disabledReadTools, true)) {
+            return false;
+        }
+
+        return $tool->category() !== ToolCategory::Action || in_array($toolName, $this->toolsConfig->allowedActions, true);
     }
 }

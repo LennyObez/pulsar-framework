@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * retained and when it becomes eligible for purging. Each policy maps a
  * category identifier (e.g. "audit_logs", "user_sessions") to a retention
  * period and optional legal basis.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RetentionPolicyInterface

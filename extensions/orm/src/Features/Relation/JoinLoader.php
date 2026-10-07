@@ -52,7 +52,7 @@ final readonly class JoinLoader
         };
 
         $builder->leftJoin(
-            $targetMetadata->tableName,
+            $targetMetadata->qualifiedTableName(),
             $joinAlias,
             static fn(JoinOnBuilder $on) => $on->on($leftColumn, '=', $rightColumn),
         );

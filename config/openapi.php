@@ -75,7 +75,7 @@ return [
     | File path for the generated spec artifact (relative to project root).
     |
     */
-    'output_path' => 'storage/api/openapi.json',
+    'output_path' => 'var/api/openapi.json',
 
     /*
     |--------------------------------------------------------------------------

@@ -13,7 +13,6 @@ use Pulsar\Extension\Cms\EventStore\ContentEventService;
 use ReflectionClass;
 
 use function count;
-use function in_array;
 use function strlen;
 
 #[CoversClass(ContentEventService::class)]
@@ -22,13 +21,6 @@ final class ContentEventServiceTest extends TestCase
 {
     private const string CONTENT_ID = '01912345-6789-7abc-8def-0123456789ab';
     private const string ACTOR_ID = '01912345-6789-7abc-8def-0123456789cd';
-
-    protected function setUp(): void
-    {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b hash algorithm is not available in this PHP build');
-        }
-    }
 
     // ── Evidence hash computation ────────────────────────────────────
 

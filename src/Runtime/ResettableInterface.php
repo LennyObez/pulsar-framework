@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Services implementing this interface will have their state reset
  * between requests in the persistent runtime. The reset is called
  * deterministically via the RequestResetRegistry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ResettableInterface

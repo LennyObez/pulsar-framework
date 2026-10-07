@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception thrown when a buffered body exceeds the allowed size limit.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class BodyTooLargeException extends RuntimeException

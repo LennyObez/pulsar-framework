@@ -10,6 +10,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 
 /**
  * Invoice generated for a completed order, with tamper-evident hashing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Invoice

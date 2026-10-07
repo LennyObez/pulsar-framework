@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Cms\Security;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 
 use function str_repeat;
 
@@ -48,12 +47,12 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function svgContainsPathElementForDarkModules(): void
+    public function svgContainsDarkModuleRects(): void
     {
         $svg = $this->encoder->encode('test');
 
-        self::assertStringContainsString('<path', $svg);
-        self::assertStringContainsString('fill="#000"', $svg);
+        // Dark modules are rendered as <rect> elements without fill (defaults to black)
+        self::assertStringContainsString('<rect x=', $svg);
     }
 
     #[Test]
@@ -61,7 +60,7 @@ final class QrCodeEncoderTest extends TestCase
     {
         $svg = $this->encoder->encode('test');
 
-        self::assertStringContainsString('fill="#fff"', $svg);
+        self::assertStringContainsString('fill="white"', $svg);
     }
 
     // -- Various input lengths ------------------------------------------------
@@ -119,13 +118,13 @@ final class QrCodeEncoderTest extends TestCase
     // -- Data too large -------------------------------------------------------
 
     #[Test]
-    public function dataTooLargeThrowsException(): void
+    public function largeInputStillProducesValidSvg(): void
     {
-        // Version 10 max capacity for byte mode at EC level M is limited
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Data too large');
+        // The encoder scales to higher QR versions for large data
+        $svg = $this->encoder->encode(str_repeat('X', 500));
 
-        $this->encoder->encode(str_repeat('X', 500));
+        self::assertStringStartsWith('<svg', $svg);
+        self::assertStringEndsWith('</svg>', $svg);
     }
 
     // -- Different character types --------------------------------------------

@@ -11,9 +11,10 @@ use Pulsar\Api\Api;
  *
  * Explains how a single claim affected the trust score, including
  * the weight assigned to that claim and its actual contribution.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ScoreExplanation
+final readonly class ScoreExplanation
 {
     /**
      * @param string $claimName The claim that contributed to the score

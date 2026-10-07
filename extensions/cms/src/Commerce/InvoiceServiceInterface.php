@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for invoice generation and retrieval.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InvoiceServiceInterface

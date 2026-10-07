@@ -15,11 +15,15 @@ use Pulsar\Security\Audit\AuditOutcome;
 use function is_bool;
 use function is_float;
 use function is_int;
+use function is_scalar;
 use function is_string;
 
 /**
  * Site settings service with typed value serialization, per-locale cascading,
  * and full audit trail for configuration changes.
+ *
+ * @psalm-api Bound to SettingsServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal]
 final readonly class SettingsService implements SettingsServiceInterface
@@ -101,7 +105,7 @@ final readonly class SettingsService implements SettingsServiceInterface
             AuditOutcome::Success,
             null,
             'cms.settings.updated',
-            "setting:{$group}.{$key}",
+            "setting:$group.$key",
             [
                 'group' => $group,
                 'key' => $key,
@@ -130,11 +134,14 @@ final readonly class SettingsService implements SettingsServiceInterface
         $settings = [];
 
         foreach ($globalResult->rows as $row) {
-            $k = (string) $row->get('key');
-            $settings[$k] = $this->deserializeValue(
-                (string) $row->get('value'),
-                (string) $row->get('value_type'),
-            );
+            $k = $row->getString('key');
+            $settings = [
+                ...$settings,
+                $k => $this->deserializeValue(
+                    $row->getString('value'),
+                    $row->getString('value_type'),
+                ),
+            ];
         }
 
         // Override with locale-specific settings if requested
@@ -144,11 +151,14 @@ final readonly class SettingsService implements SettingsServiceInterface
             $localeResult = $this->db->query($localeSql, $bindings);
 
             foreach ($localeResult->rows as $row) {
-                $k = (string) $row->get('key');
-                $settings[$k] = $this->deserializeValue(
-                    (string) $row->get('value'),
-                    (string) $row->get('value_type'),
-                );
+                $k = $row->getString('key');
+                $settings = [
+                    ...$settings,
+                    $k => $this->deserializeValue(
+                        $row->getString('value'),
+                        $row->getString('value_type'),
+                    ),
+                ];
             }
         }
 
@@ -178,17 +188,23 @@ final readonly class SettingsService implements SettingsServiceInterface
         $sql .= ' ORDER BY "group", key, locale NULLS FIRST';
 
         $result = $this->db->query($sql, $bindings);
+        /** @var array<string, array<string, mixed>> $settings */
         $settings = [];
 
         foreach ($result->rows as $row) {
-            $g = (string) $row->get('group');
-            $k = (string) $row->get('key');
+            $g = $row->getString('group');
+            $k = $row->getString('key');
 
             // Locale-specific values override global (they come after NULLS FIRST)
-            $settings[$g][$k] = $this->deserializeValue(
-                (string) $row->get('value'),
-                (string) $row->get('value_type'),
-            );
+            $groupBag = $settings[$g] ?? [];
+            $groupBag = [
+                ...$groupBag,
+                $k => $this->deserializeValue(
+                    $row->getString('value'),
+                    $row->getString('value_type'),
+                ),
+            ];
+            $settings[$g] = $groupBag;
         }
 
         return $settings;
@@ -222,15 +238,15 @@ final readonly class SettingsService implements SettingsServiceInterface
         }
 
         return new SiteSetting(
-            id: (string) $row->get('id'),
-            tenantId: $row->get('tenant_id') !== null ? (string) $row->get('tenant_id') : null,
-            group: (string) $row->get('group'),
-            key: (string) $row->get('key'),
-            locale: $row->get('locale') !== null ? (string) $row->get('locale') : null,
-            value: (string) $row->get('value'),
-            valueType: (string) $row->get('value_type'),
-            updatedAt: new DateTimeImmutable((string) $row->get('updated_at')),
-            updatedBy: (string) $row->get('updated_by'),
+            id: $row->getString('id'),
+            tenantId: $row->get('tenant_id') !== null ? $row->getString('tenant_id') : null,
+            group: $row->getString('group'),
+            key: $row->getString('key'),
+            locale: $row->get('locale') !== null ? $row->getString('locale') : null,
+            value: $row->getString('value'),
+            valueType: $row->getString('value_type'),
+            updatedAt: new DateTimeImmutable($row->getString('updated_at')),
+            updatedBy: $row->getString('updated_by'),
         );
     }
 
@@ -238,7 +254,7 @@ final readonly class SettingsService implements SettingsServiceInterface
     {
         return match ($valueType) {
             'bool' => $value ? 'true' : 'false',
-            'int', 'float', 'string' => (string) $value,
+            'int', 'float', 'string' => is_scalar($value) ? (string) $value : '',
             default => json_encode($value, JSON_THROW_ON_ERROR),
         };
     }
@@ -250,7 +266,7 @@ final readonly class SettingsService implements SettingsServiceInterface
             'int' => (int) $serialized,
             'float' => (float) $serialized,
             'string' => $serialized,
-            default => json_decode($serialized, true, 512, JSON_THROW_ON_ERROR),
+            default => json_decode($serialized, true, flags: JSON_THROW_ON_ERROR),
         };
     }
 

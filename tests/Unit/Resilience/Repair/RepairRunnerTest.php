@@ -112,7 +112,7 @@ final class RepairRunnerTest extends TestCase
         $runner = new RepairRunner();
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('repair job not registered');
+        $this->expectExceptionMessageIsOrContains('repair job not registered');
 
         $runner->repair('nonexistent');
     }

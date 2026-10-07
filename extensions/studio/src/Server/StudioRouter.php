@@ -8,12 +8,15 @@ use JsonException;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
+use Pulsar\Extension\Studio\Server\Controller\ActivityLogController;
 use Pulsar\Extension\Studio\Server\Controller\ApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Extension\Studio\Server\Controller\ConsoleOverviewController;
 use Pulsar\Extension\Studio\Server\Controller\DatabaseExplorerController;
+use Pulsar\Extension\Studio\Server\Controller\DeploymentController;
 use Pulsar\Extension\Studio\Server\Controller\ExceptionExplorerController;
+use Pulsar\Extension\Studio\Server\Controller\HealthDashboardController;
 use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
@@ -43,6 +46,9 @@ final readonly class StudioRouter
         private ApiController $api,
         private BenchmarkController $benchmark,
         private BenchmarkApiController $benchmarkApi,
+        private ActivityLogController $activityLog,
+        private HealthDashboardController $healthDashboard,
+        private DeploymentController $deployment,
         private ProductionSafetyMode $safetyMode,
     ) {}
 
@@ -56,7 +62,7 @@ final readonly class StudioRouter
         $path = '/' . trim($request->getUri()->getPath(), '/');
         $method = $request->getMethod();
 
-        // POST routes — mutable API actions
+        // POST routes: mutable API actions
         if ($method === 'POST') {
             return match (true) {
                 $path === '/studio/api/benchmark/run' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->run($request)),
@@ -86,6 +92,9 @@ final readonly class StudioRouter
             $path === '/studio/console/logs' => $this->guardDrillDown($request, fn() => $this->logExplorer->handle($request)),
             $path === '/studio/console/exceptions' => $this->exceptionExplorer->handle($request),
             $path === '/studio/console/benchmarks' => $this->guardDrillDown($request, fn() => $this->benchmark->handle($request)),
+            $path === '/studio/console/activity' => $this->guardDrillDown($request, fn() => $this->activityLog->handle($request)),
+            $path === '/studio/console/health' => $this->guardDrillDown($request, fn() => $this->healthDashboard->handle($request)),
+            $path === '/studio/console/deployments' => $this->guardDrillDown($request, fn() => $this->deployment->handle($request)),
             $this->matchesTimeline($path) => $this->guardDrillDown($request, fn() => $this->timeline->handle($request, $this->extractTimelineId($path))),
             $path === '/studio/api/benchmark/status' => $this->guardApi($request, fn() => $this->benchmarkApi->status($request)),
             $path === '/studio/api/benchmark/profiles' => $this->guardApi($request, fn() => $this->benchmarkApi->profiles($request)),

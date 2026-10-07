@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Represents the diff between two content revisions.
+ *
+ * @psalm-api Public DTO returned from RevisionService::diff(); consumed by
+ *            admin revision-history templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RevisionDiff

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Provides operations to record, revoke, and query consent state. All
  * mutations produce an audit trail via the underlying storage mechanism.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConsentManagerInterface

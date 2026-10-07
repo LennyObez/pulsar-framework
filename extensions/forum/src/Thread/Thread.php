@@ -11,10 +11,11 @@ use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
- * Thread aggregate root — represents a discussion thread in the forum.
+ * Thread aggregate root: represents a discussion thread in the forum.
  *
  * Supports typed discussions (Q&A, bug report, feature request, etc.),
  * status transitions (open/closed/locked), pinning, and solution marking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Thread
@@ -109,7 +110,6 @@ final readonly class Thread
     /**
      * Update the thread title and slug.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function editTitle(string $title, string $slug): self
     {
@@ -123,7 +123,6 @@ final readonly class Thread
     /**
      * Move thread to a different category.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function moveToCategory(string $categoryId): self
     {
@@ -137,7 +136,6 @@ final readonly class Thread
      * Close the thread.
      *
      * @throws ForumException If the transition is invalid
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function close(): self
     {
@@ -155,7 +153,6 @@ final readonly class Thread
      * Reopen a closed or locked thread.
      *
      * @throws ForumException If the transition is invalid
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function reopen(): self
     {
@@ -171,9 +168,8 @@ final readonly class Thread
     }
 
     /**
-     * Lock the thread — prevents new replies.
+     * Lock the thread: prevents new replies.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function lock(): self
     {
@@ -184,9 +180,8 @@ final readonly class Thread
     }
 
     /**
-     * Unlock the thread — allows new replies.
+     * Unlock the thread: allows new replies.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function unlock(): self
     {
@@ -199,7 +194,6 @@ final readonly class Thread
     /**
      * Pin the thread to the top of its category listing.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function pin(): self
     {
@@ -212,7 +206,6 @@ final readonly class Thread
     /**
      * Unpin the thread from the top of its category listing.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function unpin(): self
     {
@@ -227,7 +220,6 @@ final readonly class Thread
      *
      * @throws ForumException If the thread type does not support solutions
      * @throws ForumException If the thread already has a solution
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function solve(string $postId): self
     {
@@ -248,7 +240,6 @@ final readonly class Thread
     /**
      * Increment the reply count and update last activity timestamp.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementReplyCount(): self
     {
@@ -262,7 +253,6 @@ final readonly class Thread
     /**
      * Increment the view count.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementViewCount(): self
     {
@@ -274,7 +264,6 @@ final readonly class Thread
     /**
      * Update the aggregate vote score.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function updateVoteScore(int $delta): self
     {

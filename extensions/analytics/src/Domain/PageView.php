@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single page view event recorded by the analytics tracker.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PageView

@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Http\Controller\Api;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\Commerce\ApiKey;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
@@ -15,9 +16,11 @@ use Pulsar\Extension\Cms\Media\MediaVisibility;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
+use function sprintf;
 
 /**
  * Public REST API controller for CMS media assets.
@@ -25,7 +28,7 @@ use function min;
  * Provides JSON endpoints for listing, retrieving, uploading,
  * and deleting media assets.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class MediaApiController
 {
     public function __construct(
@@ -34,15 +37,21 @@ final readonly class MediaApiController
     ) {}
 
     /**
-     * GET /api/v1/media — List media assets with pagination.
+     * GET /api/v1/media: List media assets with pagination.
      */
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
 
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
-        $mimeType = is_string($params['mime'] ?? null) ? $params['mime'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawMime */
+        $rawMime = $params['mime'] ?? null;
+        $mimeType = is_string($rawMime) ? $rawMime : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -75,9 +84,9 @@ final readonly class MediaApiController
     }
 
     /**
-     * GET /api/v1/media/{id} — Show a single media asset.
+     * GET /api/v1/media/{id}: Show a single media asset.
      */
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $asset = $this->mediaRepository->findById($id);
 
@@ -102,7 +111,7 @@ final readonly class MediaApiController
     }
 
     /**
-     * POST /api/v1/media — Upload a new media asset via multipart form data.
+     * POST /api/v1/media: Upload a new media asset via multipart form data.
      */
     public function upload(ServerRequestInterface $request): Response
     {
@@ -122,9 +131,13 @@ final readonly class MediaApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $visibilityValue = is_string($body['visibility'] ?? null) ? $body['visibility'] : 'public';
+        /** @var mixed $rawVisibility */
+        $rawVisibility = $body['visibility'] ?? null;
+        $visibilityValue = is_string($rawVisibility) ? $rawVisibility : 'public';
         $visibility = MediaVisibility::tryFrom($visibilityValue) ?? MediaVisibility::Public;
-        $uploaderId = is_string($body['uploader_id'] ?? null) ? $body['uploader_id'] : 'api';
+        /** @var mixed $rawUploaderId */
+        $rawUploaderId = $body['uploader_id'] ?? null;
+        $uploaderId = is_string($rawUploaderId) ? $rawUploaderId : 'api';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -155,18 +168,32 @@ final readonly class MediaApiController
     }
 
     /**
-     * DELETE /api/v1/media/{id} — Delete a media asset.
+     * DELETE /api/v1/media/{id}: Delete a media asset.
+     *
+     * Requires an authenticated API key (CmsApiKeyMiddleware) and deletes the
+     * asset only when it belongs to the caller's tenant. Without this an
+     * anonymous caller who guesses an asset id could permanently destroy another
+     * tenant's media; the deletion audit records the real acting key, not a
+     * generic "REST API" actor.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
+        /** @var mixed $apiKey */
+        $apiKey = $request->getAttribute('cms_api_key');
+        if (!$apiKey instanceof ApiKey) {
+            return Response::json(['error' => 'Authentication required', 'status' => 401], 401);
+        }
+
         $asset = $this->mediaRepository->findById($id);
 
-        if ($asset === null) {
+        // Fail closed: an asset from another tenant (or none) is reported as 404,
+        // so ids cannot be probed and no cross-tenant delete can occur.
+        if ($asset === null || $asset->tenantId !== $apiKey->tenantId) {
             return Response::json(['error' => 'Media asset not found', 'status' => 404], 404);
         }
 
         try {
-            $this->mediaService->delete($id, 'Deleted via REST API');
+            $this->mediaService->delete($id, sprintf('Deleted via REST API by api-key %s', $apiKey->id));
 
             return Response::json([
                 'data' => ['id' => $id, 'status' => 'deleted'],

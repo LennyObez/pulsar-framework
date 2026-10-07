@@ -152,7 +152,6 @@
                                 @can('cms.content.delete')
                                     <form method="POST" action="/admin/cms/content/{{ $item['id'] }}" class="cms-inline-form" data-cms-confirm="Are you sure you want to delete this content?">
                                         @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger" title="Delete">Delete</button>
                                     </form>
                                 @endcan

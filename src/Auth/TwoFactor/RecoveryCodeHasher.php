@@ -47,13 +47,7 @@ final readonly class RecoveryCodeHasher
      */
     public function hashAll(array $codes): array
     {
-        $hashes = [];
-
-        foreach ($codes as $code) {
-            $hashes[] = $this->hash($code);
-        }
-
-        return $hashes;
+        return array_map($this->hash(...), $codes);
     }
 
     /**

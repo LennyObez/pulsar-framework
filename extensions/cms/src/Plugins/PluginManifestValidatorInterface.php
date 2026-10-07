@@ -9,6 +9,10 @@ use Pulsar\Extension\Cms\Themes\ValidationResult;
 
 /**
  * Validates plugin manifest files (plugin.json).
+ *
+ * @psalm-api Public binding contract; implemented by PluginManifestValidator
+ *            and consumed by CmsPluginManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PluginManifestValidatorInterface

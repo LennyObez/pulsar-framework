@@ -19,8 +19,9 @@ use function time;
 /**
  * Verifies cryptographic device proofs using challenge-response with KeyRing-based signing.
  *
- * Challenges include a nonce and timestamp for replay safety (Finding D).
- * All crypto operations go through KeyRingInterface (Finding B).
+ * Challenges include a nonce and timestamp for replay safety.
+ * All crypto operations go through KeyRingInterface, so this class never
+ * holds key material of its own.
  */
 #[Internal]
 final class DeviceProofVerifier
@@ -32,7 +33,16 @@ final class DeviceProofVerifier
      */
     private const int CHALLENGE_MAX_AGE = 300; // 5 minutes
 
-    /** @var array<string, string> Used nonces to prevent replay */
+    /**
+     * Consumed nonces mapped to the wall-clock time at which they can no
+     * longer be replayed (challenge timestamp + max age). Entries are pruned
+     * once that time passes: the freshness check already rejects challenges
+     * older than the window, so dropping an expired nonce cannot re-enable a
+     * replay. This bounds memory to nonces consumed within one window rather
+     * than letting the cache grow for the whole worker lifetime.
+     *
+     * @var array<string, int>
+     */
     private array $usedNonces = [];
 
     public function __construct(
@@ -75,12 +85,18 @@ final class DeviceProofVerifier
 
         [$nonce, $timestamp] = $parts;
 
-        // Check challenge freshness (replay safety - Finding D)
-        $challengeAge = time() - (int) $timestamp;
+        $now = time();
+
+        // Check challenge freshness (replay safety)
+        $challengeAge = $now - (int) $timestamp;
 
         if ($challengeAge < 0 || $challengeAge > $this->challengeMaxAge) {
             return DeviceProofResult::failed('Challenge expired');
         }
+
+        // Drop nonces that can no longer be replayed (their challenge would
+        // now fail the freshness check) so the cache stays bounded.
+        $this->pruneExpiredNonces($now);
 
         // Check nonce reuse (replay prevention)
         if (isset($this->usedNonces[$nonce])) {
@@ -100,10 +116,22 @@ final class DeviceProofVerifier
             return DeviceProofResult::failed('Proof verification failed');
         }
 
-        // Mark nonce as used
-        $this->usedNonces[$nonce] = $nonce;
+        // Mark nonce as used until its challenge would expire on its own.
+        $this->usedNonces[$nonce] = (int) $timestamp + $this->challengeMaxAge;
 
         return DeviceProofResult::verified($deviceId);
+    }
+
+    /**
+     * Remove consumed nonces whose challenge window has elapsed.
+     */
+    private function pruneExpiredNonces(int $now): void
+    {
+        foreach ($this->usedNonces as $nonce => $expiresAt) {
+            if ($expiresAt < $now) {
+                unset($this->usedNonces[$nonce]);
+            }
+        }
     }
 
     /**

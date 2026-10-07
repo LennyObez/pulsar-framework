@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Metadata cache configuration DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MetadataCacheConfig
@@ -19,20 +20,17 @@ final readonly class MetadataCacheConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     driver?: string,
+     *     path?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $driver */
-        $driver = $data['driver'] ?? 'array';
-
-        /** @var string $path */
-        $path = $data['path'] ?? '';
-
         return new self(
-            driver: $driver,
-            path: $path,
+            driver: $data['driver'] ?? 'array',
+            path: $data['path'] ?? '',
         );
     }
 }

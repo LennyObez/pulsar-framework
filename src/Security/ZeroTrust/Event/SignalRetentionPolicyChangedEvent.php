@@ -12,9 +12,10 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
  *
  * Compliance-relevant event: retention policy changes must be logged
  * for regulatory audit trails (GDPR, HIPAA).
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class SignalRetentionPolicyChangedEvent
+final readonly class SignalRetentionPolicyChangedEvent
 {
     /**
      * @param ClaimSource $source Signal source whose retention policy changed

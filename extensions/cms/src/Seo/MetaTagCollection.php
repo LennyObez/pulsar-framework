@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable collection of SEO meta tags for a content page.
+ *
+ * @psalm-api Public DTO returned from SeoServiceInterface; consumed by
+ *            content templates rendering the head section.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MetaTagCollection

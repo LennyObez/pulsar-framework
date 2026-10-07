@@ -15,6 +15,7 @@ use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
 use function bin2hex;
 use function in_array;
+use function is_string;
 use function random_bytes;
 use function time;
 
@@ -51,7 +52,7 @@ final readonly class CreateResourceHandler
             id: bin2hex(random_bytes(16)),
             action: 'create',
             resourceName: $request->resourceName,
-            recordId: $result->metadata['id'] ?? null,
+            recordId: isset($result->metadata['id']) && is_string($result->metadata['id']) ? $result->metadata['id'] : null,
             actor: $request->context->actor,
             timestamp: time(),
             success: $result->success,
@@ -72,6 +73,7 @@ final readonly class CreateResourceHandler
             if (!$field->editable) {
                 continue;
             }
+            /** @var mixed $value */
             $value = $data[$field->name] ?? null;
             foreach ($field->rules as $rule) {
                 $error = $rule->validate($value, $field->label);

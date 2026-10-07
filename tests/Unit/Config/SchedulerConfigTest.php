@@ -33,7 +33,6 @@ final class SchedulerConfigTest extends TestCase
             'enabled' => true,
             'timezone' => 'America/New_York',
             'max_execution_time' => 7200,
-            'lock_timeout' => 600,
             'log_output' => false,
         ];
 
@@ -42,7 +41,6 @@ final class SchedulerConfigTest extends TestCase
         self::assertTrue($config->enabled);
         self::assertSame('America/New_York', $config->timezone);
         self::assertSame(7200, $config->maxExecutionTime);
-        self::assertSame(600, $config->lockTimeout);
         self::assertFalse($config->logOutput);
     }
 
@@ -54,7 +52,6 @@ final class SchedulerConfigTest extends TestCase
         self::assertFalse($config->enabled);
         self::assertSame('UTC', $config->timezone);
         self::assertSame(3600, $config->maxExecutionTime);
-        self::assertSame(300, $config->lockTimeout);
         self::assertTrue($config->logOutput);
     }
 
@@ -107,7 +104,6 @@ final class SchedulerConfigTest extends TestCase
         self::assertFalse($config->enabled);
         self::assertSame('Europe/London', $config->timezone);
         self::assertSame(3600, $config->maxExecutionTime);
-        self::assertSame(300, $config->lockTimeout);
         self::assertFalse($config->logOutput);
     }
 
@@ -119,7 +115,35 @@ final class SchedulerConfigTest extends TestCase
         self::assertFalse($config->enabled);
         self::assertSame('UTC', $config->timezone);
         self::assertSame(3600, $config->maxExecutionTime);
-        self::assertSame(300, $config->lockTimeout);
         self::assertTrue($config->logOutput);
+    }
+
+    /**
+     * `lock_timeout` was parsed into `SchedulerConfig::$lockTimeout` and read by
+     * nothing: overlap prevention takes its lock lifetime from
+     * `withoutOverlapping($lock, $expiresAfterMinutes)`, per job. Dropping the
+     * property alone would have left the key still accepted and still governing
+     * nothing, so it is out of KNOWN_KEYS too and a deployment that kept it is
+     * told (ADR-0036) rather than left believing it tuned something.
+     */
+    #[Test]
+    public function aLeftOverLockTimeoutIsReportedAsAnUnknownKey(): void
+    {
+        $config = SchedulerConfig::fromArray(['lock_timeout' => 600], $this->environment);
+
+        self::assertSame(['lock_timeout'], $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function theRecognisedKeysAreStillAccepted(): void
+    {
+        $config = SchedulerConfig::fromArray([
+            'enabled' => true,
+            'timezone' => 'Europe/Brussels',
+            'max_execution_time' => 120,
+            'log_output' => false,
+        ], $this->environment);
+
+        self::assertSame([], $config->unknownConfigKeys());
     }
 }

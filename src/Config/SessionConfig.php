@@ -6,25 +6,39 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function is_array;
-use function is_int;
-use function is_string;
+use Pulsar\Config\Exception\ConfigException;
 
 /**
  * Typed configuration DTO for session settings.
  *
  * Maps from the `session` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class SessionConfig
+readonly class SessionConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `session` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'cookie_name', 'lifetime', 'cookie_httponly', 'cookie_secure', 'cookie_samesite',
+        'regenerate_on_privilege_change', 'handler', 'encryption', 'validators',
+        'max_concurrent_sessions', 'cookie_path', 'cookie_domain', 'gc_probability',
+        'gc_divisor', 'save_path', 'cookie_max_payload_size', 'cookie_replay_window',
+        'idle_timeout', 'cookie_host_prefix', 'authenticated_marker_keys',
+    ];
+
     /**
      * @param array{
      *     user_agent?: array{enabled?: bool, mode?: string},
      *     remote_address?: array{enabled?: bool, mode?: string, ipv4_mask?: int, ipv6_mask?: int},
      *     fingerprint?: array{enabled?: bool, attributes?: list<string>},
      * } $validators
+     * @param list<string> $authenticatedMarkerKeys Session-data keys whose presence marks
+     *     an authenticated session. The session subsystem reads these to force
+     *     re-authentication on idle-timeout/validator failure (PCI-DSS 8.2.8) instead of
+     *     silently regenerating. Defaults to the framework guard's `_pulsar_identity`
+     *     (mirrors `Pulsar\Auth\Guard\SessionGuard`); custom guards should add their key.
+     * @param list<string> $unknownKeys Keys present in the raw `session` array that are
+     *     not recognized (typos); surfaced by ConfigManager. See {@see ReportsUnknownKeys}.
      */
     public function __construct(
         public string $cookieName,
@@ -44,83 +58,156 @@ readonly class SessionConfig
         public string $savePath = '',
         public int $cookieMaxPayloadSize = 2048,
         public int $cookieReplayWindow = 86400,
+        public int $idleTimeout = 900,
+        public bool $cookieHostPrefix = false,
+        public array $authenticatedMarkerKeys = ['_pulsar_identity'],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * A copy with a different idle timeout (seconds). Used by compliance
+     * enforcement to tighten the timeout to the value the active regulatory
+     * profile requires without rebuilding the whole config by hand.
+     */
+    #[NoDiscard]
+    public function withIdleTimeout(int $idleTimeout): self
+    {
+        return clone($this, ['idleTimeout' => $idleTimeout]);
+    }
+
+    /**
+     * A copy with session-payload encryption toggled. Used by compliance
+     * enforcement to require encryption at rest when the active regulatory
+     * profile mandates it.
+     */
+    #[NoDiscard]
+    public function withEncryption(bool $encryption): self
+    {
+        return clone($this, ['encryption' => $encryption]);
+    }
+
+    /**
+     * A copy with the cookie `Secure` flag toggled. Used by compliance enforcement
+     * to require HTTPS-only session cookies when the active regulatory profile
+     * mandates encryption in transit.
+     */
+    #[NoDiscard]
+    public function withCookieSecure(bool $cookieSecure): self
+    {
+        return clone($this, ['cookieSecure' => $cookieSecure]);
+    }
+
+    /**
+     * Get the effective cookie name, applying the `__Host-` prefix when enabled.
+     *
+     * The `__Host-` prefix instructs browsers to enforce: Secure flag, Path=/,
+     * and no Domain attribute: preventing cookie tossing attacks from sibling
+     * subdomains. Requires `cookieSecure=true`, `cookiePath='/'`, and
+     * `cookieDomain=''` to be valid per the spec.
+     */
+    #[NoDiscard]
+    public function effectiveCookieName(): string
+    {
+        if ($this->cookieHostPrefix) {
+            return '__Host-' . $this->cookieName;
+        }
+
+        return $this->cookieName;
+    }
 
     /**
      * Build from the raw session config array.
      *
-     * @param array<string, mixed> $data Raw `session` sub-array from config/security.php
+     * @param array{
+     *     cookie_name?: string,
+     *     lifetime?: int,
+     *     cookie_httponly?: bool|int|string,
+     *     cookie_secure?: bool|int|string,
+     *     cookie_samesite?: string,
+     *     regenerate_on_privilege_change?: bool|int|string,
+     *     handler?: string,
+     *     encryption?: bool|int|string,
+     *     validators?: array{
+     *         user_agent?: array{enabled?: bool, mode?: string},
+     *         remote_address?: array{enabled?: bool, mode?: string, ipv4_mask?: int, ipv6_mask?: int},
+     *         fingerprint?: array{enabled?: bool, attributes?: list<string>},
+     *     },
+     *     max_concurrent_sessions?: int,
+     *     cookie_path?: string,
+     *     cookie_domain?: string,
+     *     gc_probability?: int,
+     *     gc_divisor?: int,
+     *     save_path?: string,
+     *     cookie_max_payload_size?: int,
+     *     cookie_replay_window?: int,
+     *     idle_timeout?: int,
+     *     cookie_host_prefix?: bool|int|string,
+     *     authenticated_marker_keys?: list<string>,
+     * } $data Raw `session` sub-array from config/security.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $rawCookieName = $data['cookie_name'] ?? 'PULSAR_SESSION';
-        $cookieName = $environment->get('SESSION_COOKIE_NAME')
-            ?? (is_string($rawCookieName) ? $rawCookieName : 'PULSAR_SESSION');
+        // Secure-by-default in production, relaxed otherwise: an explicit
+        // cookie_secure (config or SESSION_COOKIE_SECURE env) always wins, but
+        // when unset the cookie is marked Secure only in production. This keeps
+        // production cookies HTTPS-only while letting the session — and thus
+        // CSRF-protected forms — work over plain http:// on the local dev
+        // server, where a Secure cookie is never returned and every POST 403s.
+        $appEnv = $environment->get('APP_ENV') ?? 'local';
+        $secureEnv = $environment->get('SESSION_COOKIE_SECURE');
+        $cookieSecure = match (true) {
+            $secureEnv !== null => $secureEnv === 'true' || $secureEnv === '1',
+            isset($data['cookie_secure']) => (bool) $data['cookie_secure'],
+            default => $appEnv === 'production',
+        };
 
-        $rawLifetime = $data['lifetime'] ?? 7200;
-        $lifetime = is_int($rawLifetime) ? $rawLifetime : (int) (is_numeric($rawLifetime) ? $rawLifetime : 7200);
-
-        $cookieHttpOnly = (bool) ($data['cookie_httponly'] ?? true);
-        $cookieSecure = (bool) ($data['cookie_secure'] ?? true);
-
-        $rawCookieSameSite = $data['cookie_samesite'] ?? 'Strict';
-        $cookieSameSite = is_string($rawCookieSameSite) ? $rawCookieSameSite : 'Strict';
-
-        $regenerateOnPrivilegeChange = (bool) ($data['regenerate_on_privilege_change'] ?? true);
-
-        $rawHandler = $data['handler'] ?? 'file';
-        $handler = is_string($rawHandler) ? $rawHandler : 'file';
-
-        $encryption = (bool) ($data['encryption'] ?? true);
-
-        $rawValidators = $data['validators'] ?? [];
-        $validatorsRaw = is_array($rawValidators) ? $rawValidators : [];
-        /** @var array{user_agent?: array{enabled?: bool, mode?: string}, remote_address?: array{enabled?: bool, mode?: string, ipv4_mask?: int, ipv6_mask?: int}, fingerprint?: array{enabled?: bool, attributes?: list<string>}} $validators */
-        $validators = $validatorsRaw;
-
-        $rawMaxConcurrent = $data['max_concurrent_sessions'] ?? 3;
-        $maxConcurrentSessions = is_int($rawMaxConcurrent) ? $rawMaxConcurrent : 3;
-
-        $rawCookiePath = $data['cookie_path'] ?? '/';
-        $cookiePath = is_string($rawCookiePath) ? $rawCookiePath : '/';
-
-        $rawCookieDomain = $data['cookie_domain'] ?? '';
-        $cookieDomain = is_string($rawCookieDomain) ? $rawCookieDomain : '';
-
-        $rawGcProbability = $data['gc_probability'] ?? 1;
-        $gcProbability = is_int($rawGcProbability) ? $rawGcProbability : 1;
-
-        $rawGcDivisor = $data['gc_divisor'] ?? 100;
-        $gcDivisor = is_int($rawGcDivisor) ? $rawGcDivisor : 100;
-
-        $rawSavePath = $data['save_path'] ?? '';
-        $savePath = is_string($rawSavePath) ? $rawSavePath : '';
-
-        $rawCookieMaxPayload = $data['cookie_max_payload_size'] ?? 2048;
-        $cookieMaxPayloadSize = is_int($rawCookieMaxPayload) ? $rawCookieMaxPayload : 2048;
-
-        $rawCookieReplayWindow = $data['cookie_replay_window'] ?? 86400;
-        $cookieReplayWindow = is_int($rawCookieReplayWindow) ? $rawCookieReplayWindow : 86400;
-
-        return new self(
-            cookieName: $cookieName,
-            lifetime: $lifetime,
-            cookieHttpOnly: $cookieHttpOnly,
+        $config = new self(
+            cookieName: $environment->get('SESSION_COOKIE_NAME') ?? $data['cookie_name'] ?? 'PULSAR_SESSION',
+            lifetime: $data['lifetime'] ?? 7200,
+            cookieHttpOnly: (bool) ($data['cookie_httponly'] ?? true),
             cookieSecure: $cookieSecure,
-            cookieSameSite: $cookieSameSite,
-            regenerateOnPrivilegeChange: $regenerateOnPrivilegeChange,
-            handler: $handler,
-            encryption: $encryption,
-            validators: $validators,
-            maxConcurrentSessions: $maxConcurrentSessions,
-            cookiePath: $cookiePath,
-            cookieDomain: $cookieDomain,
-            gcProbability: $gcProbability,
-            gcDivisor: $gcDivisor,
-            savePath: $savePath,
-            cookieMaxPayloadSize: $cookieMaxPayloadSize,
-            cookieReplayWindow: $cookieReplayWindow,
+            cookieSameSite: $data['cookie_samesite'] ?? 'Strict',
+            regenerateOnPrivilegeChange: (bool) ($data['regenerate_on_privilege_change'] ?? true),
+            handler: $data['handler'] ?? 'file',
+            encryption: (bool) ($data['encryption'] ?? true),
+            validators: $data['validators'] ?? [],
+            maxConcurrentSessions: $data['max_concurrent_sessions'] ?? 3,
+            cookiePath: $data['cookie_path'] ?? '/',
+            cookieDomain: $data['cookie_domain'] ?? '',
+            gcProbability: $data['gc_probability'] ?? 1,
+            gcDivisor: $data['gc_divisor'] ?? 100,
+            savePath: $data['save_path'] ?? '',
+            cookieMaxPayloadSize: $data['cookie_max_payload_size'] ?? 2048,
+            cookieReplayWindow: $data['cookie_replay_window'] ?? 86400,
+            idleTimeout: $data['idle_timeout'] ?? 900,
+            cookieHostPrefix: (bool) ($data['cookie_host_prefix'] ?? false),
+            authenticatedMarkerKeys: $data['authenticated_marker_keys'] ?? ['_pulsar_identity'],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
+
+        // The `__Host-` cookie prefix is only honoured by browsers when the cookie
+        // is Secure, has Path=/, and carries no Domain attribute. A mismatched
+        // combination produces a cookie name that every browser silently rejects,
+        // breaking the session (and thus authentication) with no error. Reject it
+        // at config-build time so the misconfiguration surfaces immediately.
+        if ($config->cookieHostPrefix
+            && ($config->cookieSecure !== true || $config->cookiePath !== '/' || $config->cookieDomain !== '')
+        ) {
+            throw ConfigException::invalidValue(
+                'security.session.cookie_host_prefix',
+                "__Host- prefix requires cookie_secure=true, cookie_path='/', and empty cookie_domain",
+            );
+        }
+
+        return $config;
     }
 }

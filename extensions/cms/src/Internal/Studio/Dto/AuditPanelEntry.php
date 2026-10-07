@@ -8,7 +8,9 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 
 /**
- * Row in the CMS audit panel — a single CMS-relevant audit event.
+ * Row in the CMS audit panel: a single CMS-relevant audit event.
+ *
+ * @psalm-api Returned by CmsAuditPanel::list(); consumed by Studio templates.
  */
 #[Internal]
 final readonly class AuditPanelEntry

@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Menu items form a tree via parent_id and can link to either
  * internal content (via content_id) or external URLs.
+ *
+ * @psalm-api Public DTO returned from MenuRepositoryInterface; consumed by
+ *            navigation rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MenuItem
@@ -26,6 +30,7 @@ final readonly class MenuItem
      * @param string|null $icon Optional icon identifier
      * @param int $sortOrder Position among siblings
      * @param bool $visible Whether the item is rendered
+     * @param string|null $importId Stable import identifier for idempotent imports
      */
     public function __construct(
         public string $id,
@@ -38,5 +43,6 @@ final readonly class MenuItem
         public ?string $icon,
         public int $sortOrder,
         public bool $visible,
+        public ?string $importId = null,
     ) {}
 }

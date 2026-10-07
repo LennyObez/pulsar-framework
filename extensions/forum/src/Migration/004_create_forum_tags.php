@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $driver = $connection->driver();
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
@@ -22,9 +25,7 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_slug ON forum_tags (slug)
-            SQL);
+        $indexes->ensure('forum_tags', 'uq_tag_slug', ['slug'], unique: true);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_thread_tags (
@@ -36,9 +37,7 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_thread_tags_thread ON forum_thread_tags (thread_id)
-            SQL);
+        $indexes->ensure('forum_thread_tags', 'idx_thread_tags_thread', ['thread_id']);
     }
 
     public function down(ConnectionInterface $connection): void

@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Implementations may aggregate from PSR-6 pool metrics or
  * the underlying cache driver's diagnostic counters.
+ *
+ * @psalm-api Public binding contract; consumed by dashboard widgets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CacheStatsProviderInterface

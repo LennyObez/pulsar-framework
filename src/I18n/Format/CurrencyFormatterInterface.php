@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Locale-aware currency formatting contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CurrencyFormatterInterface

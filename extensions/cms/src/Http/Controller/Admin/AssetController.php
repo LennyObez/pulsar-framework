@@ -26,7 +26,7 @@ use const PATHINFO_EXTENSION;
  * the framework router. In development, the dev router serves assets
  * directly before kernel boot for better performance.
  */
-#[Internal(reason: 'CMS admin asset serving — implementation detail')]
+#[Internal(reason: 'CMS admin asset serving; implementation detail')]
 final readonly class AssetController
 {
     private const array MIME_TYPES = [
@@ -61,7 +61,11 @@ final readonly class AssetController
         foreach ($candidates as $filePath) {
             $realPath = realpath($filePath);
 
-            if ($realPath === false || !is_file($realPath) || !str_starts_with($realPath, realpath($baseDir) ?: '')) {
+            if ($realPath === false) {
+                continue;
+            }
+
+            if (!is_file($realPath) || !str_starts_with($realPath, realpath($baseDir) ?: '')) {
                 continue;
             }
 

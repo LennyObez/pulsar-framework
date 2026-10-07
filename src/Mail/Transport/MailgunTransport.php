@@ -55,7 +55,7 @@ final readonly class MailgunTransport implements TransportInterface
             }
 
             /** @var array{id?: string} $decoded */
-            $decoded = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
 
             return $decoded['id'] ?? '';
         } catch (MailException $e) {
@@ -116,6 +116,7 @@ final readonly class MailgunTransport implements TransportInterface
             $params['h:' . $key] = $value;
         }
 
+        /** @var mixed $value */
         foreach ($message->metadata as $key => $value) {
             $params['v:' . $key] = is_string($value) ? $value : (string) json_encode($value);
         }

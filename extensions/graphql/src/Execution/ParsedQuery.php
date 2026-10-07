@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A parsed GraphQL query consisting of top-level field selections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ParsedQuery

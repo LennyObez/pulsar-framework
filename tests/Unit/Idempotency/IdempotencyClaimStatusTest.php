@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Idempotency;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Idempotency\IdempotencyClaimStatus;
 
-#[CoversClass(IdempotencyClaimStatus::class)]
+#[CoversNothing]
 final class IdempotencyClaimStatusTest extends TestCase
 {
     #[Test]

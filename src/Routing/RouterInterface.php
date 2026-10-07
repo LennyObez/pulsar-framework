@@ -6,6 +6,7 @@ namespace Pulsar\Routing;
 
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
+use Pulsar\Routing\Binding\BindingScope;
 
 /**
  * Route registration and query contract.
@@ -16,6 +17,7 @@ use Pulsar\Http\Method;
  *
  * Internal-only methods (lock, loadRoutes, etc.) are intentionally
  * excluded to keep the public surface focused.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RouterInterface
@@ -27,43 +29,31 @@ interface RouterInterface
 
     /**
      * Register a GET route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function get(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a POST route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function post(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a PUT route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function put(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a PATCH route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function patch(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a DELETE route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function delete(string $path, mixed $handler, ?string $name = null): self;
 
     /**
      * Register a route matching any method.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
     public function any(string $path, mixed $handler, ?string $name = null): self;
 
@@ -88,10 +78,48 @@ interface RouterInterface
     /**
      * Register an explicit parameter-to-model binding.
      *
+     * `$scope` overrides what the route path says about containment, and its
+     * default overrides nothing. See {@see \Pulsar\Routing\Binding\BindingScope}.
+     *
      * @param class-string $modelClass
      * @param class-string|null $resolverClass
+     * @param string|null $parentRelation Relation to resolve through; required by, and exclusive to, BindingScope::Contained
      */
-    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self;
+    public function model(
+        string $parameter,
+        string $modelClass,
+        ?string $resolverClass = null,
+        BindingScope $scope = BindingScope::Path,
+        ?string $parentRelation = null,
+    ): self;
+
+    /**
+     * Register a full resource route set (7 routes: index, create, store, show, edit, update, destroy).
+     *
+     * Passing `['auth']` guards nothing on its own: the generated routes carry
+     * no `permissions` attribute, and
+     * {@see \Pulsar\Auth\Middleware\AuthorizationMiddleware} reads an empty
+     * permission list as deny-everyone. To guard a resource set, register its
+     * routes through {@see RouteAccessRegistrar::authenticated()} and name the
+     * permission each one requires.
+     *
+     * @param string $name Resource name (e.g. 'photos')
+     * @param string $controller Controller class
+     * @param list<string> $middleware Middleware for all routes
+     */
+    public function resource(string $name, string $controller, array $middleware = []): self;
+
+    /**
+     * Register an API resource route set (5 routes: index, store, show, update, destroy).
+     *
+     * The caveat on {@see RouterInterface::resource()} applies here too: `auth`
+     * without a declared permission denies every caller.
+     *
+     * @param string $name Resource name (e.g. 'photos')
+     * @param string $controller Controller class
+     * @param list<string> $middleware Middleware for all routes
+     */
+    public function apiResource(string $name, string $controller, array $middleware = []): self;
 
     /**
      * Get all registered routes.

@@ -10,6 +10,7 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
+use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Middleware\StepUpMiddleware;
@@ -18,6 +19,8 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Session\SessionInterface;
+
+use function json_decode;
 
 #[CoversClass(StepUpMiddleware::class)]
 final class StepUpMiddlewareTest extends TestCase
@@ -138,6 +141,70 @@ final class StepUpMiddlewareTest extends TestCase
 
         self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
         self::assertStringContainsString('Step-up authentication required', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function returns403WhenNoSecurityContext(): void
+    {
+        /** @var SessionInterface&Stub $session */
+        $session = $this->createStub(SessionInterface::class);
+        $middleware = new StepUpMiddleware($session);
+
+        $request = new ServerRequest(method: 'POST', uri: '/wire-transfer');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(body: 'OK'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertSame('Step-up authentication required', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function returns403JsonWhenNoSecurityContextAndAcceptJson(): void
+    {
+        /** @var SessionInterface&Stub $session */
+        $session = $this->createStub(SessionInterface::class);
+        $middleware = new StepUpMiddleware($session);
+
+        $request = new ServerRequest(
+            method: 'POST',
+            uri: '/api/wire-transfer',
+            headers: ['Accept' => 'application/json'],
+        );
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(body: 'OK'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $response->getBody(), true);
+        self::assertSame('Step-up authentication required', $body['error']);
+        self::assertSame(403, $body['status']);
+    }
+
+    #[Test]
+    public function returns403WhenIdentityIsAnonymous(): void
+    {
+        /** @var SessionInterface&Stub $session */
+        $session = $this->createStub(SessionInterface::class);
+        $middleware = new StepUpMiddleware($session);
+
+        $authManager = $this->createStub(AuthManagerInterface::class);
+        $authManager->method('authenticate')->willReturn(new AnonymousIdentity());
+
+        $request = new ServerRequest(method: 'POST', uri: '/sensitive-action');
+        $securityContext = new SecurityContext($authManager, $request);
+        $request = $request->withAttribute('_security_context', $securityContext);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(body: 'OK'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     /**

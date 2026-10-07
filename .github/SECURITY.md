@@ -11,8 +11,8 @@ Security is a core design goal of Pulsar. We prioritize secure defaults, auditab
 
 | Version       | Supported |
 | ------------- | --------- |
-| 1.0.0-rc.11   | Yes       |
-| < 1.0.0-rc.11 | No        |
+| 1.0.0-rc.12   | Yes       |
+| < 1.0.0-rc.12 | No        |
 
 Security fixes are applied to the `main` branch and the latest release candidate tag. Older RC tags do not receive backports.
 

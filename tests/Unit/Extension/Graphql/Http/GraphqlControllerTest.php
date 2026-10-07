@@ -29,6 +29,8 @@ use Pulsar\Extension\Graphql\Resolver\TaxonomyResolver;
 use Pulsar\Extension\Graphql\Schema\SchemaBuilder;
 
 use function json_decode;
+use function str_repeat;
+use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -145,10 +147,45 @@ final class GraphqlControllerTest extends TestCase
     }
 
     #[Test]
+    public function execute_returns_413_for_oversized_body(): void
+    {
+        // 64KB = 65,536 bytes; generate a body that exceeds this
+        $oversizedQuery = str_repeat('a', 65_537);
+        $request = $this->createRequest($oversizedQuery);
+
+        $response = $this->controller->execute($request);
+
+        self::assertSame(413, $response->getStatusCode());
+        $body = $this->decodeResponse($response);
+        self::assertNull($body['data']);
+        self::assertNotEmpty($body['errors']);
+        self::assertIsArray($body['errors']);
+        self::assertIsArray($body['errors'][0]);
+        self::assertIsString($body['errors'][0]['message']);
+        self::assertStringContainsString('maximum allowed size', $body['errors'][0]['message']);
+    }
+
+    #[Test]
+    public function execute_accepts_body_at_exact_limit(): void
+    {
+        // Build a valid JSON body that is exactly 65,536 bytes
+        // The JSON envelope {"query":"..."} uses 12 bytes for structure
+        $padding = str_repeat(' ', 65_536 - 12);
+        $jsonBody = '{"query":"' . $padding . '"}';
+        self::assertSame(65_536, strlen($jsonBody));
+
+        $request = $this->createRequest($jsonBody);
+        $response = $this->controller->execute($request);
+
+        // Should NOT be 413 — must pass the size check
+        self::assertNotSame(413, $response->getStatusCode());
+    }
+
+    #[Test]
     public function introspect_returns_schema(): void
     {
         $request = $this->createStub(ServerRequestInterface::class);
-        $response = $this->controller->introspect($request);
+        $response = $this->controller->introspect();
 
         self::assertSame(200, $response->getStatusCode());
 

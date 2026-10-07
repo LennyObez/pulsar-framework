@@ -17,15 +17,22 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
+use function count;
+use function file_put_contents;
 use function is_dir;
+use function json_encode;
 use function microtime;
 use function number_format;
+use function sort;
 use function sprintf;
 use function str_replace;
 use function strlen;
 use function substr;
 
 use const DIRECTORY_SEPARATOR;
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Pre-compiles all templates during build/deploy step.
@@ -49,17 +56,26 @@ final class ViewCompileCommand extends Command
         $this->name = 'view:compile';
         $this->description = 'Pre-compile all templates to the cache directory';
         $this->addOption('force', 'Recompile all templates even if cached', '-f');
+        $this->addOption('manifest', 'Write a JSON manifest of compiled templates to the given path', '-m');
+        $this->addOption('verify', 'Verify all templates are precompiled (exit 1 if any need compilation)', '-V');
     }
 
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
+        // Verify mode: check that all templates are already compiled
+        if ($input->getOption('verify') !== null) {
+            return $this->executeVerify($output);
+        }
+
         $output->info('Compiling templates...');
 
         $startTime = microtime(true);
         $compiled = 0;
         $skipped = 0;
         $errors = 0;
+        /** @var list<string> $compiledNames */
+        $compiledNames = [];
 
         foreach ($this->config->templatePaths as $basePath) {
             if (!is_dir($basePath)) {
@@ -76,15 +92,17 @@ final class ViewCompileCommand extends Command
 
                     if (!$force && !$this->compiler->needsRecompilation($templateName)) {
                         $skipped++;
+                        $compiledNames[] = $templateName;
 
                         continue;
                     }
 
                     $this->compiler->compile($templateName);
                     $compiled++;
+                    $compiledNames[] = $templateName;
                 } catch (ViewException $e) {
                     $errors++;
-                    $output->error(sprintf('  Error: %s — %s', $templateName, $e->getMessage()));
+                    $output->error(sprintf('  Error: %s: %s', $templateName, $e->getMessage()));
                 }
             }
         }
@@ -105,6 +123,13 @@ final class ViewCompileCommand extends Command
             return ExitCode::Error->value;
         }
 
+        // Write manifest if requested
+        $manifestPath = $input->getNullableStringOption('manifest');
+
+        if ($manifestPath !== null) {
+            $this->writeManifest($manifestPath, $compiledNames, $output);
+        }
+
         $total = $compiled + $skipped;
         $output->success(sprintf(
             'All %d template(s) are compiled and cached at: %s',
@@ -116,7 +141,63 @@ final class ViewCompileCommand extends Command
     }
 
     /**
-     * Find all .pulsar.php template files in a directory.
+     * Verify that all templates are precompiled (no runtime compilation needed).
+     */
+    private function executeVerify(OutputInterface $output): int
+    {
+        $output->info('Verifying template precompilation...');
+
+        /** @var list<string> $stale */
+        $stale = [];
+
+        foreach ($this->config->templatePaths as $basePath) {
+            if (!is_dir($basePath)) {
+                continue;
+            }
+
+            foreach ($this->findTemplates($basePath) as $templateName) {
+                if ($this->compiler->needsRecompilation($templateName)) {
+                    $stale[] = $templateName;
+                }
+            }
+        }
+
+        if ($stale === []) {
+            $output->success('All templates are precompiled. Zero runtime compilation needed.');
+
+            return ExitCode::Success->value;
+        }
+
+        $output->error(sprintf('%d template(s) need compilation:', count($stale)));
+
+        foreach ($stale as $name) {
+            $output->error(sprintf('  - %s', $name));
+        }
+
+        return ExitCode::Error->value;
+    }
+
+    /**
+     * Write a JSON manifest of all compiled template names.
+     *
+     * @param list<string> $templateNames
+     */
+    private function writeManifest(string $path, array $templateNames, OutputInterface $output): void
+    {
+        sort($templateNames);
+
+        $manifest = json_encode([
+            'templates' => $templateNames,
+            'count' => count($templateNames),
+            'cache_path' => $this->config->cachePath,
+        ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        file_put_contents($path, $manifest);
+        $output->info(sprintf('Manifest written to: %s', $path));
+    }
+
+    /**
+     * Find all Pulse template files (.pulse.php) in a directory.
      *
      * @return list<string> Template names (dot-notation)
      */
@@ -135,16 +216,12 @@ final class ViewCompileCommand extends Command
 
             $filename = $file->getFilename();
 
-            if (!str_ends_with($filename, '.pulsar.php')) {
-                continue;
+            if (str_ends_with($filename, '.pulse.php')) {
+                $relativePath = substr($file->getPathname(), strlen($basePath) + 1);
+                $name = substr($relativePath, 0, -10); // strlen('.pulse.php') = 10
+                $name = str_replace([DIRECTORY_SEPARATOR, '/'], '.', $name);
+                $templates[] = $name;
             }
-
-            $relativePath = substr($file->getPathname(), strlen($basePath) + 1);
-            // Remove .pulsar.php extension and convert separators to dots
-            $name = substr($relativePath, 0, -11); // strlen('.pulsar.php') = 11
-            $name = str_replace([DIRECTORY_SEPARATOR, '/'], '.', $name);
-
-            $templates[] = $name;
         }
 
         return $templates;

@@ -16,6 +16,9 @@ use function sodium_crypto_generichash;
  *
  * Each revision captures a point-in-time snapshot of a content translation,
  * with an evidence hash (BLAKE2b) proving data integrity.
+ *
+ * @psalm-api Resolved from the DI container by content services and admin
+ *            revision controllers; not instantiated by name.
  */
 #[Internal]
 final readonly class RevisionService
@@ -201,14 +204,18 @@ final readonly class RevisionService
         $compareFields = ['title', 'slug', 'body', 'excerpt', 'metaTitle', 'metaDescription'];
 
         foreach ($compareFields as $field) {
+            // The compared fields are all ?string entity properties; psalm cannot
+            // resolve the dynamic property name, so state the type explicitly.
+            /** @var string|null $fromValue */
             $fromValue = $from->{$field};
+            /** @var string|null $toValue */
             $toValue = $to->{$field};
 
             if ($fromValue !== $toValue) {
                 $changes[] = new FieldDiff(
                     field: $field,
-                    from: $fromValue !== null ? (string) $fromValue : null,
-                    to: $toValue !== null ? (string) $toValue : null,
+                    from: $fromValue,
+                    to: $toValue,
                 );
             }
         }

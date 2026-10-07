@@ -17,13 +17,14 @@ use function strtolower;
 /**
  * Flags fields with names suggesting unnecessary PII collection.
  *
- * Advisory only — not a compliance gate. This analyzer checks field names
+ * Advisory only: not a compliance gate. This analyzer checks field names
  * against patterns that indicate potentially unnecessary personally identifiable
  * information collection (e.g., maiden names, full SSNs). Results should be
  * reviewed by qualified privacy personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class DataMinimizationAnalyzer implements PolicyAnalyzerInterface
+final readonly class DataMinimizationAnalyzer implements PolicyAnalyzerInterface
 {
     /** @var list<array{pattern: string, description: string, severity: string, confidence: float}> */
     private const array PII_INDICATORS = [

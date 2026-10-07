@@ -40,7 +40,7 @@ return [
     'storage' => 'memory',
 
     // Path to the JSON file when storage is 'file'
-    'file_path' => 'storage/flags.json',
+    'file_path' => 'var/flags/flags.json',
 
     // When true, every flag evaluation is recorded in the audit log
     'audit_evaluations' => false,
@@ -84,7 +84,7 @@ readonly class FeatureFlagConfig
     public function __construct(
         public bool $enabled = false,
         public FlagStorageDriver $storage = FlagStorageDriver::Memory,
-        public string $filePath = 'storage/flags.json',
+        public string $filePath = 'var/flags/flags.json',
         public bool $auditEvaluations = false,
         public bool $defaultState = false,
         public array $flags = [],
@@ -242,7 +242,7 @@ Persists flag definitions to a JSON file on disk. Reads are cached in memory for
 ```php
 use Pulsar\FeatureFlag\Storage\FileFlagStorage;
 
-$storage = new FileFlagStorage('storage/flags.json');
+$storage = new FileFlagStorage('var/flags/flags.json');
 $storage->set($flagDefinition);  // Writes to disk immediately
 $flag = $storage->get('dark-mode');
 ```

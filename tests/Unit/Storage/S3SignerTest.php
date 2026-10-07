@@ -154,6 +154,36 @@ final class S3SignerTest extends TestCase
     }
 
     #[Test]
+    public function signingKeyCacheReturnsCorrectKeyAcrossDifferentDates(): void
+    {
+        // The per-date signing-key cache must invalidate when the date stamp
+        // changes. Warm the cache on day 1, then sign on day 2: the day-2
+        // signature must match a freshly-constructed signer (no stale key),
+        // and the two days' signatures must differ.
+        $day1 = 1_704_067_200; // 2024-01-01T00:00:00Z
+        $day2 = 1_704_153_600; // 2024-01-02T00:00:00Z
+        $payloadHash = hash('sha256', '');
+        $headers = ['Host' => 'bucket.s3.amazonaws.com'];
+
+        // Warm the cache with day 1, then sign day 2 on the SAME instance.
+        $this->signer->sign('GET', '/key', '', $headers, $payloadHash, $day1);
+        $cachedDay2 = $this->signer->sign('GET', '/key', '', $headers, $payloadHash, $day2);
+
+        // A fresh signer that only ever sees day 2 (no prior cache).
+        $freshSigner = new S3Signer(self::ACCESS_KEY, self::SECRET_KEY, self::REGION);
+        $freshDay2 = $freshSigner->sign('GET', '/key', '', $headers, $payloadHash, $day2);
+
+        self::assertSame(
+            $freshDay2['Authorization'],
+            $cachedDay2['Authorization'],
+            'Cached signer produced a stale signing key after the date stamp changed.',
+        );
+
+        $day1Auth = $this->signer->sign('GET', '/key', '', $headers, $payloadHash, $day1);
+        self::assertNotSame($day1Auth['Authorization'], $cachedDay2['Authorization']);
+    }
+
+    #[Test]
     public function debugInfoRedactsKeys(): void
     {
         $debugInfo = $this->signer->__debugInfo();

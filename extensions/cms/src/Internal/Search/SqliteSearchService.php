@@ -23,7 +23,6 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use function array_column;
 use function array_slice;
 use function bin2hex;
-use function count;
 use function exp;
 use function implode;
 use function max;
@@ -38,6 +37,10 @@ use function usort;
 
 /**
  * SQLite FTS5 full-text search with composite ranking (bm25 + recency + taxonomy boost).
+ */
+/**
+ * @psalm-api Returned by SearchServiceFactory::create() when the active driver
+ *            is SQLite; not instantiated by name outside the factory.
  */
 #[Internal(reason: 'Use SearchServiceInterface for public API')]
 final readonly class SqliteSearchService implements SearchServiceInterface
@@ -164,7 +167,7 @@ final readonly class SqliteSearchService implements SearchServiceInterface
                 total: 0,
                 query: $query,
                 suggestions: $this->suggest($query, $locale),
-                tookMs: round((microtime(true) - $startTime) * 1000, 2),
+                tookMs: round((microtime(true) - $startTime) * 1000.0, 2),
             );
         }
 
@@ -174,7 +177,7 @@ final readonly class SqliteSearchService implements SearchServiceInterface
 
         foreach ($result->rows as $row) {
             $content = self::hydrateContent($row);
-            // bm25() returns negative values — lower (more negative) = better match
+            // bm25() returns negative values: lower (more negative) = better match
             $ftsRank = -$row->getFloat('fts_rank');
             $contentIds[] = $content->id;
             $ranked[] = ['content' => $content, 'fts_rank' => $ftsRank];
@@ -191,8 +194,8 @@ final readonly class SqliteSearchService implements SearchServiceInterface
             $content = $entry['content'];
 
             $daysSinceUpdate = max(0, (int) $now->diff($content->updatedAt)->days);
-            $recencyBoost = 1.0 + self::RECENCY_BOOST_BASE * exp(-$daysSinceUpdate / self::RECENCY_DECAY_DAYS);
-            $taxonomyBoost = 1.0 + self::TAXONOMY_BOOST_PER_TERM * ($taxonomyCounts[$content->id] ?? 0);
+            $recencyBoost = 1.0 + self::RECENCY_BOOST_BASE * exp((float) (-$daysSinceUpdate) / self::RECENCY_DECAY_DAYS);
+            $taxonomyBoost = 1.0 + self::TAXONOMY_BOOST_PER_TERM * (float) ($taxonomyCounts[$content->id] ?? 0);
 
             $entry['final_score'] = $entry['fts_rank'] * $recencyBoost * $taxonomyBoost;
         }
@@ -200,7 +203,7 @@ final readonly class SqliteSearchService implements SearchServiceInterface
         unset($entry);
 
         // Re-sort by final composite score (higher is better)
-        usort($ranked, static fn(array $a, array $b): int => $b['final_score'] <=> $a['final_score']);
+        usort($ranked, static fn(array $a, array $b): int => ($b['final_score'] ?? 0.0) <=> ($a['final_score'] ?? 0.0));
 
         // Apply pagination to re-ranked results
         $pageSlice = array_slice($ranked, $offset, $perPage);
@@ -208,7 +211,7 @@ final readonly class SqliteSearchService implements SearchServiceInterface
 
         $this->recordSearch($query, $locale, $total);
 
-        $tookMs = round((microtime(true) - $startTime) * 1000, 2);
+        $tookMs = round((microtime(true) - $startTime) * 1000.0, 2);
 
         return new SearchResult(
             items: $items,

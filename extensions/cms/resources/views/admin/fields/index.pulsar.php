@@ -77,7 +77,6 @@
                                       class="cms-inline-form"
                                       data-cms-confirm="Delete this custom field? All stored values will be lost.">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
                                 </form>
                             @endcan

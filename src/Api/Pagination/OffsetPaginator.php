@@ -19,6 +19,7 @@ use function sprintf;
  *
  * Uses page numbers and per-page sizes to slice datasets. Best for small to
  * medium datasets where total count is available and random page access is needed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OffsetPaginator implements PaginatorInterface

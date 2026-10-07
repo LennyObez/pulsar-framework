@@ -95,11 +95,22 @@ Half-step values are also available: `--space-0-5`, `--space-1-5`, `--space-2-5`
 
 #### Font families
 
-| Token          | Stack                                                            |
-| -------------- | ---------------------------------------------------------------- |
-| `--font-sans`  | system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, etc. |
-| `--font-serif` | Georgia, Cambria, Times New Roman, Times, serif                  |
-| `--font-mono`  | ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, etc.     |
+| Token            | First choice             | Falls back to                      |
+| ---------------- | ------------------------ | ---------------------------------- |
+| `--font-heading` | Montserrat (bundled)     | system-ui, -apple-system, Segoe UI |
+| `--font-sans`    | Overpass (bundled)       | system-ui, -apple-system, Segoe UI |
+| `--font-mono`    | JetBrains Mono (bundled) | ui-monospace, SF Mono, Consolas    |
+| `--font-serif`   | Georgia                  | Cambria, Times New Roman, Times    |
+
+The three bundled families are self-hosted variable WOFF2 files in
+`resources/ui/fonts/`, so no page fetches a font from a third-party CDN. The exact
+stacks live in `resources/ui/css/tokens.css`; what each file is verified to cover, and
+where it came from, is in `resources/ui/fonts/fonts.manifest.json`.
+
+Greek is the one script the bundled text families do not carry, so the `el` locale
+renders headings and body text in the system fallback above. JetBrains Mono does carry
+Greek and Cyrillic, so code and log output render in the bundled face in every shipped
+locale.
 
 #### Font sizes
 

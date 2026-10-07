@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for event system errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EventException extends RuntimeException
@@ -76,5 +77,14 @@ final class EventException extends RuntimeException
             $className,
             $reason,
         ));
+    }
+
+    /**
+     * Required envelope field is missing or empty.
+     */
+    #[NoDiscard]
+    public static function missingEnvelopeField(string $field): self
+    {
+        return new self(sprintf('EventEnvelope requires non-empty %s', $field));
     }
 }

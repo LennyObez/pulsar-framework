@@ -94,7 +94,7 @@ final class ReputationServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ForumProfile not found');
+        $this->expectExceptionMessageIsOrContains('ForumProfile not found');
 
         $service->addReputation('unknown', 5, 'reason');
     }
@@ -112,7 +112,7 @@ final class ReputationServiceTest extends TestCase
         $service = $this->makeService(profiles: $profiles);
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('ForumProfile not found');
+        $this->expectExceptionMessageIsOrContains('ForumProfile not found');
 
         $service->addReputation('user-1', 5, 'reason');
     }

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispute reason codes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DisputeReason: string

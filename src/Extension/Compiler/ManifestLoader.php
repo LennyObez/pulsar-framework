@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Loads a compiled extension manifest from a PHP file.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ManifestLoader

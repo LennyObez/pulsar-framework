@@ -21,7 +21,7 @@ use function substr;
  * Given a path prefix of '/t/', a path of '/t/acme/dashboard'
  * resolves to tenant 'acme'.
  */
-readonly class PathPrefixTenantResolver implements TenantResolverInterface
+final readonly class PathPrefixTenantResolver implements TenantResolverInterface
 {
     public function __construct(
         private TenancyConfig $config,

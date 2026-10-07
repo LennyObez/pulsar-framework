@@ -10,10 +10,11 @@ use Pulsar\Extension\Forum\Domain\ReputationLevel;
 use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
- * Forum profile — per-user forum metadata including reputation, activity counts, and ban state.
+ * Forum profile: per-user forum metadata including reputation, activity counts, and ban state.
  *
  * Linked to the shared auth_users table via userId. Each user has at most
  * one forum profile per tenant.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumProfile
@@ -76,7 +77,6 @@ final readonly class ForumProfile
     /**
      * Add reputation points (positive or negative).
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function addReputation(int $points): self
     {
@@ -89,7 +89,6 @@ final readonly class ForumProfile
     /**
      * Increment the post count.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementPostCount(): self
     {
@@ -102,7 +101,6 @@ final readonly class ForumProfile
     /**
      * Increment the thread count.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementThreadCount(): self
     {
@@ -116,7 +114,6 @@ final readonly class ForumProfile
      * Ban the user from the forum.
      *
      * @throws ForumException If the user is already banned
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function ban(string $reason, ?DateTimeImmutable $expiresAt = null): self
     {
@@ -136,7 +133,6 @@ final readonly class ForumProfile
     /**
      * Remove the ban from the user.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function unban(): self
     {

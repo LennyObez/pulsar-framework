@@ -12,9 +12,10 @@ use Pulsar\Api\Api;
  *
  * This is a high-severity security event. Listeners should trigger alerts
  * and potentially escalate to security teams.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class StepUpLockoutEvent
+final readonly class StepUpLockoutEvent
 {
     /**
      * @param string $identityId Identity that has been locked out

@@ -9,8 +9,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Storage\LocalStorageAdapter;
 use Pulsar\Storage\StorageException;
+use Symfony\Component\Filesystem\Filesystem;
 
+use function file_put_contents;
+use function mkdir;
 use function strlen;
+use function symlink;
 use function sys_get_temp_dir;
 use function uniqid;
 
@@ -22,6 +26,9 @@ final class LocalStorageAdapterTest extends TestCase
     private string $basePath;
     private LocalStorageAdapter $adapter;
 
+    /** @var list<string> directories outside basePath created by a test, removed in tearDown */
+    private array $externalDirs = [];
+
     protected function setUp(): void
     {
         $this->basePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_storage_test_' . uniqid('', true);
@@ -31,7 +38,12 @@ final class LocalStorageAdapterTest extends TestCase
 
     protected function tearDown(): void
     {
-        $this->removeDirectory($this->basePath);
+        $filesystem = new Filesystem();
+        $filesystem->remove($this->basePath);
+
+        foreach ($this->externalDirs as $dir) {
+            $filesystem->remove($dir);
+        }
     }
 
     #[Test]
@@ -122,7 +134,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function getThrowsObjectNotFoundForMissingKey(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('Storage object not found: "missing.txt"');
+        $this->expectExceptionMessageIsOrContains('Storage object not found: "missing.txt"');
 
         $_ = $this->adapter->get('missing.txt');
     }
@@ -131,7 +143,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function pathTraversalWithDoubleDotIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('path traversal not allowed');
+        $this->expectExceptionMessageIsOrContains('path traversal not allowed');
 
         $this->adapter->put('../escape.txt', 'malicious');
     }
@@ -140,7 +152,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function pathTraversalInMiddleOfKeyIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('path traversal not allowed');
+        $this->expectExceptionMessageIsOrContains('path traversal not allowed');
 
         $_ = $this->adapter->get('subdir/../../etc/passwd');
     }
@@ -149,7 +161,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function keyStartingWithSlashIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('key must not start with a directory separator');
+        $this->expectExceptionMessageIsOrContains('key must not start with a directory separator');
 
         $this->adapter->put('/absolute/path.txt', 'data');
     }
@@ -158,7 +170,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function keyStartingWithBackslashIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('key must not start with a directory separator');
+        $this->expectExceptionMessageIsOrContains('key must not start with a directory separator');
 
         $this->adapter->put('\\absolute\\path.txt', 'data');
     }
@@ -167,7 +179,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function emptyKeyIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('key must not be empty');
+        $this->expectExceptionMessageIsOrContains('key must not be empty');
 
         $this->adapter->put('', 'data');
     }
@@ -182,32 +194,50 @@ final class LocalStorageAdapterTest extends TestCase
         self::assertNull($url);
     }
 
-    private function removeDirectory(string $dir): void
+    /**
+     * Regression for the symlink boundary bug: a bare str_starts_with prefix
+     * check (without a trailing separator) would accept a symlink whose
+     * realpath shares a non-separator prefix with basePath — e.g. basePath
+     * ".../store" and a sibling ".../store-escape". The escape must be
+     * rejected because the resolved path is NOT inside the basePath
+     * directory.
+     */
+    #[Test]
+    public function symlinkResolvingToSiblingWithSharedPrefixIsRejected(): void
     {
-        if (!is_dir($dir)) {
-            return;
+        // Sibling directory whose absolute path EXTENDS basePath's name
+        // (no separator between them) — the heart of the prefix-boundary bug.
+        $escapeDir = $this->basePath . '-escape';
+
+        if (!@mkdir($escapeDir, 0o750, true) && !is_dir($escapeDir)) {
+            self::markTestSkipped('Unable to create sibling directory for symlink test.');
+        }
+        $this->externalDirs[] = $escapeDir;
+
+        file_put_contents($escapeDir . DIRECTORY_SEPARATOR . 'secret.txt', 'top secret');
+
+        // Symlink INSIDE basePath that points at the sibling escape directory.
+        $linkPath = $this->basePath . DIRECTORY_SEPARATOR . 'link';
+
+        if (!@symlink($escapeDir, $linkPath)) {
+            self::markTestSkipped('Symlinks are not supported in this environment.');
         }
 
-        $entries = scandir($dir);
+        $this->expectException(StorageException::class);
+        $this->expectExceptionMessageIsOrContains('symlink escapes storage base path');
 
-        if ($entries === false) {
-            return;
-        }
+        $_ = $this->adapter->get('link/secret.txt');
+    }
 
-        foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
+    /**
+     * Guard the boundary fix does not over-reject: a real subdirectory whose
+     * realpath legitimately starts with basePath + separator must still work.
+     */
+    #[Test]
+    public function legitimateNestedKeyIsNotRejectedByBoundaryCheck(): void
+    {
+        $this->adapter->put('nested/dir/file.txt', 'ok');
 
-            $path = $dir . DIRECTORY_SEPARATOR . $entry;
-
-            if (is_dir($path)) {
-                $this->removeDirectory($path);
-            } else {
-                unlink($path);
-            }
-        }
-
-        rmdir($dir);
+        self::assertSame('ok', $this->adapter->get('nested/dir/file.txt'));
     }
 }

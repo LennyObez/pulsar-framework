@@ -35,6 +35,7 @@ use const JSON_THROW_ON_ERROR;
  * Enforces per-contributor resource limits (section count, nesting depth,
  * keys per object, and total serialized size) to prevent any single
  * contributor from degrading the introspection snapshot.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ProjectMetadataBuilder
@@ -210,13 +211,14 @@ final class ProjectMetadataBuilder
         $result = [];
 
         foreach ($keys as $key) {
+            /** @var mixed $value */
             $value = $data[$key];
 
             if (is_string($value) || is_int($value) || is_float($value) || is_bool($value) || $value === null) {
-                $result[$key] = $value;
+                $result = [...$result, $key => $value];
             } elseif (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $result[$key] = $this->validateData($value, $errors, $depth + 1);
+                $result = [...$result, $key => $this->validateData($value, $errors, $depth + 1)];
             } elseif ($value instanceof Closure) {
                 $errors[] = sprintf('Key "%s": closures are not allowed, removed.', $key);
             } elseif (is_object($value)) {

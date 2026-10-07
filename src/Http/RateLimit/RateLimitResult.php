@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a rate limit check.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RateLimitResult
+final readonly class RateLimitResult
 {
     public function __construct(
         public bool $allowed,

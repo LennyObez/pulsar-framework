@@ -15,6 +15,8 @@ use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\SecurityContext;
+use Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter;
+use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -49,6 +51,8 @@ final class TwoFactorFlowTest extends TestCase
             recoveryCodeVerifier: $recoveryVerifier,
             issuer: 'PulsarTest',
             recoveryCodeCount: 8,
+            replayGuard: new InMemoryTotpReplayGuard(),
+            rateLimiter: new AllowAllTwoFactorRateLimiter(),
         );
     }
 
@@ -76,10 +80,20 @@ final class TwoFactorFlowTest extends TestCase
         $confirmResult = $this->manager->confirmSetup('user-1', $setup['secret'], $code);
         self::assertTrue($confirmResult->confirmed);
 
-        // Step 3: Verify code during login (using deprecated verifyCodeWithSecret)
-        $loginCode = $this->generator->computeCode($setup['secret'], $timestamp);
+        // Step 3: verify during login, with a code from the next time step. A code is
+        // redeemable once and not once per purpose, so the one that confirmed the
+        // enrolment is spent (ASVS 2.8.4). Steps N and N+1 both sit inside the
+        // verifier's ±1 window whichever side of a step boundary the run lands on.
+        $loginCode = $this->generator->computeCode(
+            $setup['secret'],
+            $timestamp + $this->generator->period(),
+        );
         $verifyResult = $this->manager->verifyCodeWithSecret('user-1', $setup['secret'], $loginCode);
         self::assertTrue($verifyResult->verified);
+
+        // The code spent on the enrolment buys nothing afterwards.
+        $replayed = $this->manager->verifyCodeWithSecret('user-1', $setup['secret'], $code);
+        self::assertFalse($replayed->verified, 'a redeemed code must not be redeemable for another purpose');
 
         // Step 4: Use recovery code as fallback
         $recoveryIndex = $this->manager->verifyRecoveryCode(

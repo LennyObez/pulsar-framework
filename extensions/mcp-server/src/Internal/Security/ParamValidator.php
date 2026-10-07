@@ -70,7 +70,11 @@ final readonly class ParamValidator
         if (file_exists($absolute)) {
             $real = realpath($absolute);
 
-            if ($real === false || !str_starts_with($real, realpath($projectRoot) ?: $projectRoot)) {
+            if ($real === false) {
+                throw McpException::protocolError('Path escapes project root', -32602);
+            }
+
+            if (!str_starts_with($real, realpath($projectRoot) ?: $projectRoot)) {
                 throw McpException::protocolError('Path escapes project root', -32602);
             }
 

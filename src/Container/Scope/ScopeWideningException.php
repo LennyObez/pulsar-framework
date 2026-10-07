@@ -17,6 +17,7 @@ use function sprintf;
  *
  * For example, a singleton depending on a request-scoped service would
  * hold a stale reference after the request scope ends.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ScopeWideningException extends Exception implements ContainerExceptionInterface

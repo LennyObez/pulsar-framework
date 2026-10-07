@@ -10,6 +10,7 @@ use Pulsar\Extension\Orm\Exception\MappingException;
 
 /**
  * Registry for entity metadata lookups.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MetadataRegistryInterface

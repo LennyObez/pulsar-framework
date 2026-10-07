@@ -12,11 +12,15 @@ use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as PsrRequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Routing\MatchedRoute;
 use RuntimeException;
+use Throwable;
 
 use function array_reverse;
-use function assert;
+use function array_unshift;
+use function class_exists;
 use function count;
+use function get_debug_type;
 use function sprintf;
 
 /**
@@ -39,6 +43,14 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
     private ?PsrRequestHandlerInterface $fallbackHandler = null;
 
+    /**
+     * Cached middleware chain for the current fallback handler.
+     *
+     * Built on first handle() call and reused for subsequent requests.
+     * Invalidated when middleware stack or fallback handler changes.
+     */
+    private ?PsrRequestHandlerInterface $cachedChain = null;
+
     public function __construct(
         private readonly ?ContainerInterface $container = null,
     ) {}
@@ -54,6 +66,26 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     {
         $this->middleware[] = $middleware;
         $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
+
+        return $this;
+    }
+
+    /**
+     * Add middleware to the front of the pipeline.
+     *
+     * The prepended middleware executes before every middleware added so far
+     * (outermost), so it observes the request before any of them — including a
+     * rewriting middleware that mutates the URI. Derived caches are invalidated
+     * so the change takes effect on the next handle().
+     *
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
+     */
+    public function prepend(PsrMiddlewareInterface|string $middleware): self
+    {
+        array_unshift($this->middleware, $middleware);
+        $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
 
         return $this;
     }
@@ -63,7 +95,10 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
      */
     public function process(ServerRequestInterface $request, PsrRequestHandlerInterface $handler): ResponseInterface
     {
-        $this->fallbackHandler = $handler;
+        if ($this->fallbackHandler !== $handler) {
+            $this->fallbackHandler = $handler;
+            $this->cachedChain = null;
+        }
 
         return $this->handle($request);
     }
@@ -80,9 +115,9 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
             throw new RuntimeException('No fallback handler set. Call process() or setHandler() first.');
         }
 
-        $pipeline = $this->createPipeline($this->fallbackHandler);
+        $chain = $this->cachedChain ??= $this->createPipeline($this->fallbackHandler);
 
-        return $pipeline->handle($request);
+        return $chain->handle($request);
     }
 
     /**
@@ -91,17 +126,29 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     public function setHandler(PsrRequestHandlerInterface $handler): void
     {
         $this->fallbackHandler = $handler;
+        $this->cachedChain = null;
     }
 
     /**
      * Process a request through the middleware stack with a callable handler.
      *
+     * $dispatchedRoute is the route whose handler $handler is going to invoke.
+     * Passing it binds every {@see DispatchedRouteAwareInterface} middleware in
+     * the stack to that route for this dispatch, so a middleware whose decisions
+     * come from the route reads the one being served rather than the `_route`
+     * attribute, which every frame between routing and the handler can rewrite.
+     * Only the kernel knows the answer, so only the kernel passes it; null is
+     * every other caller, and leaves those middleware unbound.
+     *
      * @param callable(ServerRequestInterface): ResponseInterface $handler
      */
-    public function dispatch(ServerRequestInterface $request, callable $handler): ResponseInterface
-    {
+    public function dispatch(
+        ServerRequestInterface $request,
+        callable $handler,
+        ?MatchedRoute $dispatchedRoute = null,
+    ): ResponseInterface {
         $wrappedHandler = new CallableRequestHandler($handler);
-        $pipeline = $this->createPipeline($wrappedHandler);
+        $pipeline = $this->createPipeline($wrappedHandler, $dispatchedRoute);
 
         return $pipeline->handle($request);
     }
@@ -123,15 +170,60 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     }
 
     /**
-     * Build a chained RequestHandler from the middleware stack and a final handler.
+     * Capture the current middleware stack for the kernel boot/shutdown
+     * lifecycle. Intended for kernel use only.
+     *
+     * @return list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>>
      */
-    private function createPipeline(PsrRequestHandlerInterface $handler): PsrRequestHandlerInterface
+    public function snapshot(): array
     {
+        return $this->middleware;
+    }
+
+    /**
+     * Restore the middleware stack from a {@see snapshot()}.
+     *
+     * Clears all derived caches (resolved instances, cached chain, fallback
+     * handler) so the next handle() re-resolves from the restored stack rather
+     * than serving stale pre-shutdown instances. Intended for kernel use only.
+     *
+     * @param list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>> $snapshot
+     */
+    public function restoreFromSnapshot(array $snapshot): void
+    {
+        $this->middleware = $snapshot;
+        $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
+        $this->fallbackHandler = null;
+    }
+
+    /**
+     * Build a chained RequestHandler from the middleware stack and a final handler.
+     *
+     * Resolved instances are memoised for the process lifetime, but a
+     * route-bound copy is not: it belongs to one dispatch, and reusing it would
+     * serve the next request the previous request's route. So the binding
+     * happens here, on the way into the chain, and the memoised instance stays
+     * unbound — which is also what keeps a Fiber-interleaved worker from sharing
+     * one route between concurrent requests.
+     *
+     * $dispatchedRoute is null on the paths where there is no answer yet: the
+     * global pipeline runs before routing, and {@see handle()} caches its chain
+     * across requests precisely because nothing in it depends on a route.
+     */
+    private function createPipeline(
+        PsrRequestHandlerInterface $handler,
+        ?MatchedRoute $dispatchedRoute = null,
+    ): PsrRequestHandlerInterface {
         $resolved = $this->resolvedMiddleware ??= $this->resolveAllMiddleware();
 
         $current = $handler;
 
         foreach ($resolved as $middleware) {
+            if ($dispatchedRoute !== null && $middleware instanceof DispatchedRouteAwareInterface) {
+                $middleware = $middleware->forDispatchedRoute($dispatchedRoute);
+            }
+
             $current = new MiddlewareHandler($middleware, $current);
         }
 
@@ -163,12 +255,38 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
         if ($this->container !== null && $this->container->has($middleware)) {
             $resolved = $this->container->get($middleware);
-            assert($resolved instanceof PsrMiddlewareInterface);
+
+            // An explicit type guard, not `assert()`. With
+            // `zend.assertions=-1` (typical prod) the assertion compiles
+            // out and a non-conforming binding would silently slip into
+            // the pipeline, exploding deeper inside `process()`. A real
+            // throw guarantees the failure surfaces with a precise
+            // diagnostic regardless of assertion mode.
+            if (!$resolved instanceof PsrMiddlewareInterface) {
+                throw new InvalidArgumentException(sprintf(
+                    'Container binding "%s" resolved to %s, expected %s.',
+                    $middleware,
+                    get_debug_type($resolved),
+                    PsrMiddlewareInterface::class,
+                ));
+            }
 
             return $resolved;
         }
 
         if (class_exists($middleware)) {
+            // Try container resolution for classes with constructor dependencies
+            if ($this->container !== null) {
+                try {
+                    $resolved = $this->container->get($middleware);
+                    if ($resolved instanceof PsrMiddlewareInterface) {
+                        return $resolved;
+                    }
+                } catch (Throwable) {
+                    // Container resolution failed; fall through to direct instantiation
+                }
+            }
+
             return new $middleware();
         }
 

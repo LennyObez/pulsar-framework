@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable report aggregating all deploy check results.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class DeployReport
+final readonly class DeployReport
 {
     /**
      * @param list<CheckResult> $results All individual check results

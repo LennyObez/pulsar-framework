@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Fluent table definition builder for schema operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TableBuilder

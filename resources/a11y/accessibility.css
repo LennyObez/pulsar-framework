@@ -1,0 +1,223 @@
+/* Pulsar Accessibility Styles v1.0.0
+ *
+ * Reduced motion, high contrast, focus management, skip navigation,
+ * and ARIA live region visibility. Complements the base design system.
+ *
+ * Uses design tokens from tokens.css. Import after pulsar-ui.css.
+ */
+
+/* ===========================================================================
+ * 1. Screen Reader Only
+ *
+ * Visually hidden but accessible to assistive technology.
+ * The base .sr-only is defined in utilities.css — this adds the
+ * .sr-only--focusable variant that becomes visible on focus (for skip links).
+ * =========================================================================== */
+
+.sr-only--focusable:not(:focus):not(:focus-within) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ===========================================================================
+ * 2. Skip Navigation Link
+ *
+ * Hidden off-screen until focused via Tab. Provides keyboard users a fast
+ * path past repeated navigation blocks (WCAG 2.4.1).
+ * =========================================================================== */
+
+.pui-skip-link {
+  position: fixed;
+  top: var(--space-4);
+  inset-inline-start: var(--space-4);
+  z-index: var(--z-toast);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: var(--text-sm-leading);
+  text-decoration: none;
+  border: 2px solid var(--color-focus-ring);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-200%);
+  transition: transform var(--transition-fast);
+}
+
+.pui-skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ===========================================================================
+ * 3. Reduced Motion
+ *
+ * Disables animations and transitions for users who request it via OS
+ * accessibility settings (WCAG 2.3.3). Preserves layout-affecting
+ * properties — only strips motion.
+ * =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===========================================================================
+ * 4. High Contrast Mode
+ *
+ * Strengthens visual boundaries for users who request increased contrast.
+ * Adjusts borders, outlines, and text separation. (WCAG 1.4.11)
+ * =========================================================================== */
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: #000000;
+    --color-border-strong: #000000;
+    --color-border-muted: #4b5563;
+    --color-text-muted: #374151;
+    --color-text-disabled: #6b7280;
+  }
+
+  /* Strengthen all borders to 2px for visibility */
+  .pui-card,
+  .pui-input,
+  .pui-select,
+  .pui-modal,
+  .pui-alert,
+  details {
+    border-width: 2px;
+  }
+
+  /* Ensure focus rings are bold enough */
+  :focus-visible {
+    outline-width: 3px;
+    outline-offset: 2px;
+  }
+
+  /* Buttons get visible borders in high contrast */
+  .pui-btn {
+    border: 2px solid currentColor;
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root {
+    --color-border: #e5e7eb;
+    --color-border-strong: #f3f4f6;
+    --color-border-muted: #9ca3af;
+    --color-text-muted: #d1d5db;
+    --color-text-disabled: #9ca3af;
+  }
+}
+
+/* ===========================================================================
+ * 5. Focus Visible Styles
+ *
+ * Consistent keyboard focus ring across all interactive elements.
+ * Uses :focus-visible so mouse clicks do not trigger outlines.
+ * The base rule is in base.css — this adds component-specific overrides.
+ * =========================================================================== */
+
+/* Focus trap container — subtle border when focused within (all modes) */
+[data-focus-trap]:focus-within {
+  outline: 1px dashed var(--color-border-strong);
+  outline-offset: var(--space-1);
+}
+
+/* Remove focus-trap outline in production — only visible with data-a11y-debug */
+[data-focus-trap]:focus-within:not([data-a11y-debug] [data-focus-trap]:focus-within):not(
+    [data-a11y-debug][data-focus-trap]:focus-within
+  ) {
+  outline: none;
+}
+
+[data-a11y-debug] [data-focus-trap]:focus-within,
+[data-a11y-debug][data-focus-trap]:focus-within {
+  outline: 2px dashed var(--color-warning-400);
+  outline-offset: var(--space-1);
+}
+
+/* ===========================================================================
+ * 6. ARIA Live Region Visibility
+ *
+ * Live regions are invisible by default but remain in the accessibility
+ * tree for screen readers. The .pui-live-region--visible modifier makes
+ * them visually present (useful for status messages).
+ * =========================================================================== */
+
+[aria-live] {
+  /* Ensure live regions participate in layout even when empty */
+  contain: layout;
+}
+
+[aria-live]:empty {
+  /* Empty live regions take no visual space */
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+
+.pui-live-region--visible[aria-live] {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-leading);
+}
+
+.pui-live-region--visible[aria-live='assertive'] {
+  border-color: var(--color-danger-300);
+  background-color: var(--color-danger-50);
+}
+
+/* ===========================================================================
+ * 7. Roving Tabindex Group
+ *
+ * Visual indicator for roving tabindex containers (toolbars, tablists, etc.)
+ * Active item gets a subtle highlight.
+ * =========================================================================== */
+
+[data-roving-tab] [tabindex='0'] {
+  position: relative;
+}
+
+/* ===========================================================================
+ * 8. Forced Colors / Windows High Contrast
+ *
+ * Ensures focus rings and borders are visible in Windows High Contrast Mode
+ * which strips custom colors. (WCAG 1.4.11)
+ * =========================================================================== */
+
+@media (forced-colors: active) {
+  .pui-skip-link {
+    border: 2px solid ButtonText;
+  }
+
+  .pui-skip-link:focus {
+    outline: 2px solid Highlight;
+  }
+
+  :focus-visible {
+    outline: 2px solid Highlight;
+  }
+
+  [data-focus-trap]:focus-within {
+    outline: 1px dashed ButtonText;
+  }
+}

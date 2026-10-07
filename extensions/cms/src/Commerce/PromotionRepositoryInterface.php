@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for Promotion aggregate management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PromotionRepositoryInterface

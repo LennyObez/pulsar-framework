@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Cms\Http\Controller\Admin;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
-use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
@@ -27,11 +26,9 @@ use function is_string;
  * Supports bulk publish, unpublish, archive, delete, tag, and untag
  * actions on multiple content items in a single request.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class BulkOperationsController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class BulkOperationsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int MAX_IDS_PER_REQUEST = 100;
 
     private const array VALID_ACTIONS = ['publish', 'unpublish', 'archive', 'delete', 'tag', 'untag'];
@@ -39,25 +36,34 @@ final readonly class BulkOperationsController
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private TaxonomyServiceInterface $taxonomyService,
-        private GateInterface $gate,
-        private CmsConfig $config,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function execute(ServerRequestInterface $request): Response
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.content.edit');
 
-        /** @var string $action */
-        $action = $request->getAttribute('action', '');
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
+        // API clients name the action in the path (`/content/bulk/publish`).
+        // The admin list picks it from a `<select>`, which a browser can only
+        // submit in the body, so the body carries it when the path does not.
+        /** @var mixed $routeAction */
+        $routeAction = $request->getAttribute('action', '');
+        /** @var mixed $bodyAction */
+        $bodyAction = $body['bulk_action'] ?? '';
+        $action = is_string($routeAction) && $routeAction !== ''
+            ? $routeAction
+            : (is_string($bodyAction) ? $bodyAction : '');
 
         if (!in_array($action, self::VALID_ACTIONS, true)) {
             return Response::json(['error' => 'Invalid bulk action', 'valid_actions' => self::VALID_ACTIONS], 400);
         }
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         /** @var mixed $rawIds */
         $rawIds = $body['ids'] ?? [];

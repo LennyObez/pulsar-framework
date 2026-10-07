@@ -9,9 +9,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function array_map;
-use function is_array;
-use function is_int;
-use function is_string;
 use function json_decode;
 use function json_encode;
 use function ksort;
@@ -28,6 +25,7 @@ use const SORT_STRING;
  * Provides integrity verification by recording SHA-256 hashes and sizes
  * for every artifact, plus content hashes for source inputs. An optional
  * HMAC signature seals the manifest for tamper detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BuildManifest
@@ -50,32 +48,33 @@ final readonly class BuildManifest
     /**
      * Create from array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     version?: int,
+     *     algorithm?: string,
+     *     artifacts?: array<string, array<string, mixed>>,
+     *     contentHashes?: array<string, string>,
+     *     signature?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, array<string, mixed>> $artifactData */
-        $artifactData = is_array($data['artifacts'] ?? null) ? $data['artifacts'] : [];
-
         $artifacts = array_map(
             static fn(array $entry): ArtifactEntry => ArtifactEntry::fromArray($entry),
-            $artifactData,
+            $data['artifacts'] ?? [],
         );
 
         ksort($artifacts, SORT_STRING);
 
-        /** @var array<string, string> $contentHashes */
-        $contentHashes = is_array($data['contentHashes'] ?? null) ? $data['contentHashes'] : [];
-
+        $contentHashes = $data['contentHashes'] ?? [];
         ksort($contentHashes, SORT_STRING);
 
         return new self(
-            version: isset($data['version']) && is_int($data['version']) ? $data['version'] : 1,
-            algorithm: is_string($data['algorithm'] ?? null) ? $data['algorithm'] : 'sha256',
+            version: $data['version'] ?? 1,
+            algorithm: $data['algorithm'] ?? 'sha256',
             artifacts: $artifacts,
             contentHashes: $contentHashes,
-            signature: is_string($data['signature'] ?? null) ? $data['signature'] : null,
+            signature: $data['signature'] ?? null,
         );
     }
 
@@ -114,7 +113,7 @@ final readonly class BuildManifest
     public static function fromJson(string $json): self
     {
         /** @var array<string, mixed> $data */
-        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
 
         return self::fromArray($data);
     }

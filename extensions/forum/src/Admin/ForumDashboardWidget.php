@@ -14,6 +14,7 @@ use Pulsar\Extension\Admin\Contracts\WidgetInterface;
  *
  * Uses direct COUNT queries via ConnectionInterface for efficient
  * aggregate computation without loading entity collections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumDashboardWidget implements WidgetInterface
@@ -44,17 +45,26 @@ final readonly class ForumDashboardWidget implements WidgetInterface
     public function render(): array
     {
         return [
-            'thread_count' => $this->countTable('forum_threads'),
-            'post_count' => $this->countTable('forum_posts'),
+            'thread_count' => $this->countThreads(),
+            'post_count' => $this->countPosts(),
             'pending_reports' => $this->countPendingReports(),
             'active_users_24h' => $this->countActiveUsers(),
         ];
     }
 
-    private function countTable(string $table): int
+    private function countThreads(): int
     {
         $result = $this->connection->query(
-            "SELECT COUNT(*) AS cnt FROM {$table} WHERE deleted_at IS NULL",
+            'SELECT COUNT(*) AS cnt FROM forum_threads WHERE deleted_at IS NULL',
+        );
+
+        return $result->first()?->getInt('cnt') ?? 0;
+    }
+
+    private function countPosts(): int
+    {
+        $result = $this->connection->query(
+            'SELECT COUNT(*) AS cnt FROM forum_posts WHERE deleted_at IS NULL',
         );
 
         return $result->first()?->getInt('cnt') ?? 0;

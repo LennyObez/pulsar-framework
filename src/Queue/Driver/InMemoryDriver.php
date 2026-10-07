@@ -25,7 +25,7 @@ use function time;
  * Stores all job records in a PHP array. Records are lost when the
  * process exits. Provides a getAll() method for test inspection.
  */
-#[Internal(reason: 'Testing driver — not suitable for production use')]
+#[Internal(reason: 'Testing driver; not suitable for production use')]
 final class InMemoryDriver implements QueueDriverInterface
 {
     /** @var array<string, JobRecord> */

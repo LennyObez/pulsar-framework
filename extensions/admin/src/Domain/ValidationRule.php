@@ -10,6 +10,7 @@ use function is_string;
 
 /**
  * Validation rule for an admin resource field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationRule
@@ -45,32 +46,40 @@ final readonly class ValidationRule
 
     private function validateMinLength(mixed $value, string $fieldName): ?string
     {
-        if (is_string($value) && mb_strlen($value) < (int) $this->parameter) {
-            return $this->message ?? "$fieldName must be at least $this->parameter characters";
+        $param = is_numeric($this->parameter) ? (int) $this->parameter : 0;
+        $paramStr = (string) $param;
+        if (is_string($value) && mb_strlen($value) < $param) {
+            return $this->message ?? "$fieldName must be at least $paramStr characters";
         }
         return null;
     }
 
     private function validateMaxLength(mixed $value, string $fieldName): ?string
     {
-        if (is_string($value) && mb_strlen($value) > (int) $this->parameter) {
-            return $this->message ?? "$fieldName must not exceed $this->parameter characters";
+        $param = is_numeric($this->parameter) ? (int) $this->parameter : 0;
+        $paramStr = (string) $param;
+        if (is_string($value) && mb_strlen($value) > $param) {
+            return $this->message ?? "$fieldName must not exceed $paramStr characters";
         }
         return null;
     }
 
     private function validateMin(mixed $value, string $fieldName): ?string
     {
-        if (is_numeric($value) && (float) $value < (float) $this->parameter) {
-            return $this->message ?? "$fieldName must be at least $this->parameter";
+        $param = is_numeric($this->parameter) ? (float) $this->parameter : 0.0;
+        $paramStr = (string) $param;
+        if (is_numeric($value) && (float) $value < $param) {
+            return $this->message ?? "$fieldName must be at least $paramStr";
         }
         return null;
     }
 
     private function validateMax(mixed $value, string $fieldName): ?string
     {
-        if (is_numeric($value) && (float) $value > (float) $this->parameter) {
-            return $this->message ?? "$fieldName must not exceed $this->parameter";
+        $param = is_numeric($this->parameter) ? (float) $this->parameter : 0.0;
+        $paramStr = (string) $param;
+        if (is_numeric($value) && (float) $value > $param) {
+            return $this->message ?? "$fieldName must not exceed $paramStr";
         }
         return null;
     }

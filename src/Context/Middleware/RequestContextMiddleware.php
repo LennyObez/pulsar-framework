@@ -26,6 +26,7 @@ use function strlen;
  * On inbound: reads X-Correlation-ID header (validates hex format, max 64 chars),
  * generates CausationId, and creates RequestContext from request metadata.
  * On outbound: echoes X-Correlation-ID and X-Causation-ID on response headers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequestContextMiddleware implements MiddlewareInterface

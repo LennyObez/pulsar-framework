@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Implementations may use simple prefix-swapping or route-aware slug
  * translation depending on the application's URL scheme.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LocaleUrlResolverInterface

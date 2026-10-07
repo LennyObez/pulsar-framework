@@ -16,10 +16,11 @@ use function sprintf;
 
 /**
  * Field is required when another field equals an expected value.
- * Does NOT skip null — it checks the condition and fails if required and missing.
+ * Does NOT skip null; it checks the condition and fails if required and missing.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RequiredIf implements RuleInterface
+final readonly class RequiredIf implements RuleInterface
 {
     public function __construct(
         private string $otherField,

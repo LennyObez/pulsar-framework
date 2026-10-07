@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Provides localized alt text, caption, and title for accessibility
  * and SEO across multiple languages.
+ *
+ * @psalm-api Public DTO returned from MediaRepositoryInterface; consumed by
+ *            ResponsiveImageRenderer and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaAssetTranslation

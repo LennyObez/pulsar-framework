@@ -11,6 +11,9 @@ use Pulsar\Config\CacheConfig;
 use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\CachePoolConfig;
 use Pulsar\Config\Environment;
+use Pulsar\Config\Exception\ConfigException;
+
+use function extension_loaded;
 
 #[CoversClass(CacheConfig::class)]
 final class CacheConfigTest extends TestCase
@@ -138,6 +141,186 @@ final class CacheConfigTest extends TestCase
         ], $environment);
 
         self::assertSame('/custom/cache', $config->path);
+    }
+
+    #[Test]
+    public function anUnknownDriverThrowsInsteadOfSilentlyFallingBackToFilesystem(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('unknown cache driver "redys"');
+
+        (void) CacheConfig::fromArray([
+            'pools' => [
+                'sessions' => ['driver' => 'redys'],
+            ],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function unknownTopLevelAndPoolKeysAreCollectedForWarning(): void
+    {
+        $config = CacheConfig::fromArray([
+            'enabled' => true,
+            'typo_top' => 'x',
+            'pools' => [
+                'sessions' => [
+                    'driver' => 'filesystem',
+                    'tlt' => 3600,
+                ],
+            ],
+        ], $this->environment);
+
+        // Section-relative now (ConfigManager prefixes the "cache" section label).
+        self::assertContains('typo_top', $config->unknownKeys);
+        self::assertContains('pools.sessions.tlt', $config->unknownKeys);
+    }
+
+    #[Test]
+    public function aFullyKnownConfigurationHasNoUnknownKeys(): void
+    {
+        $config = CacheConfig::fromArray([
+            'enabled' => true,
+            'default_pool' => 'main',
+            'path' => 'var/cache',
+            'pools' => [
+                'main' => [
+                    'driver' => 'filesystem',
+                    'default_ttl_seconds' => 60,
+                    'stampede_protection' => false,
+                    'gc_divisor' => 0,
+                ],
+            ],
+        ], $this->environment);
+
+        self::assertSame([], $config->unknownKeys);
+    }
+
+    #[Test]
+    public function anUnknownSerializerThrowsInsteadOfSilentlyBecomingJson(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('unknown cache serializer "igbinry"');
+
+        (void) CacheConfig::fromArray([
+            'pools' => [
+                'objects' => ['serializer' => 'igbinry'],
+            ],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function theIgbinarySerializerRequiresTheExtensionAtBoot(): void
+    {
+        if (extension_loaded('igbinary')) {
+            $config = CacheConfig::fromArray([
+                'pools' => ['fast' => ['serializer' => 'igbinary']],
+            ], $this->environment);
+
+            self::assertSame('igbinary', $config->pools['fast']->serializer);
+
+            return;
+        }
+
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('requires ext-igbinary');
+
+        (void) CacheConfig::fromArray([
+            'pools' => ['fast' => ['serializer' => 'igbinary']],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function anUnknownCompressionValueThrows(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('unknown compression "gzip"');
+
+        (void) CacheConfig::fromArray([
+            'pools' => ['pages' => ['compression' => 'gzip']],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function compressionFalseAndAutoAreAccepted(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'off' => ['compression' => false],
+                'nego' => ['compression' => 'auto'],
+                'zlib' => ['compression' => 'zlib'],
+            ],
+        ], $this->environment);
+
+        self::assertNull($config->pools['off']->compression);
+        self::assertSame('auto', $config->pools['nego']->compression);
+        self::assertSame('zlib', $config->pools['zlib']->compression);
+    }
+
+    #[Test]
+    public function compressingAnEncryptedPoolRequiresExplicitOracleAcknowledgement(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('CRIME-class oracle');
+
+        (void) CacheConfig::fromArray([
+            'pools' => [
+                'secure' => ['encrypted' => true, 'compression' => 'zlib'],
+            ],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function acknowledgedCompressionOnAnEncryptedPoolIsAccepted(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'secure' => [
+                    'encrypted' => true,
+                    'compression' => 'zlib',
+                    'compression_length_oracle_acknowledged' => true,
+                ],
+            ],
+        ], $this->environment);
+
+        self::assertSame('zlib', $config->pools['secure']->compression);
+        self::assertTrue($config->pools['secure']->compressionLengthOracleAcknowledged);
+    }
+
+    #[Test]
+    public function aPrefixWithGlobMetacharactersOrExcessLengthThrows(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('prefix must match');
+
+        (void) CacheConfig::fromArray([
+            'pools' => ['shared' => ['prefix' => 'app*']],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function aValidPrefixIsAcceptedAndDefaultsToEmpty(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'shared' => ['prefix' => 'app_a.cache:'],
+                'plain' => [],
+            ],
+        ], $this->environment);
+
+        self::assertSame('app_a.cache:', $config->pools['shared']->prefix);
+        self::assertSame('', $config->pools['plain']->prefix);
+    }
+
+    #[Test]
+    public function anAbsentDriverStillDefaultsToFilesystem(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'files' => ['critical' => true],
+            ],
+        ], $this->environment);
+
+        self::assertSame(CacheDriverType::Filesystem, $config->pools['files']->driver);
     }
 
     #[Test]

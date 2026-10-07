@@ -38,14 +38,51 @@ php bin/pulsar key:rotate
 
 ### Step 1b: drain queues
 
-Before deploying the new key, drain all queue workers to ensure no in-flight jobs remain encrypted with the old key alone:
+Before deploying the new key, drain the queues so no in-flight job remains
+encrypted with the old key alone. There is no single drain command; the
+procedure is three steps.
+
+**1. Stop the workers.** Send `SIGTERM` (or `SIGINT`) to each `queue:work`
+process - `systemctl stop pulsar-worker`, `supervisorctl stop`, `docker stop`,
+all of which do this. The worker installs handlers for both: the signal flips it
+to `Stopping`, the current job runs to completion, and the loop then exits. Do
+not `SIGKILL`; that abandons a job mid-flight, which is exactly the state this
+step exists to avoid. Stop the supervisor from restarting them, too, or the next
+step never converges.
+
+> On Windows, and on any build without `ext-pcntl`, no signal handlers are
+> installed and the worker stops only when it hits `--max-jobs`, `--memory` or
+> `--timeout`. Plan the drain around those bounds instead.
+
+**2. Confirm the backlog is empty.**
 
 ```bash
-# Stop queue workers and let current jobs finish
-php bin/pulsar queue:drain --timeout=60
+php bin/pulsar queue:status --json
+# {"pending": 0, "failed": 0}
 ```
 
-Queue payloads are AEAD-encrypted with the `que_aead` subkey (ID 10). Jobs enqueued with the old key can still be decrypted during the grace period while `PULSAR_MASTER_KEY_PREVIOUS` is set, but draining first avoids edge cases with long-running jobs that span the restart window.
+**3. If `pending` is not zero, run a bounded worker until it is.**
+
+```bash
+php bin/pulsar queue:work default --timeout=60
+```
+
+`queue:work` has no "stop when empty" mode: it polls, sleeping `--sleep`
+milliseconds on an empty queue, and stops when one of `--max-jobs` (default
+1000), `--memory` (MB) or `--timeout` (seconds) is reached. Bounding it with
+`--timeout` gives a drain that terminates on its own. Repeat until
+`queue:status` reports `pending: 0`, and run it once per queue name if the
+application uses more than the default one.
+
+Queue payloads are AEAD-encrypted with the `que_aead` subkey (ID 10). Jobs
+enqueued with the old key can still be decrypted during the grace period while
+`PULSAR_MASTER_KEY_PREVIOUS` is set, but draining first avoids edge cases with
+long-running jobs that span the restart window.
+
+Jobs in `failed` are in the dead-letter queue and are **not** drained by this
+procedure. Their payloads were encrypted with the old key, so retry them
+(`queue:retry`) before the grace period ends, or accept that they become
+undecryptable once `PULSAR_MASTER_KEY_PREVIOUS` is removed in step 6.
 
 ### Step 2: deploy and restart workers
 
@@ -131,6 +168,20 @@ php bin/pulsar optimize:clear
 php bin/pulsar optimize
 ```
 
+## Backup archives written before the rotation
+
+**Read this before you rotate, not after.** Every sealed archive is encrypted under a key derived from the master key at `SubKeyId::BackupArchiveSeal` / `bkup_arc`. Rotating `PULSAR_MASTER_KEY` derives a different archive key, so every archive already on disk was sealed under a key the deployment no longer holds. `pulsar backup:verify` refuses them by name — "sealed under archive key X, this deployment derives Y" — and `pulsar backup:restore` refuses them for the same reason. The data in them is not damaged; it is unreachable.
+
+There is no `kid` fallback here, and the difference from the audit chain is deliberate. The audit chain records which key signed each link, so `PULSAR_MASTER_KEY_PREVIOUS` lets a verifier check old links and new ones together. An archive is a single AEAD stream sealed under one key with no key ring behind it: `ArchiveSeal` derives through whatever `KeyProviderInterface` is bound and asks for one key, not a list.
+
+So the archive key follows the master key, and the sequence that keeps recoverability is:
+
+1. **Before rotating**, decide what happens to the archives you are holding. Either restore what you still need into a scratch environment while the current key is live, or **escrow the outgoing `PULSAR_MASTER_KEY`** alongside those archives. An archive without its key is unrecoverable — that is the property the seal exists to have, not a defect.
+2. **Take a fresh backup after** the rotation and after Step 5's health check, and verify it: `pulsar backup:run && pulsar backup:verify`. That is the first archive readable under the new key, and until it exists the deployment's recovery position rests entirely on archives sealed under the escrowed one.
+3. **Only then** remove the old key (Step 6), and only from the running deployment — not from wherever you escrowed it for the archives that need it.
+
+Retention has the last word: an archive kept for seven years outlives many rotations, so the escrow is a key **ring**, one entry per rotation, kept as long as the oldest archive it can open. See [backup.md](backup.md) for what an archive contains and what it deliberately does not.
+
 ## Key identifier (kid) tracking
 
 Each audit chain link and Studio evidence entry includes a `kid` field that identifies which key was used for signing. This allows the verifier to select the correct key from the key ring during verification.
@@ -141,7 +192,9 @@ Each audit chain link and Studio evidence entry includes a `kid` field that iden
 
 ## Derived subkey contexts
 
-The master key derives purpose-specific subkeys via KDF. Rotation replaces all derived keys simultaneously:
+The master key derives purpose-specific subkeys via KDF. Rotation replaces all derived keys simultaneously.
+
+This table is a reading aid for the subsystems most often asked about, **not the registry**. [ADR-0006](adr/0006-libsodium-only-crypto-master-key-derivation.md) carries every allocated id/context pair, and `tests/Unit/Security/Crypto/SubKeyIdRegistryTest.php` is what holds the two in step — so a pair missing from the rows below is missing from the reading aid, never from the hierarchy.
 
 | Purpose               | Subkey ID | Context    |
 | --------------------- | --------- | ---------- |
@@ -159,6 +212,7 @@ The master key derives purpose-specific subkeys via KDF. Rotation replaces all d
 | Build artifact sign   | 8         | `bld_sign` |
 | Queue AEAD            | 10        | `que_aead` |
 | Analytics visitor     | 20        | `anal_vis` |
+| Sealed backup archive | 22        | `bkup_arc` |
 
 ## Per-subsystem key rotation
 

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for managing content-taxonomy term associations.
+ *
+ * @psalm-api Public binding contract; implemented by TaxonomyService and
+ *            consumed by content services and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TaxonomyServiceInterface

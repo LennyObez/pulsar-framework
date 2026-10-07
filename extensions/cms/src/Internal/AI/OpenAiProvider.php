@@ -78,7 +78,6 @@ final readonly class OpenAiProvider implements LlmProviderInterface
             );
         }
 
-        /** @var array<string, mixed> $data */
         $data = json_decode($response, true);
 
         if (!is_array($data)) {

@@ -226,8 +226,9 @@ final class EventDispatcherTest extends TestCase
 
         $counter = $metrics->counter('pulsar_event_dispatched_total', 'Events dispatched');
 
-        // Scope is Internal because listenerModuleIdsFor returns [] for EventEnvelope::class
-        $labelSet = new LabelSet(['event_class' => 'test.event', 'module' => 'billing', 'scope' => EventScope::Internal->value]);
+        // No listener is registered for 'test.event', so listenerModuleIdsFor()
+        // returns [] and the scope defaults to CrossModule (safe-fail).
+        $labelSet = new LabelSet(['event_class' => 'test.event', 'module' => 'billing', 'scope' => EventScope::CrossModule->value]);
 
         // Should use eventType 'test.event' not 'Pulsar\Event\EventEnvelope'
         self::assertGreaterThan(0.0, $counter->value($labelSet));

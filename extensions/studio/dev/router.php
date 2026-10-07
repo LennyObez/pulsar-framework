@@ -5,9 +5,9 @@ declare(strict_types=1);
 /**
  * Router script for the Studio development server (php -S).
  *
- * This script bootstraps a minimal Studio environment and dispatches
- * requests to the StudioRouter. Static assets are served from the
- * filesystem; all other routes are handled by controllers.
+ * Studio has its own lightweight router (StudioRouter) rather than
+ * the full framework kernel. Static asset serving and translation
+ * bootstrap are shared via DevServerBootstrap.
  *
  * Usage: php -S host:port -t extensions/studio/dev/public/ extensions/studio/dev/router.php
  */
@@ -25,73 +25,98 @@ require $dir . '/vendor/autoload.php';
 
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
+use Pulsar\Config\I18nConfig;
+use Pulsar\Dev\DevServerBootstrap;
+use Pulsar\Dev\DevServerConfig;
 use Pulsar\Extension\Studio\Config\StudioConfig;
-use Pulsar\Http\Message\ServerRequest;
-use Pulsar\Security\Crypto\Encryptor;
-use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
 use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
+use Pulsar\Extension\Studio\Server\Controller\ActivityLogController;
 use Pulsar\Extension\Studio\Server\Controller\ApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Extension\Studio\Server\Controller\ConsoleOverviewController;
 use Pulsar\Extension\Studio\Server\Controller\DatabaseExplorerController;
+use Pulsar\Extension\Studio\Server\Controller\DeploymentController;
 use Pulsar\Extension\Studio\Server\Controller\ExceptionExplorerController;
+use Pulsar\Extension\Studio\Server\Controller\HealthDashboardController;
 use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\TimelineController;
 use Pulsar\Extension\Studio\Server\StudioRouter;
-$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+use Pulsar\Http\Message\ServerRequest;
+use Pulsar\I18n\Catalog\ChainCatalog;
+use Pulsar\I18n\Catalog\PhpCatalog;
+use Pulsar\I18n\Format\FallbackMessageFormatter;
+use Pulsar\I18n\Format\IcuMessageFormatter;
+use Pulsar\I18n\Translator;
+use Pulsar\Extension\Studio\Internal\Diagnostics\GitLogReader;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\MasterKey;
+
+$requestUri = is_string($_SERVER['REQUEST_URI'] ?? null) ? $_SERVER['REQUEST_URI'] : '/';
 $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
 
-// Serve static assets under /studio/assets/
-$assetPrefix = '/studio/assets/';
-if (str_starts_with($path, $assetPrefix)) {
-    $assetPath = substr($path, strlen($assetPrefix));
+// 1. Serve static assets (shared with all dev routers)
+$studioConfig = new DevServerConfig(
+    extensionName: 'studio',
+    assetPrefixes: [
+        '/studio/assets/' => [
+            'extensions/studio/frontend/styles',
+            'extensions/studio/frontend/dist',
+        ],
+    ],
+);
 
-    // CSS: extensions/studio/frontend/styles/
-    // JS:  extensions/studio/frontend/dist/
-    $candidates = [
-        $dir . '/extensions/studio/frontend/styles/' . $assetPath,
-        $dir . '/extensions/studio/frontend/dist/' . $assetPath,
-    ];
-
-    $mimeTypes = [
-        'css' => 'text/css; charset=UTF-8',
-        'js' => 'application/javascript; charset=UTF-8',
-        'map' => 'application/json; charset=UTF-8',
-    ];
-
-    foreach ($candidates as $filePath) {
-        $realPath = realpath($filePath);
-        if ($realPath !== false && is_file($realPath)) {
-            $ext = pathinfo($realPath, PATHINFO_EXTENSION);
-            header('Content-Type: ' . ($mimeTypes[$ext] ?? 'application/octet-stream'));
-            header('Cache-Control: no-cache');
-            readfile($realPath);
-
-            return;
-        }
-    }
-
-    http_response_code(404);
-    echo 'Asset not found';
-
+if (DevServerBootstrap::serveStaticAsset($dir, $path, $studioConfig)) {
     return;
 }
 
-// Short-circuit browser probe paths (Chrome DevTools, favicon, etc.)
+// 2. Short-circuit browser probes
 if (str_starts_with($path, '/.well-known/') || $path === '/favicon.ico') {
     http_response_code(404);
 
     return;
 }
 
-// Bootstrap Studio for dynamic routes
+// 3. Bootstrap translations so __() works in Studio templates
+$catalogPaths = [];
+$coreLangPath = $dir . '/resources/lang';
+
+if (is_dir($coreLangPath)) {
+    $catalogPaths[] = new PhpCatalog($coreLangPath);
+}
+
+$studioLangPath = $dir . '/extensions/studio/resources/lang';
+
+if (is_dir($studioLangPath)) {
+    $catalogPaths[] = new PhpCatalog($studioLangPath);
+}
+
+if ($catalogPaths !== []) {
+    $i18nConfig = new I18nConfig(
+        defaultLocale: 'en',
+        supportedLocales: ['en'],
+        fallbackLocales: ['en'],
+        catalogPath: null,
+        regulated: false,
+        maxSupportedLocales: 50,
+        strictMode: false,
+    );
+
+    $formatter = extension_loaded('intl')
+        ? new IcuMessageFormatter()
+        : new FallbackMessageFormatter();
+
+    $translator = new Translator(new ChainCatalog(...$catalogPaths), $i18nConfig, $formatter);
+    Translator::setGlobalInstance($translator);
+}
+
+// 4. Bootstrap Studio
 $envFile = file_exists($dir . '/.env') ? $dir . '/.env' : null;
 $environment = Environment::load($envFile);
 
@@ -114,12 +139,11 @@ if (!$config->enabled) {
     return;
 }
 
-// Create event store (read-only access for the server)
+// Create event store
 $storagePath = str_starts_with($config->storagePath, '/')
     ? $config->storagePath
     : $dir . '/' . $config->storagePath;
 
-// Ensure storage directory exists
 $storageDir = dirname($storagePath);
 if (!is_dir($storageDir)) {
     mkdir($storageDir, 0o755, true);
@@ -127,7 +151,7 @@ if (!is_dir($storageDir)) {
 
 $sqliteStore = new SqliteEventStore($storagePath);
 
-// Wrap with encryption if PULSAR_MASTER_KEY is set (must match Kernel's sub-key derivation)
+// Wrap with encryption if PULSAR_MASTER_KEY is set
 $store = $sqliteStore;
 $masterKeyHex = $environment->get('PULSAR_MASTER_KEY') ?? '';
 if ($masterKeyHex !== '') {
@@ -136,7 +160,7 @@ if ($masterKeyHex !== '') {
         $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'stud_enc');
         $store = new EncryptedEventStore($sqliteStore, $studioEncryptor);
     } catch (Throwable) {
-        // Invalid key or sodium failure — use plain store
+        // Invalid key or sodium failure: use plain store
     }
 }
 
@@ -158,6 +182,34 @@ $timeline = new TimelineController($timelineBuilder);
 $api = new ApiController($store);
 $benchmarkController = new BenchmarkController($aggregator);
 $benchmarkApi = new BenchmarkApiController($store, $aggregator, $dir);
+$activityLog = new ActivityLogController($store);
+$healthDashboard = new HealthDashboardController($store);
+$gitLog = new class () implements GitLogReader {
+    #[\Override]
+    public function getVersionTags(int $limit = 20): array
+    {
+        return [];
+    }
+
+    #[\Override]
+    public function getCurrentRef(): string
+    {
+        return 'dev';
+    }
+
+    #[\Override]
+    public function getCommitsBetween(?string $from, string $to, int $limit = 50): array
+    {
+        return [];
+    }
+
+    #[\Override]
+    public function getDiffStats(string $from, string $to): array
+    {
+        return ['files_changed' => 0, 'insertions' => 0, 'deletions' => 0];
+    }
+};
+$deployment = new DeploymentController($gitLog);
 
 // Create router and dispatch
 $router = new StudioRouter(
@@ -171,46 +223,47 @@ $router = new StudioRouter(
     api: $api,
     benchmark: $benchmarkController,
     benchmarkApi: $benchmarkApi,
+    activityLog: $activityLog,
+    healthDashboard: $healthDashboard,
+    deployment: $deployment,
     safetyMode: $safetyMode,
 );
 
-// Build ServerRequest from globals with _query_ attributes
+// Build request with query attributes
 /** @var array<string, mixed> $queryParams */
 $queryParams = $_GET;
-$queryAttributes = [];
+$request = ServerRequest::fromGlobals();
+
 foreach ($queryParams as $key => $value) {
     if (is_string($value)) {
-        $queryAttributes['_query_' . $key] = $value;
+        $request = $request->withAttribute('_query_' . $key, $value);
     }
-}
-
-$request = ServerRequest::fromGlobals();
-foreach ($queryAttributes as $attrKey => $attrValue) {
-    $request = $request->withAttribute($attrKey, $attrValue);
 }
 
 try {
     $response = $router->dispatch($request);
 } catch (Throwable $e) {
-    error_log(sprintf('[Studio] %s %s - 500 Internal Server Error: %s', $_SERVER['REQUEST_METHOD'] ?? 'GET', $requestUri, $e->getMessage()));
+    error_log(sprintf(
+        '[Studio] %s %s - 500 Internal Server Error: %s',
+        is_string($_SERVER['REQUEST_METHOD'] ?? null) ? $_SERVER['REQUEST_METHOD'] : 'GET',
+        $requestUri,
+        $e->getMessage(),
+    ));
     http_response_code(500);
     echo 'Internal Server Error: ' . $e->getMessage();
 
     return;
 }
 
-// Log request like PHP's built-in server
-error_log(sprintf('[%d]: %s %s - %d', $_SERVER['REMOTE_PORT'] ?? 0, $_SERVER['REQUEST_METHOD'] ?? 'GET', $requestUri, $response->getStatusCode()));
+// Log and emit
+/** @var int $remotePort */
+$remotePort = $_SERVER['REMOTE_PORT'] ?? 0;
+error_log(sprintf(
+    '[%d]: %s %s - %d',
+    $remotePort,
+    is_string($_SERVER['REQUEST_METHOD'] ?? null) ? $_SERVER['REQUEST_METHOD'] : 'GET',
+    $requestUri,
+    $response->getStatusCode(),
+));
 
-// Emit response
-http_response_code($response->getStatusCode());
-
-foreach ($response->getHeaders() as $name => $values) {
-    $first = true;
-    foreach ($values as $value) {
-        header($name . ': ' . $value, $first);
-        $first = false;
-    }
-}
-
-echo $response->getBody();
+DevServerBootstrap::emitResponse($response);

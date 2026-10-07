@@ -19,6 +19,7 @@ use function assert;
 
 /**
  * Concrete form instance holding fields and managing submission lifecycle.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Form implements FormInterface

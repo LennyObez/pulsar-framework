@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Middleware\Exception\MiddlewareNotFoundException;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use RuntimeException;
@@ -38,12 +39,29 @@ final class MiddlewareRegistryTest extends TestCase
     }
 
     #[Test]
-    public function unknownNameFallsToClassString(): void
+    public function existingClassFallsToClassString(): void
     {
         $registry = new MiddlewareRegistry();
 
         $resolved = $registry->resolve(StubAuthMiddleware::class);
         self::assertSame([StubAuthMiddleware::class], $resolved);
+    }
+
+    /**
+     * An unknown reference (typo, missing alias) fails fast with
+     * `MiddlewareNotFoundException` naming the bad reference.
+     * Deferring the error would surface it deep inside the pipeline
+     * at request time, far from the configuration that caused it.
+     */
+    #[Test]
+    public function unknownReferenceThrowsMiddlewareNotFound(): void
+    {
+        $registry = new MiddlewareRegistry();
+
+        $this->expectException(MiddlewareNotFoundException::class);
+        $this->expectExceptionMessageIsOrContains('Middleware reference "auth-typo" could not be resolved');
+
+        $registry->resolve('auth-typo');
     }
 
     #[Test]
@@ -106,7 +124,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry->alias('b', 'a'); // @phpstan-ignore argument.type (intentional: testing cycle detection with non-class-string)
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Circular middleware reference detected: "a"');
+        $this->expectExceptionMessageIsOrContains('Circular middleware reference detected: "a"');
         $registry->resolve('a');
     }
 
@@ -120,7 +138,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry->group('web', ['x']); // @phpstan-ignore argument.type (intentional: testing cycle detection)
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Circular middleware reference detected');
+        $this->expectExceptionMessageIsOrContains('Circular middleware reference detected');
         $registry->resolve('web');
     }
 

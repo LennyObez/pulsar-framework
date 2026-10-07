@@ -85,6 +85,63 @@ final class ContextPropagatorTest extends TestCase
     }
 
     #[Test]
+    public function extractReturnsNullWhenCorrelationIdIsNotString(): void
+    {
+        self::assertNull(ContextPropagator::extract([
+            '_ctx_correlation_id' => 12345,
+            '_ctx_causation_id' => str_repeat('bb', 16),
+        ]));
+    }
+
+    #[Test]
+    public function extractReturnsNullWhenCausationIdIsNotString(): void
+    {
+        self::assertNull(ContextPropagator::extract([
+            '_ctx_correlation_id' => str_repeat('aa', 16),
+            '_ctx_causation_id' => null,
+        ]));
+    }
+
+    #[Test]
+    public function extractReturnsNullWhenContextCreationFails(): void
+    {
+        // Valid strings but invalid format (not 32 hex chars) → ContextException caught → null
+        self::assertNull(ContextPropagator::extract([
+            '_ctx_correlation_id' => 'tooshort',
+            '_ctx_causation_id' => str_repeat('bb', 16),
+        ]));
+    }
+
+    #[Test]
+    public function extractHandlesNonStringOptionalFields(): void
+    {
+        $context = new RequestContext(
+            correlationId: CorrelationId::fromString(str_repeat('aa', 16)),
+            causationId: CausationId::fromString(str_repeat('bb', 16)),
+        );
+
+        $carrier = [];
+        ContextPropagator::inject($context, $carrier);
+
+        // Override optional fields with non-string values
+        $carrier['_ctx_actor'] = 42;
+        $carrier['_ctx_tenant_id'] = ['array'];
+        $carrier['_ctx_ip'] = false;
+        $carrier['_ctx_user_agent'] = 0;
+        $carrier['_ctx_locale'] = null;
+        $carrier['_ctx_timestamp'] = 12345;
+
+        $extracted = ContextPropagator::extract($carrier);
+
+        self::assertNotNull($extracted);
+        self::assertNull($extracted->actor);
+        self::assertNull($extracted->tenantId);
+        self::assertNull($extracted->ip);
+        self::assertNull($extracted->userAgent);
+        self::assertNull($extracted->locale);
+    }
+
+    #[Test]
     public function extractHandlesNullOptionalFields(): void
     {
         $context = new RequestContext(

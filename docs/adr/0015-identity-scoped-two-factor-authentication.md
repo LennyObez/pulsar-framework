@@ -2,7 +2,18 @@
 
 ## Status
 
-Accepted
+Accepted, except for the replay-guard key: **partially superseded by
+[ADR-0038](0038-totp-replay-key-drops-purpose.md)**.
+
+Decision driver 1 below ("Replay prevention must be identity-scoped and purpose-scoped")
+and the `(identityId, purpose, timeStep)` key that followed from it are reversed. Keying on
+purpose gave each purpose its own row, so one code was measurably accepted for `Login`,
+`Setup` and `StepUp` in the same second — which ASVS 2.8.4 forbids. The key is now
+`(user_id, time_step)`.
+
+Everything else recorded here stands: the `identityId` parameter, encrypt-at-rest with
+identity-bound AEAD, atomic recovery-code consumption, the audit events, and the step-up
+middleware.
 
 ## Context
 

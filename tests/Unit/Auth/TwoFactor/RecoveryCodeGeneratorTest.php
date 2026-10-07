@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
+use Pulsar\Auth\TwoFactor\RecoveryCodeSet;
 
 use function count;
 
 #[CoversClass(RecoveryCodeGenerator::class)]
+#[CoversClass(RecoveryCodeSet::class)]
 final class RecoveryCodeGeneratorTest extends TestCase
 {
     private RecoveryCodeGenerator $generator;
@@ -83,5 +85,97 @@ final class RecoveryCodeGeneratorTest extends TestCase
     {
         self::assertSame('ABCD1234EF567890', RecoveryCodeGenerator::canonicalize('abcd-1234-ef56-7890'));
         self::assertSame('ABCD1234EF567890', RecoveryCodeGenerator::canonicalize('ABCD 1234 EF56 7890'));
+    }
+
+    #[Test]
+    public function checksumReturns00ForInvalidHex(): void
+    {
+        // hex2bin() emits E_WARNING for non-hex input; suppress so test stays clean
+        $previous = set_error_handler(static fn(): bool => true);
+
+        try {
+            self::assertSame('00', RecoveryCodeGenerator::checksum('ZZZZ-ZZZZ'));
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    #[Test]
+    public function checksumProducesDifferentValuesForDifferentCodes(): void
+    {
+        $checksum1 = RecoveryCodeGenerator::checksum('ABCD-1234-EF56-7890');
+        $checksum2 = RecoveryCodeGenerator::checksum('1234-5678-9ABC-DEF0');
+
+        self::assertNotSame($checksum1, $checksum2);
+    }
+
+    #[Test]
+    public function withUsedIndexReturnsNewSetWithMarkedIndex(): void
+    {
+        $set = new RecoveryCodeSet(
+            setId: 'set-001',
+            codeHashes: ['hash-0', 'hash-1', 'hash-2', 'hash-3'],
+            usedIndices: [],
+            algorithmVersion: 2,
+            createdAt: 1709800000,
+        );
+
+        $updated = $set->withUsedIndex(1);
+
+        self::assertNotSame($set, $updated);
+        self::assertFalse($set->isUsed(1));
+        self::assertTrue($updated->isUsed(1));
+        self::assertSame([1], $updated->usedIndices);
+    }
+
+    #[Test]
+    public function withUsedIndexReturnsSameInstanceIfAlreadyUsed(): void
+    {
+        $set = new RecoveryCodeSet(
+            setId: 'set-002',
+            codeHashes: ['hash-0', 'hash-1'],
+            usedIndices: [0],
+            algorithmVersion: 2,
+            createdAt: 1709800000,
+        );
+
+        $result = $set->withUsedIndex(0);
+
+        self::assertSame($set, $result);
+    }
+
+    #[Test]
+    public function remainingCountReflectsUsedIndices(): void
+    {
+        $set = new RecoveryCodeSet(
+            setId: 'set-003',
+            codeHashes: ['hash-0', 'hash-1', 'hash-2', 'hash-3', 'hash-4'],
+            usedIndices: [],
+            algorithmVersion: 2,
+            createdAt: 1709800000,
+        );
+
+        self::assertSame(5, $set->remainingCount());
+
+        $used1 = $set->withUsedIndex(0);
+        self::assertSame(4, $used1->remainingCount());
+
+        $used2 = $used1->withUsedIndex(3);
+        self::assertSame(3, $used2->remainingCount());
+    }
+
+    #[Test]
+    public function isUsedReturnsFalseForUnusedIndex(): void
+    {
+        $set = new RecoveryCodeSet(
+            setId: 'set-004',
+            codeHashes: ['hash-0', 'hash-1'],
+            usedIndices: [0],
+            algorithmVersion: 2,
+            createdAt: 1709800000,
+        );
+
+        self::assertTrue($set->isUsed(0));
+        self::assertFalse($set->isUsed(1));
     }
 }

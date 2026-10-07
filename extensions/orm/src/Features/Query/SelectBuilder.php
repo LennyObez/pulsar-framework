@@ -11,6 +11,7 @@ use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\EntityQueryBuilderInterface;
+use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\AggregateBuilder;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Domain\FetchPlan;
@@ -18,13 +19,22 @@ use Pulsar\Extension\Orm\Domain\IdentifierValidator;
 use Pulsar\Extension\Orm\Domain\LikePattern;
 use Pulsar\Extension\Orm\Domain\LockMode;
 use Pulsar\Extension\Orm\Domain\RawExpression;
+use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Domain\SortDirection;
 use Pulsar\Extension\Orm\Exception\QueryBuilderException;
+use Pulsar\Extension\Orm\Features\Encryption\EncryptedColumnGuard;
 use Pulsar\Extension\Orm\Internal\Compiler\SqlCompiler;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
+use Pulsar\Pagination\CursorPaginator;
+use Pulsar\Pagination\PaginationResult;
 
-use function array_merge;
+use function array_key_exists;
+use function array_keys;
+use function assert;
+use function count;
+use function implode;
+use function max;
 use function sprintf;
 
 /**
@@ -32,19 +42,28 @@ use function sprintf;
  *
  * Implements both RowQueryBuilderInterface (raw rows) and
  * EntityQueryBuilderInterface (hydrated entities).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SelectBuilder implements EntityQueryBuilderInterface
 {
     private readonly IdentifierQuoter $quoter;
-    private readonly ExpressionCompiler $exprCompiler;
-    private readonly BindingCounter $bindingCounter;
+
+    /**
+     * Not readonly, and deliberately so: {@see subqueryBuilder()} replaces both
+     * of these on a freshly constructed sub-builder so that the subquery draws
+     * its placeholder names from THIS builder's sequence. Nothing else may
+     * reassign them — they are private to a final class, written in the
+     * constructor and in that one factory.
+     */
+    private ExpressionCompiler $exprCompiler;
+    private BindingCounter $bindingCounter;
 
     /** @var list<string|RawExpression> */
     private array $columns = ['*'];
 
-    private string $baseTable;
-    private string $baseAlias;
+    private string $baseTable = '';
+    private string $baseAlias = '';
 
     /** @var list<JoinClause> */
     private array $joins = [];
@@ -77,6 +96,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
     private ?EntityMetadata $metadata = null;
     private ?EntityHydratorInterface $hydrator = null;
+    private ?EncryptedColumnGuard $encryptedColumnGuard = null;
 
     /** @var class-string|null */
     private ?string $entityClass = null;
@@ -94,11 +114,21 @@ final class SelectBuilder implements EntityQueryBuilderInterface
      */
     public function from(string $table, string $alias = 't0'): self
     {
-        IdentifierValidator::validate($table);
+        IdentifierValidator::validateQualified($table);
         IdentifierValidator::validate($alias);
         $this->baseTable = $table;
         $this->baseAlias = $alias;
         $this->aliasMap[$alias] = $table;
+
+        return $this;
+    }
+
+    /**
+     * Set the encrypted column guard for WHERE/ORDER BY validation.
+     */
+    public function withEncryptedColumnGuard(EncryptedColumnGuard $guard): self
+    {
+        $this->encryptedColumnGuard = $guard;
 
         return $this;
     }
@@ -117,11 +147,18 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         $this->metadata = $metadata;
         $this->hydrator = $hydrator;
 
-        return $this->from($metadata->tableName);
+        return $this->from($metadata->qualifiedTableName());
     }
 
     /**
      * Add a raw JOIN clause.
+     *
+     * The callback receives the JoinOnBuilder to declare the ON conditions on.
+     * Documenting it is not cosmetic: without the callable's shape, every call
+     * site's closure parameter analyses as mixed, so `$on->on(...)` inside it is
+     * unchecked and a typo in the method name would only surface at runtime.
+     *
+     * @param callable(JoinOnBuilder): mixed $onCallback
      */
     public function join(string $table, string $alias, string $type, callable $onCallback): self
     {
@@ -144,13 +181,15 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         );
 
         $this->joins[] = new JoinClause($type, $tableExpr, $compiled['sql'], $compiled['bindings']);
-        $this->bindings = array_merge($this->bindings, $compiled['bindings']);
+        $this->addBindings($compiled['bindings']);
 
         return $this;
     }
 
     /**
      * Add an INNER JOIN.
+     *
+     * @param callable(JoinOnBuilder): mixed $onCallback
      */
     public function innerJoin(string $table, string $alias, callable $onCallback): self
     {
@@ -159,6 +198,8 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
     /**
      * Add a LEFT JOIN.
+     *
+     * @param callable(JoinOnBuilder): mixed $onCallback
      */
     public function leftJoin(string $table, string $alias, callable $onCallback): self
     {
@@ -176,9 +217,10 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     #[Override]
     public function where(string $column, mixed $value): self
     {
+        $this->guardEncryptedWhere($column);
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), '=', $value);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -186,9 +228,10 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     #[Override]
     public function whereOp(string $column, string $operator, mixed $value): self
     {
+        $this->guardEncryptedWhere($column);
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), $operator, $value);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -212,9 +255,10 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     #[Override]
     public function whereIn(string $column, array $values): self
     {
+        $this->guardEncryptedWhere($column);
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -224,7 +268,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values, true);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -234,7 +278,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->between($this->qualifyColumn($column), $low, $high);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -244,7 +288,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->like($this->qualifyColumn($column), $pattern);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -254,14 +298,258 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->wheres[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
 
     #[Override]
+    public function orWhere(callable $callback): self
+    {
+        // Capture existing wheres, then let the callback build a new group
+        $previousWheres = $this->wheres;
+        $previousBindings = $this->bindings;
+        $this->wheres = [];
+        $this->bindings = [];
+
+        $callback($this);
+
+        /** @var list<Expression> $orGroup */
+        $orGroup = $this->wheres;
+        $orBindings = $this->bindings;
+
+        // Restore previous state
+        $this->wheres = $previousWheres;
+        $this->bindings = $previousBindings;
+
+        if (count($orGroup) === 0) {
+            return $this;
+        }
+
+        // Build the OR clause from the callback's conditions
+        /** @var list<string> $orSqls */
+        $orSqls = [];
+        foreach ($orGroup as $expr) {
+            $orSqls[] = $expr->sql;
+        }
+
+        /** @var string $orClause */
+        $orClause = count($orSqls) === 1
+            ? $orSqls[0]
+            : '(' . implode(' AND ', $orSqls) . ')';
+
+        if (count($previousWheres) > 0) {
+            // Wrap previous wheres in AND group, then OR with the new group
+            $prevSqls = [];
+            foreach ($previousWheres as $expr) {
+                $prevSqls[] = $expr->sql;
+            }
+            $prevClause = count($prevSqls) === 1
+                ? $prevSqls[0]
+                : '(' . implode(' AND ', $prevSqls) . ')';
+
+            $merged = self::mergeBindings($previousBindings, $orBindings);
+
+            $combined = new Expression(
+                sprintf('(%s OR %s)', $prevClause, $orClause),
+                $merged,
+            );
+
+            $this->wheres = [$combined];
+            $this->bindings = $merged;
+        } else {
+            // No previous WHERE to OR against, so the group's conditions stand
+            // alone — but "no previous WHERE" is not "no previous binding". A
+            // JOIN ON clause that compares a column to a value contributes one
+            // with no WHERE anywhere near it, and adopting the group's map
+            // wholesale used to drop it: the SQL still named :p0 while the map
+            // no longer carried it, and the driver rejected the statement.
+            $this->wheres = $orGroup;
+            $this->bindings = self::mergeBindings($previousBindings, $orBindings);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Filter entities that have at least one related entity matching the relation.
+     *
+     * Uses an EXISTS subquery to check for related records. Only works
+     * for HasMany, HasOne, and BelongsToMany relations.
+     *
+     * @param callable(self): void|null $callback Optional callback to add constraints to the subquery
+     */
+    public function whereHas(
+        string $relationName,
+        MetadataRegistryInterface $metadataRegistry,
+        ?callable $callback = null,
+    ): self {
+        return $this->addRelationExistsClause($relationName, $metadataRegistry, $callback, false);
+    }
+
+    /**
+     * Filter entities that have no related entities matching the relation.
+     *
+     * Uses a NOT EXISTS subquery to check for absence of related records.
+     *
+     * @param callable(self): void|null $callback Optional callback to add constraints to the subquery
+     */
+    public function whereDoesntHave(
+        string $relationName,
+        MetadataRegistryInterface $metadataRegistry,
+        ?callable $callback = null,
+    ): self {
+        return $this->addRelationExistsClause($relationName, $metadataRegistry, $callback, true);
+    }
+
+    /**
+     * @param callable(self): void|null $callback
+     */
+    private function addRelationExistsClause(
+        string $relationName,
+        MetadataRegistryInterface $metadataRegistry,
+        ?callable $callback,
+        bool $negate,
+    ): self {
+        if ($this->metadata === null) {
+            throw QueryBuilderException::invalid('whereHas requires entity-aware query (use forEntity)');
+        }
+
+        $relation = $this->metadata->relations[$relationName] ?? null;
+        if ($relation === null) {
+            throw QueryBuilderException::invalid(sprintf('Unknown relation "%s"', $relationName));
+        }
+
+        $targetMetadata = $metadataRegistry->get($relation->targetEntity);
+        $subBuilder = $this->subqueryBuilder();
+        // qualifiedTableName(), not tableName: a bare "posts" resolves against
+        // whatever the connection's search path names, which on a multi-schema
+        // deployment is a different table from the one the relation points at.
+        $subBuilder->from($targetMetadata->qualifiedTableName(), 'sub0');
+        $subBuilder->select([RawExpression::of('1')]);
+
+        // Build the correlation condition based on relation type
+        match ($relation->type) {
+            RelationType::HasOne, RelationType::HasMany => $subBuilder->whereRaw(RawExpression::of(sprintf(
+                '%s.%s = %s.%s',
+                $this->quoter->quote('sub0'),
+                $this->quoter->quote($relation->foreignKey),
+                $this->quoter->quote($this->baseAlias),
+                $this->quoter->quote($this->metadata->primaryKey->columnName),
+            ))),
+            RelationType::BelongsTo => $subBuilder->whereRaw(RawExpression::of(sprintf(
+                '%s.%s = %s.%s',
+                $this->quoter->quote('sub0'),
+                $this->quoter->quote($relation->localKey),
+                $this->quoter->quote($this->baseAlias),
+                $this->quoter->quote($relation->foreignKey),
+            ))),
+            RelationType::MorphMany => (function () use ($subBuilder, $relation): void {
+                assert($this->metadata !== null);
+                $morphBinding = $this->bindingCounter->next('morph');
+                $subBuilder->whereRaw(RawExpression::of(sprintf(
+                    '%s.%s = %s.%s AND %s.%s = :%s',
+                    $this->quoter->quote('sub0'),
+                    $this->quoter->quote($relation->morphIdColumn ?? ''),
+                    $this->quoter->quote($this->baseAlias),
+                    $this->quoter->quote($this->metadata->primaryKey->columnName),
+                    $this->quoter->quote('sub0'),
+                    $this->quoter->quote($relation->morphTypeColumn ?? ''),
+                    $morphBinding,
+                )));
+                $this->addBindings([$morphBinding => $this->metadata->entityClass]);
+            })(),
+            default => throw QueryBuilderException::invalid(sprintf(
+                'whereHas does not support relation type "%s"',
+                $relation->type->value,
+            )),
+        };
+
+        if ($callback !== null) {
+            $callback($subBuilder);
+        }
+
+        $subSql = $subBuilder->toSql();
+        $keyword = $negate ? 'NOT EXISTS' : 'EXISTS';
+        $existsExpr = new Expression(
+            sprintf('%s (%s)', $keyword, $subSql['sql']),
+            $subSql['bindings'],
+        );
+        $this->wheres[] = $existsExpr;
+        $this->addBindings($subSql['bindings']);
+
+        return $this;
+    }
+
+    /**
+     * Create a builder for a correlated subquery of this query.
+     *
+     * The sub-builder shares this builder's placeholder counter, and that
+     * sharing is the whole mechanism: one monotonic sequence per compiled
+     * statement means no two clauses — at any nesting depth, in the outer query
+     * or in any subquery under it — can ever draw the same parameter name.
+     *
+     * A sub-builder holding a counter of its own would begin again at `:p0`.
+     * The SQL still reads correctly, and the outer query still says
+     * `t0.name = :p0`, but merging the two binding maps replaces the outer
+     * value with the subquery's. The query then executes without error against
+     * a filter nobody wrote, and returns the wrong rows.
+     */
+    private function subqueryBuilder(): self
+    {
+        $sub = new self($this->connection);
+        $sub->bindingCounter = $this->bindingCounter;
+        $sub->exprCompiler = new ExpressionCompiler($sub->quoter, $this->bindingCounter);
+
+        return $sub;
+    }
+
+    /**
+     * Bind freshly compiled parameters into this query's binding map.
+     *
+     * @param array<string, mixed> $incoming
+     *
+     * @throws QueryBuilderException If a name is already bound.
+     */
+    private function addBindings(array $incoming): void
+    {
+        $this->bindings = self::mergeBindings($this->bindings, $incoming);
+    }
+
+    /**
+     * Merge two binding maps, refusing any name that both sides claim.
+     *
+     * Builder-generated names cannot repeat — {@see subqueryBuilder()} keeps the
+     * whole statement on one counter. A repeat therefore means a
+     * {@see RawExpression} chose a name some other clause already owns, which is
+     * the one remaining way a value can be silently rebound. Refusing turns that
+     * into a build-time error instead of wrong rows at runtime.
+     *
+     * @param array<string, mixed> $existing
+     * @param array<string, mixed> $incoming
+     * @return array<string, mixed>
+     *
+     * @throws QueryBuilderException If a name is bound on both sides.
+     */
+    private static function mergeBindings(array $existing, array $incoming): array
+    {
+        foreach (array_keys($incoming) as $name) {
+            if (array_key_exists($name, $existing)) {
+                throw QueryBuilderException::duplicateBinding($name);
+            }
+        }
+
+        // Union, not array_merge: array_merge renumbers integer-like keys, and a
+        // renamed placeholder is precisely the failure this method exists to
+        // prevent. The loop above has already ruled out a collision, so the
+        // union's left-wins rule can never discard anything.
+        return $existing + $incoming;
+    }
+
+    #[Override]
     public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): self
     {
+        $this->guardEncryptedOrderBy($column);
         $this->orderBys[] = sprintf('%s %s', $this->quoter->quote($this->qualifyColumn($column)), $direction->value);
 
         return $this;
@@ -296,7 +584,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->havings[] = $expr;
-        $this->bindings = array_merge($this->bindings, $expr->bindings);
+        $this->addBindings($expr->bindings);
 
         return $this;
     }
@@ -352,6 +640,9 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         return $result->first();
     }
 
+    /**
+     * @return list<object>
+     */
     #[Override]
     public function getEntities(): array
     {
@@ -379,10 +670,37 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         return $this->hydrator->hydrate($this->entityClass, $row);
     }
 
+    /**
+     * Build an aggregate query over the same rows this query selects.
+     *
+     * {@see AggregateBuilder} emits its own statement rather than reusing
+     * {@see toSql()}, so the two can only agree if every predicate that decides
+     * WHICH ROWS MATCH is reproduced here. That means the WHERE expressions and
+     * — the part that used to be missed — the soft-delete filter, which lives in
+     * {@see compileSoftDeleteFilters()} and never enters `$this->wheres`.
+     * Omitting it made `paginate()` count rows the page could not show ("127
+     * results" over 119 reachable ones) and made
+     * `GenericRepository::exists()` answer true for a trashed entity that
+     * `find()` returns null for.
+     *
+     * ORDER BY, LIMIT, OFFSET and the lock mode are deliberately not carried
+     * over: they shape or reserve a result set without changing which rows
+     * satisfy the query, and an aggregate is asked about all of them.
+     *
+     * GROUP BY and HAVING do change the answer, and an aggregate statement has
+     * nowhere to put them, so a grouped query is refused rather than silently
+     * counted flat.
+     *
+     * @throws QueryBuilderException If the query carries GROUP BY or HAVING.
+     */
     #[Override]
     public function aggregate(): AggregateBuilder
     {
-        $compiledWheres = [];
+        if ($this->groupBys !== [] || $this->havings !== []) {
+            throw QueryBuilderException::aggregateOverGroupedQuery();
+        }
+
+        $compiledWheres = $this->compileSoftDeleteFilters();
         foreach ($this->wheres as $expr) {
             $compiledWheres[] = $expr->sql;
         }
@@ -400,6 +718,70 @@ final class SelectBuilder implements EntityQueryBuilderInterface
             $compiledWheres,
             $this->bindings,
         );
+    }
+
+    /**
+     * Execute a count + paginated query, returning a PaginationResult.
+     *
+     * The total comes from {@see aggregate()}, which is scoped to exactly the
+     * rows this page can reach — the soft-delete filter included — so the
+     * headline figure and the list below it always agree.
+     *
+     * @param int $page Current page (1-based)
+     * @param int $perPage Items per page
+     * @return PaginationResult<Row>
+     *
+     * @throws QueryBuilderException If the query carries GROUP BY or HAVING,
+     *                               which no aggregate statement can express.
+     */
+    public function paginate(int $page = 1, int $perPage = 15): PaginationResult
+    {
+        $page = max(1, $page);
+        $total = $this->aggregate()->count();
+
+        $this->limitValue = $perPage;
+        $this->offsetValue = ($page - 1) * $perPage;
+
+        $result = $this->get();
+
+        return new PaginationResult($result->rows, $total, $perPage, $page);
+    }
+
+    /**
+     * Execute a cursor-based paginated query.
+     *
+     * Fetches perPage + 1 rows to determine if more pages exist,
+     * without requiring a COUNT query.
+     *
+     * @param int $perPage Items per page
+     * @param string|null $cursor Opaque cursor from the previous page
+     * @param string $cursorColumn Column to use for cursor ordering
+     * @return CursorPaginator<Row>
+     */
+    public function cursorPaginate(int $perPage = 15, ?string $cursor = null, string $cursorColumn = 'id'): CursorPaginator
+    {
+        IdentifierValidator::validateQualified($cursorColumn);
+
+        if ($cursor !== null) {
+            $decoded = CursorPaginator::decodeCursor($cursor);
+
+            // The cursor is client-supplied and opaque: only its VALUE is
+            // trusted (it is bound as a parameter). The column it carries
+            // must equal the column this query was configured to page by —
+            // a tampered cursor naming any other column is rejected so it
+            // can never steer the WHERE/ORDER BY onto an attacker-chosen
+            // identifier.
+            if ($decoded !== null && $decoded['column'] === $cursorColumn) {
+                $this->whereOp($cursorColumn, '>', $decoded['value']);
+            }
+        }
+
+        $this->orderBy($cursorColumn);
+        $this->limitValue = $perPage + 1;
+
+        $result = $this->get();
+
+        return new CursorPaginator($result->rows, $perPage, $cursor, $cursorColumn);
     }
 
     #[Override]
@@ -481,7 +863,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
             return [];
         }
 
-        if ($this->includeTrashed) {
+        if ($this->includeTrashed || $this->metadata->softDeleteColumn === null) {
             return [];
         }
 
@@ -506,5 +888,27 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         }
 
         return $this->baseAlias . '.' . $column;
+    }
+
+    /**
+     * Guard against filtering on an encrypted column without a blind index.
+     */
+    private function guardEncryptedWhere(string $column): void
+    {
+        if ($this->encryptedColumnGuard !== null && $this->entityClass !== null) {
+            $bare = str_contains($column, '.') ? substr($column, strpos($column, '.') + 1) : $column;
+            $this->encryptedColumnGuard->guardWhere($this->entityClass, $bare);
+        }
+    }
+
+    /**
+     * Guard against ordering by an encrypted column.
+     */
+    private function guardEncryptedOrderBy(string $column): void
+    {
+        if ($this->encryptedColumnGuard !== null && $this->entityClass !== null) {
+            $bare = str_contains($column, '.') ? substr($column, strpos($column, '.') + 1) : $column;
+            $this->encryptedColumnGuard->guardOrderBy($this->entityClass, $bare);
+        }
     }
 }

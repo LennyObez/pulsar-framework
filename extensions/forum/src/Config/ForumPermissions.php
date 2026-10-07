@@ -13,7 +13,7 @@ use Pulsar\Auth\Authorization\RoleRegistryInterface;
  * Defines all forum roles and permissions, then registers them
  * with Pulsar's RoleRegistryInterface during extension boot.
  */
-#[Internal(reason: 'Forum permission wiring — not a public API surface')]
+#[Internal(reason: 'Forum permission wiring; not a public API surface')]
 final class ForumPermissions
 {
     /** @var list<string> */

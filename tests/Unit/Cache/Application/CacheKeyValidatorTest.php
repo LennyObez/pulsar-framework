@@ -28,7 +28,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function emptyStringThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
 
         CacheKeyValidator::validate('');
     }
@@ -37,7 +37,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharCurlyOpenThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key{bad');
     }
@@ -46,7 +46,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharCurlyCloseThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key}bad');
     }
@@ -55,7 +55,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharParenOpenThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key(bad');
     }
@@ -64,7 +64,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharParenCloseThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key)bad');
     }
@@ -73,7 +73,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharForwardSlashThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key/bad');
     }
@@ -82,7 +82,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharBackslashThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key\\bad');
     }
@@ -91,7 +91,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharAtThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key@bad');
     }
@@ -100,7 +100,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function reservedCharColonThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key:bad');
     }
@@ -109,7 +109,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function overLengthKeyThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not exceed 250 characters');
+        $this->expectExceptionMessageIsOrContains('must not exceed 250 characters');
 
         CacheKeyValidator::validate(str_repeat('a', 251));
     }
@@ -118,7 +118,7 @@ final class CacheKeyValidatorTest extends TestCase
     public function validateMultipleWithNonStringKeyThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must be a string');
+        $this->expectExceptionMessageIsOrContains('must be a string');
 
         CacheKeyValidator::validateMultiple([123]);
     }

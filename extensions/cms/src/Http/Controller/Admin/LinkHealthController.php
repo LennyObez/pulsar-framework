@@ -14,6 +14,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function count;
+use function is_int;
 use function max;
 use function min;
 
@@ -23,16 +24,16 @@ use function min;
  * Provides a broken links report and the ability to trigger
  * a full link health check across all published content.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class LinkHealthController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class LinkHealthController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private LinkHealthServiceInterface $linkHealthService,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Display broken links report with pagination and filters.
@@ -43,8 +44,12 @@ final readonly class LinkHealthController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 50)));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 50));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');

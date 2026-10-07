@@ -6,6 +6,7 @@ namespace Pulsar\Extension\McpServer\Internal\Protocol;
 
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Core\Version;
 use Pulsar\Extension\McpServer\Config\McpConfig;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Contracts\McpToolRegistryInterface;
@@ -36,7 +37,6 @@ use function sprintf;
 final readonly class MessageHandler
 {
     private const string SERVER_NAME = 'pulsar-mcp';
-    private const string SERVER_VERSION = '1.0.0-rc.9';
     private const int METHOD_NOT_FOUND = -32601;
     private const int INVALID_PARAMS = -32602;
 
@@ -69,7 +69,7 @@ final readonly class MessageHandler
     public function handle(JsonRpcRequest $request): ?string
     {
         if ($request->isNotification()) {
-            return $this->handleNotification($request);
+            return $this->handleNotification();
         }
 
         /** @var string|int $id */
@@ -88,26 +88,14 @@ final readonly class MessageHandler
         };
     }
 
-    private function handleNotification(JsonRpcRequest $request): ?string
+    private function handleNotification(): null
     {
-        if ($request->method === 'notifications/cancelled') {
-            $this->handleCancelled($request->params);
-        }
-
-        // All notifications (including notifications/initialized) return null per spec
+        // notifications/cancelled and notifications/initialized are best-effort
+        // acknowledgments. The current implementation runs tool execution
+        // synchronously, so cancellation has nothing to interrupt. Future async
+        // execution can read the requestId and check a cancellation registry.
+        // All notifications return null per spec.
         return null;
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     */
-    private function handleCancelled(array $params): void
-    {
-        // Best-effort cancel tracking. The requestId identifies which in-flight
-        // request the client wants cancelled. Since tool execution is synchronous
-        // in the current implementation, this is a no-op acknowledgment.
-        // Future async execution can check a cancellation registry keyed by
-        // $params['requestId'].
     }
 
     /**
@@ -144,9 +132,16 @@ final readonly class MessageHandler
                     'listChanged' => false,
                 ],
             ],
+            // Computed, never written down. This was a private constant holding a
+            // literal, and it went three releases without being touched: every MCP
+            // client that completed a handshake was told the server was a version the
+            // framework had already left behind, and nothing could notice, because a
+            // stale string is still correct PHP. Bundled extensions ship in lockstep
+            // with the framework (docs/extension-versioning.md), so the framework's
+            // version is this server's version by definition rather than by upkeep.
             'serverInfo' => [
                 'name' => self::SERVER_NAME,
-                'version' => self::SERVER_VERSION,
+                'version' => Version::full(),
             ],
         ]);
     }

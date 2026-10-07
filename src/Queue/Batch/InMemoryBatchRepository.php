@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Queue\Exception\QueueException;
 
 use function array_filter;
+use function array_keys;
 use function count;
 use function time;
 
@@ -105,7 +106,7 @@ final class InMemoryBatchRepository implements BatchRepositoryInterface
             static fn(JobBatch $b): bool => $b->finishedAt !== null && $b->finishedAt < $beforeTimestamp,
         );
 
-        foreach ($pruned as $id => $batch) {
+        foreach (array_keys($pruned) as $id) {
             unset($this->batches[$id]);
         }
 

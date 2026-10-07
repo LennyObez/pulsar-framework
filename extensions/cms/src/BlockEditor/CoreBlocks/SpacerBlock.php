@@ -36,7 +36,9 @@ final readonly class SpacerBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $height = (int) ($data['height'] ?? 0);
+        /** @var mixed $rawHeight */
+        $rawHeight = $data['height'] ?? null;
+        $height = is_int($rawHeight) ? $rawHeight : 0;
         $height = max(1, min(500, $height));
 
         return "<div style=\"height:{$height}px\" aria-hidden=\"true\"></div>";

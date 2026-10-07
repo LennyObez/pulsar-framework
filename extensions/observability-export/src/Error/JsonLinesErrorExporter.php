@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\ObservabilityExport\Error;
 
 use Override;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
 use Pulsar\Extension\ObservabilityExport\Schema\ErrorSchema;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
@@ -19,8 +19,9 @@ use const PHP_EOL;
  *
  * Buffers events in memory and flushes to disk when the threshold is reached.
  * Uses flock(LOCK_EX) for multi-process safety.
+ * @api
  */
-#[Internal(reason: 'Implementation detail; depend on ErrorExporterInterface')]
+#[Api(since: '1.0.0')]
 final class JsonLinesErrorExporter implements ErrorExporterInterface
 {
     /** @var list<ErrorEvent> */

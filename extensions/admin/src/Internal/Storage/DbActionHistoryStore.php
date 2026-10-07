@@ -65,16 +65,17 @@ final readonly class DbActionHistoryStore implements ActionHistoryStoreInterface
     {
         $entries = [];
         foreach ($result->rows as $row) {
+            /** @var array{id: string, action: string, resource_name: string, record_id: string|null, actor: string, timestamp: int, success: int, detail: string} $data */
             $data = $row->toArray();
             $entries[] = new ActionHistoryEntry(
-                id: (string) $data['id'],
-                action: (string) $data['action'],
-                resourceName: (string) $data['resource_name'],
-                recordId: $data['record_id'] !== null ? (string) $data['record_id'] : null,
-                actor: (string) $data['actor'],
-                timestamp: (int) $data['timestamp'],
+                id: $data['id'],
+                action: $data['action'],
+                resourceName: $data['resource_name'],
+                recordId: $data['record_id'],
+                actor: $data['actor'],
+                timestamp: $data['timestamp'],
                 success: (bool) $data['success'],
-                detail: (string) $data['detail'],
+                detail: $data['detail'],
             );
         }
         return $entries;

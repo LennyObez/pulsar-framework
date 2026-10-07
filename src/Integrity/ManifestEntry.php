@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single file entry within an integrity manifest.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ManifestEntry

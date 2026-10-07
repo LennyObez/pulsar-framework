@@ -42,14 +42,20 @@ use function in_array;
 use function is_dir;
 use function json_decode;
 use function random_bytes;
+use function realpath;
 use function rtrim;
+use function str_starts_with;
 use function strlen;
 use function substr;
+use function sys_get_temp_dir;
 
 use const JSON_THROW_ON_ERROR;
 
 /**
  * Theme lifecycle manager handling install, activate, deactivate, delete, preview, and rollback.
+ *
+ * @psalm-api Bound to ThemeManagerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ThemeManagerInterface for public API')]
 final readonly class ThemeManager implements ThemeManagerInterface
@@ -116,7 +122,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
             }
 
             /** @var array<string, mixed> $manifestData */
-            $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+            $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
             $manifest = ThemeManifest::fromArray($manifestData);
 
             $validation = $this->manifestValidator->validate($manifest);
@@ -130,7 +136,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
 
             if ($existing !== null) {
                 throw CmsException::themeManifestInvalid(
-                    "Theme with slug '{$manifest->slug}' is already installed",
+                    "Theme with slug '$manifest->slug' is already installed",
                 );
             }
 
@@ -182,7 +188,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
                 AuditOutcome::Success,
                 $installedBy,
                 'cms.theme.installed',
-                "theme:{$themeId}",
+                "theme:$themeId",
                 ['slug' => $manifest->slug, 'version' => $manifest->version],
             );
 
@@ -241,7 +247,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
             AuditOutcome::Success,
             $activatedBy,
             'cms.theme.activated',
-            "theme:{$themeId}",
+            "theme:$themeId",
             ['slug' => $theme->slug],
         );
 
@@ -315,7 +321,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
             AuditOutcome::Success,
             $deletedBy,
             'cms.theme.deleted',
-            "theme:{$themeId}",
+            "theme:$themeId",
             ['slug' => $theme->slug, 'reason' => $reason],
         );
 
@@ -410,8 +416,8 @@ final readonly class ThemeManager implements ThemeManagerInterface
             RecursiveIteratorIterator::SELF_FIRST,
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             $relativePath = substr($item->getPathname(), strlen($source) + 1);
             $targetPath = $target . '/' . $relativePath;
 
@@ -449,7 +455,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
 
     private function removeDirectory(string $path): void
     {
-        if (!is_dir($path)) {
+        if (!is_dir($path) || !$this->isInsideAllowedRoot($path)) {
             return;
         }
 
@@ -458,8 +464,8 @@ final readonly class ThemeManager implements ThemeManagerInterface
             RecursiveIteratorIterator::CHILD_FIRST,
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             if ($item->isDir()) {
                 rmdir($item->getPathname());
             } else {
@@ -468,5 +474,42 @@ final readonly class ThemeManager implements ThemeManagerInterface
         }
 
         rmdir($path);
+    }
+
+    /**
+     * Defence-in-depth: confirm the directory to remove resolves inside the
+     * configured theme storage path, the public asset directory, or the
+     * system temp dir. Guards against any future regression in slug
+     * validation or DB tampering.
+     */
+    private function isInsideAllowedRoot(string $path): bool
+    {
+        $resolved = realpath($path);
+
+        if ($resolved === false) {
+            return false;
+        }
+
+        $roots = [
+            $this->config->storagePath,
+            rtrim($this->publicPath, '/') . '/cms-assets',
+            sys_get_temp_dir(),
+        ];
+
+        foreach ($roots as $root) {
+            $rootReal = realpath($root);
+
+            if ($rootReal === false) {
+                continue;
+            }
+
+            $rootWithSep = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;
+
+            if (str_starts_with($resolved, $rootWithSep)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

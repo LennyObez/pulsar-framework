@@ -15,7 +15,6 @@ use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 
 #[CoversClass(PaymentIntent::class)]
-#[CoversClass(PaymentIntentStatus::class)]
 final class PaymentIntentTest extends TestCase
 {
     #[Test]
@@ -65,7 +64,7 @@ final class PaymentIntentTest extends TestCase
         $intent = $this->createIntent(PaymentIntentStatus::Cancelled);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Invalid PaymentIntent transition');
+        $this->expectExceptionMessageIsOrContains('Invalid PaymentIntent transition');
 
         (void) $intent->transitionTo(PaymentIntentStatus::Captured);
     }

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\Redirect;
@@ -21,6 +22,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function findByPathReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbRedirectRepository($db, null);
@@ -47,6 +49,7 @@ final class DbRedirectRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbRedirectRepository($db, null);
@@ -68,6 +71,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function findByPathUsesTenantIdFromConstructor(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -84,6 +88,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function findByPathUsesExplicitTenantOverride(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -100,6 +105,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function findByPathUsesSentinelWhenNoTenant(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -131,10 +137,11 @@ final class DbRedirectRepositoryTest extends TestCase
         );
 
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
-                self::stringContains('INSERT INTO cms_redirects'),
+                self::stringContains('INSERT INTO `cms_redirects`'),
                 self::callback(static function (array $b): bool {
                     return $b['id'] === 'redir-save'
                         && $b['from_path'] === '/old'
@@ -152,9 +159,82 @@ final class DbRedirectRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function saveGeneratesPostgresqlSyntax(): void
+    {
+        $now = new DateTimeImmutable('2024-06-15T10:00:00+00:00');
+        $redirect = new Redirect(
+            id: 'redir-pg',
+            tenantId: null,
+            fromPath: '/pg-old',
+            toPath: '/pg-new',
+            statusCode: 301,
+            locale: null,
+            hits: 0,
+            lastHitAt: null,
+            createdAt: $now,
+            createdBy: 'user-pg',
+            reason: 'PostgreSQL test',
+        );
+
+        $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::PostgreSQL);
+        $db->expects(self::once())
+            ->method('execute')
+            ->with(
+                self::logicalAnd(
+                    self::stringContains('INSERT INTO "cms_redirects"'),
+                    self::stringContains('ON CONFLICT'),
+                    self::stringContains('DO UPDATE SET'),
+                    self::stringContains('EXCLUDED.'),
+                ),
+                self::callback(static fn(array $b): bool => $b['id'] === 'redir-pg'
+                    && $b['from_path'] === '/pg-old'),
+            );
+
+        $repo = new DbRedirectRepository($db, null);
+        $repo->save($redirect);
+    }
+
+    #[Test]
+    public function saveGeneratesSqliteSyntax(): void
+    {
+        $now = new DateTimeImmutable('2024-06-15T10:00:00+00:00');
+        $redirect = new Redirect(
+            id: 'redir-sl',
+            tenantId: null,
+            fromPath: '/sl-old',
+            toPath: '/sl-new',
+            statusCode: 308,
+            locale: null,
+            hits: 0,
+            lastHitAt: null,
+            createdAt: $now,
+            createdBy: 'user-sl',
+            reason: 'SQLite test',
+        );
+
+        $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::SQLite);
+        $db->expects(self::once())
+            ->method('execute')
+            ->with(
+                self::logicalAnd(
+                    self::stringContains('INSERT INTO "cms_redirects"'),
+                    self::stringContains('ON CONFLICT'),
+                    self::stringContains('DO UPDATE SET'),
+                ),
+                self::anything(),
+            );
+
+        $repo = new DbRedirectRepository($db, null);
+        $repo->save($redirect);
+    }
+
+    #[Test]
     public function incrementHitsCallsExecute(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -201,6 +281,7 @@ final class DbRedirectRepositoryTest extends TestCase
         ];
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result($rows));
 
         $repo = new DbRedirectRepository($db, null);
@@ -215,6 +296,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function findAllCalculatesOffsetFromPage(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -231,6 +313,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function findAllClampsPageToMinimumOne(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -247,6 +330,7 @@ final class DbRedirectRepositoryTest extends TestCase
     public function deleteCallsExecuteWithSoftDelete(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -264,6 +348,7 @@ final class DbRedirectRepositoryTest extends TestCase
         $cutoff = new DateTimeImmutable('2024-01-01T00:00:00+00:00');
 
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -297,6 +382,7 @@ final class DbRedirectRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbRedirectRepository($db, null);

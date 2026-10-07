@@ -11,17 +11,20 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Core\KernelInterface;
-use Pulsar\Http\Message\Response;
+use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Http\Message\BodyTooLargeException;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Exception\RuntimeException;
 use Pulsar\Runtime\Worker\HealthResponse;
-use Pulsar\Runtime\Worker\HealthStatus;
 use Pulsar\Runtime\Worker\WorkerContext;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Throwable;
 
 use function function_exists;
+use function header;
+use function headers_send;
 use function sprintf;
 
 use const PHP_OS_FAMILY;
@@ -34,7 +37,7 @@ use const PHP_OS_FAMILY;
  * the RequestSandbox for isolation.
  */
 #[Internal]
-final class FrankenPhpRuntime implements ReloadableRuntimeInterface
+final class FrankenPhpRuntime implements ReloadableRuntimeInterface, SupportsEarlyHints
 {
     private RuntimeStatus $status = RuntimeStatus::Stopped;
     private readonly WorkerContext $workerContext;
@@ -80,6 +83,7 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
         $continueWorking = true;
 
         while ($continueWorking && $this->status === RuntimeStatus::Running) {
+            /** @var bool $result */
             $result = frankenphp_handle_request(function (): void {
                 $this->handleRequest();
             });
@@ -103,39 +107,68 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
     /**
      * Handle a single request inside the FrankenPHP worker callback.
      *
+     * `ServerRequest::fromGlobals()` used to run before the try. It throws on a
+     * body over the cap, so a single oversized upload escaped the callback and
+     * took the whole worker down with it — every in-flight and queued request on
+     * that process, from one request nobody had to authenticate to send.
+     *
      * @codeCoverageIgnore Requires FrankenPHP runtime environment
      */
     private function handleRequest(): void
     {
         $this->workerContext->beginRequest();
 
-        $request = ServerRequest::fromGlobals();
-
-        // Health endpoint (bypass kernel)
-        if ($this->config->healthEndpoint && $request->getUri()->getPath() === '/_health') {
-            $this->emitHealthResponse();
-            $this->workerContext->endRequest();
-
-            return;
-        }
+        $request = null;
 
         try {
+            $request = ServerRequest::fromGlobals();
+
+            // Health endpoint (bypass kernel)
+            if ($this->config->healthEndpoint && $request->getUri()->getPath() === '/_health') {
+                $this->emitHealthResponse();
+                $this->workerContext->endRequest();
+
+                return;
+            }
+
             $request = $this->beforeRequest($request);
             $response = $this->kernel->handle($request);
         } catch (Throwable $e) {
             $this->logger?->error('Request handler error', [
                 'exception' => $e->getMessage(),
-                'path' => $request->getUri()->getPath(),
+                'path' => $request?->getUri()->getPath() ?? '(request not parsed)',
             ]);
-            $response = new Response(
-                statusCode: ResponseStatus::InternalServerError->value,
-                body: 'Internal Server Error',
-            );
+            $response = $this->errorResponse($e);
         }
 
-        $this->afterRequest($request, $response);
+        // No request object when fromGlobals() threw: the sandbox has nothing to
+        // reset against, and calling it with a fabricated request would reset
+        // state the failed request never touched.
+        if ($request !== null) {
+            $this->afterRequest($request, $response);
+        }
+
         $this->emitResponse($response);
         $this->workerContext->endRequest();
+    }
+
+    /**
+     * Generic error response for a request the worker could not complete.
+     *
+     * Body-too-large is the one failure the client can act on, and the ceiling
+     * is server policy rather than a secret, so it earns its own status.
+     * Everything else is a 500 with no detail: the previous plain-text
+     * `Internal Server Error` carried neither the security headers nor the
+     * `Cache-Control: no-store` that an error page emitted outside the pipeline
+     * has to supply itself.
+     */
+    private function errorResponse(Throwable $e): ResponseInterface
+    {
+        $status = $e instanceof BodyTooLargeException
+            ? ResponseStatus::PayloadTooLarge
+            : ResponseStatus::InternalServerError;
+
+        return new ProductionRenderer()->response($status);
     }
 
     #[Override]
@@ -149,11 +182,11 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
     {
         $this->status = RuntimeStatus::Draining;
         $this->workerContext->drain();
-        $this->logger?->info('FrankenPHP worker reload requested — draining');
+        $this->logger?->info('FrankenPHP worker reload requested: draining');
     }
 
     #[Override]
-    public function healthStatus(): HealthStatus
+    public function healthStatus(): WorkerHealthStatus
     {
         return $this->workerContext->healthStatus();
     }
@@ -182,17 +215,39 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
     }
 
     /**
-     * Send early hints (103) via FrankenPHP's native API.
+     * Send Link headers as a 103 interim response.
      *
-     * @param array<string, string> $headers Headers to send as early hints
+     * This used to call `frankenphp_early_hints()`, a function FrankenPHP does not
+     * have and never had: its extension declares eleven functions and that is not
+     * one of them. Guarded by function_exists(), the call was therefore a permanent
+     * no-op — HTTP 103 never shipped, and nothing reported it, because a silent
+     * no-op is indistinguishable from a working optimisation nobody measured.
      *
-     * @codeCoverageIgnore Requires FrankenPHP runtime
+     * The supported mechanism is headers_send(): it flushes the headers accumulated
+     * so far with the given status, so setting the Link headers and flushing at 103
+     * produces the interim response. PHP keeps building the real one afterwards.
+     *
+     * The parameter shape changed with it. It used to take `array<string, string>`
+     * while the only producer, EarlyHints::toLinkHeaders(), returns a list of Link
+     * header *values* — a mismatch that could not have worked either, and further
+     * evidence the two ends were never connected.
+     *
+     * @param list<string> $linkHeaderValues
+     *
+     * @codeCoverageIgnore Requires the FrankenPHP runtime
      */
-    public function earlyHints(array $headers): void
+    #[Override]
+    public function earlyHints(array $linkHeaderValues): void
     {
-        if (function_exists('frankenphp_early_hints')) {
-            frankenphp_early_hints($headers);
+        if ($linkHeaderValues === [] || !function_exists('headers_send')) {
+            return;
         }
+
+        foreach ($linkHeaderValues as $value) {
+            header('Link: ' . $value, false);
+        }
+
+        headers_send(ResponseStatus::EarlyHints->value);
     }
 
     /**
@@ -267,18 +322,19 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant — POSIX-only, guarded by OS check */
-        pcntl_signal(SIGINT, function (): void {
+        $sigint = SIGINT;
+        $sigterm = SIGTERM;
+        $sigusr1 = SIGUSR1;
+
+        pcntl_signal($sigint, function (): void {
             $this->stop();
         });
 
-        /** @psalm-suppress UndefinedConstant */
-        pcntl_signal(SIGTERM, function (): void {
+        pcntl_signal($sigterm, function (): void {
             $this->stop();
         });
 
-        /** @psalm-suppress UndefinedConstant */
-        pcntl_signal(SIGUSR1, function (): void {
+        pcntl_signal($sigusr1, function (): void {
             $this->reload();
         });
     }

@@ -5,23 +5,36 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Payments;
 
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Resolution\TypedServiceResolver;
+use Pulsar\Extensibility\ExtensionConfigRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Contracts\PayPalCertificateProviderInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookProcessorInterface;
+use Pulsar\Extension\Payments\Features\CancelPaymentIntent\CancelPaymentIntentHandler;
+use Pulsar\Extension\Payments\Features\CapturePaymentIntent\CapturePaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
+use Pulsar\Extension\Payments\Features\RefundCharge\RefundChargeHandler;
 use Pulsar\Extension\Payments\Gateway\PaymentGateway;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\SystemClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Internal\Webhook\PayPalCertificateProvider;
+use Pulsar\Extension\Payments\Tax\DefaultTaxProvider;
+use Pulsar\Extension\Payments\Tax\TaxProviderInterface;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
+use Pulsar\Idempotency\TenantAwareIdempotencyStore;
+use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Tenancy\TenantContext;
 use Pulsar\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Webhook\WebhookEventLogInterface;
 use Pulsar\Webhook\WebhookVerifierInterface;
@@ -40,13 +53,9 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
 
         // Config
         $container->bind(PaymentsConfig::class, static function () use ($container): PaymentsConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.payments')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.payments');
-            }
+            $configData = $container->has(ExtensionConfigRegistry::class)
+                ? $container->get(ExtensionConfigRegistry::class)->section('payments')
+                : [];
 
             return PaymentsConfig::fromArray($configData);
         });
@@ -63,7 +72,15 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             return match ($config->provider) {
                 'null' => new NullProvider($clock),
                 'simulator' => new SimulatorProvider($clock),
-                default => $container->get($config->provider),
+                // Refuse arbitrary class instantiation — verify the configured
+                // FQCN actually implements the expected interface before
+                // letting the container resolve it.
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->provider,
+                    PaymentProviderInterface::class,
+                    'payments.provider',
+                ),
             };
         });
 
@@ -72,11 +89,31 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var PaymentsConfig $config */
             $config = $container->get(PaymentsConfig::class);
 
-            /** @var IdempotencyStoreInterface */
-            return match ($config->idempotency->store) {
+            /** @var IdempotencyStoreInterface $base */
+            $base = match ($config->idempotency->store) {
                 'memory' => new InMemoryIdempotencyStore(),
-                default => $container->get($config->idempotency->store),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->idempotency->store,
+                    IdempotencyStoreInterface::class,
+                    'payments.idempotency.store',
+                ),
             };
+
+            // When a `TenantContext` is wired (multi-tenant
+            // deployment), wrap the store in a per-tenant namespacing
+            // decorator so two tenants who pick the same logical
+            // idempotency key cannot collide on a single store row.
+            // Single-tenant deployments leave `TenantContext` unwired
+            // and continue to see the raw key.
+            if ($container->has(TenantContext::class)) {
+                /** @var TenantContext $tenantContext */
+                $tenantContext = $container->get(TenantContext::class);
+
+                return new TenantAwareIdempotencyStore($base, $tenantContext);
+            }
+
+            return $base;
         });
 
         // Webhook event log
@@ -87,15 +124,42 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var WebhookEventLogInterface */
             return match ($config->webhookLog->store) {
                 'memory' => new InMemoryWebhookEventLog(),
-                default => $container->get($config->webhookLog->store),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->webhookLog->store,
+                    WebhookEventLogInterface::class,
+                    'payments.webhook_log.store',
+                ),
             };
         });
+
+        // Signs idempotency-cache payloads with a master-key-derived HMAC so a
+        // tampered store row cannot replay as a forged response.
+        $container->bind(SignedIdempotencyEnvelope::class, static function () use ($container): SignedIdempotencyEnvelope {
+            /** @var KeyProviderInterface $keyProvider */
+            $keyProvider = $container->get(KeyProviderInterface::class);
+
+            return new SignedIdempotencyEnvelope($keyProvider);
+        });
+
+        // Tax provider
+        $container->bind(TaxProviderInterface::class, DefaultTaxProvider::class);
 
         // Webhook verifier
         $container->bind(WebhookVerifierInterface::class, HmacWebhookVerifier::class);
 
-        // Feature handlers
+        // PayPal webhook signing certificate provider: supplies the RSA public
+        // key that PayPalWebhookHandler verifies transmission signatures
+        // against. PayPal signs webhooks with its own certificate, so
+        // verification is asymmetric — there is no shared secret to configure,
+        // and none may be substituted for the certificate.
+        $container->bind(PayPalCertificateProviderInterface::class, PayPalCertificateProvider::class);
+
+        // Feature handlers — each mutating operation has its own slice
         $container->bind(CreatePaymentIntentHandler::class, CreatePaymentIntentHandler::class);
+        $container->bind(CapturePaymentIntentHandler::class, CapturePaymentIntentHandler::class);
+        $container->bind(CancelPaymentIntentHandler::class, CancelPaymentIntentHandler::class);
+        $container->bind(RefundChargeHandler::class, RefundChargeHandler::class);
         $container->bind(ProcessWebhookHandler::class, ProcessWebhookHandler::class);
 
         // Gateway
@@ -119,7 +183,12 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             IdempotencyStoreInterface::class,
             WebhookEventLogInterface::class,
             WebhookVerifierInterface::class,
+            TaxProviderInterface::class,
+            SignedIdempotencyEnvelope::class,
             CreatePaymentIntentHandler::class,
+            CapturePaymentIntentHandler::class,
+            CancelPaymentIntentHandler::class,
+            RefundChargeHandler::class,
             ProcessWebhookHandler::class,
             PaymentGateway::class,
             PaymentGatewayInterface::class,

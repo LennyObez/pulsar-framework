@@ -14,7 +14,9 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Scheduler\ContainerJobRegistry;
 use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Scheduler\JobRegistryInterface;
 use Pulsar\Scheduler\Scheduler;
 use Random\Randomizer;
 
@@ -52,6 +54,10 @@ final readonly class SchedulerWiring implements ServiceWiringInterface
 
         $registry = new JobRegistry();
         $container->instance(JobRegistry::class, $registry);
+
+        // The class-name-and-schedule contract two extensions call. Unbound, its
+        // has() guard was false and their scheduled jobs were never registered.
+        $container->instance(JobRegistryInterface::class, new ContainerJobRegistry($registry, $container));
 
         $contextHolder = $container->has(RequestContextHolder::class)
             ? $container->get(RequestContextHolder::class)

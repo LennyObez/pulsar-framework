@@ -20,7 +20,6 @@ use Pulsar\Observability\Tracing\TraceContext;
 use Pulsar\Routing\RoutingException;
 use Throwable;
 
-use function sprintf;
 use function str_contains;
 
 /**
@@ -48,8 +47,23 @@ final readonly class ExceptionHandler
         $status = $this->resolveStatus($exception);
         $headers = $this->resolveHeaders($exception);
 
-        $this->logException($exception, $request, $status);
+        // Reportable exceptions can report themselves; return false suppresses default logging
+        if ($exception instanceof ReportableInterface) {
+            $shouldLog = $exception->report();
+        } else {
+            $shouldLog = true;
+        }
+
+        if ($shouldLog) {
+            $this->logException($exception, $request, $status);
+        }
+
         $this->captureError($exception, $request);
+
+        // Renderable exceptions produce their own response
+        if ($exception instanceof RenderableInterface) {
+            return $exception->render($request);
+        }
 
         // ValidationException always renders as JSON
         if ($exception instanceof ValidationException) {
@@ -98,6 +112,10 @@ final readonly class ExceptionHandler
 
             if ($exception->isMethodNotAllowed()) {
                 return ResponseStatus::MethodNotAllowed;
+            }
+
+            if ($exception->isNotImplemented()) {
+                return ResponseStatus::NotImplemented;
             }
         }
 
@@ -177,6 +195,7 @@ final readonly class ExceptionHandler
 
         // Extract trace ID from request attributes if available
         $traceId = null;
+        /** @var mixed $traceContext */
         $traceContext = $request->getAttribute('_trace_context');
 
         if ($traceContext instanceof TraceContext) {
@@ -234,6 +253,7 @@ final readonly class ExceptionHandler
             }
         }
 
+        /** @var mixed $attribute */
         $attribute = $request->getAttribute('_request_context');
 
         return $attribute instanceof RequestContext ? $attribute : null;
@@ -241,13 +261,41 @@ final readonly class ExceptionHandler
 
     /**
      * Minimal fallback when the renderer itself fails.
+     *
+     * Produces a complete, valid HTML document so the user sees a proper
+     * error page even when the database is down or the template engine
+     * throws. No external resources are loaded (no CSS/JS/fonts) to
+     * ensure this works regardless of infrastructure state.
      */
     private function fallbackBody(ResponseStatus $status): string
     {
-        return sprintf(
-            '<h1>%d %s</h1>',
-            $status->value,
-            htmlspecialchars($status->reasonPhrase(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-        );
+        $code = $status->value;
+        $phrase = htmlspecialchars($status->reasonPhrase());
+
+        return <<<HTML
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>$code $phrase</title>
+                <style>
+                    body{font-family:system-ui,-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f8f9fa;color:#212529}
+                    .error{text-align:center;max-width:480px;padding:2rem}
+                    h1{font-size:3rem;margin:0 0 .5rem}
+                    p{color:#6c757d;margin:0 0 1.5rem}
+                    a{color:#0d6efd;text-decoration:none}
+                    a:hover{text-decoration:underline}
+                </style>
+            </head>
+            <body>
+                <main class="error" role="main">
+                    <h1>$code</h1>
+                    <p>$phrase</p>
+                    <a href="/">Return to homepage</a>
+                </main>
+            </body>
+            </html>
+            HTML;
     }
 }

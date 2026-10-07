@@ -11,7 +11,6 @@
 
     <form method="POST" action="/admin/cms/plugins/{{ $plugin['id'] }}/settings" class="cms-plugin-settings__form">
         @csrf
-        @method('PUT')
 
         @if (empty($schema))
             <p class="cms-widget__empty">This plugin has no configurable settings.</p>

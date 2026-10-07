@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Port interface for persisting notifications to a database.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DatabaseNotificationStoreInterface

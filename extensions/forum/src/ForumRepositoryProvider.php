@@ -12,7 +12,10 @@ use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
 use Pulsar\Extension\Forum\Category\CategoryTranslationRepositoryInterface;
 use Pulsar\Extension\Forum\Internal\Persistence\DbCategoryRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbCategoryTranslationRepository;
+use Pulsar\Extension\Forum\Internal\Persistence\DbForumModerationLogRepository;
+use Pulsar\Extension\Forum\Internal\Persistence\DbForumNotificationRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbForumProfileRepository;
+use Pulsar\Extension\Forum\Internal\Persistence\DbNotificationPreferenceRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbPostReportRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbPostRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbPostVoteRepository;
@@ -22,10 +25,15 @@ use Pulsar\Extension\Forum\Internal\Persistence\DbThreadRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbThreadSubscriptionRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbThreadVoteRepository;
 use Pulsar\Extension\Forum\Internal\Persistence\DbUserBadgeRepository;
+use Pulsar\Extension\Forum\Internal\Persistence\DbUserBanRepository;
+use Pulsar\Extension\Forum\Notification\ForumNotificationRepositoryInterface;
+use Pulsar\Extension\Forum\Notification\NotificationPreferenceRepositoryInterface;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
+use Pulsar\Extension\Forum\Report\UserBanRepositoryInterface;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
 use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
@@ -35,7 +43,7 @@ use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
 /**
  * Binds all forum repository interfaces to their database-backed implementations.
  */
-#[Internal(reason: 'Forum service wiring — use interfaces for public API')]
+#[Internal(reason: 'Forum service wiring; use interfaces for public API')]
 final readonly class ForumRepositoryProvider
 {
     public function register(ContainerInterface $container): void
@@ -108,6 +116,28 @@ final readonly class ForumRepositoryProvider
         $container->instance(
             ThreadSubscriptionRepositoryInterface::class,
             new DbThreadSubscriptionRepository($connection, $tenantId),
+        );
+
+        // Batch 25: Notifications
+        $container->instance(
+            ForumNotificationRepositoryInterface::class,
+            new DbForumNotificationRepository($connection),
+        );
+
+        $container->instance(
+            NotificationPreferenceRepositoryInterface::class,
+            new DbNotificationPreferenceRepository($connection),
+        );
+
+        // Batch 25: Moderation log + bans
+        $container->instance(
+            ForumModerationLogRepositoryInterface::class,
+            new DbForumModerationLogRepository($connection),
+        );
+
+        $container->instance(
+            UserBanRepositoryInterface::class,
+            new DbUserBanRepository($connection),
         );
     }
 }

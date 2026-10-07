@@ -2,6 +2,20 @@
 
 ## Status
 
+**Superseded by [ADR-0072](0072-a-budget-is-the-assertion-that-runs.md).**
+Every operative statement of the Decision below is false against the shipped CI. The
+budget JSON files are read by no code; the budgets that fail a build are `#[Assert]`
+attributes in `tests/Benchmark`. The retry threshold is 20, not 5. The job is
+`php-benchmark-tier-a`, is named "Hard Gate", and blocks — it is not advisory. No
+coefficient-of-variation logic exists, so nothing is promoted or demoted. And the
+budgets are absolute wall-clock numbers, not relative to a baseline; relative detection
+exists in `benchmark-regression.yml` with a different design. Read ADR-0072 for what is
+in force.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted
 
 ## Context
@@ -29,7 +43,7 @@ Define explicit performance budgets for framework-critical operations. Use a **h
 
 ### Enforcement model
 
-- **Budget definitions** live in `tools/php/performance-budgets.json` as machine-readable thresholds.
+- **Budget definitions** live in `tools/php/budgets.fpm.json` (FPM mode) and `tools/php/budgets.persistent.json` (persistent runtime) as machine-readable thresholds.
 - **PHPBench** runs benchmarks with 5 iterations, 1000 revolutions, and a 5% retry threshold.
 - **CI job** (`php-benchmark`) runs after `php-quality`, produces benchmark text output and JSON results.
 - **Artifacts** are retained for 14 days, enabling historical comparison across PRs.

@@ -14,6 +14,7 @@ use Pulsar\Extension\Orm\Contracts\RepositoryInterface;
 use Pulsar\Extension\Orm\Domain\FetchPlan;
 use Pulsar\Extension\Orm\Exception\EntityNotFoundException;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantScopeApplier;
 
 /**
  * Generic repository implementation for any entity type.
@@ -31,8 +32,13 @@ final readonly class GenericRepository implements RepositoryInterface
         private AuditingPersister $persister,
         /** @var class-string<T> */
         private string $entityClass,
+        // Null in a single-tenant app (no TenantScope bound); non-null wires the
+        // read-side tenant filter so find()/findBy()/count()/exists() cannot
+        // return another tenant's rows.
+        private ?TenantScopeApplier $tenantScopeApplier = null,
     ) {}
 
+    /** @return T|null */
     #[Override]
     public function find(string|int $id, ?FetchPlan $fetchPlan = null): ?object
     {
@@ -45,6 +51,7 @@ final readonly class GenericRepository implements RepositoryInterface
 
         $builder->where($metadata->primaryKey->columnName, $id);
 
+        /** @var T|null */
         return $builder->firstEntity();
     }
 
@@ -60,6 +67,7 @@ final readonly class GenericRepository implements RepositoryInterface
         return $entity;
     }
 
+    /** @return list<T> */
     #[Override]
     public function findBy(array $criteria = [], ?FetchPlan $fetchPlan = null): array
     {
@@ -69,13 +77,16 @@ final readonly class GenericRepository implements RepositoryInterface
             $builder->withFetchPlan($fetchPlan);
         }
 
+        /** @var mixed $value */
         foreach ($criteria as $column => $value) {
-            $builder->where($column, $value);
+            $builder->where((string) $column, $value);
         }
 
+        /** @var list<T> */
         return $builder->getEntities();
     }
 
+    /** @return T|null */
     #[Override]
     public function findOneBy(array $criteria, ?FetchPlan $fetchPlan = null): ?object
     {
@@ -85,10 +96,12 @@ final readonly class GenericRepository implements RepositoryInterface
             $builder->withFetchPlan($fetchPlan);
         }
 
+        /** @var mixed $value */
         foreach ($criteria as $column => $value) {
-            $builder->where($column, $value);
+            $builder->where((string) $column, $value);
         }
 
+        /** @var T|null */
         return $builder->firstEntity();
     }
 
@@ -98,6 +111,12 @@ final readonly class GenericRepository implements RepositoryInterface
         $metadata = $this->metadataRegistry->get($this->entityClass);
         $builder = new SelectBuilder($this->connection);
         $builder->forEntity($this->entityClass, $metadata, $this->hydrator);
+
+        // Constrain every read to the active tenant. query() is the single
+        // chokepoint for find()/findBy()/findOneBy()/count()/exists(), so the
+        // filter applies uniformly; the applier is a no-op for non-tenant-scoped
+        // entities and when no tenant context is active.
+        $this->tenantScopeApplier?->apply($builder, $metadata);
 
         return $builder;
     }
@@ -121,12 +140,41 @@ final readonly class GenericRepository implements RepositoryInterface
     }
 
     #[Override]
+    public function bulkInsert(array $entities, MutationContext $context): void
+    {
+        if ($entities === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($entities, $context): void {
+            foreach ($entities as $entity) {
+                $this->persister->insert($entity, $context);
+            }
+        });
+    }
+
+    #[Override]
+    public function bulkUpdate(array $entities, MutationContext $context): void
+    {
+        if ($entities === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($entities, $context): void {
+            foreach ($entities as $entity) {
+                $this->persister->update($entity, $context);
+            }
+        });
+    }
+
+    #[Override]
     public function count(array $criteria = []): int
     {
         $builder = $this->query();
 
+        /** @var mixed $value */
         foreach ($criteria as $column => $value) {
-            $builder->where($column, $value);
+            $builder->where((string) $column, $value);
         }
 
         return $builder->aggregate()->count();

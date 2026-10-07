@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\WebAuthn\Config;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
+use Pulsar\Extension\Auth\WebAuthn\Config\WebAuthnConfig;
 
 #[CoversClass(WebAuthnConfig::class)]
 final class WebAuthnConfigTest extends TestCase

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Interface for feature flag evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FeatureFlagManagerInterface

@@ -44,7 +44,7 @@ final class ConnectionManagerTest extends TestCase
         $manager = ConnectionManager::fromConfig($config);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Database connection "unknown" is not configured');
+        $this->expectExceptionMessageIsOrContains('Database connection "unknown" is not configured');
 
         $manager->connection('unknown');
     }

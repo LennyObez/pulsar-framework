@@ -89,6 +89,7 @@ final readonly class AdminSchemaMiddleware implements MiddlewareInterface
 
                 // Step-up auth check for destructive operations
                 if (in_array($operation, $this->config->requireStepUpFor, true)) {
+                    /** @var mixed $stepUpVerified */
                     $stepUpVerified = $request->getAttribute('step_up_verified');
 
                     if ($stepUpVerified !== true && $request->getHeaderLine('X-Step-Up-Token') === '') {

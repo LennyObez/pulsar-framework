@@ -11,6 +11,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\DecoratorDefinition;
 
 use function array_reverse;
+use function class_exists;
 use function usort;
 
 /**
@@ -33,7 +34,7 @@ final class DecoratorChain
     #[NoDiscard]
     public static function resolve(object $inner, array $decorators, ContainerInterface $container): object
     {
-        // Sort by priority DESC — highest priority wraps outermost
+        // Sort by priority DESC: highest priority wraps outermost
         $sorted = $decorators;
         usort($sorted, static fn(DecoratorDefinition $a, DecoratorDefinition $b): int => $b->priority <=> $a->priority);
 
@@ -47,8 +48,10 @@ final class DecoratorChain
                 /** @var object $current */
                 $current = ($decorator->decorator)($current, $container);
             } else {
-                /** @var class-string $decoratorClass */
                 $decoratorClass = $decorator->decorator;
+                if (!class_exists($decoratorClass)) {
+                    continue;
+                }
                 $current = new $decoratorClass($current);
             }
         }

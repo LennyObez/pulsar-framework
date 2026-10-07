@@ -45,7 +45,7 @@ final class InMemoryWebhookEventLogTest extends TestCase
         $log->claim('evt-1', new DateTimeImmutable(), 3600);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('currently being processed');
+        $this->expectExceptionMessageIsOrContains('currently being processed');
 
         $log->claim('evt-1', new DateTimeImmutable(), 3600);
     }

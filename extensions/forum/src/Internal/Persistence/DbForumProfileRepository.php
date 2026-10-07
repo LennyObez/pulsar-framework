@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Profile\ForumProfile;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
@@ -16,9 +17,11 @@ use function ceil;
 use function max;
 use function min;
 
-#[Internal(reason: 'Raw-DB repository — use ForumProfileRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ForumProfileRepositoryInterface for public API')]
 final readonly class DbForumProfileRepository implements ForumProfileRepositoryInterface
 {
+    private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
+
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT p.*
         FROM forum_profiles p
@@ -29,66 +32,70 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
         SELECT p.*
         FROM forum_profiles p
         WHERE p.user_id = :user_id
-            AND p.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_COUNT_TOP_CONTRIBUTORS = <<<'SQL'
         SELECT COUNT(*) AS total
         FROM forum_profiles p
-        WHERE p.tenant_id IS NOT DISTINCT FROM :tenant_id
+        WHERE COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_FIND_TOP_CONTRIBUTORS = <<<'SQL'
         SELECT p.*
         FROM forum_profiles p
-        WHERE p.tenant_id IS NOT DISTINCT FROM :tenant_id
+        WHERE COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY p.reputation_score DESC
         LIMIT :limit OFFSET :offset
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_profiles (
-            id, tenant_id, user_id, reputation_score,
-            post_count, thread_count, is_banned, ban_reason,
-            banned_at, ban_expires_at, created_at, updated_at
-        ) VALUES (
-            :id, :tenant_id, :user_id, :reputation_score,
-            :post_count, :thread_count, :is_banned, :ban_reason,
-            :banned_at, :ban_expires_at, :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            reputation_score = EXCLUDED.reputation_score,
-            post_count = EXCLUDED.post_count,
-            thread_count = EXCLUDED.thread_count,
-            is_banned = EXCLUDED.is_banned,
-            ban_reason = EXCLUDED.ban_reason,
-            banned_at = EXCLUDED.banned_at,
-            ban_expires_at = EXCLUDED.ban_expires_at,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'user_id', 'reputation_score',
+        'post_count', 'thread_count', 'is_banned', 'ban_reason',
+        'banned_at', 'ban_expires_at', 'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'reputation_score', 'post_count', 'thread_count',
+        'is_banned', 'ban_reason', 'banned_at', 'ban_expires_at', 'updated_at',
+    ];
 
     private const string SQL_INCREMENT_REPUTATION = <<<'SQL'
         UPDATE forum_profiles
         SET reputation_score = reputation_score + :delta,
             updated_at = :updated_at
         WHERE user_id = :user_id
-            AND tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
+    // Clamp to >= 0 with a portable CASE expression (GREATEST is unavailable in
+    // SQLite). :delta is bound twice under distinct names because native prepared
+    // statements do not allow reusing a single named placeholder.
     private const string SQL_INCREMENT_POST_COUNT = <<<'SQL'
         UPDATE forum_profiles
-        SET post_count = GREATEST(0, post_count + :delta),
+        SET post_count = CASE WHEN post_count + :delta > 0 THEN post_count + :delta_value ELSE 0 END,
             updated_at = :updated_at
         WHERE user_id = :user_id
-            AND tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_INCREMENT_THREAD_COUNT = <<<'SQL'
         UPDATE forum_profiles
-        SET thread_count = GREATEST(0, thread_count + :delta),
+        SET thread_count = CASE WHEN thread_count + :delta > 0 THEN thread_count + :delta_value ELSE 0 END,
             updated_at = :updated_at
         WHERE user_id = :user_id
-            AND tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+        SQL;
+
+    private const string SQL_CLEAR_BAN_FLAG = <<<'SQL'
+        UPDATE forum_profiles
+        SET is_banned = 0,
+            ban_reason = NULL,
+            banned_at = NULL,
+            ban_expires_at = NULL,
+            updated_at = :updated_at
+        WHERE user_id = :user_id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_DELETE = <<<'SQL'
@@ -116,7 +123,7 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
     {
         $result = $this->connection->query(self::SQL_FIND_BY_USER, [
             'user_id' => $userId,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
         $row = $result->first();
 
@@ -135,15 +142,15 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
         $page = max(1, $page);
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
-        $effectiveTenantId = $tenantId ?? $this->tenantId;
+        $tenantKey = $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT;
 
         $countResult = $this->connection->query(self::SQL_COUNT_TOP_CONTRIBUTORS, [
-            'tenant_id' => $effectiveTenantId,
+            'tenant_key' => $tenantKey,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_TOP_CONTRIBUTORS, [
-            'tenant_id' => $effectiveTenantId,
+            'tenant_key' => $tenantKey,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -162,7 +169,15 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
 
     public function save(ForumProfile $profile): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_profiles',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $profile->id,
             'tenant_id' => $profile->tenantId,
             'user_id' => $profile->userId,
@@ -189,7 +204,7 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
 
         $this->connection->execute(self::SQL_INCREMENT_REPUTATION, [
             'user_id' => $userId,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'delta' => $delta,
             'updated_at' => $now->format('c'),
         ]);
@@ -201,8 +216,9 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
 
         $this->connection->execute(self::SQL_INCREMENT_POST_COUNT, [
             'user_id' => $userId,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'delta' => $delta,
+            'delta_value' => $delta,
             'updated_at' => $now->format('c'),
         ]);
     }
@@ -213,8 +229,20 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
 
         $this->connection->execute(self::SQL_INCREMENT_THREAD_COUNT, [
             'user_id' => $userId,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'delta' => $delta,
+            'delta_value' => $delta,
+            'updated_at' => $now->format('c'),
+        ]);
+    }
+
+    public function clearBanFlag(string $userId, ?string $tenantId = null): void
+    {
+        $now = new DateTimeImmutable();
+
+        $this->connection->execute(self::SQL_CLEAR_BAN_FLAG, [
+            'user_id' => $userId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'updated_at' => $now->format('c'),
         ]);
     }

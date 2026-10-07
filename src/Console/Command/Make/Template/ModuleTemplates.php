@@ -160,6 +160,9 @@ final readonly class ModuleTemplates
             use $namespace\\Controller\\{$name}Controller;
 
             return function (Router \$router): void {
+                // Anonymous as written. Declare who may reach it with
+                // Pulsar\Routing\RouteAccessRegistrar rather than leaving the answer to
+                // whichever middleware the deployment happens to have piped.
                 \$router->get('/$lcName', [{$name}Controller::class, 'index'], '$lcName.index');
             };
             PHP;
@@ -172,13 +175,13 @@ final readonly class ModuleTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
-            - `Internal/Infrastructure/` — Implementation details
-            - `Controller/` — HTTP controllers
-            - `Config/` — Configuration DTOs
-            - `Middleware/` — HTTP middleware
-            - `Models/` — Domain models
-            - `Views/` — View templates
+            - `Contracts/`: Public API interfaces (`#[Api(since: '1.0.0')]`)
+            - `Internal/Infrastructure/`: Implementation details
+            - `Controller/`: HTTP controllers
+            - `Config/`: Configuration DTOs
+            - `Middleware/`: HTTP middleware
+            - `Models/`: Domain models
+            - `Views/`: View templates
             MD;
     }
 

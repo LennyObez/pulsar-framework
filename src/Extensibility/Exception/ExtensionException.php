@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Base exception for extension-related errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class ExtensionException extends RuntimeException
@@ -82,5 +83,14 @@ class ExtensionException extends RuntimeException
     public static function bootBeforeRegister(): self
     {
         return new self('Extensions must be registered before booting');
+    }
+
+    /**
+     * Create exception for a configuration file that does not return an array.
+     */
+    #[NoDiscard]
+    public static function invalidConfigFile(string $file): self
+    {
+        return new self(sprintf('Extension configuration file "%s" must return an array', $file));
     }
 }

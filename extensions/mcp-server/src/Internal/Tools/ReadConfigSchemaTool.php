@@ -62,6 +62,7 @@ final readonly class ReadConfigSchemaTool implements McpToolInterface
         $snapshot = $this->metadataService->snapshot();
         $schemas = $snapshot->configSchema->schemas;
 
+        /** @var mixed $nameFilter */
         $nameFilter = $params['name'] ?? null;
         if (is_string($nameFilter) && $nameFilter !== '') {
             $schemas = array_filter(

@@ -21,6 +21,9 @@ use const ENT_XML1;
 
 /**
  * Generates RSS 2.0 and Atom 1.0 feeds for published content.
+ *
+ * @psalm-api Bound to FeedGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use FeedGeneratorInterface for public API')]
 final readonly class FeedGenerator implements FeedGeneratorInterface
@@ -86,7 +89,7 @@ final readonly class FeedGenerator implements FeedGeneratorInterface
                 <description>Latest content</description>
                 <language>{$this->esc($locale)}</language>
                 <atom:link href="{$this->esc($feedLink)}" rel="self" type="application/rss+xml"/>
-            {$body}
+            $body
               </channel>
             </rss>
             XML;
@@ -154,8 +157,8 @@ final readonly class FeedGenerator implements FeedGeneratorInterface
               <link href="{$this->esc($baseUrl)}"/>
               <link href="{$this->esc($feedLink)}" rel="self"/>
               <id>{$this->esc($baseUrl)}/</id>
-              <updated>{$updatedStr}</updated>
-            {$body}
+              <updated>$updatedStr</updated>
+            $body
             </feed>
             XML;
     }

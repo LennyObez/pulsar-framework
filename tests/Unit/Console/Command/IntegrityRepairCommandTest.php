@@ -16,6 +16,7 @@ use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilderInterface;
+use Pulsar\Integrity\ManifestScope;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
 
@@ -75,12 +76,13 @@ final class IntegrityRepairCommandTest extends TestCase
     public function withConfirmBuildsAndWritesManifest(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'blake2b',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0',
             entryCount: 2,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $builder = $this->createStub(ManifestBuilderInterface::class);
@@ -121,12 +123,13 @@ final class IntegrityRepairCommandTest extends TestCase
     public function createsDirectoryIfNotExists(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'blake2b',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $builder = $this->createStub(ManifestBuilderInterface::class);

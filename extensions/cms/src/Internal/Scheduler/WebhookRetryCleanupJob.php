@@ -20,6 +20,9 @@ use function sprintf;
  * Scheduled job that purges permanently failed webhook events older than 30 days.
  *
  * Executes daily at 2 AM UTC to keep the cms_webhook_events table from growing unbounded.
+ *
+ * @psalm-api Registered with the scheduler by the CMS service provider;
+ *            invoked through JobInterface, not instantiated by name.
  */
 #[Internal(reason: 'CMS webhook event cleanup scheduler job')]
 final readonly class WebhookRetryCleanupJob implements JobInterface

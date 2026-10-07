@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Abstracts the underlying queue monitor to avoid coupling dashboard
  * widgets to concrete final classes.
+ *
+ * @psalm-api Public binding contract; consumed by dashboard widgets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface QueueStatsProviderInterface

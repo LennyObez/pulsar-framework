@@ -21,10 +21,9 @@ use function function_exists;
 use function is_array;
 use function is_dir;
 use function is_numeric;
+use function is_resource;
 use function is_string;
 use function mkdir;
-use function pclose;
-use function popen;
 use function preg_match;
 use function sprintf;
 use function trim;
@@ -32,7 +31,6 @@ use function unlink;
 use function var_export;
 
 use const PHP_BINARY;
-use const PHP_OS_FAMILY;
 
 /**
  * Handles benchmark dashboard API actions.
@@ -55,7 +53,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * POST /studio/api/benchmark/run — start benchmark as a background process.
+     * POST /studio/api/benchmark/run: start benchmark as a background process.
      *
      * Writes a temporary PHP runner script that executes the benchmark,
      * captures output to a file, and writes the exit code to another file.
@@ -81,52 +79,71 @@ final readonly class BenchmarkApiController
             mkdir($this->runDir, 0o750, true);
         }
 
-        // Clean stale files from previous runs
-        @unlink($outputFile);
-        @unlink($exitFile);
-        @unlink($pidFile);
-        @unlink($runnerFile);
+        // Clean stale files from previous runs (best-effort: a file may
+        // legitimately not exist between runs, so check before unlinking
+        // rather than suppressing the warning).
+        foreach ([$outputFile, $exitFile, $pidFile, $runnerFile] as $stale) {
+            if (is_file($stale)) {
+                unlink($stale);
+            }
+        }
 
         $binary = PHP_BINARY;
         $script = $this->basePath . '/bin/pulsar';
 
-        // Write a temporary runner script. This avoids shell quoting issues
-        // on Windows and reliably captures both output and exit code.
+        // Write a temporary runner script. The runner uses proc_open with
+        // an argv array (no shell), which prevents shell metacharacter
+        // injection regardless of how the binary path is constructed.
         $runnerCode = sprintf(
-            "<?php\n\$c = 0;\nob_start();\nsystem(%s, \$c);\nfile_put_contents(%s, ob_get_clean());\nfile_put_contents(%s, (string) \$c);\n",
-            var_export(sprintf('%s %s studio:console:bench --json 2>&1', $binary, $script), true),
+            "<?php\n"
+            . "\$proc = proc_open([%s, %s, 'studio:console:bench', '--json'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], \$pipes);\n"
+            . "if (!is_resource(\$proc)) { file_put_contents(%s, '255'); exit(255); }\n"
+            . "\$out = stream_get_contents(\$pipes[1]) . stream_get_contents(\$pipes[2]);\n"
+            . "fclose(\$pipes[1]); fclose(\$pipes[2]);\n"
+            . "\$exit = proc_close(\$proc);\n"
+            . "file_put_contents(%s, \$out);\n"
+            . "file_put_contents(%s, (string) \$exit);\n",
+            var_export($binary, true),
+            var_export($script, true),
+            var_export($exitFile, true),
             var_export($outputFile, true),
             var_export($exitFile, true),
         );
         file_put_contents($runnerFile, $runnerCode);
 
-        if (PHP_OS_FAMILY === 'Windows') {
-            // Windows: start /B launches detached process
-            $cmd = sprintf('start "" /B "%s" "%s"', $binary, $runnerFile);
-            $handle = popen($cmd, 'r');
+        // Launch the runner script in the background using proc_open with
+        // an argv array. This bypasses the shell entirely and prevents any
+        // command injection regardless of binary or runnerFile content.
+        $argv = [$binary, $runnerFile];
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
 
-            if ($handle !== false) {
-                pclose($handle);
-            }
+        $proc = proc_open($argv, $descriptors, $pipes);
 
-            file_put_contents($pidFile, 'windows');
+        if (is_resource($proc)) {
+            // Close stdin so the child does not block waiting for input
+            fclose($pipes[0]);
+
+            $procStatus = proc_get_status($proc);
+            $childPid = (string) $procStatus['pid'];
+
+            // Detach: do not wait for the child. proc_close would block
+            // until completion, so we leak the handle intentionally and
+            // record the PID so status() can poll the exit file instead.
+            file_put_contents($pidFile, $childPid);
         } else {
-            // Unix: launch in background, capture PID via $!
-            $cmd = sprintf('%s %s & echo $!', $binary, $runnerFile);
-            $handle = popen($cmd, 'r');
-
-            if ($handle !== false) {
-                $pid = trim((string) fgets($handle));
-                pclose($handle);
-                file_put_contents($pidFile, $pid);
-            }
+            file_put_contents($pidFile, 'failed');
+            file_put_contents($exitFile, '255');
         }
 
         return Response::json(['started' => true]);
     }
 
     /**
-     * GET /studio/api/benchmark/status — poll benchmark completion.
+     * GET /studio/api/benchmark/status: poll benchmark completion.
      */
     public function status(ServerRequestInterface $_request): Response
     {
@@ -140,16 +157,19 @@ final readonly class BenchmarkApiController
             return Response::json(['running' => false, 'completed' => false]);
         }
 
-        // Check if exit file exists — means process finished
+        // Check if exit file exists: means process finished
         if (file_exists($exitFile)) {
             $exitCode = (int) trim((string) file_get_contents($exitFile));
             $output = file_exists($outputFile) ? (string) file_get_contents($outputFile) : '';
 
-            // Clean up run files
-            @unlink($pidFile);
-            @unlink($exitFile);
-            @unlink($outputFile);
-            @unlink($runnerFile);
+            // Clean up run files. Each path is constructed under our own
+            // $this->runDir at the top of this method, so the unlink target
+            // is always within a server-controlled directory.
+            foreach ([$pidFile, $exitFile, $outputFile, $runnerFile] as $runFile) {
+                if (is_file($runFile)) {
+                    unlink($runFile);
+                }
+            }
 
             if ($exitCode !== 0) {
                 return Response::json([
@@ -174,7 +194,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * POST /studio/api/benchmark/delete — delete specific benchmark runs.
+     * POST /studio/api/benchmark/delete: delete specific benchmark runs.
      */
     public function deleteRuns(ServerRequestInterface $request): Response
     {
@@ -211,7 +231,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * POST /studio/api/benchmark/clear — delete all benchmark events.
+     * POST /studio/api/benchmark/clear: delete all benchmark events.
      */
     public function clearHistory(ServerRequestInterface $_request): Response
     {
@@ -221,7 +241,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * GET /studio/api/benchmark/profiles — fetch profiles for a specific run.
+     * GET /studio/api/benchmark/profiles: fetch profiles for a specific run.
      */
     public function profiles(ServerRequestInterface $request): Response
     {

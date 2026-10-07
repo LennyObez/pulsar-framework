@@ -17,7 +17,6 @@ use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use stdClass;
 
 #[CoversClass(Container::class)]
-#[CoversClass(BindingType::class)]
 #[CoversClass(ContainerException::class)]
 #[CoversClass(NotFoundException::class)]
 final class ContainerTest extends TestCase
@@ -63,7 +62,7 @@ final class ContainerTest extends TestCase
         $container = new Container();
 
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No binding found for "unbound"');
+        $this->expectExceptionMessageIsOrContains('No binding found for "unbound"');
 
         $_ = $container->get('unbound');
     }
@@ -93,6 +92,42 @@ final class ContainerTest extends TestCase
 
         self::assertSame($first, $second);
         self::assertSame(1, $callCount);
+    }
+
+    #[Test]
+    public function singletonRegistersAsSingleton(): void
+    {
+        $container = new Container();
+        $callCount = 0;
+
+        $container->singleton('service', function () use (&$callCount) {
+            $callCount++;
+            return new stdClass();
+        });
+
+        $first = $container->get('service');
+        $second = $container->get('service');
+
+        self::assertSame($first, $second);
+        self::assertSame(1, $callCount);
+    }
+
+    #[Test]
+    public function singletonOverwritesPreviousBinding(): void
+    {
+        $container = new Container();
+
+        $container->singleton('service', fn() => (object) ['v' => 1]);
+        /** @var stdClass $first */
+        $first = $container->get('service');
+
+        $container->singleton('service', fn() => (object) ['v' => 2]);
+        /** @var stdClass $second */
+        $second = $container->get('service');
+
+        self::assertSame(1, $first->v);
+        self::assertSame(2, $second->v);
+        self::assertNotSame($first, $second);
     }
 
     #[Test]
@@ -168,6 +203,33 @@ final class ContainerTest extends TestCase
     }
 
     #[Test]
+    public function getAutowiresUnboundInstantiableConcrete(): void
+    {
+        $container = new Container();
+
+        // Neither ServiceStub nor its concrete dependency is bound — both are
+        // autowired on demand so applications need not bind every concrete.
+        $service = $container->get(ServiceStub::class);
+
+        self::assertInstanceOf(ServiceStub::class, $service);
+        self::assertInstanceOf(DependencyStub::class, $service->dependency);
+        // Autowiring does not register a binding: has() still reports false.
+        self::assertFalse($container->has(ServiceStub::class));
+    }
+
+    #[Test]
+    public function getThrowsNotFoundForUnboundInterface(): void
+    {
+        $container = new Container();
+
+        // An interface is not instantiable and cannot be autowired without a
+        // binding — it must still surface as NotFound, not silently succeed.
+        $this->expectException(NotFoundException::class);
+
+        $_ = $container->get(ServiceContractStub::class);
+    }
+
+    #[Test]
     public function autowireUsesDefaultValuesForOptionalParameters(): void
     {
         $container = new Container();
@@ -200,7 +262,7 @@ final class ContainerTest extends TestCase
         $container->bind('b', fn(ContainerInterface $c) => $c->get('a'));
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Circular dependency');
+        $this->expectExceptionMessageIsOrContains('Circular dependency');
 
         $_ = $container->get('a');
     }
@@ -214,7 +276,7 @@ final class ContainerTest extends TestCase
         $container->bind('service', $nonExistent);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         $_ = $container->get('service');
     }
@@ -226,7 +288,7 @@ final class ContainerTest extends TestCase
         $container->bind('service', fn() => 'not an object');
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('must return an object');
+        $this->expectExceptionMessageIsOrContains('must return an object');
 
         $_ = $container->get('service');
     }
@@ -347,7 +409,7 @@ final class ContainerTest extends TestCase
         $container->bind(UntypedParamStub::class, UntypedParamStub::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('no type hint');
+        $this->expectExceptionMessageIsOrContains('no type hint');
 
         $_ = $container->get(UntypedParamStub::class);
     }
@@ -359,7 +421,7 @@ final class ContainerTest extends TestCase
         $container->bind(BuiltinTypeStub::class, BuiltinTypeStub::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('non-class type');
+        $this->expectExceptionMessageIsOrContains('non-class type');
 
         $_ = $container->get(BuiltinTypeStub::class);
     }
@@ -371,7 +433,7 @@ final class ContainerTest extends TestCase
         $container->bind(AbstractStub::class, AbstractStub::class);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('not instantiable');
+        $this->expectExceptionMessageIsOrContains('not instantiable');
 
         $_ = $container->get(AbstractStub::class);
     }
@@ -407,6 +469,8 @@ final class ContainerTest extends TestCase
 }
 
 // Test stubs
+interface ServiceContractStub {}
+
 class DependencyStub {}
 
 class ServiceStub
@@ -426,7 +490,9 @@ class OptionalDependencyStub
 class NullableDependencyStub
 {
     public function __construct(
-        public readonly ?DependencyStub $dependency = null,
+        // Interface: genuinely unresolvable without a binding, so a nullable
+        // parameter falls back to null (a nullable concrete would be autowired).
+        public readonly ?ServiceContractStub $dependency = null,
     ) {}
 }
 

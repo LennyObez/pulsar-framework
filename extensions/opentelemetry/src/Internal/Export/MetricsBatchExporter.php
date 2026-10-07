@@ -26,7 +26,7 @@ final readonly class MetricsBatchExporter
 
     public function __construct(
         OtlpTransportInterface $transport,
-        private ResourceInfo $resource,
+        ResourceInfo $resource,
         MetricsRequestBuilder $builder = new MetricsRequestBuilder(),
         int $maxBatchSize = 512,
         int $maxQueueSize = 2048,
@@ -35,9 +35,9 @@ final readonly class MetricsBatchExporter
         /** @var BatchExporter<OtlpMetric> $batchExporter */
         $batchExporter = new BatchExporter(
             transport: $transport,
-            serializer: function (array $metrics) use ($builder): string {
+            serializer: static function (array $metrics) use ($builder, $resource): string {
                 /** @var list<OtlpMetric> $metrics */
-                return $builder->build($metrics, $this->resource);
+                return $builder->build($metrics, $resource);
             },
             signalPath: '/v1/metrics',
             maxBatchSize: $maxBatchSize,

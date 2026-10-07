@@ -22,6 +22,9 @@ use function trim;
  *
  * Scans line-by-line with regex patterns, handling case-insensitive matching,
  * whitespace obfuscation, CSS comments, backslash escapes, and encoded values.
+ *
+ * @psalm-api Bound to CssValidatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CssValidatorInterface for public API')]
 final readonly class CssValidator implements CssValidatorInterface
@@ -61,55 +64,55 @@ final readonly class CssValidator implements CssValidatorInterface
             $compacted = (string) preg_replace('/[\s\x{00A0}]+/u', '', $normalized);
 
             if ($this->containsImport($compacted)) {
-                $errors[] = "Line {$lineNum}: @import is not allowed";
+                $errors[] = "Line $lineNum: @import is not allowed";
 
                 continue;
             }
 
             if ($this->containsCharset($compacted)) {
-                $errors[] = "Line {$lineNum}: @charset is not allowed";
+                $errors[] = "Line $lineNum: @charset is not allowed";
 
                 continue;
             }
 
             if ($this->containsExpression($compacted)) {
-                $errors[] = "Line {$lineNum}: expression() is not allowed";
+                $errors[] = "Line $lineNum: expression() is not allowed";
 
                 continue;
             }
 
             if ($this->containsExternalUrl($compacted)) {
-                $errors[] = "Line {$lineNum}: url() with external scheme is not allowed";
+                $errors[] = "Line $lineNum: url() with external scheme is not allowed";
 
                 continue;
             }
 
             if ($this->containsJavascript($compacted)) {
-                $errors[] = "Line {$lineNum}: javascript: protocol is not allowed";
+                $errors[] = "Line $lineNum: javascript: protocol is not allowed";
 
                 continue;
             }
 
             if ($this->containsVbscript($compacted)) {
-                $errors[] = "Line {$lineNum}: vbscript: protocol is not allowed";
+                $errors[] = "Line $lineNum: vbscript: protocol is not allowed";
 
                 continue;
             }
 
             if ($this->containsMozBinding($compacted)) {
-                $errors[] = "Line {$lineNum}: -moz-binding is not allowed";
+                $errors[] = "Line $lineNum: -moz-binding is not allowed";
 
                 continue;
             }
 
             if ($this->containsBehavior($compacted)) {
-                $errors[] = "Line {$lineNum}: behavior: is not allowed";
+                $errors[] = "Line $lineNum: behavior: is not allowed";
 
                 continue;
             }
 
             if ($this->containsOLink($compacted)) {
-                $errors[] = "Line {$lineNum}: -o-link: is not allowed";
+                $errors[] = "Line $lineNum: -o-link: is not allowed";
 
                 continue;
             }
@@ -191,7 +194,11 @@ final readonly class CssValidator implements CssValidatorInterface
         // Remove hex escape sequences: \XX or \XXXXXX followed by optional space
         $result = (string) preg_replace_callback(
             '/\\\\([0-9a-fA-F]{1,6})\s?/',
-            static fn(array $matches): string => mb_chr((int) hexdec($matches[1])),
+            static function (array $matches): string {
+                $char = mb_chr((int) hexdec($matches[1]));
+
+                return $char !== false ? $char : '';
+            },
             $css,
         );
 

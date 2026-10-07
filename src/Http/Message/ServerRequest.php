@@ -22,14 +22,16 @@ use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_keys;
+use function array_values;
 use function explode;
 use function implode;
 use function in_array;
 use function is_array;
+use function is_resource;
 use function is_string;
 use function json_decode;
 use function json_validate;
-use function ksort;
+use function preg_match;
 use function str_contains;
 use function strlen;
 use function strpos;
@@ -40,13 +42,14 @@ use function trim;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * PSR-7 server request — the canonical HTTP request object for Pulsar.
+ * PSR-7 server request: the canonical HTTP request object for Pulsar.
  *
  * Implements ServerRequestInterface with Pulsar-specific convenience methods.
  * Headers are stored lowercase internally with deterministic iteration order.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
-class ServerRequest implements ServerRequestInterface
+final class ServerRequest implements ServerRequestInterface
 {
     private string $protocolVersion;
 
@@ -90,6 +93,9 @@ class ServerRequest implements ServerRequestInterface
     /** @var array<string, mixed> */
     private array $attributes;
 
+    /** @var array<string, list<string>>|null */
+    private ?array $headersCache = null;
+
     /**
      * @param array<string, string|list<string>> $headers
      * @param array<string, mixed> $serverParams
@@ -98,6 +104,16 @@ class ServerRequest implements ServerRequestInterface
      * @param array<UploadedFileInterface> $uploadedFiles
      * @param null|array<string, mixed>|object $parsedBody
      * @param array<string, mixed> $attributes
+     *
+     * @throws InvalidArgumentException when a header name is not an RFC 7230
+     *                                  token or a value carries CR, LF or NUL.
+     *                                  `withHeader()` has always rejected
+     *                                  those; the constructor holds the same
+     *                                  invariant so no instance can carry a
+     *                                  header the mutators would refuse.
+     *                                  Request ingress never reaches this
+     *                                  throw — {@see extractHeadersFromServer()}
+     *                                  drops malformed headers first.
      */
     public function __construct(
         string $method = 'GET',
@@ -114,7 +130,7 @@ class ServerRequest implements ServerRequestInterface
     ) {
         $this->method = $method;
         $this->uri = is_string($uri) ? Uri::fromString($uri) : $uri;
-        $this->body = is_string($body) ? Stream::create($body) : $body;
+        $this->body = is_string($body) ? new StringStream($body) : $body;
         $this->protocolVersion = $protocolVersion;
         $this->serverParams = $serverParams;
         $this->cookieParams = $cookieParams;
@@ -128,9 +144,13 @@ class ServerRequest implements ServerRequestInterface
         $this->headerNames = [];
 
         foreach ($headers as $name => $value) {
+            HeaderValidator::assertValidName($name);
+            /** @var list<string> $values */
+            $values = is_array($value) ? array_values($value) : [$value];
+            HeaderValidator::assertValidValue($values);
             $lowered = strtolower($name);
             $this->headerNames[$lowered] = $name;
-            $this->headers[$lowered] = is_array($value) ? $value : [$value];
+            $this->headers[$lowered] = $values;
         }
 
         // Set Host header from URI if not present
@@ -146,8 +166,6 @@ class ServerRequest implements ServerRequestInterface
             $this->headerNames['host'] = 'Host';
             $this->headers['host'] = [$host];
         }
-
-        ksort($this->headers);
     }
 
     /**
@@ -158,6 +176,9 @@ class ServerRequest implements ServerRequestInterface
      * @param array<string, mixed>|null $post
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $files
+     * @param int $maxBodyBytes Hard cap on bytes read from php://input;
+     *                          a request exceeding this throws
+     *                          {@see BodyTooLargeException}.
      */
     #[NoDiscard]
     public static function fromGlobals(
@@ -166,6 +187,7 @@ class ServerRequest implements ServerRequestInterface
         ?array $post = null,
         ?array $cookies = null,
         ?array $files = null,
+        int $maxBodyBytes = self::DEFAULT_MAX_BODY_BYTES,
     ): self {
         /** @var array<string, mixed> $serverData */
         $serverData = $server ?? $_SERVER;
@@ -178,9 +200,11 @@ class ServerRequest implements ServerRequestInterface
         /** @var array<string, mixed> $fileData */
         $fileData = $files ?? $_FILES;
 
+        /** @var mixed $requestMethod */
         $requestMethod = $serverData['REQUEST_METHOD'] ?? 'GET';
         $method = is_string($requestMethod) ? $requestMethod : 'GET';
 
+        /** @var mixed $requestUri */
         $requestUri = $serverData['REQUEST_URI'] ?? '/';
         $uriString = is_string($requestUri) ? $requestUri : '/';
 
@@ -190,12 +214,7 @@ class ServerRequest implements ServerRequestInterface
         $port = null;
 
         if (isset($serverData['HTTP_HOST']) && is_string($serverData['HTTP_HOST'])) {
-            $hostParts = explode(':', $serverData['HTTP_HOST']);
-            $host = $hostParts[0];
-
-            if (isset($hostParts[1])) {
-                $port = (int) $hostParts[1];
-            }
+            [$host, $port] = self::splitHostPort($serverData['HTTP_HOST']);
         } elseif (isset($serverData['SERVER_NAME']) && is_string($serverData['SERVER_NAME'])) {
             $host = $serverData['SERVER_NAME'];
         }
@@ -224,14 +243,17 @@ class ServerRequest implements ServerRequestInterface
             query: $queryString,
         );
 
+        /** @var mixed $protocol */
         $protocol = $serverData['SERVER_PROTOCOL'] ?? null;
         $protocolVersion = is_string($protocol) ? str_replace('HTTP/', '', $protocol) : '1.1';
 
-        // Extract headers from $_SERVER
         $headers = self::extractHeadersFromServer($serverData);
 
-        // Read body from php://input
-        $body = Stream::fromFile('php://input', 'rb');
+        // Read php://input with a hard cap. stream_get_contents
+        // with $length+1 lets us detect overflow without buffering megabytes
+        // we are about to reject anyway. Chunked transfer is handled
+        // transparently — fgets/fread on php://input return decoded bytes.
+        $body = self::readLimitedInputBody($maxBodyBytes);
 
         /** @var array<UploadedFileInterface> $uploadedFiles */
         $uploadedFiles = self::normalizeFiles($fileData);
@@ -248,6 +270,44 @@ class ServerRequest implements ServerRequestInterface
             uploadedFiles: $uploadedFiles,
             parsedBody: !empty($postData) ? $postData : null,
         );
+    }
+
+    /**
+     * Split a Host authority into host and optional port, correctly handling
+     * RFC 3986 bracketed IPv6 literals such as "[::1]:8080". A naive
+     * explode(":") splits on every colon, mangling the IPv6 address into "[" and
+     * casting an empty fragment to port 0.
+     *
+     * @return array{0: string, 1: int|null}
+     */
+    private static function splitHostPort(string $authority): array
+    {
+        // IPv6 literal: "[addr]" optionally followed by ":port".
+        if ($authority !== '' && $authority[0] === '[') {
+            $closing = strpos($authority, ']');
+
+            if ($closing === false) {
+                return [$authority, null];
+            }
+
+            $host = substr($authority, 0, $closing + 1);
+            $rest = substr($authority, $closing + 1);
+            $port = $rest !== '' && $rest[0] === ':' ? substr($rest, 1) : '';
+
+            return [$host, $port === '' ? null : (int) $port];
+        }
+
+        $colon = strpos($authority, ':');
+
+        // No colon, or a bare (unbracketed) IPv6 address — multiple colons and
+        // therefore no port to take per RFC 3986: leave the authority intact.
+        if ($colon === false || strpos($authority, ':', $colon + 1) !== false) {
+            return [$authority, null];
+        }
+
+        $port = substr($authority, $colon + 1);
+
+        return [substr($authority, 0, $colon), $port === '' ? null : (int) $port];
     }
 
     // ── PSR-7 MessageInterface ──────────────────────────────────────────
@@ -275,13 +335,17 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function getHeaders(): array
     {
+        if ($this->headersCache !== null) {
+            return $this->headersCache;
+        }
+
         $result = [];
 
         foreach ($this->headers as $lowered => $values) {
             $result[$this->headerNames[$lowered]] = $values;
         }
 
-        return $result;
+        return $this->headersCache = $result;
     }
 
     #[Override]
@@ -311,39 +375,46 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withHeader(string $name, $value): static
     {
+        // Validate RFC 7230 token name + CRLF/NUL-free value.
+        HeaderValidator::assertValidName($name);
         /** @var list<string> $values */
-        $values = is_array($value) ? $value : [$value];
+        $values = is_array($value) ? array_values($value) : [$value];
+        HeaderValidator::assertValidValue($values);
         $lowered = strtolower($name);
 
-        $new = clone $this;
-        $new->headerNames[$lowered] = $name;
-        $new->headers[$lowered] = $values;
-        ksort($new->headers);
-
-        return $new;
+        return clone($this, [
+            'headerNames' => [...$this->headerNames, $lowered => $name],
+            'headers' => [...$this->headers, $lowered => $values],
+            'headersCache' => null,
+        ]);
     }
 
     #[NoDiscard]
     #[Override]
     public function withAddedHeader(string $name, $value): static
     {
+        // Same validation as withHeader for the additive variant.
+        HeaderValidator::assertValidName($name);
         /** @var list<string> $values */
-        $values = is_array($value) ? $value : [$value];
+        $values = is_array($value) ? array_values($value) : [$value];
+        HeaderValidator::assertValidValue($values);
         $lowered = strtolower($name);
 
-        $new = clone $this;
-
-        if (isset($new->headers[$lowered])) {
+        if (isset($this->headers[$lowered])) {
             /** @var list<string> $merged */
-            $merged = [...$new->headers[$lowered], ...$values];
-            $new->headers[$lowered] = $merged;
-        } else {
-            $new->headerNames[$lowered] = $name;
-            $new->headers[$lowered] = $values;
-            ksort($new->headers);
+            $merged = [...$this->headers[$lowered], ...$values];
+
+            return clone($this, [
+                'headersCache' => null,
+                'headers' => [...$this->headers, $lowered => $merged],
+            ]);
         }
 
-        return $new;
+        return clone($this, [
+            'headersCache' => null,
+            'headerNames' => [...$this->headerNames, $lowered => $name],
+            'headers' => [...$this->headers, $lowered => $values],
+        ]);
     }
 
     #[NoDiscard]
@@ -356,10 +427,15 @@ class ServerRequest implements ServerRequestInterface
             return $this;
         }
 
-        $new = clone $this;
-        unset($new->headers[$lowered], $new->headerNames[$lowered]);
+        $headers = $this->headers;
+        $headerNames = $this->headerNames;
+        unset($headers[$lowered], $headerNames[$lowered]);
 
-        return $new;
+        return clone($this, [
+            'headers' => $headers,
+            'headerNames' => $headerNames,
+            'headersCache' => null,
+        ]);
     }
 
     #[Override]
@@ -429,26 +505,25 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withUri(UriInterface $uri, bool $preserveHost = false): static
     {
-        $new = clone $this;
-        $new->uri = $uri;
+        $shouldUpdateHostHeader = (!$preserveHost || !$this->hasHeader('Host')) && $uri->getHost() !== '';
 
-        if (!$preserveHost || !$this->hasHeader('Host')) {
-            $host = $uri->getHost();
-
-            if ($host !== '') {
-                $uriPort = $uri->getPort();
-
-                if ($uriPort !== null) {
-                    $host .= ':' . $uriPort;
-                }
-
-                $new->headerNames['host'] = 'Host';
-                $new->headers['host'] = [$host];
-                ksort($new->headers);
-            }
+        if (!$shouldUpdateHostHeader) {
+            return clone($this, ['uri' => $uri]);
         }
 
-        return $new;
+        $host = $uri->getHost();
+        $uriPort = $uri->getPort();
+
+        if ($uriPort !== null) {
+            $host .= ':' . $uriPort;
+        }
+
+        return clone($this, [
+            'uri' => $uri,
+            'headerNames' => [...$this->headerNames, 'host' => 'Host'],
+            'headers' => [...$this->headers, 'host' => [$host]],
+            'headersCache' => null,
+        ]);
     }
 
     // ── PSR-7 ServerRequestInterface ────────────────────────────────────
@@ -565,10 +640,9 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withAttribute(string $name, $value): static
     {
-        $new = clone $this;
-        $new->attributes[$name] = $value;
-
-        return $new;
+        return clone($this, [
+            'attributes' => [...$this->attributes, $name => $value],
+        ]);
     }
 
     #[NoDiscard]
@@ -579,10 +653,10 @@ class ServerRequest implements ServerRequestInterface
             return $this;
         }
 
-        $new = clone $this;
-        unset($new->attributes[$name]);
+        $attributes = $this->attributes;
+        unset($attributes[$name]);
 
-        return $new;
+        return clone($this, ['attributes' => $attributes]);
     }
 
     // ── Pulsar Convenience Methods ──────────────────────────────────────
@@ -764,10 +838,43 @@ class ServerRequest implements ServerRequestInterface
 
     /**
      * Check if the request is over HTTPS.
+     *
+     * A load balancer that terminates TLS rewrites the
+     * scheme to plain HTTP before the request reaches PHP, so
+     * `$this->uri->getScheme()` reads `http` even though the
+     * client connection was encrypted. Honour `X-Forwarded-Proto`
+     * (and `Forwarded` per RFC 7239) when a trusted proxy
+     * delivered the request — but only then. Without the trust
+     * gate, any client could inject the header and trick the
+     * framework into thinking a plaintext request was secure.
      */
-    public function isSecure(): bool
+    public function isSecure(?\Pulsar\Http\TrustedProxy $trustedProxy = null): bool
     {
-        return $this->uri->getScheme() === 'https';
+        if ($this->uri->getScheme() === 'https') {
+            return true;
+        }
+
+        if ($trustedProxy === null) {
+            return false;
+        }
+
+        $remoteAddr = $this->server('REMOTE_ADDR');
+        if (!is_string($remoteAddr) || !$trustedProxy->isTrustedSource($remoteAddr)) {
+            return false;
+        }
+
+        $forwardedProto = $this->header('X-Forwarded-Proto');
+        if (is_string($forwardedProto) && strtolower(trim($forwardedProto)) === 'https') {
+            return true;
+        }
+
+        // RFC 7239: `Forwarded: proto=https;...`
+        $forwarded = $this->header('Forwarded');
+        if (is_string($forwarded) && preg_match('/(?:^|;|\s)proto=("?)https\1/i', $forwarded) === 1) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -865,7 +972,8 @@ class ServerRequest implements ServerRequestInterface
         }
 
         try {
-            $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+            /** @var mixed $decoded */
+            $decoded = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
             return is_array($decoded) ? $decoded : [];
@@ -875,10 +983,77 @@ class ServerRequest implements ServerRequestInterface
     }
 
     /**
+     * Read php://input up to maxBodyBytes, throw on overflow.
+     *
+     * Reads `$maxBodyBytes + 1` so the overflow path is distinguishable from
+     * an exactly-at-limit request. Returns a StringStream for compatibility
+     * with the existing fromGlobals contract; downstream code that needs
+     * streaming semantics for very large bodies must use a dedicated runtime
+     * adapter rather than fromGlobals.
+     */
+    private static function readLimitedInputBody(int $maxBodyBytes): StreamInterface
+    {
+        if ($maxBodyBytes <= 0) {
+            return new StringStream('');
+        }
+
+        $fp = @fopen('php://input', 'rb');
+
+        if (!is_resource($fp)) {
+            return new StringStream('');
+        }
+
+        try {
+            $contents = stream_get_contents($fp, $maxBodyBytes + 1);
+        } finally {
+            fclose($fp);
+        }
+
+        if (!is_string($contents)) {
+            return new StringStream('');
+        }
+
+        $size = strlen($contents);
+
+        if ($size > $maxBodyBytes) {
+            throw BodyTooLargeException::exceedsLimit($size, $maxBodyBytes);
+        }
+
+        return new StringStream($contents);
+    }
+
+    /** Default body cap (10 MB). */
+    public const int DEFAULT_MAX_BODY_BYTES = 10_485_760;
+
+    /**
+     * CGI meta-variable name (RFC 3875 §4.1.18) that a SAPI can have produced
+     * from a hyphen-separated field-name: uppercase alphanumeric runs joined
+     * by single underscores. A leading, trailing or doubled underscore cannot
+     * come from that transform, so the raw name carried an underscore of its
+     * own and the reverse mapping is guesswork.
+     */
+    private const string CGI_HEADER_KEY_PATTERN = '/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/';
+
+    /**
      * Extract HTTP headers from a $_SERVER-style array.
      *
-     * @param array<string, mixed> $server
+     * This is the ingress boundary, so it drops rather than throws: a request
+     * from an arbitrary client must not surface as an uncaught exception from
+     * `fromGlobals()`. Three classes are dropped — keys the SAPI transform
+     * cannot have produced, names that are not RFC 7230 tokens, and values
+     * carrying CR, LF or NUL (the response-splitting payload, which would
+     * otherwise sit in the request object waiting for app code to echo it).
      *
+     * One ambiguity survives and cannot be closed here: the SAPI transform is
+     * lossy, so a client header named `X_Forwarded_Proto` and a proxy's
+     * `X-Forwarded-Proto` arrive as the same `HTTP_X_FORWARDED_PROTO` key with
+     * nothing left to tell them apart. Those are the trust inputs of
+     * {@see \Pulsar\Http\TrustedProxy::resolveClientIp()}. Rejecting the key
+     * would also reject every legitimate multi-word header, so the web server
+     * has to refuse underscore-bearing field names — nginx does by default
+     * (`underscores_in_headers off`).
+     *
+     * @param array<string, mixed> $server
      * @return array<string, string>
      */
     private static function extractHeadersFromServer(array $server): array
@@ -891,12 +1066,24 @@ class ServerRequest implements ServerRequestInterface
             }
 
             if (str_starts_with($key, 'HTTP_')) {
-                $name = str_replace('_', '-', substr($key, 5));
-                $headers[$name] = $value;
+                $suffix = substr($key, 5);
+
+                if (preg_match(self::CGI_HEADER_KEY_PATTERN, $suffix) !== 1) {
+                    continue;
+                }
+
+                $name = str_replace('_', '-', $suffix);
             } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH', 'CONTENT_MD5'], true)) {
                 $name = str_replace('_', '-', $key);
-                $headers[$name] = $value;
+            } else {
+                continue;
             }
+
+            if (!HeaderValidator::isValidName($name) || !HeaderValidator::isValidValue($value)) {
+                continue;
+            }
+
+            $headers[$name] = $value;
         }
 
         return $headers;
@@ -913,6 +1100,7 @@ class ServerRequest implements ServerRequestInterface
     {
         $normalized = [];
 
+        /** @var mixed $value */
         foreach ($files as $key => $value) {
             if ($value instanceof UploadedFile) {
                 $normalized[$key] = $value;
@@ -961,6 +1149,7 @@ class ServerRequest implements ServerRequestInterface
                     error: $errors[$idx] ?? UPLOAD_ERR_NO_FILE,
                     clientFilename: $names[$idx] ?? null,
                     clientMediaType: $types[$idx] ?? null,
+                    sapiUpload: true,
                 );
             }
 
@@ -980,6 +1169,7 @@ class ServerRequest implements ServerRequestInterface
             error: (int) $error,
             clientFilename: isset($value['name']) && is_string($value['name']) ? $value['name'] : null,
             clientMediaType: isset($value['type']) && is_string($value['type']) ? $value['type'] : null,
+            sapiUpload: true,
         );
     }
 }

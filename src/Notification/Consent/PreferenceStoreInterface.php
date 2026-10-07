@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Port interface for persisting and retrieving notification preferences and consent records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PreferenceStoreInterface

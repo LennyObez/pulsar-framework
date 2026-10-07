@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * - `None`: No URL-based locale routing (locale from headers/query only).
  * - `PathPrefix`: Locale as first path segment (e.g., /fr/about).
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LocaleUrlStrategy: string

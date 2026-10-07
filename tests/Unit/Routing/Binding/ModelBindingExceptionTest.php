@@ -23,14 +23,54 @@ final class ModelBindingExceptionTest extends TestCase
         self::assertStringContainsString('42', $e->getMessage());
     }
 
+    /**
+     * The refusal a policy hook produces is answered with the status a missing
+     * row produces, and the two must not drift apart: a `403` here beside a
+     * `404` there is an existence oracle for every caller the policy refuses.
+     * The diagnosis stays in the message, which reaches the log and never the
+     * client.
+     */
     #[Test]
-    public function authorizationFailedReturns403(): void
+    public function authorizationFailedIsIndistinguishableFromAMissingRow(): void
     {
         $e = ModelBindingException::authorizationFailed('App\\Models\\User', '42');
 
-        self::assertSame(403, $e->getCode());
+        self::assertSame(
+            ModelBindingException::modelNotFound('App\\Models\\User', 'id', '42')->getCode(),
+            $e->getCode(),
+        );
+        self::assertSame(404, $e->getCode());
         self::assertStringContainsString('App\\Models\\User', $e->getMessage());
         self::assertStringContainsString('42', $e->getMessage());
+    }
+
+    #[Test]
+    public function undeclaredAuthorizationOptOutReturns500(): void
+    {
+        $e = ModelBindingException::undeclaredAuthorizationOptOut('users.show');
+
+        self::assertSame(500, $e->getCode());
+        self::assertStringContainsString('users.show', $e->getMessage());
+        self::assertStringContainsString('_without_authorization', $e->getMessage());
+    }
+
+    #[Test]
+    public function authorizationMandatoryReturns500(): void
+    {
+        $e = ModelBindingException::authorizationMandatory('banking', 'users.show');
+
+        self::assertSame(500, $e->getCode());
+        self::assertStringContainsString('banking', $e->getMessage());
+        self::assertStringContainsString('users.show', $e->getMessage());
+    }
+
+    #[Test]
+    public function authorizationForAnotherRouteReturns500(): void
+    {
+        $e = ModelBindingException::authorizationForAnotherRoute('users.show');
+
+        self::assertSame(500, $e->getCode());
+        self::assertStringContainsString('users.show', $e->getMessage());
     }
 
     #[Test]

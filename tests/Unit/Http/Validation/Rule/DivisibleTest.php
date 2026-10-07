@@ -85,7 +85,7 @@ final class DivisibleTest extends TestCase
     public function zeroDivisorThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be zero');
+        $this->expectExceptionMessageIsOrContains('must not be zero');
 
         new Divisible(0);
     }
@@ -94,7 +94,7 @@ final class DivisibleTest extends TestCase
     public function zeroFloatDivisorThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be zero');
+        $this->expectExceptionMessageIsOrContains('must not be zero');
 
         new Divisible(0.0);
     }

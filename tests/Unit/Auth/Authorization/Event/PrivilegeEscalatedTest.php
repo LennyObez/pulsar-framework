@@ -16,27 +16,55 @@ use function strlen;
 final class PrivilegeEscalatedTest extends TestCase
 {
     #[Test]
-    public function constructionSetsAllProperties(): void
+    public function fromArrayDefaultsMissingFieldsToEmptyValues(): void
     {
-        $now = new DateTimeImmutable();
+        $event = PrivilegeEscalated::fromArray([]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame([], $event->fromRoles);
+        self::assertSame([], $event->toRoles);
+        self::assertSame('', $event->reason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function fromArrayFiltersNonStringRoles(): void
+    {
+        $event = PrivilegeEscalated::fromArray([
+            'identity_id' => 'user-1',
+            'from_roles' => ['editor', 42, null, 'viewer'],
+            'to_roles' => [true, 'admin', ['nested'], 'super'],
+            'reason' => 'test',
+            'correlation_id' => 'c-1',
+            'nonce' => 'n-1',
+            'occurred_at' => '2025-06-15T10:30:00.000000+00:00',
+        ]);
+
+        self::assertSame(['editor', 'viewer'], $event->fromRoles);
+        self::assertSame(['admin', 'super'], $event->toRoles);
+    }
+
+    #[Test]
+    public function toArrayIncludesSchemaVersion(): void
+    {
+        $now = new DateTimeImmutable('2025-06-15T10:30:00.000000+00:00');
 
         $event = new PrivilegeEscalated(
             identityId: 'user-1',
-            fromRoles: ['editor'],
-            toRoles: ['editor', 'admin'],
-            reason: 'emergency_access',
-            correlationId: 'corr-1',
-            nonce: 'nonce789',
+            fromRoles: ['viewer'],
+            toRoles: ['admin'],
+            reason: 'promotion',
+            correlationId: 'c-1',
+            nonce: 'n-1',
             occurredAt: $now,
         );
 
-        self::assertSame('user-1', $event->identityId);
-        self::assertSame(['editor'], $event->fromRoles);
-        self::assertSame(['editor', 'admin'], $event->toRoles);
-        self::assertSame('emergency_access', $event->reason);
-        self::assertSame('corr-1', $event->correlationId);
-        self::assertSame('nonce789', $event->nonce);
-        self::assertSame($now, $event->occurredAt);
+        $array = $event->toArray();
+
+        self::assertSame(1, $array['schema_version']);
+        self::assertSame(['viewer'], $array['from_roles']);
+        self::assertSame(['admin'], $array['to_roles']);
     }
 
     #[Test]

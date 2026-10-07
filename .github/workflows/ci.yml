@@ -9,30 +9,93 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   php-quality:
     name: PHP Quality (CS, PHPStan, Psalm, Boundaries)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
-          php-version: '8.5'
-          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          php-version-file: .php-version
+          # imagick + gd are loaded so Psalm/PHPStan can resolve the
+          # optional image-processing code paths in extensions/cms.
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, imagick, gd
           coverage: none
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
+
+      # The gate a contributor runs (`composer qa`) and the gate this file enforces
+      # are one declared list with two consumers, and this step is what keeps them
+      # that way. See tools/ci/assert-qa-ci-parity.php for why CI does not simply
+      # call `composer qa` -- the short version is that doing so would serialise
+      # nine jobs into one and hand every contributor the sum of what they now wait
+      # for the maximum of. It runs first because it costs milliseconds and its
+      # failure invalidates the meaning of every step below it.
+      - name: Local gate and CI gate are the same gate
+        run: composer qa:parity
+
+      # Assert that every declared version in the repository agrees with
+      # composer.json: the Pulsar\Core\Version constants, all 34 bundled extension
+      # manifests, the supported-versions table in SECURITY.md, the README status
+      # line, the issue template's version dropdown, and every other sentence that
+      # states which release this is. It also refuses a release tag on HEAD naming a
+      # version composer.json does not.
+      #
+      # It used to assert only the constants, and everything it did not cover drifted
+      # for a whole release: SECURITY.md told reporters that fixes went to rc.11 while
+      # the current release was rc.12. See tools/version/sync-version.php for what is
+      # derived, what is merely narrated, and why composer.json keeps a `version`
+      # field rather than deferring to the git tag.
+      - name: Every declared version agrees with composer.json
+        run: composer version:check
+
+      # docs/adr/README.md is generated from the records themselves, and the
+      # generator has had a --check mode since it was written. Nothing ran it: it
+      # was a leaf of no composer script and no workflow step, so a drifted index
+      # was refused only inside the PHPUnit suite, after the contributor had
+      # already pushed. Its own header warns about exactly this shape -- a --check
+      # nobody runs leaves the same stale table behind (ADR-0060).
+      #
+      # `adr:check` rather than `adr:index -- --check`: `adr:index` WRITES the file
+      # it would be checking, so a gate leaf spelled that way cannot fail, and
+      # composer's `@name` references cannot carry a `--` argument. Same split as
+      # version:sync/version:check and bench:manifest:record/bench:manifest:check.
+      - name: The ADR index matches the records it describes
+        run: composer adr:check
+
+      # infection.json5 enforces covered MSI at 90 and sets no plain-MSI floor at
+      # all. docs/testing.md said "MSI ... Minimum: 80%" and docs/prd-1.0.0.md said
+      # "Infection MSI >= 80", both describing a gate that has never existed, while
+      # ADR-0042 said the opposite and was right. Three sources, no agreement, and
+      # nothing that could notice. This compares every mutation threshold stated in
+      # the repository's Markdown against the configuration that actually runs.
+      - name: Documented mutation thresholds match infection.json5
+        run: composer mutation:thresholds
 
       - run: composer cs:check
 
@@ -42,25 +105,125 @@ jobs:
 
       - name: Fetch base ref for boundary diff
         if: github.event_name == 'pull_request'
-        run: git fetch origin ${{ github.base_ref }} --depth=1
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF" --depth=1
+
+      # PR titles using `chore:` or `docs:` while adding new src/ modules
+      # or new extensions get less reviewer attention than they need.
+      # Block at CI time so the title gets renamed before merge.
+      - name: PR title scope strictness
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.base_ref }}
+        run: bash tools/ci/check-pr-title-scope.sh
+
+      # PSR-4 conformance is a correctness gate, not style: composer's optimized
+      # classmap hides a namespace/path mismatch (the class still resolves), and
+      # `--strict-psr` only WARNS while still exiting 0. A mismatch that works on
+      # case-insensitive Windows or macOS fails to autoload on this Linux runner,
+      # and a class declared in a sibling's file is unreachable the moment nothing
+      # has included that file — the same fragility that broke 66 tests under
+      # parallel execution.
+      - name: PSR-4 autoload conformance
+        run: composer autoload:check
 
       - name: Boundary enforcement (Deptrac)
         run: composer boundary:deptrac
 
+      # Annotated rather than run as `composer boundary:custom`, because on a pull
+      # request it takes a --diff-base the composer script cannot carry. The two
+      # steps below are one gate under two conditions, so only one annotation.
+      # qa-gate: boundary:custom
       - name: Boundary enforcement (API targeting)
         if: github.event_name == 'pull_request'
-        run: php scripts/boundary_check.php --diff-base=origin/${{ github.base_ref }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: php scripts/boundary_check.php --diff-base="origin/$BASE_REF"
 
       - name: Boundary enforcement (API targeting, full scan)
         if: github.event_name != 'pull_request'
         run: php scripts/boundary_check.php
 
+      # The #[Api] SemVer promise, enforced. tools/api/public-api.snapshot.json is
+      # committed, so a removal shows up as a diff -- visible to a reviewer, not
+      # blocking without one. Pulsar\Api\BcBreakDetector existed to close that and
+      # was run by nothing but its own unit test, while docs/deprecation-policy.md
+      # told readers "CI runs this automatically on every pull request".
+      #
+      # Two conditions, one gate, so only one annotation. On a pull request the base
+      # is the merge base with the target branch, which catches a break made anywhere
+      # on the branch -- including one committed and snapshot-regenerated several
+      # commits ago. Everywhere else the base is HEAD, which is what `composer
+      # bc:check` does locally. Comparing the committed snapshot against a fresh
+      # build of the same tree would be a tautology: PublicApiSnapshotTest already
+      # asserts those two are equal, so the comparison has to cross a commit.
+      # qa-gate: bc:check
+      - name: API backward-compatibility check
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: php -d memory_limit=1G tools/api/assert-no-bc-breaks.php --base="origin/$BASE_REF"
+
+      - name: API backward-compatibility check (against HEAD)
+        if: github.event_name != 'pull_request'
+        run: composer bc:check
+
+      # Baselined: it fails on findings that are NEW relative to
+      # tools/php/substitutability-baseline.json, not on the 1237 already there.
+      # Regenerate deliberately with `composer class-shape:baseline`, never to
+      # silence a finding — the baseline is a floor that only moves down.
+      - name: Substitutability and immutability
+        run: composer class-shape
+
+      # ASVS 10.1.1 asks for a tool that can detect potentially malicious code.
+      # `composer audit` below is not it: it matches third-party versions against
+      # a CVE feed and never reads first-party source. This step reads the source
+      # — eval, shell execution, unbounded unserialize, dynamic include,
+      # decoder-then-call, weak RNG — and exits non-zero on anything outside the
+      # reviewed list in the script. The two are separate clauses (V10.1, V14.2)
+      # and must not be cited as one control.
+      - name: Malicious-code analysis (ASVS 10.1.1)
+        run: composer security:malicious
+
       - name: Audit dependencies for vulnerabilities
         run: composer audit --abandoned=report
+
+  # ADR-0031's 1500-line cap. Its own job, with nothing depending on it: as a step
+  # inside php-quality it failed that job and skipped every test suite with it.
+  pr-size:
+    name: PR Size Limit (ADR-0031)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+
+    # Reads labels and the CODEOWNER approval comment via `gh`.
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: PR size limit (ADR-0031)
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_REF: ${{ github.base_ref }}
+          REPO_FULL: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash tools/ci/check-pr-size.sh
 
   php-tests:
     name: PHP Tests (Unit, Integration, E2E)
     runs-on: ubuntu-latest
+    # No coverage here: this job is the fast signal. Coverage moved to php-coverage,
+    # which shards it — see the comment there for why it could not stay.
+    timeout-minutes: 30
     needs: php-quality
 
     services:
@@ -82,95 +245,473 @@ jobs:
           - 5432:5432
         options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
 
+      # Real backends for the cache/lock driver contract tests: without these
+      # servers the Redis/Memcached driver tests self-skip and the drivers are
+      # never exercised against a real integration anywhere.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      memcached:
+        image: memcached:1.6-alpine
+        ports:
+          - 11211:11211
+
     env:
       DB_HOST: 127.0.0.1
       DB_USERNAME: root
       DB_PASSWORD: password
       DB_DATABASE: pulsar_test
 
-    steps:
-      - uses: actions/checkout@v4
+      # Per-engine settings, because the two servers above do not share credentials and
+      # do not listen on the same port. Without these the contract suite finds no engine
+      # configured and skips — which would leave both containers running for the whole
+      # job without a single statement being sent to either.
+      DB_MYSQL_HOST: 127.0.0.1
+      DB_MYSQL_PORT: '3306'
+      DB_MYSQL_USERNAME: root
+      DB_MYSQL_PASSWORD: password
+      DB_MYSQL_DATABASE: pulsar_test
 
-      - uses: shivammathur/setup-php@v2
+      DB_PGSQL_HOST: 127.0.0.1
+      DB_PGSQL_PORT: '5432'
+      DB_PGSQL_USERNAME: postgres
+      DB_PGSQL_PASSWORD: password
+      DB_PGSQL_DATABASE: pulsar_test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          php-version: '8.5'
-          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
-          coverage: pcov
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          # Load the REAL optional extensions so the driver contract tests, the
+          # igbinary serializer, and the zstd compression path run against real
+          # integrations instead of self-skipping. Every symbol in
+          # tools/php/stubs/ must have a real counterpart here — the contract is
+          # asserted below, not assumed. (ext-brotli is built separately: it is
+          # in neither Ondřej's PPA nor PECL, so setup-php cannot resolve it.)
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
+          ini-values: apc.enable_cli=1
+          # Xdebug 3.x required for branch + path coverage (PCOV only measures
+          # lines). The mandate targets 100 % line + branch + condition coverage
+          # so Xdebug is the only production-capable choice today.
+          coverage: xdebug
+
+      # ext-brotli ships in neither Ondřej's PPA nor PECL, so setup-php cannot
+      # install it — it has to be built. It is worth the ~1 min: 'br' leads
+      # server preference in CompressionMiddleware and every browser requests
+      # it, so without this the single most-used compression path in the
+      # framework would never execute in CI even once.
+      - name: Build and install ext-brotli
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libbrotli-dev
+          git clone --depth=1 https://github.com/kjdev/php-ext-brotli.git /tmp/php-ext-brotli
+          cd /tmp/php-ext-brotli
+          phpize
+          ./configure --with-libbrotli
+          make -j"$(nproc)"
+          sudo make install
+          echo 'extension=brotli.so' | sudo tee "$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')/99-brotli.ini"
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
 
-      - name: Run all tests with coverage
-        run: php -d memory_limit=512M -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml
+      # Guards against green-by-abstention: if an optional extension silently
+      # fails to install, every test behind its function_exists() guard skips
+      # and the job still passes. Fail loudly instead.
+      - name: Assert the optional-extension contract
+        run: php tools/ci/assert-extensions.php redis memcached apcu igbinary zstd brotli
 
-      - name: Enforce coverage threshold
+      # The driver contract executes generated SQL against real engines instead of
+      # comparing it to a string. All three servers exist in this job, so every contract
+      # test must RUN here — --fail-on-skipped turns a mis-set variable into a failure
+      # rather than a silent skip, which is the only way this step can be trusted to mean
+      # what its name says. It runs before the full suite so it fails in seconds.
+      - name: Driver contract, executed against every engine
         run: |
-          php -r '
-            $xml = simplexml_load_file("coverage/clover.xml");
-            $metrics = $xml->project->metrics;
-            $stmts = (int) $metrics["statements"];
-            $covered = (int) $metrics["coveredstatements"];
-            $pct = $stmts > 0 ? round(($covered / $stmts) * 100, 2) : 0;
-            echo "Coverage: {$pct}% ({$covered}/{$stmts} statements)\n";
-            if ($pct < 50) {
-                echo "FAIL: Coverage {$pct}% is below the 50% threshold.\n";
-                exit(1);
-            }
-            echo "PASS: Coverage meets the 50% threshold.\n";
-          '
+          php vendor/bin/phpunit \
+            -c tools/php/phpunit.xml \
+            --testsuite Contract \
+            --fail-on-skipped
 
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
+      # Runs first: fails in minutes rather than after the coverage pass, and it is
+      # the only thing guarding test isolation.
+      #
+      # This is `composer test` for parity purposes, run a different way: paratest
+      # rather than serial PHPUnit, with a yield assertion behind it. The local
+      # script stays serial because a contributor wants a readable failure, not a
+      # sharded one.
+      # qa-gate: test
+      - name: Run all tests in parallel (isolation guard, no coverage)
+        env:
+          XDEBUG_MODE: 'off'
+        run: |
+          php -d memory_limit=2G \
+              vendor/bin/paratest \
+                -c tools/php/phpunit.xml \
+                --runner=WrapperRunner \
+                --processes="$(nproc)" \
+                --log-junit junit-linux.xml
+
+      # A successful suite means one of two very different things: everything ran, or
+      # very little did. The floor catches a directory or file dropping out of
+      # discovery; the ceiling catches an absent extension or service turning many
+      # tests into silent abstentions. Both bounds are set well clear of the current
+      # figures — wide enough not to fire on ordinary growth, narrow enough that a
+      # collapse cannot pass unnoticed.
+      - name: Assert the run actually exercised the suite
+        run: |
+          php tools/ci/assert-test-yield.php junit-linux.xml \
+            --min-tests=43000 \
+            --max-skipped-percent=1.0
 
       - name: Upload test results on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-unit
           path: .phpunit.cache/
           retention-days: 7
 
-  php-benchmark-tier-a:
-    name: 'Tier A: Performance Budgets (Hard Gate)'
+  # One job, PCOV, no matrix. The parts inside it are sequential, not shards.
+  #
+  # php-code-coverage appends the id of every test to every line it covers, with
+  # no way to turn that off, so memory grows with the test count. Measured on this
+  # runner: killed by a signal at 13,457 of the Unit suite's 42,588 tests, about
+  # 1.1 MB per test. At rc.12 the whole configuration lists 46,745 tests, which
+  # would need over 50 GB against the runner's 16. Recycling the process every
+  # ~4,675 tests is the only lever, the growth being inside the library. Time was
+  # never the constraint: 0.036 s per test puts the suite at ~28 minutes.
+  #
+  # PCOV records lines only. Branch data is Xdebug's alone, and Xdebug costs 0.87 s
+  # per test here — over 11 hours, past GitHub's six-hour job ceiling. So the gate
+  # enforces statements and methods, and reports Conditions as not measured rather
+  # than as 0%.
+  php-coverage:
+    name: PHP Coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     needs: php-quality
 
-    steps:
-      - uses: actions/checkout@v4
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: pulsar_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-      - uses: shivammathur/setup-php@v2
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: pulsar_test
+        ports:
+          - 5432:5432
+        options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      memcached:
+        image: memcached:1.6-alpine
+        ports:
+          - 11211:11211
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      DB_DATABASE: pulsar_test
+
+      DB_MYSQL_HOST: 127.0.0.1
+      DB_MYSQL_PORT: '3306'
+      DB_MYSQL_USERNAME: root
+      DB_MYSQL_PASSWORD: password
+      DB_MYSQL_DATABASE: pulsar_test
+
+      DB_PGSQL_HOST: 127.0.0.1
+      DB_PGSQL_PORT: '5432'
+      DB_PGSQL_USERNAME: postgres
+      DB_PGSQL_PASSWORD: password
+      DB_PGSQL_DATABASE: pulsar_test
+
+      # ~4,450 tests per part, which the measurement above puts near 5 GB.
+      COVERAGE_PARTS: '10'
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          php-version: '8.5'
-          extensions: sodium, pdo_sqlite
-          coverage: none
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
+          ini-values: apc.enable_cli=1
+          coverage: pcov
+
+      - name: Build and install ext-brotli
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libbrotli-dev
+          git clone --depth=1 https://github.com/kjdev/php-ext-brotli.git /tmp/php-ext-brotli
+          cd /tmp/php-ext-brotli
+          phpize
+          ./configure --with-libbrotli
+          make -j"$(nproc)"
+          sudo make install
+          echo 'extension=brotli.so' | sudo tee "$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')/99-brotli.ini"
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
 
+      # The list comes from PHPUnit's own discovery, so a directory added to
+      # phpunit.xml enters the parts by itself.
+      - name: Cut the suite into sequential parts
+        run: |
+          mkdir -p build/coverage
+          php -d memory_limit=2G vendor/bin/phpunit \
+            -c tools/php/phpunit.xml \
+            --no-coverage \
+            --list-tests-xml build/coverage/tests.xml
+          php tools/ci/partition-tests.php \
+            build/coverage/tests.xml "$COVERAGE_PARTS" build/coverage/part
+
+      # pcov.directory scopes instrumentation to first-party source. Left at the
+      # default it walks vendor/ and the 44,000 test files as well, which costs
+      # time and buys nothing: neither appears in the report's source scope.
+      - name: Run each part with line coverage
+        run: |
+          for part in $(seq 1 "$COVERAGE_PARTS"); do
+            echo "::group::Coverage part $part of $COVERAGE_PARTS"
+            php -d memory_limit=8G \
+                -d pcov.enabled=1 \
+                -d pcov.directory=. \
+                -d pcov.exclude='~/(vendor|tests|tools|benchmarks)/~' \
+                vendor/bin/phpunit \
+                  -c tools/php/phpunit.xml \
+                  --test-id-filter-file "build/coverage/part${part}.txt" \
+                  --coverage-clover "build/coverage/clover-${part}.xml"
+            echo "::endgroup::"
+          done
+
+      - name: Merge the parts into one report
+        run: php tools/ci/merge-clover.php coverage/clover.xml build/coverage/clover-*.xml
+
+      - name: Enforce coverage threshold (statements + methods)
+        run: composer coverage:floor
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # Windows is a supported deployment target, so the suite runs there too.
+  #
+  # This is a separate job rather than a `runs-on: [ubuntu, windows]` matrix on
+  # php-tests. That job carries four service containers, and GitHub's service
+  # containers require a Linux runner; it also builds ext-brotli through apt-get and
+  # sizes its worker pool with nproc. A matrix would have to branch on the operating
+  # system at nearly every step, producing one job pretending to be two. A leaner
+  # job that states exactly what it covers is clearer.
+  #
+  # Scope, stated rather than implied: this job exercises the filesystem, path,
+  # environment and boot behaviour where the two platforms differ, and the symlink
+  # containment cases that require elevation — GitHub's Windows runners have it. The
+  # MySQL, PostgreSQL, Redis and Memcached driver contracts, brotli and zstd
+  # compression, and coverage measurement remain on the Linux jobs.
+  php-tests-windows:
+    name: PHP Tests (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    needs: php-quality
+
+    defaults:
+      run:
+        # Git Bash ships on the Windows runners. Using it keeps every command in this
+        # job textually identical to its Linux twin, so the two cannot drift apart
+        # through shell dialect rather than through anything real.
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          # The Windows-installable subset. redis and memcached are omitted on
+          # purpose: the client extensions would load with no server behind them,
+          # which is worse than absent — the driver tests would connect to nothing
+          # and skip, while the job appeared to cover them.
+          # exif/fileinfo/gd/sockets: required or used by the suite, enabled by default
+          # on Linux only. Without them composer refuses the lockfile on Windows.
+          extensions: pdo_sqlite, pdo_mysql, pdo_pgsql, apcu, igbinary, intl, zip, sodium, exif, fileinfo, gd, sockets
+          ini-values: apc.enable_cli=1
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          # Keyed apart from the Linux jobs. Composer resolves platform-dependent
+          # packages against the running PHP, so a tree built on one runner is not
+          # a safe restore for the other.
+          key: composer-windows-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-windows-
+
+      - run: composer install --no-interaction --no-progress
+
+      # Same reasoning as the Linux job: a silently missing extension turns every
+      # test behind its guard into a skip and the job still reports green.
+      - name: Assert the optional-extension contract
+        run: php tools/ci/assert-extensions.php pdo_sqlite apcu igbinary intl sodium sockets
+
+      - name: Run all tests in parallel (isolation guard, no coverage)
+        env:
+          XDEBUG_MODE: 'off'
+        run: |
+          php -d memory_limit=2G \
+              vendor/bin/paratest \
+                -c tools/php/phpunit.xml \
+                --runner=WrapperRunner \
+                --processes="${NUMBER_OF_PROCESSORS:-4}" \
+                --log-junit junit-windows.xml
+
+      # The ceiling matters more here than on Linux: this job runs without the
+      # database, cache and compression services, so a real drop in what Windows
+      # exercises would otherwise be indistinguishable from ordinary skipping.
+      - name: Assert the run actually exercised the suite
+        run: |
+          php tools/ci/assert-test-yield.php junit-windows.xml \
+            --min-tests=43000 \
+            --max-skipped-percent=1.0
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-windows
+          path: |
+            junit-windows.xml
+            .phpunit.cache/
+          retention-days: 7
+
+  php-benchmark-tier-a:
+    name: 'Tier A: Performance Budgets (Hard Gate)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: php-quality
+
+    defaults:
+      run:
+        # `shell: bash` is what turns pipefail on; the implicit default is
+        # `bash -e {0}` WITHOUT it. Two steps below pipe into `tee`, and without
+        # pipefail the step's exit status is tee's — always 0. Every #[Assert] in
+        # tests/Benchmark was therefore unenforceable here: phpbench exits 2 on a
+        # breached budget (verified locally with a deliberately impossible
+        # assertion) and tee threw that away, so the job named 'Hard Gate' could
+        # not fail on a performance budget at all. One line, and it is the line
+        # that makes the rest of this job mean something.
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: sodium, pdo_sqlite
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      # This step used to compute the digest, echo it, and compare it to nothing,
+      # while docs/performance.md and the manifest's own header both described it
+      # as a gate that fails the build on an unauthorized change. It now compares
+      # the manifest against tools/php/bench-pipeline.manifest.sha256 and exits
+      # non-zero when the two disagree -- see the script's header for what that
+      # does and does not buy, and BenchPipelineManifestGateTest for the planted
+      # changes it has been watched refusing.
+      #
+      # The summary line is read back out of the digest file rather than
+      # recomputed: after the gate passes those are the same number, and taking it
+      # from the file means the summary cannot report a digest the gate never
+      # checked.
       - name: Verify pipeline manifest integrity
         run: |
-          MANIFEST_HASH=$(php -r "echo hash_file('sha256', 'tools/php/bench-pipeline.manifest.php');")
-          echo "Pipeline manifest hash: $MANIFEST_HASH"
-          echo "manifest_hash=$MANIFEST_HASH" >> "$GITHUB_ENV"
+          composer bench:manifest:check
+          echo "manifest_hash=$(cut -d' ' -f1 tools/php/bench-pipeline.manifest.sha256)" >> "$GITHUB_ENV"
 
       - name: 'Tier A: Run PHPBench with assertions (hard gate)'
+        # Two things in tools/php/phpbench.json make this step mean something, and
+        # neither can carry a comment of its own because the file is JSON.
+        #
+        # `runner.php_config` pins the child interpreter (OPcache on, JIT off,
+        # Xdebug off), so a budget means the same thing here as on the machine it
+        # was derived on -- Xdebug alone moved the kernel-boot subject by 2.2x.
+        # Nothing in this step should set ini flags; doing so would silently
+        # invalidate every budget in tests/Benchmark.
+        #
+        # `runner.retry_threshold` is 20, not the 5 it was. PHPBench re-runs any
+        # iteration deviating more than the threshold from the variant mean, in a
+        # `while (getRejectCount() > 0)` loop that has no limit -- 1.7 never calls
+        # `SubjectMetadata::setRetryLimit()`. At 5 a variant that cannot settle
+        # does not fail, it spins: one CMS subject retried more than ten times
+        # locally before landing at 3.3%, and the CMS group alone did not finish
+        # in twenty minutes. The threshold was never the gate; the #[Assert]
+        # budgets are, and they have margin to spare over a 20% sample.
         run: composer bench:ci 2>&1 | tee benchmark-tier-a.txt
 
       - name: 'Tier A: Run memory peak budgets'
@@ -181,12 +722,15 @@ jobs:
           php tests/Benchmark/Scenarios/memory_compliance.php > /dev/null && echo "PASS: memory_compliance"
 
       - name: Run OPcache/JIT/preload profile matrix
-        continue-on-error: true
+        # Deliberately NOT continue-on-error: this gate must block a release
+        # on a broken profile matrix. Genuine timing variance is absorbed
+        # inside `composer bench:profiles:ci` by warmup + statistical
+        # thresholds, so a failure here is a real regression.
         run: composer bench:profiles:ci | tee benchmark-profiles.txt
 
       - name: Upload benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: benchmark-results-tier-a
           path: |
@@ -198,47 +742,252 @@ jobs:
       - name: Add benchmark results to job summary
         if: always()
         run: |
-          echo '## Tier A: Performance Budget Results (Hard Gate)' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo "Pipeline manifest SHA-256: \`${{ env.manifest_hash }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-tier-a.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '## OPcache / JIT / Preload Profile Matrix' >> "$GITHUB_STEP_SUMMARY"
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-profiles.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## Tier A: Performance Budget Results (Hard Gate)'
+            echo ''
+            # Read from the environment, not expanded into the script.
+            echo "Pipeline manifest SHA-256: \`${manifest_hash}\`"
+            echo ''
+            echo '```'
+            cat benchmark-tier-a.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+            echo ''
+            echo '## OPcache / JIT / Preload Profile Matrix'
+            echo ''
+            echo '```'
+            cat benchmark-profiles.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-  cache-warmup:
-    name: Cache Warmup Smoke Test
+  # Mutation testing runs in two tiers, and this is the per-change one.
+  #
+  # A mutant that survives in code the change touched is a test gap being created
+  # right now; a mutant that survives in untouched code is old debt, and gating a
+  # pull request on it stops nothing from getting worse. So this tier mutates the
+  # changed lines and mutation-nightly.yml sweeps the whole configured scope on a
+  # schedule, where no reviewer is waiting.
+  #
+  # That scope is src/Auth, src/Security and src/Audit, not all of src/. Infection
+  # needs per-test coverage first, and its initial run over the 42,588-test Unit
+  # suite was killed by a signal at 13,457 tests — php-code-coverage holds about
+  # 1.1 MB per test and there is no way to switch that off. infection.json5 carries
+  # the reasoning; the short version is that a gate which cannot finish enforces
+  # nothing while appearing to.
+  php-mutation:
+    name: Mutation Testing (Infection)
     runs-on: ubuntu-latest
-    needs: php-quality
+    timeout-minutes: 60
+    needs: php-tests
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          php-version: '8.5'
-          extensions: pdo_sqlite
-          coverage: none
+          persist-credentials: false
+          # --git-diff-base needs the base branch to exist locally, and checkout
+          # clones a single commit by default. Without this the diff resolves
+          # against nothing and Infection mutates nothing, silently passing.
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_sqlite, sodium
+          coverage: pcov
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
 
-      - name: Verify cache warmup pipeline
+      # --ignore-msi-with-no-mutations because a change touching only workflows or
+      # documentation produces no mutable line, and an MSI of 0/0 must read as
+      # "nothing to measure" rather than as a failure.
+      - name: Run Infection over the changed lines
+        run: composer mutation:diff -- --ignore-msi-with-no-mutations
         env:
-          PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          XDEBUG_MODE: coverage
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: infection-report
+          path: |
+            build/infection/infection.log
+            build/infection/summary.log
+            build/infection/infection.json
+          retention-days: 7
+
+  php-benchmark-library:
+    name: PHPBench (benchmarks/ suite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: php-quality
+
+    defaults:
+      run:
+        # Same reason as the Tier A job above: the run step below pipes into
+        # `tee`, and without pipefail the step's exit status is tee's — always 0.
+        # Every #[Assert] in benchmarks/ was therefore unenforceable AND
+        # unreportable here: a breached budget exits phpbench non-zero, tee threw
+        # it away, and the job reported green having noticed nothing. The
+        # benchmarks/ tree is deliberately not a merge gate (docs/performance.md
+        # says so), but "not a gate" has to mean an advisory result someone can
+        # see, not a result the shell discards before anyone looks.
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_sqlite, sodium
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: Run benchmarks/ suite
+        # Advisory by declaration, now that pipefail lets a breach reach the
+        # runner at all. These budgets were never calibrated on shared CI
+        # hardware, and this tree is the component harness rather than the
+        # request-class contract — Tier A is what blocks a merge. A breach here
+        # marks the step failed-but-tolerated in the UI, which is the signal the
+        # swallowed exit code used to destroy.
+        continue-on-error: true
         run: |
+          vendor/bin/phpbench run benchmarks/ \
+            --bootstrap=vendor/autoload.php \
+            --report=default \
+            --progress=none \
+            --iterations=3 \
+            --revs=100 \
+            --warmup=1 \
+            --time-unit=microseconds \
+            2>&1 | tee benchmark-library.txt
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: benchmark-results-library
+          path: benchmark-library.txt
+          retention-days: 14
+
+      - name: Add benchmark results to job summary
+        if: always()
+        run: |
+          {
+            echo '## PHPBench Library Benchmarks'
+            echo ''
+            echo '```'
+            cat benchmark-library.txt 2>/dev/null || echo "(no results)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # This one IS a genuine matrix, unlike php-tests: no service containers, no
+  # compiled extension, no nproc — nothing that would have to branch on the OS.
+  # And it is the job with the most to say about Windows, because booting the
+  # kernel and warming the cache is almost entirely path resolution, directory
+  # creation and file writing, which is exactly where the two platforms differ.
+  cache-warmup:
+    name: Cache Warmup Smoke Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    needs: php-quality
+
+    strategy:
+      # Report both. A Windows-only boot failure is precisely the finding this
+      # matrix exists to surface, and cancelling its sibling would hide whether
+      # the fault is platform-specific or general.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          # This matrix includes windows-latest, where none of these is enabled by
+          # default and composer install refuses the lockfile without them.
+          extensions: pdo_sqlite, exif, fileinfo, gd, sodium, zip
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          # Scoped by runner OS: Composer resolves platform-dependent packages
+          # against the running PHP, so one runner's tree is not a safe restore
+          # for the other's.
+          key: composer-${{ matrix.os }}-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-${{ matrix.os }}-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: Assert the kernel boots
+        # No-compromise boot gate: a boot regression (an untrusted bundled
+        # extension capped to community, a route collision, a wiring fault) must
+        # fail CI directly. Run bin/pulsar with NO output/error suppression so a
+        # non-zero exit — i.e. Kernel::boot() throwing — fails the job. This is
+        # the guard that the cache-warmup probe below (which pipes through grep)
+        # cannot provide on its own.
+        run: |
+          # Assigned then exported: `export X="$(cmd)"` returns export's status,
+          # so a failing key generation would go unnoticed.
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
+          php bin/pulsar list > /dev/null
+
+      - name: Verify cache warmup pipeline
+        # The master key is generated per run and never written into this
+        # file: a key committed to a workflow is public, and any artefact
+        # encrypted under it would be readable by anyone who can read the
+        # workflow. It comes from PHP's own CSPRNG rather than an openssl
+        # binary, PHP being the one tool this job is guaranteed to have on
+        # either runner. It is exported inside this step only and is not
+        # persisted between jobs.
+        run: |
+          # Assigned then exported: `export X="$(cmd)"` returns export's status,
+          # so a failing key generation would go unnoticed.
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
           if php bin/pulsar list 2>/dev/null | grep -q 'optimize:validate'; then
             php bin/pulsar optimize:validate --strict
           else
@@ -246,18 +995,165 @@ jobs:
             php bin/pulsar optimize:clear
           fi
 
+      - name: Lint localized route slugs (completeness + collisions)
+        # Validates config/i18n.php localized_slugs: every key has a slug for
+        # every supported locale and no per-locale slug collisions. Empty config
+        # passes as a no-op; downstream projects inherit the same gate.
+        run: |
+          # Assigned then exported: `export X="$(cmd)"` returns export's status,
+          # so a failing key generation would go unnoticed.
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
+          php bin/pulsar i18n:slugs:lint
+
+  # Semgrep appeared ZERO times under .github/ until this job existed, and
+  # `composer security:lint` passed neither --error nor --severity, so it exited 0
+  # whatever it found. The ruleset's own header said as much: "a rule in this file
+  # cannot stop a merge". It can now.
+  #
+  # Its own job rather than a step in php-quality: the scan is single-threaded (see
+  # tools/security/assert-semgrep-clean.php for the measurement that forced that)
+  # and takes two to four minutes, and php-quality is the job every other one waits
+  # on. Nothing depends on this job, and nothing should -- it is a required check on
+  # the merge, not a prerequisite for running tests.
+  security-semgrep:
+    name: Semgrep (Pulsar ruleset, gating)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          coverage: none
+
+      # Installed through the runner's preinstalled pipx rather than by adding an
+      # action: one fewer third-party action to pin, review and trust in a job whose
+      # entire purpose is supply-chain and source hygiene.
+      #
+      # The version pin is load-bearing rather than hygiene. Which files Semgrep's
+      # PHP frontend can parse changes between releases, and this gate records the
+      # files it cannot parse as accepted blind spots; a floating version would move
+      # that set silently in either direction — new holes appearing unnoticed, or
+      # recorded holes going stale. The baseline stores the version it was measured
+      # under, and the assertion below refuses to scan under a different one rather
+      # than producing an answer that means something else.
+      - name: Install Semgrep
+        run: |
+          pipx install "semgrep==1.155.0"
+          installed="$(semgrep --version)"
+          if [ "$installed" != "1.155.0" ]; then
+            echo "Expected semgrep 1.155.0, got '$installed'." >&2
+            exit 1
+          fi
+
+      # Fails on WARNING, not on ERROR, because every rule in the Pulsar ruleset is
+      # WARNING and a threshold above the lowest severity present would re-create
+      # the inert gate this job replaces. The 51 pre-existing findings are recorded
+      # in tools/security/semgrep-baseline.json as ADR-0006 migration debt; the
+      # fifty-second fails the build.
+      #
+      # No `composer install` above: the gate script uses no autoloaded class and
+      # Semgrep reads source rather than a resolved dependency tree, so installing
+      # would cost a minute and change no answer.
+      - run: composer security:lint
+
+  # The artefact an assessor is actually handed, produced from a booted deployment
+  # rather than from a table of literals somebody typed. ADR-0041 and ADR-0045
+  # record why that distinction is the whole point: a control that reports itself
+  # implemented on the strength of a class existing is worth less than no control.
+  #
+  # Its own job because it boots the kernel, which nothing else in php-quality does,
+  # and because the JSON report is worth keeping as an artifact whether the gate
+  # passed or failed -- a failing report is the more useful of the two to read.
+  compliance-report:
+    name: Compliance Report (claims are observed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: php-quality
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_sqlite, sodium
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      # Produced BEFORE the gate and deliberately not allowed to fail the step. A
+      # failing report is the more useful of the two to read, and a step ordering
+      # that only kept the artifact on success would throw away exactly the runs
+      # someone needs it for.
+      #
+      # The master key is generated per run and never written into this file, for
+      # the same reason as in cache-warmup: a key committed to a workflow is public.
+      # Assigned then exported, because `export X="$(cmd)"` returns export's status
+      # and a failing key generation would otherwise go unnoticed.
+      - name: Produce the report
+        run: |
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
+          mkdir -p build/compliance
+          php scripts/check_compliance_claims.php --json > build/compliance/report.json || true
+
+      - name: Upload compliance report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: compliance-report
+          path: build/compliance/report.json
+          retention-days: 30
+
+      # The gate itself, run for its human-readable output: when it fails it names
+      # each control, why the deployment did not show it, and what would fix it,
+      # which is what a reader needs in the log rather than in a JSON attachment.
+      - name: Fail on any control claimed and not observed
+        run: |
+          PULSAR_MASTER_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+          export PULSAR_MASTER_KEY
+          composer compliance:check
+
   adr-check:
     name: ADR Governance Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Fetch base ref (fork-safe)
-        run: git fetch origin ${{ github.event.pull_request.base.sha }} --depth=1
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        # depth=1 only fetches the base SHA. The downstream
+        # `check-adr.sh` does `git diff "${BASE_SHA}...HEAD"`, which
+        # requires a reachable common ancestor — for PRs with multiple
+        # commits this either fails with "fatal: object not in fetch"
+        # or silently produces an incomplete diff. depth=50 fits the
+        # typical PR-size cap (ADR-0031 hard cap is 1500 LOC) with
+        # margin and keeps the fetch cheap.
+        run: git fetch origin "$BASE_SHA" --depth=50
 
       - name: Check ADR governance
         env:
@@ -267,15 +1163,18 @@ jobs:
   js:
     name: JS/TS (Lint, Format, Typecheck, Test)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: '20'
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
           cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile

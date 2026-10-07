@@ -16,6 +16,7 @@ use function strtolower;
  *
  * Validates table, column, index, and foreign key names against a strict
  * pattern and rejects SQL reserved words to prevent injection and ambiguity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaIdentifier
@@ -32,21 +33,37 @@ final class SchemaIdentifier
         'case', 'when', 'then', 'else', 'end', 'limit', 'offset', 'union', 'all',
     ];
 
+    /**
+     * @throws SchemaException If the name is empty, exceeds 64 characters, does
+     *                         not match the identifier pattern, or is a reserved word.
+     */
     public static function validateTable(string $name): void
     {
         self::validate('table', $name);
     }
 
+    /**
+     * @throws SchemaException If the name is empty, exceeds 64 characters, does
+     *                         not match the identifier pattern, or is a reserved word.
+     */
     public static function validateColumn(string $name): void
     {
         self::validate('column', $name);
     }
 
+    /**
+     * @throws SchemaException If the name is empty, exceeds 64 characters, does
+     *                         not match the identifier pattern, or is a reserved word.
+     */
     public static function validateIndex(string $name): void
     {
         self::validate('index', $name);
     }
 
+    /**
+     * @throws SchemaException If the name is empty, exceeds 64 characters, does
+     *                         not match the identifier pattern, or is a reserved word.
+     */
     public static function validateForeignKey(string $name): void
     {
         self::validate('foreign key', $name);

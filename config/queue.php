@@ -85,4 +85,33 @@ return [
         'enabled' => true,
         'retention_days' => 30,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Job Middleware
+    |--------------------------------------------------------------------------
+    |
+    | Optional middleware for the job pipelines. `encrypt_payloads` encrypts
+    | payloads of #[Encrypted]-classified jobs at rest (AEAD, key material from
+    | the security master key). `prevent_duplicates` and `rate_limit` require a
+    | lock: bind Pulsar\Cache\Application\Lock\LockInterface in the container.
+    | Use a lock all workers share -- DatabaseLock or RedisLock from
+    | Pulsar\Cache\Application\Lock -- across multiple hosts; FilesystemLock
+    | only coordinates workers on a single host. Enabling a middleware whose
+    | dependency is missing fails fast at boot.
+    |
+    */
+    'middleware' => [
+        'encrypt_payloads' => false,
+        'enforce_effect_classification' => false,
+        'prevent_duplicates' => [
+            'enabled' => false,
+            'ttl_seconds' => 300,
+        ],
+        'rate_limit' => [
+            'enabled' => false,
+            'ttl_seconds' => 1,
+            'timeout_ms' => 0,
+        ],
+    ],
 ];

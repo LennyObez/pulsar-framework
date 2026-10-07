@@ -7,10 +7,12 @@ namespace Pulsar\Tests\Unit\Integrity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\FileVerificationStatus;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestEntry;
+use Pulsar\Integrity\ManifestScope;
 use Pulsar\Integrity\ManifestVerifier;
 use Pulsar\Integrity\VerificationResult;
 
@@ -126,8 +128,9 @@ final class ManifestVerifierTest extends TestCase
         $verifier = new ManifestVerifier($this->tempDir);
         $result = $verifier->verify($manifest);
 
-        // Added files do not cause failure (only modified and missing do)
-        self::assertTrue($result->passed);
+        // An added file fails verification. A manifest that tolerates additions
+        // cannot detect a file dropped into a covered directory.
+        self::assertFalse($result->passed);
         self::assertSame(1, $result->verified);
         self::assertSame(0, $result->modified);
         self::assertSame(0, $result->missing);
@@ -144,6 +147,137 @@ final class ManifestVerifierTest extends TestCase
         self::assertSame('src/NewFile.php', $addedFile->path);
         self::assertNull($addedFile->expectedHash);
         self::assertNotNull($addedFile->actualHash);
+    }
+
+    #[Test]
+    public function it_fails_when_a_webshell_is_planted_in_a_covered_directory(): void
+    {
+        $this->createFile('src/Kernel.php', '<?php class Kernel {}');
+        $this->createFile('src/Core/Http/Request.php', '<?php class Request {}');
+
+        $manifest = $this->buildManifest(['src/**/*.php'], []);
+
+        // Every manifest entry still hashes correctly: the only change is the
+        // extra file, nested one level below a covered directory.
+        $this->createFile('src/Core/Http/shell.php', '<?php system($_GET["c"]);');
+
+        $verifier = new ManifestVerifier($this->tempDir);
+        $result = $verifier->verify($manifest);
+
+        self::assertFalse($result->passed);
+        self::assertSame(2, $result->verified);
+        self::assertSame(0, $result->modified);
+        self::assertSame(0, $result->missing);
+        self::assertSame(1, $result->added);
+
+        $addedPaths = [];
+        foreach ($result->files as $file) {
+            if ($file->status === FileVerificationStatus::Added) {
+                $addedPaths[] = $file->path;
+            }
+        }
+
+        self::assertSame(['src/Core/Http/shell.php'], $addedPaths);
+    }
+
+    /**
+     * The shape of the real repository: no .php file sits directly under src/,
+     * so no manifest entry ever names src/ as its directory.
+     *
+     * The verifier used to infer where to look from the directories its entries
+     * happened to occupy, which left src/ itself unwatched — the one place a
+     * dropped file needs no directory of its own.
+     */
+    #[Test]
+    public function it_detects_a_file_dropped_where_no_manifest_entry_lives(): void
+    {
+        $this->createFile('src/Core/Kernel.php', '<?php class Kernel {}');
+        $this->createFile('src/Http/Router.php', '<?php class Router {}');
+
+        $manifest = $this->buildManifest(['src/**/*.php'], []);
+
+        $this->createFile('src/shell.php', '<?php system($_GET["c"]);');
+
+        $result = new ManifestVerifier($this->tempDir)->verify($manifest);
+
+        self::assertFalse($result->passed);
+        self::assertSame(2, $result->verified);
+        self::assertSame(1, $result->added);
+        self::assertSame(['src/shell.php'], $this->addedPaths($result));
+    }
+
+    #[Test]
+    public function it_detects_a_file_dropped_into_a_directory_created_after_the_build(): void
+    {
+        $this->createFile('src/Core/Kernel.php', '<?php class Kernel {}');
+
+        $manifest = $this->buildManifest(['src/**/*.php'], []);
+
+        $this->createFile('src/Backdoor/shell.php', '<?php system($_GET["c"]);');
+
+        $result = new ManifestVerifier($this->tempDir)->verify($manifest);
+
+        self::assertFalse($result->passed);
+        self::assertSame(1, $result->added);
+        self::assertSame(['src/Backdoor/shell.php'], $this->addedPaths($result));
+    }
+
+    /**
+     * The other direction of the same defect. A .gitkeep beside covered sources
+     * is not tampering: the manifest never claimed to track it, and reporting it
+     * makes an untouched checkout fail the production deploy gate.
+     */
+    #[Test]
+    public function a_file_the_scope_does_not_cover_is_not_an_addition(): void
+    {
+        $this->createFile('src/Core/Kernel.php', '<?php class Kernel {}');
+        $this->createFile('src/Core/.gitkeep', '');
+        $this->createFile('src/Core/notes.md', '# scratch');
+
+        $manifest = $this->buildManifest(['src/**/*.php'], []);
+
+        $result = new ManifestVerifier($this->tempDir)->verify($manifest);
+
+        self::assertTrue($result->passed);
+        self::assertSame(1, $result->verified);
+        self::assertSame(0, $result->added);
+    }
+
+    #[Test]
+    public function an_excluded_file_is_not_an_addition(): void
+    {
+        $this->createFile('src/Core/Kernel.php', '<?php class Kernel {}');
+
+        $manifest = $this->buildManifest(['src/**/*.php'], ['src/Generated/**']);
+
+        $this->createFile('src/Generated/Proxy.php', '<?php class Proxy {}');
+
+        $result = new ManifestVerifier($this->tempDir)->verify($manifest);
+
+        self::assertTrue($result->passed);
+        self::assertSame(0, $result->added);
+    }
+
+    /**
+     * Without a scope the verifier cannot tell an addition from an untracked
+     * file, so it refuses rather than answering wrongly in either direction.
+     */
+    #[Test]
+    public function it_refuses_to_verify_a_manifest_that_declares_no_scope(): void
+    {
+        $manifest = new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
+            algorithm: 'sha256',
+            generatedAt: time(),
+            frameworkVersion: '1.0.0-rc.12',
+            entryCount: 0,
+            entries: [],
+        );
+
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('declares no scope');
+
+        new ManifestVerifier($this->tempDir)->verify($manifest);
     }
 
     #[Test]
@@ -172,12 +306,13 @@ final class ManifestVerifierTest extends TestCase
     public function it_passes_for_empty_manifest(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: time(),
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $verifier = new ManifestVerifier($this->tempDir);
@@ -255,7 +390,7 @@ final class ManifestVerifierTest extends TestCase
         self::assertIsString($hash);
 
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: time(),
             frameworkVersion: '1.0.0-rc.2',
@@ -263,6 +398,7 @@ final class ManifestVerifierTest extends TestCase
             entries: [
                 new ManifestEntry(path: 'src/Manual.php', hash: $hash, size: strlen($content)),
             ],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $verifier = new ManifestVerifier($this->tempDir);
@@ -278,7 +414,7 @@ final class ManifestVerifierTest extends TestCase
         $this->createFile('src/Manual.php', '<?php class Manual {}');
 
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: time(),
             frameworkVersion: '1.0.0-rc.2',
@@ -286,6 +422,7 @@ final class ManifestVerifierTest extends TestCase
             entries: [
                 new ManifestEntry(path: 'src/Manual.php', hash: 'incorrect_hash', size: 100),
             ],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $verifier = new ManifestVerifier($this->tempDir);
@@ -293,6 +430,22 @@ final class ManifestVerifierTest extends TestCase
 
         self::assertFalse($result->passed);
         self::assertSame(1, $result->modified);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function addedPaths(VerificationResult $result): array
+    {
+        $paths = [];
+
+        foreach ($result->files as $file) {
+            if ($file->status === FileVerificationStatus::Added) {
+                $paths[] = $file->path;
+            }
+        }
+
+        return $paths;
     }
 
     /**

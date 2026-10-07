@@ -12,7 +12,7 @@ use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\DeviceType;
 use Pulsar\Extension\Analytics\Domain\PageView;
 
-#[Internal(reason: 'Raw-DB repository — use PageViewRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use PageViewRepositoryInterface for public API')]
 final readonly class DbPageViewRepository implements PageViewRepositoryInterface
 {
     private const string SQL_INSERT = <<<'SQL'
@@ -53,8 +53,19 @@ final readonly class DbPageViewRepository implements PageViewRepositoryInterface
         LIMIT :limit
         SQL;
 
+    private const string SQL_FIND_BY_VISITOR = <<<'SQL'
+        SELECT * FROM analytics_page_views
+        WHERE visitor_id = :visitor_id
+        ORDER BY created_at DESC
+        LIMIT :limit
+        SQL;
+
     private const string SQL_DELETE_OLDER_THAN = <<<'SQL'
         DELETE FROM analytics_page_views WHERE created_at < :before
+        SQL;
+
+    private const string SQL_DELETE_BY_VISITOR = <<<'SQL'
+        DELETE FROM analytics_page_views WHERE visitor_id = :visitor_id
         SQL;
 
     public function __construct(
@@ -136,10 +147,25 @@ final readonly class DbPageViewRepository implements PageViewRepositoryInterface
         return $result;
     }
 
+    public function findByVisitorId(string $visitorId, int $limit = 10000): array
+    {
+        return $this->connection->query(self::SQL_FIND_BY_VISITOR, [
+            'visitor_id' => $visitorId,
+            'limit' => $limit,
+        ])->map(self::hydrate(...));
+    }
+
     public function deleteOlderThan(DateTimeImmutable $before): int
     {
         return $this->connection->execute(self::SQL_DELETE_OLDER_THAN, [
             'before' => $before->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function deleteByVisitorId(string $visitorId): int
+    {
+        return $this->connection->execute(self::SQL_DELETE_BY_VISITOR, [
+            'visitor_id' => $visitorId,
         ]);
     }
 

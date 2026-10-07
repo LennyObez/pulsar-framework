@@ -9,13 +9,17 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
 use Pulsar\Http\Message\Response;
 
+use function is_int;
 use function max;
 use function min;
 
 /**
  * Serves RSS and Atom feeds for published content.
+ *
+ * @psalm-api Bound to /feed/* routes by the CMS service provider;
+ *            resolved from the DI container by the router.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class FeedController
 {
     public function __construct(
@@ -71,7 +75,10 @@ final readonly class FeedController
     private function resolveLimit(ServerRequestInterface $request): int
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawLimit */
+        $rawLimit = $params['limit'] ?? null;
+        $limit = is_int($rawLimit) ? $rawLimit : 20;
 
-        return min(100, max(1, (int) ($params['limit'] ?? 20)));
+        return min(100, max(1, $limit));
     }
 }

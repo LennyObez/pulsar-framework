@@ -1,6 +1,6 @@
 <?php
 /**
- * CMS Studio — Media Processing Queue Panel.
+ * CMS Studio: Media Processing Queue Panel.
  *
  * @var list<array{jobId: string, status: string, jobClass: string, mediaAssetId: string, derivativeType: string, createdAt: int, completedAt: int|null, failedAt: int|null}>|null $pending
  * @var list<array{jobId: string, status: string, jobClass: string, mediaAssetId: string, derivativeType: string, createdAt: int, completedAt: int|null, failedAt: int|null}>|null $completed

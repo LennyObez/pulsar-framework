@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Provides information about IP addresses: proxy detection, Tor exit node checks,
  * and network zone classification. Implementations may use threat intelligence feeds,
  * local databases, or external APIs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NetworkIntelligenceInterface

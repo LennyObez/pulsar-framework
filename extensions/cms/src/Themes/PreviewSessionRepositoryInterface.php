@@ -8,6 +8,11 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence contract for theme preview sessions.
+ *
+ * @psalm-api Public binding contract; implemented by CachePreviewSessionRepository
+ *            (or InMemoryPreviewSessionRepository fallback) and consumed by
+ *            ThemeManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PreviewSessionRepositoryInterface

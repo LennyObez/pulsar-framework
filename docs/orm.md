@@ -332,6 +332,48 @@ $min    = $agg->min('total_amount');
 $max    = $agg->max('total_amount');
 ```
 
+#### Aggregates and soft deletes
+
+`aggregate()` counts the rows the query would return, not the rows in the table. On an
+entity carrying `#[SoftDelete]` it compiles the same soft-delete predicate the SELECT
+compiles, and it compiles it first, ahead of your own `where()` clauses
+(`SelectBuilder::aggregate()`, `extensions/orm/src/Features/Query/SelectBuilder.php:697`).
+`withTrashed()` and `onlyTrashed()` reach the aggregate exactly as they reach the SELECT —
+lifting the filter and inverting it respectively.
+
+```php
+// Both numbers describe the same rows.
+$visible = $em->query(User::class)->where('active', true);
+$count   = $visible->aggregate()->count();
+$rows    = $visible->getEntities();
+
+// Include, or isolate, the trashed rows in the count as well.
+$everything = $em->query(User::class)->withTrashed()->aggregate()->count();
+$deleted    = $em->query(User::class)->onlyTrashed()->aggregate()->count();
+```
+
+`AggregateFilterParityTest.php:123,156,168,180,220` is what holds the two halves together:
+it asserts the aggregate applies the filter the SELECT applies, that both modifiers reach
+it, that the soft-delete predicate precedes the caller's own, and that an entity without
+soft deletes is unaffected.
+
+#### A grouped query cannot be aggregated
+
+The aggregate statement is assembled separately from the SELECT and carries no `GROUP BY`
+and no `HAVING` of its own. Running it over a grouped query would answer a different
+question from the one you asked — a flat count where you grouped, or a count that ignores
+a `HAVING` the page applies — and would leave the `HAVING` clause's parameters bound to a
+statement that never mentions them. So it refuses:
+
+```php
+$em->query(Order::class)
+    ->groupBy('customer_id')
+    ->aggregate();  // QueryBuilderException: Cannot aggregate a query that uses GROUP BY or HAVING
+```
+
+Aggregate over the grouped result yourself, or drop the grouping from the query you
+aggregate. Tests `AggregateFilterParityTest.php:196,208`.
+
 ### Locking
 
 ```php
@@ -364,6 +406,12 @@ $all = $em->query(User::class)->withTrashed()->getEntities();
 // Only soft-deleted entities
 $trashed = $em->query(User::class)->onlyTrashed()->getEntities();
 ```
+
+Both modifiers apply to `aggregate()` as well as to the entity fetch — see
+[Aggregates and soft deletes](#aggregates-and-soft-deletes). Relation counts are scoped
+too, and are not affected by these modifiers: they follow the _target_ entity's soft-delete
+column so that a count always matches what loading the relation would return
+([Relation counts](#relation-counts)).
 
 ## LIKE escaping
 
@@ -466,6 +514,29 @@ $users = $em->query(User::class)
 ```
 
 Relations are loaded via batch loading (IN-clause) or join loading, depending on the relation type.
+
+### Relation counts
+
+A relation can be counted without being loaded. The count arrives as a
+`{relation}_count` value beside the parent — `comments_count` for a `comments` relation —
+and costs one grouped query per relation rather than one per parent.
+
+The rule that matters is the one that was once broken: **a count describes the rows the
+relation would hand back.** `WithCountLoader` builds its counting query from a table rather
+than from an entity mapping, so the target's soft-delete scope does not apply on its own;
+`excludeTrashed()`
+(`extensions/orm/src/Features/Relation/WithCountLoader.php:121-129`) restores the same
+`WHERE deleted_at IS NULL` predicate `RelationLoader` gets for free. Without it the badge
+read "12 comments" beside a list that showed nine.
+
+```php
+// $post->comments_count counts exactly the comments with('comments') would load:
+// trashed children are excluded from both.
+```
+
+Tests `WithCountSoftDeleteTest.php:151` (a `HasMany` count excludes trashed children),
+`:173` (a `MorphMany` count does too, alongside its type discrimination), `:197` (a target
+without soft deletes gains no filter, so nothing is silently narrowed).
 
 ## Schema builder
 

@@ -16,6 +16,7 @@ use const UPLOAD_ERR_OK;
 
 /**
  * PSR-17 uploaded file factory.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class UploadedFileFactory implements UploadedFileFactoryInterface

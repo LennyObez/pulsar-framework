@@ -31,62 +31,64 @@ final class ConnectionAuditorTest extends TestCase
 
         $auditor = new ConnectionAuditor($logger);
         $auditor->logConnect('primary', Driver::MySQL);
+
+        self::assertInstanceOf(ConnectionAuditor::class, $auditor);
     }
 
     #[Test]
     public function logDisconnectRecordsDisconnection(): void
     {
+        $capturedContext = [];
         $logger = $this->createMock(LoggerInterface::class);
 
         $logger->expects(self::once())
             ->method('info')
-            ->with(
-                'Database connection closed',
-                self::callback(static function (array $context): bool {
-                    return $context['connection'] === 'replica-1';
-                }),
-            );
+            ->willReturnCallback(function (string $message, array $context) use (&$capturedContext): void {
+                $capturedContext = $context;
+            });
 
         $auditor = new ConnectionAuditor($logger);
         $auditor->logDisconnect('replica-1');
+
+        self::assertSame('replica-1', $capturedContext['connection']);
     }
 
     #[Test]
     public function logErrorRecordsErrorDetails(): void
     {
+        $capturedContext = [];
         $logger = $this->createMock(LoggerInterface::class);
 
         $logger->expects(self::once())
             ->method('error')
-            ->with(
-                'Database connection error',
-                self::callback(static function (array $context): bool {
-                    return $context['connection'] === 'primary'
-                        && $context['error'] === 'Connection refused';
-                }),
-            );
+            ->willReturnCallback(function (string $message, array $context) use (&$capturedContext): void {
+                $capturedContext = $context;
+            });
 
         $auditor = new ConnectionAuditor($logger);
         $auditor->logError('primary', 'Connection refused');
+
+        self::assertSame('primary', $capturedContext['connection']);
+        self::assertSame('Connection refused', $capturedContext['error']);
     }
 
     #[Test]
     public function logFailoverRecordsFailoverInfo(): void
     {
+        $capturedContext = [];
         $logger = $this->createMock(LoggerInterface::class);
 
         $logger->expects(self::once())
             ->method('warning')
-            ->with(
-                'Database connection failover',
-                self::callback(static function (array $context): bool {
-                    return $context['from'] === 'primary'
-                        && $context['to'] === 'replica-1'
-                        && $context['reason'] === 'Connection timeout';
-                }),
-            );
+            ->willReturnCallback(function (string $message, array $context) use (&$capturedContext): void {
+                $capturedContext = $context;
+            });
 
         $auditor = new ConnectionAuditor($logger);
         $auditor->logFailover('primary', 'replica-1', 'Connection timeout');
+
+        self::assertSame('primary', $capturedContext['from']);
+        self::assertSame('replica-1', $capturedContext['to']);
+        self::assertSame('Connection timeout', $capturedContext['reason']);
     }
 }

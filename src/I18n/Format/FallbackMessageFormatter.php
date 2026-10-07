@@ -15,7 +15,7 @@ use function preg_replace_callback;
  * Simple `{name}` placeholder replacement formatter.
  *
  * Used when ext-intl is not available. Does not support ICU
- * features like plurals or select — only named placeholders.
+ * features like plurals or select: only named placeholders.
  * Logs a warning on first use.
  */
 #[Internal]
@@ -47,6 +47,7 @@ final class FallbackMessageFormatter implements MessageFormatterInterface
                 $key = $matches[1];
 
                 if (isset($parameters[$key])) {
+                    /** @var mixed $value */
                     $value = $parameters[$key];
 
                     return match (true) {

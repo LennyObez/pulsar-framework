@@ -61,7 +61,7 @@ final class NoTimestampsTest extends TestCase
         $this->createFile($basePath . '/src/Core/Kernel.php', '<?php // stub');
 
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $basePath, $cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $cacheDir);
 
         $this->assertNoTimestampPatterns($output, 'preload');
     }
@@ -77,7 +77,7 @@ final class NoTimestampsTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Ext\\Extension',
             ], $extPath),
         ];
@@ -116,7 +116,7 @@ final class NoTimestampsTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Ext\\Extension',
             ], $extPath),
         ];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Resilience;
 
 use Closure;
+use InvalidArgumentException;
 use NoDiscard;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
@@ -20,9 +21,10 @@ use function usleep;
 
 /**
  * Retry policy with exponential backoff and optional jitter.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RetryPolicy
+final readonly class RetryPolicy
 {
     private Randomizer $randomizer;
 
@@ -34,6 +36,12 @@ readonly class RetryPolicy
         private bool $jitter,
         ?Randomizer $randomizer = null,
     ) {
+        if ($maxAttempts < 1) {
+            throw new InvalidArgumentException(
+                sprintf('RetryPolicy requires maxAttempts >= 1, got %d.', $maxAttempts),
+            );
+        }
+
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 
@@ -88,7 +96,7 @@ readonly class RetryPolicy
                 $attemptDelays[] = $delay;
 
                 $logger?->warning(sprintf(
-                    'Attempt %d/%d failed: %s — retrying in %dms',
+                    'Attempt %d/%d failed: %s: retrying in %dms',
                     $attempt,
                     $this->maxAttempts,
                     $e->getMessage(),

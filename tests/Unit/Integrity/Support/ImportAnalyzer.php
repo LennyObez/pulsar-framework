@@ -7,11 +7,18 @@ namespace Pulsar\Tests\Unit\Integrity\Support;
 use function array_unique;
 use function array_values;
 use function count;
+use function explode;
 use function file_get_contents;
 use function is_array;
 use function ltrim;
+use function preg_match;
+use function str_replace;
 use function str_starts_with;
+use function strlen;
+use function strrpos;
+use function substr;
 use function token_get_all;
+use function trim;
 
 /**
  * Extracts all Pulsar class references from a PHP file using token_get_all().
@@ -35,6 +42,40 @@ final class ImportAnalyzer
      */
     public static function extractReferences(string $filePath): array
     {
+        return self::collectReferences($filePath, ['Pulsar\\']);
+    }
+
+    /**
+     * Extract references to any of the given root namespaces.
+     *
+     * This exists because the competitor-framework rule could not fire. It scanned the
+     * output of {@see extractReferences()}, which discards every name that is not
+     * `Pulsar\*` — so `Symfony\`, `Illuminate\` and the other ten forbidden prefixes
+     * were filtered out one step before the rule looked for them. The assertion was
+     * green over an empty list from the day it was written, on the same evidence as the
+     * gates this repository's audit found: code existed, therefore the control was
+     * reported as implemented.
+     *
+     * The rule's own docblock names the incident it was written after — Symfony's
+     * Filesystem used in production without a composer `require`, which would fatal on
+     * `composer install --no-dev`. Nothing here would have seen it.
+     *
+     * @param list<string> $prefixes Root namespaces to keep, each ending in a separator
+     *
+     * @return list<string>
+     */
+    public static function extractReferencesWithPrefix(string $filePath, array $prefixes): array
+    {
+        return self::collectReferences($filePath, $prefixes);
+    }
+
+    /**
+     * @param list<string> $prefixes
+     *
+     * @return list<string>
+     */
+    private static function collectReferences(string $filePath, array $prefixes): array
+    {
         $code = file_get_contents($filePath);
         if ($code === false) {
             return [];
@@ -44,6 +85,16 @@ final class ImportAnalyzer
         $count = count($tokens);
         $references = [];
         $nestingLevel = 0;
+
+        // Collect use → FQCN mappings on the way through so that
+        // `T_NAME_QUALIFIED` tokens (relative qualified names like
+        // `Cache\FrameworkCache` after `use Pulsar\Cache;`) resolve
+        // against the file's use list. Without the map, only
+        // fully-qualified inline names are counted, missing the common
+        // shape where a file imports a parent namespace and reaches a
+        // child class through it.
+        /** @var array<string, string> $useMap localPrefix => fqcn */
+        $useMap = [];
 
         for ($i = 0; $i < $count; $i++) {
             $token = $tokens[$i];
@@ -64,7 +115,7 @@ final class ImportAnalyzer
             // Fully-qualified name token (PHP 8.0+): \Pulsar\Foo\Bar
             if (is_array($token) && $token[0] === T_NAME_FULLY_QUALIFIED) {
                 $name = ltrim($token[1], '\\');
-                if (str_starts_with($name, 'Pulsar\\')) {
+                if (self::matchesAny($name, $prefixes)) {
                     $references[] = $name;
                 }
 
@@ -75,10 +126,134 @@ final class ImportAnalyzer
             if (is_array($token) && $token[0] === T_USE && $nestingLevel <= 1) {
                 $parsed = self::parseUseStatement($tokens, $i, $count);
                 foreach ($parsed as $fqcn) {
-                    if (str_starts_with($fqcn, 'Pulsar\\')) {
+                    // Index every parsed use FQCN by its last segment so
+                    // a later T_NAME_QUALIFIED token like
+                    // `Cache\FrameworkCache` (where `Cache` is the local
+                    // prefix) expands back to
+                    // `Pulsar\Cache\FrameworkCache`.
+                    $localName = self::lastSegment($fqcn);
+                    if ($localName !== '') {
+                        $useMap[$localName] = $fqcn;
+                    }
+
+                    if (self::matchesAny($fqcn, $prefixes)) {
                         $references[] = $fqcn;
                     }
                 }
+                continue;
+            }
+
+            // Relative qualified name (`Cache\FrameworkCache`) resolved
+            // through the collected use map.
+            if (is_array($token) && $token[0] === T_NAME_QUALIFIED) {
+                $segments = explode('\\', $token[1]);
+                $first = $segments[0] ?? '';
+                if ($first !== '' && isset($useMap[$first])) {
+                    $resolved = $useMap[$first] . substr($token[1], strlen($first));
+                    if (self::matchesAny($resolved, $prefixes)) {
+                        $references[] = $resolved;
+                    }
+                }
+                continue;
+            }
+        }
+
+        return array_values(array_unique($references));
+    }
+
+    /**
+     * @param list<string> $prefixes
+     */
+    private static function matchesAny(string $name, array $prefixes): bool
+    {
+        foreach ($prefixes as $prefix) {
+            if (str_starts_with($name, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Return the last segment of a backslash-separated FQCN.
+     * `Pulsar\Cache\FrameworkCache` → `FrameworkCache`,
+     * `Pulsar\Cache` → `Cache`, `''` → `''`.
+     */
+    private static function lastSegment(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
+    }
+
+    /**
+     * Extract Pulsar FQCNs that appear as quoted strings in the file.
+     *
+     * The static-import scan in {@see extractReferences()} sees `T_USE`
+     * and `T_NAME_FULLY_QUALIFIED` tokens, but code that routes through
+     * `$container->get('Pulsar\Foo\Bar')` or
+     * `class_exists('Pulsar\Foo\Bar')` keeps the FQCN inside a
+     * `T_CONSTANT_ENCAPSED_STRING`, invisible to import analysis. That
+     * is exactly the arbitrary-class-instantiation shape a boundary
+     * check has to see, so it gets its own scan.
+     *
+     * Scans `T_CONSTANT_ENCAPSED_STRING` for substrings matching
+     * `Pulsar\<UpperCaseSegment>...` and returns the deduplicated
+     * FQCNs. Handles single- and double-quoted PHP literals, both
+     * with leading backslash (`\\Pulsar\\...`) and without.
+     *
+     * @return list<string>
+     */
+    public static function extractClassStringReferences(string $filePath): array
+    {
+        // Use `@` to swallow the read-failed warning. The function
+        // already returns `false` on a missing / unreadable file, and
+        // PHPUnit's strictness converts the warning into a test
+        // failure for the legitimate "file does not exist" case.
+        $code = @file_get_contents($filePath);
+
+        if ($code === false) {
+            return [];
+        }
+
+        $tokens = token_get_all($code);
+        $references = [];
+
+        foreach ($tokens as $token) {
+            if (!is_array($token) || $token[0] !== T_CONSTANT_ENCAPSED_STRING) {
+                continue;
+            }
+
+            $literal = $token[1];
+
+            if ($literal === '') {
+                continue;
+            }
+
+            // Strip the surrounding quote pair. Single-quoted strings
+            // do not need escape decoding; double-quoted ones with a
+            // backslash-escaped namespace separator look like
+            // "\\Pulsar\\Foo" in source, which token_get_all already
+            // decodes to a single backslash.
+            $first = $literal[0];
+
+            if ($first !== "'" && $first !== '"') {
+                continue;
+            }
+
+            // Strip surrounding quotes, then normalise the source-level
+            // double-backslash escape (`\\\\` in source = `\\` in PHP =
+            // ONE backslash logically) so that double-quoted strings
+            // and single-quoted strings share the same canonical form
+            // before matching.
+            $inner = trim(substr($literal, 1, -1));
+            $normalised = str_replace('\\\\', '\\', $inner);
+            $candidate = ltrim($normalised, '\\');
+
+            if (
+                preg_match('/^Pulsar(\\\\[A-Z][A-Za-z0-9_]*)+$/', $candidate) === 1
+            ) {
+                $references[] = $candidate;
             }
         }
 

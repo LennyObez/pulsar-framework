@@ -16,8 +16,9 @@ use Pulsar\Extension\Orm\Domain\SortDirection;
 /**
  * Read-only query builder for raw row results.
  *
- * No insert/update/delete on the public interface — all writes
+ * No insert/update/delete on the public interface: all writes
  * go through repositories with MutationContext.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RowQueryBuilderInterface
@@ -79,6 +80,17 @@ interface RowQueryBuilderInterface
     public function whereRaw(RawExpression $expression): RowQueryBuilderInterface;
 
     /**
+     * Add an OR WHERE condition group.
+     *
+     * The callback receives a fresh WhereGroup builder. All conditions
+     * added inside the callback are combined with AND, then the entire
+     * group is OR-ed with the previous WHERE clauses.
+     *
+     * @param callable(RowQueryBuilderInterface): void $callback
+     */
+    public function orWhere(callable $callback): RowQueryBuilderInterface;
+
+    /**
      * Add an ORDER BY clause.
      */
     public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): RowQueryBuilderInterface;
@@ -119,7 +131,18 @@ interface RowQueryBuilderInterface
     public function first(): ?Row;
 
     /**
-     * Get an aggregate builder for this query.
+     * Get an aggregate builder scoped to the rows this query matches.
+     *
+     * The aggregate is a separate statement, so it carries the query's WHERE
+     * predicates and its entity scopes (soft deletes, tenancy) but not the
+     * result-set shaping — ORDER BY, LIMIT, OFFSET and the lock mode ask about
+     * a page, and an aggregate is asked about all the matching rows.
+     *
+     * A grouped query has no faithful aggregate: GROUP BY and HAVING change the
+     * answer and the aggregate statement cannot express them. Implementations
+     * refuse rather than return a number that does not match the rows.
+     *
+     * @throws \Pulsar\Extension\Orm\Exception\QueryBuilderException If the query carries GROUP BY or HAVING.
      */
     public function aggregate(): AggregateBuilder;
 

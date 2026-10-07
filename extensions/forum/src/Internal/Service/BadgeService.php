@@ -20,7 +20,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 
 /**
- * Badge service — evaluates badge criteria, awards and revokes badges.
+ * Badge service: evaluates badge criteria, awards and revokes badges.
  */
 #[Internal(reason: 'Use BadgeServiceInterface for public API')]
 final readonly class BadgeService implements BadgeServiceInterface
@@ -48,13 +48,11 @@ final readonly class BadgeService implements BadgeServiceInterface
 
         return match ($badge) {
             Badge::FirstPost => $profile->threadCount >= 1 || $profile->postCount >= 1,
-            Badge::FirstAnswer => $this->hasAcceptedSolution($userId),
+            Badge::FirstAnswer, Badge::Solver => $this->hasAcceptedSolution($userId),
             Badge::Helpful => $this->hasHighVoteScore($userId),
             Badge::PopularThread => $this->hasPopularThread($userId),
-            Badge::Solver => $this->hasAcceptedSolution($userId),
-            Badge::BugHunter => true, // Awarded directly by moderation service on actioned reports
+            Badge::BugHunter, Badge::Multilingual => true, // Awarded directly by moderation/integration
             Badge::Contributor => $profile->reputationLevel()->value >= ReputationLevel::Contributor->value,
-            Badge::Multilingual => true, // Requires external language detection — awarded by integration
         };
     }
 
@@ -64,7 +62,7 @@ final readonly class BadgeService implements BadgeServiceInterface
             return null;
         }
 
-        // Idempotent — skip if already awarded
+        // Idempotent: skip if already awarded
         if ($this->userBadges->hasBadge($userId, $badge, $tenantId)) {
             return null;
         }
@@ -104,7 +102,7 @@ final readonly class BadgeService implements BadgeServiceInterface
             }
         }
 
-        throw ForumException::notFound('UserBadge', "{$userId}:{$badge->value}");
+        throw ForumException::notFound('UserBadge', "$userId:$badge->value");
     }
 
     public function getUserBadges(string $userId): array
@@ -121,38 +119,20 @@ final readonly class BadgeService implements BadgeServiceInterface
     {
         $posts = $this->posts->findByAuthor($userId, 1, 100);
 
-        foreach ($posts->items as $post) {
-            if ($post->isSolution) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($posts->items, static fn(object $post): bool => $post->isSolution);
     }
 
     private function hasHighVoteScore(string $userId): bool
     {
         $posts = $this->posts->findByAuthor($userId, 1, 100);
 
-        foreach ($posts->items as $post) {
-            if ($post->voteScore >= 5) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($posts->items, static fn(object $post): bool => $post->voteScore >= 5);
     }
 
     private function hasPopularThread(string $userId): bool
     {
         $threads = $this->threads->findByAuthor($userId, 1, 100);
 
-        foreach ($threads->items as $thread) {
-            if ($thread->viewCount >= 100) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($threads->items, static fn(object $thread): bool => $thread->viewCount >= 100);
     }
 }

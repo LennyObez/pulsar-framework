@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used by locale URL generation to produce `<link rel="alternate" hreflang="...">`
  * tags for search engine locale discovery.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HreflangLink

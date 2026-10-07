@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a thread is pinned.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreadPinned

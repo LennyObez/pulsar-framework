@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BulkOperationsController;
@@ -45,7 +44,6 @@ final class BulkOperationsControllerTest extends TestCase
             $this->contentRepository,
             $this->taxonomyService,
             $gate,
-            new CmsConfig(),
         );
     }
 
@@ -80,7 +78,6 @@ final class BulkOperationsControllerTest extends TestCase
             $contentRepo,
             $this->taxonomyService,
             $gate,
-            new CmsConfig(),
         );
 
         $request = $this->createBulkRequest('unpublish', ['id-1']);

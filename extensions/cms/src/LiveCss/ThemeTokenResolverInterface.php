@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Resolves editable design tokens from a theme's manifest.
+ *
+ * @psalm-api Public binding contract; implemented by ThemeTokenResolver and
+ *            consumed by admin theme controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThemeTokenResolverInterface

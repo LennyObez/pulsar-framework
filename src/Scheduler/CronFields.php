@@ -12,7 +12,6 @@ use Pulsar\Scheduler\Exception\SchedulerException;
 use function array_map;
 use function count;
 use function explode;
-use function in_array;
 use function preg_match;
 use function sprintf;
 use function str_contains;
@@ -21,9 +20,10 @@ use function str_contains;
  * Parsed cron expression fields.
  *
  * Standard five-field cron: minute hour dayOfMonth month dayOfWeek
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class CronFields
+final readonly class CronFields
 {
     public function __construct(
         public string $minute,
@@ -89,11 +89,16 @@ readonly class CronFields
             return true;
         }
 
-        // Handle comma-separated values: "1,15,30"
+        // Handle comma-separated lists, where each token may itself be a
+        // range or step expression: "1,15,30" or "1,2-5" or "0,*/15".
         if (str_contains($field, ',')) {
-            $values = array_map('intval', explode(',', $field));
+            foreach (explode(',', $field) as $token) {
+                if (self::fieldMatches($token, $value)) {
+                    return true;
+                }
+            }
 
-            return in_array($value, $values, true);
+            return false;
         }
 
         // Handle ranges: "1-5"

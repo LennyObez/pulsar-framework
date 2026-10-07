@@ -23,7 +23,11 @@ use function array_reverse;
  * single batch query for translations, replacing the previous N+1
  * pattern of one query per ancestor level.
  */
-#[Internal(reason: 'CMS navigation — implementation detail')]
+#[Internal(reason: 'CMS navigation; implementation detail')]
+/**
+ * @psalm-api Bound to BreadcrumbGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class BreadcrumbGenerator implements BreadcrumbGeneratorInterface
 {
     public function __construct(
@@ -89,7 +93,10 @@ final readonly class BreadcrumbGenerator implements BreadcrumbGeneratorInterface
     {
         $translations = $translationsByContentId[$contentId] ?? [];
 
-        return array_find($translations, static fn(ContentTranslation $t): bool => $t->locale === $locale);
+        /** @var ContentTranslation|null $found */
+        $found = array_find($translations, static fn(ContentTranslation $t): bool => $t->locale === $locale);
+
+        return $found;
     }
 
     private function buildUrl(string $path, string $locale): string

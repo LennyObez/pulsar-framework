@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Forum\Migration\ForumDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_thread_votes (
@@ -25,10 +27,12 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_thread_vote_user
-                ON forum_thread_votes (thread_id, user_id)
-            SQL);
+        $indexes->ensure(
+            'forum_thread_votes',
+            'uq_thread_vote_user',
+            ['thread_id', 'user_id'],
+            unique: true,
+        );
 
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_post_votes (
@@ -44,10 +48,12 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_post_vote_user
-                ON forum_post_votes (post_id, user_id)
-            SQL);
+        $indexes->ensure(
+            'forum_post_votes',
+            'uq_post_vote_user',
+            ['post_id', 'user_id'],
+            unique: true,
+        );
     }
 
     public function down(ConnectionInterface $connection): void

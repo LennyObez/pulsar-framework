@@ -15,11 +15,13 @@ use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Cache\Application\Lock\LockHandle;
+use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Config\CmsPermissions;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use RuntimeException;
 
 /**
@@ -166,7 +168,10 @@ final class PrivilegeEscalationTest extends TestCase
         $gate = $this->createStub(GateInterface::class);
         $gate->method('denies')->willReturn(true);
 
-        $rateLimiter = new CmsRateLimiter($this->createStub(TaggedCacheInterface::class));
+        $lockStub = $this->createStub(LockInterface::class);
+        $lockStub->method('acquire')->willReturn(new LockHandle('r', 't', 1.0, 60));
+        $lockStub->method('release')->willReturn(true);
+        $rateLimiter = new CmsRateLimiter($this->createStub(TaggedCacheInterface::class), $lockStub);
 
         $controller = new TwoFactorController(
             new TotpGenerator(),
@@ -174,8 +179,8 @@ final class PrivilegeEscalationTest extends TestCase
             new RecoveryCodeGenerator(),
             new QrCodeEncoder(),
             $rateLimiter,
-            $gate,
             null,
+            $gate,
         );
 
         $identity = $this->createStub(IdentityInterface::class);
@@ -192,7 +197,7 @@ final class PrivilegeEscalationTest extends TestCase
             });
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Permission denied');
+        $this->expectExceptionMessageIsOrContains('Permission denied');
 
         $controller->enroll($request);
     }

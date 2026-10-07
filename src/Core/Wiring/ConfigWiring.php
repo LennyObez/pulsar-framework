@@ -9,6 +9,9 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\AuditConfig;
 use Pulsar\Config\AuthConfig;
 use Pulsar\Config\AuthorizationConfig;
+use Pulsar\Config\BusinessProfileConfig;
+use Pulsar\Config\BusinessProfileProvider;
+use Pulsar\Config\BusinessProfileProviderInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Config\ConfigRepository;
@@ -63,5 +66,14 @@ final readonly class ConfigWiring implements ServiceWiringInterface
             $container->instance(TwoFactorConfig::class, $securityConfig->auth->twoFactor);
             $container->instance(AuthorizationConfig::class, $securityConfig->auth->authorization);
         }
+
+        // Business profile (optional; available when config/business.php exists)
+        if ($repository->has(BusinessProfileConfig::class)) {
+            $container->instance(BusinessProfileConfig::class, $repository->get(BusinessProfileConfig::class));
+        }
+
+        $businessProfileProvider = new BusinessProfileProvider($repository);
+        $container->instance(BusinessProfileProvider::class, $businessProfileProvider);
+        $container->instance(BusinessProfileProviderInterface::class, $businessProfileProvider);
     }
 }

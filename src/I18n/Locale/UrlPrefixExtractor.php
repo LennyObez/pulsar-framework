@@ -7,10 +7,8 @@ namespace Pulsar\I18n\Locale;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function ctype_alpha;
 use function in_array;
 use function ltrim;
-use function preg_match;
 use function str_contains;
 use function str_ends_with;
 use function str_starts_with;
@@ -23,6 +21,7 @@ use function substr;
  *
  * Operates on the first path segment to detect supported locale tags.
  * Uses string operations (not regex) on the hot path for performance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UrlPrefixExtractor
@@ -51,10 +50,11 @@ final readonly class UrlPrefixExtractor
         $slashPos = strpos($trimmed, '/');
         $segment = $slashPos !== false ? substr($trimmed, 0, $slashPos) : $trimmed;
 
-        if (!$this->isLocaleShape($segment)) {
-            return null;
-        }
-
+        // A path segment is a locale prefix iff it is one of the configured
+        // supported locales. This is authoritative and correctly accepts
+        // 3-letter (gsw, fil, yue) and underscore-region (fr_CA) locales that a
+        // fixed 2-letter / xx-YY shape pattern wrongly rejected — a normal,
+        // non-locale segment (docs, api) is simply not in the list.
         if (!in_array($segment, $supportedLocales, true)) {
             return null;
         }
@@ -129,7 +129,7 @@ final readonly class UrlPrefixExtractor
             return false;
         }
 
-        // Mid-path: /foo/../bar — also catches root-leading /../bar
+        // Mid-path: /foo/../bar: also catches root-leading /../bar
         // Trailing: /foo/..
         // Relative: ../foo (no leading slash)
         return str_contains($path, '/../')
@@ -137,21 +137,4 @@ final readonly class UrlPrefixExtractor
             || str_starts_with($path, '../');
     }
 
-    /**
-     * Check if a segment has a valid locale shape (2-5 alpha chars, or xx-YY pattern).
-     */
-    private function isLocaleShape(string $segment): bool
-    {
-        $length = strlen($segment);
-
-        if ($length < 2 || $length > 5) {
-            return false;
-        }
-
-        if ($length === 2) {
-            return ctype_alpha($segment);
-        }
-
-        return preg_match('/^[a-zA-Z]{2,3}[-][a-zA-Z]{2}$/', $segment) === 1;
-    }
 }

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence interface for taxonomy aggregates and terms.
+ *
+ * @psalm-api Public binding contract; implemented by DbTaxonomyRepository
+ *            and consumed by TaxonomyService and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TaxonomyRepositoryInterface
@@ -16,6 +20,16 @@ interface TaxonomyRepositoryInterface
      * Find a taxonomy by its slug within a tenant scope.
      */
     public function findBySlug(string $slug, ?string $tenantId = null): ?Taxonomy;
+
+    /**
+     * Find a taxonomy by its stable import identifier for idempotent imports.
+     */
+    public function findByImportId(string $importId): ?Taxonomy;
+
+    /**
+     * Find a taxonomy term by its stable import identifier for idempotent imports.
+     */
+    public function findTermByImportId(string $importId): ?TaxonomyTerm;
 
     /**
      * Find terms for a taxonomy, optionally filtered by locale and parent.
@@ -37,4 +51,9 @@ interface TaxonomyRepositoryInterface
      * @param list<TaxonomyTermTranslation> $translations
      */
     public function saveTerm(TaxonomyTerm $term, array $translations): void;
+
+    /**
+     * Update a term's parent ID for hierarchy preservation during import.
+     */
+    public function updateTermParent(string $termId, string $parentId): void;
 }

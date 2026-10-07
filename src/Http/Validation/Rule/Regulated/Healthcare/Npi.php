@@ -20,14 +20,15 @@ use function strlen;
  *
  * NPIs are 10-digit identifiers assigned to healthcare providers.
  * Validation uses the Luhn algorithm with the prefix 80840 per CMS specification.
- * This is a FORMAT validator only — it does not verify that the NPI
+ * This is a FORMAT validator only; it does not verify that the NPI
  * is registered with NPPES. For authoritative verification, query
  * the NPI Registry.
  *
  * @see https://www.cms.gov/Regulations-and-Guidance/Administrative-Simplification/NationalProvIdentStand
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Npi implements RuleInterface
+final readonly class Npi implements RuleInterface
 {
     public function __construct(
         private string $message = '',

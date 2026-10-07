@@ -1,6 +1,6 @@
 <?php
 /**
- * CMS Studio — Audit Trail Panel.
+ * CMS Studio: Audit Trail Panel.
  *
  * @var list<array{id: string, eventType: string, outcome: string, actor: string, action: string, resource: string, timestamp: string, evidenceHash: string}>|null $entries
  * @var list<string>|null $eventTypes

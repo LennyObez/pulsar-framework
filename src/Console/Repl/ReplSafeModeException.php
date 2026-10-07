@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Thrown when a safe-mode restriction blocks an operation in the REPL.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ReplSafeModeException extends RuntimeException

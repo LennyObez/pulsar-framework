@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Database\Schema;
 
 use Pulsar\Api\Api;
+use Pulsar\Database\Dialect\Dialects;
 use Pulsar\Database\Driver;
+use Pulsar\Database\SqlIdentifier;
 
+use function array_any;
 use function array_map;
 use function count;
 use function implode;
-use function in_array;
 use function is_bool;
 use function is_float;
 use function is_int;
@@ -25,6 +27,7 @@ use function str_starts_with;
  *
  * Driver-aware: uses appropriate quoting, type mapping, and syntax
  * for MySQL/MariaDB, PostgreSQL, and SQLite.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DdlCompiler
@@ -81,9 +84,10 @@ final readonly class DdlCompiler
 
         $statements = [];
         $statements[] = sprintf(
-            'CREATE TABLE %s (%s)',
+            'CREATE TABLE %s (%s)%s',
             $this->quoteIdentifier($def->name),
             implode(', ', $parts),
+            $this->compileTableOptions($def),
         );
 
         // Non-unique indexes as separate CREATE INDEX statements
@@ -156,22 +160,20 @@ final readonly class DdlCompiler
     }
 
     /**
+     * Delegated rather than matched on the driver.
+     *
+     * The arm this replaced emitted `DROP INDEX IF EXISTS <name> ON <table>` for MySQL,
+     * which MySQL rejects outright — error 1064, a parse failure, not a tolerated
+     * no-op — so every drop through this compiler failed on that engine. The dialect
+     * has spelled it correctly all along; two implementations of one statement is what
+     * let them disagree, so now there is one.
+     *
      * @return list<string>
      */
     public function compileDropIndex(string $table, string $indexName): array
     {
-        return match ($this->driver) {
-            Driver::MySQL => [
-                sprintf(
-                    'DROP INDEX IF EXISTS %s ON %s',
-                    $this->quoteIdentifier($indexName),
-                    $this->quoteIdentifier($table),
-                ),
-            ],
-            Driver::PostgreSQL, Driver::SQLite => [
-                sprintf('DROP INDEX IF EXISTS %s', $this->quoteIdentifier($indexName)),
-            ],
-        };
+        return [Dialects::for($this->driver, $this->capabilities->driverVariant())
+            ->compileDropIndex($indexName, $table)];
     }
 
     /**
@@ -205,10 +207,26 @@ final readonly class DdlCompiler
         };
     }
 
+    /**
+     * Get a driver-appropriate default expression for UUID generation.
+     *
+     * PostgreSQL: gen_random_uuid()
+     * MySQL 8.0+: (UUID())
+     * SQLite: no native UUID: returns null (application must provide UUIDs)
+     */
+    public function uuidDefaultExpression(): ?SchemaDefaultExpression
+    {
+        return match ($this->driver) {
+            Driver::PostgreSQL => SchemaDefaultExpression::PostgresUuid,
+            Driver::MySQL => SchemaDefaultExpression::MysqlUuid,
+            Driver::SQLite => null,
+        };
+    }
+
     private function compileColumnDef(SchemaColumn $column, bool $singlePkAutoIncrement): string
     {
         $type = $this->mapType($column);
-        $sql = $this->quoteIdentifier($column->name) . ' ' . $type;
+        $sql = $this->quoteIdentifier($column->name) . ' ' . $type . $this->compileColumnCollation($column);
 
         // UNSIGNED (MySQL/MariaDB only, silently ignored for others)
         if ($column->unsigned && $this->driver === Driver::MySQL) {
@@ -268,6 +286,15 @@ final readonly class DdlCompiler
         return match ($column->type) {
             SchemaColumnType::String => sprintf('VARCHAR(%d)', $column->length ?? 255),
             SchemaColumnType::Text => 'TEXT',
+            // MySQL is the only engine where the width of a text column is a decision.
+            // Its TEXT stops at 65,535 bytes; LONGTEXT is the widest of the four and the
+            // only one that never has to be revisited. PostgreSQL's and SQLite's TEXT are
+            // already as wide as either engine goes, so the narrow and wide cases
+            // converge there rather than one of them being approximated.
+            SchemaColumnType::BigText => match ($this->driver) {
+                Driver::MySQL => 'LONGTEXT',
+                Driver::PostgreSQL, Driver::SQLite => 'TEXT',
+            },
             SchemaColumnType::Integer => match ($this->driver) {
                 Driver::PostgreSQL => $column->autoIncrement ? 'SERIAL' : 'INTEGER',
                 default => 'INTEGER',
@@ -275,11 +302,24 @@ final readonly class DdlCompiler
             SchemaColumnType::SmallInt => 'SMALLINT',
             SchemaColumnType::BigInt => match ($this->driver) {
                 Driver::PostgreSQL => $column->autoIncrement ? 'BIGSERIAL' : 'BIGINT',
+                // SQLite accepts AUTOINCREMENT only on a column declared exactly
+                // `INTEGER PRIMARY KEY`: that spelling, and no other, makes the column an
+                // alias of the rowid, and AUTOINCREMENT is a modifier on the rowid
+                // counter. `BIGINT PRIMARY KEY AUTOINCREMENT` is rejected outright.
+                // Nothing is lost by the substitution — SQLite's INTEGER is already a
+                // 64-bit signed value, so the range is the one BigInt asked for.
+                Driver::SQLite => $column->autoIncrement && $column->primaryKey
+                    ? 'INTEGER'
+                    : 'BIGINT',
                 default => 'BIGINT',
             },
             SchemaColumnType::Float => match ($this->driver) {
                 Driver::PostgreSQL => 'DOUBLE PRECISION',
                 default => 'FLOAT',
+            },
+            SchemaColumnType::Double => match ($this->driver) {
+                Driver::PostgreSQL => 'DOUBLE PRECISION',
+                default => 'DOUBLE',
             },
             SchemaColumnType::Decimal => sprintf('DECIMAL(%d, %d)', $column->precision ?? 8, $column->scale ?? 2),
             SchemaColumnType::Boolean => match ($this->driver) {
@@ -289,7 +329,8 @@ final readonly class DdlCompiler
             },
             SchemaColumnType::DateTime => match ($this->driver) {
                 Driver::PostgreSQL => 'TIMESTAMP',
-                default => 'DATETIME',
+                Driver::MySQL => 'DATETIME(6)',
+                Driver::SQLite => 'DATETIME',
             },
             SchemaColumnType::Date => 'DATE',
             SchemaColumnType::Time => 'TIME',
@@ -307,6 +348,97 @@ final readonly class DdlCompiler
                 default => 'BLOB',
             },
             SchemaColumnType::Enum => $this->compileEnumType($column),
+        };
+    }
+
+    /**
+     * The clauses that follow a CREATE TABLE column list.
+     *
+     * Only MySQL has a table-level collation clause, so only MySQL emits anything. The
+     * silence on the other two is the correct translation rather than a dropped feature:
+     * PostgreSQL and SQLite already compare text exactly by default, which is the only
+     * intent {@see SchemaCollation} can express, and neither has syntax here to say so
+     * twice. {@see SchemaCollation::Exact} carries the per-engine reasoning.
+     */
+    private function compileTableOptions(TableDefinition $def): string
+    {
+        if ($def->collation === null) {
+            return '';
+        }
+
+        return match ($this->driver) {
+            // `COLLATE=x` with the equals sign is the table-option spelling; the column
+            // spelling below omits it, and MySQL rejects each in the other's position.
+            Driver::MySQL => ' COLLATE=' . $this->collationName($def->collation),
+            Driver::PostgreSQL, Driver::SQLite => '',
+        };
+    }
+
+    /**
+     * A collation clause for one column, where the engine accepts one.
+     *
+     * Guarded on the column type as well as the driver: MySQL refuses `COLLATE` on
+     * anything that is not a character type — an `INT` or a `JSON` column with a
+     * collation is a parse error, not an ignored hint — so a caller that sets one table
+     * wide must not have it land on the integers.
+     */
+    private function compileColumnCollation(SchemaColumn $column): string
+    {
+        if ($column->collation === null || !$this->acceptsCollation($column->type)) {
+            return '';
+        }
+
+        return match ($this->driver) {
+            Driver::MySQL => ' COLLATE ' . $this->collationName($column->collation),
+            Driver::PostgreSQL, Driver::SQLite => '',
+        };
+    }
+
+    /**
+     * Whether a collation clause is legal on this type.
+     *
+     * Every case is listed rather than falling through a default, so that adding a column
+     * type is a decision made here instead of a silent `false` inherited from a type
+     * nobody compared it against.
+     */
+    private function acceptsCollation(SchemaColumnType $type): bool
+    {
+        return match ($type) {
+            SchemaColumnType::String,
+            SchemaColumnType::Text,
+            SchemaColumnType::BigText,
+            SchemaColumnType::Uuid,
+            // ENUM on MySQL, VARCHAR with a CHECK elsewhere: character either way.
+            SchemaColumnType::Enum => true,
+            // JSON is excluded even though it holds text. MySQL fixes a JSON column at
+            // utf8mb4_bin itself and rejects any COLLATE clause on it.
+            SchemaColumnType::Json,
+            SchemaColumnType::Integer,
+            SchemaColumnType::SmallInt,
+            SchemaColumnType::BigInt,
+            SchemaColumnType::Float,
+            SchemaColumnType::Double,
+            SchemaColumnType::Decimal,
+            SchemaColumnType::Boolean,
+            SchemaColumnType::DateTime,
+            SchemaColumnType::Date,
+            SchemaColumnType::Time,
+            SchemaColumnType::Binary => false,
+        };
+    }
+
+    /**
+     * The engine's name for a comparison rule.
+     *
+     * Reached only on the MySQL family: the other two return before asking, because they
+     * have nothing to spell. `utf8mb4_bin` exists on MySQL and MariaDB alike, so the
+     * variant does not change the answer, and naming it here rather than in the enum
+     * keeps the engine's vocabulary inside the one class whose job is to know it.
+     */
+    private function collationName(SchemaCollation $collation): string
+    {
+        return match ($collation) {
+            SchemaCollation::Exact => 'utf8mb4_bin',
         };
     }
 
@@ -350,12 +482,20 @@ final readonly class DdlCompiler
         );
     }
 
+    /**
+     * Delimit an identifier for the target engine.
+     *
+     * Delegates to {@see SqlIdentifier}, which validates rather than escapes. The two are
+     * not equivalent postures: escaping accepts any name and relies on doubling the
+     * delimiter correctly, while validation refuses any name that could carry a
+     * delimiter, a comment introducer or a statement separator in the first place. The
+     * second is the stronger guarantee, and it matters most on the path where a name
+     * arrives from a user — the admin schema editor — rather than from a migration
+     * written by hand.
+     */
     private function quoteIdentifier(string $identifier): string
     {
-        return match ($this->driver) {
-            Driver::MySQL => '`' . str_replace('`', '``', $identifier) . '`',
-            Driver::PostgreSQL, Driver::SQLite => '"' . str_replace('"', '""', $identifier) . '"',
-        };
+        return SqlIdentifier::quote($identifier, $this->driver);
     }
 
     private function quoteDefaultValue(int|float|string|bool|null $value): string
@@ -400,9 +540,9 @@ final readonly class DdlCompiler
             }
         }
 
-        return $autoIncrementPks === 1 && in_array(true, array_map(
-            static fn(SchemaColumn $c): bool => $c->primaryKey,
+        return $autoIncrementPks === 1 && array_any(
             $def->columns,
-        ), true);
+            static fn(SchemaColumn $c): bool => $c->primaryKey,
+        );
     }
 }

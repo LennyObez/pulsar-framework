@@ -141,12 +141,14 @@ summary {
  * 2. Base Typography
  * =========================================================================== */
 
+/* Charter §3.4: Headings use --font-heading (Montserrat) */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
+  font-family: var(--font-heading);
   font-weight: var(--font-bold);
   line-height: var(--leading-tight);
   color: var(--color-text);
@@ -369,4 +371,65 @@ summary {
     background-color: var(--color-primary-800);
     color: var(--color-primary-100);
   }
+}
+
+/* ===========================================================================
+ * 5. Reduced Motion (Charter §10.4 — mandatory)
+ * =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===========================================================================
+ * 6. Skip-to-Content Link (Charter §10.2)
+ * =========================================================================== */
+
+.pui-skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  top: var(--space-4);
+  z-index: calc(var(--z-toast) + 1);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: #ffffff;
+  background-color: var(--color-primary-600);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--transition-fast);
+}
+
+.pui-skip-link:focus {
+  transform: translateY(0);
+}
+
+/*
+ * Managed-challenge live-region status text.
+ *
+ * The @shield widget announces its localized status (verifying / complete /
+ * error) into this element, which sits inside a role="status" aria-live region.
+ * It is visually hidden so the otherwise-invisible challenge stays invisible to
+ * sighted users while remaining available to screen readers.
+ */
+.pulsar-managed-challenge-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }

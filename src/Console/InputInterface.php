@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for console input.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InputInterface
@@ -52,4 +53,28 @@ interface InputInterface
      * Get an option value.
      */
     public function getOption(string $name, mixed $default = null): mixed;
+
+    /**
+     * Get an option value as a string, falling back to the default when not set
+     * or when the option value is not a string.
+     */
+    public function getStringOption(string $name, string $default = ''): string;
+
+    /**
+     * Get an option value as a nullable string. Returns null when the option is
+     * absent or not a string.
+     */
+    public function getNullableStringOption(string $name): ?string;
+
+    /**
+     * Get an option value as an int, falling back to the default when not set
+     * or when the option is not an integer / numeric string.
+     */
+    public function getIntOption(string $name, int $default = 0): int;
+
+    /**
+     * Get an option value as a bool. Returns the default when the option is
+     * absent or not a boolean/int/string convertible to one.
+     */
+    public function getBoolOption(string $name, bool $default = false): bool;
 }

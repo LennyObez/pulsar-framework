@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\View\Engine;
 
+use Generator;
 use Pulsar\Api\Internal;
 use Pulsar\View\ViewException;
 use Throwable;
@@ -13,13 +14,14 @@ use function extract;
 use function ob_end_clean;
 use function ob_get_clean;
 use function ob_start;
+use function strlen;
 
 use const EXTR_SKIP;
 
 /**
  * Compile-to-PHP template engine for trusted templates.
  *
- * Compiles `.pulsar.php` templates to cached PHP files, then executes them
+ * Compiles `.pulse.php` templates to cached PHP files, then executes them
  * with extracted data variables. All output is HTML-escaped by default.
  *
  * Runtime helpers (`$__env` for inheritance, `$__auth` for authorization)
@@ -28,9 +30,14 @@ use const EXTR_SKIP;
 #[Internal(reason: 'Engine implementation detail; use TemplateEngineInterface')]
 final readonly class TemplateEngine implements TemplateEngineInterface
 {
+    private ViewComposers $composers;
+
     public function __construct(
         private TemplateCompiler $compiler,
-    ) {}
+        ?ViewComposers $composers = null,
+    ) {
+        $this->composers = $composers ?? new ViewComposers();
+    }
 
     /**
      * Access the underlying compiler for directive registration and direct compilation.
@@ -42,6 +49,12 @@ final readonly class TemplateEngine implements TemplateEngineInterface
 
     public function render(string $template, array $data = []): string
     {
+        // Merge shared data + matching view composers beneath the caller's
+        // explicit data (explicit wins). Applied to every render, including
+        // nested partials and framework-internal renders (error pages). The
+        // resolver short-circuits to $data when nothing is shared/registered.
+        $data = $this->composers->resolve($template, $data);
+
         // Check if $__env was supplied externally (e.g. by @extends parent rendering)
         $isTopLevel = !array_key_exists('__env', $data);
 
@@ -88,6 +101,51 @@ final readonly class TemplateEngine implements TemplateEngineInterface
         return $this->compiler->exists($template);
     }
 
+    public function share(string|array $key, mixed $value = null): void
+    {
+        $this->composers->share($key, $value);
+    }
+
+    public function composer(string|array $patterns, callable $composer): void
+    {
+        $this->composers->composer($patterns, $composer);
+    }
+
+    /**
+     * Access the shared-data / composer store (e.g. so an internal renderer can
+     * share the same request-scoped state). Prefer {@see share()} / {@see composer()}.
+     */
+    public function composers(): ViewComposers
+    {
+        return $this->composers;
+    }
+
+    /**
+     * Stream a template as a Generator that yields HTML chunks.
+     *
+     * Compatible with StreamedResponse for chunked transfer encoding.
+     * Splits output at `@defer` boundaries for progressive rendering.
+     *
+     * @param string $template Template name
+     * @param array<string, mixed> $data Variables available inside the template
+     * @param int $chunkSize Minimum bytes per yielded chunk
+     *
+     * @return Generator<int, string, void, void>
+     */
+    public function stream(string $template, array $data = [], int $chunkSize = 4096): Generator
+    {
+        $output = $this->render($template, $data);
+        $offset = 0;
+        $length = strlen($output);
+
+        while ($offset < $length) {
+            $chunk = substr($output, $offset, $chunkSize);
+            $offset += strlen($chunk);
+
+            yield $chunk;
+        }
+    }
+
     /**
      * Execute a compiled template in an isolated scope.
      *
@@ -105,7 +163,6 @@ final readonly class TemplateEngine implements TemplateEngineInterface
         ob_start();
 
         try {
-            /** @psalm-suppress UnresolvableInclude */
             include $_path_;
         } catch (Throwable $e) {
             ob_end_clean();
@@ -113,6 +170,7 @@ final readonly class TemplateEngine implements TemplateEngineInterface
             throw ViewException::compilationFailed(
                 $_path_,
                 'execution failed: ' . $e->getMessage(),
+                $e,
             );
         }
 

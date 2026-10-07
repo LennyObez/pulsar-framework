@@ -13,7 +13,7 @@ use Pulsar\Deploy\DeployCheckInterface;
  * Validates that the framework cache is warm in production.
  *
  * In production, a cold cache means routes, config, and container hints
- * are rebuilt on every boot — a significant performance penalty.
+ * are rebuilt on every boot: a significant performance penalty.
  */
 #[Internal]
 final readonly class FilesystemScanCheck implements DeployCheckInterface
@@ -44,7 +44,7 @@ final readonly class FilesystemScanCheck implements DeployCheckInterface
         if ($this->frameworkCache->isWarm()) {
             return CheckResult::pass(
                 $this->getName(),
-                'Framework cache is warm — no runtime filesystem scanning required.',
+                'Framework cache is warm: no runtime filesystem scanning required.',
             );
         }
 
@@ -53,12 +53,12 @@ final readonly class FilesystemScanCheck implements DeployCheckInterface
         return $severity === 'error'
             ? CheckResult::error(
                 $this->getName(),
-                'Framework cache is cold — config, routes, and container will be scanned on every boot.',
+                'Framework cache is cold: config, routes, and container will be scanned on every boot.',
                 ['Run `php bin/pulsar optimize` to warm the framework cache.'],
             )
             : CheckResult::warning(
                 $this->getName(),
-                'Framework cache is cold — consider warming it for staging.',
+                'Framework cache is cold: consider warming it for staging.',
                 ['Run `php bin/pulsar optimize` to warm the framework cache.'],
             );
     }

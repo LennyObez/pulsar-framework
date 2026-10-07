@@ -12,7 +12,6 @@ use Pulsar\Extension\Cms\Themes\ValidationResult;
 
 use function array_column;
 use function in_array;
-use function is_string;
 use function preg_match;
 use function sprintf;
 use function strlen;
@@ -20,6 +19,9 @@ use function trim;
 
 /**
  * Validates plugin manifests against required fields and format constraints.
+ *
+ * @psalm-api Bound to PluginManifestValidatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use PluginManifestValidatorInterface for public API')]
 final readonly class PluginManifestValidator implements PluginManifestValidatorInterface
@@ -66,33 +68,33 @@ final readonly class PluginManifestValidator implements PluginManifestValidatorI
         $validCapabilities = array_column(PluginCapability::cases(), 'value');
 
         foreach ($manifest->capabilities as $capability) {
-            if (!is_string($capability) || !in_array($capability, $validCapabilities, true)) {
+            if (!in_array($capability, $validCapabilities, true)) {
                 $errors[] = sprintf('Unknown capability: "%s"', $capability);
             }
         }
 
         // Validate dependency version constraints
         foreach ($manifest->dependencies as $depSlug => $constraint) {
-            if (!is_string($constraint) || preg_match(self::VERSION_CONSTRAINT_PATTERN, $constraint) !== 1) {
+            if (preg_match(self::VERSION_CONSTRAINT_PATTERN, $constraint) !== 1) {
                 $errors[] = sprintf('Invalid version constraint for dependency "%s": "%s"', $depSlug, $constraint);
             }
         }
 
         // Optional warnings
         if ($manifest->description === null || trim($manifest->description) === '') {
-            $warnings[] = 'Missing description — recommended for plugin marketplace listing';
+            $warnings[] = 'Missing description: recommended for plugin marketplace listing';
         }
 
         if ($manifest->authorName === null || trim($manifest->authorName) === '') {
-            $warnings[] = 'Missing author_name — recommended for attribution';
+            $warnings[] = 'Missing author_name: recommended for attribution';
         }
 
         if ($manifest->license === null || trim($manifest->license) === '') {
-            $warnings[] = 'Missing license — recommended for compliance';
+            $warnings[] = 'Missing license: recommended for compliance';
         }
 
         if ($manifest->entryPoint === null || trim($manifest->entryPoint) === '') {
-            $warnings[] = 'Missing entry_point — plugin will have no executable code';
+            $warnings[] = 'Missing entry_point: plugin will have no executable code';
         }
 
         if ($errors !== []) {

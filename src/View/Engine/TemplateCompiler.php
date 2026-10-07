@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\View\Engine;
 
 use NoDiscard;
+use PhpToken;
 use Pulsar\Api\Internal;
 use Pulsar\View\ViewConfig;
 use Pulsar\View\ViewException;
 
 use function array_key_exists;
+use function ctype_alnum;
 use function ctype_alpha;
 use function explode;
-use function file_exists;
 use function file_get_contents;
 use function implode;
 use function is_file;
@@ -26,14 +27,16 @@ use function substr;
 use function trim;
 
 use const DIRECTORY_SEPARATOR;
+use const T_INLINE_HTML;
 
 /**
- * Compiles `.pulsar.php` templates to cached PHP for trusted template execution.
+ * Compiles Pulse templates (`.pulse.php`) to cached PHP for trusted template execution.
  *
  * Compilation is deterministic: identical source input always produces identical
  * compiled output, with no timestamps, PIDs, or non-deterministic elements.
  *
  * Supports extensible directive compilation via a callback registry.
+ * Templates use the `.pulse.php` extension.
  */
 #[Internal(reason: 'Compiler internals are not part of the public API')]
 final class TemplateCompiler
@@ -41,10 +44,17 @@ final class TemplateCompiler
     /** @var array<string, callable(string): string> */
     private array $directiveCompilers = [];
 
+    private readonly ?SandboxCompiler $sandboxCompiler;
+
     public function __construct(
         private readonly ViewConfig $config,
         private readonly TemplateCache $cache,
-    ) {}
+        ?SandboxCompiler $sandboxCompiler = null,
+    ) {
+        $this->sandboxCompiler = $config->sandboxMode
+            ? ($sandboxCompiler ?? new SandboxCompiler())
+            : null;
+    }
 
     /**
      * Compile a template by name and return the compiled artifact.
@@ -73,6 +83,8 @@ final class TemplateCompiler
 
         $compiledOutput = $this->compileSource($sourceContent, $templateName);
 
+        $this->sandboxCompiler?->validate($compiledOutput, $templateName);
+
         return $this->cache->put($templateName, $sourceContent, $compiledOutput);
     }
 
@@ -80,23 +92,39 @@ final class TemplateCompiler
      * Compile a template source string to PHP output.
      *
      * @param string $source Raw template source
-     * @param string $templateName Template name for error context
+     * @param string $templateName Name used in diagnostics
+     *
+     * @throws ViewException If the source routes a translation to the output unescaped
      */
     #[NoDiscard]
-    public function compileSource(string $source, string $templateName = '<inline>'): string
+    public function compileSource(string $source, string $templateName = '<template source>'): string
     {
-        $output = $source;
-
         // Phase 1: Strip comment blocks {{-- comment --}} (before echo compilation)
-        $output = $this->compileComments($output);
+        $output = $this->compileComments($source);
 
-        // Phase 2: Compile directives (registered by the directive system)
-        $output = $this->compileDirectives($output, $templateName);
+        // Phase 2: Refuse the constructs that route a translated string to the
+        // output without escaping it. `@t('k')` escapes in markup and does not
+        // escape inside a PHP tag or inside another directive's argument list,
+        // where the `@` is PHP's error-suppression operator rather than the
+        // directive marker. A form whose escaping depends on its surroundings
+        // cannot be reviewed by reading it, so it is not part of the language.
+        // Built here rather than held as a property: the guard is stateless,
+        // compilation results are cached, so this runs once per template, and a
+        // property typed to a final class is a seam no consumer can reach.
+        $guard = new TranslationOutputGuard();
+        $violations = $guard->violations($source);
 
-        // Phase 3: Compile raw (unescaped) output {!! $expr !!}
+        if ($violations !== []) {
+            throw ViewException::compilationFailed($templateName, $guard->describe($violations));
+        }
+
+        // Phase 3: Compile directives (registered by the directive system)
+        $output = $this->compileDirectives($output);
+
+        // Phase 4: Compile raw (unescaped) output {!! $expr !!}
         $output = $this->compileRawEchos($output);
 
-        // Phase 4: Compile escaped output {{ $expr }}
+        // Phase 5: Compile escaped output {{ $expr }}
         return $this->compileEscapedEchos($output);
     }
 
@@ -128,18 +156,18 @@ final class TemplateCompiler
     #[NoDiscard]
     public function resolve(string $templateName): string
     {
-        // Strip namespace prefix (e.g., 'cms::admin.layout' → 'admin.layout')
-        if (str_contains($templateName, '::')) {
-            $parts = explode('::', $templateName, 2);
-            $templateName = $parts[1] ?? $templateName;
+        // Absolute path: return directly if the file exists.
+        // This supports ContentController returning resolved project template paths.
+        if (is_file($templateName)) {
+            return $templateName;
         }
 
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $templateName) . '.pulsar.php';
+        $relativePath = $this->toRelativePath($templateName);
 
         foreach ($this->config->templatePaths as $basePath) {
             $fullPath = $basePath . DIRECTORY_SEPARATOR . $relativePath;
 
-            if (is_file($fullPath) && file_exists($fullPath)) {
+            if (is_file($fullPath)) {
                 return $fullPath;
             }
         }
@@ -155,23 +183,30 @@ final class TemplateCompiler
     #[NoDiscard]
     public function exists(string $templateName): bool
     {
-        // Strip namespace prefix (e.g., 'cms::admin.layout' → 'admin.layout')
+        $relativePath = $this->toRelativePath($templateName);
+
+        return array_any(
+            $this->config->templatePaths,
+            static fn(string $basePath): bool => is_file($basePath . DIRECTORY_SEPARATOR . $relativePath),
+        );
+    }
+
+    /**
+     * Convert a dot-notation template name to a relative filesystem path.
+     *
+     * Strips namespace prefixes (e.g., 'cms::admin.layout' → 'admin/layout.pulse.php').
+     * Uses the `.pulse.php` extension.
+     */
+    private function toRelativePath(string $templateName): string
+    {
         if (str_contains($templateName, '::')) {
             $parts = explode('::', $templateName, 2);
             $templateName = $parts[1] ?? $templateName;
         }
 
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $templateName) . '.pulsar.php';
+        $baseName = str_replace('.', DIRECTORY_SEPARATOR, $templateName);
 
-        foreach ($this->config->templatePaths as $basePath) {
-            $fullPath = $basePath . DIRECTORY_SEPARATOR . $relativePath;
-
-            if (is_file($fullPath)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $baseName . '.pulse.php';
     }
 
     /**
@@ -195,13 +230,26 @@ final class TemplateCompiler
     /**
      * Compile escaped output expressions: {{ $expr }}
      *
-     * Compiles to htmlspecialchars() with ENT_QUOTES | ENT_SUBSTITUTE and UTF-8.
+     * Compiles to ContextEscaper::html() which applies ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5
+     * with UTF-8 encoding. This uses the centralized context-aware escaper instead of
+     * inline htmlspecialchars() calls, ensuring consistent XSS prevention.
      */
     private function compileEscapedEchos(string $source): string
     {
+        // Honor ViewConfig::autoEscape. Escaping stays on by default; disabling it
+        // makes {{ }} emit raw output, so it is only safe when the application
+        // escapes manually (the security trade-off is documented on the option).
+        if (!$this->config->autoEscape) {
+            return (string) preg_replace_callback(
+                '/\{\{\s*(.+?)\s*}}/s',
+                static fn(array $matches): string => '<?php echo (string) (' . trim($matches[1]) . '); ?>',
+                $source,
+            );
+        }
+
         return (string) preg_replace_callback(
             '/\{\{\s*(.+?)\s*}}/s',
-            static fn(array $matches): string => '<?php echo htmlspecialchars((string) (' . trim($matches[1]) . '), ENT_QUOTES | ENT_SUBSTITUTE, \'UTF-8\'); ?>',
+            static fn(array $matches): string => '<?php echo \Pulsar\Security\Escaper\ContextEscaper::html((string) (' . trim($matches[1]) . ')); ?>',
             $source,
         );
     }
@@ -229,19 +277,47 @@ final class TemplateCompiler
     }
 
     /**
-     * Compile all registered directives.
+     * Compile all registered directives found in the template's markup.
+     *
+     * Directive expansion is confined to the inline-HTML runs of the template.
+     * Every directive compiles to a `<?php ... ?>` block, so expanding one that
+     * sits inside an already-open PHP tag could only ever emit
+     * `<?= <?php echo ...; ?> ?>`, which does not parse. Inside a PHP tag `@` is
+     * not template syntax at all — it is PHP's error-suppression operator, and
+     * `<?= @t('key') ?>` is a suppressed call to the global `t()` helper that the
+     * compiler must leave alone.
+     *
+     * PHP's own lexer decides where those runs begin and end, so string literals,
+     * comments and heredocs containing `?>` are handled exactly as the runtime
+     * would handle them — no second, weaker tag scanner to keep in agreement.
+     */
+    private function compileDirectives(string $source): string
+    {
+        if ($this->directiveCompilers === []) {
+            return $source;
+        }
+
+        $result = '';
+
+        foreach (PhpToken::tokenize($source) as $token) {
+            $result .= $token->is(T_INLINE_HTML)
+                ? $this->compileDirectivesInMarkup($token->text)
+                : $token->text;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Compile directives inside one inline-HTML run of a template.
      *
      * Matches patterns like @directiveName, @directiveName(...), and block
      * directives like @enddirectiveName. Uses balanced-parenthesis matching
      * so that expressions with nested parens (e.g. `@foreach (($a ?? []) as $v)`)
      * are captured correctly.
      */
-    private function compileDirectives(string $source, string $templateName): string
+    private function compileDirectivesInMarkup(string $source): string
     {
-        if ($this->directiveCompilers === []) {
-            return $source;
-        }
-
         $result = '';
         $offset = 0;
         $len = strlen($source);
@@ -259,17 +335,25 @@ final class TemplateCompiler
             // Copy everything before the @
             $result .= substr($source, $offset, $atPos - $offset);
 
-            // Extract directive name
+            // Extract directive name: a required alpha first char, then any
+            // alphanumerics or underscores — so @escape_js, @csp_nonce,
+            // @region_selector and @dev_reload resolve as whole names instead of
+            // stopping at the underscore (which silently emitted @escape + literal
+            // _js, shipping raw unescaped JS and an empty CSP nonce).
             $nameStart = $atPos + 1;
             $nameEnd = $nameStart;
 
-            while ($nameEnd < $len && ctype_alpha($source[$nameEnd])) {
+            if ($nameEnd < $len && ctype_alpha($source[$nameEnd])) {
                 $nameEnd++;
+
+                while ($nameEnd < $len && (ctype_alnum($source[$nameEnd]) || $source[$nameEnd] === '_')) {
+                    $nameEnd++;
+                }
             }
 
             $name = substr($source, $nameStart, $nameEnd - $nameStart);
 
-            // Not a registered directive — emit as-is and advance past the @name
+            // Not a registered directive; emit as-is and advance past the @name
             if ($name === '' || !array_key_exists($name, $this->directiveCompilers)) {
                 $result .= substr($source, $atPos, $nameEnd - $atPos);
                 $offset = $nameEnd;
@@ -293,7 +377,7 @@ final class TemplateCompiler
                 $result .= $compiled;
                 $offset = $closePos;
             } else {
-                // No parentheses — e.g. @else, @endif, @endforeach
+                // No parentheses: e.g. @else, @endif, @endforeach
                 $compiled = ($this->directiveCompilers[$name])('');
                 $result .= $compiled;
                 $offset = $nameEnd;
@@ -313,10 +397,30 @@ final class TemplateCompiler
         $depth = 0;
         $len = strlen($source);
 
+        // Quote state so that parentheses inside string literals are ignored,
+        // e.g. @if($x === ')') or @foreach(explode(')', $s) as $p). Null when not
+        // inside a string, otherwise the opening quote character.
+        $quote = null;
+
         for ($i = $openPos; $i < $len; $i++) {
             $char = $source[$i];
 
-            if ($char === '(') {
+            if ($quote !== null) {
+                // Inside a string literal: a backslash escapes the next character
+                // (so an escaped quote does not close the string), otherwise a
+                // matching quote ends it.
+                if ($char === '\\') {
+                    $i++;
+                } elseif ($char === $quote) {
+                    $quote = null;
+                }
+
+                continue;
+            }
+
+            if ($char === '"' || $char === "'") {
+                $quote = $char;
+            } elseif ($char === '(') {
                 $depth++;
             } elseif ($char === ')') {
                 $depth--;
@@ -327,7 +431,7 @@ final class TemplateCompiler
             }
         }
 
-        // Unbalanced — return everything after the opening paren
+        // Unbalanced; return everything after the opening paren
         return substr($source, $openPos + 1);
     }
 }

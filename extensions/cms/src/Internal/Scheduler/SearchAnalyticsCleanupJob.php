@@ -22,6 +22,9 @@ use function sprintf;
  *
  * Executes daily at 4 AM UTC. Retrieves yesterday's search totals
  * and logs them as a summary for monitoring purposes.
+ *
+ * @psalm-api Registered with the scheduler by the CMS service provider;
+ *            invoked through JobInterface, not instantiated by name.
  */
 #[Internal(reason: 'CMS search analytics daily summary job')]
 final readonly class SearchAnalyticsCleanupJob implements JobInterface

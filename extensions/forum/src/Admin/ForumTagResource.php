@@ -16,6 +16,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  * Admin resource definition for forum tags.
  *
  * Supports full CRUD for managing thread classification labels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumTagResource implements DataResourceInterface

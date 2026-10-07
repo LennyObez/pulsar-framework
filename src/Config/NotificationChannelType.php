@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Available notification delivery channel types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum NotificationChannelType: string
@@ -18,4 +19,6 @@ enum NotificationChannelType: string
     case Slack = 'slack';
     case Webhook = 'webhook';
     case Log = 'log';
+    case Broadcast = 'broadcast';
+    case Push = 'push';
 }

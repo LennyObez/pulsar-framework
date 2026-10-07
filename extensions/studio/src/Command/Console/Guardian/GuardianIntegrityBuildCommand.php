@@ -22,7 +22,6 @@ use SodiumException;
 use function dirname;
 use function file_put_contents;
 use function is_dir;
-use function is_string;
 use function mkdir;
 use function sprintf;
 
@@ -62,8 +61,7 @@ final class GuardianIntegrityBuildCommand extends Command
     {
         $isJson = $input->hasOption('json');
         $shouldSign = $input->hasOption('sign');
-        $rawOutput = $input->getOption('output');
-        $outputPath = is_string($rawOutput) ? $rawOutput : $this->config->manifestPath;
+        $outputPath = $input->getStringOption('output', $this->config->manifestPath);
 
         $manifest = $this->builder->build($this->config->include, $this->config->exclude);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Failover;
 
+use Closure;
 use DateTimeImmutable;
 use Override;
 use Pulsar\Api\Api;
@@ -14,9 +15,10 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Resilience\CircuitBreaker;
 use Pulsar\Resilience\CircuitBreakerState;
 
+use function bin2hex;
 use function microtime;
+use function random_bytes;
 use function sprintf;
-use function uniqid;
 
 /**
  * Manages database failover detection and endpoint switching.
@@ -24,6 +26,7 @@ use function uniqid;
  * Integrates with circuit breaking to prevent cascading failures, emits
  * telemetry counters via MetricRegistry, and produces compliance-grade
  * FailoverEvent records for regulated environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FailoverManager implements FailoverManagerInterface
@@ -33,16 +36,26 @@ final class FailoverManager implements FailoverManagerInterface
     /** @var list<FailoverEvent> */
     private array $events = [];
 
+    /** @var (Closure(): ConnectionInterface)|null */
+    private ?Closure $connectionFactory;
+
+    /**
+     * @param (callable(): ConnectionInterface)|null $connectionFactory
+     */
     public function __construct(
-        private readonly ConnectionInterface $primaryConnection,
+        private ConnectionInterface $primaryConnection,
         private readonly ConnectionHealthCheckerInterface $healthChecker,
         private readonly FailoverStrategyInterface $strategy,
         private readonly CircuitBreaker $circuitBreaker,
         private readonly FailoverConfig $config,
         private readonly MetricRegistry $metrics,
         string $primaryEndpoint,
+        ?callable $connectionFactory = null,
     ) {
         $this->currentPrimary = $primaryEndpoint;
+        $this->connectionFactory = $connectionFactory !== null
+            ? $connectionFactory(...)
+            : null;
     }
 
     #[Override]
@@ -77,6 +90,13 @@ final class FailoverManager implements FailoverManagerInterface
         }
 
         $this->currentPrimary = $target;
+
+        // Reconnect to the new primary if a connection factory is available
+        if ($this->connectionFactory !== null) {
+            $this->primaryConnection->disconnect();
+            $this->primaryConnection = ($this->connectionFactory)();
+        }
+
         $this->circuitBreaker->reset();
 
         $durationMs = (microtime(true) - $start) * 1000.0;
@@ -90,7 +110,7 @@ final class FailoverManager implements FailoverManagerInterface
                 targetEndpoint: $target,
                 affectedOperationCount: 0,
                 durationMs: $durationMs,
-                correlationId: uniqid('fo_', true),
+                correlationId: sprintf('fo_%s', bin2hex(random_bytes(16))),
                 occurredAt: new DateTimeImmutable(),
             );
             $this->events[] = $event;
@@ -109,6 +129,17 @@ final class FailoverManager implements FailoverManagerInterface
     public function getCurrentPrimary(): string
     {
         return $this->currentPrimary;
+    }
+
+    /**
+     * Get the current primary connection.
+     *
+     * After a failover with a connection factory, this returns the
+     * newly created connection to the failover target.
+     */
+    public function getConnection(): ConnectionInterface
+    {
+        return $this->primaryConnection;
     }
 
     /**

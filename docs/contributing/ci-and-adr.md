@@ -20,19 +20,31 @@ The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request
 | --------------- | ----------------------------------------- | ------------- |
 | `php-benchmark` | PHPBench microbenchmarks + profile matrix | `php-quality` |
 
-Advisory jobs currently use `continue-on-error: true`. Individual benchmarks may be promoted to merge-blocking as signal stability improves (see ADR-0012).
+Advisory jobs declare `continue-on-error: true` — the nightly Tier B benchmarks and the
+`benchmarks/` tree job. The Tier A performance budgets are not among them: they block a
+merge, and there is no variance-driven promotion between advisory and blocking. See
+[ADR-0072](../adr/0072-a-budget-is-the-assertion-that-runs.md), which supersedes ADR-0012.
 
 ### Job dependency graph
 
 ```
 push/PR
 ├── php-quality
-│   ├── php-tests
-│   ├── php-benchmark (advisory)
+│   ├── php-tests            (+ php-tests-windows, php-coverage, php-mutation)
+│   ├── php-benchmark-tier-a (hard gate: performance budgets)
+│   ├── php-benchmark-library(advisory: the benchmarks/ component tree)
 │   └── cache-warmup
+├── pr-size (PR only)
 ├── adr-check (PR only)
+├── security-semgrep
+├── compliance-report
 └── js
 ```
+
+`benchmark-regression.yml` runs separately, on pull requests touching `src/`,
+`extensions/` or `benchmarks/`, and blocks at 5% slower than the merge base.
+`benchmark-nightly.yml` (Tier B) and `benchmark-rc-gate.yml` (Tier C) are not part of
+this graph — one is scheduled, the other is triggered by hand before an RC tag.
 
 ## Running checks locally
 
@@ -97,7 +109,7 @@ ADRs are also encouraged (but not CI-enforced) for significant changes to extens
 ### How to write an ADR
 
 1. Copy the template: `docs/adr/0000-template.md`
-2. Name the file: `docs/adr/NNNN-short-slug.md` where `NNNN` is the next sequential number
+2. Name the file: `docs/adr/<NNNN>-<short-slug>.md` where `<NNNN>` is the next sequential number
 3. Fill in all sections: Status, Context, Decision Drivers, Decision, Alternatives Considered, Consequences, Security Impact, Performance Impact, Migration/Rollback Plan, Links
 4. Set the status to `Proposed` for the PR. It becomes `Accepted` when merged.
 

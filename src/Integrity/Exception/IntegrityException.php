@@ -14,6 +14,7 @@ use function sprintf;
  * Exception thrown for file integrity errors.
  *
  * Provides static factory methods for specific integrity error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class IntegrityException extends RuntimeException
@@ -37,12 +38,26 @@ final class IntegrityException extends RuntimeException
     }
 
     /**
+     * The manifest declares no scope, so what ought to be on disk is undefined.
+     *
+     * Without it the verifier cannot tell an added file from an untracked one,
+     * so it refuses to answer rather than guess in either direction.
+     */
+    #[NoDiscard]
+    public static function scopeMissing(): self
+    {
+        return new self(
+            'Integrity manifest declares no scope: rebuild it with "php bin/pulsar integrity:build"',
+        );
+    }
+
+    /**
      * HMAC signature verification failed for the manifest.
      */
     #[NoDiscard]
     public static function signatureInvalid(): self
     {
-        return new self('Integrity manifest signature is invalid — the manifest may have been tampered with');
+        return new self('Integrity manifest signature is invalid: the manifest may have been tampered with');
     }
 
     /**

@@ -1,43 +1,62 @@
 # OAuth2/OIDC Authorization Server
 
-Pulsar's OAuth2/OIDC extension provides a server-side authorization server with OpenID Connect provider capability.
+Pulsar provides a server-side OAuth2 authorization server with OpenID Connect
+provider capability through the bundled **`pulsar/auth`** extension.
 
-## Installation
+## Where this lives
 
-Add the `pulsar/oauth2` extension to your project:
+The authorization server has no package of its own. It ships inside `pulsar/auth`,
+together with WebAuthn/FIDO2, social SSO and TOTP two-factor;
+`extensions/auth/pulsar.json` records that in its `replaces` list. Earlier
+revisions of this page told you to run `composer require pulsar/oauth2`, which was
+wrong in every release it appeared in — no package by that name has ever been
+published, and the merge into `pulsar/auth` happened before 1.0.0.
 
-```bash
-composer require pulsar/oauth2
-```
+There is nothing to install. `pulsar/auth` is infrastructure rather than an
+application product, so it is on disk in any application that has the framework
+and it loads at boot with no configuration entry. You only need to name it if your
+application takes exclusive control of what loads:
 
-Register in your `pulsar.json`:
-
-```json
-{
-  "extensions": ["pulsar/oauth2"]
-}
+```php
+// config/app.php — an EXCLUSIVE allowlist; when set, only these load
+'extensions' => [
+    'enabled' => ['pulsar/auth', 'pulsar/orm'],
+],
 ```
 
 ## Quick start
 
 ### Configuration
 
-Create `config/oauth2.php`:
+The extension ships `extensions/auth/config/auth.php` with defaults for all three
+subsystems. To change them, put a `config/auth.php` in your application: the host
+file **replaces** the extension's file rather than merging into it, so copy the
+shipped file and edit it rather than writing only the keys you want to change.
 
 ```php
+// config/auth.php
 return [
-    'issuer' => 'https://auth.example.com',
-    'access_token_ttl' => 900,        // 15 minutes
-    'refresh_token_ttl' => 2_592_000,  // 30 days
-    'authorization_code_ttl' => 600,   // 10 minutes
-    'signing_key_id' => 'oauth_sign',
-    'token_format' => 'reference',     // or 'jwt'
+    'social' => [/* … */],
+    'webauthn' => [/* … */],
+
+    'oauth2' => [
+        'issuer' => 'https://auth.example.com',
+        'access_token_ttl' => 900,         // 15 minutes
+        'refresh_token_ttl' => 2_592_000,  // 30 days
+        'authorization_code_ttl' => 600,   // 10 minutes
+        'signing_key_id' => 'oauth_sign',
+        'token_format' => 'reference',     // or 'jwt'
+    ],
 ];
 ```
 
+`OAUTH2_ISSUER` sets the issuer from the environment if you would rather not ship a
+config file at all.
+
 ### Registered endpoints
 
-The extension automatically registers:
+Unlike the WebAuthn ceremonies, these routes need nothing from the host
+application, so the extension registers them itself at boot:
 
 | Endpoint                            | Method | Description                    |
 | ----------------------------------- | ------ | ------------------------------ |
@@ -47,7 +66,12 @@ The extension automatically registers:
 | `/oauth/revoke`                     | POST   | Token revocation (RFC 7009)    |
 | `/.well-known/openid-configuration` | GET    | OIDC Discovery                 |
 | `/.well-known/jwks.json`            | GET    | JWKS endpoint                  |
-| `/oauth/userinfo`                   | GET    | OIDC UserInfo                  |
+
+`/oauth/userinfo` is the exception: mapping a subject to claims is a per-deployment
+decision, so the extension binds no default for `UserClaimsProviderInterface` and
+registers the route **only** once your application has bound one. Until then the
+path 404s, and the discovery document reflects that rather than advertising an
+endpoint that cannot answer.
 
 ## Supported grant types
 

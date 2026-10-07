@@ -7,13 +7,16 @@ namespace Pulsar\Extension\Forum\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscription;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use ThreadSubscriptionRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ThreadSubscriptionRepositoryInterface for public API')]
 final readonly class DbThreadSubscriptionRepository implements ThreadSubscriptionRepositoryInterface
 {
+    private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
+
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT s.*
         FROM forum_thread_subscriptions s
@@ -38,7 +41,7 @@ final readonly class DbThreadSubscriptionRepository implements ThreadSubscriptio
         SELECT s.*
         FROM forum_thread_subscriptions s
         WHERE s.user_id = :user_id
-            AND s.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(s.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY s.created_at DESC
         LIMIT 10000
         SQL;
@@ -49,13 +52,15 @@ final readonly class DbThreadSubscriptionRepository implements ThreadSubscriptio
         WHERE s.user_id = :user_id AND s.thread_id = :thread_id
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_thread_subscriptions (
-            id, tenant_id, user_id, thread_id, created_at
-        ) VALUES (
-            :id, :tenant_id, :user_id, :thread_id, :created_at
-        )
+    private const string SQL_INSERT_IGNORE_PG = <<<'SQL'
+        INSERT INTO forum_thread_subscriptions (id, tenant_id, user_id, thread_id, created_at)
+        VALUES (:id, :tenant_id, :user_id, :thread_id, :created_at)
         ON CONFLICT (id) DO NOTHING
+        SQL;
+
+    private const string SQL_INSERT_IGNORE_MYSQL = <<<'SQL'
+        INSERT IGNORE INTO forum_thread_subscriptions (id, tenant_id, user_id, thread_id, created_at)
+        VALUES (:id, :tenant_id, :user_id, :thread_id, :created_at)
         SQL;
 
     private const string SQL_DELETE = <<<'SQL'
@@ -107,7 +112,7 @@ final readonly class DbThreadSubscriptionRepository implements ThreadSubscriptio
     {
         $result = $this->connection->query(self::SQL_FIND_BY_USER, [
             'user_id' => $userId,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
 
         return $result->map(self::hydrate(...));
@@ -125,7 +130,12 @@ final readonly class DbThreadSubscriptionRepository implements ThreadSubscriptio
 
     public function save(ThreadSubscription $subscription): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = match ($this->connection->driver()) {
+            Driver::MySQL => self::SQL_INSERT_IGNORE_MYSQL,
+            Driver::PostgreSQL, Driver::SQLite => self::SQL_INSERT_IGNORE_PG,
+        };
+
+        $this->connection->execute($sql, [
             'id' => $subscription->id,
             'tenant_id' => $subscription->tenantId,
             'user_id' => $subscription->userId,

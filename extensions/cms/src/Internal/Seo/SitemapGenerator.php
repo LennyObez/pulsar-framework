@@ -26,6 +26,9 @@ use const ENT_XML1;
 
 /**
  * Generates XML sitemaps with hreflang alternate links and pagination.
+ *
+ * @psalm-api Bound to SitemapGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use SitemapGeneratorInterface for public API')]
 final readonly class SitemapGenerator implements SitemapGeneratorInterface
@@ -52,7 +55,7 @@ final readonly class SitemapGenerator implements SitemapGeneratorInterface
                 tenantId: $tenantId,
             );
 
-            $totalPages = (int) ceil($result->total / self::MAX_URLS_PER_SITEMAP);
+            $totalPages = (int) ceil(($result->total ?? 0) / self::MAX_URLS_PER_SITEMAP);
             $totalPages = $totalPages > 0 ? $totalPages : 1;
 
             for ($page = 1; $page <= $totalPages; $page++) {
@@ -164,7 +167,7 @@ final readonly class SitemapGenerator implements SitemapGeneratorInterface
         return <<<XML
             <?xml version="1.0" encoding="UTF-8"?>
             <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-            {$body}
+            $body
             </sitemapindex>
             XML;
     }
@@ -180,7 +183,7 @@ final readonly class SitemapGenerator implements SitemapGeneratorInterface
             <?xml version="1.0" encoding="UTF-8"?>
             <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
                     xmlns:xhtml="http://www.w3.org/1999/xhtml">
-            {$body}
+            $body
             </urlset>
             XML;
     }

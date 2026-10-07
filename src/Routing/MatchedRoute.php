@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a successfully matched route.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class MatchedRoute
+final readonly class MatchedRoute
 {
     /**
      * @param Route $route The matched route definition
@@ -39,8 +40,6 @@ readonly class MatchedRoute
 
     /**
      * Get the route handler.
-     *
-     * @return callable|class-string|array{0: class-string, 1: string}
      */
     public function getHandler(): mixed
     {

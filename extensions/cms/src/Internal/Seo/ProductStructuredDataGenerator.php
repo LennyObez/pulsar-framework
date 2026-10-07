@@ -18,6 +18,9 @@ use function sprintf;
 
 /**
  * Generates Product schema.org structured data for content linked to a commerce product.
+ *
+ * @psalm-api Aggregated by SeoService through the StructuredDataGeneratorInterface
+ *            contract; resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use StructuredDataGeneratorInterface for public API')]
 final readonly class ProductStructuredDataGenerator implements StructuredDataGeneratorInterface

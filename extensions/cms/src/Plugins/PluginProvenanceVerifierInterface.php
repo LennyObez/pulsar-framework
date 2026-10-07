@@ -9,6 +9,10 @@ use Pulsar\Extension\Cms\Themes\ProvenanceResult;
 
 /**
  * Verifies plugin package integrity (SHA-256) and authenticity (Ed25519 signature).
+ *
+ * @psalm-api Public binding contract; implemented by PluginProvenanceVerifier
+ *            and consumed by CmsPluginManager during installation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PluginProvenanceVerifierInterface

@@ -5,10 +5,10 @@
  * @var string|null $backUrl
  * @var string|null $backLabel
  */
-$typedTitle = $title ?? 'No Data';
-$typedMessage = $message ?? 'No data to display.';
+$typedTitle = $title ?? __('studio.no_data');
+$typedMessage = $message ?? __('studio.no_data_hint');
 $typedBackUrl = $backUrl ?? '';
-$typedBackLabel = $backLabel ?? 'Go Back';
+$typedBackLabel = $backLabel ?? __('studio.go_back');
 ?>
 <div class="empty-state">
     <h2><?= htmlspecialchars($typedTitle, ENT_QUOTES, 'UTF-8') ?></h2>

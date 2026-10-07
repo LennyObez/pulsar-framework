@@ -1,0 +1,164 @@
+# Automated dependency PROPOSALS, never automated adoption.
+#
+# The distinction is the whole design. A toolchain that updates itself in place
+# adopts a regressed or compromised release with nobody having looked — not a
+# posture a framework aimed at banking and healthcare can hold. Dependabot opens a
+# pull request instead: the full quality gate runs on it, and a human merges.
+#
+# It also closes the drift this repo actually had. Nothing proposed ordinary
+# version bumps at all; the alerts on the security tab are GitHub's automatic
+# vulnerability notices, which fire only once something is already known-bad. That
+# is detection, not maintenance.
+#
+# Updates are grouped so a week's patches arrive as one reviewable PR rather than
+# forty. Majors stay ungrouped and separate, because a major is a decision.
+#
+# Every ecosystem waits seven days before a routine bump is proposed. A package
+# published minutes ago has had nobody looking at it, and the window in which a
+# hijacked release gets caught and yanked is measured in days. Seven matches the
+# High tier already published in docs/dependabot-sla.md, so the file states one
+# number rather than two. This delays nothing that matters in an incident:
+# cooldown is a version-update option and does not apply to security updates,
+# which keep arriving immediately and keep their 48-hour critical SLA.
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # PHP — the root tree
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    versioning-strategy: increase
+    commit-message:
+      prefix: build
+      prefix-development: build
+      include: scope
+    groups:
+      php-patch-and-minor:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      # Three ceilings are real and documented in composer.json; a PR raising them
+      # would fail to install and waste a review each week. They are lifted by
+      # hand when upstream unblocks, not by a bot that cannot read the reason.
+      - dependency-name: jetbrains/phpstorm-stubs
+        versions: ['> 2026.1']
+      - dependency-name: psalm/plugin-phpunit
+        versions: ['>= 0.20']
+
+  # ---------------------------------------------------------------------------
+  # PHP — the isolated analyser tree (bamarni/composer-bin-plugin)
+  #
+  # A separate directory means a separate entry: Dependabot does not discover
+  # vendor-bin/* on its own, so without this the analyser toolchain would silently
+  # never be proposed for update — the same blind spot in a different place.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: composer
+    directory: /vendor-bin/psalm
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      analyser-toolchain:
+        patterns: ['*']
+        update-types: [minor, patch]
+
+  # ---------------------------------------------------------------------------
+  # PHP — the bundled auth extension
+  #
+  # extensions/auth/composer.json declares three third-party runtime
+  # requirements — league/oauth2-server, web-auth/webauthn-lib and
+  # web-token/jwt-framework — and not one of them appears in the root
+  # composer.lock, because the extension is a separate package with a separate
+  # dependency tree. So neither the root entry above nor a root `composer audit`
+  # had ever looked at the OAuth2, WebAuthn and JWT implementations the framework
+  # actually ships. Dependabot reads a manifest with no lockfile directly, which
+  # is what this entry is for.
+  #
+  # Any other extension manifest that grows a third-party requirement needs an
+  # entry here too; the extension-audit step in dependency-audit.yml discovers
+  # those manifests and fails the build when one is missing from this file.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: composer
+    directory: /extensions/auth
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    versioning-strategy: increase
+    commit-message:
+      prefix: build
+      prefix-development: build
+      include: scope
+    groups:
+      auth-extension-patch-and-minor:
+        patterns: ['*']
+        update-types: [minor, patch]
+
+  # ---------------------------------------------------------------------------
+  # JavaScript / TypeScript
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    versioning-strategy: increase
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      js-patch-and-minor:
+        patterns: ['*']
+        update-types: [minor, patch]
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions
+  #
+  # Actions are pinned by SHA here, which is the supply-chain-correct form but
+  # also the one that rots invisibly: a pinned SHA never warns that it is two
+  # majors behind, and six of ours were still on the deprecated Node 20 runtime
+  # before anyone checked. This entry is what makes that visible weekly.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Brussels
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ['*']
+        update-types: [minor, patch]

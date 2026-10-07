@@ -1,6 +1,8 @@
 # Security baseline
 
-Pulsar ships secure defaults for session management, CSRF protection, security headers, cryptographic primitives, and audit logging. All security features are configured via the `SecurityConfig` DTO loaded from `config/security.php`.
+Pulsar ships secure defaults for session management, CSRF protection and security headers. All security features are configured via the `SecurityConfig` DTO loaded from `config/security.php`.
+
+> **Cryptography and audit integrity are not among those defaults.** Every at-rest protection is derived from `PULSAR_MASTER_KEY`, which both shipped environment templates leave empty. Without it there is no encryptor, session payloads are stored unencrypted, and the audit chain is never keyed — while `config/security.php` still reads `'encryption' => true`. `composer deploy:check` refuses staging and production without a usable key (the `master-key` gate); local development is left to you, which is why the templates carry the consequence inline. See [docs/compliance.md](compliance.md).
 
 ## Configuration
 
@@ -128,6 +130,59 @@ $valid = $manager->validate($token);  // true
 $manager->rotate();                   // Invalidate old, generate new
 ```
 
+### CSRF tokens and BREACH resistance
+
+BREACH extracts a secret from a compressed HTTP response by varying
+attacker-reflected content and watching the response length. Every CSRF token is
+a secret emitted in a compressed response, so **no manager may transmit its
+token verbatim**. All three implementations satisfy this, by different means:
+
+| Manager                | Emitted value                            | Why it is not an oracle target                                                |
+| ---------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
+| `CsrfTokenManager`     | `hex(pad \|\| inner XOR pad)`, fresh pad | Session token is stable, so it is masked per response                         |
+| `StatelessCsrfManager` | `hex(pad \|\| inner XOR pad)`, fresh pad | Inner token is deterministic per second+action, so it is masked               |
+| `EncryptedCsrfManager` | Fresh ciphertext                         | Encrypts a payload carrying a random nonce, so every emission already differs |
+
+`CsrfTokenManager` is the default wired by `SecurityWiring`, and it is the case
+masking exists for: the synchronizer token is stored once and lives for the
+whole session, so without masking the exact same secret bytes appear in every
+page. Rails (`masked_authenticity_token`) and Django (`_mask_cipher_secret`)
+mask their session-backed tokens for precisely this reason. Its stored form is
+unchanged (existing sessions keep working) and `validate()` still accepts the
+legacy verbatim form, so tokens already rendered into open pages survive a
+deploy.
+
+Do not rely on "our forms do not reflect input" as the defence. That is a
+property of current content, not a designed control: one reflected search field
+re-rendered into a compressed page reinstates the oracle, silently.
+
+#### StatelessCsrfManager specifics
+
+`StatelessCsrfManager` provides CSRF protection with no server-side state
+(CDN/Varnish and stateless-API friendly). Its MAC binds
+`timestamp || len(action) || action || binding`, where `binding` is a
+**per-browser secret** — the `__Host-pulsar-csrf` cookie. Without that binding
+the MAC would cover only server-side values (timestamp, action) that any
+visitor, including an attacker, can reproduce, so anyone could mint a token
+valid for every victim (issue #425). The binding is a signed double-submit
+cookie: the attacker's cross-site page can neither read it (`HttpOnly`,
+cross-origin) nor set it (`__Host-` prefix), so a forged token cannot be paired
+with the victim's cookie.
+
+Wiring: put `CsrfBindingCookieMiddleware` ahead of CSRF validation — it
+establishes the `__Host-pulsar-csrf` cookie (Secure, HttpOnly, Path=/,
+SameSite=Strict) and publishes its value into `CsrfBindingContext`, which the
+manager's binding provider reads. The manager fails closed (throws) when no
+binding is present and rejects a key that is not `SODIUM_CRYPTO_AUTH_KEYBYTES`
+long at construction.
+
+The inner token is deterministic for a given `(second, action, binding)`, which
+would be a stable BREACH compression-oracle target if emitted verbatim beside
+attacker-reflected input. Every emitted token is therefore masked with a fresh
+per-response one-time pad (`transmitted = pad || (inner XOR pad)`, as in Django
+and Rails); only the masked form is accepted. Never emit a raw, unmasked secret
+in a compressible response beside attacker-controlled input.
+
 ### CsrfMiddleware
 
 Automatically validates CSRF tokens on state-changing HTTP methods.
@@ -144,6 +199,20 @@ Automatically validates CSRF tokens on state-changing HTTP methods.
 
 1. Request header (`X-CSRF-Token` by default)
 2. POST form field (`_csrf_token` by default)
+3. JSON body field for `application/json` SPAs (`_csrf_token` by default)
+
+**Layer 1 — cross-origin rejection (on by default).** Before the token check, an unsafe request is classified against the origins the server accepts. This runs whenever `origin_validation` is not `off`, with **no dependency on a configured allowlist**: the expected origin is derived from the request's own scheme+host, so a single-domain app is protected with zero configuration. `trusted_origins` only _adds_ origins (e.g. a separate admin domain) — an empty list means "same-origin only", not "disabled".
+
+Classification, by signal reliability:
+
+- **`Origin` present** → accepted iff it equals the request's own origin or a `trusted_origins` entry; otherwise 403. `Origin: null` (sandboxed iframes, `data:` navigations, redirect laundering) is always treated as cross-origin — a first-party request never sends it.
+- **`Origin` absent, `Sec-Fetch-Site` present** → `cross-site`/`cross-origin` is 403; `same-origin`/`same-site` passes. Every evergreen browser sends this header on unsafe requests.
+- **`Referer` present** → its origin is matched the same way.
+- **No signal at all** → only reachable by non-browser clients, which carry no ambient cookies and so cannot mount CSRF. `optional` (default) lets them through to the token check; `required` rejects them.
+
+`origin_validation` modes: `optional` (default, above), `required` (also rejects the no-signal case), `off` (skip Layer 1 — not recommended; the token then stands alone).
+
+> Behind a TLS terminator that does not rewrite the request scheme, same-origin derivation can compute `http://…` where the public origin is `https://…`, causing false 403s. Add the public origin to `trusted_origins` as the escape hatch.
 
 **On failure**, the middleware returns a 403 JSON response:
 
@@ -237,7 +306,13 @@ return [
 ];
 ```
 
-The `SecurityHeadersConfig` DTO is a readonly object constructed from this array via `fromArray()`. Headers are applied in the order they appear in the configuration.
+The `SecurityHeadersConfig` DTO is a readonly object constructed from this array via `fromArray()`.
+
+#### Literal headers vs. structured blocks
+
+The `headers` array also accepts structured sub-blocks (`csp`, `hsts`, `cross_origin`, `permissions_policy`, `nel`) that are typed and validated — these are the recommended way to configure CSP, HSTS, Cross-Origin isolation, Permissions-Policy, and NEL.
+
+When a **literal** `Strict-Transport-Security` or `Permissions-Policy` key is set alongside its structured block, the **literal wins** — "what you write is what's emitted". To make the override explicit rather than silent, Pulsar logs a one-time boot warning (`component: security.headers`) whenever a literal shadows an active structured block with a different value. A literal `Strict-Transport-Security` is still emitted **only over HTTPS** (RFC 6797 §7.2 forbids HSTS over plaintext HTTP), exactly like the structured `hsts` block.
 
 ### HSTS recommendation
 
@@ -256,7 +331,44 @@ For production deployments served over HTTPS, add the `Strict-Transport-Security
 | `includeSubDomains` | Apply the policy to all subdomains                            |
 | `preload`           | Optional: submit to the HSTS preload list for browser vendors |
 
-**Do not enable HSTS** unless all of the following are true:
+Alternatively, use the structured `hsts` block, which is typed and validated. Note the key spelling differs from the literal header directive — the config key is **`include_sub_domains`** (snake_case), while the emitted directive is `includeSubDomains` (the RFC 6797 token):
+
+```php
+'headers' => [
+    'hsts' => [
+        'enabled'             => true,
+        'max_age'            => 63072000,
+        'include_sub_domains' => true,  // emitted as `includeSubDomains`
+        'preload'             => true,
+    ],
+],
+```
+
+A literal `Strict-Transport-Security` (e.g. with `preload`) overrides this structured block — see [Literal headers vs. structured blocks](#literal-headers-vs-structured-blocks).
+
+#### TLS terminated at the edge
+
+When a CDN or reverse proxy (CloudFront, nginx, …) terminates TLS and emits HSTS
+itself — on every response, including static assets and error pages that never
+reach PHP — the application must **not** emit its own `Strict-Transport-Security`
+header, or the response carries a duplicate. Leave `enabled => false` and set
+`emitted_at_edge => true`:
+
+```php
+'headers' => [
+    'hsts' => [
+        'enabled'         => false,  // app emits no header (edge already does)
+        'emitted_at_edge' => true,   // but the deployment IS HTTPS-only
+    ],
+],
+```
+
+`emitted_at_edge` changes **only** the security-posture assessment: the
+`https_enforced` and `hsts_enabled` checks are satisfied, so a correct
+edge-terminated deployment is no longer reported as a HTTP-only violation on
+every request. It never causes the app to emit the header.
+
+**Do not enable HSTS** (app-side) unless all of the following are true:
 
 - Your domain is served exclusively over HTTPS.
 - All subdomains (if using `includeSubDomains`) also support HTTPS.
@@ -372,7 +484,8 @@ The general `Encryptor` uses `sodium_crypto_secretbox` (XSalsa20-Poly1305) witho
 1. Generate a master key: `php -r "echo bin2hex(random_bytes(32));"`
 2. Set the environment variable: `PULSAR_MASTER_KEY=<64-char-hex>`
 3. The kernel automatically registers `MasterKey`, `Encryptor`, and `AuditLogger` when the key is present
-4. If `PULSAR_MASTER_KEY` is not set, crypto-dependent services are not registered; session, CSRF, and security headers still function
+4. If `PULSAR_MASTER_KEY` is not set, crypto-dependent services are not registered and **nothing raises an error**: no `EncryptorInterface`, no `SessionEncryption`, no keyed audit chain, no `SecretVault`. Session, CSRF and security headers still function, so the application looks healthy while its at-rest protections are absent
+5. A key that is present but malformed is rejected during wiring, which logs an error and binds a `MasterKeyFailure`, then lets the boot continue — leaving the same empty container as an unset key
 
 ## Kernel integration
 
@@ -417,3 +530,92 @@ All security errors throw `Pulsar\Security\Exception\SecurityException` with des
 | `decryptionFailed()`        | Ciphertext tampered or wrong key          |
 | `auditIntegrityViolation()` | Audit entry HMAC verification fails       |
 | `auditWriteFailed()`        | Audit file sink cannot write              |
+
+## Security posture preflight
+
+At the end of boot, `SecurityPostureWiring` runs a preflight that evaluates the
+deployment's security posture against the fully wired container and produces a
+`SecurityPostureReport` of per-control items, each `OK`, `DEGRADED`, or `FAIL`
+with a reason and a fix. It fails **loud** instead of letting a control run
+silently inert — most importantly, a security feature disabled by a missing
+binding (e.g. a captcha whose single-use replay cache is unbound because
+`TaggedCacheInterface` is missing) is reported as a `FAIL`, not dropped.
+
+Controls evaluated: debug mode, CSRF protection, HTTPS/HSTS, the master key,
+session encryption, session cookie flags (`Secure`/`HttpOnly`/`SameSite`),
+baseline security headers, and every security feature flagged inert by the
+wiring-contract detector. Outside production, production-only weaknesses
+surface as `DEGRADED` warnings rather than failures, so they remain visible
+without breaking local development.
+
+Two of those controls are decided from the **container**, not from
+`config/security.php`, because a configuration value records what was asked for
+and these two questions are about what is running:
+
+- **`master_key`** — the supplied value is put through the same
+  `MasterKey::fromHex()` parse the wiring performs, and the report then checks
+  that a `MasterKey` and an `EncryptorInterface` are actually bound. A key that
+  is sixty-four characters long but does not decode is a `FAIL`, in every
+  environment: the operator asked for cryptography and the process is running
+  without it.
+- **`session_encryption`** — `security.session.encryption = true` is a request.
+  It is honoured only inside the branch `SecurityWiring` skips when the master
+  key is missing or rejected, so the report requires a bound `SessionEncryption`
+  before reporting `OK`. Enabled-but-unbound is a `FAIL` in every environment,
+  because it means session payloads are being written in cleartext. Encryption
+  switched **off** in configuration keeps the usual environment-aware treatment:
+  `FAIL` in production, `DEGRADED` elsewhere.
+
+### A rejected master key
+
+Supplying `PULSAR_MASTER_KEY` and having it refused is not the same state as
+supplying nothing, even though the two leave an identical container. The boot
+continues either way — an unusable key should not take a deployment offline
+over a subsystem it may not use — but a rejection is now recorded rather than
+swallowed:
+
+- `SecurityWiring` logs it at `error` level (this is an event, not a
+  configuration choice), naming what is unbound as a result: the encryptor,
+  session encryption, tokenization and the audit HMAC chain.
+- A `MasterKeyFailure` is bound into the container carrying the reason. It is
+  what lets `security:check` and `deploy:check` tell "never asked for
+  cryptography" apart from "asked and was refused", and it is why the master-key
+  posture item can report the actual parse error instead of a length.
+
+### Inspecting the posture
+
+```bash
+php bin/pulsar security:check
+```
+
+Prints every control with its status and fix and exits non-zero when any
+control failed, so it doubles as a CI / pre-start deployment gate. The same
+report is surfaced through the health endpoint and `health:check` as the
+`security_posture` check (`UNHEALTHY` on failure, `DEGRADED` on warning).
+
+### Enforcement
+
+Enforcement is opt-in and ops-controlled, so the default stays backward-safe
+(report only, never abort boot):
+
+| Environment variable                  | Effect                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `PULSAR_SECURITY_POSTURE_ENFORCE`     | `true` → in production, blocking items abort boot                                                |
+| `PULSAR_SECURITY_POSTURE_STRICT`      | `true` → `DEGRADED` items block too (not only `FAIL`)                                            |
+| `PULSAR_SECURITY_POSTURE_LOG_AT_BOOT` | `true`/`false` → force the boot advisory log (default: on outside production, off in production) |
+
+When enforcement is enabled and running in production, blocking items throw
+`SecurityPostureException` during boot rather than starting the application in
+a weakened state.
+
+### Boot-time logging
+
+Security posture is a property of the **configuration** — it cannot change
+between two requests in the same process. Under a per-request SAPI (PHP-FPM,
+where each request is a fresh boot), logging it on every boot would repeat an
+unchanging line on every request and bury real incidents. So the advisory boot
+log is **off in production by default** (set `PULSAR_SECURITY_POSTURE_LOG_AT_BOOT=true`
+to force it on); the posture is still surfaced through `security:check`, the
+`/health` endpoint, and boot enforcement. When it does log, it uses `warning`
+(a configuration state the operator may have chosen deliberately), never
+`error` — reserving `error` for events keeps error-level alerting actionable.

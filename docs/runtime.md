@@ -305,14 +305,16 @@ The built-in persistent runtime provides a full HTTP/1.1 origin server:
 
 ### Fiber concurrency
 
-When `fiber_concurrency > 0`, the runtime uses a cooperative Fiber scheduler:
+`fiber_concurrency` accepts `0` (synchronous accept loop, the default) and `1` (one connection Fiber at a time). **A value above 1 is refused**: the worker throws `RuntimeException::unsafeFiberConcurrency()` at construction and never starts serving.
 
-- One Fiber per accepted connection
+When `fiber_concurrency = 1`, the runtime drives that single connection through a cooperative Fiber scheduler:
+
+- One Fiber for the accepted connection
 - Main loop uses `socket_select()` to find readable sockets
-- Fibers suspend when I/O would block
-- Backpressure: stops accepting when at concurrency limit
+- The Fiber parks on a timer while a contended cache lock is retried, so the accept loop keeps checking signals and recycle thresholds
+- Backpressure: stops accepting while the Fiber is active
 
-Fibers provide I/O concurrency only - PHP remains single-threaded. Blocking DB calls without async drivers do not benefit from Fibers. The value is in concurrent socket I/O (accept + read + write overlap). Set `fiber_concurrency = 0` (default) for a synchronous accept loop, which is simpler and sufficient for most workloads behind a load balancer.
+Higher values are refused because `RequestSandbox` isolates one request from the _next_ one on the worker, not from a _concurrent_ one: a request parked inside `kernel->handle()` can resume holding another request's session, request-scoped container instances, and feature-flag evaluation log. Nothing is lost by the cap — the connection handler blocks on every socket read and write, so extra Fibers bought no I/O concurrency. Scale with multiple worker processes behind a load balancer. [`docs/async-model.md`](async-model.md) has the full inventory of what crosses and why.
 
 ### The `--public` flag
 
@@ -321,6 +323,35 @@ By default, the persistent runtime only binds to loopback addresses (`127.0.0.1`
 - This server does not terminate TLS
 - It should sit behind a reverse proxy in production
 - The address may be accessible on the network
+
+## Early Hints (HTTP 103)
+
+A 103 lets the browser start fetching your stylesheet while PHP is still building the page. Register the hints your shell needs and the framework puts the middleware on the pipeline:
+
+```php
+use Pulsar\Http\Http3\EarlyHints;
+
+$hints = new EarlyHints();
+$hints->preloadStylesheet('/assets/app.css');
+$hints->preloadFont('/assets/fonts/inter.woff2');
+
+$container->instance(EarlyHints::class, $hints);
+```
+
+Nothing is added to the pipeline when no hint set is registered, so applications that do not want this pay nothing for it. Bind `EarlyHintsInterface` instead if your hints vary by request.
+
+Hints are sent only for `GET` navigations — a `fetch()` (`Sec-Fetch-Dest: empty`) renders no document and can preload nothing — and only after canonical-path redirection has been decided, so nothing is spent on a request about to be 301'd.
+
+### What your server has to support
+
+A 103 is an _interim_ response: the connection stays open and the real response follows on the same request.
+
+| Runtime                       | Result                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| FrankenPHP                    | A real 103, via `headers_send()` — the only PHP SAPI that can emit one today |
+| PHP-FPM, and every other SAPI | The `Link` headers ride on the final response                                |
+
+The fallback is not a failure: a browser still honours `Link: rel=preload` on the final response. It arrives later than a 103 would, and that is the whole difference. The FastCGI protocol carries exactly one response per request, so PHP-FPM cannot send an interim status whatever the front server supports — no nginx or Apache directive changes that.
 
 ## CLI commands
 
@@ -337,7 +368,7 @@ Options:
   --max-requests   Max requests before recycling (default: from config)
   --memory         Memory threshold in MB (default: from config)
   --timeout        Time limit in seconds (default: from config)
-  --concurrency    Fiber concurrency, 0=sync (default: from config)
+  --concurrency    Fiber concurrency: 0=sync or 1; above 1 refused (default: from config)
   --runtime        Runtime driver override (fpm, persistent, frankenphp, roadrunner)
   --public         Required to bind to non-loopback addresses
 ```
@@ -396,7 +427,7 @@ All settings are in `config/runtime.php`. Environment variables override config 
 | `keep_alive_timeout`     | `15`        | --                              | Idle timeout between requests (s)                                        |
 | `header_timeout_seconds` | `15`        | --                              | Slowloris header timeout (s)                                             |
 | `body_timeout_seconds`   | `60`        | --                              | Body receive timeout (s)                                                 |
-| `fiber_concurrency`      | `0`         | `RUNTIME_FIBER_CONCURRENCY`     | Fiber slots (0 = synchronous)                                            |
+| `fiber_concurrency`      | `0`         | `RUNTIME_FIBER_CONCURRENCY`     | `0` sync or `1`; above 1 is refused at startup                           |
 | `max_header_size`        | `8192`      | --                              | Max request header size (bytes)                                          |
 | `max_body_size`          | `10485760`  | --                              | Max request body size (bytes)                                            |
 | `add_date_header`        | `true`      | --                              | Add Date header to responses                                             |

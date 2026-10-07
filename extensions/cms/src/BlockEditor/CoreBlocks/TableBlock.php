@@ -53,9 +53,11 @@ final readonly class TableBlock implements BlockTypeInterface
         /** @var list<string> $headers */
         $headers = $data['headers'] ?? [];
 
-        /** @var list<list<string>> $rows */
+        /** @var list<mixed> $rows */
         $rows = $data['rows'] ?? [];
-        $hasHeaderRow = (bool) ($data['hasHeaderRow'] ?? true);
+        /** @var mixed $rawHasHeaderRow */
+        $rawHasHeaderRow = $data['hasHeaderRow'] ?? null;
+        $hasHeaderRow = is_bool($rawHasHeaderRow) ? $rawHasHeaderRow : true;
 
         $html = '<table>';
 
@@ -78,8 +80,9 @@ final readonly class TableBlock implements BlockTypeInterface
 
             $html .= '<tr>';
 
+            /** @var mixed $cell */
             foreach ($row as $cell) {
-                $html .= '<td>' . htmlspecialchars($cell, ENT_QUOTES, 'UTF-8') . '</td>';
+                $html .= '<td>' . htmlspecialchars(is_string($cell) ? $cell : '', ENT_QUOTES, 'UTF-8') . '</td>';
             }
 
             $html .= '</tr>';
@@ -96,9 +99,10 @@ final readonly class TableBlock implements BlockTypeInterface
         if (!isset($data['headers']) || !is_array($data['headers'])) {
             $errors[] = 'headers is required and must be an array';
         } else {
+            /** @var mixed $header */
             foreach ($data['headers'] as $index => $header) {
                 if (!is_string($header)) {
-                    $errors[] = "headers[{$index}] must be a string";
+                    $errors[] = "headers[$index] must be a string";
                 }
             }
         }
@@ -108,14 +112,15 @@ final readonly class TableBlock implements BlockTypeInterface
         } else {
             foreach ($data['rows'] as $rowIndex => $row) {
                 if (!is_array($row)) {
-                    $errors[] = "rows[{$rowIndex}] must be an array";
+                    $errors[] = "rows[$rowIndex] must be an array";
 
                     continue;
                 }
 
+                /** @var mixed $cell */
                 foreach ($row as $cellIndex => $cell) {
                     if (!is_string($cell)) {
-                        $errors[] = "rows[{$rowIndex}][{$cellIndex}] must be a string";
+                        $errors[] = "rows[$rowIndex][$cellIndex] must be a string";
                     }
                 }
             }

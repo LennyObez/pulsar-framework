@@ -16,6 +16,9 @@ use function sprintf;
 
 /**
  * Generates WebPage schema.org structured data for page content type.
+ *
+ * @psalm-api Aggregated by SeoService through the StructuredDataGeneratorInterface
+ *            contract; resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use StructuredDataGeneratorInterface for public API')]
 final readonly class WebPageStructuredDataGenerator implements StructuredDataGeneratorInterface

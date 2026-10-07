@@ -14,6 +14,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  *
  * Each resource declares its fields, supported operations, bulk actions,
  * export policy, and audit configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DataResourceInterface

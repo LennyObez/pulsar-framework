@@ -14,9 +14,10 @@ use function strtoupper;
  * Validated table name value object.
  *
  * Accepts only alphanumeric + underscore identifiers that are not SQL keywords.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class TableName
+final readonly class TableName
 {
     private const array SQL_KEYWORDS = [
         'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER',

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 use function array_intersect_key;
 use function array_key_exists;
+use function array_keys;
 use function array_map;
 use function sprintf;
 
@@ -18,6 +19,7 @@ use function sprintf;
  * Prevents cardinality explosion by restricting which attribute keys
  * are forwarded for each metric scope. Unknown keys are logged on first
  * occurrence and tracked in a bounded set.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AttributeAllowlist
@@ -36,7 +38,9 @@ final readonly class AttributeAllowlist
         int $maxTrackedUnknowns = 1000,
         private ?LoggerInterface $logger = null,
     ) {
-        $this->allowedLookup = array_map(array_flip(...), $allowedKeys);
+        /** @var array<string, array<string, int>> $lookup */
+        $lookup = array_map(array_flip(...), $allowedKeys);
+        $this->allowedLookup = $lookup;
         $this->unknownTracker = new OverflowTracker($maxTrackedUnknowns);
     }
 
@@ -58,7 +62,7 @@ final readonly class AttributeAllowlist
         $allowed = $this->allowedLookup[$scope];
         $filtered = array_intersect_key($attributes, $allowed);
 
-        foreach ($attributes as $key => $value) {
+        foreach (array_keys($attributes) as $key) {
             if (!array_key_exists($key, $allowed)) {
                 $this->logUnknownKey($scope, $key);
             }
@@ -71,7 +75,7 @@ final readonly class AttributeAllowlist
     {
         if ($this->unknownTracker->track($key)) {
             $this->logger?->debug(sprintf(
-                'Unknown attribute key "%s" in scope "%s" — filtered out',
+                'Unknown attribute key "%s" in scope "%s": filtered out',
                 $key,
                 $scope,
             ));

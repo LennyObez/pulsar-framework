@@ -10,7 +10,6 @@ use Pulsar\Extension\Cms\ABTest\Experiment;
 use Pulsar\Extension\Cms\ABTest\ExperimentVariant;
 
 use function array_sum;
-use function array_values;
 use function count;
 use function hash;
 use function hexdec;
@@ -21,6 +20,9 @@ use function substr;
  *
  * Uses hash(visitorId + experimentId) to consistently assign the same
  * visitor to the same variant across requests.
+ *
+ * @psalm-api Resolved from the DI container and injected into ExperimentService;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'A/B test implementation detail')]
 final readonly class TrafficSplitter
@@ -64,6 +66,6 @@ final readonly class TrafficSplitter
         }
 
         // Fallback (should not reach here)
-        return array_values($variants)[count($variants) - 1];
+        return $variants[count($variants) - 1];
     }
 }

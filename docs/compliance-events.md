@@ -1,10 +1,12 @@
-# Compliance Events
+# Compliance events
 
 ## Overview
 
 Pulsar's compliance event system provides a structured, auditable event model for regulated domains. Every compliance event extends the `ComplianceEvent` base class and carries a unique event ID, timestamp, correlation ID, and cryptographic nonce for replay protection.
 
-The system supports controls for:
+> **These events record assertions, they do not verify them.** An event such as `DpiaCompleted` or `PenetrationTestCompleted` is your organization stating that something happened outside the software; Pulsar timestamps and chains that statement, which is genuinely useful evidence, and it has no way to know whether the assessment was performed or was any good. Emitting the event is not performing the activity. For controls whose outcome Pulsar can actually observe, see `pulsar compliance:report`.
+
+The system provides an event vocabulary for:
 
 - **GDPR** -- Consent management, data subject rights, breach notification, pseudonymization
 - **HIPAA** -- PHI access logging, breach notification, security incident response, audit review
@@ -86,12 +88,14 @@ Authorization events live in `Pulsar\Auth\Authorization\Event` and implement `En
 | ------------------------- | ------------------------------------------------------- |
 | `AuthenticationSucceeded` | Dispatched on successful authentication                 |
 | `AuthenticationFailed`    | Dispatched on failed authentication attempt             |
-| `AuthorizationGranted`    | Dispatched when the Gate grants access                  |
-| `AuthorizationDenied`     | Dispatched when the Gate denies access                  |
+| `AuthorizationGranted`    | Built for every grant the Gate reaches                  |
+| `AuthorizationDenied`     | Built for every refusal the Gate reaches                |
 | `PrivilegeEscalated`      | Dispatched when a user's roles are escalated in-session |
 | `StepUpAuthRequired`      | Dispatched when step-up authentication is triggered     |
 
 Each authorization event carries its own `correlationId` and `nonce` for replay safety, and provides a `create()` factory that generates these automatically using a cryptographically secure `Randomizer`.
+
+The two authorization-decision events are **not dispatched to application listeners**. `Gate::allows()` hands each decision to its `AuthorizationDecisionSinkInterface`, and the framework's sink constructs the event when it writes the audit entry — after the decision has been returned. Putting the dispatcher on the authorization path meant every listener the application had registered ran inside every decision; see [ADR-0052](adr/0052-an-authorization-decision-does-not-run-the-application.md) and [Decision audit trail](authorization.md#decision-audit-trail). An application that wants to observe decisions binds an `AuthorizationDecisionSinkInterface`.
 
 ```php
 use Pulsar\Auth\Authorization\Event\AuthorizationGranted;
@@ -305,6 +309,34 @@ The built-in `InMemoryEvidenceExporter` is provided for testing and development.
 
 The `ComplianceLogSink` routes log entries through regulation-specific formatters before writing to an underlying sink. When an `EncryptorInterface` is provided, the entire log entry is encrypted after formatting.
 
+### Config-driven wiring
+
+The framework wires the sink from `config/observability.php`:
+
+```php
+'logging' => [
+    // ... regular channels ...
+    'compliance' => [
+        'enabled' => true,
+        'frameworks' => ['gdpr', 'hipaa'],   // empty list = all four
+        'path' => 'var/logs/compliance.log', // resolve_path()-ed
+    ],
+],
+```
+
+GDPR/HIPAA pseudonymization derives its HMAC key from the security master key,
+so enabling the block without `PULSAR_MASTER_KEY` (or naming an unknown
+framework) aborts boot — never a silent unmasked fallback. The entry is
+encrypted at rest when the security encryptor is bound.
+
+> **Copy semantics.** The wired sink is an **additional, masked copy** attached
+> alongside your regular channels: `var/logs/pulsar.log` (and any other
+> configured channel) still receives the **original, unmasked** entries. If raw
+> PII must not persist on disk, point the regular channels at a stream
+> (`stderr`) or apply retention to their files — the compliance file is the
+> durable masked artifact. To mask the _only_ copy of your logs, assemble the
+> sink manually around your channel's sink as shown below.
+
 ### Formatter stack
 
 ```php
@@ -313,16 +345,29 @@ use Pulsar\Observability\Log\Compliance\PciDssLogFormatter;
 use Pulsar\Observability\Log\Compliance\GdprLogFormatter;
 use Pulsar\Observability\Log\Compliance\HipaaLogFormatter;
 use Pulsar\Observability\Log\Compliance\SoxLogFormatter;
+use Pulsar\Security\Crypto\MasterKey;
+
+// The GDPR and HIPAA formatters pseudonymize with a KEYED hash and take the key
+// as a required constructor argument. Derive it the way the framework's own
+// wiring does -- subkey 18, context 'cmp_logs' -- so a manually assembled sink
+// produces the same pseudonyms as the config-driven one.
+$hmacKey = $masterKey->deriveSubKey(18, 'cmp_logs');
 
 $complianceSink = new ComplianceLogSink(
     underlyingSink: $fileSink,
     encryptor: $encryptor,       // optional, encrypts full entry
     new PciDssLogFormatter(),
-    new GdprLogFormatter(),
-    new HipaaLogFormatter(),
+    new GdprLogFormatter($hmacKey),
+    new HipaaLogFormatter($hmacKey),
     new SoxLogFormatter(),
 );
 ```
+
+`GdprLogFormatter` and `HipaaLogFormatter` reject a key shorter than
+`SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN` (16 bytes) with an
+`InvalidArgumentException` rather than pseudonymizing weakly. `PciDssLogFormatter`
+and `SoxLogFormatter` take no key: masking a PAN and classifying a snapshot are
+not keyed operations.
 
 ### PCI-DSS: card masking
 
@@ -336,14 +381,19 @@ Masking is applied to both the log message and all context values recursively.
 
 ### GDPR: pseudonymization
 
-`GdprLogFormatter` replaces personal data fields with SHA-256 based pseudonyms (truncated to 16 hex characters, prefixed with `pseudonym_`). Default fields: `user_id`, `email`, `subject_id`, `name`, `ip_address`. Custom field lists can be provided via the constructor.
+`GdprLogFormatter` replaces personal data fields with **keyed BLAKE2b** pseudonyms — `Hmac::computeHex($value, $hmacKey)` truncated to 16 hex characters and prefixed with `pseudonym_`. Default fields: `user_id`, `email`, `subject_id`, `name`, `ip_address`; a custom list is the second constructor argument, matched case-insensitively, and only string values are replaced.
+
+The key is not optional and the hash is not plain SHA-256, which is the difference that matters: an unkeyed digest of a low-entropy identifier — an email address, an IPv4 address, a sequential user id — is re-identifiable by exhaustive search in seconds, so it would not be pseudonymization within the meaning of GDPR Art. 4(5) at all. Earlier revisions of this page described it as SHA-256 based; the code has never been.
+
+It rewrites the **context only**. `format()` returns the entry with its `message` unchanged, so a personal identifier interpolated into the message string reaches the file in the clear. Pass identifiers as context values — `$logger->info('subject exported', ['subject_id' => $id])`, not `$logger->info("subject $id exported")`. Only `PciDssLogFormatter` rewrites the message, and only for Luhn-valid PANs.
 
 ### HIPAA: PHI markers
 
 `HipaaLogFormatter` detects PHI categories in log context and:
 
 - Adds a `phi_access: true` flag when any PHI key is present
-- Pseudonymizes patient identifier fields (`patient_id`, `patient_name`, `ssn`, `mrn`, `health_plan_id`) using SHA-256 hashing with a `patient_` prefix
+- Pseudonymizes patient identifier fields (`patient_id`, `patient_name`, `ssn`, `mrn`, `health_plan_id`) with the same **keyed BLAKE2b** construction the GDPR formatter uses, truncated to 16 hex characters and prefixed with `patient_`. It is keyed for the same reason and more sharply: an SSN has under 30 bits of entropy, so an unkeyed digest of one is a lookup table away from the number itself. Earlier revisions of this page said SHA-256; the key is a required constructor argument and a short one is refused.
+- The `phi_access` flag is added to the context; the log **message** is left untouched by this formatter, so PHI interpolated into a message string is not masked. Put identifiers in the context, not the message
 
 ### SOX: snapshot handling
 

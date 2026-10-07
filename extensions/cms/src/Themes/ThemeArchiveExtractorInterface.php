@@ -9,6 +9,10 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
  * Safely extracts theme archives with Zip Slip protection.
+ *
+ * @psalm-api Public binding contract; implemented by SafeArchiveExtractor and
+ *            consumed by ThemeManager + CmsPluginManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThemeArchiveExtractorInterface

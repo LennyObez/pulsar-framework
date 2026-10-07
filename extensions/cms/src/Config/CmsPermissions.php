@@ -12,8 +12,11 @@ use Pulsar\Auth\Authorization\RoleRegistryInterface;
 /**
  * Defines all CMS roles and permissions, then registers them
  * with Pulsar's RoleRegistryInterface during extension boot.
+ *
+ * @psalm-api Static utility invoked by name from CmsExtension::boot();
+ *            never instantiated.
  */
-#[Internal(reason: 'CMS permission wiring — not a public API surface')]
+#[Internal(reason: 'CMS permission wiring; not a public API surface')]
 final class CmsPermissions
 {
     /** @var list<string> */
@@ -106,6 +109,8 @@ final class CmsPermissions
         'cms.livecss.view',
         'cms.livecss.edit',
         'cms.livecss.rollback',
+        'cms.tools.export',
+        'cms.tools.gdpr.erase',
     ];
 
     /**

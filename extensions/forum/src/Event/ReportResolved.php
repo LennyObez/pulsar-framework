@@ -9,6 +9,7 @@ use Pulsar\Extension\Forum\Domain\ReportStatus;
 
 /**
  * Dispatched when a moderator resolves a report (actioned or dismissed).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReportResolved

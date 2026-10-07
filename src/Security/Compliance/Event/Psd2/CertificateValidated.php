@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Security\Compliance\Event\Psd2;
+
+use DateTimeImmutable;
+use NoDiscard;
+use Pulsar\Api\Api;
+use Pulsar\Event\Attribute\RequiresEnvelope;
+use Pulsar\Security\Compliance\ComplianceEvent;
+
+/**
+ * Records validation of a PSD2 eIDAS certificate.
+ * @api
+ */
+#[Api(since: '1.0.0')]
+#[RequiresEnvelope]
+final readonly class CertificateValidated extends ComplianceEvent
+{
+    public const int SCHEMA_VERSION = 1;
+
+    public function __construct(
+        string $eventId,
+        DateTimeImmutable $occurredAt,
+        string $correlationId,
+        string $nonce,
+        public string $serialNumber,
+        public string $certificateType,
+        public string $authorizationNumber,
+    ) {
+        parent::__construct($eventId, $occurredAt, $correlationId, $nonce);
+    }
+
+    public function regulation(): string
+    {
+        return 'psd2';
+    }
+
+    public function eventType(): string
+    {
+        return 'certificate_validated';
+    }
+
+    public function toArray(): array
+    {
+        return [
+            ...$this->baseToArray(),
+            'schema_version' => self::SCHEMA_VERSION,
+            'serial_number' => $this->serialNumber,
+            'certificate_type' => $this->certificateType,
+            'authorization_number' => $this->authorizationNumber,
+        ];
+    }
+
+    /**
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     serial_number?: string,
+     *     certificate_type?: string,
+     *     authorization_number?: string,
+     * } $data
+     */
+    #[NoDiscard]
+    public static function fromArray(array $data): self
+    {
+        $occurredAt = $data['occurred_at'] ?? null;
+
+        return new self(
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            serialNumber: $data['serial_number'] ?? '',
+            certificateType: $data['certificate_type'] ?? '',
+            authorizationNumber: $data['authorization_number'] ?? '',
+        );
+    }
+}

@@ -27,7 +27,11 @@ use const PREG_SET_ORDER;
  * Supports single and multi-document Markdown files. Multi-document files
  * use `---` as a document separator (on its own line between documents).
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class MarkdownImporter
 {
     /**
@@ -142,7 +146,7 @@ final readonly class MarkdownImporter
                     $seenFrontmatterEnd = true;
                     $current[] = $line;
                 } elseif ($seenFrontmatterEnd) {
-                    // Document separator — save current and start new
+                    // Document separator: save current and start new
                     $documents[] = trim(implode("\n", $current));
                     $current = [];
                     $inFrontmatter = false;

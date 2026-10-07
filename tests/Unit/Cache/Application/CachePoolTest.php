@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,8 +15,14 @@ use Pulsar\Cache\Application\Driver\ArrayDriver;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Event\CacheEventEmitter;
 use Pulsar\Cache\Application\Exception\CacheException;
+use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Pulsar\Cache\Application\Lock\ArrayLock;
+use Pulsar\Cache\Application\Lock\LockHandle;
+use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Serializer\JsonCacheSerializer;
 use RuntimeException;
+
+use function strlen;
 
 #[CoversClass(CachePool::class)]
 final class CachePoolTest extends TestCase
@@ -137,7 +144,7 @@ final class CachePoolTest extends TestCase
     #[Test]
     public function criticalModeThrowsCacheExceptionOnDriverError(): void
     {
-        $driver = $this->createStub(\Pulsar\Cache\Application\Driver\CacheDriverInterface::class);
+        $driver = $this->createStub(CacheDriverInterface::class);
         $driver->method('get')->willThrowException(new RuntimeException('disk full'));
         $driver->method('name')->willReturn('failing');
 
@@ -150,7 +157,7 @@ final class CachePoolTest extends TestCase
         );
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('failing');
+        $this->expectExceptionMessageIsOrContains('failing');
 
         $criticalPool->getItem('any-key');
     }
@@ -318,5 +325,513 @@ final class CachePoolTest extends TestCase
         $foreignItem->method('getKey')->willReturn('foreign-key');
 
         self::assertFalse($this->pool->saveDeferred($foreignItem));
+    }
+
+    #[Test]
+    public function getItemReturnsDeferredItemClone(): void
+    {
+        $pool = $this->createPool();
+
+        $item = CacheItem::hit('deferred', 'value1');
+        $pool->saveDeferred($item);
+
+        $retrieved = $pool->getItem('deferred');
+        self::assertTrue($retrieved->isHit());
+        self::assertSame('value1', $retrieved->get());
+        $retrieved->set('modified');
+        $original = $pool->getItem('deferred');
+        self::assertSame('value1', $original->get());
+    }
+
+    #[Test]
+    public function getItemsReturnsEmptyForEmptyKeys(): void
+    {
+        $pool = $this->createPool();
+
+        $items = $pool->getItems([]);
+
+        self::assertSame([], $items);
+    }
+
+    #[Test]
+    public function getItemsReturnsDeferredItemsAndDriverItems(): void
+    {
+        $pool = $this->createPool();
+
+        $item1 = CacheItem::miss('driver-key');
+        $item1->set('driver-val');
+        $pool->save($item1);
+
+        $deferred = CacheItem::hit('deferred-key', 'deferred-val');
+        $pool->saveDeferred($deferred);
+
+        /** @var array<string, CacheItemInterface> $items */
+        $items = $pool->getItems(['driver-key', 'deferred-key', 'missing-key']);
+
+        self::assertCount(3, $items);
+        self::assertTrue($items['driver-key']->isHit());
+        self::assertSame('driver-val', $items['driver-key']->get());
+        self::assertTrue($items['deferred-key']->isHit());
+        self::assertSame('deferred-val', $items['deferred-key']->get());
+        self::assertFalse($items['missing-key']->isHit());
+    }
+
+    #[Test]
+    public function getItemsHandlesDriverError(): void
+    {
+        $driver = $this->createStub(CacheDriverInterface::class);
+        $driver->method('getMultiple')->willThrowException(new RuntimeException('read err'));
+        $driver->method('name')->willReturn('failing');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            critical: false,
+        );
+
+        /** @var array<string, CacheItemInterface> $items */
+        $items = $pool->getItems(['k1', 'k2']);
+
+        self::assertCount(2, $items);
+        self::assertFalse($items['k1']->isHit());
+        self::assertFalse($items['k2']->isHit());
+    }
+
+    #[Test]
+    public function getItemsCriticalModeThrowsOnDriverError(): void
+    {
+        $driver = $this->createStub(CacheDriverInterface::class);
+        $driver->method('getMultiple')->willThrowException(new RuntimeException('read err'));
+        $driver->method('name')->willReturn('failing');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            critical: true,
+        );
+
+        $this->expectException(CacheException::class);
+        $pool->getItems(['k1']);
+    }
+
+    #[Test]
+    public function hasItemReturnsTrueForDeferredItem(): void
+    {
+        $pool = $this->createPool();
+
+        $item = CacheItem::hit('has-deferred', 'val');
+        $pool->saveDeferred($item);
+
+        self::assertTrue($pool->hasItem('has-deferred'));
+    }
+
+    #[Test]
+    public function hasItemReturnsFalseOnDriverException(): void
+    {
+        $driver = $this->createStub(CacheDriverInterface::class);
+        $driver->method('has')->willThrowException(new RuntimeException('check err'));
+        $driver->method('name')->willReturn('failing');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+        );
+
+        self::assertFalse($pool->hasItem('any-key'));
+    }
+
+    #[Test]
+    public function deleteItemsReturnsEmptyArray(): void
+    {
+        $pool = $this->createPool();
+
+        self::assertTrue($pool->deleteItems([]));
+    }
+
+    #[Test]
+    public function deleteItemsRemovesDeferredItems(): void
+    {
+        $pool = $this->createPool();
+
+        $item = CacheItem::hit('del-deferred', 'v');
+        $pool->saveDeferred($item);
+
+        $pool->deleteItems(['del-deferred']);
+
+        $retrieved = $pool->getItem('del-deferred');
+        self::assertFalse($retrieved->isHit());
+    }
+
+    #[Test]
+    public function deleteItemsHandlesDriverError(): void
+    {
+        $driver = $this->createStub(CacheDriverInterface::class);
+        $driver->method('deleteMultiple')->willThrowException(new RuntimeException('del err'));
+        $driver->method('name')->willReturn('failing');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            critical: false,
+        );
+
+        self::assertFalse($pool->deleteItems(['k1', 'k2']));
+    }
+
+    #[Test]
+    public function deleteItemsCriticalModeThrowsOnDriverError(): void
+    {
+        $driver = $this->createStub(CacheDriverInterface::class);
+        $driver->method('deleteMultiple')->willThrowException(new RuntimeException('del err'));
+        $driver->method('name')->willReturn('failing');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            critical: true,
+        );
+
+        $this->expectException(CacheException::class);
+        $pool->deleteItems(['k1']);
+    }
+
+    #[Test]
+    public function clearRemovesDeferredItems(): void
+    {
+        $pool = $this->createPool();
+
+        $item = CacheItem::hit('deferred-clear', 'v');
+        $pool->saveDeferred($item);
+
+        $pool->clear();
+
+        $retrieved = $pool->getItem('deferred-clear');
+        self::assertFalse($retrieved->isHit());
+    }
+
+    #[Test]
+    public function saveForeignCacheItemReturnsFalse(): void
+    {
+        $pool = $this->createPool();
+        $foreignItem = $this->createStub(CacheItemInterface::class);
+
+        self::assertFalse($pool->save($foreignItem));
+    }
+
+    #[Test]
+    public function commitSavesAllDeferredItems(): void
+    {
+        $pool = $this->createPool();
+
+        $item1 = CacheItem::hit('c1', 'val1');
+        $item2 = CacheItem::hit('c2', 'val2');
+        $pool->saveDeferred($item1);
+        $pool->saveDeferred($item2);
+
+        $result = $pool->commit();
+        self::assertTrue($result);
+
+        self::assertTrue($pool->getItem('c1')->isHit());
+        self::assertTrue($pool->getItem('c2')->isHit());
+    }
+
+    #[Test]
+    public function commitReturnsFalseIfAnySaveFails(): void
+    {
+        $driver = $this->createStub(CacheDriverInterface::class);
+        $driver->method('set')->willThrowException(new RuntimeException('write err'));
+        $driver->method('name')->willReturn('failing');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            critical: false,
+        );
+
+        $item = CacheItem::hit('commit-fail', 'v');
+        $pool->saveDeferred($item);
+
+        self::assertFalse($pool->commit());
+    }
+
+    #[Test]
+    public function rememberUsesCustomTtl(): void
+    {
+        $pool = $this->createPool();
+
+        $value = $pool->remember('ttl-key', static fn(): string => 'ttl-val', 60);
+
+        self::assertSame('ttl-val', $value);
+
+        $cached = $pool->remember('ttl-key', static fn(): string => 'should-not-be-called', 60);
+        self::assertSame('ttl-val', $cached);
+    }
+
+    #[Test]
+    public function rememberUsesDefaultTtl(): void
+    {
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            defaultTtlSeconds: 300,
+        );
+
+        $value = $pool->remember('default-ttl', static fn(): string => 'val');
+
+        self::assertSame('val', $value);
+    }
+
+    #[Test]
+    public function rememberWithStampedeLockComputesAndCachesOnMiss(): void
+    {
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: new ArrayLock(),
+        );
+
+        $calls = 0;
+        $callback = static function () use (&$calls): string {
+            $calls++;
+
+            return 'computed';
+        };
+
+        self::assertSame('computed', $pool->remember('sg-key', $callback));
+        self::assertSame('computed', $pool->remember('sg-key', $callback));
+        self::assertSame(1, $calls, 'The value must be computed once and served from cache thereafter');
+    }
+
+    #[Test]
+    public function rememberDoesNotAcquireTheLockOnAHit(): void
+    {
+        $lock = $this->createMock(LockInterface::class);
+        $lock->expects(self::never())->method('acquire');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        // Seed the key via save (not remember) so the remember() below is a hit
+        // and must never reach for the lock.
+        $seed = CacheItem::miss('hit-key');
+        $seed->set('seeded');
+        $pool->save($seed);
+
+        self::assertSame('seeded', $pool->remember('hit-key', static fn(): string => 'should-not-run'));
+    }
+
+    #[Test]
+    public function rememberFallsBackToDirectComputeWhenLockAcquisitionFails(): void
+    {
+        $lock = $this->createStub(LockInterface::class);
+        $lock->method('acquire')->willThrowException(new LockAcquisitionException('locked'));
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        // Lock unavailable: the request must still resolve by computing directly.
+        self::assertSame('computed', $pool->remember('busy-key', static fn(): string => 'computed'));
+    }
+
+    #[Test]
+    public function rememberPollsForTheWinnersWriteAfterALockTimeoutInsteadOfRecomputing(): void
+    {
+        // A loser whose lock wait times out must not immediately recompute (the
+        // herd): it polls, and picks up the value the winner writes during the
+        // poll window without invoking its own callback.
+        $lock = $this->createStub(LockInterface::class);
+        $lock->method('acquire')->willThrowException(new LockAcquisitionException('timed out'));
+
+        // The winner's write "appears" on the poll: get() returns null for the
+        // initial miss, then the winner's value on the next read.
+        $driver = new class extends \Pulsar\Cache\Application\Driver\AbstractCacheDriver {
+            private int $reads = 0;
+
+            /** @var array<string, string> */
+            private array $store = [];
+
+            public function get(string $key): ?string
+            {
+                $this->reads++;
+
+                if ($this->reads >= 2 && !isset($this->store[$key])) {
+                    $this->store[$key] = (string) json_encode('winner');
+                }
+
+                return $this->store[$key] ?? null;
+            }
+
+            public function set(string $key, string $value, ?int $ttlSeconds): bool
+            {
+                $this->store[$key] = $value;
+
+                return true;
+            }
+
+            public function delete(string $key): bool
+            {
+                unset($this->store[$key]);
+
+                return true;
+            }
+
+            public function has(string $key): bool
+            {
+                return isset($this->store[$key]);
+            }
+
+            public function clear(): bool
+            {
+                $this->store = [];
+
+                return true;
+            }
+
+            public function capabilities(): \Pulsar\Cache\Application\Driver\CacheDriverCapabilities
+            {
+                return new \Pulsar\Cache\Application\Driver\CacheDriverCapabilities();
+            }
+
+            public function name(): string
+            {
+                return 'appearing';
+            }
+        };
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        $called = false;
+        $value = $pool->remember('herd-key', static function () use (&$called): string {
+            $called = true;
+
+            return 'loser';
+        });
+
+        self::assertSame('winner', $value);
+        self::assertFalse($called, 'The loser must serve the winner\'s write, not recompute');
+    }
+
+    #[Test]
+    public function rememberReadsTheWinnersValueWhenTheDoubleCheckHits(): void
+    {
+        $driver = new ArrayDriver();
+        $serializer = new JsonCacheSerializer();
+
+        // A lock whose acquire simulates a concurrent winner having written the
+        // value while we waited: remember() must return that value and skip our
+        // callback entirely.
+        $lock = new class ($driver, $serializer) implements LockInterface {
+            public function __construct(
+                private readonly ArrayDriver $driver,
+                private readonly JsonCacheSerializer $serializer,
+            ) {}
+
+            public function acquire(string $resource, int $ttlSeconds = 30, int $timeoutMs = 0): LockHandle
+            {
+                $key = substr($resource, strlen('_stampede.'));
+                $this->driver->set($key, $this->serializer->serialize('winner'), null);
+
+                return new LockHandle($resource, 'token', 0.0, $ttlSeconds);
+            }
+
+            public function release(LockHandle $handle): bool
+            {
+                return true;
+            }
+
+            public function refresh(LockHandle $handle, int $ttlSeconds = 30): bool
+            {
+                return true;
+            }
+        };
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: $serializer,
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        $called = false;
+        $value = $pool->remember('dc-key', static function () use (&$called): string {
+            $called = true;
+
+            return 'loser';
+        });
+
+        self::assertSame('winner', $value);
+        self::assertFalse($called, 'The double-check hit must short-circuit before the callback runs');
+    }
+
+    #[Test]
+    public function saveItemWithExpirationSetsCorrectTtl(): void
+    {
+        $pool = $this->createPool();
+
+        $item = CacheItem::miss('expire-key');
+        $item->set('expire-val');
+        $item->expiresAt(new DateTimeImmutable('+1 hour'));
+
+        self::assertTrue($pool->save($item));
+
+        $retrieved = $pool->getItem('expire-key');
+        self::assertTrue($retrieved->isHit());
+    }
+
+    #[Test]
+    public function deleteItemRemovesDeferredItem(): void
+    {
+        $pool = $this->createPool();
+
+        $item = CacheItem::hit('del-def', 'v');
+        $pool->saveDeferred($item);
+
+        $pool->deleteItem('del-def');
+
+        $retrieved = $pool->getItem('del-def');
+        self::assertFalse($retrieved->isHit());
+    }
+
+    private function createPool(): CachePool
+    {
+        return new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+        );
     }
 }

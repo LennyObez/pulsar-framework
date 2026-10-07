@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_taxonomies (
@@ -77,10 +79,12 @@ return new class implements MigrationInterface {
             )
             SQL);
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_term_slug_taxonomy_locale_tenant
-                ON cms_taxonomy_term_translations (taxonomy_id, locale, slug, tenant_key)
-            SQL);
+        $indexes->ensure(
+            'cms_taxonomy_term_translations',
+            'uq_term_slug_taxonomy_locale_tenant',
+            ['taxonomy_id', 'locale', 'slug', 'tenant_key'],
+            unique: true,
+        );
 
         $connection->execute(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_content_taxonomy_terms (

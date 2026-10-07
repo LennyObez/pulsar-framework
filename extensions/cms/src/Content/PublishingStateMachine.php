@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Cms\Content;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Exception\CmsException;
-use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
+use Pulsar\Extension\Cms\Publishing\PublishingOrchestratorInterface;
 
 /**
  * Validates and applies publishing status transitions on Content aggregates.
@@ -17,28 +17,27 @@ use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
  *
  * When a PublishingOrchestrator is provided, multi-channel publishing is
  * triggered automatically after successful publish/unpublish transitions.
+ *
+ * @psalm-api Resolved from the DI container by content services and admin
+ *            controllers; not instantiated by name.
  */
 #[Internal]
 final readonly class PublishingStateMachine
 {
     public function __construct(
-        private ?PublishingOrchestrator $orchestrator = null,
+        private ?PublishingOrchestratorInterface $orchestrator = null,
     ) {}
 
     /**
      * Transition content to the target publishing status.
      *
-     * @param string      $actorId          The ID of the user performing the transition
-     * @param string|null $reason           Optional reason for the transition (used in audit trail)
-     * @param bool        $editorialWorkflow Whether editorial workflow rules apply
+     * @param bool $editorialWorkflow Whether editorial workflow rules apply
      *
      * @throws CmsException If the transition is not allowed from the current status
      */
     public function transition(
         Content $content,
         PublishingStatus $target,
-        string $actorId,
-        ?string $reason = null,
         bool $editorialWorkflow = false,
     ): Content {
         if (!$content->status->canTransitionTo($target, $editorialWorkflow)) {

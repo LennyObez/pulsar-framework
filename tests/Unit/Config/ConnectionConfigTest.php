@@ -11,6 +11,9 @@ use Pulsar\Config\ConnectionConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Database\Driver;
 
+use const DIRECTORY_SEPARATOR;
+use const PHP_OS_FAMILY;
+
 #[CoversClass(ConnectionConfig::class)]
 final class ConnectionConfigTest extends TestCase
 {
@@ -118,5 +121,105 @@ final class ConnectionConfigTest extends TestCase
         ], $env);
 
         self::assertSame(['timeout' => 5], $config->options);
+    }
+
+    #[Test]
+    public function sqliteRelativePathResolvedAgainstBasePath(): void
+    {
+        $env = Environment::load(null);
+        $basePath = '/srv/myproject';
+
+        $config = ConnectionConfig::fromArray('local', [
+            'driver' => 'sqlite',
+            'database' => 'database/app.sqlite',
+        ], $env, $basePath);
+
+        self::assertSame('/srv/myproject' . DIRECTORY_SEPARATOR . 'database/app.sqlite', $config->database);
+    }
+
+    #[Test]
+    public function sqliteAbsolutePathUnchangedWithBasePath(): void
+    {
+        $env = Environment::load(null);
+        $basePath = '/srv/myproject';
+
+        $config = ConnectionConfig::fromArray('local', [
+            'driver' => 'sqlite',
+            'database' => '/var/db/shared.sqlite',
+        ], $env, $basePath);
+
+        self::assertSame('/var/db/shared.sqlite', $config->database);
+    }
+
+    #[Test]
+    public function sqliteMemoryUnchangedWithBasePath(): void
+    {
+        $env = Environment::load(null);
+
+        $config = ConnectionConfig::fromArray('local', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+        ], $env, '/srv/myproject');
+
+        self::assertSame(':memory:', $config->database);
+    }
+
+    #[Test]
+    public function sqliteEmptyDatabaseUnchangedWithBasePath(): void
+    {
+        $env = Environment::load(null);
+
+        $config = ConnectionConfig::fromArray('local', [
+            'driver' => 'sqlite',
+            'database' => '',
+        ], $env, '/srv/myproject');
+
+        self::assertSame('', $config->database);
+    }
+
+    #[Test]
+    public function sqliteWithoutBasePathLeavesRelativePathForDriver(): void
+    {
+        $env = Environment::load(null);
+
+        $config = ConnectionConfig::fromArray('local', [
+            'driver' => 'sqlite',
+            'database' => 'database/app.sqlite',
+        ], $env);
+
+        // Without basePath, the relative path is stored as-is
+        // (Driver::buildDsn will resolve it against cwd at connection time)
+        self::assertSame('database/app.sqlite', $config->database);
+    }
+
+    #[Test]
+    public function mysqlDatabaseUnaffectedByBasePath(): void
+    {
+        $env = Environment::load(null);
+
+        $config = ConnectionConfig::fromArray('main', [
+            'driver' => 'mysql',
+            'database' => 'myapp',
+        ], $env, '/srv/myproject');
+
+        // basePath only affects SQLite
+        self::assertSame('myapp', $config->database);
+    }
+
+    #[Test]
+    public function sqliteWindowsAbsolutePathUnchanged(): void
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            self::markTestSkipped('Windows-only path test');
+        }
+
+        $env = Environment::load(null);
+
+        $config = ConnectionConfig::fromArray('local', [
+            'driver' => 'sqlite',
+            'database' => 'C:\\Users\\app\\data.sqlite',
+        ], $env, 'D:\\projects\\myapp');
+
+        self::assertSame('C:\\Users\\app\\data.sqlite', $config->database);
     }
 }

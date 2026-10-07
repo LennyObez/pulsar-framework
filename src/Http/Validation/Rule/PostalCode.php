@@ -16,9 +16,10 @@ use function sprintf;
 /**
  * Validates postal/ZIP codes per country-specific patterns.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class PostalCode implements RuleInterface
+final readonly class PostalCode implements RuleInterface
 {
     /** @var array<string, string> */
     private const array PATTERNS = [

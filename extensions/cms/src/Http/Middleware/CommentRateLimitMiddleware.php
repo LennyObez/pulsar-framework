@@ -10,14 +10,16 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
 
 use function hash;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
-use function sprintf;
 use function time;
 
 /**
@@ -28,8 +30,11 @@ use function time;
  * to prevent trivial bypass.
  *
  * Returns 429 Too Many Requests with Retry-After header when exceeded.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
 {
     private const int DEFAULT_PER_MINUTE = 5;
@@ -48,7 +53,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
         $now = time();
 
         // Check per-minute limit
-        $minuteKey = sprintf('cms_comment_rate:%s:min:%d', $ipHash, (int) ($now / 60));
+        $minuteKey = CmsCacheKeys::commentRateMinute($ipHash, (int) ($now / 60));
         $minuteCount = $this->incrementCounter($minuteKey, 60);
 
         if ($minuteCount > $this->rateLimitPerMinute) {
@@ -64,7 +69,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
         }
 
         // Check per-hour limit
-        $hourKey = sprintf('cms_comment_rate:%s:hour:%d', $ipHash, (int) ($now / 3600));
+        $hourKey = CmsCacheKeys::commentRateHour($ipHash, (int) ($now / 3600));
         $hourCount = $this->incrementCounter($hourKey, 3600);
 
         if ($hourCount > $this->rateLimitPerHour) {
@@ -91,11 +96,12 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
     /**
      * Resolve a stable hash of the client IP address.
      *
-     * Uses REMOTE_ADDR only — never trusts X-Forwarded-For or similar
+     * Uses REMOTE_ADDR only: never trusts X-Forwarded-For or similar
      * headers which are trivially spoofable.
      */
     private function resolveIpHash(ServerRequestInterface $request): string
     {
+        /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         $raw = is_string($ip) ? $ip : 'unknown';
 
@@ -107,10 +113,13 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
      */
     private function incrementCounter(string $key, int $ttlSeconds): int
     {
+        /** @var mixed $current */
         $current = $this->cache->get($key);
-        $count = ($current !== null) ? ((int) $current + 1) : 1;
+        $count = (is_string($current) || is_int($current)) && is_numeric($current)
+            ? ((int) $current + 1)
+            : 1;
 
-        $this->cache->set($key, (string) $count, ['cms_comment_rate'], $ttlSeconds);
+        $this->cache->set($key, (string) $count, [CmsCacheKeys::TAG_COMMENT_RATE], $ttlSeconds);
 
         return $count;
     }

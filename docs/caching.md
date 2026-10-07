@@ -116,38 +116,229 @@ The `MetricRegistry` reference is cached at boot time to avoid per-request conta
 
 ## Deploy check severity overrides
 
-Deploy checks support per-check severity configuration via `config/deploy.php`:
+Deploy checks support per-check severity configuration via `config/deploy.php`.
+Each entry is an **array**, not a bare severity string, and each key is the
+check's registered name in **kebab-case**:
 
 ```php
 'checks' => [
-    'debug_mode'       => 'fail',   // Default severity
-    'filesystem_scan'  => 'warn',   // Downgrade to warning
-    'opcache_enabled'  => 'off',    // Skip entirely
+    // Runs, and any warning it raises becomes a blocking error.
+    'debug-mode'      => ['enabled' => true,  'severity' => 'fail'],
+    // Runs, and any error it raises is downgraded to a warning.
+    'filesystem-scan' => ['enabled' => true,  'severity' => 'warn'],
+    // Runs, and reports a pass whatever it finds.
+    'jit'             => ['enabled' => true,  'severity' => 'off'],
+    // Does not run. Absent from the report.
+    'opcache'         => ['enabled' => false, 'severity' => 'fail'],
 ],
 ```
 
-Three severity levels:
+A value that is not an array is ignored and the check keeps its default -
+silently. `'debug_mode' => 'fail'` configures nothing: the name is wrong
+(underscore, not hyphen) and so is the shape.
 
-| Level  | Behavior                                 |
-| ------ | ---------------------------------------- |
-| `fail` | Check runs normally (default)            |
-| `warn` | Errors are downgraded to warnings        |
-| `off`  | Check is replaced with a no-op skip stub |
+The registered names are exactly these:
+
+| Name                      | Default | Name                   | Default |
+| ------------------------- | ------- | ---------------------- | ------- |
+| `debug-mode`              | `fail`  | `https-readiness`      | `warn`  |
+| `environment-values`      | `warn`  | `http3-readiness`      | `warn`  |
+| `master-key`              | `fail`  | `health-endpoint`      | `warn`  |
+| `opcache`                 | `fail`  | `rate-limiting`        | `warn`  |
+| `jit`                     | `warn`  | `request-size-limits`  | `warn`  |
+| `cache-settings`          | `fail`  | `trusted-proxies`      | `warn`  |
+| `filesystem-scan`         | `fail`  | `integrity`            | `fail`  |
+| `security-headers`        | `fail`  | `audit-logger`         | `fail`  |
+| `two-factor-rate-limiter` | `warn`  | `dependency-integrity` | `warn`  |
+
+An unrecognised name is not rejected: `DeployConfig::parseChecks()` carries
+names it does not know so an extension can configure its own check. The
+consequence is that a typo configures a check nobody runs, and nothing says so.
+
+`enabled` and `severity` do different things:
+
+| Key                  | Behavior                                                              |
+| -------------------- | --------------------------------------------------------------------- |
+| `enabled => false`   | The check is never registered. It is absent from the report entirely. |
+| `severity => 'fail'` | Warnings from the check are upgraded to blocking errors.              |
+| `severity => 'warn'` | Errors from the check are downgraded to warnings.                     |
+| `severity => 'off'`  | Any non-passing result is reported as a pass.                         |
+
+A result whose severity was changed is stamped `overridden` and carries its
+`originalSeverity`, so a downgraded failure renders as a pass that says what it
+originally was rather than as a bare pass.
+
+Note that `severity => 'off'` alone still runs the check; it only rewrites the
+verdict. To stop it running, set `enabled => false`.
 
 ### Environment variable overrides
 
 Individual check severity can be overridden via environment variables, useful for CI or ephemeral environments:
 
 ```bash
-DEPLOY_CHECK_OPCACHE_ENABLED_SEVERITY=off php bin/pulsar deploy:check
+DEPLOY_CHECK_OPCACHE_SEVERITY=off php bin/pulsar deploy:check
 DEPLOY_CHECK_DEBUG_MODE_SEVERITY=warn php bin/pulsar deploy:check
 ```
 
-The variable naming convention is `DEPLOY_CHECK_{NAME}_SEVERITY` where `{NAME}` is the check name in SCREAMING_SNAKE_CASE.
+The variable name is `DEPLOY_CHECK_{NAME}_SEVERITY`, where `{NAME}` is the
+registered check name uppercased with hyphens replaced by underscores -
+`filesystem-scan` becomes `DEPLOY_CHECK_FILESYSTEM_SCAN_SEVERITY`. A value that
+is not `fail`, `warn` or `off` is ignored.
+
+From the environment, `off` also sets `enabled => false`, so the check does not
+run at all - **except in production, where an env-supplied `off` is discarded**
+and the file-configured severity stays in force. Control of the deployment
+environment must not be enough to neutralise a deploy gate with no reviewable
+change; `fail` and `warn` remain available from the environment because neither
+can weaken the gate below what the config file already allows.
+
+## Application cache serializers
+
+The application cache layer (PSR-6/PSR-16 pools, [ADR-0018](adr/0018-application-cache-layer.md)) serializes every stored value. Each pool picks a serializer with `serializer:` — an unknown value or a serializer whose extension is missing fails at boot with a `ConfigException` rather than silently falling back to JSON:
+
+- **`json`** (default) — encodes scalars and arrays only. It **rejects objects** with a `CacheException` rather than silently degrading. JSON has no code-execution surface on decode, so it is the safe default. Caveat: integer array keys come back as strings and float fidelity depends on the encoder flags.
+- **`php`** — uses PHP `serialize()`/`unserialize()` and can round-trip objects. Because unrestricted `unserialize()` is an object-injection vector, the `php` serializer is **fail-closed**: it only reconstructs classes listed in the pool's `allowed_classes`. An empty or absent allowlist permits **no** objects, and any class name in the allowlist that does not actually exist is dropped, so the allowlist can never widen deserialization to an unexpected type.
+- **`igbinary`** (requires `ext-igbinary`) — compact binary encoding, markedly faster than JSON on large arrays, with exact integer-key and float fidelity. It is **data-only, enforced at runtime on both write and read**: `igbinary_unserialize()` has no `allowed_classes` equivalent, so it cannot match the `php` serializer's fail-closed allowlist — objects are refused outright, including nested inside arrays. To cache objects, use `php` with an allowlist.
+
+```php
+// config/cache.php
+'pools' => [
+    'objects' => [
+        'driver' => 'filesystem',
+        'serializer' => 'php',
+        'allowed_classes' => [\App\Dto\Money::class], // fail-closed allowlist
+    ],
+],
+```
+
+Only enable the `php` serializer for pools whose contents are entirely under your control, and keep `allowed_classes` as narrow as possible.
+
+## Application cache compression
+
+Pools can transparently compress stored values (`compression: 'auto'` negotiates zstd > zlib by loaded extension; an explicit algorithm fails at boot if its extension is missing; default off). `compression_level` is optional and range-checked per codec at boot (zstd 1-22, zlib 0-9); omitted, each codec uses its documented default (zstd 3, zlib 6). It is worth tuning per pool against **real** payloads: a codec's ratio is not monotonic in its level — on regular, highly periodic input, zstd level 1 can beat level 3 and even level 19 (reproducible with the reference `zstd` CLI) — so an optimum inferred from synthetic fixtures will not transfer. zstd is the codec of choice at rest: both ends are ours, so there is no browser-support constraint, and it holds a better speed/ratio frontier than zlib on cache-sized values. (Brotli's advantage is its built-in web dictionary on small text over the wire — that is `CompressionMiddleware`'s job, not this layer's.) Values below `compression_threshold_bytes` (default 4096) or that would not shrink are stored raw. The stored form is self-describing, so enabling, disabling, or switching algorithms never invalidates existing entries, and counters (`increment`/`decrement`) bypass compression entirely.
+
+Combining `compression` with `encrypted: true` on one pool fails at boot unless `compression_length_oracle_acknowledged: true` is set: compress-then-encrypt leaks plaintext structure through ciphertext length (a CRIME-class oracle). See [ADR-0018](adr/0018-application-cache-layer.md) for the decorator stacking order and the full rationale.
+
+## Shared backends and key prefixes
+
+Redis and Memcached store keys raw, so every pool — and every application — on one backend shares a single keyspace, and `clear()` (`FLUSHDB`/`flush`) wipes all of it, including co-hosted session stores and queues. Set a per-pool `prefix` (charset `[A-Za-z0-9_.:-]`, max 64) to namespace the pool: `clear()` then deletes exactly that prefix on drivers that can enumerate keys (Redis via cursor-based SCAN+UNLINK, APCu), and fails loudly on Memcached (no enumeration primitive) instead of silently flushing the server. The boot log warns for any Redis/Memcached pool left unprefixed. Lock resources are deliberately not prefixed — see ADR-0018.
+
+## HTTP response caching (`HttpCacheMiddleware`)
+
+`Pulsar\Http\Cache\HttpCacheMiddleware` is a full-page response cache. It is **opt-in**: no wiring registers it, so an application that never pipes it is not affected by anything in this section.
+
+The decision this section describes -- refusing identity rather than keying on it -- is recorded in [ADR-0076](adr/0076-a-shared-cache-refuses-identity-rather-than-keying-on-it.md), along with the rejected alternative and why reversing it is the single change that reintroduces cross-caller disclosure.
+
+It is a **shared** cache. The stored entry is keyed by request method, path and query string — and by nothing else — so an entry produced for one caller is the entry handed to whoever asks for that key next. Two consequences an operator should hold on to:
+
+- The key does not contain the caller. There is no per-user store, and there is no configuration that adds one.
+- The key uses the query string as written, so `?a=1&b=2` and `?b=2&a=1` are different entries, while `/reports` and `/reports/` are the same one.
+
+Because there is no per-user store, the middleware's only safety mechanism is **refusal**: a request or response that carries identity is not read from the store and not written to it. The refusal list below is exhaustive and is enforced in both directions.
+
+### Requests the shared store is not consulted for
+
+Checked before the handler runs. The response is returned with `X-Cache: BYPASS`; the store is neither read nor written.
+
+| Condition                                                  | Notes                                                                                                                                                    |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cache.private` request attribute is truthy                | Never overridable — see [`cache.share_across_clients`](#cacheshare_across_clients) below                                                                 |
+| `Cookie` request header present and not blank              | Covers the session cookie without having to know its name, and every other per-client value. Skipped when `cache.share_across_clients` is exactly `true` |
+| `Authorization` request header present and not blank       | Skipped when `cache.share_across_clients` is exactly `true`                                                                                              |
+| `Proxy-Authorization` request header present and not blank | Skipped when `cache.share_across_clients` is exactly `true`                                                                                              |
+
+The `Cookie` refusal is deliberately indiscriminate. Deciding which cookies are "just analytics" is how a shared cache ends up serving one account's page to another, so any cookie at all is enough.
+
+The three header refusals are waived together or not at all. `carriesIdentity()` answers on `cache.share_across_clients` before it looks at any header, so the opt-in is not a per-header switch: setting it on a route means a request carrying a session cookie is read from and written to the shared store exactly like an anonymous one. Only the `cache.private` row survives it.
+
+### Responses that are not stored
+
+Checked **after** the handler has run, on the real response. The response is returned with `X-Cache: BYPASS` and nothing is written to the store. No route attribute can switch any of these off.
+
+| Condition                                                    | Why                                                                                                                        |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `Set-Cookie` present and not blank                           | The cookie was minted for one caller; storing the response stores the cookie with it                                       |
+| `Vary` present and not blank                                 | It names a request dimension the key does not contain, so the key cannot tell the variants apart                           |
+| `Transfer-Encoding` present and not blank                    | A stored entry is replayed as a plain buffered body; a replayed transfer coding in front of raw bytes is a response desync |
+| `Cache-Control` contains `no-store`, `no-cache` or `private` | The origin already said the response may not be shared                                                                     |
+
+The `Cache-Control` test is a substring match over the whole header value, so it fires on any comma-separated directive list containing one of those tokens — including forms such as `no-cache="Set-Cookie"`.
+
+### Responses that are simply not cached
+
+These are not refusals and carry **no** `X-Cache` header at all; the response is passed through untouched.
+
+- The request method is not `GET` or `HEAD`.
+- The `cache.enabled` request attribute is exactly `false`.
+- The response status is outside the 2xx range.
+
+### Route attributes
+
+The middleware reads five request attributes. They are ordinary PSR-7 attributes: set them from a route-scoped middleware, or from any frame that runs before `HttpCacheMiddleware`.
+
+| Attribute                    | Type           | Default | Effect                                                                                                  |
+| ---------------------------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| `cache.ttl`                  | `int`          | `60`    | Entry lifetime in seconds, and the `max-age` written to `Cache-Control`. A non-integer value is ignored |
+| `cache.tags`                 | `list<string>` | `[]`    | Invalidation groups for `invalidateByTags()`                                                            |
+| `cache.enabled`              | `bool`         | `true`  | Exactly `false` skips the middleware entirely                                                           |
+| `cache.private`              | `bool`         | `false` | Keeps the response out of the shared store and lets the **browser** keep it — see below                 |
+| `cache.share_across_clients` | `bool`         | `false` | Exactly `true` waives the three identity **request** headers. Waives nothing on the response side       |
+
+#### `cache.private`
+
+`cache.private` no longer stores anything. It used to mean "store it, and label it `private`"; it now means "the browser may keep this, the shared store may not". Concretely: the store is neither read nor written, `X-Cache: BYPASS` is set, and `Cache-Control: private, max-age=<ttl>` is added **only if the response carries no `Cache-Control` of its own** — a handler that already said `no-store` is not overruled.
+
+#### `cache.share_across_clients`
+
+This is the application asserting that the route's answer does not depend on the caller — a public page that an authenticated browser happens to request. Setting it to exactly `true` waives the `Cookie`, `Authorization` and `Proxy-Authorization` refusals for that request, and nothing else.
+
+What it cannot do:
+
+- It cannot waive `cache.private`, which is tested first and independently.
+- It cannot waive any response-side refusal. Those run afterwards, on the real response, and are not conditioned on the assertion: a response carrying `Set-Cookie`, `Vary`, `Transfer-Encoding` or a `private`/`no-cache`/`no-store` directive is still refused, however the route was annotated.
+
+**Read this before setting it.** Those remaining checks are _declaration-based_: the middleware reads headers, and **does not inspect the body**. A handler that renders the caller's name into the page, sets no cookie and declares no `Vary` produces a response that looks shareable and is not. The assertion is a promise the middleware cannot verify — it is only as good as the route it is put on, and putting it on a personalised route causes exactly the cross-caller disclosure the refusals exist to prevent.
+
+### `X-Cache`
+
+Every path through the middleware that reaches a decision labels the response, so an operator can tell the three cases apart from the wire without reading the store:
+
+| Value    | Meaning                                                                                                                                                                          |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HIT`    | Served from the store — full replay, or a `304 Not Modified` when `If-None-Match` matched                                                                                        |
+| `MISS`   | Produced by the handler and stored; the next request for this key should be a `HIT`                                                                                              |
+| `BYPASS` | Refused. Nothing was written, so the entry will not warm up on a later request. A request-side refusal does not read the store either; a response-side one has already missed it |
+
+`MISS` and `BYPASS` are the pair that matters when investigating: a `MISS` is a cold cache, a `BYPASS` is a cache that will never be warm for that request.
+
+### What a stored entry replays
+
+A `MISS` that stores adds `ETag` (an `xxh128` digest of the body), `Cache-Control: public, max-age=<ttl>` and `X-Cache: MISS` to the live response. `public` is not a guess: everything that could have made the response one caller's has already left through a `BYPASS`.
+
+A `HIT` replays the stored status, headers and body, plus `ETag`, `X-Cache: HIT` and `Age` (seconds since the entry was created). When the request carries a matching `If-None-Match` (or `*`), the reply is a bodiless `304` with `ETag`, `Cache-Control: public, max-age=<remaining ttl>` and `X-Cache: HIT`.
+
+### Wiring
+
+```php
+use Pulsar\Http\Cache\HttpCacheMiddleware;
+use Pulsar\Http\Cache\InMemoryCacheStorage;
+
+$cache = new HttpCacheMiddleware(new InMemoryCacheStorage(), defaultTtl: 60);
+
+$kernel->addMiddleware($cache);        // or name it in a route's `middleware:` list
+
+$cache->invalidateByTags(['users']);   // targeted invalidation
+$cache->clearCache();                  // drop everything
+```
+
+`InMemoryCacheStorage` lives for one process. Under a classic SAPI that means the cache never survives a request; a persistent worker runtime keeps it for the worker's lifetime, unshared between workers. Implement `CacheStorageInterface` for a backend that outlives either.
+
+Marking sensitive routes uncacheable by browsers and proxies is a different mechanism: see [`#[NoCacheResponse]` and `NoCacheMiddleware`](http.md#nocacheresponse-and-nocachemiddleware).
 
 ## See also
 
 - [`deployment.md`](deployment.md) - Full deployment guide
+- [`http.md`](http.md) - Response cache directives, streamed responses, error-path headers
 - [`performance.md`](performance.md) - Benchmark harness
 - [Performance budgets](performance.md): regression thresholds
 - [`cli-reference.md`](cli-reference.md) - Full command reference

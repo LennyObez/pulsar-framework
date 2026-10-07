@@ -88,7 +88,7 @@ final class LeakDetector
 
             foreach ($this->trackedResources as $entry) {
                 $message = sprintf(
-                    'Unreleased resource: [%s] %s — %s',
+                    'Unreleased resource: [%s] %s: %s',
                     $entry->type,
                     $entry->id,
                     $entry->description,

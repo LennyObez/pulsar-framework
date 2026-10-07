@@ -129,6 +129,34 @@ final class WebhookHandlerTest extends TestCase
         self::assertFalse($result->accepted);
     }
 
+    /**
+     * Regression: a payload that passes signature + replay checks but is not
+     * valid JSON must be rejected cleanly (the declared contract is a
+     * WebhookResult return), never surface an uncaught JsonException.
+     */
+    #[Test]
+    public function it_rejects_malformed_json_payload(): void
+    {
+        $verifier = $this->createStub(WebhookVerifierInterface::class);
+        $verifier->method('verify')->willReturn(true);
+
+        $handler = new WebhookHandler($verifier, new InMemoryDeduplicationStore());
+
+        $request = new WebhookRequest(
+            payload: '{not valid json',
+            headers: [],
+            sourceIp: '1.2.3.4',
+            timestamp: time(),
+            provider: 'ses',
+        );
+
+        $result = $handler->handle($request);
+
+        self::assertFalse($result->accepted);
+        self::assertSame('', $result->eventId);
+        self::assertSame(WebhookEventType::Delivery, $result->eventType);
+    }
+
     #[Test]
     public function it_defaults_to_delivery_event_type(): void
     {

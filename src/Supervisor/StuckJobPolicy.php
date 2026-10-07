@@ -14,6 +14,7 @@ use Pulsar\Config\SupervisorConfig;
  * Defines the timeout after which a processing job is considered stuck,
  * the interval between detection sweeps, and whether stuck jobs should
  * be moved to the dead-letter queue automatically.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StuckJobPolicy

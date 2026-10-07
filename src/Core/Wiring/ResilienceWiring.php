@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Config\ConfigManager;
@@ -11,15 +13,27 @@ use Pulsar\Config\HealthCheckConfig;
 use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\RetryConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Http\Controller\HealthController;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Observability\Diagnostics\DiagnosticsAuthGuard;
 use Pulsar\Resilience\CircuitBreakerRegistry;
+use Pulsar\Resilience\HealthCheck\CacheHealthCheck;
+use Pulsar\Resilience\HealthCheck\DatabaseHealthCheck;
+use Pulsar\Resilience\HealthCheck\DiskHealthCheck;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Resilience\RetryPolicy;
+use Pulsar\Routing\RouteAccessRegistrar;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Crypto\FipsComplianceCheck;
+
+use function in_array;
 
 #[Internal]
 final readonly class ResilienceWiring implements ServiceWiringInterface
@@ -61,9 +75,93 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
         $container->instance(HealthCheckRunner::class, $healthCheckRunner);
         $container->instance(HealthCheckRunnerInterface::class, $healthCheckRunner);
 
+        // Register built-in health checks. The FIPS check is opt-in
+        // (health_check.fips_check): it reports "degraded" on any non-FIPS
+        // host and the health endpoint 503s on non-healthy results -- the
+        // right fail-closed signal for a FIPS-regulated deployment, but it
+        // would eject every ordinary deployment from its LB pool by default.
+        $healthCheckRunner->register(new DiskHealthCheck());
+
+        if ($resilienceConfig->healthCheck->fipsCheck) {
+            $healthCheckRunner->register(new FipsComplianceCheck());
+        }
+
+        // Health endpoint: lazily registers checks that depend on services
+        // wired after ResilienceWiring (e.g. CacheWiring).
+        // Registered at both /_pulsar/health and /health for convenience.
+        $healthHandler = static function (ServerRequestInterface $request) use ($container, $healthCheckRunner): Response {
+            // Register cache health check on first request when PSR-16 cache is available
+            if ($container->has(CacheInterface::class)) {
+                /** @var CacheInterface $cache */
+                $cache = $container->get(CacheInterface::class);
+
+                if (!self::hasCheck($healthCheckRunner, 'cache')) {
+                    $healthCheckRunner->register(new CacheHealthCheck($cache));
+                }
+            }
+
+            // Same lazy pattern for database connectivity: DatabaseWiring runs
+            // before ResilienceWiring, but the connection may be bound by an
+            // extension or replaced at runtime, so resolve it per request.
+            if ($container->has(ConnectionManagerInterface::class)) {
+                /** @var ConnectionManagerInterface $connectionManager */
+                $connectionManager = $container->get(ConnectionManagerInterface::class);
+
+                if (!self::hasCheck($healthCheckRunner, 'database')) {
+                    $healthCheckRunner->register(new DatabaseHealthCheck($connectionManager));
+                }
+            }
+
+            // Check messages carry absolute paths, database hostnames and driver
+            // errors; latencies are a timing side channel. The probe itself must
+            // stay open, so the DETAIL is gated instead, on the same Bearer token
+            // that opens the diagnostics dashboard and the metrics exporter.
+            // Resolved per request rather than captured: this wiring runs before
+            // DiagnosticsWiring, so at boot the guard may not be bound yet. When
+            // no guard exists nothing can vouch for a request and every caller
+            // gets the reduced body.
+            $guard = $container->has(DiagnosticsAuthGuard::class)
+                ? $container->get(DiagnosticsAuthGuard::class)
+                : null;
+            /** @var DiagnosticsAuthGuard|null $guard */
+
+            $controller = new HealthController(
+                $healthCheckRunner,
+                $guard === null
+                    ? null
+                    : static fn(ServerRequestInterface $probe): bool => $guard->isAuthorized($probe),
+            );
+
+            return $controller($request);
+        };
+
+        $routes = new RouteAccessRegistrar($router, $middlewareRegistry);
+
+        // Public on purpose, and it is the one route here where that is the whole
+        // point: a load balancer or orchestrator probes it with no credential and
+        // acts on the status code alone. Registered at both paths for convenience.
+        // What makes "public" safe rather than merely true is above -- the body an
+        // unauthenticated caller receives carries each check's name and status and
+        // nothing else.
+        $probeReason = 'Liveness/readiness probe for load balancers and orchestrators, which '
+            . 'carry no credential; anonymous callers receive the overall status and each '
+            . 'check status only, with messages and latencies withheld unless the '
+            . 'PULSAR_DIAGNOSTICS_TOKEN Bearer token is presented.';
+
+        $routes->publicRoute([Method::GET], '/_pulsar/health', $healthHandler, 'pulsar.health', $probeReason);
+        $routes->publicRoute([Method::GET], '/health', $healthHandler, 'pulsar.health.alias', $probeReason);
+
         // Repair runner
         $repairRunner = new RepairRunner();
         $container->instance(RepairRunner::class, $repairRunner);
         $container->instance(RepairRunnerInterface::class, $repairRunner);
+    }
+
+    /**
+     * Check whether a health check with the given name is already registered.
+     */
+    private static function hasCheck(HealthCheckRunner $runner, string $name): bool
+    {
+        return in_array($name, $runner->names(), true);
     }
 }

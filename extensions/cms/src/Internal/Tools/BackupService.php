@@ -30,6 +30,8 @@ use function hash_equals;
 use function implode;
 use function in_array;
 use function is_array;
+use function is_int;
+use function is_string;
 use function json_decode;
 use function json_encode;
 use function preg_match;
@@ -46,7 +48,11 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  * Dumps CMS database tables to JSON with BLAKE2b integrity hashes,
  * stored in private media disk. Restore validates hash before applying.
  */
-#[Internal(reason: 'Backup internals — use BackupServiceInterface')]
+#[Internal(reason: 'Backup internals; use BackupServiceInterface')]
+/**
+ * @psalm-api Bound to BackupServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class BackupService implements BackupServiceInterface
 {
     private const string BACKUP_DIR = 'backups/cms';
@@ -108,8 +114,9 @@ final readonly class BackupService implements BackupServiceInterface
                 $bindings['tenant_id'] = $scope->tenantId;
             }
 
+            $quotedTable = '"' . $table . '"';
             $result = $this->connection->query(
-                "SELECT * FROM {$table}{$tenantFilter}",
+                "SELECT * FROM $quotedTable$tenantFilter",
                 $bindings,
             );
 
@@ -159,7 +166,7 @@ final readonly class BackupService implements BackupServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.backup.created',
-            "backup:{$backupId}",
+            "backup:$backupId",
             [
                 'scope' => $scope->toArray(),
                 'hash' => $hash,
@@ -179,10 +186,15 @@ final readonly class BackupService implements BackupServiceInterface
         }
 
         $metaJson = $this->disk->read($metadataPath);
-        $meta = json_decode($metaJson, true, 512, JSON_THROW_ON_ERROR);
+        /** @var array<string, mixed> $meta */
+        $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
-        $storagePath = $meta['storage_path'];
-        $expectedHash = $meta['hash'];
+        /** @var mixed $rawStoragePath */
+        $rawStoragePath = $meta['storage_path'] ?? null;
+        $storagePath = is_string($rawStoragePath) ? $rawStoragePath : '';
+        /** @var mixed $rawHash */
+        $rawHash = $meta['hash'] ?? null;
+        $expectedHash = is_string($rawHash) ? $rawHash : '';
 
         if (!$this->disk->exists($storagePath)) {
             throw CmsException::backupNotFound($backupId);
@@ -195,14 +207,19 @@ final readonly class BackupService implements BackupServiceInterface
             throw CmsException::backupTampered($backupId);
         }
 
-        $backupData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        /** @var array<string, mixed> $backupData */
+        $backupData = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+        /** @var array<string, mixed> $tables */
         $tables = $backupData['tables'] ?? [];
-        $scope = BackupScope::fromArray($backupData['scope'] ?? []);
-        $restoredCounts = [];
+        /** @var array{include_content?: bool, include_media?: bool, include_taxonomies?: bool, include_menus?: bool, include_settings?: bool, include_commerce?: bool, tenant_id?: string|null} $scopeData */
+        $scopeData = $backupData['scope'] ?? [];
+        $scope = BackupScope::fromArray($scopeData);
         $warnings = [];
 
-        $this->connection->transaction(function (ConnectionInterface $conn) use ($tables, $scope, &$restoredCounts, &$warnings): void {
+        /** @var array<string, int> $restoredCounts */
+        $restoredCounts = $this->connection->transaction(function (ConnectionInterface $conn) use ($tables, $scope): array {
             $tablesToRestore = $this->getTablesForScope($scope);
+            $counts = [];
 
             // Validate all table names against the whitelist
             foreach ($tablesToRestore as $table) {
@@ -214,7 +231,7 @@ final readonly class BackupService implements BackupServiceInterface
             // Truncate in reverse order (children before parents)
             $reversed = array_reverse($tablesToRestore, true);
 
-            foreach ($reversed as $label => $table) {
+            foreach ($reversed as $table) {
                 $tenantFilter = '';
                 $bindings = [];
 
@@ -223,7 +240,7 @@ final readonly class BackupService implements BackupServiceInterface
                     $bindings['tenant_id'] = $scope->tenantId;
                 }
 
-                $conn->execute("DELETE FROM \"{$table}\"{$tenantFilter}", $bindings);
+                $conn->execute("DELETE FROM \"$table\"$tenantFilter", $bindings);
             }
 
             // Re-insert in forward order (parents before children)
@@ -234,32 +251,38 @@ final readonly class BackupService implements BackupServiceInterface
                     continue;
                 }
 
-                $restoredCounts[$label] = count($rows);
+                $counts[$label] = count($rows);
 
+                /** @var mixed $row */
                 foreach ($rows as $row) {
                     if (!is_array($row) || $row === []) {
                         continue;
                     }
 
+                    /** @var array<string, mixed> $row */
                     $columns = array_keys($row);
 
                     foreach ($columns as $col) {
-                        if (!$this->validateColumnName($col)) {
-                            throw CmsException::invalidBackupData(sprintf('Invalid column name: %s', $col));
+                        $colName = $col;
+
+                        if (!$this->validateColumnName($colName)) {
+                            throw CmsException::invalidBackupData(sprintf('Invalid column name: %s', $colName));
                         }
                     }
 
-                    $quotedColumns = array_map(static fn(string $col): string => "\"{$col}\"", $columns);
-                    $placeholders = array_map(static fn(string $col): string => ":{$col}", $columns);
+                    $quotedColumns = array_map(static fn(string $col): string => "\"$col\"", $columns);
+                    $placeholders = array_map(static fn(string $col): string => ":$col", $columns);
                     $columnList = implode(', ', $quotedColumns);
                     $placeholderList = implode(', ', $placeholders);
 
                     $conn->execute(
-                        "INSERT INTO \"{$table}\" ({$columnList}) VALUES ({$placeholderList})",
+                        "INSERT INTO \"$table\" ($columnList) VALUES ($placeholderList)",
                         $row,
                     );
                 }
             }
+
+            return $counts;
         });
 
         $this->auditLogger?->log(
@@ -267,7 +290,7 @@ final readonly class BackupService implements BackupServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.backup.restored',
-            "backup:{$backupId}",
+            "backup:$backupId",
             [
                 'reason' => $reason,
                 'restored_counts' => $restoredCounts,
@@ -296,20 +319,34 @@ final readonly class BackupService implements BackupServiceInterface
                 continue;
             }
 
-            $scope = BackupScope::fromArray($meta['scope'] ?? []);
+            /** @var array{include_content?: bool, include_media?: bool, include_taxonomies?: bool, include_menus?: bool, include_settings?: bool, include_commerce?: bool, tenant_id?: string|null} $scopeArr */
+            $scopeArr = $meta['scope'] ?? [];
+            $scope = BackupScope::fromArray($scopeArr);
 
             if ($tenantId !== null && $scope->tenantId !== null && $scope->tenantId !== $tenantId) {
                 continue;
             }
 
+            /** @var mixed $rawStoragePath */
+            $rawStoragePath = $meta['storage_path'] ?? null;
+            /** @var mixed $rawHash */
+            $rawHash = $meta['hash'] ?? null;
+            /** @var mixed $rawSize */
+            $rawSize = $meta['size'] ?? null;
+            /** @var mixed $rawCreatedAt */
+            $rawCreatedAt = $meta['created_at'] ?? null;
+            /** @var mixed $rawCreatedBy */
+            $rawCreatedBy = $meta['created_by'] ?? null;
+            /** @var mixed $rawId */
+            $rawId = $meta['id'];
             $backups[] = new Backup(
-                id: $meta['id'],
+                id: is_string($rawId) ? $rawId : '',
                 scope: $scope,
-                storagePath: $meta['storage_path'],
-                hash: $meta['hash'],
-                size: $meta['size'],
-                createdAt: new DateTimeImmutable($meta['created_at']),
-                createdBy: $meta['created_by'],
+                storagePath: is_string($rawStoragePath) ? $rawStoragePath : '',
+                hash: is_string($rawHash) ? $rawHash : '',
+                size: is_int($rawSize) ? $rawSize : 0,
+                createdAt: new DateTimeImmutable(is_string($rawCreatedAt) ? $rawCreatedAt : 'now'),
+                createdBy: is_string($rawCreatedBy) ? $rawCreatedBy : '',
             );
         }
 
@@ -325,9 +362,12 @@ final readonly class BackupService implements BackupServiceInterface
         }
 
         $metaJson = $this->disk->read($metadataPath);
-        $meta = json_decode($metaJson, true, 512, JSON_THROW_ON_ERROR);
+        /** @var array<string, mixed> $meta */
+        $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
-        $storagePath = $meta['storage_path'] ?? null;
+        /** @var mixed $rawStoragePath */
+        $rawStoragePath = $meta['storage_path'] ?? null;
+        $storagePath = is_string($rawStoragePath) ? $rawStoragePath : null;
 
         if ($storagePath !== null && $this->disk->exists($storagePath)) {
             $this->disk->delete($storagePath);
@@ -341,7 +381,7 @@ final readonly class BackupService implements BackupServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.backup.deleted',
-            "backup:{$backupId}",
+            "backup:$backupId",
             [
                 'reason' => $reason,
             ],
@@ -439,17 +479,19 @@ final readonly class BackupService implements BackupServiceInterface
     {
         $paths = [];
 
-        // Use the backup index approach — list known metadata files
+        // Use the backup index approach: list known metadata files
         // The disk may not support directory listing, so we maintain an index
         $indexPath = self::BACKUP_DIR . '/index.json';
 
         if ($this->disk->exists($indexPath)) {
             $indexJson = $this->disk->read($indexPath);
+            /** @var mixed $index */
             $index = json_decode($indexJson, true);
 
             if (is_array($index)) {
+                /** @var mixed $id */
                 foreach ($index as $id) {
-                    $metaPath = self::BACKUP_DIR . '/' . $id . '.meta.json';
+                    $metaPath = self::BACKUP_DIR . '/' . (is_string($id) ? $id : '') . '.meta.json';
 
                     if ($this->disk->exists($metaPath)) {
                         $paths[] = $metaPath;
@@ -471,6 +513,7 @@ final readonly class BackupService implements BackupServiceInterface
 
         if ($this->disk->exists($indexPath)) {
             $indexJson = $this->disk->read($indexPath);
+            /** @var mixed $decoded */
             $decoded = json_decode($indexJson, true);
 
             if (is_array($decoded)) {
@@ -479,7 +522,7 @@ final readonly class BackupService implements BackupServiceInterface
         }
 
         if ($remove) {
-            $index = array_values(array_filter($index, static fn(string $id): bool => $id !== $backupId));
+            $index = array_values(array_filter($index, static fn(mixed $id): bool => $id !== $backupId));
         } else {
             $index[] = $backupId;
         }

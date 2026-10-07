@@ -7,7 +7,9 @@ namespace Pulsar\Tests\Unit\Audit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
@@ -88,7 +90,29 @@ final class AuditLoggerInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function fallsBackToSystemWhenNoActorAvailable(): void
+    public function throwsWhenContextHasNoActorAndNoneProvided(): void
+    {
+        $holder = new RequestContextHolder();
+        $holder->set(new RequestContext(
+            correlationId: CorrelationId::fromString(str_repeat('aa', 16)),
+            causationId: CausationId::fromString(str_repeat('bb', 16)),
+        ));
+
+        $sink = $this->createStub(AuditSinkInterface::class);
+        $logger = new AuditLogger($sink, $this->auditKey, contextHolder: $holder);
+
+        $this->expectException(AuditActorMissingException::class);
+
+        $logger->log(
+            event: AuditEvent::SystemEvent,
+            outcome: AuditOutcome::Success,
+            actor: null,
+            action: 'background_task',
+        );
+    }
+
+    #[Test]
+    public function acceptsExplicitAuditActorWhenContextLacksActor(): void
     {
         $holder = new RequestContextHolder();
         $holder->set(new RequestContext(
@@ -102,11 +126,11 @@ final class AuditLoggerInterfaceTest extends TestCase
         $entry = $logger->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('background.task'),
             action: 'background_task',
         );
 
-        self::assertSame('system', $entry->actor);
+        self::assertSame('system:background.task', $entry->actor);
     }
 
     #[Test]

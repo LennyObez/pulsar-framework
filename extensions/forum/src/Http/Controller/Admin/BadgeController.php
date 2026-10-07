@@ -18,9 +18,9 @@ use function array_map;
 use function is_string;
 
 /**
- * Admin controller for badge management — overview, manual award/revoke.
+ * Admin controller for badge management: overview, manual award/revoke.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class BadgeController
 {
     use RendersAdminView;
@@ -32,7 +32,7 @@ final readonly class BadgeController
     ) {}
 
     /**
-     * GET /admin/forum/badges — Badge overview with available badges.
+     * GET /admin/forum/badges: Badge overview with available badges.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -52,7 +52,7 @@ final readonly class BadgeController
     }
 
     /**
-     * GET /admin/forum/badges/user/{userId} — Show badges for a user.
+     * GET /admin/forum/badges/user/{userId}: Show badges for a user.
      */
     public function userBadges(ServerRequestInterface $request, string $userId): Response
     {
@@ -74,7 +74,7 @@ final readonly class BadgeController
     }
 
     /**
-     * POST /admin/forum/badges/award — Manually award a badge to a user.
+     * POST /admin/forum/badges/award: Manually award a badge to a user.
      */
     public function award(ServerRequestInterface $request): Response
     {
@@ -84,8 +84,12 @@ final readonly class BadgeController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $badgeValue = is_string($body['badge'] ?? null) ? $body['badge'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawBadge */
+        $rawBadge = $body['badge'] ?? null;
+        $badgeValue = is_string($rawBadge) ? $rawBadge : '';
 
         if ($userId === '' || $badgeValue === '') {
             return Response::json(['error' => 'user_id and badge are required'], 422);
@@ -119,7 +123,7 @@ final readonly class BadgeController
     }
 
     /**
-     * POST /admin/forum/badges/revoke — Revoke a badge from a user.
+     * POST /admin/forum/badges/revoke: Revoke a badge from a user.
      */
     public function revoke(ServerRequestInterface $request): Response
     {
@@ -129,8 +133,12 @@ final readonly class BadgeController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $badgeValue = is_string($body['badge'] ?? null) ? $body['badge'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawBadge */
+        $rawBadge = $body['badge'] ?? null;
+        $badgeValue = is_string($rawBadge) ? $rawBadge : '';
 
         if ($userId === '' || $badgeValue === '') {
             return Response::json(['error' => 'user_id and badge are required'], 422);

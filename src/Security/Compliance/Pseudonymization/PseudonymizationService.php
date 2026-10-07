@@ -7,6 +7,7 @@ namespace Pulsar\Security\Compliance\Pseudonymization;
 use LogicException;
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -86,7 +87,7 @@ final class PseudonymizationService implements PseudonymizationServiceInterface
      */
     public function __serialize(): array
     {
-        throw new LogicException('PseudonymizationService must not be serialized — derived key material would leak.');
+        throw new LogicException('PseudonymizationService must not be serialized: derived key material would leak.');
     }
 
     #[Override]
@@ -126,7 +127,7 @@ final class PseudonymizationService implements PseudonymizationServiceInterface
         $this->auditLogger->log(
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('compliance.pseudonymization'),
             action: 'pseudonym.resolve',
             resource: $pseudonym,
         );

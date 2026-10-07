@@ -18,6 +18,7 @@ use Pulsar\I18n\TranslatorInterface;
  *
  * Reads the current locale from the translator, which is updated
  * per-request by the locale middleware, avoiding stale boot-time values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TemplateLocaleHelper

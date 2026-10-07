@@ -16,6 +16,10 @@ use Pulsar\I18n\Locale\UrlPrefixExtractor;
  * Extracts the locale from the URL path prefix using the core
  * UrlPrefixExtractor, falling back to the CMS default locale
  * when no supported locale is found in the path.
+ *
+ * @psalm-api Public service resolved from the DI container by content
+ *            middleware; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LocaleResolver

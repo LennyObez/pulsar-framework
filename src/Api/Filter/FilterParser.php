@@ -16,7 +16,6 @@ use function explode;
 use function in_array;
 use function is_a;
 use function is_numeric;
-use function trim;
 
 /**
  * Parses raw filter query parameters into validated AST nodes.
@@ -30,6 +29,7 @@ use function trim;
  *   - `?filter[status]=eq:active`
  *   - `?filter[age]=gte:18`
  *   - `?filter[role]=in:admin,editor`
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterParser
@@ -75,6 +75,7 @@ final readonly class FilterParser
             }
 
             // Cast and validate value
+            /** @var mixed $typedValue */
             $typedValue = $this->castValue($value, $definition, $operator, $field);
 
             $expressions[] = FilterExpression::create($definition->column, $operator, $typedValue);
@@ -120,7 +121,7 @@ final readonly class FilterParser
         FilterOperator $operator,
         string $field,
     ): mixed {
-        // Handle "in" operator — comma-separated list
+        // Handle "in" operator: comma-separated list
         if ($operator === FilterOperator::In) {
             $parts = array_map(trim(...), explode(',', $rawValue));
 

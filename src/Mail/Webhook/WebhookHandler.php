@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Mail\Webhook;
 
+use JsonException;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -66,17 +68,34 @@ final readonly class WebhookHandler implements WebhookHandlerInterface
             );
         }
 
-        $decoded = json_decode($request->payload, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode($request->payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            $this->logEvent($request, 'webhook.rejected', AuditOutcome::Denied, [
+                'reason' => 'malformed_payload',
+            ]);
+
+            return new WebhookResult(
+                accepted: false,
+                eventId: '',
+                eventType: WebhookEventType::Delivery,
+            );
+        }
+
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 
+        /** @var mixed $rawEventId */
         $rawEventId = $data['event_id'] ?? '';
         $eventId = is_string($rawEventId) ? $rawEventId : '';
 
+        /** @var mixed $rawEventType */
         $rawEventType = $data['event_type'] ?? '';
         $eventType = WebhookEventType::tryFrom(is_string($rawEventType) ? $rawEventType : '')
             ?? WebhookEventType::Delivery;
 
+        /** @var mixed $rawMessageId */
         $rawMessageId = $data['message_id'] ?? null;
         $messageId = is_string($rawMessageId) ? $rawMessageId : null;
 
@@ -118,7 +137,7 @@ final readonly class WebhookHandler implements WebhookHandlerInterface
         $this->auditLogger?->log(
             event: AuditEvent::Communication,
             outcome: $outcome,
-            actor: null,
+            actor: AuditActor::system('mail.webhook'),
             action: $action,
             resource: $request->provider,
             metadata: [

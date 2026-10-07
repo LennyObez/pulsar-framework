@@ -16,9 +16,10 @@ use function sprintf;
 
 /**
  * Validates ISO 3166-1 alpha-2 country codes. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class CountryCode implements RuleInterface
+final readonly class CountryCode implements RuleInterface
 {
     /** @var list<string> */
     private const array CODES = [

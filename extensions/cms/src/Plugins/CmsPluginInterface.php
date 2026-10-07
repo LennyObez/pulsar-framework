@@ -12,6 +12,10 @@ use Pulsar\Api\Api;
  * Plugins implement this interface and declare it as the entry_point in plugin.json.
  * The register() method is called once during installation; boot() is called on every
  * request where the plugin is enabled.
+ *
+ * @psalm-api Public extension contract; implementations are loaded by name from
+ *            installed plugin packages by CmsPluginManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsPluginInterface

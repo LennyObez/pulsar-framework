@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Exception thrown during build pipeline operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BuildException extends RuntimeException
@@ -87,6 +88,17 @@ final class BuildException extends RuntimeException
         return new self(
             'Build manifest signature verification failed. '
             . 'The manifest may have been tampered with. Run `pulsar build --sign` to re-sign.',
+        );
+    }
+
+    #[NoDiscard]
+    public static function signatureVerificationUnavailable(): self
+    {
+        return new self(
+            'Build manifest is signed but the cryptographic services required to verify '
+            . 'it are unavailable. Refusing to boot rather than trust an unverifiable '
+            . 'signature (fail closed). Provide PULSAR_MASTER_KEY in production, or rebuild '
+            . 'without a signature if signing is not required.',
         );
     }
 

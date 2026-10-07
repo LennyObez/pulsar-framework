@@ -1,0 +1,62 @@
+/* ===========================================================================
+ * Progressive enhancement — no-inline reveal-on-scroll
+ * ---------------------------------------------------------------------------
+ * Replaces the classic inline `<script>documentElement.classList.add('js')`
+ * bootstrap. That inline script forced every app's CSP to carry a
+ * `script-src 'sha256-…'`; branching visibility on the CSS `scripting` media
+ * feature instead needs NO script at all, so a project can ship the strongest,
+ * most cacheable policy: `script-src 'self'` with no inline, no hash, no nonce.
+ *
+ * Behaviour:
+ *   - JS enabled  → `@media (scripting: enabled)` matches from FIRST PAINT, so
+ *     [data-pulsar-reveal] elements start hidden before paint (no FOUC) and
+ *     reveal.js animates them in as they enter the viewport.
+ *   - JS disabled → `scripting: none`; the block below never applies, so the
+ *     elements keep their default, visible state (correct no-JS experience).
+ *   - `scripting` unsupported (older engine) → the block is ignored entirely,
+ *     again leaving elements visible. The <noscript> stylesheet fallback
+ *     documented in assets.md covers the same gap explicitly.
+ *
+ * Fail-safe: the mechanism NEVER leaves content permanently hidden. If reveal.js
+ * is blocked or fails to load, the `pulsar-reveal-failsafe` animation still
+ * brings every element to its visible state after a short delay — losing only
+ * the scroll-triggered timing, never the content.
+ * =========================================================================== */
+
+@media (scripting: enabled) {
+  [data-pulsar-reveal] {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    will-change: opacity, transform;
+
+    /* Fail-safe reveal for a never-arriving bundle (see header). */
+    animation: pulsar-reveal-failsafe 1ms linear 3s forwards;
+  }
+
+  [data-pulsar-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+    animation: none;
+  }
+}
+
+@keyframes pulsar-reveal-failsafe {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Honour reduced-motion: no movement, no animation, always visible. */
+@media (prefers-reduced-motion: reduce) {
+  [data-pulsar-reveal],
+  [data-pulsar-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+}

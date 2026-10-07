@@ -16,6 +16,7 @@ use Pulsar\Config\RateLimitConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
+use ReflectionClass;
 
 #[CoversClass(SecurityConfig::class)]
 #[CoversClass(SessionConfig::class)]
@@ -38,6 +39,7 @@ final class SecurityConfigTest extends TestCase
     protected function tearDown(): void
     {
         putenv('SESSION_COOKIE_NAME');
+        putenv('APP_ENV');
     }
 
     #[Test]
@@ -98,7 +100,10 @@ final class SecurityConfigTest extends TestCase
     #[Test]
     public function defaultsAppliedWhenKeysAreMissing(): void
     {
-        $config = SecurityConfig::fromArray([], $this->environment);
+        // cookie_secure defaults to secure only in production; pin it so the
+        // secure-default assertion is deterministic.
+        putenv('APP_ENV=production');
+        $config = SecurityConfig::fromArray([], Environment::load());
 
         self::assertSame('PULSAR_SESSION', $config->session->cookieName);
         self::assertSame(7200, $config->session->lifetime);
@@ -211,7 +216,7 @@ final class SecurityConfigTest extends TestCase
         self::assertTrue($config->csp->enabled);
         self::assertSame("'self'", $config->csp->defaultSrc);
         self::assertTrue($config->hsts->enabled);
-        self::assertSame(31536000, $config->hsts->maxAge);
+        self::assertSame(63072000, $config->hsts->maxAge);
         self::assertSame('same-origin', $config->crossOrigin->openerPolicy);
     }
 
@@ -239,7 +244,14 @@ final class SecurityConfigTest extends TestCase
 
         $effective = $config->effectiveHeaders();
 
-        self::assertArrayNotHasKey('Content-Security-Policy', $effective);
+        // Disabling CspConfig only suppresses the *custom* CSP; the restrictive
+        // baseline Content-Security-Policy from MINIMUM_HEADERS remains as a
+        // defense-in-depth floor (see SecurityHeadersConfig::MINIMUM_HEADERS).
+        // It must never escalate to a report-only-only state.
+        self::assertSame(
+            "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'",
+            $effective['Content-Security-Policy'],
+        );
         self::assertArrayNotHasKey('Content-Security-Policy-Report-Only', $effective);
     }
 
@@ -276,8 +288,18 @@ final class SecurityConfigTest extends TestCase
 
         $effective = $config->effectiveHeaders();
 
-        self::assertArrayNotHasKey('Cross-Origin-Opener-Policy', $effective);
-        self::assertArrayNotHasKey('Cross-Origin-Embedder-Policy', $effective);
-        self::assertArrayNotHasKey('Cross-Origin-Resource-Policy', $effective);
+        // Empty CrossOriginConfig values mean "do not override"; the secure
+        // baseline Cross-Origin-* headers from MINIMUM_HEADERS remain so an
+        // empty override never weakens cross-origin isolation.
+        self::assertSame('same-origin', $effective['Cross-Origin-Opener-Policy']);
+        self::assertSame('require-corp', $effective['Cross-Origin-Embedder-Policy']);
+        self::assertSame('same-origin', $effective['Cross-Origin-Resource-Policy']);
+    }
+
+    #[Test]
+    public function classIsFinal(): void
+    {
+        $reflection = new ReflectionClass(SecurityConfig::class);
+        self::assertTrue($reflection->isFinal(), 'SecurityConfig must be final to prevent config DTO subclassing');
     }
 }

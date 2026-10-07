@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Decouples the runtime adapter from concrete PSR-7 worker implementations
  * (e.g., RoadRunner, ReactPHP). The concrete implementation bridges the
  * external worker's protocol.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WorkerInterface

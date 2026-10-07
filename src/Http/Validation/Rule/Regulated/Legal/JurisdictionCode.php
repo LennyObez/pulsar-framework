@@ -20,9 +20,10 @@ use function strtoupper;
  * Accepts 50 US states + DC + US territories (AS, GU, MP, PR, VI).
  *
  * @see https://www.iso.org/obp/ui/#iso:code:3166:US
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class JurisdictionCode implements RuleInterface
+final readonly class JurisdictionCode implements RuleInterface
 {
     /** @var list<string> Valid US jurisdiction codes */
     private const array CODES = [

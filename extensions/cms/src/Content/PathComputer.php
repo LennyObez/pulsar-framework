@@ -13,6 +13,8 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * Handles cycle detection, max depth enforcement, and cascading path
  * recomputation when content hierarchy changes.
+ *
+ * @psalm-api Resolved by content service from the DI container; not new'd by name.
  */
 #[Internal]
 final readonly class PathComputer

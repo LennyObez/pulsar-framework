@@ -17,6 +17,11 @@ declare(strict_types=1);
  *   php scripts/wiring_check.php --json                  # JSON output
  */
 
+use Pulsar\Api\CompositionRoots;
+use Pulsar\Tooling\Support\JsonDocument;
+
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
 // ---------------------------------------------------------------------------
 // WiringAnalyzer — core analysis logic (testable independently)
 // ---------------------------------------------------------------------------
@@ -24,18 +29,6 @@ declare(strict_types=1);
 final class WiringAnalyzer
 {
     /** FQCNs that are composition roots — they wire others, aren't wired themselves. */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\\Core\\Kernel',
-        'Pulsar\\Console\\Application',
-        'Pulsar\\Console\\Command\\OptimizeCommand',
-        'Pulsar\\Console\\Command\\BuildCommand',
-    ];
-
-    /** Namespace prefixes for composition roots. */
-    private const array COMPOSITION_ROOT_NAMESPACES = [
-        'Pulsar\\Core\\Wiring\\',
-    ];
-
     /** Path segments that indicate exempt files. */
     private const array EXEMPT_PATH_SEGMENTS = [
         '/Migration/', // Migrations execute by naming convention
@@ -127,13 +120,10 @@ final class WiringAnalyzer
      */
     public function isExempt(string $fqcn, string $relativePath): bool
     {
-        // Composition root classes
-        if (in_array($fqcn, self::COMPOSITION_ROOTS, true)) {
-            return true;
-        }
-
-        // Composition root namespaces
-        if (array_any(self::COMPOSITION_ROOT_NAMESPACES, static fn(string $p): bool => str_starts_with($fqcn, $p))) {
+        // Delegated, not restated. This checker held a third copy of the list, and the
+        // narrowest of the three: it recognised Pulsar\Core\Wiring\ but not
+        // Pulsar\Core\Boot\, so boot-time assembly classes were reported as unwired.
+        if (CompositionRoots::contains($fqcn)) {
             return true;
         }
 
@@ -286,7 +276,7 @@ final class WiringAnalyzer
         // Skip "use function" and "use const"
         if ($i < $count && is_array($tokens[$i])) {
             if ($tokens[$i][0] === T_FUNCTION || $tokens[$i][0] === T_CONST) {
-                while ($i < $count && $tokens[$i] !== ';') {
+                while ($i < $count && (!is_string($tokens[$i]) || $tokens[$i] !== ';')) {
                     $i++;
                 }
 
@@ -375,7 +365,8 @@ if (PHP_SAPI !== 'cli') {
     return;
 }
 
-$scriptFile = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
+$scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? '';
+$scriptFile = realpath(is_string($scriptFilename) ? $scriptFilename : '');
 $thisFile = realpath(__FILE__);
 if ($scriptFile !== false && $thisFile !== false && $scriptFile !== $thisFile) {
     return;
@@ -384,12 +375,17 @@ if ($scriptFile !== false && $thisFile !== false && $scriptFile !== $thisFile) {
 $rootDir = dirname(__DIR__);
 $baselinePath = $rootDir . '/tools/php/wiring-baseline.json';
 
+// $argv only exists when register_argc_argv is on — always true under the CLI
+// SAPI, but reading it unguarded would silently drop every flag if it were not.
+/** @var list<string> $arguments */
+$arguments = array_values(array_filter($argv ?? [], 'is_string'));
+
 // Parse CLI arguments
-$jsonOutput = in_array('--json', $argv, true);
-$generateBaseline = in_array('--generate-baseline', $argv, true);
+$jsonOutput = in_array('--json', $arguments, true);
+$generateBaseline = in_array('--generate-baseline', $arguments, true);
 $diffBase = null;
 
-foreach ($argv as $arg) {
+foreach ($arguments as $arg) {
     if (str_starts_with($arg, '--diff-base=')) {
         $diffBase = substr($arg, strlen('--diff-base='));
     }
@@ -414,12 +410,13 @@ if ($diffBase !== null) {
     }
 }
 
-// Load baseline
+// Load baseline. An entry that lost its `fqcn` would key the exemption set on
+// null and silently accept an unrelated unwired component, so the field is
+// required rather than assumed.
 $baseline = [];
 if (!$generateBaseline && file_exists($baselinePath)) {
-    $data = json_decode((string) file_get_contents($baselinePath), true, 512, JSON_THROW_ON_ERROR);
-    foreach ($data['unwired'] ?? [] as $entry) {
-        $baseline[$entry['fqcn']] = true;
+    foreach (JsonDocument::fromFile($baselinePath)->children('unwired') as $entry) {
+        $baseline[$entry->string('fqcn')] = true;
     }
 }
 

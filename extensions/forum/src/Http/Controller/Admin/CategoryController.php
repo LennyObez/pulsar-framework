@@ -16,12 +16,13 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_numeric;
 use function is_string;
 
 /**
  * Admin controller for forum category CRUD with translation management.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class CategoryController
 {
     use RendersAdminView;
@@ -34,7 +35,7 @@ final readonly class CategoryController
     ) {}
 
     /**
-     * GET /admin/forum/categories — List all categories.
+     * GET /admin/forum/categories: List all categories.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -54,7 +55,7 @@ final readonly class CategoryController
     }
 
     /**
-     * GET /admin/forum/categories/{id} — Show a single category with translations.
+     * GET /admin/forum/categories/{id}: Show a single category with translations.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -78,7 +79,7 @@ final readonly class CategoryController
     }
 
     /**
-     * POST /admin/forum/categories — Create a new category.
+     * POST /admin/forum/categories: Create a new category.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -88,7 +89,9 @@ final readonly class CategoryController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $slug = is_string($body['slug'] ?? null) ? $body['slug'] : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slug = is_string($rawSlug) ? $rawSlug : '';
 
         if ($slug === '') {
             return Response::json(['error' => 'Slug is required'], 422);
@@ -96,8 +99,12 @@ final readonly class CategoryController
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
-        $parentId = is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null;
-        $sortOrder = is_numeric($body['sort_order'] ?? null) ? (int) $body['sort_order'] : 0;
+        /** @var mixed $rawParentId */
+        $rawParentId = $body['parent_id'] ?? null;
+        $parentId = is_string($rawParentId) ? $rawParentId : null;
+        /** @var mixed $rawSortOrder */
+        $rawSortOrder = $body['sort_order'] ?? null;
+        $sortOrder = is_numeric($rawSortOrder) ? (int) $rawSortOrder : 0;
 
         $category = Category::create(
             id: UuidGenerator::v7(),
@@ -109,9 +116,15 @@ final readonly class CategoryController
 
         $this->categoryRepository->save($category);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : $slug;
-        $description = is_string($body['description'] ?? null) ? $body['description'] : '';
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : 'en';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : $slug;
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        $description = is_string($rawDescription) ? $rawDescription : '';
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         $translation = CategoryTranslation::create(
             id: UuidGenerator::v7(),
@@ -129,7 +142,7 @@ final readonly class CategoryController
     }
 
     /**
-     * PUT /admin/forum/categories/{id} — Update a category.
+     * PUT /admin/forum/categories/{id}: Update a category.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -145,47 +158,59 @@ final readonly class CategoryController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        if (is_string($body['slug'] ?? null) && $body['slug'] !== $category->slug) {
-            $category = $category->changeSlug($body['slug']);
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        if (is_string($rawSlug) && $rawSlug !== $category->slug) {
+            $category = $category->changeSlug($rawSlug);
         }
 
-        if (isset($body['sort_order'])) {
-            $category = $category->reorder(is_numeric($body['sort_order']) ? (int) $body['sort_order'] : 0);
+        /** @var mixed $rawSortOrder */
+        $rawSortOrder = $body['sort_order'] ?? null;
+        if ($rawSortOrder !== null) {
+            $category = $category->reorder(is_numeric($rawSortOrder) ? (int) $rawSortOrder : 0);
         }
 
-        if (isset($body['is_locked'])) {
-            $category = $body['is_locked'] ? $category->lock() : $category->unlock();
+        /** @var mixed $rawIsLocked */
+        $rawIsLocked = $body['is_locked'] ?? null;
+        if ($rawIsLocked !== null) {
+            $category = $rawIsLocked ? $category->lock() : $category->unlock();
         }
 
         $this->categoryRepository->save($category);
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
 
-        if (is_string($body['name'] ?? null) || is_string($body['description'] ?? null)) {
+        if (is_string($rawName) || is_string($rawDescription)) {
             $translation = $this->translationRepository->findByCategoryAndLocale($id, $locale);
 
             if ($translation !== null) {
-                $name = is_string($body['name'] ?? null) ? $body['name'] : $translation->name;
-                $description = is_string($body['description'] ?? null) ? $body['description'] : $translation->description;
+                $name = is_string($rawName) ? $rawName : $translation->name;
+                $description = is_string($rawDescription) ? $rawDescription : $translation->description;
                 $translation = $translation->update($name, $description);
-                $this->translationRepository->save($translation);
             } else {
                 $translation = CategoryTranslation::create(
                     id: UuidGenerator::v7(),
                     categoryId: $id,
                     locale: $locale,
-                    name: is_string($body['name'] ?? null) ? $body['name'] : $category->slug,
-                    description: is_string($body['description'] ?? null) ? $body['description'] : '',
+                    name: is_string($rawName) ? $rawName : $category->slug,
+                    description: is_string($rawDescription) ? $rawDescription : '',
                 );
-                $this->translationRepository->save($translation);
             }
+
+            $this->translationRepository->save($translation);
         }
 
         return Response::json(['data' => $this->serializeWithTranslations($category)]);
     }
 
     /**
-     * DELETE /admin/forum/categories/{id} — Delete a category.
+     * DELETE /admin/forum/categories/{id}: Delete a category.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

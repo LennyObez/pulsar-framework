@@ -7,12 +7,16 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\ApiKey;
 use Pulsar\Extension\Cms\Commerce\ApiKeyRepositoryInterface;
 
 /**
  * Database-backed API key repository.
+ *
+ * @psalm-api Bound to ApiKeyRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ApiKeyRepositoryInterface for public API')]
 final readonly class DbApiKeyRepository implements ApiKeyRepositoryInterface
@@ -21,14 +25,11 @@ final readonly class DbApiKeyRepository implements ApiKeyRepositoryInterface
         SELECT * FROM cms_api_keys WHERE key_hash = :key_hash AND is_active = 1 LIMIT 1
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_api_keys (id, tenant_id, name, key_hash, last_used_at, is_active, created_at, expires_at)
-        VALUES (:id, :tenant_id, :name, :key_hash, :last_used_at, :is_active, :created_at, :expires_at)
-        ON CONFLICT (id) DO UPDATE SET
-            name = EXCLUDED.name,
-            is_active = EXCLUDED.is_active,
-            expires_at = EXCLUDED.expires_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'name', 'key_hash', 'last_used_at', 'is_active', 'created_at', 'expires_at',
+    ];
+
+    private const array UPSERT_UPDATE = ['name', 'is_active', 'expires_at'];
 
     private const string SQL_RECORD_USAGE = <<<'SQL'
         UPDATE cms_api_keys SET last_used_at = :now WHERE id = :id
@@ -47,7 +48,15 @@ final readonly class DbApiKeyRepository implements ApiKeyRepositoryInterface
 
     public function save(ApiKey $key): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_api_keys',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $key->id,
             'tenant_id' => $key->tenantId,
             'name' => $key->name,

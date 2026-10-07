@@ -11,6 +11,7 @@ use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
  * A user's report on a post for moderation review.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostReport
@@ -65,10 +66,9 @@ final readonly class PostReport
     }
 
     /**
-     * Review this report — transition to the given status with moderator details.
+     * Review this report: transition to the given status with moderator details.
      *
      * @throws ForumException If the transition is invalid
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function review(
         ReportStatus $target,

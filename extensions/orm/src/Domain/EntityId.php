@@ -14,6 +14,7 @@ use function sprintf;
  *
  * Carries the entity class name and primary key value for
  * identity map lookups and audit trail references.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EntityId

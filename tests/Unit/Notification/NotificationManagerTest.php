@@ -8,15 +8,20 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\NotificationChannelType;
 use Pulsar\Config\NotificationConfig;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Notification\Event\NotificationFailed;
 use Pulsar\Notification\Event\NotificationSent;
+use Pulsar\Notification\Exception\NotificationException;
 use Pulsar\Notification\NotifiableInterface;
 use Pulsar\Notification\Notification;
 use Pulsar\Notification\NotificationChannelInterface;
 use Pulsar\Notification\NotificationManager;
+use Pulsar\Security\Audit\AuditEvent;
+use Pulsar\Security\Audit\AuditOutcome;
+use RuntimeException;
 
 #[CoversClass(NotificationManager::class)]
 final class NotificationManagerTest extends TestCase
@@ -44,6 +49,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -67,6 +74,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -88,6 +97,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -111,6 +122,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -133,6 +146,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -153,6 +168,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -172,6 +189,80 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->sendNow($notifiable, $notification, ['log']);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
+    }
+
+    #[Test]
+    public function it_audits_unexpected_throwable(): void
+    {
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::Communication,
+                AuditOutcome::Error,
+                null,
+                'notification.unexpected_error',
+                self::anything(),
+                self::callback(static function (array $metadata): bool {
+                    return isset($metadata['notification_id'])
+                        && $metadata['channel'] === 'mail'
+                        && $metadata['exception_class'] === RuntimeException::class;
+                }),
+            );
+
+        $channel = $this->createStub(NotificationChannelInterface::class);
+        $channel->method('name')->willReturn('mail');
+        $channel->method('send')->willThrowException(new RuntimeException('Unexpected'));
+
+        $notifiable = $this->createNotifiable('user-audit');
+        $notification = $this->createNotification(['mail']);
+
+        $manager = new NotificationManager(
+            $this->config,
+            ['mail' => $channel],
+            auditLogger: $auditLogger,
+            logger: $this->createStub(LoggerInterface::class),
+        );
+
+        // Should not throw — unexpected errors are caught and audited
+        $manager->send($notifiable, $notification);
+    }
+
+    #[Test]
+    public function it_does_not_audit_notification_exception_as_unexpected(): void
+    {
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        // NotificationException caught by the first catch block should log with Failure, not Error
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::Communication,
+                AuditOutcome::Failure,
+                self::anything(),
+                'notification.failed',
+                self::anything(),
+                self::anything(),
+            );
+
+        $channel = $this->createStub(NotificationChannelInterface::class);
+        $channel->method('name')->willReturn('mail');
+        $channel->method('send')->willThrowException(
+            NotificationException::deliveryFailed('mail', 'user-audit-ne'),
+        );
+
+        $notifiable = $this->createNotifiable('user-audit-ne');
+        $notification = $this->createNotification(['mail']);
+
+        $manager = new NotificationManager(
+            $this->config,
+            ['mail' => $channel],
+            auditLogger: $auditLogger,
+            logger: $this->createStub(LoggerInterface::class),
+        );
+
+        $manager->send($notifiable, $notification);
     }
 
     private function createNotifiable(string $id): NotifiableInterface

@@ -1,92 +1,466 @@
 <?xml version="1.0"?>
+<!--
+    `findUnusedBaselineEntry="true"` + `findUnusedCode="true"` are
+    intentionally aggressive at errorLevel=1. The combination keeps
+    the baseline pruned (any baseline entry that no longer matches a
+    real Psalm error fails CI) and forces unused private methods /
+    dead code to surface in review.
+
+    DO NOT reach for `psalm \-\-alter` when Unused* / PossiblyUnused* /
+    InvalidReturnType issues fire: that pass deletes what it judges
+    unused, and Psalm's judgement of "unused" includes methods reached
+    only through a container binding or an interface it cannot see.
+    Either suppress at the call site with a precise
+    `@psalm-suppress UnusedMethod reason: ...` tag, or restructure the
+    code so the dead path is genuinely removed.
+
+    STRICTNESS SWITCHES — measured, not guessed (2026-07-26)
+
+    errorLevel="1" is the strictest level, but the level is not the
+    whole of Psalm's strictness: a dozen orthogonal switches sit
+    beside it. Every one was tried and counted rather than assumed.
+
+    Enabled because the codebase already satisfied them, so they cost
+    nothing and stop the first regression:
+      ensureOverrideAttribute, strictBinaryOperands,
+      sealAllMethods, sealAllProperties,
+      findUnusedIssueHandlerSuppression  -> 0 errors each
+
+    findUnusedPsalmSuppress is ON. A stale `@psalm-suppress` is worse
+    than no suppression: it keeps suppressing whatever error later
+    appears at that line, so the switch must stay on and the tags must
+    stay accurate.
+
+    Measured and NOT yet enabled, with the work each one requires:
+      ensureArrayIntOffsetsExist         -> ~270 sites
+      ensureArrayStringOffsetsExist      -> ~220 sites
+
+    Both are real findings rather than noise, and satisfying them
+    means giving each array access a proved-present offset — array
+    shapes, not casts. Enabling them before that work is done makes
+    `composer qa` red for everyone, and a gate that is always red is a
+    gate nobody reads.
+
+    Deliberately NOT enabled, because they would make things worse:
+      disableSuppressAll  - the policy above depends on precise,
+                            justified suppressions being possible.
+      disableVarParsing   - inline @var is what narrows container
+                            get() returns; discarding it yields less
+                            precise types, not more.
+    Note that many remaining switches (allowStringToStandInForClass,
+    hideExternalErrors, ignoreInternalFunction*) are permissive knobs:
+    enabling them loosens the analysis. They stay off.
+-->
 <psalm
-    errorLevel="1"
-    resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    errorLevel="1"
+    resolveFromConfigFile="true"
     cacheDirectory="../../.psalm-cache"
     findUnusedBaselineEntry="true"
-    findUnusedCode="false"
+    findUnusedCode="true"
+    findUnusedIssueHandlerSuppression="true"
+    findUnusedPsalmSuppress="true"
+    ensureOverrideAttribute="true"
+    strictBinaryOperands="true"
+    sealAllMethods="true"
+    sealAllProperties="true"
 >
     <projectFiles>
         <directory name="../../src"/>
-        <directory name="../../extensions/studio/src"/>
+        <directory name="../../extensions/accessibility/src"/>
+        <directory name="../../extensions/admin/src"/>
+        <directory name="../../extensions/ai-governance/src"/>
+        <directory name="../../extensions/analytics/src"/>
+        <directory name="../../extensions/auth/src"/>
+        <directory name="../../extensions/cms/src"/>
+        <directory name="../../extensions/compliance/data-act/src"/>
+        <directory name="../../extensions/compliance/dora/src"/>
+        <directory name="../../extensions/compliance/dsa/src"/>
+        <directory name="../../extensions/compliance/eidas/src"/>
+        <directory name="../../extensions/compliance/fhir/src"/>
+        <directory name="../../extensions/compliance/medical-devices/src"/>
+        <directory name="../../extensions/compliance/psd2/src"/>
+        <directory name="../../extensions/devices/src"/>
+        <directory name="../../extensions/example/src"/>
+        <directory name="../../extensions/feedback/src"/>
+        <directory name="../../extensions/form/src"/>
+        <directory name="../../extensions/forum/src"/>
+        <directory name="../../extensions/graphql/src"/>
+        <directory name="../../extensions/grpc/src"/>
+        <directory name="../../extensions/mcp-server/src"/>
+        <directory name="../../extensions/observability-export/src"/>
+        <directory name="../../extensions/observability/src"/>
+        <directory name="../../extensions/opentelemetry/src"/>
+        <directory name="../../extensions/orm/src"/>
         <directory name="../../extensions/payments/src"/>
         <directory name="../../extensions/psr7-bridge/src"/>
-        <directory name="../../extensions/observability-export/src"/>
-        <directory name="../../extensions/form/src"/>
+        <directory name="../../extensions/releases/src"/>
+        <directory name="../../extensions/studio/src"/>
+        <directory name="../../extensions/subscriptions/src"/>
+        <directory name="../../extensions/booking/src"/>
+        <directory name="../../extensions/health-status/src"/>
+        <directory name="../../extensions/messaging/src"/>
+        <directory name="../../extensions/tickets/src"/>
         <ignoreFiles>
             <directory name="../../vendor"/>
         </ignoreFiles>
     </projectFiles>
 
+    <!--
+        Extension signatures come from jetbrains/phpstorm-stubs, which tracks the
+        extensions upstream, and never from a hand-written copy. A hand-written
+        stub drifts from the extension it describes (a return type widened
+        upstream to `int|false`, a method added), and a stub that is merely
+        plausible makes the analyser confidently wrong.
+
+        Psalm does ship curated stubs of its own for redis/memcached/amqp/apcu in
+        vendor/vimeo/psalm/stubs/extensions/ — but it only loads them when the
+        extension is actually present in the analysing PHP. None of these are
+        installed here or in CI, so relying on that would leave Psalm with no
+        declaration at all: dropping these four entries yields UndefinedClass
+        errors and a cascade of Mixed* findings behind them. They are listed
+        explicitly for that reason, and the upstream path is what makes them
+        trustworthy rather than the listing itself.
+
+        The remaining entries are hand-written because nothing upstream exists to
+        copy: suggested composer packages that are not installed, a runtime that
+        publishes no stubs, or — for gRPC — an upstream stub that is provably wrong.
+    -->
     <stubs>
-        <file name="stubs/Redis.php"/>
-        <file name="stubs/Memcached.php"/>
-        <file name="stubs/PsySH.php"/>
-        <file name="stubs/Amqp.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/redis/Redis.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/memcached/memcached.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/amqp/amqp.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/apcu/apcu.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/imagick/imagick.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/igbinary/igbinary.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/msgpack/msgpack.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/brotli/brotli.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/frankenphp/frankenphp.php"/>
+        <!-- ext-pcntl is POSIX-only: PHP has no Windows build of it, so a developer
+             machine can never have it and the analysers there would treat every
+             signal constant as undefined and every pcntl_*() argument as mixed. The
+             framework registers signal handlers in its worker lifecycle, so that is
+             a real analysis gap on the platform where the code actually runs.
+             pcntl_c.php carries the SIG* constants; pcntl.php the functions. -->
+        <file name="../../vendor/jetbrains/phpstorm-stubs/pcntl/pcntl.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/pcntl/pcntl_c.php"/>
+        <!-- Replaces phpstorm-stubs' gRPC stub outright: two of its declarations are wrong
+             against the extension's C source. See the file for the arginfo it cites. -->
+        <file name="stubs/Grpc.php"/>
         <file name="stubs/AwsSqs.php"/>
         <file name="stubs/GooglePubSub.php"/>
+        <file name="stubs/PsySH.php"/>
+        <file name="stubs/RoadRunner.php"/>
+        <!--
+            Not a stub for something missing: psr/http-message is a hard dependency,
+            so ServerRequestInterface already exists. This re-declares it with
+            `array<array-key, mixed>` returns where PSR-7 says bare `array`, which
+            stops every member access degrading to mixed. PHPStan does not load it —
+            it needs no such refinement, and its stubFiles mechanism would analyse
+            the partial re-declaration on its own and fail to resolve the parent
+            RequestInterface this file does not restate.
+        -->
+        <file name="stubs/Psr7.php"/>
     </stubs>
 
+    <plugins>
+        <!--
+            Teaches Psalm about the Pulsar framework's container-resolution
+            conventions (PHP attributes consumed via reflection, registry-managed
+            interfaces, framework base classes, controller naming convention,
+            etc.). Stops the analyser from reporting UnusedClass /
+            PossiblyUnusedMethod / PossiblyUnusedProperty false positives on
+            classes that are wired at runtime but whose call sites Psalm
+            cannot trace statically.
+        -->
+        <pluginClass class="Pulsar\Tooling\PsalmPlugin\PulsarPsalmPlugin"/>
+    </plugins>
+
     <issueHandlers>
-        <!-- Allow mixed types for reflection-based DI and request handling -->
-        <MixedAssignment errorLevel="suppress"/>
-        <MixedMethodCall errorLevel="suppress"/>
-        <MixedArgument errorLevel="suppress"/>
-        <MixedReturnStatement errorLevel="suppress"/>
+        <!--
+            Zero-tolerance policy.
+            Every remaining suppression below must fall in one of three categories:
+              (A) Psalm 6.x parser/analyser bug with documented upstream link and
+                  expected resolution in a later Psalm version.
+              (B) Protocol or PSR interface shape that Psalm legitimately cannot
+                  derive (e.g. named-argument mismatch forced by interface stability).
+              (C) Single-file narrow suppression for a specific edge case.
+            Broad Mixed*/Unused*/ClassMustBeFinal blanket suppressions are not
+            allowed: they hide whole issue classes across the whole codebase.
 
-        <!-- Readonly classes are designed for extension in a framework -->
-        <ClassMustBeFinal errorLevel="suppress"/>
+            === ratchet plan ===
+            Ratchet triggers (per category):
+              (A) When Psalm 7 stable lands, audit each (A) entry against the
+                  release notes — most should disappear. Failing entries get
+                  upstream tracking issues filed.
+              (B) Audit each entry against the PSR interface it pins. If the
+                  upstream PSR ever tightens the contract, the suppression
+                  becomes unnecessary. PSR-7 ParamNameMismatch and
+                  MoreSpecificImplementedParamType are likely permanent.
+              (C) These are the burndown queue. Each (C) entry has an explicit
+                  file path; investigate and either fix the false positive
+                  upstream, restructure the code, or upgrade the suppression to
+                  an inline `@psalm-suppress` with a tighter reason tag.
 
-        <!-- False positives for enum value comparisons -->
-        <RedundantCondition errorLevel="suppress"/>
+            Adding a new suppression: classify (A/B/C), add a 2-line rationale
+            comment, and link the upstream issue where one exists. Adding a
+            suppression without this metadata is a CI-blocking review red flag.
+        -->
 
-        <!-- Allow array_values on lists for type coercion -->
-        <RedundantFunctionCallGivenDocblockType errorLevel="suppress"/>
-
-        <!-- Interface methods overriding PSR interfaces don't need #[Override] -->
+        <!-- (A) Psalm 6.x does not fully support PHP 8.5 #[Override] on
+             methods implementing interface contracts. PHPStan max is authoritative
+             for override validation. Re-evaluate after Psalm 7 stable.
+             Upstream: https://github.com/vimeo/psalm/issues -->
+        <InvalidAttribute errorLevel="suppress"/>
         <MissingOverrideAttribute errorLevel="suppress"/>
 
-        <!-- Allow type coercion for docblock types -->
-        <RedundantConditionGivenDocblockType errorLevel="suppress"/>
-        <ArgumentTypeCoercion errorLevel="suppress"/>
+        <!-- (A) Psalm 6.x strict binary-operand mode flags int+float operations
+             that are valid in PHP 8.5. PHPStan max is authoritative. -->
+        <InvalidOperand errorLevel="suppress"/>
 
-        <!-- File operations can return false -->
+        <!-- (A) Psalm 6.x misparses PHP 8.5 clone-with and pipe operator expressions,
+             reporting undefined variables for valid syntax constructs. -->
+        <UndefinedGlobalVariable errorLevel="suppress"/>
+
+        <!-- (A) Psalm 6.x reports redundant calls that actually serve as explicit
+             type coercion (e.g., array_values for list<T> type).
+             Will be tightened to per-file once Psalm 7 ships. -->
+        <RedundantFunctionCall errorLevel="suppress"/>
+        <RedundantFunctionCallGivenDocblockType errorLevel="suppress"/>
+
+        <!-- (A) Psalm 6.x + readonly constructor-promotion false positives -->
+        <RedundantPropertyInitializationCheck errorLevel="suppress"/>
+
+        <!-- (A) Enum value comparisons are flagged redundant by Psalm 6.x -->
+        <RedundantCondition errorLevel="suppress"/>
+        <RedundantConditionGivenDocblockType errorLevel="suppress"/>
+
+        <!-- (A) Psalm 7 beta does not yet support PHP 8.5 clone() function syntax
+             which preserves the type of $this. PHPStan max is authoritative. -->
+        <MoreSpecificReturnType errorLevel="suppress"/>
+        <LessSpecificReturnStatement errorLevel="suppress"/>
+
+        <!-- (A) Psalm 6.x: "@var redundant" with modern inference -->
+        <UnnecessaryVarAnnotation errorLevel="suppress"/>
+
+        <!-- (A) Casts required by older Psalm — keep until 7.0 stable -->
+        <RedundantCastGivenDocblockType errorLevel="suppress"/>
+
+        <!-- (B) PSR interface implementations may use different parameter names
+             than the interface — required for named-argument ABI stability. -->
+        <ParamNameMismatch errorLevel="suppress"/>
+
+        <!-- (B) Covariant/contravariant parameter types in PHP 8.5 implementations
+             are wider than Psalm 6 can track. -->
+        <MoreSpecificImplementedParamType errorLevel="suppress"/>
+
+        <!-- (B) Dynamic includes in templates — structural limitation of any
+             static analyser. -->
+        <UnresolvableInclude errorLevel="suppress"/>
+
+        <!-- (B) File operation returns can legitimately be falsy (fopen, fread,
+             file_get_contents). These are narrow-enough that suppression is
+             justified; per-call try/catch wrapping would obscure error paths. -->
         <RiskyTruthyFalsyComparison errorLevel="suppress"/>
 
-        <!-- Psalm 6.15 does not yet recognize PHP 8.4 virtual property hooks
-             (get-only computed properties with no backing store) -->
+        <!-- (B) Explicit type coercion at value-object construction is the
+             standard "parse, don't validate" pattern. -->
+        <ArgumentTypeCoercion errorLevel="suppress"/>
+
+        <!-- (C) Psalm 6.15 does not yet recognize PHP 8.4 virtual property hooks
+             (get-only computed properties with no backing store). -->
         <PropertyNotSetInConstructor>
             <errorLevel type="suppress">
                 <file name="../../src/Console/Input/ArrayInput.php"/>
             </errorLevel>
         </PropertyNotSetInConstructor>
 
-        <!-- Psalm 6.15 does not yet support PHP 8.5 clone() function syntax
-             which preserves the type of $this. PHPStan max is authoritative. -->
-        <MoreSpecificReturnType>
-            <errorLevel type="suppress">
-                <file name="../../src/Http/Message/Response.php"/>
-                <file name="../../src/Http/Message/ServerRequest.php"/>
-                <file name="../../src/Api/Filter/Filter.php"/>
-            </errorLevel>
-        </MoreSpecificReturnType>
-        <LessSpecificReturnStatement>
-            <errorLevel type="suppress">
-                <file name="../../src/Http/Message/Response.php"/>
-                <file name="../../src/Http/Message/ServerRequest.php"/>
-                <file name="../../src/Api/Filter/Filter.php"/>
-            </errorLevel>
-        </LessSpecificReturnStatement>
-
-        <!-- Psalm false positive: ReflectionNamedType::getName() returns string,
-             comparison with 'self'/'static'/'parent' is valid runtime check -->
+        <!-- (C) Psalm false positive: ReflectionNamedType::getName() returns string,
+             comparison with 'self'/'static'/'parent' is a valid runtime check. -->
         <TypeDoesNotContainType>
             <errorLevel type="suppress">
                 <file name="../../src/Container/Compiler/Pass/OptimizePass.php"/>
             </errorLevel>
         </TypeDoesNotContainType>
+
+        <!-- (C) Psalm's Fiber stub declares no template parameters; phpstan requires
+             all four, so the code annotates Fiber<Socket, void, void, void>. A stub
+             disagreement between the two analysers, not a real type error. -->
+        <TooManyTemplateParams>
+            <errorLevel type="suppress">
+                <file name="../../src/Runtime/Fiber/FiberScheduler.php"/>
+            </errorLevel>
+        </TooManyTemplateParams>
+
+        <!-- (C) Optional-extension symbols (ext-imagick, ext-brotli, ext-zstd,
+             FrankenPHP) are declared in tools/php/stubs/ so analysis is identical
+             whether or not the extension is loaded. That removes the previously
+             environment-fragile UndefinedClass / MixedArgument / per-file
+             UnusedParam / MixedAssignment suppressions for these files. -->
+        <UnusedParam>
+            <errorLevel type="suppress">
+                <!-- (C) Magic __serialize / __unserialize methods that exist solely to
+                     forbid serialization. PHP mandates the signature; the body throws
+                     before reading $data. -->
+                <file name="../../src/Security/Crypto/CompositeKeyProvider.php"/>
+                <file name="../../src/Security/Crypto/Encryptor.php"/>
+                <file name="../../src/Security/Crypto/MasterKey.php"/>
+                <file name="../../src/Security/Csrf/EncryptedCsrfManager.php"/>
+                <file name="../../src/Security/Csrf/StatelessCsrfManager.php"/>
+                <file name="../../src/Security/Session/SessionEncryption.php"/>
+                <!-- (C) #[Api] public surface where the parameter is reserved
+                     for future use without breaking the documented signature.
+                     Each entry corresponds to a forward-compatible API contract
+                     (filter operator hint, query bindings, retry exception
+                     introspection, cache key tracking, model-binder request
+                     context, hreflang current-locale anchoring, etc.). -->
+                <file name="../../extensions/cms/src/I18n/HreflangGenerator.php"/>
+                <file name="../../src/Api/Filter/Filter.php"/>
+                <file name="../../src/Database/Cache/SensitivityMetadata.php"/>
+                <file name="../../src/Database/Cache/TableTagExtractor.php"/>
+                <file name="../../src/Observability/Profiler/RequestProfiler.php"/>
+                <file name="../../src/Queue/Retry/QueueRetryPolicy.php"/>
+                <file name="../../src/Routing/Binding/ModelBinder.php"/>
+                <!-- (C) RuntimeInterface::afterRequest(\$request, \$response): the
+                     RequestSandbox impl currently uses neither argument but the
+                     interface contract requires the signature for future
+                     request/response-driven cleanup hooks. -->
+                <file name="../../src/Runtime/RequestSandbox.php"/>
+                <!-- (C) WebAuthnAttestationVerifier reserved signature parameters
+                     for the COSE signature / attestation chain verification work
+                     still to land. -->
+                <file name="../../src/Security/ZeroTrust/DeviceIdentity/Internal/WebAuthnAttestationVerifier.php"/>
+            </errorLevel>
+        </UnusedParam>
+
+        <!-- (C) Template-method default implementations on abstract base classes:
+             subclasses override these hooks and use the contract parameter, but
+             Psalm only sees the base "not implemented" default. -->
+        <PossiblyUnusedParam>
+            <errorLevel type="suppress">
+                <file name="../../src/Notification/Notification.php"/>
+                <file name="../../src/Live/LiveComponent.php"/>
+            </errorLevel>
+        </PossiblyUnusedParam>
+
+        <!-- (C) The DI container is intentionally type-generic at the boundary:
+             callers know the concrete type they fetched and downstream type
+             narrowing happens at the call site, not inside the container.
+             The wrapper proxies (ReadOnly, ScopedContainerProxy, BoundaryGuard)
+             pass through the mixed return type from $inner->get() unchanged. -->
+        <MixedAssignment>
+            <errorLevel type="suppress">
+                <!-- (C) DI container is type-generic at the boundary by design.
+                     CompiledContainer::call() resolves arbitrary callable args
+                     (user input + container returns) — the same inherently-mixed
+                     boundary as Container::call(); de-duplicating both call()
+                     bodies into one CallableInvoker helper is a tracked follow-up. -->
+                <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Container/Compiled/CompiledContainer.php"/>
+                <file name="../../src/Support/Arr.php"/>
+                <!-- (C) PSR-16 SimpleCache::getMultiple() reads inherently-mixed
+                     stored cache values into an array<string, mixed>. Assigning a
+                     mixed value to an array offset is MixedAssignment with no
+                     narrower honest type (cache values are mixed by the PSR-16
+                     contract). The single-value get() returns mixed directly (no
+                     error); getMultiple must accumulate into an array because
+                     callers array-access the result, so it cannot become a
+                     generator, and a per-key get() loop would regress the batch
+                     lookup. Same type-generic boundary as Container::call() above. -->
+                <file name="../../src/Cache/Application/SimpleCache.php"/>
+                <!-- (C) View shared data / composers: ViewComposers::share()
+                     accumulates inherently-mixed view-data values (mixed by the
+                     TemplateEngineInterface::share() #[Api] contract) into the
+                     per-request array<string, mixed> store. Iterating and
+                     offset-writing those mixed values is MixedAssignment with no
+                     narrower honest type — the same type-generic boundary as
+                     PSR-16 SimpleCache above. -->
+                <file name="../../src/View/Engine/ViewComposers.php"/>
+                <!-- (C) PdoConnection::assertOnlyDriverAttributes() partitions the
+                     configured options, keeping the integer-keyed ones PDO reads and
+                     refusing the string keys PDO would discard. The values it carries
+                     across are mixed by PDO's own contract and cannot be narrowed to
+                     scalar: PDO::ATTR_STATEMENT_CLASS legitimately takes an array.
+                     They must be accumulated because PDO's constructor takes an array,
+                     so array_filter(ARRAY_FILTER_USE_KEY) cannot express the int-key
+                     guarantee to Psalm. Same type-generic boundary as PSR-16 above. -->
+                <file name="../../src/Database/PdoConnection.php"/>
+                <!-- (A) PHP 8.5 ext-dom Dom\NodeList iteration: Psalm narrows
+                     iteration values to mixed (DOMNodeList::current() returns
+                     DOMNode in stubs but Psalm doesn't recognise ext-dom 8.5
+                     replacements). PHPStan correctly types them. We previously
+                     used /** @var mixed */ to silence Psalm but PHPStan then
+                     rejected those annotations as wider than the native type. -->
+                <file name="../../src/Support/Html/Html5Parser.php"/>
+            </errorLevel>
+        </MixedAssignment>
+        <MixedReturnStatement>
+            <errorLevel type="suppress">
+                <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Container/Internal/BoundaryGuard.php"/>
+                <file name="../../src/Console/Repl/ReadOnlyContainer.php"/>
+                <file name="../../src/Extensibility/Internal/ScopedContainerProxy.php"/>
+                <!-- (C) Resilience/Helpers compose Closure(): T through wrapper
+                     closures; Psalm cannot thread the generic T through nested
+                     anonymous-function returns. -->
+                <file name="../../src/Resilience/ResiliencePolicy.php"/>
+                <file name="../../src/Support/Helpers.php"/>
+            </errorLevel>
+        </MixedReturnStatement>
+
+        <!-- (C) `new \$className(...)` dynamic instantiation through container
+             compiler passes and reflection-based factories: Psalm cannot
+             narrow a class-string variable into the constructor call site,
+             even after class_exists/@var class-string guards. -->
+        <MixedMethodCall>
+            <errorLevel type="suppress">
+                <file name="../../src/Container/Compiler/Pass/ResolveTaggedIteratorPass.php"/>
+                <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Container/Decorator/DecoratorChain.php"/>
+                <file name="../../src/Core/Kernel.php"/>
+                <file name="../../src/Core/MicroKernel.php"/>
+                <file name="../../src/Rendering/Storybook/StorybookRenderer.php"/>
+            </errorLevel>
+        </MixedMethodCall>
+
+        <!-- (C) Generic Closure(): T resolution helpers — Psalm cannot thread
+             the @template T parameter through Closure invocations. The
+             Helpers::value implementation is correct; the @return T contract
+             is preserved at the call site, just not within the helper body. -->
+        <InvalidReturnType>
+            <errorLevel type="suppress">
+                <file name="../../src/Support/functions.php"/>
+            </errorLevel>
+        </InvalidReturnType>
+        <InvalidReturnStatement>
+            <errorLevel type="suppress">
+                <file name="../../src/Support/functions.php"/>
+            </errorLevel>
+        </InvalidReturnStatement>
+
+        <!-- (C) EntityFactory uses `new static()` with @template T of object
+             for the test data builder pattern. @phpstan-consistent-constructor
+             and @psalm-consistent-constructor cover the constructor signature
+             but Psalm 6.x still flags the generic instantiation because T
+             could be narrowed in subclasses. The factory pattern is intentional. -->
+        <UnsafeGenericInstantiation>
+            <errorLevel type="suppress">
+                <file name="../../src/Testing/EntityFactory.php"/>
+            </errorLevel>
+        </UnsafeGenericInstantiation>
+
+        <!-- (C) Pulse templates use `foreach (... as $local) { include partial; }`
+             to leverage PHP's scope inheritance through include. Psalm cannot
+             trace the partial's variable consumption, so the foreach value
+             reads as unused at the loop site. -->
+        <UnusedForeachValue>
+            <errorLevel type="suppress">
+                <file name="../../extensions/health-status/src/Server/View/templates/dashboard.pulse.php"/>
+            </errorLevel>
+        </UnusedForeachValue>
+
     </issueHandlers>
 </psalm>

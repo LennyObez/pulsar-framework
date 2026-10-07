@@ -30,19 +30,19 @@ use function unlink;
  * activating, deactivating, previewing, and deleting themes.
  * Dangerous operations (install, activate, delete) require step-up auth.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class ThemeController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class ThemeController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int INSTALL_RATE_LIMIT_PER_MINUTE = 2;
 
     public function __construct(
         private ThemeManagerInterface $themeManager,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List all installed themes.
@@ -212,7 +212,9 @@ final readonly class ThemeController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([

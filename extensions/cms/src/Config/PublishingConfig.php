@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Multi-channel publishing configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by ChannelRegistry and individual publishing channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PublishingConfig
@@ -26,15 +31,20 @@ final readonly class PublishingConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     rss_enabled?: bool|int|string,
+     *     static_site_enabled?: bool|int|string,
+     *     static_site_output_path?: string,
+     *     rss_feed_path?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
             rssEnabled: (bool) ($data['rss_enabled'] ?? false),
             staticSiteEnabled: (bool) ($data['static_site_enabled'] ?? false),
-            staticSiteOutputPath: (string) ($data['static_site_output_path'] ?? './public/static'),
-            rssFeedPath: (string) ($data['rss_feed_path'] ?? './public/feed.xml'),
+            staticSiteOutputPath: Coerce::string($data['static_site_output_path'] ?? null, './public/static'),
+            rssFeedPath: Coerce::string($data['rss_feed_path'] ?? null, './public/feed.xml'),
         );
     }
 }

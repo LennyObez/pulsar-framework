@@ -88,7 +88,7 @@ final class TrustTierIntegrationTest extends TestCase
         $this->bootstrap->addExtension($extension, $manifest);
 
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('CryptoKeyAccess');
+        $this->expectExceptionMessageIsOrContains('CryptoKeyAccess');
 
         $this->bootstrap->register($this->container);
     }
@@ -125,7 +125,7 @@ final class TrustTierIntegrationTest extends TestCase
 
         // Community can't access database — effective tier is community, not verified
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('DatabaseRaw');
+        $this->expectExceptionMessageIsOrContains('DatabaseRaw');
 
         $this->bootstrap->register($this->container);
     }
@@ -210,7 +210,7 @@ final class TrustTierIntegrationTest extends TestCase
     {
         return ExtensionManifest::fromArray([
             'name' => $name,
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'TestExtension',
             'trust_tier' => $trustTier,
         ]);

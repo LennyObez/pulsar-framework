@@ -21,9 +21,10 @@ use function count;
  * Produced by signal providers and consumed by the policy engine.
  *
  * @implements IteratorAggregate<int, Claim>
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ClaimSet implements Countable, IteratorAggregate
+final readonly class ClaimSet implements Countable, IteratorAggregate
 {
     /** @var list<Claim> */
     private array $claims;
@@ -56,7 +57,10 @@ readonly class ClaimSet implements Countable, IteratorAggregate
     #[NoDiscard]
     public function first(string $name): ?Claim
     {
-        return array_find($this->claims, static fn(Claim $claim): bool => $claim->name === $name);
+        /** @var Claim|null $found */
+        $found = array_find($this->claims, static fn(Claim $claim): bool => $claim->name === $name);
+
+        return $found;
     }
 
     /**

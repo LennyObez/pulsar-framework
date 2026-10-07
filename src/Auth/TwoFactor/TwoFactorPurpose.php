@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Purpose of a two-factor authentication verification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TwoFactorPurpose: string

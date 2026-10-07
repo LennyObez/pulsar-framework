@@ -23,7 +23,7 @@ use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Runtime\RoadRunnerRuntime;
 use Pulsar\Runtime\RuntimeStatus;
 use Pulsar\Runtime\RuntimeType;
-use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use RuntimeException;
 
 #[CoversClass(RoadRunnerRuntime::class)]
@@ -82,7 +82,7 @@ final class RoadRunnerRuntimeTest extends TestCase
         $runtime = $this->createRuntime();
 
         // WorkerContext starts in Stopped state, which maps to ShuttingDown
-        self::assertSame(HealthStatus::ShuttingDown, $runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $runtime->healthStatus());
     }
 
     #[Test]
@@ -91,7 +91,7 @@ final class RoadRunnerRuntimeTest extends TestCase
         $runtime = $this->createRuntime();
         $runtime->reload();
 
-        self::assertSame(HealthStatus::Draining, $runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::Draining, $runtime->healthStatus());
     }
 
     #[Test]

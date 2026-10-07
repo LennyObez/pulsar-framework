@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Forum\Domain;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Domain\ReportStatus;
 
-#[CoversClass(ReportStatus::class)]
+#[CoversNothing]
 final class ReportStatusTest extends TestCase
 {
     /** @return iterable<string, array{ReportStatus, ReportStatus, bool}> */

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Notification dispatched when content is submitted for editorial review.
+ *
+ * @psalm-api Constructed by CmsNotificationDispatcher and dispatched through
+ *            the framework notification manager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReviewRequestNotification implements CmsNotificationInterface
@@ -35,15 +39,15 @@ final readonly class ReviewRequestNotification implements CmsNotificationInterfa
 
     public function subject(): string
     {
-        return "Review requested: {$this->contentTitle}";
+        return "Review requested: $this->contentTitle";
     }
 
     public function body(): string
     {
-        $body = "A review has been requested for \"{$this->contentTitle}\".";
+        $body = "A review has been requested for \"$this->contentTitle\".";
 
         if ($this->message !== null && $this->message !== '') {
-            $body .= " Message: {$this->message}";
+            $body .= " Message: $this->message";
         }
 
         return $body;

@@ -1,14 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/phpbench/phpbench/main/phpbench.schema.json",
-  "runner.bootstrap": "../../vendor/autoload.php",
+  "runner.bootstrap": "../../tools/php/bootstrap.php",
   "runner.path": "../../tests/Benchmark",
   "runner.file_pattern": "*Bench.php",
   "runner.iterations": [5],
   "runner.revs": [1000],
   "runner.warmup": [1],
-  "runner.retry_threshold": 5,
+  "runner.retry_threshold": 20,
   "runner.time_unit": "microseconds",
   "runner.assert": "mode(variant.time.avg) < 10 milliseconds",
+  "runner.php_config": {
+    "opcache.enable_cli": "1",
+    "opcache.jit": "off",
+    "opcache.jit_buffer_size": "0",
+    "xdebug.mode": "off"
+  },
   "report.generators": {
     "pulsar": {
       "generator": "expression",

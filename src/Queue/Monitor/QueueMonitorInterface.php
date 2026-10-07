@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Provides access to collected metrics and health-check status
  * for individual queues.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface QueueMonitorInterface
@@ -23,5 +24,5 @@ interface QueueMonitorInterface
     /**
      * Check the health status of a specific queue.
      */
-    public function healthCheck(string $queue): HealthStatus;
+    public function healthCheck(string $queue): QueueHealthStatus;
 }

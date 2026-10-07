@@ -1,0 +1,154 @@
+/* Pulsar UI — Shell Layout Component v1.0.0
+ * Charter §8.1: Two-column admin shell (header + sidebar + content).
+ * ARIA: role="banner" on header, role="navigation" on sidebar,
+ *       role="main" on content area.
+ */
+
+.pui-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.pui-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--navbar-height);
+  padding-inline: var(--space-6);
+  background-color: var(--navbar-bg);
+  border-block-end: 1px solid var(--navbar-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  flex-shrink: 0;
+}
+
+.pui-shell__header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.pui-shell__header-brand:hover {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.pui-shell__header-search {
+  flex: 1;
+  max-width: 24rem;
+  margin-inline: var(--space-6);
+}
+
+.pui-shell__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pui-shell__body {
+  display: flex;
+  flex: 1;
+}
+
+.pui-shell__sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background-color: var(--sidebar-bg);
+  border-inline-end: 1px solid var(--sidebar-border);
+  overflow-y: auto;
+  height: calc(100vh - var(--navbar-height));
+  position: sticky;
+  top: var(--navbar-height);
+}
+
+.pui-shell__content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6) var(--space-8);
+}
+
+.pui-shell__content-inner {
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+/* Page header inside content */
+.pui-shell__page-header {
+  margin-block-end: var(--space-6);
+}
+
+.pui-shell__page-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  line-height: var(--text-2xl-leading);
+}
+
+.pui-shell__page-subtitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-block-start: var(--space-1);
+}
+
+/* Mobile hamburger toggle */
+.pui-shell__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.pui-shell__toggle:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.pui-shell__toggle:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Mobile: sidebar becomes drawer */
+@media (max-width: 767px) {
+  .pui-shell__toggle {
+    display: inline-flex;
+  }
+
+  .pui-shell__sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-modal);
+    height: 100vh;
+    top: 0;
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+  }
+
+  .pui-shell__sidebar--open {
+    transform: translateX(0);
+  }
+
+  .pui-shell__content {
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .pui-shell__header {
+    padding-inline: var(--space-4);
+  }
+}

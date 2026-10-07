@@ -60,7 +60,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{blocks: list<array{blockType: string, data: array<string, mixed>}>}> $columns */
+        /** @var list<mixed> $columns */
         $columns = $data['columns'] ?? [];
         $columnCount = count($columns);
 
@@ -68,7 +68,13 @@ final readonly class ColumnsBlock implements BlockTypeInterface
             return '<div class="columns"></div>';
         }
 
-        $html = "<div class=\"columns\" style=\"display:grid;grid-template-columns:repeat({$columnCount},1fr);gap:1rem\">";
+        $html = "<div class=\"columns\" style=\"display:grid;grid-template-columns:repeat($columnCount,1fr);gap:1rem\">";
+
+        // Propagate the request CSP nonce to nested blocks (e.g. a contact form
+        // placed inside a column) so their script tags stay nonce-compliant.
+        /** @var mixed $rawNonce */
+        $rawNonce = $data['_csp_nonce'] ?? null;
+        $cspNonce = is_string($rawNonce) && $rawNonce !== '' ? $rawNonce : null;
 
         foreach ($columns as $column) {
             if (!is_array($column)) {
@@ -77,10 +83,12 @@ final readonly class ColumnsBlock implements BlockTypeInterface
 
             $html .= '<div class="column">';
 
+            /** @var mixed $blocks */
             $blocks = $column['blocks'] ?? [];
 
             if (is_array($blocks)) {
-                $html .= $this->renderer->renderRawBlocks($blocks);
+                /** @var list<mixed> $blocks */
+                $html .= $this->renderer->renderRawBlocks($blocks, $cspNonce);
             }
 
             $html .= '</div>';
@@ -102,30 +110,31 @@ final readonly class ColumnsBlock implements BlockTypeInterface
 
         foreach ($data['columns'] as $colIndex => $column) {
             if (!is_array($column)) {
-                $errors[] = "columns[{$colIndex}] must be an object";
+                $errors[] = "columns[$colIndex] must be an object";
 
                 continue;
             }
 
             if (!isset($column['blocks']) || !is_array($column['blocks'])) {
-                $errors[] = "columns[{$colIndex}].blocks is required and must be an array";
+                $errors[] = "columns[$colIndex].blocks is required and must be an array";
 
                 continue;
             }
 
+            /** @var mixed $block */
             foreach ($column['blocks'] as $blockIndex => $block) {
                 if (!is_array($block)) {
-                    $errors[] = "columns[{$colIndex}].blocks[{$blockIndex}] must be an object";
+                    $errors[] = "columns[$colIndex].blocks[$blockIndex] must be an object";
 
                     continue;
                 }
 
                 if (!isset($block['blockType']) || !is_string($block['blockType'])) {
-                    $errors[] = "columns[{$colIndex}].blocks[{$blockIndex}].blockType is required and must be a string";
+                    $errors[] = "columns[$colIndex].blocks[$blockIndex].blockType is required and must be a string";
                 }
 
                 if (!isset($block['data']) || !is_array($block['data'])) {
-                    $errors[] = "columns[{$colIndex}].blocks[{$blockIndex}].data is required and must be an object";
+                    $errors[] = "columns[$colIndex].blocks[$blockIndex].data is required and must be an object";
                 }
             }
         }

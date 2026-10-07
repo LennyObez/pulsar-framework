@@ -29,6 +29,7 @@ use const SEEK_SET;
 
 /**
  * PSR-7 stream wrapper around a PHP resource.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 class Stream implements StreamInterface

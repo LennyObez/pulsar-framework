@@ -17,6 +17,8 @@ use function openssl_pkey_get_public;
 use function openssl_verify;
 use function parse_url;
 use function str_ends_with;
+use function stream_context_create;
+use function time;
 
 use const OPENSSL_ALGO_SHA256;
 
@@ -29,13 +31,19 @@ use const OPENSSL_ALGO_SHA256;
  * 3. Verifying the signature against the canonical message string
  */
 #[Internal]
-final readonly class SesWebhookVerifier implements WebhookVerifierInterface
+final class SesWebhookVerifier implements WebhookVerifierInterface
 {
+    private const int CERT_CACHE_TTL = 3600;
+    private const float FETCH_TIMEOUT = 3.0;
+
+    /** @var array<string, array{cert: string, expires: int}> */
+    private array $certCache = [];
+
     /**
      * @param list<string> $allowedCertHosts Allowed hostnames for signing certificate URLs
      */
     public function __construct(
-        private array $allowedCertHosts = ['sns.amazonaws.com'],
+        private readonly array $allowedCertHosts = ['sns.amazonaws.com'],
     ) {}
 
     public function verify(WebhookRequest $request): bool
@@ -59,8 +67,8 @@ final readonly class SesWebhookVerifier implements WebhookVerifierInterface
             return false;
         }
 
-        $certificate = file_get_contents($certUrl);
-        if ($certificate === false) {
+        $certificate = $this->fetchCertificate($certUrl);
+        if ($certificate === null) {
             return false;
         }
 
@@ -96,12 +104,49 @@ final readonly class SesWebhookVerifier implements WebhookVerifierInterface
     }
 
     /**
+     * Fetch a certificate with a 3-second timeout and 1-hour cache.
+     *
+     * Prevents blocking the request handler on slow/unresponsive cert hosts
+     * and avoids redundant fetches for the same signing certificate URL.
+     */
+    private function fetchCertificate(string $url): ?string
+    {
+        if (isset($this->certCache[$url]) && $this->certCache[$url]['expires'] > time()) {
+            return $this->certCache[$url]['cert'];
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => self::FETCH_TIMEOUT,
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ],
+        ]);
+
+        $certificate = @file_get_contents($url, false, $context);
+
+        if ($certificate === false) {
+            return null;
+        }
+
+        $this->certCache[$url] = [
+            'cert' => $certificate,
+            'expires' => time() + self::CERT_CACHE_TTL,
+        ];
+
+        return $certificate;
+    }
+
+    /**
      * Build the canonical string to verify against based on SNS message type.
      *
      * @param array<string, mixed> $data
      */
     private function buildCanonicalMessage(array $data): string
     {
+        /** @var mixed $rawType */
         $rawType = $data['Type'] ?? '';
         $type = is_string($rawType) ? $rawType : '';
 

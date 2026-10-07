@@ -11,7 +11,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Analytics\Contracts\SessionRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\Session;
 
-#[Internal(reason: 'Raw-DB repository — use SessionRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use SessionRepositoryInterface for public API')]
 final readonly class DbSessionRepository implements SessionRepositoryInterface
 {
     private const string SQL_FIND_ACTIVE_BY_VISITOR = <<<'SQL'
@@ -41,8 +41,19 @@ final readonly class DbSessionRepository implements SessionRepositoryInterface
         WHERE id = :id
         SQL;
 
+    private const string SQL_FIND_BY_VISITOR = <<<'SQL'
+        SELECT * FROM analytics_sessions
+        WHERE visitor_id = :visitor_id
+        ORDER BY started_at DESC
+        LIMIT :limit
+        SQL;
+
     private const string SQL_DELETE_OLDER_THAN = <<<'SQL'
         DELETE FROM analytics_sessions WHERE ended_at < :before
+        SQL;
+
+    private const string SQL_DELETE_BY_VISITOR = <<<'SQL'
+        DELETE FROM analytics_sessions WHERE visitor_id = :visitor_id
         SQL;
 
     public function __construct(
@@ -89,10 +100,25 @@ final readonly class DbSessionRepository implements SessionRepositoryInterface
         ]);
     }
 
+    public function findByVisitorId(string $visitorId, int $limit = 10000): array
+    {
+        return $this->connection->query(self::SQL_FIND_BY_VISITOR, [
+            'visitor_id' => $visitorId,
+            'limit' => $limit,
+        ])->map(self::hydrate(...));
+    }
+
     public function deleteOlderThan(DateTimeImmutable $before): int
     {
         return $this->connection->execute(self::SQL_DELETE_OLDER_THAN, [
             'before' => $before->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function deleteByVisitorId(string $visitorId): int
+    {
+        return $this->connection->execute(self::SQL_DELETE_BY_VISITOR, [
+            'visitor_id' => $visitorId,
         ]);
     }
 

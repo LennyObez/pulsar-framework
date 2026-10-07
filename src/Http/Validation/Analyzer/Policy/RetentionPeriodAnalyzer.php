@@ -17,13 +17,14 @@ use function sprintf;
 /**
  * Flags data with timestamps beyond a configured retention period.
  *
- * Advisory only — not a compliance gate. This analyzer checks whether
+ * Advisory only: not a compliance gate. This analyzer checks whether
  * timestamp values are older than the configured retention period.
  * Default retention period is 365 days. Results should be reviewed by
  * qualified data governance personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionPeriodAnalyzer implements PolicyAnalyzerInterface
+final readonly class RetentionPeriodAnalyzer implements PolicyAnalyzerInterface
 {
     public function __construct(
         private int $retentionDays = 365,

@@ -17,6 +17,7 @@ use function count;
  *
  * Stores completed spans up to a configurable maximum. When full,
  * the oldest spans are evicted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemorySpanCollector implements SpanProcessorInterface

@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Idempotency\Exception\IdempotencyErrorKind;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
@@ -64,10 +65,15 @@ final class InMemoryIdempotencyStoreTest extends TestCase
 
         $store->claim('key-1', 'hash-1', 'createIntent', $now, 3600);
 
-        $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('currently being processed');
-
-        $store->claim('key-1', 'hash-1', 'createIntent', $now, 3600);
+        try {
+            $store->claim('key-1', 'hash-1', 'createIntent', $now, 3600);
+            self::fail('Expected IdempotencyException for concurrent claim');
+        } catch (IdempotencyException $e) {
+            // The kind tag must be ConcurrentClaim so HTTP layers
+            // can map this to 409 Conflict rather than 500.
+            self::assertSame(IdempotencyErrorKind::ConcurrentClaim, $e->kind);
+            self::assertStringContainsString('currently being processed', $e->getMessage());
+        }
     }
 
     #[Test]

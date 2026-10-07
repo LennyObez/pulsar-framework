@@ -12,9 +12,10 @@ use function mb_strtoupper;
 
 /**
  * Converts string values to uppercase. Non-strings pass through unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Uppercase implements FilterInterface
+final readonly class Uppercase implements FilterInterface
 {
     #[Override]
     public function apply(mixed $value): mixed

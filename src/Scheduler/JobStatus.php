@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Execution status of a scheduled job.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum JobStatus: string

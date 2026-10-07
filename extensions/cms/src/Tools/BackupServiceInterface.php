@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Tools;
 
 use Pulsar\Api\Api;
+use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
  * Service interface for CMS backup and restore operations.
  *
  * Backups are stored as JSON files with BLAKE2b integrity hashes.
  * Restore operations validate hash integrity before applying data.
+ *
+ * @psalm-api Public binding contract; implemented by BackupService and
+ *            consumed by admin backup controllers and the BackupRetentionJob.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BackupServiceInterface
@@ -25,7 +30,7 @@ interface BackupServiceInterface
      *
      * Validates the backup hash for tamper detection before applying.
      *
-     * @throws \Pulsar\Extension\Cms\Exception\CmsException If the backup is not found or hash is invalid
+     * @throws CmsException If the backup is not found or hash is invalid
      */
     public function restoreBackup(string $backupId, string $reason, string $actorId): RestoreResult;
 
@@ -39,7 +44,7 @@ interface BackupServiceInterface
     /**
      * Delete a backup file and its metadata.
      *
-     * @throws \Pulsar\Extension\Cms\Exception\CmsException If the backup is not found
+     * @throws CmsException If the backup is not found
      */
     public function deleteBackup(string $backupId, string $reason, string $actorId): void;
 }

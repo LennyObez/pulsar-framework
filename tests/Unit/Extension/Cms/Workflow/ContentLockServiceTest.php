@@ -11,6 +11,7 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\ContentLockService;
@@ -32,6 +33,7 @@ final class ContentLockServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->db = $this->createStub(ConnectionInterface::class);
+        $this->db->method('driver')->willReturn(Driver::MySQL);
         $this->auditLogger = $this->createStub(AuditLoggerInterface::class);
         $this->auditLogger->method('log')->willReturn($this->createStub(AuditEntry::class));
         $this->service = new ContentLockService($this->db, $this->auditLogger);
@@ -106,17 +108,23 @@ final class ContentLockServiceTest extends TestCase
         // Verify that acquire issues exactly ONE execute call (atomic upsert),
         // not a separate DELETE followed by INSERT (which would be two calls)
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
                 self::callback(static function (string $sql): bool {
-                    // Must contain ON CONFLICT DO UPDATE with WHERE clause
-                    return str_contains($sql, 'ON CONFLICT')
+                    // MySQL: ON DUPLICATE KEY UPDATE with IF(expires_at < :now, ...)
+                    // PostgreSQL: ON CONFLICT DO UPDATE WHERE expires_at < :now
+                    $isMySql = str_contains($sql, 'ON DUPLICATE KEY UPDATE')
+                        && str_contains($sql, 'IF(expires_at < :now');
+                    $isPg = str_contains($sql, 'ON CONFLICT')
                         && str_contains($sql, 'DO UPDATE')
                         && str_contains($sql, 'WHERE cms_content_locks.expires_at < :now');
+
+                    return $isMySql || $isPg;
                 }),
                 self::callback(static function (array $bindings): bool {
-                    // Must include :now parameter for the WHERE clause
+                    // Must include :now parameter for the conditional logic
                     return isset($bindings['now'])
                         && isset($bindings['content_id'])
                         && isset($bindings['user_id']);
@@ -172,6 +180,7 @@ final class ContentLockServiceTest extends TestCase
     public function release_deletes_lock_and_logs_audit(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -234,6 +243,7 @@ final class ContentLockServiceTest extends TestCase
     public function force_unlock_deletes_and_logs(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -296,6 +306,7 @@ final class ContentLockServiceTest extends TestCase
     public function is_locked_deletes_and_returns_null_for_expired_lock(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->willReturn(new Result([
@@ -326,6 +337,7 @@ final class ContentLockServiceTest extends TestCase
     public function cleanup_expired_returns_deleted_count(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(self::stringContains('DELETE FROM cms_content_locks WHERE expires_at'))

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Admin-level permissions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AdminPermission: string

@@ -40,20 +40,12 @@ final class MakeExtensionCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
-        $vendor = $input->getOption('vendor', 'acme');
-        $basePath = $input->getOption('path', 'extensions');
+        $vendor = $input->getStringOption('vendor', 'acme');
+        $basePath = $input->getStringOption('path', 'extensions');
 
         if (!is_string($name) || $name === '') {
             $output->errorln('Extension name is required.');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($vendor)) {
-            $vendor = 'acme';
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'extensions';
         }
 
         // Normalize names
@@ -176,7 +168,12 @@ final class MakeExtensionCommand extends Command
 
                 public function boot(ContainerInterface \$container, RouterInterface \$router): void
                 {
-                    // Register routes
+                    // Register routes. This one is anonymous: the router sugar attaches
+                    // no middleware and no permission, and AuthorizationMiddleware reads an
+                    // absent permission list as deny-everyone, so the exposure of a route
+                    // registered this way depends on the host application's pipeline rather
+                    // than on a decision. State the decision instead --
+                    // Pulsar\Routing\RouteAccessRegistrar takes it in one line.
                     \$router->get('/{$this->toKebabCase($className)}', [{$className}Controller::class, 'index'], '{$this->toKebabCase($className)}.index');
                 }
 

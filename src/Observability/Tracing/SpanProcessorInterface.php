@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for processing completed spans.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SpanProcessorInterface

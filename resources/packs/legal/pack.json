@@ -1,0 +1,18 @@
+{
+  "name": "legal",
+  "description": "Legal practice management starter kit with case management and document retention",
+  "version": "1.0.0",
+  "requiredPulsarVersion": "^1.0",
+  "compliancePresets": ["Document-Retention", "Audit-Trail"],
+  "files": {
+    "config/retention.php": "config/retention.php",
+    "config/audit.php": "config/audit.php",
+    "src/LegalCase.php": "src/Entity/LegalCase.php",
+    "src/Document.php": "src/Entity/Document.php",
+    "src/Client.php": "src/Entity/Client.php",
+    "src/Deadline.php": "src/Entity/Deadline.php",
+    "tests/LegalCaseTest.php": "tests/Unit/Entity/LegalCaseTest.php",
+    "tests/DocumentTest.php": "tests/Unit/Entity/DocumentTest.php"
+  },
+  "postInstallCommands": []
+}

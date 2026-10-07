@@ -8,8 +8,12 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * CSS override entity — represents a versioned set of custom CSS and token
+ * CSS override entity: represents a versioned set of custom CSS and token
  * overrides applied on top of an installed theme.
+ *
+ * @psalm-api Public DTO returned from CssOverrideRepositoryInterface and
+ *            LiveCssServiceInterface; consumed by template rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CssOverride

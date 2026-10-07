@@ -13,7 +13,7 @@ use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use Pulsar\Http\Message\Response;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -28,11 +28,9 @@ use function strlen;
  * Provides endpoints for enrolling (with QR code), verifying, and disabling 2FA.
  * All operations require step-up authentication and appropriate permissions.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class TwoFactorController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class TwoFactorController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int RATE_LIMIT_PER_MINUTE = 5;
 
     public function __construct(
@@ -41,10 +39,12 @@ final readonly class TwoFactorController
         private RecoveryCodeGenerator $recoveryCodeGenerator,
         private QrCodeEncoder $qrCodeEncoder,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
         private ?AuditLoggerInterface $auditLogger,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Return 2FA enrollment status for the current user.
@@ -63,7 +63,7 @@ final readonly class TwoFactorController
     }
 
     /**
-     * Begin 2FA enrollment — generate secret and QR code.
+     * Begin 2FA enrollment: generate secret and QR code.
      *
      * Returns a provisioning URI and SVG QR code for scanning with an authenticator app.
      * The secret is returned to be stored temporarily until the user confirms with a valid code.
@@ -74,14 +74,20 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_enroll:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        // Fail-closed. A missing limiter denies the admin 2FA flow
+        // instead of allowing unlimited tries — production wires a real one.
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_enroll:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $accountName = is_string($body['account_name'] ?? null) ? $body['account_name'] : $identity->id();
-        $issuer = is_string($body['issuer'] ?? null) ? $body['issuer'] : 'PulsarCMS';
+        /** @var mixed $rawAccountName */
+        $rawAccountName = $body['account_name'] ?? null;
+        $accountName = is_string($rawAccountName) ? $rawAccountName : $identity->id();
+        /** @var mixed $rawIssuer */
+        $rawIssuer = $body['issuer'] ?? null;
+        $issuer = is_string($rawIssuer) ? $rawIssuer : 'PulsarCMS';
 
         // Generate a new TOTP secret
         $secret = $this->totpGenerator->generateSecret();
@@ -128,14 +134,18 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_confirm:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_confirm:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $code = is_string($body['code'] ?? null) ? $body['code'] : '';
-        $secret = is_string($body['secret'] ?? null) ? $body['secret'] : '';
+        /** @var mixed $rawCode */
+        $rawCode = $body['code'] ?? null;
+        $code = is_string($rawCode) ? $rawCode : '';
+        /** @var mixed $rawSecret */
+        $rawSecret = $body['secret'] ?? null;
+        $secret = is_string($rawSecret) ? $rawSecret : '';
 
         if ($code === '' || $secret === '') {
             return Response::json(['error' => 'Both code and secret are required'], 400);
@@ -186,14 +196,18 @@ final readonly class TwoFactorController
     {
         $identity = $this->requireIdentity($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_verify:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_verify:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $code = is_string($body['code'] ?? null) ? $body['code'] : '';
-        $secret = is_string($body['secret'] ?? null) ? $body['secret'] : '';
+        /** @var mixed $rawCode */
+        $rawCode = $body['code'] ?? null;
+        $code = is_string($rawCode) ? $rawCode : '';
+        /** @var mixed $rawSecret */
+        $rawSecret = $body['secret'] ?? null;
+        $secret = is_string($rawSecret) ? $rawSecret : '';
 
         if ($code === '' || $secret === '') {
             return Response::json(['error' => 'Both code and secret are required'], 400);
@@ -243,13 +257,15 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_disable:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_disable:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([

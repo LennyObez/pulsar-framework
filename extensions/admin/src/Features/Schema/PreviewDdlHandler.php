@@ -6,12 +6,19 @@ namespace Pulsar\Extension\Admin\Features\Schema;
 
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaColumn;
+use Pulsar\Database\Schema\SchemaIdentifier;
 use Pulsar\Database\Schema\SchemaIndex;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Database\Schema\TableDefinition;
 
 /**
  * Generates DDL preview without executing. Returns SQL + capability warnings.
+ *
+ * Identifiers are validated here for the same reason {@see AlterTableHandler} validates
+ * them: both are reached by the same request body, and only one of them used to check.
+ * A preview request missing its `name` reached the compiler as an empty identifier and
+ * left the controller as a 500 — the operator's malformed input reported as a server
+ * fault. Rejecting it here yields the 400 it is.
  */
 final readonly class PreviewDdlHandler
 {
@@ -38,6 +45,9 @@ final readonly class PreviewDdlHandler
      */
     public function previewAddColumn(string $table, SchemaColumn $column): array
     {
+        SchemaIdentifier::validateTable($table);
+        SchemaIdentifier::validateColumn($column->name);
+
         $statements = $this->schemaManager->previewAddColumn($table, $column);
 
         return [
@@ -51,6 +61,10 @@ final readonly class PreviewDdlHandler
      */
     public function previewDropColumn(string $table, string $column): array
     {
+        // Before the capability check: a malformed identifier is malformed on every engine.
+        SchemaIdentifier::validateTable($table);
+        SchemaIdentifier::validateColumn($column);
+
         if (!$this->capabilities->supportsDropColumn()) {
             return [
                 'statements' => [],
@@ -73,6 +87,13 @@ final readonly class PreviewDdlHandler
      */
     public function previewAddIndex(string $table, SchemaIndex $index): array
     {
+        SchemaIdentifier::validateTable($table);
+        SchemaIdentifier::validateIndex($index->name);
+
+        foreach ($index->columns as $column) {
+            SchemaIdentifier::validateColumn($column);
+        }
+
         $statements = $this->schemaManager->previewAddIndex($table, $index);
 
         return [
@@ -86,6 +107,9 @@ final readonly class PreviewDdlHandler
      */
     public function previewDropIndex(string $table, string $indexName): array
     {
+        SchemaIdentifier::validateTable($table);
+        SchemaIdentifier::validateIndex($indexName);
+
         $statements = $this->schemaManager->previewDropIndex($table, $indexName);
 
         return [
@@ -99,6 +123,8 @@ final readonly class PreviewDdlHandler
      */
     public function previewDropTable(string $table): array
     {
+        SchemaIdentifier::validateTable($table);
+
         $statements = $this->schemaManager->previewDropTable($table);
 
         return [
@@ -112,6 +138,9 @@ final readonly class PreviewDdlHandler
      */
     public function previewRenameTable(string $from, string $to): array
     {
+        SchemaIdentifier::validateTable($from);
+        SchemaIdentifier::validateTable($to);
+
         $statements = $this->schemaManager->previewRenameTable($from, $to);
 
         return [

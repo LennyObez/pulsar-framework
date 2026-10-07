@@ -17,7 +17,6 @@ use Pulsar\Extension\Cms\Workflow\ReviewStatus;
 
 #[CoversClass(EditorialWorkflowService::class)]
 #[CoversClass(EditorialReview::class)]
-#[CoversClass(ReviewStatus::class)]
 final class EditorialWorkflowTest extends TestCase
 {
     #[Test]

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Runtime\ReloadableRuntimeInterface;
 use Pulsar\Runtime\RuntimeType;
-use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Pulsar\Runtime\Worker\WorkerState;
 use ReflectionClass;
@@ -49,7 +49,7 @@ final class ReloadableRuntimeInterfaceTest extends TestCase
 
         $method = $reflection->getMethod('healthStatus');
         self::assertTrue($method->isPublic());
-        self::assertSame(HealthStatus::class, (string) $method->getReturnType());
+        self::assertSame(WorkerHealthStatus::class, (string) $method->getReturnType());
     }
 
     #[Test]
@@ -77,10 +77,10 @@ final class ReloadableRuntimeInterfaceTest extends TestCase
         );
 
         $mock = $this->createStub(ReloadableRuntimeInterface::class);
-        $mock->method('healthStatus')->willReturn(HealthStatus::Healthy);
+        $mock->method('healthStatus')->willReturn(WorkerHealthStatus::Healthy);
         $mock->method('workerInfo')->willReturn($workerInfo);
 
-        self::assertSame(HealthStatus::Healthy, $mock->healthStatus());
+        self::assertSame(WorkerHealthStatus::Healthy, $mock->healthStatus());
         self::assertSame($workerInfo, $mock->workerInfo());
     }
 }

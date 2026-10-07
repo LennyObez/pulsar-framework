@@ -24,6 +24,7 @@ use const E_USER_DEPRECATED;
  * Logs deprecation warnings and will be removed in v2.0.
  *
  * @deprecated Use PSR-15 MiddlewareInterface directly. This adapter will be removed in v2.0.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class LegacyMiddlewareAdapter implements MiddlewareInterface

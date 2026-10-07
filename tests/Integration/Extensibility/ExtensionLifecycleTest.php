@@ -9,8 +9,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use Pulsar\Config\TrustedExtensionsConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Kernel;
+use Pulsar\Extensibility\CapabilityPolicy;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ExtensionLifecycle;
@@ -32,8 +34,9 @@ final class ExtensionLifecycleTest extends TestCase
         $extension = new TestableExtension();
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => TestableExtension::class,
+            'trust_tier' => 'core',
             'provides' => [
                 'services' => [TestableService::class],
                 'routes' => true,
@@ -41,6 +44,7 @@ final class ExtensionLifecycleTest extends TestCase
         ]);
 
         $bootstrap->addExtension($extension, $manifest);
+        $this->configureTrust($bootstrap, 'test/extension');
 
         // Act: Create kernel with extension bootstrap and boot
         $kernel = new Kernel(extensionBootstrap: $bootstrap);
@@ -71,11 +75,13 @@ final class ExtensionLifecycleTest extends TestCase
         $extension = new TestableExtension();
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => TestableExtension::class,
+            'trust_tier' => 'core',
         ]);
 
         $bootstrap->addExtension($extension, $manifest);
+        $this->configureTrust($bootstrap, 'test/extension');
 
         $kernel = new Kernel(extensionBootstrap: $bootstrap);
         $kernel->boot();
@@ -103,11 +109,13 @@ final class ExtensionLifecycleTest extends TestCase
         $extension = new ExtensionWithProvider();
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/provider-extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => ExtensionWithProvider::class,
+            'trust_tier' => 'core',
         ]);
 
         $bootstrap->addExtension($extension, $manifest);
+        $this->configureTrust($bootstrap, 'test/provider-extension');
 
         $kernel = new Kernel(extensionBootstrap: $bootstrap);
         $kernel->boot();
@@ -192,13 +200,13 @@ final class ExtensionLifecycleTest extends TestCase
 
         $manifestA = ExtensionManifest::fromArray([
             'name' => 'ext/a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtA',
         ]);
 
         $manifestB = ExtensionManifest::fromArray([
             'name' => 'ext/b',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtB',
             'requires' => ['ext/a' => '1.0'],
         ]);
@@ -212,6 +220,26 @@ final class ExtensionLifecycleTest extends TestCase
 
         // Both should boot in order (A before B due to dependency)
         self::assertSame(['a', 'b'], $bootOrder->getArrayCopy());
+    }
+
+    /**
+     * Grant the named extensions core trust before the kernel boots.
+     *
+     * The kernel engages the capability sandbox at boot (ExtensionSandbox); a
+     * service-registering extension needs core tier, which a real deployment
+     * declares in config/extensions.php. Setting the policy explicitly here
+     * both expresses that trust and makes the kernel's own harden() a no-op.
+     */
+    private function configureTrust(ExtensionBootstrap $bootstrap, string ...$names): void
+    {
+        $bootstrap->capabilityPolicy = CapabilityPolicy::defaults();
+
+        $trusted = [];
+        foreach ($names as $name) {
+            $trusted[$name] = ['tier' => 'core'];
+        }
+
+        $bootstrap->trustedExtensionsConfig = TrustedExtensionsConfig::fromArray($trusted);
     }
 }
 

@@ -24,6 +24,7 @@ use function bin2hex;
 use function hash;
 use function implode;
 use function random_bytes;
+use function sprintf;
 use function str_starts_with;
 use function strtolower;
 use function time;
@@ -128,7 +129,20 @@ final readonly class AlterTableHandler
             table: $table,
             statements: $statements,
             context: $context,
-            execute: fn() => $this->schemaManager->dropIndex($table, $indexName),
+            // Refusing is what keeps the audit trail honest. `dropIndex()` scopes to the
+            // table and leaves the schema untouched when the index belongs elsewhere or
+            // to nothing — and recording that as a Success, with an evidence hash over a
+            // statement that changed nothing, is a compliance artefact for an event that
+            // did not happen.
+            execute: function () use ($table, $indexName): void {
+                if (!$this->schemaManager->dropIndex($table, $indexName)) {
+                    throw new AdminException(sprintf(
+                        'Index "%s" does not exist on table "%s"',
+                        $indexName,
+                        $table,
+                    ));
+                }
+            },
             identifiers: ['indexes' => [$indexName]],
         );
     }

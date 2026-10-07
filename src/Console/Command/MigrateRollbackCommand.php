@@ -45,6 +45,20 @@ final class MigrateRollbackCommand extends Command
             }
         } catch (Throwable $e) {
             $output->errorln(sprintf('Rollback failed: %s', $e->getMessage()));
+
+            // The runner wraps whatever `down()` threw in
+            // `DatabaseException::migrationFailed()`, whose message names only the version
+            // and the direction. The reason lives one link down the chain — including the
+            // refusal a framework migration raises rather than drop a table that still
+            // holds rows — so printing only the outer message tells an operator that the
+            // rollback stopped without telling them what would have been destroyed.
+            // `migrate:run` has always printed the cause; this is the same line.
+            $previous = $e->getPrevious();
+
+            if ($previous !== null) {
+                $output->errorln(sprintf('Caused by: %s', $previous->getMessage()));
+            }
+
             return ExitCode::Error->value;
         }
 

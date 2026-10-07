@@ -7,23 +7,69 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_numeric;
-
 /**
  * Typed configuration DTO for HTTP Strict Transport Security headers.
  *
  * Maps from the `hsts` key within the `headers` section of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class HstsConfig
+final readonly class HstsConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `headers.hsts` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'max_age', 'include_sub_domains', 'preload', 'emitted_at_edge',
+    ];
+
+    /**
+     * @param bool $emittedAtEdge TLS is terminated and HSTS asserted at the edge
+     *        (CDN / reverse proxy), so the application deliberately does NOT emit
+     *        its own Strict-Transport-Security header (avoiding a duplicate).
+     *        Independent of {@see $enabled}: when true, the security-posture
+     *        checks treat HTTPS-enforcement and HSTS as satisfied without the app
+     *        emitting the header. Leave false for app-emitted HSTS.
+     * @param list<string> $unknownKeys Keys present in the raw `hsts` array that this
+     *        DTO does not read — `include_subdomains` written without the underscore
+     *        before "domains" silently reverts to the default instead of erroring.
+     */
     public function __construct(
         public bool $enabled = true,
-        public int $maxAge = 31536000,
+        public int $maxAge = 63072000,
         public bool $includeSubDomains = true,
         public bool $preload = false,
+        public bool $emittedAtEdge = false,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
+
+    /**
+     * Whether HTTPS/HSTS is asserted at all -- by the app emitting the header,
+     * or by an edge that terminates TLS. Used by the security-posture checks so
+     * an edge-terminated deployment is not falsely reported as HTTP-only.
+     */
+    #[NoDiscard]
+    public function isAsserted(): bool
+    {
+        return $this->enabled || $this->emittedAtEdge;
+    }
+
+    /**
+     * A copy with HSTS emission toggled. Used by compliance enforcement to assert
+     * HTTPS when the active regulatory profile requires encryption in transit and
+     * the deployment asserts it nowhere else (neither here nor at the edge).
+     */
+    #[NoDiscard]
+    public function withEnabled(bool $enabled): self
+    {
+        return clone($this, ['enabled' => $enabled]);
+    }
 
     #[NoDiscard]
     public function toHeaderValue(): string
@@ -42,19 +88,24 @@ readonly class HstsConfig
     }
 
     /**
-     * @param array<string, mixed> $data Raw `hsts` sub-array from config
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     max_age?: int,
+     *     include_sub_domains?: bool|int|string,
+     *     preload?: bool|int|string,
+     *     emitted_at_edge?: bool|int|string,
+     * } $data Raw `hsts` sub-array from config
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxAge = $data['max_age'] ?? 31536000;
-        $maxAge = is_int($rawMaxAge) ? $rawMaxAge : (int) (is_numeric($rawMaxAge) ? $rawMaxAge : 31536000);
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            maxAge: $maxAge,
+            maxAge: $data['max_age'] ?? 63072000,
             includeSubDomains: (bool) ($data['include_sub_domains'] ?? true),
             preload: (bool) ($data['preload'] ?? false),
+            emittedAtEdge: (bool) ($data['emitted_at_edge'] ?? false),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

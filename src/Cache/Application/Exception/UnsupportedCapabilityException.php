@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Thrown when a cache operation requires a capability the driver does not support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UnsupportedCapabilityException extends RuntimeException implements
@@ -40,5 +41,16 @@ final class UnsupportedCapabilityException extends RuntimeException implements
     public static function atomicIncrementOnEncryptedPool(): self
     {
         return new self('Atomic increment/decrement is not supported on encrypted cache pools');
+    }
+
+    #[NoDiscard]
+    public static function prefixScopedClearUnsupported(string $driver): self
+    {
+        return new self(sprintf(
+            'Driver "%s" cannot enumerate keys, so clear() on a prefixed pool cannot be scoped to the prefix. '
+            . 'Refusing to flush the whole shared backend: use a dedicated backend for this pool, '
+            . 'a driver with key enumeration (Redis, APCu), or invalidate via tags instead.',
+            $driver,
+        ));
     }
 }

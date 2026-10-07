@@ -27,6 +27,7 @@ use function str_contains;
  *
  * Falls back to the configured default format when no match is found.
  * Sets the resolved renderer on the request attribute 'pulsar.api.renderer'.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentNegotiator implements MiddlewareInterface

@@ -19,6 +19,7 @@ use Pulsar\Api\Api;
  *         'created_after' => Filter::date('created_at', '>='),
  *         'internal_status' => Filter::enum(InternalStatus::class)->guard('admin'),
  *     ]);
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Filter

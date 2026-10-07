@@ -10,6 +10,10 @@ use Pulsar\Api\Api;
  * Persistence interface for the append-only content event log.
  *
  * Supports event replay for projection rebuilds and auditing.
+ *
+ * @psalm-api Public binding contract; implemented by DbContentEventRepository
+ *            and consumed by content services in event-sourcing mode.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentEventStoreInterface

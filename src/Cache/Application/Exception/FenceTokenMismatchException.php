@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Thrown when a fencing token does not match during a fenced operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FenceTokenMismatchException extends RuntimeException implements

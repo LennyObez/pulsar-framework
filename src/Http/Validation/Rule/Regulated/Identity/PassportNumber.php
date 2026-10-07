@@ -20,9 +20,10 @@ use function sprintf;
  * Configurable per country for jurisdiction-specific patterns.
  *
  * @see https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class PassportNumber implements RuleInterface
+final readonly class PassportNumber implements RuleInterface
 {
     private string $pattern;
 

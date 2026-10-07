@@ -168,7 +168,7 @@ final readonly class PaymentFlowTemplates
 
                     if (\$claim->status === IdempotencyClaimStatus::Replay && \$claim->resultPayload !== null) {
                         /** @var array<string, mixed> \$cached */
-                        \$cached = json_decode(\$claim->resultPayload, true, 512, JSON_THROW_ON_ERROR);
+                        \$cached = json_decode(\$claim->resultPayload, true, flags: JSON_THROW_ON_ERROR);
                         return {$name}Intent::fromArray(\$cached);
                     }
 
@@ -557,12 +557,12 @@ final readonly class PaymentFlowTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
-            - `Internal/Infrastructure/` — Provider implementations
-            - `Gateway/` — Payment orchestration with idempotency
-            - `Config/` — Configuration DTOs
-            - `Domain/` — Value objects and enums
-            - `Exception/` — Domain exceptions
+            - `Contracts/`: Public API interfaces (`#[Api(since: '1.0.0')]`)
+            - `Internal/Infrastructure/`: Provider implementations
+            - `Gateway/`: Payment orchestration with idempotency
+            - `Config/`: Configuration DTOs
+            - `Domain/`: Value objects and enums
+            - `Exception/`: Domain exceptions
             MD;
     }
 

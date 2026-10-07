@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Auth\Guard;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Guard\SessionGuard;
+use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
+use Pulsar\Config\SessionConfig;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\SessionInterface;
+use Pulsar\Security\Session\SessionManager;
+
+use function time;
 
 #[CoversClass(SessionGuard::class)]
 final class SessionGuardTest extends TestCase
@@ -90,8 +97,18 @@ final class SessionGuardTest extends TestCase
         self::assertSame([], $identity->attributes());
     }
 
+    /**
+     * Login rotates the id, stores the identity, and stamps when the
+     * credentials were presented.
+     *
+     * Driven against a real SessionManager rather than a mock: the stamp is
+     * what `SensitiveOperationMiddleware` reads to decide whether a password
+     * change may proceed without re-authentication, so the property worth
+     * asserting is that the value is in the store and readable — not that
+     * `set()` was called some number of times.
+     */
     #[Test]
-    public function loginRegeneratesSessionAndStoresIdentity(): void
+    public function loginRegeneratesSessionStoresIdentityAndStampsAuthenticationTime(): void
     {
         $identity = new Identity(
             id: 'user-1',
@@ -101,26 +118,155 @@ final class SessionGuardTest extends TestCase
             attributes: [],
         );
 
-        $session = $this->createMock(SessionInterface::class);
-        $session->expects(self::once())->method('regenerate');
-        $session->expects(self::once())->method('set')->with(
-            '_pulsar_identity',
-            $identity->toArray(),
-        );
+        $session = new SessionManager(new ArrayHandler(), new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        ));
+        $session->start();
+
+        $anonymousId = $session->id();
+        $before = time();
 
         $guard = new SessionGuard($session);
         $guard->login($identity);
+
+        self::assertNotSame($anonymousId, $session->id(), 'login must rotate the session id');
+        self::assertSame($identity->toArray(), $session->get('_pulsar_identity'));
+
+        $stamp = $guard->lastAuthenticatedAt();
+        self::assertNotNull($stamp, 'login must record when the credentials were presented');
+        self::assertGreaterThanOrEqual($before, $stamp);
+        self::assertLessThanOrEqual(time(), $stamp);
+    }
+
+    /**
+     * A session that never authenticated has no stamp, so every operation
+     * requiring re-authentication demands it rather than reading a zero as a
+     * timestamp at the epoch.
+     */
+    #[Test]
+    public function lastAuthenticatedAtIsNullBeforeAnyLogin(): void
+    {
+        $session = new SessionManager(new ArrayHandler(), new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        ));
+        $session->start();
+
+        self::assertNull(new SessionGuard($session)->lastAuthenticatedAt());
+    }
+
+    /**
+     * Logout must leave nothing of the authenticated session behind. The
+     * identity key is the obvious part; the residue — OAuth state, wizard
+     * progress, cart — is the part `regenerate()` used to carry across,
+     * because it preserves the data array over the id rotation. Driven
+     * against a real SessionManager rather than a mock: an expectation that
+     * `remove()` was called proves nothing about what the store holds
+     * afterwards.
+     */
+    #[Test]
+    public function logoutDiscardsEverySessionKeyNotOnlyTheIdentity(): void
+    {
+        $handler = new ArrayHandler();
+        $session = new SessionManager($handler, new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        ));
+        $session->start();
+
+        $guard = new SessionGuard($session);
+        $guard->login(new Identity(
+            id: 'user-a',
+            displayName: 'User A',
+            roles: ['admin'],
+            twoFactorStatus: TwoFactorStatus::Verified,
+            attributes: [],
+        ));
+
+        $session->set('oauth_state', 'state-token');
+        $session->set('cart', ['sku-1']);
+        $session->save();
+
+        $authenticatedId = $session->id();
+
+        $guard->logout();
+
+        self::assertSame([], $session->all(), 'no session key may survive logout');
+        self::assertNotSame($authenticatedId, $session->id());
+        self::assertSame(
+            '',
+            $handler->read($authenticatedId),
+            'the authenticated session record must be destroyed server-side, not abandoned',
+        );
+        self::assertStringNotContainsString(
+            'sku-1',
+            $handler->read($session->id()),
+            'the post-logout record must not inherit the authenticated session data',
+        );
+        self::assertNull($guard->authenticate(new ServerRequest(method: 'GET', uri: '/')));
     }
 
     #[Test]
-    public function logoutRemovesIdentityAndRegenerates(): void
+    public function loginWritesAnIdentityKeyRecognisedByTheSessionAuthGate(): void
     {
-        $session = $this->createMock(SessionInterface::class);
-        $session->expects(self::once())->method('remove')->with('_pulsar_identity');
-        $session->expects(self::once())->method('regenerate');
+        // Desync guard: the PCI-DSS 8.2.8 idle gate classifies a session as
+        // authenticated from SessionConfig::authenticatedMarkerKeys. Prove that a
+        // real guard login writes a session-data key those markers recognise, so the
+        // gate (SessionManager) and the guard cannot silently drift apart.
+        $config = new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        );
+        $session = new SessionManager(new ArrayHandler(), $config);
+        $session->start();
 
-        $guard = new SessionGuard($session);
-        $guard->logout();
+        $identity = new Identity(
+            id: 'user-42',
+            displayName: 'Auth User',
+            roles: ['user'],
+            twoFactorStatus: TwoFactorStatus::Disabled,
+            attributes: [],
+        );
+
+        new SessionGuard($session)->login($identity);
+
+        $recognised = false;
+        foreach ($config->authenticatedMarkerKeys as $key) {
+            if ($session->get($key) !== null) {
+                $recognised = true;
+                break;
+            }
+        }
+
+        self::assertTrue(
+            $recognised,
+            'After a guard login the session must carry a data key that SessionConfig recognises as authenticated (PCI-DSS 8.2.8 gate source of truth).',
+        );
     }
 
     #[Test]
@@ -143,5 +289,41 @@ final class SessionGuardTest extends TestCase
 
         $guard = new SessionGuard($session);
         $guard->updateIdentity($identity);
+    }
+
+    #[Test]
+    public function authenticateReturnsNullWhenSessionDataIsNull(): void
+    {
+        /** @var SessionInterface&Stub $session */
+        $session = $this->createStub(SessionInterface::class);
+        $session->method('isStarted')->willReturn(true);
+        $session->method('has')->willReturn(true);
+        $session->method('get')->willReturn(null);
+
+        $guard = new SessionGuard($session);
+        $request = new ServerRequest(method: 'GET', uri: '/account');
+
+        self::assertNull($guard->authenticate($request));
+    }
+
+    /**
+     * The guard persists the concrete Identity shape only. Any other
+     * implementation (AnonymousIdentity, a custom domain identity) must
+     * raise LogicException rather than be dropped: a silent drop makes
+     * `login()` report success while leaving the session empty, and the
+     * failure only surfaces on the next request.
+     */
+    #[Test]
+    public function storeIdentityRejectsNonIdentityImplementation(): void
+    {
+        $session = $this->createStub(SessionInterface::class);
+        $session->method('isStarted')->willReturn(false);
+
+        $guard = new SessionGuard($session);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIsOrContains('SessionGuard::storeIdentity expected');
+
+        $guard->updateIdentity(new AnonymousIdentity());
     }
 }

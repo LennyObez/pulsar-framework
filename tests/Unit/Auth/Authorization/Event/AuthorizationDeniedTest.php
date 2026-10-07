@@ -16,27 +16,74 @@ use function strlen;
 final class AuthorizationDeniedTest extends TestCase
 {
     #[Test]
-    public function constructionSetsAllProperties(): void
+    public function fromArrayDefaultsMissingFieldsToEmptyStrings(): void
     {
-        $now = new DateTimeImmutable();
+        $event = AuthorizationDenied::fromArray([]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->permission);
+        self::assertNull($event->resource);
+        self::assertSame('', $event->denialReason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function fromArrayIgnoresNonStringValues(): void
+    {
+        $event = AuthorizationDenied::fromArray([
+            'identity_id' => 42,
+            'permission' => true,
+            'resource' => ['array'],
+            'denial_reason' => null,
+            'correlation_id' => 3.14,
+            'nonce' => false,
+        ]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->permission);
+        self::assertNull($event->resource);
+        self::assertSame('', $event->denialReason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function toArrayIncludesSchemaVersion(): void
+    {
+        $now = new DateTimeImmutable('2025-06-15T10:30:00.000000+00:00');
 
         $event = new AuthorizationDenied(
             identityId: 'user-1',
             permission: 'users.delete',
             resource: 'user-42',
             denialReason: 'ABAC-deny',
-            correlationId: 'corr-1',
-            nonce: 'def456',
+            correlationId: 'c-1',
+            nonce: 'n-1',
             occurredAt: $now,
         );
 
-        self::assertSame('user-1', $event->identityId);
-        self::assertSame('users.delete', $event->permission);
-        self::assertSame('user-42', $event->resource);
-        self::assertSame('ABAC-deny', $event->denialReason);
-        self::assertSame('corr-1', $event->correlationId);
-        self::assertSame('def456', $event->nonce);
-        self::assertSame($now, $event->occurredAt);
+        $array = $event->toArray();
+
+        self::assertSame(1, $array['schema_version']);
+        self::assertSame('user-42', $array['resource']);
+    }
+
+    #[Test]
+    public function createPreservesNullResource(): void
+    {
+        $event = AuthorizationDenied::create(
+            identityId: 'user-1',
+            permission: 'admin.panel',
+            resource: null,
+            denialReason: 'RBAC-miss',
+            correlationId: 'corr-1',
+        );
+
+        self::assertNull($event->resource);
+
+        $array = $event->toArray();
+        self::assertNull($array['resource']);
     }
 
     #[Test]

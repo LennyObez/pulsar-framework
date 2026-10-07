@@ -43,7 +43,7 @@ final class CoreRuntimeProbeTest extends TestCase
 
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test-ext',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'Pulsar\\TestExtension',
             'provides' => ['services' => ['Pulsar\\SomeService']],
             'requires' => ['core' => '>=1.0.0'],

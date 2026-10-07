@@ -28,7 +28,13 @@ Ship an optional persistent worker runtime (`runtime:serve`) as a built-in comma
 - **Execution order is deterministic:** (1) evict, (2) reset, (3) leak check.
 
 4. **Graceful recycling.** Workers shut down gracefully after configurable thresholds (request count, memory usage, uptime) and are restarted by a process supervisor.
-5. **Optional Fiber concurrency.** The `--concurrency N` flag enables Fiber-based connection multiplexing for accepting multiple connections. Individual request handling remains sequential (see ADR-0005).
+5. **Optional Fiber concurrency.** The `--concurrency` flag chooses whether the connection handler runs inside a Fiber: `0` is a synchronous accept loop, `1` is one connection Fiber at a time. Values above 1 are **refused** at construction, because the runtime does not isolate per-request state across interleaved Fibers — a request parked inside a contended cache lock would resume holding the next request's session ([ADR-0071](0071-a-fiber-keyed-map-is-not-concurrency.md)). Connections are therefore accepted one at a time, and individual request handling is sequential (see ADR-0005 for the execution model).
+
+### What depends on requests being handled one at a time
+
+The sequential guarantee in (5) is not only a simplification; at least one security property is built directly on it, and a change to that guarantee has to move the property with it.
+
+- **`BindingProvenance` confines a bound-model attestation to the request that earned it** by numbering a binding pass and answering only for the pass that is open. Nothing on the request can carry that number — PSR-7 messages are immutable, so the binder's request and the argument resolver's are different instances, and a request attribute is the surface the seal exists not to trust — so it is a counter held privately by that object, and it is correct exactly while one request is served at a time. Under overlapping requests in one process, two passes would each end the other's attestations. That fails closed rather than open: a handler loses a model it was entitled to instead of receiving one it was not. It is still a break, and the fix is per-context state rather than a process-wide counter.
 
 ### Safety constraints
 

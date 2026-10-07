@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Available storage driver types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum StorageDriver: string

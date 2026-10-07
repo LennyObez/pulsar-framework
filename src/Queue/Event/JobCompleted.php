@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a job completes successfully.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobCompleted extends QueueEvent

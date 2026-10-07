@@ -51,11 +51,16 @@ final readonly class TabsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{title: string, content: string}> $tabs */
+        /** @var list<mixed> $tabs */
         $tabs = $data['tabs'] ?? [];
-        $defaultActive = (int) ($data['defaultActive'] ?? 0);
+        /** @var mixed $rawDefaultActive */
+        $rawDefaultActive = $data['defaultActive'] ?? null;
+        $defaultActive = is_int($rawDefaultActive) ? $rawDefaultActive : 0;
 
-        $html = '<div class="tabs">';
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' ' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') : '';
+
+        $html = "<div class=\"tabs$className\"$anchor>";
         $html .= '<div role="tablist" class="tabs__list">';
 
         foreach ($tabs as $i => $tab) {
@@ -63,23 +68,28 @@ final readonly class TabsBlock implements BlockTypeInterface
                 continue;
             }
 
-            $title = htmlspecialchars((string) ($tab['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawTitle */
+            $rawTitle = $tab['title'] ?? null;
+            $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
             $selected = $i === $defaultActive ? 'true' : 'false';
 
-            $html .= "<button role=\"tab\" id=\"tab-{$i}\" aria-controls=\"panel-{$i}\" aria-selected=\"{$selected}\" class=\"tabs__tab\">{$title}</button>";
+            $html .= "<button role=\"tab\" id=\"tab-$i\" aria-controls=\"panel-$i\" aria-selected=\"$selected\" class=\"tabs__tab\">$title</button>";
         }
 
         $html .= '</div>';
 
+        /** @var mixed $tab */
         foreach ($tabs as $i => $tab) {
             if (!is_array($tab)) {
                 continue;
             }
 
-            $content = htmlspecialchars((string) ($tab['content'] ?? ''), ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawContent */
+            $rawContent = $tab['content'] ?? null;
+            $content = htmlspecialchars(is_string($rawContent) ? $rawContent : '', ENT_QUOTES, 'UTF-8');
             $hidden = $i !== $defaultActive ? ' hidden' : '';
 
-            $html .= "<div role=\"tabpanel\" id=\"panel-{$i}\" aria-labelledby=\"tab-{$i}\" class=\"tabs__panel\"{$hidden}>{$content}</div>";
+            $html .= "<div role=\"tabpanel\" id=\"panel-$i\" aria-labelledby=\"tab-$i\" class=\"tabs__panel\"$hidden>$content</div>";
         }
 
         return $html . '</div>';
@@ -98,17 +108,17 @@ final readonly class TabsBlock implements BlockTypeInterface
 
         foreach ($data['tabs'] as $index => $tab) {
             if (!is_array($tab)) {
-                $errors[] = "tabs[{$index}] must be an object";
+                $errors[] = "tabs[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($tab['title']) || !is_string($tab['title'])) {
-                $errors[] = "tabs[{$index}].title is required and must be a string";
+                $errors[] = "tabs[$index].title is required and must be a string";
             }
 
             if (!isset($tab['content']) || !is_string($tab['content'])) {
-                $errors[] = "tabs[{$index}].content is required and must be a string";
+                $errors[] = "tabs[$index].content is required and must be a string";
             }
         }
 

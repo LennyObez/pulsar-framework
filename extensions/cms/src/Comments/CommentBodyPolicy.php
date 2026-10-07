@@ -12,6 +12,10 @@ use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
  *
  * Delegates to SafeHtmlPolicy::sanitizeComment() which uses the restricted
  * comment element subset: p, br, strong, em, a(href), code, blockquote, pre.
+ *
+ * @psalm-api Public service resolved from the DI container by CommentService;
+ *            not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentBodyPolicy

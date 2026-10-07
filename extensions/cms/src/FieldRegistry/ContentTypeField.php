@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Each field has a type that maps to a specific database value column
  * for proper indexing and type-safe queries.
+ *
+ * @psalm-api Public DTO returned from FieldRegistryRepositoryInterface and
+ *            ContentTypeBuilder; consumed by admin form rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentTypeField

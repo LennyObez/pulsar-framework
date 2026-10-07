@@ -18,7 +18,7 @@ use Pulsar\Http\Message\Response;
  * the signature and handles event-specific logic. Returns 200 on success
  * or 400 on failure to satisfy webhook provider retry semantics.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class WebhookController
 {
     public function __construct(

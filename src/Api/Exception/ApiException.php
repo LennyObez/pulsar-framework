@@ -14,6 +14,7 @@ use function sprintf;
  * Base exception for all API resource errors.
  *
  * Provides static factory methods for specific API error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ApiException extends RuntimeException
@@ -63,23 +64,6 @@ final class ApiException extends RuntimeException
         return new self(
             sprintf('Requested %d includes exceeds maximum of %d', $count, $max),
             400,
-        );
-    }
-
-    /**
-     * A domain entity was returned directly from a controller without transformation.
-     */
-    #[NoDiscard]
-    public static function entitySerializationBanned(string $entityClass, string $correlationId): self
-    {
-        return new self(
-            sprintf(
-                'Entity "%s" returned directly from controller without API resource transformation (correlation: %s). '
-                . 'Wrap the entity in an ApiResource subclass.',
-                $entityClass,
-                $correlationId,
-            ),
-            500,
         );
     }
 

@@ -12,6 +12,7 @@ use Pulsar\Security\Compliance\Retention\RetentionPolicy;
  *
  * Implementations produce tamper-evident exports with integrity
  * hash manifests for regulatory audit purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EvidenceExporterInterface

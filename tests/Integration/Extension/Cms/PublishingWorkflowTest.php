@@ -14,7 +14,6 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
 #[CoversClass(Content::class)]
-#[CoversClass(PublishingStatus::class)]
 final class PublishingWorkflowTest extends TestCase
 {
     #[Test]
@@ -72,7 +71,7 @@ final class PublishingWorkflowTest extends TestCase
 
         // Published -> Draft is not a valid transition
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'published' to 'draft'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'published' to 'draft'");
 
         $published->restore();
     }

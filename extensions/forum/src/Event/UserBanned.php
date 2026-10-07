@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a user is banned from the forum.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UserBanned

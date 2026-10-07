@@ -15,7 +15,7 @@
         if (navigator.sendBeacon) {
           navigator.sendBeacon(api, body);
         } else {
-          fetch(api, {
+          void fetch(api, {
             method: 'POST',
             body,
             headers: { 'Content-Type': 'application/json' },
@@ -69,7 +69,11 @@
       const base = s.src.substring(0, s.src.lastIndexOf('/') + 1);
       ext.split(',').forEach((name: string) => {
         const n = name.trim();
-        if (n) {
+        // An extension name reaches a script src. The host cannot be changed from here
+        // because base already carries scheme and host, but a name containing / or ..
+        // would still load some other same-origin path as script. Only a plain name is
+        // ever a legitimate value, so anything else is dropped rather than resolved.
+        if (n && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(n)) {
           const el = document.createElement('script');
           el.async = true;
           el.src = base + 'extensions/' + n + '.js';

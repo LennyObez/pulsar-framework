@@ -6,11 +6,13 @@ namespace Pulsar\Extension\Forum\Internal\Persistence;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Tag\Tag;
 use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use TagRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use TagRepositoryInterface for public API')]
 final readonly class DbTagRepository implements TagRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -41,10 +43,15 @@ final readonly class DbTagRepository implements TagRepositoryInterface
         LIMIT 1000
         SQL;
 
-    private const string SQL_ATTACH_TO_THREAD = <<<'SQL'
+    private const string SQL_ATTACH_PG = <<<'SQL'
         INSERT INTO forum_thread_tags (tag_id, thread_id)
         VALUES (:tag_id, :thread_id)
         ON CONFLICT (tag_id, thread_id) DO NOTHING
+        SQL;
+
+    private const string SQL_ATTACH_MYSQL = <<<'SQL'
+        INSERT IGNORE INTO forum_thread_tags (tag_id, thread_id)
+        VALUES (:tag_id, :thread_id)
         SQL;
 
     private const string SQL_DETACH_FROM_THREAD = <<<'SQL'
@@ -52,18 +59,13 @@ final readonly class DbTagRepository implements TagRepositoryInterface
         WHERE tag_id = :tag_id AND thread_id = :thread_id
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_tags (
-            id, slug, name, description, usage_count
-        ) VALUES (
-            :id, :slug, :name, :description, :usage_count
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            slug = EXCLUDED.slug,
-            name = EXCLUDED.name,
-            description = EXCLUDED.description,
-            usage_count = EXCLUDED.usage_count
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'slug', 'name', 'description', 'usage_count',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'slug', 'name', 'description', 'usage_count',
+    ];
 
     private const string SQL_FIND_POPULAR = <<<'SQL'
         SELECT t.*
@@ -122,7 +124,12 @@ final readonly class DbTagRepository implements TagRepositoryInterface
 
     public function attachToThread(string $tagId, string $threadId): void
     {
-        $this->connection->execute(self::SQL_ATTACH_TO_THREAD, [
+        $sql = match ($this->connection->driver()) {
+            Driver::MySQL => self::SQL_ATTACH_MYSQL,
+            Driver::PostgreSQL, Driver::SQLite => self::SQL_ATTACH_PG,
+        };
+
+        $this->connection->execute($sql, [
             'tag_id' => $tagId,
             'thread_id' => $threadId,
         ]);
@@ -147,7 +154,15 @@ final readonly class DbTagRepository implements TagRepositoryInterface
 
     public function save(Tag $tag): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_tags',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $tag->id,
             'slug' => $tag->slug,
             'name' => $tag->name,

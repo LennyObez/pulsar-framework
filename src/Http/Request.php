@@ -7,25 +7,33 @@ namespace Pulsar\Http;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Http\Exception\BodyTooLargeException;
 use WeakMap;
 
 use function array_diff_key;
 use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
+use function fclose;
+use function feof;
+use function fopen;
+use function fread;
 use function is_array;
+use function is_int;
 use function is_string;
 use function json_decode;
 use function json_validate;
 use function str_contains;
+use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
 /**
  * Immutable HTTP request value object.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Request
+final readonly class Request
 {
     /**
      * @param array<string, mixed> $query   GET parameters
@@ -100,7 +108,6 @@ readonly class Request
     /**
      * Return a new request with an added attribute.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
      */
     #[NoDiscard]
     public function withAttribute(string $key, mixed $value): self
@@ -116,7 +123,6 @@ readonly class Request
      *
      * @param array<string, mixed> $attributes Attributes to merge (overwrites existing keys)
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withAttributes(array $attributes): self
@@ -127,7 +133,6 @@ readonly class Request
     /**
      * Return a new request without the specified attribute.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withoutAttribute(string $key): self
@@ -175,6 +180,17 @@ readonly class Request
     }
 
     /**
+     * Hard cap on the body size that `json()` will pass to `json_decode`.
+     *
+     * `Request::fromGlobals()` already applies a body-size cap (default
+     * 8 MiB) at read time, but a caller constructing a `Request` instance
+     * directly with a hand-crafted body (tests, internal dispatch) bypasses
+     * that cap. This second-line guard ensures the JSON parser never sees
+     * more than a documented bound regardless of how the body got here.
+     */
+    private const int JSON_BODY_DECODE_LIMIT = 8_388_608; // 8 MiB
+
+    /**
      * Perform the actual JSON body decoding (no caching).
      *
      * @return array<string, mixed>
@@ -186,12 +202,21 @@ readonly class Request
             return [];
         }
 
-        if ($this->body === '' || !json_validate($this->body)) {
+        // Refuse to decode oversize bodies. Returning an empty
+        // array keeps the `json()` contract intact (callers already
+        // handle the empty-array case for invalid JSON / wrong content
+        // type) without raising mid-request.
+        if ($this->body === '' || strlen($this->body) > self::JSON_BODY_DECODE_LIMIT) {
+            return [];
+        }
+
+        if (!json_validate($this->body)) {
             return [];
         }
 
         try {
-            $decoded = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
+            /** @var mixed $decoded */
+            $decoded = json_decode($this->body, true, flags: JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
             return is_array($decoded) ? $decoded : [];
@@ -203,11 +228,31 @@ readonly class Request
     /**
      * Merge all input sources: query + post + json (json > post > query precedence).
      *
+     * Results are memoized per-instance via a WeakMap so that repeated calls
+     * from input(), has(), filled(), only(), except() do not rebuild the array.
+     *
      * @return array<string, mixed>
      */
     public function all(): array
     {
-        return [...$this->query, ...$this->post, ...$this->json()];
+        /** @var WeakMap<self, array<string, mixed>>|null $cache */
+        static $cache = null;
+
+        if ($cache === null) {
+            /** @var WeakMap<self, array<string, mixed>> $map */
+            $map = new WeakMap();
+            $cache = $map;
+        }
+
+        if (isset($cache[$this])) {
+            /** @var array<string, mixed> */
+            return $cache[$this];
+        }
+
+        $result = [...$this->query, ...$this->post, ...$this->json()];
+        $cache[$this] = $result;
+
+        return $result;
     }
 
     /**
@@ -283,6 +328,7 @@ readonly class Request
      */
     public function isSecure(): bool
     {
+        /** @var mixed $https */
         $https = $this->server('HTTPS');
         return $https !== null && $https !== 'off';
     }
@@ -310,12 +356,34 @@ readonly class Request
     }
 
     /**
+     * Default upper bound on the request body size that `fromGlobals` will
+     * read from `php://input` (8 MiB).
+     *
+     * Without a ceiling, an attacker can post an arbitrarily large body
+     * and exhaust worker memory before the application even begins to
+     * parse the request — a cheap DoS vector. The default matches the
+     * common `post_max_size` ini value of 8 MiB and can be raised or
+     * lowered explicitly per call.
+     */
+    public const int DEFAULT_MAX_BODY_BYTES = 8_388_608;
+
+    /**
      * Create a Request from PHP superglobals.
+     *
+     * Reads `php://input` with an explicit upper bound: anything larger
+     * than `$maxBodyBytes` raises `BodyTooLargeException` so the kernel
+     * can reply with 413 Payload Too Large. Pass `0` to disable the cap
+     * (rarely safe — typically only useful for trusted internal jobs).
      *
      * @param array<string, mixed>|null $get
      * @param array<string, mixed>|null $post
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $server
+     * @param int $maxBodyBytes Upper bound on the body size; 0 disables.
+     *
+     * @throws BodyTooLargeException When `php://input` exceeds the cap or
+     *                               when the declared `Content-Length`
+     *                               already exceeds the cap.
      */
     #[NoDiscard]
     public static function fromGlobals(
@@ -323,6 +391,7 @@ readonly class Request
         ?array $post = null,
         ?array $cookies = null,
         ?array $server = null,
+        int $maxBodyBytes = self::DEFAULT_MAX_BODY_BYTES,
     ): self {
         /** @var array<string, mixed> $serverData */
         $serverData = $server ?? $_SERVER;
@@ -333,15 +402,19 @@ readonly class Request
         /** @var array<string, mixed> $cookieData */
         $cookieData = $cookies ?? $_COOKIE;
 
+        /** @var mixed $requestMethod */
         $requestMethod = $serverData['REQUEST_METHOD'] ?? 'GET';
         $method = Method::fromString(is_string($requestMethod) ? $requestMethod : 'GET');
 
+        /** @var mixed $requestUri */
         $requestUri = $serverData['REQUEST_URI'] ?? '/';
         $uri = is_string($requestUri) ? $requestUri : '/';
 
+        /** @var mixed $queryStr */
         $queryStr = $serverData['QUERY_STRING'] ?? '';
         $queryString = is_string($queryStr) ? $queryStr : '';
 
+        /** @var mixed $protocol */
         $protocol = $serverData['SERVER_PROTOCOL'] ?? null;
         $protocolVersion = is_string($protocol)
             ? str_replace('HTTP/', '', $protocol)
@@ -356,7 +429,16 @@ readonly class Request
         $path = rawurldecode($path);
 
         $headers = HeaderBag::fromServer($serverData);
-        $body = file_get_contents('php://input') ?: '';
+
+        $declaredLength = self::resolveContentLength($serverData);
+
+        if ($maxBodyBytes > 0 && $declaredLength > $maxBodyBytes) {
+            // Fail fast on Content-Length: no point allocating a stream
+            // for a body the application is going to refuse anyway.
+            throw new BodyTooLargeException($maxBodyBytes, $declaredLength);
+        }
+
+        $body = self::readBoundedBody('php://input', $maxBodyBytes, $declaredLength);
 
         return new self(
             method: $method,
@@ -371,5 +453,88 @@ readonly class Request
             server: $serverData,
             protocolVersion: $protocolVersion,
         );
+    }
+
+    /**
+     * @param array<string, mixed> $serverData
+     */
+    private static function resolveContentLength(array $serverData): int
+    {
+        /** @var mixed $raw */
+        $raw = $serverData['CONTENT_LENGTH'] ?? $serverData['HTTP_CONTENT_LENGTH'] ?? null;
+
+        if (is_string($raw) && ctype_digit($raw)) {
+            return (int) $raw;
+        }
+
+        if (is_int($raw) && $raw >= 0) {
+            return $raw;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Read a request-body stream, refusing anything past `$maxBodyBytes`.
+     *
+     * Streaming the body in chunks (rather than `file_get_contents`) keeps
+     * the failure mode loud: as soon as the cumulative read exceeds the
+     * cap we raise — we never allocate space for the over-sized payload.
+     *
+     * Visible to tests so the bounded-read logic can be exercised against
+     * arbitrary stream URLs (a temp file, a memory stream, …) without
+     * relying on `php://input` being writable from PHP test code.
+     *
+     * @throws BodyTooLargeException
+     *
+     * @internal
+     */
+    public static function readBoundedBody(string $stream, int $maxBodyBytes, int $declaredLength): string
+    {
+        $handle = @fopen($stream, 'rb');
+
+        if ($handle === false) {
+            return '';
+        }
+
+        try {
+            if ($maxBodyBytes <= 0) {
+                $body = '';
+
+                while (!feof($handle)) {
+                    $chunk = fread($handle, 8_192);
+                    if ($chunk === false) {
+                        break;
+                    }
+                    $body .= $chunk;
+                }
+
+                return $body;
+            }
+
+            // Read at most $maxBodyBytes + 1 to detect overflow without
+            // allocating the entire over-sized payload.
+            $body = '';
+            $remaining = $maxBodyBytes + 1;
+
+            while ($remaining > 0 && !feof($handle)) {
+                $chunk = fread($handle, $remaining < 8_192 ? $remaining : 8_192);
+
+                if ($chunk === false || $chunk === '') {
+                    break;
+                }
+
+                $body .= $chunk;
+                $remaining = $maxBodyBytes + 1 - strlen($body);
+            }
+
+            if (strlen($body) > $maxBodyBytes) {
+                throw new BodyTooLargeException($maxBodyBytes, $declaredLength);
+            }
+
+            return $body;
+        } finally {
+            fclose($handle);
+        }
     }
 }

@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Auth\AuthenticationState;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
@@ -23,7 +24,12 @@ use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Method;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Routing\MatchedRoute;
+use Pulsar\Routing\Route;
+
+use function in_array;
 
 /**
  * End-to-end tests for the authentication and authorization flow.
@@ -63,15 +69,36 @@ final class AuthFlowTest extends TestCase
 
     /**
      * Run a request through the auth middleware pipeline.
+     *
+     * The kernel is what hands the dispatched route down in production, so the
+     * harness has to hand it down too: AuthorizationMiddleware fails closed
+     * without one, and a pipeline test that omits it would be measuring the
+     * absence of routing rather than the authorization decision. Pass `null` to
+     * exercise that fail-closed path deliberately.
+     *
+     * The route is bound rather than written to `_route`, because that is the
+     * channel the middleware reads. The attribute is rewritable by every
+     * route-level frame ahead of this one, and a substitute route declaring the
+     * `_authenticated` sentinel used to skip the real route's permissions
+     * entirely.
+     *
+     * @param list<string>|null $permissions Route-declared permissions, or null for no route context
      */
     private function processRequest(
         ServerRequestInterface $request,
         AuthManagerInterface $authManager,
         GateInterface $gate,
         RequestHandlerInterface $handler,
+        ?array $permissions = ['_authenticated'],
     ): ResponseInterface {
-        $authMiddleware = new AuthenticationMiddleware($authManager);
+        $authMiddleware = new AuthenticationMiddleware($authManager, new AuthenticationState());
         $authzMiddleware = new AuthorizationMiddleware($gate);
+
+        if ($permissions !== null) {
+            $authzMiddleware = $authzMiddleware->forDispatchedRoute(
+                $this->matchedRoute($request, $permissions),
+            );
+        }
 
         // Pipeline: authentication -> authorization -> handler
         $authzHandler = new class ($authzMiddleware, $handler) implements RequestHandlerInterface {
@@ -87,6 +114,23 @@ final class AuthFlowTest extends TestCase
         };
 
         return $authMiddleware->process($request, $authzHandler);
+    }
+
+    /**
+     * Build the route the router would have matched for this request.
+     *
+     * @param list<string> $permissions
+     */
+    private function matchedRoute(ServerRequestInterface $request, array $permissions): MatchedRoute
+    {
+        return new MatchedRoute(
+            new Route(
+                methods: [Method::from($request->getMethod())],
+                path: $request->getUri()->getPath(),
+                handler: static fn(): ResponseInterface => Response::text(''),
+                attributes: ['permissions' => $permissions],
+            ),
+        );
     }
 
     private function createHandler(callable $fn): RequestHandlerInterface
@@ -309,6 +353,81 @@ final class AuthFlowTest extends TestCase
         );
         self::assertSame(ResponseStatus::Unauthorized->value, $secondResponse->getStatusCode());
     }
+
+    /**
+     * Without route context the required permissions are unknown, so an
+     * authenticated request must not pass unchecked.
+     */
+    #[Test]
+    public function authenticatedRequestWithoutRouteContextIsForbidden(): void
+    {
+        $this->sessionStore->login('user-noroute', 'Erin');
+        $reached = false;
+
+        $response = $this->processRequest(
+            $this->createRequest('GET', '/dashboard'),
+            new AuthFlowTestAuthManager($this->sessionStore),
+            new AuthFlowTestGate(),
+            $this->createHandler(function () use (&$reached): ResponseInterface {
+                $reached = true;
+
+                return Response::text('should not reach');
+            }),
+            permissions: null,
+        );
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertFalse($reached, 'The handler must not run when authorization cannot be decided');
+    }
+
+    /**
+     * A route behind the auth middleware that declares no permission default-denies
+     * rather than admitting every authenticated user. Naming `_authenticated` is the
+     * operator's explicit opt-in to "any logged-in identity may pass".
+     */
+    #[Test]
+    public function routeDeclaringNoPermissionIsForbiddenEvenWhenAuthenticated(): void
+    {
+        $this->sessionStore->login('user-nodecl', 'Frank');
+
+        $response = $this->processRequest(
+            $this->createRequest('GET', '/dashboard'),
+            new AuthFlowTestAuthManager($this->sessionStore),
+            new AuthFlowTestGate(),
+            $this->createHandler(fn(): ResponseInterface => Response::text('should not reach')),
+            permissions: [],
+        );
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function declaredPermissionIsCheckedAgainstTheGate(): void
+    {
+        $this->sessionStore->login('user-rbac', 'Grace');
+        $authManager = new AuthFlowTestAuthManager($this->sessionStore);
+        $handler = $this->createHandler(fn(): ResponseInterface => Response::text('reports'));
+
+        $granted = $this->processRequest(
+            $this->createRequest('GET', '/reports'),
+            $authManager,
+            new AuthFlowTestGate(['reports.view']),
+            $handler,
+            permissions: ['reports.view'],
+        );
+
+        self::assertSame(ResponseStatus::OK->value, $granted->getStatusCode());
+
+        $denied = $this->processRequest(
+            $this->createRequest('GET', '/reports'),
+            $authManager,
+            new AuthFlowTestGate(['reports.view']),
+            $handler,
+            permissions: ['reports.delete'],
+        );
+
+        self::assertSame(ResponseStatus::Forbidden->value, $denied->getStatusCode());
+    }
 }
 
 /**
@@ -471,14 +590,25 @@ final readonly class AuthFlowTestGuard implements GuardInterface
 }
 
 /**
- * Test gate that allows all authenticated users.
+ * Test gate that allows all authenticated users, or only a named set of permissions.
  */
 final class AuthFlowTestGate implements GateInterface
 {
+    /**
+     * @param list<string>|null $granted Permissions this gate allows, or null for "any, once authenticated"
+     */
+    public function __construct(
+        private readonly ?array $granted = null,
+    ) {}
+
     #[Override]
     public function allows(IdentityInterface $identity, string $permission, ?PolicyContext $context = null): bool
     {
-        return $identity->isAuthenticated();
+        if (!$identity->isAuthenticated()) {
+            return false;
+        }
+
+        return $this->granted === null || in_array($permission, $this->granted, true);
     }
 
     #[Override]

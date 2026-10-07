@@ -16,9 +16,10 @@ use const FILTER_VALIDATE_URL;
 
 /**
  * Value must be a valid URL via FILTER_VALIDATE_URL. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Url implements RuleInterface
+final readonly class Url implements RuleInterface
 {
     public function __construct(
         private string $message = '',

@@ -172,7 +172,18 @@ final class SqliteSchemaChangeLogStore implements SchemaChangeLogStoreInterface
     }
 
     /**
-     * @param list<array<string, mixed>> $rows
+     * @param list<array{
+     *     id: string,
+     *     operation: string,
+     *     table_name: string,
+     *     actor: string,
+     *     reason: string,
+     *     timestamp: int,
+     *     statements: string,
+     *     evidence_hash: string,
+     *     correlation_id: string|null,
+     *     success: int,
+     * }> $rows
      * @return list<SchemaChangeLogEntry>
      */
     private function hydrateAll(array $rows): array
@@ -180,18 +191,18 @@ final class SqliteSchemaChangeLogStore implements SchemaChangeLogStoreInterface
         return array_map(
             static function (array $row): SchemaChangeLogEntry {
                 /** @var list<string> $statements */
-                $statements = json_decode((string) $row['statements'], true, 512, JSON_THROW_ON_ERROR);
+                $statements = json_decode($row['statements'], true, 512, JSON_THROW_ON_ERROR);
 
                 return new SchemaChangeLogEntry(
-                    id: (string) $row['id'],
-                    operation: (string) $row['operation'],
-                    table: (string) $row['table_name'],
-                    actor: (string) $row['actor'],
-                    reason: (string) $row['reason'],
-                    timestamp: (int) $row['timestamp'],
+                    id: $row['id'],
+                    operation: $row['operation'],
+                    table: $row['table_name'],
+                    actor: $row['actor'],
+                    reason: $row['reason'],
+                    timestamp: $row['timestamp'],
                     statements: $statements,
-                    evidenceHash: (string) $row['evidence_hash'],
-                    correlationId: $row['correlation_id'] !== null ? (string) $row['correlation_id'] : null,
+                    evidenceHash: $row['evidence_hash'],
+                    correlationId: $row['correlation_id'],
                     success: (bool) $row['success'],
                 );
             },

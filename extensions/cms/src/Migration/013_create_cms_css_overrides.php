@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_css_overrides (
@@ -32,15 +34,18 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_css_override_tenant_theme_version
-                ON cms_css_overrides (tenant_key, theme_id, version)
-            SQL);
+        $indexes->ensure(
+            'cms_css_overrides',
+            'uq_css_override_tenant_theme_version',
+            ['tenant_key', 'theme_id', 'version'],
+            unique: true,
+        );
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_css_override_tenant_theme_active
-                ON cms_css_overrides (tenant_id, theme_id, is_active)
-            SQL);
+        $indexes->ensure(
+            'cms_css_overrides',
+            'idx_css_override_tenant_theme_active',
+            ['tenant_id', 'theme_id', 'is_active'],
+        );
     }
 
     public function down(ConnectionInterface $connection): void

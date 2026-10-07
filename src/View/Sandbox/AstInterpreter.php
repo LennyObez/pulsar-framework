@@ -97,12 +97,13 @@ final class AstInterpreter
 
     /**
      * Evaluate an output node ({{ $var }}).
-     * All output is auto-escaped — no raw bypass.
+     * All output is auto-escaped: no raw bypass.
      *
      * @param array<string, mixed> $data
      */
     private function evaluateOutput(AstNode $node, array $data): void
     {
+        /** @var mixed $value */
         $value = $this->resolveExpression($node->value, $data);
         $stringValue = match (true) {
             is_string($value) => $value,
@@ -121,6 +122,7 @@ final class AstInterpreter
      */
     private function evaluateIf(AstNode $node, array $data): void
     {
+        /** @var mixed $condition */
         $condition = $this->resolveExpression($node->value, $data);
 
         if ($condition) {
@@ -144,6 +146,7 @@ final class AstInterpreter
             throw ViewException::invalidDirective('foreach', 'invalid expression: ' . $node->value);
         }
 
+        /** @var mixed $collection */
         $collection = $this->resolveExpression($parts['collection'], $data);
 
         if (!is_iterable($collection)) {
@@ -152,6 +155,10 @@ final class AstInterpreter
 
         $iterationCount = 0;
 
+        /**
+         * @var mixed $key
+         * @var mixed $value
+         */
         foreach ($collection as $key => $value) {
             $iterationCount++;
 
@@ -159,11 +166,10 @@ final class AstInterpreter
                 throw ViewException::sandboxLoopLimitExceeded($this->config->loopLimit);
             }
 
-            $loopData = $data;
-            $loopData[$parts['value']] = $value;
+            $loopData = [...$data, $parts['value'] => $value];
 
             if ($parts['key'] !== null) {
-                $loopData[$parts['key']] = $key;
+                $loopData = [...$loopData, $parts['key'] => $key];
             }
 
             $this->evaluateChildren($node->children, $loopData);
@@ -244,7 +250,9 @@ final class AstInterpreter
             $pos = strpos($expr, " $op ");
 
             if ($pos !== false) {
+                /** @var mixed $left */
                 $left = $this->resolveExpression(substr($expr, 0, $pos), $data);
+                /** @var mixed $right */
                 $right = $this->resolveExpression(substr($expr, $pos + strlen($op) + 2), $data);
 
                 return match ($op) {
@@ -300,6 +308,7 @@ final class AstInterpreter
 
         foreach ($parts as $part) {
             if (is_array($current) && array_key_exists($part, $current)) {
+                /** @var mixed $current */
                 $current = $current[$part];
             } else {
                 return null;

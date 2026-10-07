@@ -13,12 +13,15 @@ use function array_keys;
 use function is_bool;
 use function is_float;
 use function is_int;
+use function is_numeric;
 use function is_resource;
 use function is_string;
+use function preg_match;
 use function stream_get_contents;
 
 /**
  * Readonly single-row value object with typed accessors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 readonly class Row
@@ -66,13 +69,14 @@ readonly class Row
      */
     public function getInt(string $column): int
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_int($value)) {
             return $value;
         }
 
-        if (is_string($value) && $value !== '' && ($value === '0' || ltrim($value, '-0123456789') === '')) {
+        if (is_string($value) && preg_match('/^-?\d+$/D', $value) === 1) {
             return (int) $value;
         }
 
@@ -86,6 +90,7 @@ readonly class Row
      */
     public function getString(string $column): string
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_string($value)) {
@@ -106,6 +111,7 @@ readonly class Row
      */
     public function getBool(string $column): bool
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_bool($value)) {
@@ -130,6 +136,7 @@ readonly class Row
      */
     public function getFloat(string $column): float
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_float($value)) {
@@ -154,6 +161,7 @@ readonly class Row
      */
     public function getNullableInt(string $column): ?int
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if ($value === null) {
@@ -164,11 +172,40 @@ readonly class Row
             return $value;
         }
 
-        if (is_string($value) && $value !== '' && ($value === '0' || ltrim($value, '-0123456789') === '')) {
+        if (is_string($value) && preg_match('/^-?\d+$/D', $value) === 1) {
             return (int) $value;
         }
 
         throw DatabaseException::typeCastFailed($column, 'int');
+    }
+
+    /**
+     * Get a column as a nullable float.
+     *
+     * @throws DatabaseException If the column does not exist.
+     */
+    public function getNullableFloat(string $column): ?float
+    {
+        /** @var mixed $value */
+        $value = $this->get($column);
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_float($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return (float) $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        throw DatabaseException::typeCastFailed($column, 'float');
     }
 
     /**
@@ -182,6 +219,7 @@ readonly class Row
      */
     public function getBinary(string $column): string
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_string($value)) {
@@ -208,6 +246,7 @@ readonly class Row
      */
     public function getNullableString(string $column): ?string
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if ($value === null) {

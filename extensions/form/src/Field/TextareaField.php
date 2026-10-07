@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Multi-line text input field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TextareaField extends AbstractField

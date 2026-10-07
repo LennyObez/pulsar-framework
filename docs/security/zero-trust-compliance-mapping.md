@@ -4,6 +4,8 @@ This document maps Pulsar's zero-trust architecture to applicable regulatory fra
 
 **Disclaimer**: This document describes control coverage provided by the framework. It does not constitute a compliance certification. Organizations must perform their own compliance assessments, engage qualified auditors, and implement operational procedures appropriate to their regulatory obligations. The framework provides controls and evidence generation capabilities; compliance is achieved through the combination of technical controls, operational procedures, and organizational governance.
 
+**How to read the mappings below**: a row saying a component is _relevant to_ an article means exactly that. It is not a statement that the article is satisfied, and it is not a statement about your deployment — the zero-trust module is configuration-driven, and a policy engine with no rules bound decides nothing. For the outcome of a control in a running deployment, run `pulsar compliance:report`, which computes each answer from a probe instead of from a table. See [ADR-0045](../adr/0045-a-control-status-is-observed-not-written.md) for why that distinction is enforced in code rather than left to care.
+
 ---
 
 ## 1. NIST SP 800-207 zero-trust architecture - tenet mapping

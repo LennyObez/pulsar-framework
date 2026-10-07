@@ -6,6 +6,8 @@
  * awareness endpoint.
  */
 
+import { cmsApi } from '../utils/api.js';
+
 /** Session info from the collaboration API. */
 interface SessionInfo {
   id: string;
@@ -95,9 +97,8 @@ export class AwarenessOverlay {
       return;
     }
 
-    await fetch(`${this.baseUrl}/${this.contentId}/awareness`, {
+    await cmsApi(`${this.baseUrl}/${this.contentId}/awareness`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         session_id: this.sessionId,
         cursor_position:

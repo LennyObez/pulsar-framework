@@ -23,7 +23,8 @@ use const JSON_THROW_ON_ERROR;
  * Tag-based cache wrapping a driver + tag strategy.
  *
  * Stores tag version snapshots with each item.
- * Validates tag versions on read — stale items are treated as misses.
+ * Validates tag versions on read: stale items are treated as misses.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TaggedCache implements TaggedCacheInterface
@@ -79,6 +80,7 @@ final readonly class TaggedCache implements TaggedCacheInterface
 
             /** @var string $serializedValue */
             $serializedValue = $envelope['v'];
+            /** @var mixed $value */
             $value = $this->serializer->deserialize($serializedValue);
             $this->eventEmitter->emitHit($this->poolName, $this->driver->name(), $key, $start);
 

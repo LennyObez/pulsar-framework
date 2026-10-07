@@ -14,6 +14,7 @@ use function array_values;
  *
  * Preserves immutable originals so downstream code can compare
  * sanitized vs. original values when needed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SanitizationPipeline
@@ -35,14 +36,16 @@ final readonly class SanitizationPipeline
     public function sanitize(array $data): SanitizationResult
     {
         $originals = $data;
-        $sanitized = $data;
+        $sanitized = [];
 
-        foreach ($sanitized as $field => $value) {
+        /** @var mixed $value */
+        foreach ($data as $field => $value) {
             foreach ($this->filters as $filter) {
+                /** @var mixed $value */
                 $value = $filter->apply($value);
             }
 
-            $sanitized[$field] = $value;
+            $sanitized = [...$sanitized, $field => $value];
         }
 
         return new SanitizationResult($sanitized, $originals);

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a content translation's slug changes.
+ *
+ * @psalm-api Event class — dispatched by the slug update service
+ *            through the EventDispatcher; redirect listener subscribes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SlugChanged

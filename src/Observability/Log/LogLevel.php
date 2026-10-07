@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Log severity levels mapping PSR-3 levels.
  *
  * Lower severity value = more severe (0 = emergency, 7 = debug).
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LogLevel: string

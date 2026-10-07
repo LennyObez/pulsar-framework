@@ -127,7 +127,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
             }
 
             // Preload checks
-            $preloadResult = $this->checkPreload($environment);
+            $preloadResult = $this->checkPreload();
 
             if ($preloadResult !== null) {
                 return $preloadResult;
@@ -145,7 +145,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
      *
      * @return CheckResult|null Null if preload config is acceptable
      */
-    private function checkPreload(string $environment): ?CheckResult
+    private function checkPreload(): ?CheckResult
     {
         $preloadPath = $this->runtime->iniGet('opcache.preload');
 
@@ -165,7 +165,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
         if (!$this->isAbsolutePath($preloadPath)) {
             return CheckResult::warning(
                 self::CHECK_NAME,
-                'Preload path is relative — use an absolute path to avoid ambiguity across SAPIs',
+                'Preload path is relative: use an absolute path to avoid ambiguity across SAPIs',
                 [
                     sprintf('Current path: %s', $preloadPath),
                     'Set opcache.preload to an absolute path (e.g., /var/www/app/preload.generated.php).',
@@ -226,17 +226,8 @@ final readonly class OpcacheCheck implements DeployCheckInterface
      */
     private function isAbsolutePath(string $path): bool
     {
-        // Unix absolute
-        if (str_starts_with($path, '/')) {
-            return true;
-        }
-
-        // Windows absolute: C:\, D:\, etc.
-        if (isset($path[2]) && $path[1] === ':' && ($path[2] === '\\' || $path[2] === '/')) {
-            return true;
-        }
-
-        return false;
+        return str_starts_with($path, '/')
+            || (isset($path[2]) && $path[1] === ':' && ($path[2] === '\\' || $path[2] === '/'));
     }
 
     /**
@@ -252,7 +243,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
         }
 
         // Unix unsafe prefixes
-        /** @psalm-suppress MixedReturnStatement — Psalm 6.x lacks return-type inference for array_find() */
+        /** @psalm-suppress MixedReturnStatement: Psalm 6.x lacks return-type inference for array_find() */
         return array_find(self::UNSAFE_PATH_PREFIXES, static fn(string $prefix): bool => str_starts_with($path, $prefix))
             // Windows unsafe prefixes (case-insensitive)
             ?? array_find(self::UNSAFE_PATH_PREFIXES_WINDOWS, static fn(string $prefix): bool => str_starts_with(strtolower($path), $prefix))

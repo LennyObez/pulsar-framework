@@ -11,6 +11,7 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Event\EventDispatcherInterface;
@@ -333,6 +334,7 @@ final class VariantCheckoutTest extends TestCase
         $digitalDelivery->method('createDownloadTokens')->willReturn([]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('transaction')->willReturnCallback(
             static function (callable $callback) use ($db): mixed {
                 return $callback($db);

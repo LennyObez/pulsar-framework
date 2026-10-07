@@ -20,6 +20,9 @@ use Pulsar\Mail\Mailable;
 use Pulsar\Mail\MailManager;
 use Pulsar\Mail\Message;
 use Pulsar\Mail\Transport\ArrayTransport;
+use Pulsar\Mail\Transport\MailgunTransport;
+use Pulsar\Mail\Transport\MailHttpClientInterface;
+use RuntimeException;
 
 #[CoversClass(MailManager::class)]
 final class MailManagerTest extends TestCase
@@ -72,9 +75,41 @@ final class MailManagerTest extends TestCase
         $manager = new MailManager($this->config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('not configured');
+        $this->expectExceptionMessageIsOrContains('not configured');
 
         $manager->driver('nonexistent');
+    }
+
+    #[Test]
+    public function it_resolves_api_transport_when_http_client_is_provided(): void
+    {
+        // With an HTTP client supplied (as MailWiring now does by default), an
+        // API-based driver resolves instead of throwing "required".
+        $config = new MailConfig(
+            enabled: true,
+            defaultDriver: MailDriverType::Mailgun,
+            driverOptions: ['mailgun' => ['domain' => 'example.com', 'api_key' => 'key-abc']],
+        );
+        $manager = new MailManager($config, $this->createStub(MailHttpClientInterface::class));
+
+        self::assertInstanceOf(MailgunTransport::class, $manager->driver('mailgun'));
+    }
+
+    #[Test]
+    public function it_throws_for_api_transport_without_http_client(): void
+    {
+        // The original bug: no client -> API transports are unusable.
+        $config = new MailConfig(
+            enabled: true,
+            defaultDriver: MailDriverType::Mailgun,
+            driverOptions: ['mailgun' => ['domain' => 'example.com', 'api_key' => 'key-abc']],
+        );
+        $manager = new MailManager($config);
+
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessageIsOrContains('MailHttpClientInterface is required');
+
+        $manager->driver('mailgun');
     }
 
     #[Test]
@@ -145,7 +180,7 @@ final class MailManagerTest extends TestCase
         $manager = new MailManager($config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('LoggerInterface is required');
+        $this->expectExceptionMessageIsOrContains('LoggerInterface is required');
 
         $manager->driver();
     }
@@ -191,5 +226,51 @@ final class MailManagerTest extends TestCase
         );
 
         $manager->raw($message);
+    }
+
+    /**
+     * Regression: when the transport succeeds, a throwing success-path observer
+     * (event dispatcher, audit logger, logger) must NOT be caught by the
+     * failure handler and turned into a MailException. The delivered message id
+     * must be returned and the failure side-effects must never fire.
+     */
+    #[Test]
+    public function it_does_not_report_failure_when_success_event_dispatcher_throws(): void
+    {
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        // Throw on the MailSent dispatch (the only dispatch on the success path).
+        $dispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::isInstanceOf(MailSent::class))
+            ->willThrowException(new RuntimeException('observer blew up'));
+
+        $manager = new MailManager(
+            $this->config,
+            eventDispatcher: $dispatcher,
+        );
+
+        $message = new Message(
+            from: new Address('sender@test.com'),
+            to: [new Address('user@test.com')],
+            subject: 'Observer Throws',
+            textBody: 'Hello',
+        );
+
+        // The send succeeded at the transport, so the observer's failure must
+        // propagate as itself — NOT be swallowed and re-thrown as a send failure.
+        try {
+            $manager->raw($message);
+            self::fail('Expected the success-path observer exception to surface');
+        } catch (MailException $e) {
+            self::fail('A successful send was falsely reported as a MailException: ' . $e->getMessage());
+        } catch (RuntimeException $e) {
+            self::assertSame('observer blew up', $e->getMessage());
+        }
+
+        // The message must have been handed to the transport exactly once: the
+        // failure path (which would re-send nothing but emit MailFailed) never ran.
+        $transport = $manager->driver();
+        self::assertInstanceOf(ArrayTransport::class, $transport);
+        self::assertCount(1, $transport->sent());
     }
 }

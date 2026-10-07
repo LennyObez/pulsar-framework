@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\Driver\InMemoryFailedJobRepository;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\FailedJob;
 use Pulsar\Queue\JobRecord;
@@ -55,6 +56,25 @@ final class DeadLetterQueueTest extends TestCase
     }
 
     #[Test]
+    public function it_persists_across_instances_via_a_shared_repository(): void
+    {
+        $repository = new InMemoryFailedJobRepository();
+
+        $first = new DeadLetterQueue($this->driver, repository: $repository);
+        $first->store($this->makeRecord('persist-1', 'emails', 'App\\Jobs\\X', '{}', 2), 'boom');
+
+        // A fresh DLQ instance (e.g. a recycled worker) backed by the same durable
+        // repository still sees the dead-lettered job; the previous per-instance
+        // array lost everything on restart. Cross-process durability proper is
+        // covered by DatabaseFailedJobRepositoryTest.
+        $second = new DeadLetterQueue($this->driver, repository: $repository);
+        $listed = $second->list();
+
+        self::assertCount(1, $listed);
+        self::assertSame('persist-1', $listed[0]->id);
+    }
+
+    #[Test]
     public function it_retries_a_single_failed_job(): void
     {
         $driver = $this->createMock(QueueDriverInterface::class);
@@ -79,7 +99,7 @@ final class DeadLetterQueueTest extends TestCase
     public function it_throws_when_retrying_nonexistent_failed_job(): void
     {
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->dlq->retry('nonexistent-id');
     }
@@ -188,6 +208,42 @@ final class DeadLetterQueueTest extends TestCase
             ->with('high-priority', 'App\\Jobs\\Important', '{"urgent":true}');
 
         $dlq->retry('orig-q');
+    }
+
+    #[Test]
+    public function regulated_purge_requires_a_reason(): void
+    {
+        $dlq = new DeadLetterQueue($this->driver, regulated: true);
+        $dlq->store($this->makeRecord('reg-1', 'default', 'App\\Jobs\\A', '{}', 1), 'Err');
+
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessageMatches('/explicit reason in regulated mode/');
+
+        $dlq->purge();
+    }
+
+    #[Test]
+    public function regulated_purge_succeeds_with_a_reason(): void
+    {
+        $dlq = new DeadLetterQueue($this->driver, regulated: true);
+        $dlq->store($this->makeRecord('reg-2', 'default', 'App\\Jobs\\A', '{}', 1), 'Err');
+        $dlq->store($this->makeRecord('reg-3', 'default', 'App\\Jobs\\B', '{}', 1), 'Err');
+
+        $purged = $dlq->purge(actorId: 'admin', reason: 'Quarterly compliance cleanup');
+
+        self::assertSame(2, $purged);
+        self::assertCount(0, $dlq->list());
+    }
+
+    #[Test]
+    public function non_regulated_purge_does_not_require_a_reason(): void
+    {
+        $this->dlq->store($this->makeRecord('np-1', 'default', 'App\\Jobs\\A', '{}', 1), 'Err');
+
+        $purged = $this->dlq->purge();
+
+        self::assertSame(1, $purged);
+        self::assertCount(0, $this->dlq->list());
     }
 
     private function makeRecord(

@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Grpc\Health;
+
+use NoDiscard;
+use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+/**
+ * Response for the grpc.health.v1.Health/Check RPC.
+ * @api
+ */
+#[Api(since: '1.0.0')]
+final readonly class HealthCheckResponse
+{
+    public function __construct(
+        public HealthStatus $status,
+    ) {}
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[NoDiscard]
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            status: HealthStatus::tryFrom(Coerce::int($data['status'] ?? null, HealthStatus::Unknown->value)) ?? HealthStatus::Unknown,
+        );
+    }
+
+    /**
+     * @return array{status: int}
+     */
+    public function toArray(): array
+    {
+        return [
+            'status' => $this->status->value,
+        ];
+    }
+}

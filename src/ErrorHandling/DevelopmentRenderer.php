@@ -44,7 +44,11 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
         $headersHtml = $this->renderHeaders($request);
         /** @var array<string, mixed> $queryParams */
         $queryParams = $request->getQueryParams();
-        $queryHtml = $this->renderArray($queryParams);
+        // Scrub query params through the same allowlist used for
+        // headers so a query like `?token=...` does not leak to the
+        // error page when an operator accidentally enables APP_DEBUG in
+        // production.
+        $queryHtml = $this->renderArray($this->scrubber->scrub($queryParams));
         $previousHtml = $this->renderPreviousExceptions($exception);
 
         return <<<HTML
@@ -146,6 +150,7 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
 
         $html = '';
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             $escapedKey = $this->escape($key);
             $escapedValue = $this->escape(is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''));
@@ -192,6 +197,6 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
 
     private function escape(string $value): string
     {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return htmlspecialchars($value);
     }
 }

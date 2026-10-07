@@ -10,6 +10,7 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Extension\Cms\Commerce\InvoiceServiceInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Http\Message\Response;
+use Pulsar\View\Engine\TemplateEngineInterface;
 
 /**
  * Admin controller for invoice viewing and downloading.
@@ -17,15 +18,16 @@ use Pulsar\Http\Message\Response;
  * Invoices are generated automatically on order confirmation.
  * This controller provides read-only access for administrative review.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class InvoiceController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class InvoiceController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private InvoiceServiceInterface $invoiceService,
-        private GateInterface $gate,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -52,7 +54,7 @@ final readonly class InvoiceController
             return new Response(
                 headers: [
                     'Content-Type' => 'text/html; charset=utf-8',
-                    'Content-Disposition' => "attachment; filename=\"invoice-{$id}.html\"",
+                    'Content-Disposition' => "attachment; filename=\"invoice-$id.html\"",
                 ],
                 body: $html,
             );

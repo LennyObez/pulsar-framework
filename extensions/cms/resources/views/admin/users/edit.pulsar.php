@@ -31,7 +31,6 @@
 
         <form method="POST" action="/admin/cms/users/{{ $user['id'] }}/roles" class="cms-form" data-cms-step-up-form>
             @csrf
-            @method('PUT')
 
             <div class="cms-form-group">
                 <label for="user-roles" class="cms-form-group__label">Assigned Roles</label>

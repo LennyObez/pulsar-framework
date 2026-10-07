@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use Generator;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -17,6 +18,7 @@ use function is_int;
  * Prepared statement wrapper.
  *
  * Provides a fluent interface for binding parameters and executing statements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Statement
@@ -61,6 +63,48 @@ final class Statement
     }
 
     /**
+     * Execute the statement and stream rows lazily via a generator.
+     *
+     * `execute()` materialises the full result set with
+     * `fetchAll()`, which OOMs on large queries (an export, a
+     * tenant-wide audit dump, a backfill scan). This streaming
+     * variant uses PDO's row-at-a-time `fetch()` so memory stays
+     * O(1) regardless of result-set size. Trade-off: the generator
+     * holds the underlying PDOStatement open for the lifetime of
+     * the iteration, so callers MUST drain or break out — leaving
+     * a partial iteration sitting around can pin database
+     * resources. For known-bounded result sets prefer `execute()`.
+     *
+     * @param array<string, mixed> $bindings Additional bindings (merged with fluent bindings)
+     *
+     * @return Generator<int, array<string, mixed>>
+     */
+    public function executeStreaming(array $bindings = []): Generator
+    {
+        $merged = [...$this->bindings, ...$bindings];
+
+        try {
+            $this->bindAll($merged);
+            $this->statement->execute();
+        } catch (PDOException $e) {
+            throw DatabaseException::queryFailed($this->sql, $e);
+        }
+
+        try {
+            while (true) {
+                /** @var array<string, mixed>|false $row */
+                $row = $this->statement->fetch(PDO::FETCH_ASSOC);
+                if ($row === false) {
+                    return;
+                }
+                yield $row;
+            }
+        } finally {
+            $this->statement->closeCursor();
+        }
+    }
+
+    /**
      * Execute the statement as a write query and return the affected row count.
      *
      * @param array<string, mixed> $bindings Additional bindings (merged with fluent bindings)
@@ -86,7 +130,14 @@ final class Statement
      */
     private function bindAll(array $bindings): void
     {
+        /** @var mixed $value */
         foreach ($bindings as $key => $value) {
+            if ($value instanceof Param) {
+                $this->statement->bindValue(':' . ltrim($key, ':'), $value->bytes(), $value->pdoType());
+
+                continue;
+            }
+
             $paramType = match (true) {
                 $value === null => PDO::PARAM_NULL,
                 is_int($value) => PDO::PARAM_INT,

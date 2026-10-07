@@ -17,12 +17,11 @@ use Pulsar\Security\Compliance\Exception\ComplianceException;
  * Supports controls for SOX Section 302/404 by producing immutable,
  * classification-aware snapshots. Restricted fields are redacted at
  * capture time and public fields are excluded entirely.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SnapshotCapture
 {
-    private function __construct() {}
-
     /**
      * Capture a point-in-time snapshot of classified entity fields.
      *
@@ -49,6 +48,7 @@ final class SnapshotCapture
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $field->classification === DataClassification::Restricted
                 ? '[REDACTED]'
                 : $field->value;

@@ -16,7 +16,11 @@ use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
 
+use function bin2hex;
+use function sodium_crypto_generichash;
 use function sprintf;
+
+use const SODIUM_CRYPTO_GENERICHASH_BYTES_MAX;
 
 /**
  * Service for atomic content snapshots across all locales.
@@ -24,6 +28,9 @@ use function sprintf;
  * Captures the complete state of a content item (all translations, blocks,
  * and taxonomy term bindings) as a single immutable record with an evidence hash.
  * Used in governance-grade environments to prove exact state at publish time.
+ *
+ * @psalm-api Resolved by content service for governance-grade snapshots;
+ *            not new'd by name.
  */
 #[Internal]
 final readonly class ContentSnapshotService implements ContentSnapshotServiceInterface
@@ -53,7 +60,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
                 ['content_id' => $contentId],
             );
 
-            $nextNumber = ((int) $result->firstOrFail()->get('max_num')) + 1;
+            $nextNumber = ($result->firstOrFail()->getInt('max_num')) + 1;
 
             // Serialize all translations
             $translations = $this->translationRepository->findByContentId($contentId);
@@ -105,7 +112,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             $taxonomyTermIds = [];
 
             foreach ($termResult->rows as $row) {
-                $taxonomyTermIds[] = (string) $row->get('term_id');
+                $taxonomyTermIds[] = $row->getString('term_id');
             }
 
             // Compute evidence hash over entire payload
@@ -161,31 +168,46 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             throw CmsException::contentNotFound($snapshotId);
         }
 
-        /** @var list<array<string, mixed>> $translationsData */
-        $translationsData = json_decode((string) $row->get('translations_json'), true, 512, JSON_THROW_ON_ERROR);
+        /** @var list<array{
+         *     id?: string,
+         *     locale?: string,
+         *     title?: string,
+         *     slug_segment?: string,
+         *     path?: string,
+         *     body?: string,
+         *     excerpt?: string|null,
+         *     meta_title?: string|null,
+         *     meta_description?: string|null,
+         *     og_image_id?: string|null,
+         *     robots?: string|null,
+         *     structured_data_overrides?: array<string, mixed>|null,
+         *     reading_time_minutes?: int|null,
+         * }> $translationsData
+         */
+        $translationsData = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
 
-        $this->db->transaction(function (ConnectionInterface $db) use ($translationsData, $row, $restoredBy): void {
-            $contentId = (string) $row->get('content_id');
-            $snapshotNumber = (int) $row->get('snapshot_number');
+        $this->db->transaction(function () use ($translationsData, $row, $restoredBy): void {
+            $contentId = $row->getString('content_id');
+            $snapshotNumber = $row->getInt('snapshot_number');
 
             foreach ($translationsData as $data) {
-                $locale = (string) $data['locale'];
+                $locale = $data['locale'] ?? '';
 
                 $translation = new ContentTranslation(
-                    id: (string) $data['id'],
+                    id: $data['id'] ?? '',
                     contentId: $contentId,
                     locale: $locale,
-                    title: (string) $data['title'],
-                    slugSegment: (string) $data['slug_segment'],
-                    path: (string) $data['path'],
-                    body: (string) $data['body'],
-                    excerpt: $data['excerpt'] !== null ? (string) $data['excerpt'] : null,
-                    metaTitle: $data['meta_title'] !== null ? (string) $data['meta_title'] : null,
-                    metaDescription: $data['meta_description'] !== null ? (string) $data['meta_description'] : null,
-                    ogImageId: $data['og_image_id'] !== null ? (string) $data['og_image_id'] : null,
-                    robots: $data['robots'] !== null ? (string) $data['robots'] : null,
-                    structuredDataOverrides: $data['structured_data_overrides'],
-                    readingTimeMinutes: $data['reading_time_minutes'] !== null ? (int) $data['reading_time_minutes'] : null,
+                    title: $data['title'] ?? '',
+                    slugSegment: $data['slug_segment'] ?? '',
+                    path: $data['path'] ?? '',
+                    body: $data['body'] ?? '',
+                    excerpt: $data['excerpt'] ?? null,
+                    metaTitle: $data['meta_title'] ?? null,
+                    metaDescription: $data['meta_description'] ?? null,
+                    ogImageId: $data['og_image_id'] ?? null,
+                    robots: $data['robots'] ?? null,
+                    structuredDataOverrides: $data['structured_data_overrides'] ?? null,
+                    readingTimeMinutes: $data['reading_time_minutes'] ?? null,
                     bodyPlaintext: '',
                     headingsText: '',
                     customFieldsText: '',
@@ -220,17 +242,24 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
         $snapshots = [];
 
         foreach ($result->rows as $row) {
+            /** @var list<array<string, mixed>> $translationsDecoded */
+            $translationsDecoded = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
+            /** @var list<array<string, mixed>> $blocksDecoded */
+            $blocksDecoded = json_decode($row->getString('blocks_json'), true, 512, JSON_THROW_ON_ERROR);
+            /** @var list<string> $termIdsDecoded */
+            $termIdsDecoded = json_decode($row->getString('taxonomy_term_ids'), true, 512, JSON_THROW_ON_ERROR);
+
             $snapshots[] = new ContentSnapshot(
-                id: (string) $row->get('id'),
-                contentId: (string) $row->get('content_id'),
-                snapshotNumber: (int) $row->get('snapshot_number'),
-                translationsJson: json_decode((string) $row->get('translations_json'), true, 512, JSON_THROW_ON_ERROR),
-                blocksJson: json_decode((string) $row->get('blocks_json'), true, 512, JSON_THROW_ON_ERROR),
-                taxonomyTermIds: json_decode((string) $row->get('taxonomy_term_ids'), true, 512, JSON_THROW_ON_ERROR),
-                evidenceHash: (string) $row->get('evidence_hash'),
-                reason: (string) $row->get('reason'),
-                createdBy: (string) $row->get('created_by'),
-                createdAt: new DateTimeImmutable((string) $row->get('created_at')),
+                id: $row->getString('id'),
+                contentId: $row->getString('content_id'),
+                snapshotNumber: $row->getInt('snapshot_number'),
+                translationsJson: $translationsDecoded,
+                blocksJson: $blocksDecoded,
+                taxonomyTermIds: $termIdsDecoded,
+                evidenceHash: $row->getString('evidence_hash'),
+                reason: $row->getString('reason'),
+                createdBy: $row->getString('created_by'),
+                createdAt: new DateTimeImmutable($row->getString('created_at')),
             );
         }
 
@@ -255,7 +284,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             'taxonomy_term_ids' => $taxonomyTermIds,
         ], JSON_THROW_ON_ERROR);
 
-        return hash('blake2b', $data);
+        return bin2hex(sodium_crypto_generichash($data, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MAX));
     }
 
 }

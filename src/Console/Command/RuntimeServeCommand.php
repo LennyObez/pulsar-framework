@@ -13,8 +13,9 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Runtime\Exception\RuntimeException;
+use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeCollectorInterface;
-use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
 use Pulsar\Runtime\RuntimeType;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
@@ -33,7 +34,7 @@ final class RuntimeServeCommand extends Command
 {
     public function __construct(
         private readonly KernelInterface $kernel,
-        private readonly RuntimeFactory $runtimeFactory,
+        private readonly PersistentRuntimeFactoryInterface $runtimeFactory,
         private readonly RuntimeResolver $resolver,
         private readonly ?RuntimeConfig $runtimeConfig = null,
         private readonly ?LoggerInterface $logger = null,
@@ -54,7 +55,7 @@ final class RuntimeServeCommand extends Command
         $this->addOption('max-requests', 'Maximum requests before recycling');
         $this->addOption('memory', 'Memory threshold in MB');
         $this->addOption('timeout', 'Time limit in seconds');
-        $this->addOption('concurrency', 'Fiber concurrency (0 = synchronous)');
+        $this->addOption('concurrency', 'Fiber concurrency: 0 (synchronous) or 1. Higher is refused');
         $this->addOption('public', 'Allow binding to non-loopback address');
         $this->addOption('runtime', 'Runtime type (fpm, persistent, frankenphp, roadrunner)');
     }
@@ -65,8 +66,7 @@ final class RuntimeServeCommand extends Command
         $config = $this->resolveConfig($input);
 
         // Resolve runtime type from --runtime option or auto-detect
-        $runtimeOption = $input->getOption('runtime');
-        /** @var string|null $runtimeOption */
+        $runtimeOption = $input->getNullableStringOption('runtime');
         $runtimeType = $runtimeOption !== null
             ? RuntimeType::from($runtimeOption)
             : $this->resolver->resolve();
@@ -77,6 +77,16 @@ final class RuntimeServeCommand extends Command
                 'The "sockets" PHP extension is required for the persistent runtime. '
                 . 'Install or enable it in php.ini.',
             );
+
+            return ExitCode::Error->value;
+        }
+
+        // The persistent runtime refuses to isolate interleaved requests, so it
+        // refuses to interleave them. Reported here as a command error rather
+        // than an uncaught exception from the runtime constructor, which is the
+        // authoritative guard — see PersistentRuntime's class docblock.
+        if ($runtimeType === RuntimeType::Persistent && $config->fiberConcurrency > 1) {
+            $output->error(RuntimeException::unsafeFiberConcurrency($config->fiberConcurrency)->getMessage());
 
             return ExitCode::Error->value;
         }
@@ -128,37 +138,40 @@ final class RuntimeServeCommand extends Command
         return ExitCode::Success->value;
     }
 
+    /**
+     * Apply the command-line overrides on top of the configured runtime.
+     *
+     * Every field the DTO carries is either overridden from an option or copied
+     * from the base config. Rebuilding it while omitting a field does not leave
+     * that field alone — it silently reinstates the constructor default, so a
+     * `drain_timeout_seconds` of 90 became 30 the moment `runtime:serve` ran,
+     * and the operator had no way to see it happen. `driver`,
+     * `drainTimeoutSeconds`, `healthEndpoint` and `unknownKeys` are copied here
+     * for that reason; `unknownKeys` because a rebuilt config that reports no
+     * unknown keys tells the ADR-0036 sweep the file was clean when it was not.
+     */
     private function resolveConfig(InputInterface $input): RuntimeConfig
     {
         $base = $this->runtimeConfig ?? new RuntimeConfig();
 
-        /** @var string|null $host */
-        $host = $input->getOption('host');
-        /** @var string|null $port */
-        $port = $input->getOption('port');
-        /** @var string|null $maxRequests */
-        $maxRequests = $input->getOption('max-requests');
-        /** @var string|null $memory */
-        $memory = $input->getOption('memory');
-        /** @var string|null $timeout */
-        $timeout = $input->getOption('timeout');
-        /** @var string|null $concurrency */
-        $concurrency = $input->getOption('concurrency');
-
         return new RuntimeConfig(
-            host: $host ?? $base->host,
-            port: $port !== null ? (int) $port : $base->port,
-            maxRequests: $maxRequests !== null ? (int) $maxRequests : $base->maxRequests,
-            memoryThresholdMb: $memory !== null ? (int) $memory : $base->memoryThresholdMb,
-            timeLimitSeconds: $timeout !== null ? (int) $timeout : $base->timeLimitSeconds,
+            host: $input->getStringOption('host', $base->host),
+            port: $input->hasOption('port') ? $input->getIntOption('port', $base->port) : $base->port,
+            maxRequests: $input->hasOption('max-requests') ? $input->getIntOption('max-requests', $base->maxRequests) : $base->maxRequests,
+            memoryThresholdMb: $input->hasOption('memory') ? $input->getIntOption('memory', $base->memoryThresholdMb) : $base->memoryThresholdMb,
+            timeLimitSeconds: $input->hasOption('timeout') ? $input->getIntOption('timeout', $base->timeLimitSeconds) : $base->timeLimitSeconds,
             keepAlive: $base->keepAlive,
             keepAliveTimeout: $base->keepAliveTimeout,
             headerTimeoutSeconds: $base->headerTimeoutSeconds,
             bodyTimeoutSeconds: $base->bodyTimeoutSeconds,
-            fiberConcurrency: $concurrency !== null ? (int) $concurrency : $base->fiberConcurrency,
+            fiberConcurrency: $input->hasOption('concurrency') ? $input->getIntOption('concurrency', $base->fiberConcurrency) : $base->fiberConcurrency,
             maxHeaderSize: $base->maxHeaderSize,
             maxBodySize: $base->maxBodySize,
             addDateHeader: $base->addDateHeader,
+            driver: $base->driver,
+            drainTimeoutSeconds: $base->drainTimeoutSeconds,
+            healthEndpoint: $base->healthEndpoint,
+            unknownKeys: $base->unknownKeys,
         );
     }
 

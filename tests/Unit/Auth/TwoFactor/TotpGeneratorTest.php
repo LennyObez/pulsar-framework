@@ -10,7 +10,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 
+use function bin2hex;
+use function hex2bin;
+use function str_repeat;
 use function strlen;
+use function strtolower;
 
 #[CoversClass(TotpGenerator::class)]
 final class TotpGeneratorTest extends TestCase
@@ -168,5 +172,152 @@ final class TotpGeneratorTest extends TestCase
         $custom = new TotpGenerator(codeDigits: 8, period: 60);
         self::assertSame(60, $custom->period());
         self::assertSame(8, $custom->digits());
+    }
+
+    #[Test]
+    public function decodeSecretBase32RoundtripsWithEncode(): void
+    {
+        $original = $this->generator->generateSecret();
+        $encoded = $this->generator->encodeSecretBase32($original);
+        $decoded = $this->generator->decodeSecretBase32($encoded);
+
+        self::assertSame($original, $decoded);
+    }
+
+    #[Test]
+    public function decodeSecretBase32ReturnsNullForInvalidCharacters(): void
+    {
+        self::assertNull($this->generator->decodeSecretBase32('!!!INVALID!!!'));
+    }
+
+    #[Test]
+    public function decodeSecretBase32HandlesLowercaseInput(): void
+    {
+        $original = $this->generator->generateSecret();
+        $encoded = $this->generator->encodeSecretBase32($original);
+        $decoded = $this->generator->decodeSecretBase32(strtolower($encoded));
+
+        self::assertSame($original, $decoded);
+    }
+
+    #[Test]
+    public function decodeSecretBase32HandlesEmptyString(): void
+    {
+        $decoded = $this->generator->decodeSecretBase32('');
+
+        self::assertSame('', $decoded);
+    }
+
+    #[Test]
+    public function base32EncodeHandlesAllByteValues(): void
+    {
+        // Generate input where trailing bits < 5 exist (byte count not multiple of 5)
+        $input = "\x00\xFF\x80\x3C\x01\xAB\xCD";
+        $encoded = $this->generator->encodeSecretBase32($input);
+
+        self::assertMatchesRegularExpression('/^[A-Z2-7]+$/', $encoded);
+
+        $decoded = $this->generator->decodeSecretBase32($encoded);
+        self::assertSame($input, $decoded);
+    }
+
+    #[Test]
+    public function provisioningUriContainsAllParameters(): void
+    {
+        $secret = hex2bin('48656c6c6f21deadbeef') ?: '';
+        $uri = $this->generator->provisioningUri($secret, 'dr.smith@hospital.org', 'SecureHealth');
+
+        self::assertStringStartsWith('otpauth://totp/', $uri);
+        self::assertStringContainsString('issuer=SecureHealth', $uri);
+        self::assertStringContainsString('algorithm=SHA1', $uri);
+        self::assertStringContainsString('digits=6', $uri);
+        self::assertStringContainsString('period=30', $uri);
+        self::assertStringContainsString('dr.smith%40hospital.org', $uri);
+        self::assertStringContainsString('secret=', $uri);
+    }
+
+    #[Test]
+    public function provisioningUriWithCustomAlgorithmAndPeriod(): void
+    {
+        $generator = new TotpGenerator(codeDigits: 8, period: 60, algorithm: 'sha256');
+        $secret = $generator->generateSecret();
+        $uri = $generator->provisioningUri($secret, 'admin@bank.com', 'TrustBank');
+
+        self::assertStringContainsString('algorithm=SHA256', $uri);
+        self::assertStringContainsString('digits=8', $uri);
+        self::assertStringContainsString('period=60', $uri);
+    }
+
+    #[Test]
+    public function computeCodeUsesCurrentTimeWhenTimestampNull(): void
+    {
+        $secret = $this->generator->generateSecret();
+
+        $code = $this->generator->computeCode($secret);
+
+        self::assertSame(6, strlen($code));
+        self::assertMatchesRegularExpression('/^\d{6}$/', $code);
+    }
+
+    #[Test]
+    public function computeCodeWithEightDigitGenerator(): void
+    {
+        $generator = new TotpGenerator(codeDigits: 8);
+        $secret = $generator->generateSecret();
+
+        $code = $generator->computeCode($secret, 1000000);
+
+        self::assertSame(8, strlen($code));
+        self::assertMatchesRegularExpression('/^\d{8}$/', $code);
+    }
+
+    #[Test]
+    public function generateSecretProducesUniqueValues(): void
+    {
+        $secrets = [];
+        for ($i = 0; $i < 10; $i++) {
+            $secrets[] = bin2hex($this->generator->generateSecret());
+        }
+
+        $uniqueSecrets = array_unique($secrets);
+        self::assertCount(10, $uniqueSecrets);
+    }
+
+    #[Test]
+    public function base32EncodeSingleByte(): void
+    {
+        $encoded = $this->generator->encodeSecretBase32("\x00");
+        self::assertMatchesRegularExpression('/^[A-Z2-7]+$/', $encoded);
+
+        $decoded = $this->generator->decodeSecretBase32($encoded);
+        self::assertSame("\x00", $decoded);
+    }
+
+    #[Test]
+    public function base32EncodeExactFiveByteMultiple(): void
+    {
+        // 5 bytes = 8 base32 chars, no trailing bits
+        $input = str_repeat("\xAB", 5);
+        $encoded = $this->generator->encodeSecretBase32($input);
+
+        self::assertSame(8, strlen($encoded));
+        self::assertMatchesRegularExpression('/^[A-Z2-7]+$/', $encoded);
+
+        $decoded = $this->generator->decodeSecretBase32($encoded);
+        self::assertSame($input, $decoded);
+    }
+
+    #[Test]
+    public function provisioningUriEncodesSpecialCharactersInAccountAndIssuer(): void
+    {
+        $secret = $this->generator->generateSecret();
+        $uri = $this->generator->provisioningUri(
+            $secret,
+            'user name+special@firm.co',
+            'My App & Co.',
+        );
+
+        self::assertStringContainsString('user%20name%2Bspecial%40firm.co', $uri);
+        self::assertStringContainsString('My%20App%20%26%20Co.', $uri);
     }
 }

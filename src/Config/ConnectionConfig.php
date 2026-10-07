@@ -8,14 +8,29 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
-use function is_string;
+use function str_starts_with;
+
+use const DIRECTORY_SEPARATOR;
+use const PHP_OS_FAMILY;
 
 /**
  * Typed configuration DTO for a single database connection.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ConnectionConfig
+final readonly class ConnectionConfig implements ReportsUnknownKeys
 {
+    /** Keys read from a single entry of `connections` in config/database.php. */
+    private const array KNOWN_KEYS = [
+        'driver', 'host', 'port', 'database', 'username', 'password',
+        'charset', 'collation', 'options',
+    ];
+
+    /**
+     * @param list<string> $unknownKeys Keys present in this connection's raw array that
+     *     the DTO does not read — a misspelled `database` silently connects to the
+     *     empty default rather than the schema the operator named.
+     */
     public function __construct(
         public string $name,
         public Driver $driver,
@@ -26,51 +41,60 @@ readonly class ConnectionConfig
         public string $password,
         public string $charset,
         public string $collation,
-        /** @var array<string, mixed> */
+        /**
+         * Driver options exactly as the config file wrote them. The keys are genuinely
+         * mixed: PDO's own attributes are integer constants, while `sslmode` and its
+         * kin are strings. Declaring string keys here is what made
+         * PdoConnection::fromConfig() restate the type instead of narrowing it.
+         *
+         * @var array<array-key, mixed>
+         */
         public array $options,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from a raw config array and environment.
      *
-     * @param array<string, mixed> $data Raw connection config array
+     * @param array{
+     *     driver?: string,
+     *     host?: string,
+     *     port?: int|string,
+     *     database?: string,
+     *     username?: string,
+     *     password?: string,
+     *     charset?: string,
+     *     collation?: string,
+     *     options?: array<string, mixed>,
+     * } $data Raw connection config array
+     * @param string|null $basePath Project root for resolving relative SQLite paths.
+     *                              When null, relative paths are left as-is (resolved by Driver at DSN time).
      */
     #[NoDiscard]
-    public static function fromArray(string $name, array $data, Environment $environment): self
+    public static function fromArray(string $name, array $data, Environment $environment, ?string $basePath = null): self
     {
-        $rawDriver = $data['driver'] ?? 'mysql';
-        $driverString = is_string($rawDriver) ? $rawDriver : 'mysql';
-        $driver = Driver::from($driverString);
+        $driver = Driver::from($data['driver'] ?? 'mysql');
 
-        /** @var string $hostDefault */
-        $hostDefault = $data['host'] ?? '127.0.0.1';
-        $host = $environment->get('DB_HOST') ?? $hostDefault;
+        $host = $environment->get('DB_HOST') ?? $data['host'] ?? '127.0.0.1';
 
         $portEnv = $environment->get('DB_PORT');
-        /** @var int|string $portDefault */
-        $portDefault = $data['port'] ?? $driver->defaultPort();
-        $port = $portEnv !== null ? (int) $portEnv : (int) $portDefault;
+        $port = $portEnv !== null ? (int) $portEnv : (int) ($data['port'] ?? $driver->defaultPort());
 
-        /** @var string $dbDefault */
-        $dbDefault = $data['database'] ?? '';
-        $database = $environment->get('DB_DATABASE') ?? $dbDefault;
+        $database = $environment->get('DB_DATABASE') ?? $data['database'] ?? '';
 
-        /** @var string $usernameDefault */
-        $usernameDefault = $data['username'] ?? '';
-        $username = $environment->get('DB_USERNAME') ?? $usernameDefault;
-
-        /** @var string $passwordDefault */
-        $passwordDefault = $data['password'] ?? '';
-        $password = $environment->get('DB_PASSWORD') ?? $passwordDefault;
-
-        /** @var string $charset */
-        $charset = $data['charset'] ?? 'utf8mb4';
-
-        /** @var string $collation */
-        $collation = $data['collation'] ?? 'utf8mb4_unicode_ci';
-
-        /** @var array<string, mixed> $options */
-        $options = $data['options'] ?? [];
+        // For SQLite, resolve relative paths against the project root at config time.
+        // This ensures symlinked projects write to their own database, not the framework's.
+        if ($driver === Driver::SQLite && $basePath !== null) {
+            $database = self::resolveSqlitePath($database, $basePath);
+        }
 
         return new self(
             name: $name,
@@ -78,11 +102,31 @@ readonly class ConnectionConfig
             host: $host,
             port: $port,
             database: $database,
-            username: $username,
-            password: $password,
-            charset: $charset,
-            collation: $collation,
-            options: $options,
+            username: $environment->get('DB_USERNAME') ?? $data['username'] ?? '',
+            password: $environment->get('DB_PASSWORD') ?? $data['password'] ?? '',
+            charset: $data['charset'] ?? 'utf8mb4',
+            collation: $data['collation'] ?? 'utf8mb4_unicode_ci',
+            options: $data['options'] ?? [],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
+    }
+
+    /**
+     * Resolve a relative SQLite database path against a project root.
+     *
+     * Absolute paths, :memory:, and empty strings are returned unchanged.
+     */
+    private static function resolveSqlitePath(string $database, string $basePath): string
+    {
+        if ($database === ':memory:' || $database === '') {
+            return $database;
+        }
+
+        // Already absolute (Unix or Windows)
+        if (str_starts_with($database, '/') || (PHP_OS_FAMILY === 'Windows' && isset($database[1]) && $database[1] === ':')) {
+            return $database;
+        }
+
+        return $basePath . DIRECTORY_SEPARATOR . $database;
     }
 }

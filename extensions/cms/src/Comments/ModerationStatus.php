@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Only comments in Pending status may transition to other states.
  * Once moderated (Approved, Rejected, Spam), the status is final.
+ *
+ * @psalm-api Public enum referenced by Comment::status and consumed by
+ *            user-land code and admin moderation views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ModerationStatus: string

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Null object for unauthenticated requests.
  *
  * Always returns false for isAuthenticated() and empty values for all fields.
+ * @api
  */
 #[Api(since: '1.0.0')]
 readonly class AnonymousIdentity implements IdentityInterface

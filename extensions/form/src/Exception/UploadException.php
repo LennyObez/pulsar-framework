@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Thrown when file upload validation or processing fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UploadException extends FormException

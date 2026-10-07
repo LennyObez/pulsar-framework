@@ -20,6 +20,15 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Pulsar\Api\Api;
+use Pulsar\Api\CompositionRoots;
+use Pulsar\Extensibility\ExtensionAutoloader;
+
+// Extensions are not in the root composer.json autoload (ADR-0004: no privileged
+// built-in access), so register PSR-4 autoloading for them. This boundary check
+// reflects imported classes to read their #[Api] attribute; without the
+// autoloader, extension classes would be unresolvable and every cross-extension
+// import would be misreported as targeting a non-#[Api] class.
+ExtensionAutoloader::registerForPaths([__DIR__ . '/../extensions']);
 
 // ---------------------------------------------------------------------------
 // BoundaryAnalyzer — core analysis logic (testable independently)
@@ -27,19 +36,6 @@ use Pulsar\Api\Api;
 
 final class BoundaryAnalyzer
 {
-    /** FQCNs that are composition roots — exempt from cross-module rules. */
-    private const array COMPOSITION_ROOTS = [
-        'Pulsar\\Core\\Kernel',
-        'Pulsar\\Console\\Application',
-        'Pulsar\\Console\\Command\\OptimizeCommand',
-        'Pulsar\\Console\\Command\\BuildCommand',
-    ];
-
-    /** Namespace prefixes that are composition roots (all classes within are exempt). */
-    private const array COMPOSITION_ROOT_NAMESPACES = [
-        'Pulsar\\Core\\Wiring\\',
-    ];
-
     /** The Api/Internal attribute FQCNs are always accessible. */
     private const array ALWAYS_ACCESSIBLE = [
         'Pulsar\\Api\\Api',
@@ -52,25 +48,56 @@ final class BoundaryAnalyzer
     /** @var array<string, true> Indexed set of #[Internal] class FQCNs */
     private array $internalClasses = [];
 
-    /** @var array<string, true> Reflection cache for classes not in snapshot */
+    /**
+     * Reflection cache for classes absent from the snapshot.
+     *
+     * Tri-state per class: true = carries #[Api], false = does not, null = could
+     * not be resolved at all. `null` is a cached answer rather than a miss, which
+     * is why lookups use array_key_exists() and not isset().
+     *
+     * @var array<string, bool|null>
+     */
     private array $reflectionCache = [];
 
     public function __construct(string $snapshotPath)
     {
-        if (file_exists($snapshotPath)) {
-            $data = json_decode(
-                (string) file_get_contents($snapshotPath),
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
+        if (!file_exists($snapshotPath)) {
+            return;
+        }
 
-            foreach (array_keys($data['api_classes'] ?? []) as $fqcn) {
-                $this->apiClasses[$fqcn] = true;
+        /** @var mixed $data */
+        $data = json_decode(
+            (string) file_get_contents($snapshotPath),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        if (!is_array($data)) {
+            return;
+        }
+
+        // The snapshot is the authority on what is public: silently treating a
+        // malformed one as "no #[Api] classes at all" would make every boundary
+        // violation look permitted, so each section is checked before it is read.
+        $apiClasses = $data['api_classes'] ?? [];
+
+        if (is_array($apiClasses)) {
+            foreach (array_keys($apiClasses) as $fqcn) {
+                if (is_string($fqcn)) {
+                    $this->apiClasses[$fqcn] = true;
+                }
             }
+        }
 
-            foreach ($data['internal_classes'] ?? [] as $fqcn) {
-                $this->internalClasses[$fqcn] = true;
+        $internalClasses = $data['internal_classes'] ?? [];
+
+        if (is_array($internalClasses)) {
+            /** @var mixed $fqcn */
+            foreach ($internalClasses as $fqcn) {
+                if (is_string($fqcn)) {
+                    $this->internalClasses[$fqcn] = true;
+                }
             }
         }
     }
@@ -109,11 +136,12 @@ final class BoundaryAnalyzer
      */
     public function isCompositionRoot(string $fqcn): bool
     {
-        if (in_array($fqcn, self::COMPOSITION_ROOTS, true)) {
-            return true;
-        }
-
-        return array_any(self::COMPOSITION_ROOT_NAMESPACES, static fn(string $prefix): bool => str_starts_with($fqcn, $prefix));
+        // Delegated, not restated. This list existed three times — here, in the wiring
+        // checker, and in the runtime BoundaryGuard — and the copies had already
+        // diverged: Pulsar\Core\Boot\ was a root for this checker and not for the guard,
+        // so a class there passed the static gate and would have been refused when it
+        // ran. Three copies of a rule are three rules.
+        return CompositionRoots::contains($fqcn);
     }
 
     /**
@@ -576,24 +604,31 @@ if (PHP_SAPI !== 'cli') {
 }
 
 // Only run CLI when this script is the main entry point
-$scriptFile = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
+$scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? '';
+$scriptFile = realpath(is_string($scriptFilename) ? $scriptFilename : '');
 $thisFile = realpath(__FILE__);
 if ($scriptFile !== false && $thisFile !== false && $scriptFile !== $thisFile) {
     return;
 }
+
+// $argv only exists when register_argc_argv is enabled. It always is under the
+// CLI SAPI, but the analyser cannot know that, and reading a possibly-undefined
+// global here would make every flag silently unparsed if it ever were not.
+/** @var list<string> $arguments */
+$arguments = array_values(array_filter($argv ?? [], 'is_string'));
 
 $rootDir = dirname(__DIR__);
 $snapshotPath = $rootDir . '/tools/api/public-api.snapshot.json';
 $baselinePath = $rootDir . '/tools/php/boundary-baseline.json';
 
 // Parse CLI arguments
-$jsonOutput = in_array('--json', $argv, true);
-$strict = in_array('--strict', $argv, true);
-$generateBaseline = in_array('--generate-baseline', $argv, true);
+$jsonOutput = in_array('--json', $arguments, true);
+$strict = in_array('--strict', $arguments, true);
+$generateBaseline = in_array('--generate-baseline', $arguments, true);
 $diffBase = null;
 $hasDiffBase = false;
 
-foreach ($argv as $arg) {
+foreach ($arguments as $arg) {
     if (str_starts_with($arg, '--diff-base=')) {
         $diffBase = substr($arg, strlen('--diff-base='));
         $hasDiffBase = true;
@@ -603,18 +638,42 @@ foreach ($argv as $arg) {
 // Determine changed files
 $changedFiles = [];
 if ($diffBase !== null) {
-    $command = sprintf(
-        'git -C %s diff --name-only --diff-filter=ACMR %s...HEAD 2>/dev/null',
-        escapeshellarg($rootDir),
-        escapeshellarg($diffBase),
+    // Shell-free invocation: passing the command as an argument array makes
+    // proc_open bypass the shell entirely, so $diffBase (a CLI-supplied value)
+    // can never be interpreted as a command — no escaping required, no
+    // injection surface.
+    $descriptors = [
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $pipes = [];
+    // The argument-array form of proc_open never spawns a shell, so
+    // $rootDir/$diffBase cannot be interpreted as a command; the audit rule
+    // cannot distinguish array-form (safe) from string-form (shell) calls.
+    // nosemgrep: php.lang.security.exec-use.exec-use
+    $process = proc_open(
+        ['git', '-C', $rootDir, 'diff', '--name-only', '--diff-filter=ACMR', $diffBase . '...HEAD'],
+        $descriptors,
+        $pipes,
     );
-    $output = [];
-    exec($command, $output, $exitCode);
-    if ($exitCode === 0) {
-        $changedFiles = array_filter($output, static fn (string $f): bool => str_ends_with($f, '.php'));
-        $changedFiles = array_values($changedFiles);
+
+    if (is_resource($process)) {
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+
+        if ($exitCode === 0 && is_string($stdout)) {
+            $changedFiles = array_values(array_filter(
+                explode("\n", trim($stdout)),
+                static fn(string $f): bool => $f !== '' && str_ends_with($f, '.php'),
+            ));
+        } else {
+            fwrite(STDERR, "Warning: Could not resolve diff-base '$diffBase'. Running full scan.\n");
+            $hasDiffBase = false;
+        }
     } else {
-        fwrite(STDERR, "Warning: Could not resolve diff-base '$diffBase'. Running full scan.\n");
+        fwrite(STDERR, "Warning: Could not spawn git for diff-base '$diffBase'. Running full scan.\n");
         $hasDiffBase = false;
     }
 }
@@ -622,8 +681,24 @@ if ($diffBase !== null) {
 // Load baseline
 $baseline = [];
 if (!$generateBaseline && file_exists($baselinePath)) {
+    /** @var mixed $data */
     $data = json_decode((string) file_get_contents($baselinePath), true, 512, JSON_THROW_ON_ERROR);
-    foreach ($data['violations'] ?? [] as $entry) {
+    $baselineViolations = is_array($data) ? ($data['violations'] ?? []) : [];
+
+    if (!is_array($baselineViolations)) {
+        $baselineViolations = [];
+    }
+
+    /** @var mixed $entry */
+    foreach ($baselineViolations as $entry) {
+        // A baseline entry missing either half would key on an empty string and
+        // silently exempt an unrelated violation, so both must be present.
+        if (!is_array($entry) || !isset($entry['file'], $entry['import'])
+            || !is_string($entry['file']) || !is_string($entry['import'])
+        ) {
+            continue;
+        }
+
         $key = $entry['file'] . '|' . $entry['import'];
         $baseline[$key] = true;
     }
@@ -658,8 +733,18 @@ foreach ($directories as $directory) {
 
         $filePath = $file->getPathname();
 
-        // Skip test fixtures
-        if (str_contains($filePath, 'Fixture')) {
+        // Skip test code and fixtures. Boundary rules govern shipped code,
+        // not tests: a test legitimately constructs concrete implementations
+        // (e.g. Database\PdoConnection for a DB integration test) and may
+        // exercise a module's own internals directly. This mirrors the
+        // deptrac config, whose exclude_files drops '#.*Test\.php$#' and
+        // '#.*Fixture.*\.php$#' for the same reason.
+        $normalisedPath = str_replace('\\', '/', $filePath);
+        if (
+            str_contains($normalisedPath, '/tests/')
+            || str_ends_with($filePath, 'Test.php')
+            || str_contains($filePath, 'Fixture')
+        ) {
             continue;
         }
 
@@ -685,7 +770,7 @@ if ($generateBaseline) {
     $baselineData = [
         'generated' => date('c'),
         'violations' => array_map(
-            static fn (array $v): array => [
+            static fn(array $v): array => [
                 'file' => $v['file'],
                 'import' => $v['import'],
                 'rule' => $v['rule'],
@@ -722,8 +807,8 @@ if ($generateBaseline) {
 }
 
 // Count by severity
-$errors = array_filter($allViolations, static fn (array $v): bool => $v['severity'] === 'error');
-$warnings = array_filter($allViolations, static fn (array $v): bool => $v['severity'] === 'warning');
+$errors = array_filter($allViolations, static fn(array $v): bool => $v['severity'] === 'error');
+$warnings = array_filter($allViolations, static fn(array $v): bool => $v['severity'] === 'warning');
 $errorCount = count($errors);
 $warningCount = count($warnings);
 

@@ -9,6 +9,7 @@ use Pulsar\Extension\Orm\Domain\ColumnType;
 
 /**
  * Schema column definition for table creation/modification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ColumnDefinition

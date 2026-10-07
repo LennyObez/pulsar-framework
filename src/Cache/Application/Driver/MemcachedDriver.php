@@ -6,11 +6,12 @@ namespace Pulsar\Cache\Application\Driver;
 
 use Memcached;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use Throwable;
 
-use function array_combine;
+use function array_fill_keys;
 use function array_keys;
-use function array_map;
+use function is_array;
 use function is_string;
 use function time;
 
@@ -19,9 +20,14 @@ use function time;
  *
  * Uses ext-memcached for distributed in-memory caching with native
  * TTL support and atomic counter operations.
+ *
+ * Declares {@see GenerationClearableInterface}: Memcached cannot enumerate keys,
+ * so a prefixed pool clears by bumping a generation counter, and Memcached's LRU
+ * eviction reclaims the orphaned previous generation — safe here, unsafe on a
+ * store without eviction.
  */
 #[Internal]
-final class MemcachedDriver extends AbstractCacheDriver
+final class MemcachedDriver extends AbstractCacheDriver implements GenerationClearableInterface
 {
     public function __construct(
         private readonly Memcached $memcached,
@@ -48,17 +54,20 @@ final class MemcachedDriver extends AbstractCacheDriver
             return [];
         }
 
+        // getMulti() is typed as mixed upstream: it answers with a key => value map,
+        // or false when the whole fetch failed. Anything else means the driver is not
+        // the extension it claims to be, and reading offsets off it would be silent
+        // nulls for every key — a cache that always misses rather than one that errors.
         $values = $this->memcached->getMulti($keys);
 
-        if ($values === false) {
-            return array_combine($keys, array_map(static fn(string $_): null => null, $keys));
+        if (!is_array($values)) {
+            return array_fill_keys($keys, null);
         }
 
         $result = [];
 
         foreach ($keys as $key) {
-            $value = $values[$key] ?? null;
-            $result[$key] = is_string($value) ? $value : null;
+            $result[$key] = Coerce::nullableString($values[$key] ?? null);
         }
 
         return $result;
@@ -78,6 +87,20 @@ final class MemcachedDriver extends AbstractCacheDriver
         $expiration = $ttl !== null ? time() + $ttl : 0;
 
         return $this->memcached->set($key, $value, $expiration);
+    }
+
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        $ttl = $this->normalizeTtl($ttlSeconds);
+
+        if ($this->isExpiredTtl($ttl)) {
+            return !$this->has($key);
+        }
+
+        // Memcached::add stores only if the key is absent — atomic server-side.
+        $expiration = $ttl !== null ? time() + $ttl : 0;
+
+        return $this->memcached->add($key, $value, $expiration);
     }
 
     public function setMultiple(array $values, ?int $ttlSeconds): bool
@@ -101,7 +124,7 @@ final class MemcachedDriver extends AbstractCacheDriver
     {
         $this->memcached->delete($key);
 
-        // Treat "not found" as success — the key is already gone
+        // Treat "not found" as success: the key is already gone
         return $this->memcached->getResultCode() === Memcached::RES_SUCCESS
             || $this->memcached->getResultCode() === Memcached::RES_NOTFOUND;
     }
@@ -139,10 +162,16 @@ final class MemcachedDriver extends AbstractCacheDriver
             $result = $this->memcached->increment($key, $step);
 
             if ($result === false && $this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
-                // Initialize key to the step value
-                $this->memcached->set($key, (string) $step, 0);
+                // Initialize atomically: add() stores only if the key is still
+                // absent, so a concurrent initializer cannot be clobbered (the
+                // previous set() overwrote whatever a racing process had
+                // already counted). If we lose the init race, the key now
+                // exists — increment it like any other hit.
+                if ($this->memcached->add($key, (string) $step, 0)) {
+                    return $step;
+                }
 
-                return $step;
+                return $this->memcached->increment($key, $step);
             }
 
             return $result;

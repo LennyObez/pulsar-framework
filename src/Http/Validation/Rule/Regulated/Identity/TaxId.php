@@ -19,9 +19,10 @@ use function sprintf;
  * Supports jurisdiction-specific patterns for common tax identification formats.
  *
  * @see https://www.irs.gov/individuals/international-taxpayers/taxpayer-identification-numbers-tin
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class TaxId implements RuleInterface
+final readonly class TaxId implements RuleInterface
 {
     private string $pattern;
 

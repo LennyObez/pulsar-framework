@@ -11,13 +11,12 @@ use Pulsar\Api\Api;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use SodiumException;
 
 use function bin2hex;
-use function hash;
 use function is_array;
-use function is_int;
-use function is_string;
 use function json_encode;
+use function sodium_crypto_generichash;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -28,7 +27,8 @@ use const JSON_UNESCAPED_UNICODE;
  * Envelope wrapping a domain/integration event with metadata and integrity hash.
  *
  * The payload hash is computed from canonical serialization: event type, schema version,
- * and recursively key-sorted JSON payload — protecting the semantic meaning of the event.
+ * and recursively key-sorted JSON payload: protecting the semantic meaning of the event.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EventEnvelope
@@ -54,6 +54,7 @@ final readonly class EventEnvelope
      *
      * @throws JsonException
      * @throws RandomException
+     * @throws SodiumException
      */
     #[NoDiscard]
     public static function wrap(
@@ -97,64 +98,67 @@ final readonly class EventEnvelope
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     event_type?: string,
+     *     schema_version?: int,
+     *     metadata?: array<string, mixed>,
+     *     payload?: array<string, mixed>,
+     *     origin_module?: string|null,
+     *     scope?: string|null,
+     * } $data
      *
-     * @throws JsonException|InvalidArgumentException
+     * @throws JsonException
+     * @throws InvalidArgumentException When a required envelope field (event_type, etc.) is missing or empty.
+     * @throws SodiumException
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $metadataData */
-        $metadataData = $data['metadata'] ?? [];
-
-        /** @var array<string, mixed> $payload */
-        $payload = $data['payload'] ?? [];
-
-        $eventId = $data['event_id'] ?? '';
         $eventType = $data['event_type'] ?? '';
-        $schemaVersion = $data['schema_version'] ?? 0;
-        $originModule = $data['origin_module'] ?? null;
-        $scopeRaw = $data['scope'] ?? null;
 
-        $validEventType = is_string($eventType) ? $eventType : '';
-
-        if ($validEventType === '') {
-            throw new InvalidArgumentException('EventEnvelope requires non-empty eventType');
+        if ($eventType === '') {
+            throw new InvalidArgumentException('EventEnvelope requires a non-empty eventType');
         }
 
-        $scope = is_string($scopeRaw) ? (EventScope::tryFrom($scopeRaw) ?? EventScope::CrossModule) : EventScope::CrossModule;
+        $payload = $data['payload'] ?? [];
+        $schemaVersion = $data['schema_version'] ?? 0;
+        $scopeRaw = $data['scope'] ?? null;
 
         return new self(
-            eventId: is_string($eventId) ? $eventId : '',
-            eventType: $validEventType,
-            schemaVersion: is_int($schemaVersion) ? $schemaVersion : 0,
-            metadata: EventMetadata::fromArray($metadataData),
+            eventId: $data['event_id'] ?? '',
+            eventType: $eventType,
+            schemaVersion: $schemaVersion,
+            metadata: EventMetadata::fromArray($data['metadata'] ?? []),
             payload: $payload,
-            payloadHash: self::computeHash(
-                $validEventType,
-                is_int($schemaVersion) ? $schemaVersion : 0,
-                $payload,
-            ),
-            originModule: is_string($originModule) ? $originModule : null,
-            scope: $scope,
+            payloadHash: self::computeHash($eventType, $schemaVersion, $payload),
+            originModule: $data['origin_module'] ?? null,
+            scope: $scopeRaw !== null
+                ? (EventScope::tryFrom($scopeRaw) ?? EventScope::CrossModule)
+                : EventScope::CrossModule,
         );
     }
 
     /**
-     * Compute canonical payload hash.
+     * Compute canonical payload hash using BLAKE2b (libsodium).
      *
      * Includes eventType and schemaVersion in the hash so identical payloads
-     * with different types/versions produce different hashes.
+     * with different types/versions produce different hashes. Per ADR-0006
+     * the framework uses libsodium primitives only — `hash('sha256', ...)` is
+     * forbidden in security-relevant code. The output is a 32-byte (64 hex)
+     * digest, the same length as the previous SHA-256 implementation, so any
+     * stored fixed-width column or comparison logic is preserved.
      *
      * @param array<string, mixed> $payload
      *
      * @throws JsonException
+     * @throws SodiumException
      */
     private static function computeHash(string $eventType, int $schemaVersion, array $payload): string
     {
         $canonicalInput = self::canonicalize($eventType, $schemaVersion, $payload);
 
-        return hash('sha256', $canonicalInput);
+        return bin2hex(sodium_crypto_generichash($canonicalInput, '', 32));
     }
 
     /**
@@ -183,10 +187,11 @@ final readonly class EventEnvelope
     {
         ksort($data);
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $data[$key] = self::recursiveKsort($value);
+                $data = [...$data, $key => self::recursiveKsort($value)];
             }
         }
 
@@ -195,9 +200,6 @@ final readonly class EventEnvelope
 
     private static function defaultRandomizer(): Randomizer
     {
-        /** @var Randomizer|null $randomizer */
-        static $randomizer = null;
-
-        return $randomizer ??= new Randomizer(new Secure());
+        return new Randomizer(new Secure());
     }
 }

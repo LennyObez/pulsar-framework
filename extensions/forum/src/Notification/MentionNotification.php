@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent when a user is @mentioned in a post.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MentionNotification implements ForumNotificationInterface
@@ -33,12 +34,12 @@ final readonly class MentionNotification implements ForumNotificationInterface
 
     public function subject(): string
     {
-        return "{$this->authorName} mentioned you in: {$this->threadTitle}";
+        return "$this->authorName mentioned you in: $this->threadTitle";
     }
 
     public function body(): string
     {
-        return "{$this->authorName} mentioned you in a post in the thread \"{$this->threadTitle}\".";
+        return "$this->authorName mentioned you in a post in the thread \"$this->threadTitle\".";
     }
 
     public function metadata(): array

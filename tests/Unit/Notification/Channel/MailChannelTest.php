@@ -15,9 +15,13 @@ use Pulsar\Mail\Exception\MailException;
 use Pulsar\Mail\Mailable;
 use Pulsar\Mail\MailManagerInterface;
 use Pulsar\Notification\Channel\MailChannel;
+use Pulsar\Notification\Consent\NotificationClassification;
+use Pulsar\Notification\Consent\NotificationClassificationRegistry;
 use Pulsar\Notification\Exception\NotificationException;
 use Pulsar\Notification\NotifiableInterface;
 use Pulsar\Notification\Notification;
+
+use function str_contains;
 
 #[CoversClass(MailChannel::class)]
 final class MailChannelTest extends TestCase
@@ -78,9 +82,46 @@ final class MailChannelTest extends TestCase
         $notification = $this->createMailNotification();
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
+    }
+
+    #[Test]
+    public function it_strips_crlf_from_unsubscribe_header_to_prevent_header_injection(): void
+    {
+        $sentMailable = null;
+        $mailManager = $this->createMock(MailManagerInterface::class);
+        $mailManager->expects(self::once())
+            ->method('send')
+            ->with(self::callback(function (Mailable $mailable) use (&$sentMailable): bool {
+                $sentMailable = $mailable;
+                return true;
+            }))
+            ->willReturn('msg-crlf');
+
+        $notification = $this->createMailNotification();
+
+        $registry = new NotificationClassificationRegistry();
+        $registry->register($notification::class, NotificationClassification::Marketing);
+
+        // Operator-misconfigured pattern carrying an embedded CRLF + injected header.
+        $channel = new MailChannel(
+            $mailManager,
+            $registry,
+            "https://example.test/unsub?id={notifiable_id}\r\nBcc: attacker@evil.test",
+        );
+
+        $channel->send($this->createNotifiable('user@test.com'), $notification);
+
+        self::assertNotNull($sentMailable);
+        $message = $sentMailable->build(new Address('default@test.com'));
+
+        $unsubscribe = $message->headers['List-Unsubscribe'] ?? '';
+        self::assertIsString($unsubscribe);
+        self::assertFalse(str_contains($unsubscribe, "\r"), 'List-Unsubscribe must not contain CR');
+        self::assertFalse(str_contains($unsubscribe, "\n"), 'List-Unsubscribe must not contain LF');
+        self::assertStringContainsString('Bcc: attacker@evil.test', $unsubscribe);
     }
 
     #[Test]

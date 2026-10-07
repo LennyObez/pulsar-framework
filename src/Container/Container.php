@@ -7,8 +7,8 @@ namespace Pulsar\Container;
 use Closure;
 use NoDiscard;
 use Override;
-use Pulsar\Container\Compiler\ContainerBuilder;
-use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
+use Pulsar\Api\Api;
+use Pulsar\Container\Compiler\CompilerPassProcessor;
 use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Decorator\DecoratorChain;
 use Pulsar\Container\Exception\ContainerException;
@@ -23,8 +23,7 @@ use ReflectionNamedType;
 use Throwable;
 
 use function array_keys;
-use function array_pop;
-use function in_array;
+use function class_exists;
 use function is_callable;
 use function is_object;
 use function is_string;
@@ -36,7 +35,9 @@ use function sprintf;
  * Implements PSR-11 and provides singleton/factory binding support,
  * service tags, contextual bindings, scoped lifetimes, lazy proxies,
  * decorator chains, deferred providers, and compiler pass support.
+ * @api
  */
+#[Api(since: '1.0.0')]
 final class Container implements AdvancedContainerInterface
 {
     /**
@@ -56,9 +57,22 @@ final class Container implements AdvancedContainerInterface
     /**
      * IDs currently being resolved (for circular dependency detection).
      *
-     * @var list<string>
+     * @var array<string, true>
      */
     private array $resolving = [];
+
+    /**
+     * Maximum autowiring depth. A pathological dependency
+     * graph (or a malformed annotation) could otherwise drive
+     * the recursion past PHP's stack limit and crash the SAPI
+     * worker before any circular-dependency detection fires.
+     * 64 levels is comfortably above any realistic application
+     * graph (the Pulsar core boots with depth ~12) while leaving
+     * headroom for PHP's own ~8 MB / 256-frame stack budget.
+     */
+    private const int MAX_BUILD_DEPTH = 64;
+
+    private int $buildDepth = 0;
 
     /**
      * Cached constructor parameter type maps (optimization hints).
@@ -98,7 +112,7 @@ final class Container implements AdvancedContainerInterface
     /**
      * Load optimization hints from cache.
      *
-     * Hints are fallible — if a hint fails at resolution time,
+     * Hints are fallible; if a hint fails at resolution time,
      * the container silently falls back to reflection. Passing null
      * clears all hints.
      *
@@ -114,6 +128,12 @@ final class Container implements AdvancedContainerInterface
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
         $this->bindWithLifetime($id, $concrete, $type->toLifetime());
+    }
+
+    #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->bind($id, $concrete, BindingType::Singleton);
     }
 
     #[Override]
@@ -155,21 +175,31 @@ final class Container implements AdvancedContainerInterface
     #[Override]
     public function get(string $id): mixed
     {
-        // Return cached instance if available
         if (isset($this->instances[$id])) {
             return $this->instances[$id];
         }
 
-        // Check for binding
         if (isset($this->definitions[$id])) {
             return $this->resolve($id);
         }
 
-        // Check deferred providers before giving up
+        // Deferred providers are consulted before the autowiring fallback below, and
+        // therefore before anything can conclude the id is unresolvable.
         if ($this->deferredProviders !== null && $this->deferredProviders->has($id)) {
             $this->deferredProviders->resolve($id, $this);
 
             return $this->resolveAfterDeferredRegistration($id);
+        }
+
+        // Autowire an unbound but instantiable concrete class on demand, so
+        // applications need not bind every concrete (a controller and its plain
+        // dependencies "just work"). has() still reports false for such ids.
+        // Interfaces, abstract classes and non-class ids fall through to
+        // NotFoundException; an unresolvable dependency deeper in the graph
+        // surfaces as a ContainerException naming the consumer and parameter
+        // (see buildFromReflection) rather than an opaque "no binding found".
+        if (class_exists($id) && new ReflectionClass($id)->isInstantiable()) {
+            return $this->build($id);
         }
 
         throw NotFoundException::forId($id);
@@ -257,19 +287,7 @@ final class Container implements AdvancedContainerInterface
     #[Override]
     public function processCompilerPasses(PassRunner $runner): void
     {
-        $builder = new ContainerBuilder();
-
-        foreach ($this->definitions as $id => $definition) {
-            $builder->setDefinition($id, $definition);
-        }
-
-        $runner->run($builder);
-
-        // Re-import processed definitions
-        $this->definitions = [];
-        foreach ($builder->allDefinitions() as $id => $definition) {
-            $this->definitions[$id] = $definition;
-        }
+        $this->definitions = CompilerPassProcessor::process($this->definitions, $runner);
     }
 
     #[Override]
@@ -309,19 +327,18 @@ final class Container implements AdvancedContainerInterface
 
     private function resolve(string $id): object
     {
-        // Circular dependency detection
-        if (in_array($id, $this->resolving, true)) {
-            throw ContainerException::circularDependency($id, $this->resolving);
+        // Circular dependency detection: O(1) via associative array
+        if (isset($this->resolving[$id])) {
+            throw ContainerException::circularDependency($id, array_keys($this->resolving));
         }
 
-        $this->resolving[] = $id;
+        $this->resolving[$id] = true;
 
         try {
             $definition = $this->definitions[$id];
             $concrete = $definition->concrete;
             $lifetime = $definition->lifetime;
 
-            // Check scoped instance cache
             if (($lifetime === Lifetime::RequestScope || $lifetime === Lifetime::TenantScope) && $this->scopeManager !== null) {
                 $scopedInstance = $this->scopeManager->getScopedInstance($id, $lifetime);
                 if ($scopedInstance !== null) {
@@ -329,10 +346,11 @@ final class Container implements AdvancedContainerInterface
                 }
             }
 
-            // Build the instance — lazy proxy wrapping if flagged
+            // Build the instance: lazy proxy wrapping if flagged
             if ($definition->lazy) {
                 $instance = LazyServiceFactory::create($id, $concrete, $this);
             } elseif ($concrete instanceof Closure) {
+                /** @var mixed $instance */
                 $instance = $concrete($this);
             } else {
                 $instance = $this->build($concrete);
@@ -359,7 +377,7 @@ final class Container implements AdvancedContainerInterface
 
             return $instance;
         } finally {
-            array_pop($this->resolving);
+            unset($this->resolving[$id]);
         }
     }
 
@@ -383,16 +401,35 @@ final class Container implements AdvancedContainerInterface
             );
         }
 
-        // Try cached resolution hints first
-        if (isset($this->resolutionHints[$className])) {
-            try {
-                return $this->buildFromHints($className, $this->resolutionHints[$className]);
-            } catch (Throwable) {
-                // Fallback to reflection
-            }
+        // Bound the autowiring stack so a malformed graph
+        // cannot crash the SAPI worker. The resolving-set already
+        // catches direct cycles; this guards against deep but
+        // acyclic chains that would otherwise blow the PHP stack.
+        if ($this->buildDepth >= self::MAX_BUILD_DEPTH) {
+            throw ContainerException::unresolvable(
+                $className,
+                sprintf(
+                    'Autowiring depth limit reached (%d). The dependency graph rooted at this class is too deep — review the chain for accidental recursion or restructure the offending services.',
+                    self::MAX_BUILD_DEPTH,
+                ),
+            );
         }
+        $this->buildDepth++;
 
-        return $this->buildFromReflection($className);
+        try {
+            // Try cached resolution hints first
+            if (isset($this->resolutionHints[$className])) {
+                try {
+                    return $this->buildFromHints($className, $this->resolutionHints[$className]);
+                } catch (Throwable) {
+                    // Fallback to reflection
+                }
+            }
+
+            return $this->buildFromReflection($className);
+        } finally {
+            $this->buildDepth--;
+        }
     }
 
     /**
@@ -407,6 +444,10 @@ final class Container implements AdvancedContainerInterface
      */
     private function buildFromHints(string $className, array $hints): object
     {
+        if (!class_exists($className)) {
+            throw ContainerException::unresolvable($className, sprintf('Class "%s" does not exist', $className));
+        }
+
         $dependencies = [];
 
         foreach ($hints as $hint) {
@@ -426,6 +467,10 @@ final class Container implements AdvancedContainerInterface
      */
     private function buildFromReflection(string $className): object
     {
+        if (!class_exists($className)) {
+            throw ContainerException::unresolvable($className, sprintf('Class "%s" does not exist', $className));
+        }
+
         $reflector = new ReflectionClass($className);
 
         if (!$reflector->isInstantiable()) {
@@ -442,6 +487,7 @@ final class Container implements AdvancedContainerInterface
         }
 
         $parameters = $constructor->getParameters();
+        /** @var list<mixed> $dependencies */
         $dependencies = [];
 
         foreach ($parameters as $parameter) {
@@ -449,7 +495,9 @@ final class Container implements AdvancedContainerInterface
 
             if ($type === null) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    /** @var mixed $defaultValue */
+                    $defaultValue = $parameter->getDefaultValue();
+                    $dependencies[] = $defaultValue;
                     continue;
                 }
 
@@ -464,7 +512,9 @@ final class Container implements AdvancedContainerInterface
 
             if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    /** @var mixed $defaultValue */
+                    $defaultValue = $parameter->getDefaultValue();
+                    $dependencies[] = $defaultValue;
                     continue;
                 }
 
@@ -491,7 +541,9 @@ final class Container implements AdvancedContainerInterface
                 $dependencies[] = $this->get($dependencyClass);
             } catch (NotFoundException) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    /** @var mixed $defaultValue */
+                    $defaultValue = $parameter->getDefaultValue();
+                    $dependencies[] = $defaultValue;
                 } elseif ($type->allowsNull()) {
                     $dependencies[] = null;
                 } else {
@@ -527,12 +579,12 @@ final class Container implements AdvancedContainerInterface
         $concrete = $this->contextualBindings[$consumer][$abstract];
 
         if (is_callable($concrete)) {
-            /** @var object */
+            /** @var object|null */
             return $concrete($this);
         }
 
         if (isset($this->definitions[$concrete]) || isset($this->instances[$concrete])) {
-            /** @var object */
+            /** @var object|null */
             return $this->get($concrete);
         }
 
@@ -575,14 +627,7 @@ final class Container implements AdvancedContainerInterface
     #[Override]
     public function validateScopeGraph(): void
     {
-        $builder = new ContainerBuilder();
-
-        foreach ($this->definitions as $id => $definition) {
-            $builder->setDefinition($id, $definition);
-        }
-
-        $pass = new ValidateLifetimesPass();
-        $pass->process($builder);
+        CompilerPassProcessor::validateScopeGraph($this->definitions);
     }
 
     #[Override]
@@ -593,5 +638,78 @@ final class Container implements AdvancedContainerInterface
         }
 
         $this->deferredProviders->register($provider);
+    }
+
+    /**
+     * Call a callable, resolving type-hinted parameters from the container.
+     *
+     * @param callable $callable The callable to invoke
+     * @param array<string, mixed> $params Explicit parameter overrides
+     *
+     * @throws ContainerException If a required parameter cannot be resolved
+     * @throws ReflectionException If reflection on the callable fails
+     */
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        $reflection = CallableReflector::reflect($callable);
+        /** @var list<mixed> $arguments */
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $name = $parameter->getName();
+
+            // Explicit parameters take precedence
+            if (isset($params[$name])) {
+                /** @var mixed $explicitArg */
+                $explicitArg = $params[$name];
+                $arguments[] = $explicitArg;
+
+                continue;
+            }
+
+            $type = $parameter->getType();
+
+            // Resolve from the container by type hint. get() autowires an
+            // unbound but instantiable concrete (has() reports false for those),
+            // so resolve via get()+catch — exactly as buildFromReflection does
+            // for constructor parameters — instead of gating on has(), which
+            // would skip autowirable concretes and fall through to the error path.
+            if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                try {
+                    $arguments[] = $this->get($type->getName());
+
+                    continue;
+                } catch (NotFoundException) {
+                    // Not resolvable: fall through to default / null / throw.
+                }
+            }
+
+            // Fall back to default value
+            if ($parameter->isDefaultValueAvailable()) {
+                /** @var mixed $defaultArg */
+                $defaultArg = $parameter->getDefaultValue();
+                $arguments[] = $defaultArg;
+
+                continue;
+            }
+
+            // Nullable parameters default to null
+            if ($type !== null && $type->allowsNull()) {
+                $arguments[] = null;
+
+                continue;
+            }
+
+            throw ContainerException::unresolvable(
+                'call()',
+                sprintf(
+                    'Cannot resolve parameter "%s" for callable: no container binding and no default value',
+                    $name,
+                ),
+            );
+        }
+
+        return $callable(...$arguments);
     }
 }

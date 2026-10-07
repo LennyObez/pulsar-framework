@@ -109,7 +109,17 @@ return [
     | Fiber Concurrency
     |--------------------------------------------------------------------------
     |
-    | Number of concurrent Fiber connections. 0 = synchronous accept loop.
+    | Connection fibers the persistent runtime may run. Only 0 (synchronous
+    | accept loop) and 1 (one connection fiber at a time) are accepted; a
+    | higher value is REFUSED at startup and the worker does not boot.
+    |
+    | The runtime does not isolate per-request state across interleaved fibers:
+    | the request-scoped container pool, the session manager and the feature
+    | flag evaluation log are process-global, so a request suspended inside a
+    | contended cache lock can come back holding the next request's session.
+    | Nothing is lost by the restriction — the connection handler blocks on
+    | every socket read and write, so extra fibers bought no I/O concurrency.
+    | Scale with multiple worker processes behind a load balancer instead.
     |
     | Env override: RUNTIME_FIBER_CONCURRENCY
     |

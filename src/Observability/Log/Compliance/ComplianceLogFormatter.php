@@ -13,6 +13,7 @@ use Pulsar\Observability\Log\LogEntry;
  * Implementations apply masking, pseudonymization, or metadata enrichment
  * to log entries before they are written to sinks. Each formatter returns
  * a new LogEntry since LogEntry is readonly.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ComplianceLogFormatter

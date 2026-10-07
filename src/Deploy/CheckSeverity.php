@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity level for a deploy check result.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CheckSeverity: string

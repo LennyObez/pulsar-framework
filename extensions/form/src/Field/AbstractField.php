@@ -13,6 +13,7 @@ use Pulsar\Http\Validation\RuleInterface;
  *
  * Provides common field functionality: name, label, value,
  * validation rules, and HTML attributes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class AbstractField implements FieldInterface

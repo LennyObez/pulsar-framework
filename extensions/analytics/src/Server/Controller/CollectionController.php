@@ -25,12 +25,12 @@ use const PHP_URL_HOST;
 /**
  * Handles incoming analytics events from the tracker script.
  *
- * Always returns 204 No Content — never leaks information about
+ * Always returns 204 No Content: never leaks information about
  * whether tracking succeeded or failed. Validates that the Referer
  * or Origin header matches the registered site domain to prevent
  * forged beacon payloads.
  */
-#[Internal(reason: 'Analytics collection endpoint — public-facing')]
+#[Internal(reason: 'Analytics collection endpoint; public-facing')]
 final readonly class CollectionController
 {
     public function __construct(
@@ -48,6 +48,8 @@ final readonly class CollectionController
                 return Response::noContent();
             }
 
+            /** @var array<string, mixed> $payload */
+
             // Validate payload origin against registered site domain
             $site = $this->validateOrigin($request, $payload);
 
@@ -58,6 +60,7 @@ final readonly class CollectionController
             // Pass validated site via request attribute to avoid duplicate DB lookup
             $request = $request->withAttribute('analytics.site', $site);
 
+            /** @var mixed $type */
             $type = $payload['type'] ?? '';
 
             match ($type) {
@@ -79,10 +82,14 @@ final readonly class CollectionController
      * then falls back to Referer. Returns the validated Site on success, or
      * null on validation failure. The caller should pass the Site via request
      * attributes to avoid a duplicate DB lookup downstream.
+     *
+     * @param array<string, mixed> $payload
      */
     private function validateOrigin(ServerRequestInterface $request, array $payload): ?Site
     {
-        $trackingId = (string) ($payload['site'] ?? '');
+        /** @var mixed $rawTrackingId */
+        $rawTrackingId = $payload['site'] ?? '';
+        $trackingId = is_string($rawTrackingId) ? $rawTrackingId : '';
 
         if ($trackingId === '') {
             return null;
@@ -102,7 +109,7 @@ final readonly class CollectionController
         }
 
         if ($origin === '') {
-            // No origin info — reject. Legitimate browser requests always include
+            // No origin info; reject. Legitimate browser requests always include
             // Origin (cross-origin) or Referer (same-origin). Missing both means
             // the request was sent by a non-browser tool (curl, bot, etc.).
             return null;

@@ -42,15 +42,19 @@ final readonly class IconBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $name = htmlspecialchars((string) ($data['name'] ?? ''), ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawName */
+        $rawName = $data['name'] ?? null;
+        $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $size */
         $size = $data['size'] ?? null;
+        /** @var mixed $color */
         $color = $data['color'] ?? null;
 
         if (!is_string($size) || !in_array($size, self::VALID_SIZES, true)) {
             $size = 'md';
         }
 
-        $cssClass = "icon icon-{$name} icon--{$size}";
+        $cssClass = "icon icon-$name icon--$size";
 
         $style = '';
 
@@ -58,7 +62,7 @@ final readonly class IconBlock implements BlockTypeInterface
             $style = ' style="color:' . htmlspecialchars($color, ENT_QUOTES, 'UTF-8') . '"';
         }
 
-        return "<span class=\"{$cssClass}\"{$style} aria-hidden=\"true\"></span>";
+        return "<span class=\"$cssClass\"$style aria-hidden=\"true\"></span>";
     }
 
     #[Override]

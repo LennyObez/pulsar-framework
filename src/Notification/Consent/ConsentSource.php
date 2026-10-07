@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Source of a consent action.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ConsentSource: string

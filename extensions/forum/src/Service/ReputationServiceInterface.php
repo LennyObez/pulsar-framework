@@ -9,7 +9,8 @@ use Pulsar\Extension\Forum\Domain\ReputationLevel;
 use Pulsar\Extension\Forum\Profile\ForumProfile;
 
 /**
- * Reputation service — manage user reputation scores and level progression.
+ * Reputation service: manage user reputation scores and level progression.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReputationServiceInterface

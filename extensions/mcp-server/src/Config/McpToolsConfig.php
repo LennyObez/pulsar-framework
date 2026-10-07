@@ -6,6 +6,9 @@ namespace Pulsar\Extension\McpServer\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Tool execution sub-configuration.
@@ -34,35 +37,21 @@ final readonly class McpToolsConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $disabledReadTools */
-        $disabledReadTools = (array) ($data['disabled_read_tools'] ?? []);
-
-        /** @var list<string> $allowedActions */
-        $allowedActions = (array) ($data['allowed_actions'] ?? []);
-
-        $maxOutputBytes = (int) ($data['max_output_bytes'] ?? 1_048_576);
-
-        $actionTimeout = (int) ($data['action_timeout'] ?? 120);
-
-        /** @var array<string, mixed> $commandsRaw */
-        $commandsRaw = (array) ($data['commands'] ?? []);
-
-        /** @var ?string $phpunit */
-        $phpunit = isset($commandsRaw['phpunit']) ? (string) $commandsRaw['phpunit'] : null;
-        /** @var ?string $composer */
-        $composer = isset($commandsRaw['composer']) ? (string) $commandsRaw['composer'] : null;
-        /** @var ?string $pnpm */
-        $pnpm = isset($commandsRaw['pnpm']) ? (string) $commandsRaw['pnpm'] : null;
+        /** @var mixed $commandsRaw */
+        $commandsRaw = $data['commands'] ?? null;
+        if (!is_array($commandsRaw)) {
+            $commandsRaw = [];
+        }
 
         return new self(
-            disabledReadTools: $disabledReadTools,
-            allowedActions: $allowedActions,
-            maxOutputBytes: $maxOutputBytes,
-            actionTimeout: $actionTimeout,
+            disabledReadTools: Coerce::listOfString($data['disabled_read_tools'] ?? null),
+            allowedActions: Coerce::listOfString($data['allowed_actions'] ?? null),
+            maxOutputBytes: Coerce::strictInt($data['max_output_bytes'] ?? null, 1_048_576),
+            actionTimeout: Coerce::strictInt($data['action_timeout'] ?? null, 120),
             commands: [
-                'phpunit' => $phpunit,
-                'composer' => $composer,
-                'pnpm' => $pnpm,
+                'phpunit' => Coerce::nullableString($commandsRaw['phpunit'] ?? null),
+                'composer' => Coerce::nullableString($commandsRaw['composer'] ?? null),
+                'pnpm' => Coerce::nullableString($commandsRaw['pnpm'] ?? null),
             ],
         );
     }

@@ -105,7 +105,7 @@ final class CaseNumberTest extends TestCase
     public function invalidPatternThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('valid regular expression');
+        $this->expectExceptionMessageIsOrContains('valid regular expression');
 
         new CaseNumber(pattern: '/[invalid');
     }
@@ -114,7 +114,7 @@ final class CaseNumberTest extends TestCase
     public function excessivelyLongPatternThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('maximum length');
+        $this->expectExceptionMessageIsOrContains('maximum length');
 
         new CaseNumber(pattern: '/' . str_repeat('a', 500) . '/');
     }

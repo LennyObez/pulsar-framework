@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Contract for HTTP runtime implementations.
  *
  * Defines the lifecycle for both traditional PHP-FPM and persistent worker runtimes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RuntimeInterface

@@ -7,10 +7,13 @@ namespace Pulsar\Tests\Unit\Resilience;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Pulsar\Resilience\CircuitBreaker;
 use Pulsar\Resilience\CircuitBreakerState;
 use Pulsar\Resilience\Exception\ResilienceException;
 use RuntimeException;
+use Stringable;
 
 #[CoversClass(CircuitBreaker::class)]
 final class CircuitBreakerTest extends TestCase
@@ -77,7 +80,7 @@ final class CircuitBreakerTest extends TestCase
         self::assertSame(CircuitBreakerState::Open, $breaker->state());
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Circuit breaker "my-service" is open');
+        $this->expectExceptionMessageIsOrContains('Circuit breaker "my-service" is open');
 
         $breaker->execute(fn(): string => 'should not run');
     }
@@ -246,5 +249,181 @@ final class CircuitBreakerTest extends TestCase
         );
 
         self::assertSame('payment-gateway', $breaker->name());
+    }
+
+    /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
+    public array $loggedRecords = [];
+
+    #[Test]
+    public function logsAtWarningWhenTheCircuitOpens(): void
+    {
+        $breaker = new CircuitBreaker(
+            name: 'orders',
+            failureThreshold: 2,
+            successThreshold: 1,
+            openTimeoutSeconds: 60,
+            logger: $this->makeLogger(),
+        );
+
+        $breaker->recordFailure();
+        self::assertCount(0, $this->loggedRecords);
+
+        $breaker->recordFailure();
+
+        $toOpen = $this->recordsTo(CircuitBreakerState::Open);
+        self::assertCount(1, $toOpen);
+        $record = $toOpen[0];
+        self::assertSame(LogLevel::WARNING, $record['level']);
+        self::assertSame('orders', $this->contextString($record, 'circuit'));
+        self::assertSame(2, $this->contextInt($record, 'failure_count'));
+    }
+
+    #[Test]
+    public function logsHalfOpenAndCloseTransitionsAtInfo(): void
+    {
+        $breaker = new CircuitBreaker(
+            name: 'orders',
+            failureThreshold: 1,
+            successThreshold: 1,
+            openTimeoutSeconds: 0,
+            logger: $this->makeLogger(),
+        );
+
+        // Open (WARNING).
+        $breaker->recordFailure();
+        // Reading the state evaluates the Open->HalfOpen transition (timeout 0).
+        self::assertSame(CircuitBreakerState::HalfOpen, $breaker->state());
+        // One success in half-open closes the circuit.
+        $breaker->recordSuccess();
+        self::assertSame(CircuitBreakerState::Closed, $breaker->state());
+
+        self::assertCount(1, $this->recordsTo(CircuitBreakerState::Open));
+
+        $halfOpen = $this->recordsTo(CircuitBreakerState::HalfOpen);
+        self::assertCount(1, $halfOpen);
+        self::assertSame(LogLevel::INFO, $halfOpen[0]['level']);
+
+        $closed = $this->recordsTo(CircuitBreakerState::Closed);
+        self::assertCount(1, $closed);
+        self::assertSame(LogLevel::INFO, $closed[0]['level']);
+    }
+
+    #[Test]
+    public function doesNotLogWhenNoLoggerProvided(): void
+    {
+        $breaker = new CircuitBreaker(
+            name: 'orders',
+            failureThreshold: 1,
+            successThreshold: 1,
+            openTimeoutSeconds: 60,
+        );
+
+        $breaker->recordFailure();
+
+        self::assertSame(CircuitBreakerState::Open, $breaker->state());
+        self::assertCount(0, $this->loggedRecords);
+    }
+
+    /**
+     * @return list<array{level: string, message: string, context: array<string, mixed>}>
+     */
+    private function recordsTo(CircuitBreakerState $state): array
+    {
+        $matches = [];
+
+        foreach ($this->loggedRecords as $record) {
+            if (($record['context']['to'] ?? null) === $state->value) {
+                $matches[] = $record;
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
+     * @param array{level: string, message: string, context: array<string, mixed>} $record
+     */
+    private function contextString(array $record, string $key): string
+    {
+        $value = $record['context'][$key] ?? null;
+        self::assertIsString($value);
+
+        return $value;
+    }
+
+    /**
+     * @param array{level: string, message: string, context: array<string, mixed>} $record
+     */
+    private function contextInt(array $record, string $key): int
+    {
+        $value = $record['context'][$key] ?? null;
+        self::assertIsInt($value);
+
+        return $value;
+    }
+
+    private function makeLogger(): LoggerInterface
+    {
+        $test = $this;
+
+        return new class ($test) implements LoggerInterface {
+            public function __construct(private readonly CircuitBreakerTest $test) {}
+
+            /** @param array<mixed> $context */
+            private function record(string $level, string $message, array $context): void
+            {
+                /** @var array<string, mixed> $typedContext */
+                $typedContext = $context;
+                $this->test->loggedRecords[] = ['level' => $level, 'message' => $message, 'context' => $typedContext];
+            }
+
+            public function emergency(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::EMERGENCY, (string) $message, $context);
+            }
+
+            public function alert(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::ALERT, (string) $message, $context);
+            }
+
+            public function critical(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::CRITICAL, (string) $message, $context);
+            }
+
+            public function error(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::ERROR, (string) $message, $context);
+            }
+
+            public function warning(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::WARNING, (string) $message, $context);
+            }
+
+            public function notice(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::NOTICE, (string) $message, $context);
+            }
+
+            public function info(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::INFO, (string) $message, $context);
+            }
+
+            public function debug(Stringable|string $message, array $context = []): void
+            {
+                $this->record(LogLevel::DEBUG, (string) $message, $context);
+            }
+
+            /** @param array<mixed> $context */
+            public function log(mixed $level, Stringable|string $message, array $context = []): void
+            {
+                /** @var string $levelString */
+                $levelString = $level;
+                $this->record($levelString, (string) $message, $context);
+            }
+        };
     }
 }

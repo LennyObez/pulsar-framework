@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Incoming webhook request from a mail provider.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebhookRequest

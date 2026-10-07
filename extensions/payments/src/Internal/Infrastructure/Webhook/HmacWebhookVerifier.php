@@ -11,7 +11,10 @@ use Pulsar\Webhook\Exception\WebhookException;
 use Pulsar\Webhook\WebhookVerifierInterface;
 
 use function abs;
+use function ctype_xdigit;
 use function str_starts_with;
+use function strlen;
+use function strtolower;
 use function substr;
 
 /**
@@ -23,6 +26,9 @@ use function substr;
 #[Internal]
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {
+    /** HMAC-SHA256 produces 32 bytes = 64 hex chars. */
+    private const int HMAC_HEX_LENGTH = 64;
+
     public function __construct(
         private ClockInterface $clock,
     ) {}
@@ -34,6 +40,10 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
         string $secret,
         int $toleranceSeconds,
     ): void {
+        if ($secret === '') {
+            throw WebhookException::emptySecret();
+        }
+
         $parsed = self::parseHeader($signatureHeader);
         $timestamp = $parsed['timestamp'];
         $signatures = $parsed['signatures'];
@@ -86,7 +96,11 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
                 $timestamp = (int) $value;
             } elseif (str_starts_with($part, 'v1=')) {
                 $value = substr($part, 3);
+
                 if ($value !== '') {
+                    // Buffer raw v1; validate after timestamp /
+                    // signatures-present checks so error priority
+                    // is stable.
                     $signatures[] = $value;
                 }
             }
@@ -100,6 +114,21 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
             throw WebhookException::malformedHeader('no v1 signatures');
         }
 
-        return ['timestamp' => $timestamp, 'signatures' => $signatures];
+        // Validate each v1 is 64 lowercase hex AFTER the
+        // timestamp / signatures-present checks so error priority
+        // is consistent with the parser's lexical order.
+        $validated = [];
+
+        foreach ($signatures as $signature) {
+            $signature = strtolower($signature);
+
+            if (strlen($signature) !== self::HMAC_HEX_LENGTH || !ctype_xdigit($signature)) {
+                throw WebhookException::malformedHeader('non-hex v1 signature');
+            }
+
+            $validated[] = $signature;
+        }
+
+        return ['timestamp' => $timestamp, 'signatures' => $validated];
     }
 }

@@ -1,4 +1,4 @@
-# Deterministic Build Pipeline
+# Deterministic build pipeline
 
 Pulsar's build pipeline compiles all production artifacts into immutable, content-addressed files. The same input always produces byte-identical output.
 

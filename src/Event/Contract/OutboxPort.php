@@ -13,7 +13,7 @@ use Pulsar\Event\EventEnvelope;
  * Implementations store events alongside domain writes in the same transaction,
  * then publish asynchronously via a relay process.
  */
-#[Internal(reason: 'Unimplemented port — will be promoted to #[Api] when an adapter ships')]
+#[Internal(reason: 'Implemented by DatabaseOutboxPort; relay-only contract, not part of the public API')]
 interface OutboxPort
 {
     /**
@@ -34,9 +34,25 @@ interface OutboxPort
     public function markPublished(string $eventId): void;
 
     /**
-     * Retrieve pending (unpublished) events.
+     * Record a publish failure: increment the attempt counter and store the
+     * last error so the relay can bound retries and an operator can triage
+     * without trawling logs.
+     */
+    public function recordFailure(string $eventId, string $error): void;
+
+    /**
+     * Retrieve pending (unpublished, not dead-lettered) events, oldest first.
      *
      * @return list<EventEnvelope>
      */
     public function pendingEvents(int $limit = 100): array;
+
+    /**
+     * Retrieve events that exhausted their publish-attempt budget and were
+     * dead-lettered. Surfaced (never auto-deleted) so auditors and operators
+     * can inspect permanently-failing integration events.
+     *
+     * @return list<EventEnvelope>
+     */
+    public function deadLetteredEvents(int $limit = 100): array;
 }

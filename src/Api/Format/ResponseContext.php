@@ -10,6 +10,7 @@ use Pulsar\Api\Pagination\PaginationMeta;
 
 /**
  * Value object carrying rendering context for response formatters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResponseContext

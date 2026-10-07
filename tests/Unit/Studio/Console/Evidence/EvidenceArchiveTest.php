@@ -235,7 +235,7 @@ final class EvidenceArchiveTest extends TestCase
     public function fromJsonThrowsOnInvalidJson(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         $_ = EvidenceArchive::fromJson('not valid json');
     }

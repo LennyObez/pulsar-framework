@@ -15,6 +15,7 @@ use Pulsar\Config\I18nConfig;
  * controllers, and locale switcher components. Delegates to a
  * {@see LocaleUrlResolverInterface} for alternate resolution when available,
  * falling back to simple prefix-swapping.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LocaleUrlGenerator

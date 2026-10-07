@@ -44,6 +44,7 @@ final class FailoverManagerTest extends TestCase
     private function createManager(
         ?FailoverConfig $config = null,
         string $primaryEndpoint = '10.0.0.1',
+        ?callable $connectionFactory = null,
     ): FailoverManager {
         return new FailoverManager(
             primaryConnection: $this->connection,
@@ -53,6 +54,7 @@ final class FailoverManagerTest extends TestCase
             config: $config ?? new FailoverConfig(enabled: true),
             metrics: $this->metrics,
             primaryEndpoint: $primaryEndpoint,
+            connectionFactory: $connectionFactory,
         );
     }
 
@@ -214,7 +216,7 @@ final class FailoverManagerTest extends TestCase
         $manager = $this->createManager();
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Strategy "test" could not resolve a failover target');
+        $this->expectExceptionMessageIsOrContains('Strategy "test" could not resolve a failover target');
 
         $manager->executeFailover();
     }
@@ -234,5 +236,76 @@ final class FailoverManagerTest extends TestCase
         $manager->executeFailover();
 
         self::assertCount(0, $manager->events());
+    }
+
+    #[Test]
+    public function failoverReconnectsWhenFactoryProvided(): void
+    {
+        $newConnection = $this->createStub(ConnectionInterface::class);
+
+        $this->strategy->method('resolveTarget')->willReturn('10.0.0.2');
+        $this->strategy->method('name')->willReturn('test');
+
+        $factoryCallCount = 0;
+        $factory = function () use ($newConnection, &$factoryCallCount): ConnectionInterface {
+            $factoryCallCount++;
+            return $newConnection;
+        };
+
+        $manager = $this->createManager(connectionFactory: $factory);
+
+        $manager->executeFailover();
+
+        self::assertSame(1, $factoryCallCount);
+        self::assertSame($newConnection, $manager->getConnection());
+    }
+
+    #[Test]
+    public function failoverWithoutFactoryPreservesOriginalConnection(): void
+    {
+        $this->strategy->method('resolveTarget')->willReturn('10.0.0.2');
+        $this->strategy->method('name')->willReturn('test');
+
+        $manager = $this->createManager();
+
+        $manager->executeFailover();
+
+        // Without a factory, getConnection returns the original (now stale) connection
+        self::assertSame($this->connection, $manager->getConnection());
+    }
+
+    #[Test]
+    public function failoverDisconnectsOldConnectionBeforeReconnecting(): void
+    {
+        $oldConnection = $this->createMock(ConnectionInterface::class);
+        $oldConnection->expects(self::once())->method('disconnect');
+
+        $newConnection = $this->createStub(ConnectionInterface::class);
+
+        $this->strategy->method('resolveTarget')->willReturn('10.0.0.2');
+        $this->strategy->method('name')->willReturn('test');
+
+        $manager = new FailoverManager(
+            primaryConnection: $oldConnection,
+            healthChecker: $this->healthChecker,
+            strategy: $this->strategy,
+            circuitBreaker: $this->circuitBreaker,
+            config: new FailoverConfig(enabled: true),
+            metrics: $this->metrics,
+            primaryEndpoint: '10.0.0.1',
+            connectionFactory: static fn(): ConnectionInterface => $newConnection,
+        );
+
+        $manager->executeFailover();
+
+        self::assertSame($newConnection, $manager->getConnection());
+    }
+
+    #[Test]
+    public function getConnectionReturnsCurrentPrimaryConnection(): void
+    {
+        $manager = $this->createManager();
+
+        self::assertSame($this->connection, $manager->getConnection());
     }
 }

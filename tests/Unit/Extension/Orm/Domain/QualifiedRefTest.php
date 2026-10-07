@@ -36,7 +36,7 @@ final class QualifiedRefTest extends TestCase
     public function parseRejectsUnqualifiedReference(): void
     {
         $this->expectException(QueryBuilderException::class);
-        $this->expectExceptionMessage('qualified references');
+        $this->expectExceptionMessageIsOrContains('qualified references');
 
         $_ = QualifiedRef::parse('id');
     }

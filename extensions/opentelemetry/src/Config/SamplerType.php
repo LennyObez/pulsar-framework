@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Trace sampler strategy type.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SamplerType: string

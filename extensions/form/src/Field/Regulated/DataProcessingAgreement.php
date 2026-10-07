@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Captures evidence that the user reviewed and accepted
  * the data processing agreement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DataProcessingAgreement extends AbstractRegulatedField

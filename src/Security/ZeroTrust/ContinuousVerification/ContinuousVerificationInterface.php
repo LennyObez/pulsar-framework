@@ -15,6 +15,7 @@ use Pulsar\Security\ZeroTrust\Signal\SignalContext;
  * re-evaluates the trust posture throughout the session lifecycle. Implementations
  * collect fresh signals, evaluate policy, and determine whether the session should
  * continue, require step-up authentication, or be terminated.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContinuousVerificationInterface

@@ -9,14 +9,13 @@ use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 
 /**
  * Adapts a callable into a PSR-15 RequestHandler.
- *
- * @internal Used by MiddlewarePipeline to wrap callable handlers.
+ * @api
  */
-#[Internal]
+#[Api(since: '1.0.0')]
 final readonly class CallableRequestHandler implements RequestHandlerInterface
 {
     /** @var Closure(ServerRequestInterface): ResponseInterface */

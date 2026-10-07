@@ -1,0 +1,19 @@
+{
+  "name": "healthcare",
+  "description": "Healthcare application starter kit with support for HIPAA and MDR controls",
+  "version": "1.0.0",
+  "requiredPulsarVersion": "^1.0",
+  "compliancePresets": ["HIPAA", "MDR"],
+  "files": {
+    "config/phi-access.php": "config/phi-access.php",
+    "config/data-classification.php": "config/data-classification.php",
+    "config/encryption.php": "config/encryption.php",
+    "src/Patient.php": "src/Entity/Patient.php",
+    "src/MedicalRecord.php": "src/Entity/MedicalRecord.php",
+    "src/Appointment.php": "src/Entity/Appointment.php",
+    "src/Prescription.php": "src/Entity/Prescription.php",
+    "tests/PatientTest.php": "tests/Unit/Entity/PatientTest.php",
+    "tests/MedicalRecordTest.php": "tests/Unit/Entity/MedicalRecordTest.php"
+  },
+  "postInstallCommands": []
+}

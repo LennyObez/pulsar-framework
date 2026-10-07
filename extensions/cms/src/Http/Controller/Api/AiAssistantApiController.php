@@ -6,9 +6,9 @@ namespace Pulsar\Extension\Cms\Http\Controller\Api;
 
 use JsonException;
 use Psr\Http\Message\ServerRequestInterface;
+use Pulsar\AI\AiResponse;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
-use Pulsar\Extension\Cms\AI\LlmResponse;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
 use Pulsar\Extension\Cms\Seo\SerpPreview;
 use Pulsar\Http\Message\Response;
@@ -24,7 +24,7 @@ use const JSON_THROW_ON_ERROR;
  * All endpoints require API key authentication (CmsApiKeyMiddleware)
  * and return a uniform response shape.
  */
-#[Internal(reason: 'CMS AI API controller — implementation detail')]
+#[Internal(reason: 'CMS AI API controller; implementation detail')]
 final readonly class AiAssistantApiController
 {
     public function __construct(
@@ -325,7 +325,7 @@ final readonly class AiAssistantApiController
 
         try {
             /** @var array<string, mixed> $analysis */
-            $analysis = json_decode($result->content, true, 512, JSON_THROW_ON_ERROR);
+            $analysis = json_decode($result->content, true, flags: JSON_THROW_ON_ERROR);
 
             return Response::json([
                 'analysis' => $analysis,
@@ -402,9 +402,15 @@ final readonly class AiAssistantApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : null;
-        $metaDescription = is_string($body['metaDescription'] ?? null) ? $body['metaDescription'] : null;
-        $url = is_string($body['url'] ?? null) ? $body['url'] : null;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['metaDescription'] ?? null;
+        $metaDescription = is_string($rawMetaDescription) ? $rawMetaDescription : null;
+        /** @var mixed $rawUrl */
+        $rawUrl = $body['url'] ?? null;
+        $url = is_string($rawUrl) ? $rawUrl : null;
 
         if ($title === null || $title === '') {
             return Response::json(['error' => 'Missing required field: title'], 422);
@@ -423,7 +429,7 @@ final readonly class AiAssistantApiController
         return Response::json($preview->toArray());
     }
 
-    private function formatResponse(LlmResponse $result): Response
+    private function formatResponse(AiResponse $result): Response
     {
         $status = $result->finishReason === 'error' ? 502 : 200;
 

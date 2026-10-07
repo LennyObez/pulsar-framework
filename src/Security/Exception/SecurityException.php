@@ -14,10 +14,24 @@ use function sprintf;
  * Base exception for all security-related errors.
  *
  * Provides static factory methods for specific security error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SecurityException extends RuntimeException
 {
+    /**
+     * Exception code carried by {@see sessionIdleExpired}. The session middleware
+     * treats this as a recoverable, non-strict failure (rotate to a fresh session)
+     * rather than surfacing a 500. See {@see \Pulsar\Security\Session\SessionMiddleware}.
+     */
+    public const int CODE_SESSION_IDLE_EXPIRED = 1001;
+
+    /**
+     * Exception code carried by {@see sessionValidationFailed} (e.g. a changed
+     * User-Agent fingerprint). Recovered from by default, like the idle-timeout code.
+     */
+    public const int CODE_SESSION_VALIDATION_FAILED = 1002;
+
     /**
      * CSRF token validation failed.
      */
@@ -100,6 +114,55 @@ final class SecurityException extends RuntimeException
     }
 
     /**
+     * Audit chain state on disk is unverifiable.
+     *
+     * Raised when an audit sink reports {@see \Pulsar\Security\Audit\AuditChainState::Corrupted}
+     * — the file holds at least one entry but the last record cannot
+     * be parsed, the `hmac` field is missing, or an IO failure
+     * prevented the lookup. Continuing would silently break the
+     * tamper-evidence chain by re-seeding over corrupt state, so the
+     * logger refuses to write any further entries until the chain is
+     * either rotated or restored.
+     */
+    #[NoDiscard]
+    public static function auditChainCorrupted(string $reason): self
+    {
+        return new self(sprintf(
+            'Audit chain integrity check failed: %s. Refusing to append further entries until the chain is rotated or restored.',
+            $reason,
+        ));
+    }
+
+    /**
+     * A second call reached the audit chain advance while one was still inside it.
+     *
+     * The advance reads the previous entry's HMAC, builds an entry chained to it,
+     * writes it and only then publishes the new head. A call that enters that
+     * window reads the same predecessor and writes an entry claiming the same
+     * position; whichever of the two is not published last is orphaned, and every
+     * later verification reports the chain as tampered with.
+     *
+     * The realistic source is a nested call: an audit sink — or something a sink
+     * reaches, a logger handler, an event listener — that itself logs an audit
+     * event. It is refused rather than waited out because waiting cannot resolve
+     * it: the second call is on the same call stack as the first, so the first
+     * cannot finish until the second returns. See
+     * {@see \Pulsar\Security\Audit\AuditLogger} for why the fiber case is refused
+     * on the same terms.
+     */
+    #[NoDiscard]
+    public static function auditChainAdvanceReentered(string $action): self
+    {
+        return new self(sprintf(
+            'Audit chain advance re-entered while logging "%s": a second entry would claim the '
+            . 'position the first has not finished taking, breaking the chain from that point on. '
+            . 'An audit sink, or something it calls, is logging an audit event of its own; make '
+            . 'that path write without going back through the logger.',
+            $action,
+        ));
+    }
+
+    /**
      * Audit sink write failure.
      */
     #[NoDiscard]
@@ -111,7 +174,7 @@ final class SecurityException extends RuntimeException
     #[NoDiscard]
     public static function serializationForbidden(string $class): self
     {
-        return new self(sprintf('Serialization of %s is forbidden — key material must not leave process memory', $class));
+        return new self(sprintf('Serialization of %s is forbidden: key material must not leave process memory', $class));
     }
 
     /**
@@ -120,7 +183,7 @@ final class SecurityException extends RuntimeException
     #[NoDiscard]
     public static function sessionValidationFailed(string $validator): self
     {
-        return new self(sprintf('Session validation failed: %s', $validator));
+        return new self(sprintf('Session validation failed: %s', $validator), self::CODE_SESSION_VALIDATION_FAILED);
     }
 
     /**
@@ -158,4 +221,53 @@ final class SecurityException extends RuntimeException
     {
         return new self(sprintf('Session payload size %d bytes exceeds maximum of %d bytes', $size, $max));
     }
+
+    /**
+     * Session has been idle for longer than the configured timeout (PCI-DSS 8.2.8).
+     */
+    #[NoDiscard]
+    public static function sessionIdleExpired(int $idleSeconds, int $maxIdle): self
+    {
+        return new self(
+            sprintf('Session idle timeout exceeded: %d seconds idle, maximum is %d seconds', $idleSeconds, $maxIdle),
+            self::CODE_SESSION_IDLE_EXPIRED,
+        );
+    }
+
+    /**
+     * Session payload could not be JSON-encoded for storage.
+     *
+     * Sessions are stored as JSON to eliminate the unserialize()
+     * attack surface (CWE-502). Application code that puts
+     * non-encodable values (resources, raw object instances,
+     * closures) into the session triggers this exception at save()
+     * time.
+     */
+    #[NoDiscard]
+    public static function sessionEncodingFailed(string $reason): self
+    {
+        return new self(sprintf(
+            'Failed to encode session payload as JSON: %s. Session values must be scalars, arrays, or JsonSerializable instances.',
+            $reason,
+        ));
+    }
+
+    /**
+     * Secret vault key not found.
+     */
+    #[NoDiscard]
+    public static function vaultKeyNotFound(string $key): self
+    {
+        return new self(sprintf('Secret "%s" not found in the vault', $key));
+    }
+
+    /**
+     * Runtime security assertion failed.
+     */
+    #[NoDiscard]
+    public static function assertionFailed(string $assertion, string $detail): self
+    {
+        return new self(sprintf('Security assertion failed [%s]: %s', $assertion, $detail));
+    }
+
 }

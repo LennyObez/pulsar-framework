@@ -11,6 +11,7 @@ use function is_array;
 
 /**
  * Immutable configuration for the form extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FormConfig
@@ -28,23 +29,19 @@ final readonly class FormConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $csrfData */
-        $csrfData = is_array($data['csrf'] ?? null) ? $data['csrf'] : [];
+        $sub = static function (string $k) use ($data): array {
+            /** @var mixed $value */
+            $value = $data[$k] ?? null;
 
-        /** @var array<string, mixed> $rendererData */
-        $rendererData = is_array($data['renderer'] ?? null) ? $data['renderer'] : [];
-
-        /** @var array<string, mixed> $uploadData */
-        $uploadData = is_array($data['upload'] ?? null) ? $data['upload'] : [];
-
-        /** @var array<string, mixed> $wizardData */
-        $wizardData = is_array($data['wizard'] ?? null) ? $data['wizard'] : [];
+            /** @var array<string, mixed> */
+            return is_array($value) ? $value : [];
+        };
 
         return new self(
-            csrf: CsrfFormConfig::fromArray($csrfData),
-            renderer: RendererConfig::fromArray($rendererData),
-            upload: UploadConfig::fromArray($uploadData),
-            wizard: WizardFormConfig::fromArray($wizardData),
+            csrf: CsrfFormConfig::fromArray($sub('csrf')),
+            renderer: RendererConfig::fromArray($sub('renderer')),
+            upload: UploadConfig::fromArray($sub('upload')),
+            wizard: WizardFormConfig::fromArray($sub('wizard')),
         );
     }
 }

@@ -52,27 +52,23 @@ final class MakeAdapterCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
-        $portName = $input->getOption('port');
-        $module = $input->getOption('module');
-        $basePath = $input->getOption('path', 'app/Modules');
+        $portName = $input->getStringOption('port');
+        $module = $input->getStringOption('module');
+        $basePath = $input->getStringOption('path', 'app/Modules');
 
         if (!is_string($name) || $name === '') {
             $output->errorln('Adapter name is required.');
             return ExitCode::Invalid->value;
         }
 
-        if (!is_string($module) || $module === '') {
+        if ($module === '') {
             $output->errorln('Module name is required (--module).');
             return ExitCode::Invalid->value;
         }
 
-        if (!is_string($portName) || $portName === '') {
+        if ($portName === '') {
             $output->errorln('Port name is required (--port).');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
         }
 
         $name = $this->toPascalCase($name);
@@ -107,7 +103,7 @@ final class MakeAdapterCommand extends Command
         // Ensure Internal/Infrastructure directory exists
         $infraDir = $modulePath . DIRECTORY_SEPARATOR . 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure';
         if (!is_dir($infraDir)) {
-            mkdir($infraDir, 0o755, true);
+            mkdir($infraDir, 0o750, true);
         }
 
         $output->writeln(sprintf('Creating adapter: %s in %s', $name, $module));
@@ -125,7 +121,7 @@ final class MakeAdapterCommand extends Command
                 . DIRECTORY_SEPARATOR . 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure';
 
             if (!is_dir($testDir)) {
-                mkdir($testDir, 0o755, true);
+                mkdir($testDir, 0o750, true);
             }
 
             $this->writeFiles($testDir, [

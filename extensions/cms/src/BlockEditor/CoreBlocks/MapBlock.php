@@ -43,9 +43,16 @@ final readonly class MapBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $lat = (float) ($data['latitude'] ?? 0);
-        $lon = (float) ($data['longitude'] ?? 0);
-        $zoom = (int) ($data['zoom'] ?? 13);
+        /** @var mixed $rawLat */
+        $rawLat = $data['latitude'] ?? null;
+        /** @var mixed $rawLon */
+        $rawLon = $data['longitude'] ?? null;
+        $lat = (is_float($rawLat) || is_int($rawLat)) ? (float) $rawLat : 0.0;
+        $lon = (is_float($rawLon) || is_int($rawLon)) ? (float) $rawLon : 0.0;
+        /** @var mixed $rawZoom */
+        $rawZoom = $data['zoom'] ?? null;
+        $zoom = is_int($rawZoom) ? $rawZoom : 13;
+        /** @var mixed $caption */
         $caption = $data['caption'] ?? null;
 
         if ($zoom < 1 || $zoom > 20) {
@@ -59,10 +66,10 @@ final readonly class MapBlock implements BlockTypeInterface
         $bboxMaxLon = number_format($lon + 0.01, 6, '.', '');
         $bboxMaxLat = number_format($lat + 0.01, 6, '.', '');
 
-        $src = "https://www.openstreetmap.org/export/embed.html?bbox={$bboxMinLon}%2C{$bboxMinLat}%2C{$bboxMaxLon}%2C{$bboxMaxLat}&amp;layer=mapnik&amp;marker={$latStr}%2C{$lonStr}";
+        $src = "https://www.openstreetmap.org/export/embed.html?bbox=$bboxMinLon%2C$bboxMinLat%2C$bboxMaxLon%2C$bboxMaxLat&amp;layer=mapnik&amp;marker=$latStr%2C$lonStr&amp;zoom=$zoom";
 
         $html = '<figure class="map">';
-        $html .= "<iframe src=\"{$src}\" width=\"100%\" height=\"400\" sandbox=\"allow-scripts\" loading=\"lazy\" title=\"Map\" style=\"border:0\"></iframe>";
+        $html .= "<iframe src=\"$src\" width=\"100%\" height=\"400\" sandbox=\"allow-scripts\" loading=\"lazy\" title=\"Map\" style=\"border:0\"></iframe>";
 
         if (is_string($caption) && $caption !== '') {
             $html .= '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';

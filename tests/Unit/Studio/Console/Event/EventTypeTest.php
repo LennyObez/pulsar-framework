@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Event;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +12,7 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 
 use function count;
 
-#[CoversClass(EventType::class)]
+#[CoversNothing]
 final class EventTypeTest extends TestCase
 {
     #[Test]

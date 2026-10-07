@@ -18,6 +18,7 @@ use Pulsar\Mail\Envelope;
 use Pulsar\Mail\Event\MailSent;
 use Pulsar\Mail\Mailable;
 use Pulsar\Mail\MailManager;
+use Pulsar\Mail\Message;
 use Pulsar\Mail\Transport\ArrayTransport;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
@@ -128,7 +129,7 @@ final class MailManagerIntegrationTest extends TestCase
 
         $manager = new MailManager($config);
 
-        $message = new \Pulsar\Mail\Message(
+        $message = new Message(
             from: new Address('custom@app.com', 'Custom'),
             to: [
                 new Address('alice@test.com'),

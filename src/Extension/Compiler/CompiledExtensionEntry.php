@@ -6,11 +6,11 @@ namespace Pulsar\Extension\Compiler;
 
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * A single extension entry within a compiled extension manifest.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledExtensionEntry
@@ -35,16 +35,13 @@ final readonly class CompiledExtensionEntry
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $dependencies */
-        $dependencies = $data['dependencies'] ?? [];
-
         return new self(
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            version: is_string($data['version'] ?? null) ? $data['version'] : '',
-            extensionClass: is_string($data['extensionClass'] ?? null) ? $data['extensionClass'] : '',
-            enabled: (bool) ($data['enabled'] ?? true),
-            dependencies: $dependencies,
-            trustTier: is_string($data['trustTier'] ?? null) ? $data['trustTier'] : 'community',
+            name: Coerce::string($data['name'] ?? null),
+            version: Coerce::string($data['version'] ?? null),
+            extensionClass: Coerce::string($data['extensionClass'] ?? null),
+            enabled: Coerce::bool($data['enabled'] ?? null, true),
+            dependencies: Coerce::listOfString($data['dependencies'] ?? null),
+            trustTier: Coerce::string($data['trustTier'] ?? null, 'community'),
         );
     }
 

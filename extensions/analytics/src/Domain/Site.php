@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Each site has a unique domain and tracking ID used to identify
  * which website analytics data belongs to.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Site

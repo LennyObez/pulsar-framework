@@ -12,9 +12,10 @@ use Pulsar\Api\Api;
  *
  * Represents a device that has been enrolled in the zero-trust device registry.
  * Stores the device fingerprint, attestation data, and registration metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class DeviceIdentity
+final readonly class DeviceIdentity
 {
     /**
      * @param string $deviceId Unique device identifier

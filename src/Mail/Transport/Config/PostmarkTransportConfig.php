@@ -6,9 +6,8 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
-
-use function is_string;
 
 /**
  * Configuration for the Postmark mail transport.
@@ -28,7 +27,7 @@ final readonly class PostmarkTransportConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            serverToken: is_string($data['server_token'] ?? null) ? $data['server_token'] : '',
+            serverToken: Coerce::string($data['server_token'] ?? null),
         );
     }
 }

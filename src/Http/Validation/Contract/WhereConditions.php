@@ -10,9 +10,10 @@ use function array_values;
 
 /**
  * Immutable collection of WHERE conditions.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class WhereConditions
+final readonly class WhereConditions
 {
     /** @var list<WhereCondition> */
     public array $conditions;

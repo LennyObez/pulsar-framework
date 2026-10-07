@@ -1,23 +1,230 @@
 includes:
     - phpstan-baseline.neon
+    # Reports calls to anything marked @deprecated — our own retiring APIs, vendor
+    # libraries, and whatever the bundled PHP stubs know about. PHPStan does NOT
+    # check deprecations without this extension. It complements, and does not
+    # replace, the runtime sweep (`phpunit --display-deprecations`): the engine
+    # itself is the only authority on brand-new core deprecations, while this
+    # catches code the tests never execute.
+    - ../../vendor/phpstan/phpstan-deprecation-rules/rules.neon
+
+services:
+    -
+        class: Pulsar\PHPStan\Rules\ForbidIntegrationEventBusInSagaStepRule
+        tags:
+            - phpstan.rules.rule
+    # ADR-0006's weak-algorithm clause used to live in Semgrep at severity
+    # WARNING, which no workflow ran and which could not fail a build even when
+    # it did. Here it is an error in a gate CI already requires. The argument is
+    # the repository root; `composer phpstan` runs from it, and a wrong value
+    # makes the rule over-report rather than fall silent.
+    -
+        class: Pulsar\PHPStan\Rules\ForbidBrokenHashRule
+        arguments:
+            projectRoot: %currentWorkingDirectory%
+        tags:
+            - phpstan.rules.rule
 
 parameters:
     level: max
     paths:
         - ../../src
-        - ../../extensions/studio/src
+        - ../../extensions/accessibility/src
+        - ../../extensions/admin/src
+        - ../../extensions/ai-governance/src
+        - ../../extensions/analytics/src
+        - ../../extensions/auth/src
+        - ../../extensions/cms/src
+        - ../../extensions/compliance/dora/src
+        - ../../extensions/compliance/eidas/src
+        - ../../extensions/compliance/fhir/src
+        - ../../extensions/compliance/medical-devices/src
+        - ../../extensions/compliance/psd2/src
+        - ../../extensions/compliance/dsa/src
+        - ../../extensions/compliance/data-act/src
+        - ../../extensions/devices/src
+        - ../../extensions/example/src
+        - ../../extensions/feedback/src
+        - ../../extensions/form/src
+        - ../../extensions/forum/src
+        - ../../extensions/graphql/src
+        - ../../extensions/grpc/src
+        - ../../extensions/mcp-server/src
+        - ../../extensions/observability-export/src
+        - ../../extensions/observability/src
+        - ../../extensions/opentelemetry/src
+        - ../../extensions/orm/src
         - ../../extensions/payments/src
         - ../../extensions/psr7-bridge/src
-        - ../../extensions/observability-export/src
-        - ../../extensions/opentelemetry/src
-        - ../../extensions/form/src
+        - ../../extensions/releases/src
+        - ../../extensions/studio/src
+        - ../../extensions/subscriptions/src
         - ../../tests
+        # First-party code that enforces quality must itself be analysed. These
+        # three trees held the boundary / compliance-claims / extension-coverage /
+        # wiring gates, the PSR-4 and coverage gates, the API-snapshot builder, the
+        # custom PHPStan rules, the Psalm plugin, the SBOM generator and every
+        # benchmark — and they were the only unchecked PHP in the repository. A
+        # silent bug in a gate does not fail the build, it stops protecting it,
+        # which is worse than a bug in a feature. Verified with a deliberate-error
+        # probe: before this, PHPStan never reported it.
+        - ../../tools
+        - ../../scripts
+        - ../../benchmarks
     excludePaths:
-        - ../../vendor
+        # Declaration files, not code: the bodies exist only to satisfy the parser,
+        # so analysing them yields nothing but ~77 unused-parameter reports. They
+        # are loaded through scanFiles/stubFiles below instead.
+        - ../../tools/php/stubs
+    # The Psalm plugin in tools/php/psalm-plugin/ is first-party code PHPStan
+    # analyses, but Psalm itself now lives in its own dependency tree
+    # (vendor-bin/psalm/, bamarni/composer-bin-plugin) and is therefore invisible to
+    # the root autoloader. Scanning registers its symbols without analysing them:
+    # without this, every Psalm\Plugin reference reads as an unknown class and the
+    # plugin silently stops being type-checked — 99 errors, and the plugin is the
+    # thing that decides what Psalm considers dead code.
+    scanDirectories:
+        - ../../vendor-bin/psalm/vendor/vimeo/psalm/src
     bootstrapFiles:
         - ../../scripts/boundary_check.php
+    # Symbols that are genuinely absent from the analysis environment, so every
+    # caller was previously analysed blind. Only 6 of the 14 stub files on disk
+    # were ever listed here while psalm.xml loaded all 14, so the two analysers
+    # held different pictures of the same codebase.
+    #
+    # Extension signatures come from jetbrains/phpstorm-stubs, not from files we
+    # write. Eight hand-written stubs used to live in stubs/ and they had drifted:
+    # Redis::sRem() was declared `int` where the extension returns `int|false`,
+    # Redis::exists() `int` where it returns `Redis|int|bool`, and close()/quit()
+    # were missing outright. A stub that is merely plausible is worse than none —
+    # it makes the analyser confidently wrong, and nothing detects the drift.
+    # phpstorm-stubs tracks the extensions upstream and is already a declared dev
+    # dependency, so it is the authority for anything it covers.
     scanFiles:
+        - ../../vendor/jetbrains/phpstorm-stubs/amqp/amqp.php
+        - ../../vendor/jetbrains/phpstorm-stubs/apcu/apcu.php
+        - ../../vendor/jetbrains/phpstorm-stubs/brotli/brotli.php
+        - ../../vendor/jetbrains/phpstorm-stubs/frankenphp/frankenphp.php
+        - ../../vendor/jetbrains/phpstorm-stubs/igbinary/igbinary.php
+        - ../../vendor/jetbrains/phpstorm-stubs/imagick/imagick.php
+        - ../../vendor/jetbrains/phpstorm-stubs/memcached/memcached.php
+        - ../../vendor/jetbrains/phpstorm-stubs/redis/Redis.php
+        - ../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php
+        # Hand-written only where nothing upstream exists to copy: suggested
+        # composer packages that are not installed (AWS SQS, Google Cloud Pub/Sub,
+        # PsySH, the RoadRunner worker classes). FrankenPHP is no longer among them:
+        # the one function we hand-declared, frankenphp_early_hints(), does not
+        # exist in the runtime at all — see FrankenPhpRuntime::earlyHints().
         - stubs/AwsSqs.php
+        - stubs/Grpc.php
         - stubs/GooglePubSub.php
+        - stubs/PsySH.php
+        - stubs/RoadRunner.php
+    # stubs/Grpc.php REPLACES phpstorm-stubs' gRPC stub rather than adding to it, which
+    # is why the upstream path is absent above. Two of upstream's declarations are
+    # provably wrong against the extension's C source — Server::requestCall()'s arity
+    # and ServerCredentials::createSsl()'s nullability — and following them would mean
+    # editing correct code to match an incorrect description. PHPStan's stubFiles does
+    # not win over a scanFiles declaration of the same class, so the replacement has to
+    # be exclusive rather than layered. AnalyzerStubsTest asserts the two are never
+    # both loaded.
+    # stubs/Psr7.php is deliberately NOT loaded here, and it is the one stub that
+    # must not be. psr/http-message is a hard dependency, so PSR-7's interfaces
+    # already exist: the file is not a stub for something missing, it is a Psalm
+    # `<stubs>` override that re-declares ServerRequestInterface's deliberately
+    # loose `: array` returns as `array<array-key, mixed>` to stop Psalm's
+    # MixedArrayAccess flooding every member access — as its own docblock states.
+    # PHPStan needs no such refinement, and loading it through stubFiles makes
+    # PHPStan analyse the partial re-declaration on its own terms, where it cannot
+    # resolve the parent RequestInterface it does not restate.
+    # At level=max, `treatPhpDocTypesAsCertain: false` tells
+    # PHPStan to treat PHPDoc type declarations as advisory
+    # rather than authoritative. This is deliberate: the
+    # codebase blends language-level param/return types with
+    # PHPDoc generics, and the strict mode reports "PHPDoc
+    # claims X but inference says Y" on code that is provably
+    # correct (e.g. `array<string, mixed>` from json_decode,
+    # which PHP infers as `mixed`). Flipping it to true is a
+    # sweep through every generic-heavy file, for no type
+    # safety the current setting does not already provide.
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true
+    ignoreErrors:
+        # === Deprecated APIs exercised by their OWN tests ===
+        # phpstan-deprecation-rules exists to stop PRODUCTION code from reaching
+        # for a retiring API. A test that covers a deprecated class must, by
+        # definition, call it: we still ship those classes (Psr7Bridge adapters,
+        # LegacyMiddlewareAdapter and TwoFactorManager::verifyCodeWithSecret, all
+        # deprecated in 1.0.0-rc.11), so they must stay under test until they are
+        # actually removed — deleting the tests to silence the rule would be
+        # strictly worse than the warning.
+        #
+        # Listed FILE BY FILE rather than as a blanket `tests/` exclusion, so a new
+        # deprecated-API caller anywhere else still fails the gate, and each entry
+        # disappears naturally when its subject is deleted. src/ carries ZERO
+        # deprecation findings and must stay that way.
+        -
+            message: '#(deprecated class|deprecated method|of deprecated)#'
+            paths:
+                - ../../tests/E2E/Extension/Cms/AdminTwoFactorTest.php
+                - ../../tests/Integration/Auth/TwoFactorFlowTest.php
+                - ../../tests/Unit/Auth/TwoFactor/TwoFactorManagerTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr15MiddlewareAdapterTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr7BridgeExtensionTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr7ToPulsarRequestTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr7ToPulsarResponseTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/PulsarToPsr7RequestTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/PulsarToPsr7ResponseTest.php
+                - ../../tests/Unit/Http/Middleware/LegacyMiddlewareAdapterTest.php
+
+        # === Category B: Config-validator boundary pattern (fromArray) ===
+        # The framework's typed-config DTOs (~318 classes) follow the validator-
+        # at-the-boundary pattern: `fromArray(array<string, mixed> $data): self`
+        # accepts the raw config map (from YAML / JSON / require'd PHP arrays)
+        # and narrows each field via runtime `?? default` + `is_*` checks. The
+        # @param array{key?: type, ...} docblock documents which keys the
+        # validator looks at, for human readers.
+        #
+        # PHPStan's `argument.type` rule reads the shape as a strict contract
+        # and flags every caller that passes the wider `array<string, mixed>`.
+        # Since the validator IS the narrowing boundary — by design — coercion
+        # at the call site would push the typing burden upstream to the config
+        # loader, defeating the encapsulation of the validator.
+        #
+        # Suppress the specific `argument.type` for $data validator-boundary
+        # call sites where the callee already accepts and narrows the wider
+        # input. Covers `fromArray`, `renderLoggedIn`, `renderLoginForm`,
+        # `deserializeCart`, etc. — any method taking a `$data` parameter and
+        # internally narrowing via runtime `is_*` checks.
+        -
+            identifier: argument.type
+            message: '#^Parameter \#\d+ \$\w+ of (static method|method|function) [^ ]+ expects array\{.+\}, (array<string, mixed>(\|null)?|non-empty-array<string, mixed>|array\{\w+: array<string, mixed>(, \w+: array<string, mixed>)*(, \w+: list<array<string, mixed>>)?\}) given\.$#'
+        # Same validator pattern but with `list<array{...}>` receiver
+        # (batch validators like hydrateAll) accepting `list<array<string, mixed>>`
+        # from the database driver / config loader.
+        -
+            identifier: argument.type
+            message: '#^Parameter \#\d+ \$\w+ of (static method|method|function) [^ ]+ expects list<array\{.+\}>, list<array<string, mixed>> given\.$#'
+        # === Category B: Test fixtures deliberately pass invalid shapes ===
+        # Validator-pattern fromArray() / fromX() tests intentionally pass
+        # type-mismatched arrays (e.g. `['api_key' => 12345]` when the shape
+        # expects `'api_key' => string`) to assert the validator throws / falls
+        # back gracefully. PHPStan cannot tell "this test is verifying the
+        # validator handles bad input" from "this is buggy production code".
+        # Suppress argument.type for tests/ on the same fromArray family.
+        -
+            identifier: argument.type
+            message: '#^Parameter \#\d+ \$\w+ of (static method|method|function) [^ ]+ expects array\{.+\}, array\{.+\} given\.$#'
+            path: ../../tests/
+
+        # === Category A: Psalm / PHPStan disagreement on int offset domain ===
+        # QrCodeEncoder loops iterate `for ($i = 0; $i < 11; $i++)` over typed
+        # constant arrays. Psalm widens $i to int<-1, 10> (loop unrolling
+        # artifact) and demands `?? 0` to silence InvalidArrayOffset. PHPStan
+        # correctly narrows $i to int<0, 10> and then flags `?? 0` as a
+        # nullsafeAlways. Only one of the two can be satisfied; we keep the
+        # `?? 0` (Psalm's pessimistic view is the safer fallback) and let
+        # PHPStan ignore the always-exists noise on the static constant arrays.
+        -
+            identifier: nullCoalesce.offset
+            message: '#^Offset (int<-?\d+, \d+>|0\|1\|2\|3\|4\|5\|6\|7\|8\|9) on array\{.+\} on left side of \?\? always exists and is not nullable\.$#'

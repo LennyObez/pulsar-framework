@@ -90,31 +90,53 @@ Pulsar uses a tiered benchmark system to enforce performance budgets across all 
 
 #### Tier A: hard gate (every PR)
 
-- **Runs on**: every pull request as a required CI check
-- **Environment**: in-memory drivers only (no databases, caches, or message brokers)
-- **Assertion**: median (p50) vs absolute budget, +/- 5% tolerance
-- **Failure policy**: budget violations **block merge**
+- **Runs on**: every pull request, as the `php-benchmark-tier-a` job
+- **Environment**: in-memory drivers only (no databases, caches, or message brokers), with
+  OPcache on, JIT off and Xdebug off pinned by `runner.php_config`
+- **Assertion**: `mode(variant.time.avg)` against an absolute budget, no tolerance band —
+  the budget is the number in the `#[Assert]` attribute and nothing widens it
+- **Failure policy**: budget violations **block merge**. PHPBench exits non-zero on a
+  breach and the step propagates it (the job sets `shell: bash`, so the pipe into `tee`
+  does not swallow the status)
 - **Covers**: container, routing, middleware, request lifecycle, crypto (AEAD, HMAC), audit, session, validation, memory peak
 
 #### Tier B: nightly (realistic environment)
 
 - **Runs on**: scheduled nightly (3 AM UTC) or manual trigger
 - **Environment**: real Redis, PostgreSQL, AMQP containers
-- **Assertion**: p90 vs budget, +/- 15% tolerance
-- **Failure policy**: regression alerts (notification), not hard gate
+- **Assertion**: the same absolute `#[Assert]` budgets as Tier A, measured against real
+  backends
+- **Failure policy**: advisory. The run steps carry `continue-on-error: true`, so a breach
+  marks the step and leaves the workflow green
 - **Covers**: all Tier A benchmarks plus real-backend session, audit, and queue benchmarks
 
 #### Tier C: RC gate (controlled runner)
 
 - **Runs on**: manually triggered before tagging an RC release
 - **Environment**: real backends on controlled runner (self-hosted or pinned instance)
-- **Assertion**: p90 vs budget, +/- 10% tolerance
-- **Failure policy**: must pass before RC is tagged
+- **Assertion**: the same absolute `#[Assert]` budgets, plus the memory-peak scenarios
+- **Failure policy**: the job fails on a breach, and passing it is a precondition of
+  tagging the RC. It is triggered by hand (`workflow_dispatch`), so nothing enforces that
+  it was run — the release checklist does
 - **Covers**: all Tier B benchmarks plus `crypto.kdf` (Argon2id)
+
+#### Regression check: relative, every PR
+
+Separate from the tiers, and the only relative gate: `.github/workflows/benchmark-regression.yml`
+runs on any pull request touching `src/`, `extensions/` or `benchmarks/`. It measures the
+merge base and the pull request **in the same job on the same runner**, then refuses
+anything more than 5% slower. Both halves run under the same CPU, PHP build and load,
+which is the only arrangement in which a 5% threshold means what it says. It is
+merge-blocking.
 
 ### Component-level budgets
 
-All component-level budgets are defined in `tools/php/performance-budgets.json`:
+The budgets that fail a build are the `#[Assert]` attributes on the subjects in
+`tests/Benchmark` — 77 of them across 24 classes. `tools/php/performance-budgets.json`
+is a **reference table read by no code**; it exists so the whole set can be read in one
+place, and it can only be trusted as far as the last person who kept it in step with the
+attributes. When the two disagree, the attribute is the budget. See
+[ADR-0072](adr/0072-a-budget-is-the-assertion-that-runs.md).
 
 | Budget ID                       | Max average      | Description                                                    |
 | ------------------------------- | ---------------- | -------------------------------------------------------------- |
@@ -128,7 +150,8 @@ All component-level budgets are defined in `tools/php/performance-budgets.json`:
 | `request.creation`              | 5 microseconds   | `Request` object construction                                  |
 | `response.creation`             | 5 microseconds   | `Response` object construction via static factory              |
 | `validation.simple`             | 50 microseconds  | Validation of 5 fields with simple rules                       |
-| `kernel.dispatch`               | 500 microseconds | Full kernel request dispatch cycle                             |
+| `kernel.dispatch`               | 400 microseconds | Steady-state dispatch on an already-booted kernel              |
+| `kernel.boot_and_dispatch`      | 30 milliseconds  | Cold boot plus one dispatch (`#[RetryThreshold(25)]`)          |
 | `authorization.gate_check`      | 50 microseconds  | Authorization gate check with policies                         |
 
 #### Budget categories
@@ -176,14 +199,122 @@ End-to-end request lifecycle benchmarks exercising realistic middleware stacks:
 | `allocations.anonymous`     | < 500  | Advisory    | Object allocations (anonymous)     |
 | `allocations.authenticated` | < 1000 | Advisory    | Object allocations (authenticated) |
 
+### The standalone `benchmarks/` tree
+
+`tools/php/phpbench.json` sets `runner.path` to `tests/Benchmark`, so `composer bench`
+and every CI tier above measure **only** that tree. A second tree, `benchmarks/`, holds
+component benchmarks that are run by giving PHPBench an explicit path. They are not a
+merge gate; they are the harness you reach for when a change touches the ORM or when a
+memory regression needs attributing to a component rather than to a request class.
+
+Their budgets are stated here because they are asserted in the benchmark classes
+themselves rather than in `performance-budgets.json`, and a budget nobody can find is a
+budget nobody defends.
+
+#### ORM query builder — `benchmarks/Orm/QueryBuilderBench.php`
+
+| Subject                         | Budget   |
+| ------------------------------- | -------- |
+| Simple `SELECT`                 | < 50 us  |
+| Complex `SELECT` (5 conditions) | < 100 us |
+| `SELECT` with `JOIN`            | < 100 us |
+| `SELECT` with `LIKE`            | < 50 us  |
+| `INSERT` build                  | < 50 us  |
+| `UPDATE` build                  | < 50 us  |
+| `DELETE` build                  | < 50 us  |
+| 10 sequential `SELECT` builds   | < 500 us |
+
+#### ORM hydration — `benchmarks/Orm/HydrationBench.php`
+
+| Subject             | Budget   |
+| ------------------- | -------- |
+| Single entity       | < 20 us  |
+| 10 entities         | < 100 us |
+| 100 entities        | < 1 ms   |
+| 1000 entities       | < 10 ms  |
+| Dehydrate (INSERT)  | < 20 us  |
+| Dehydrate (UPDATE)  | < 20 us  |
+| Extract primary key | < 10 us  |
+
+#### ORM relations — `benchmarks/Orm/RelationBench.php`
+
+| Subject                         | Budget  |
+| ------------------------------- | ------- |
+| Eager-load HasMany (50 parents) | < 10 ms |
+| `withCount` (50 parents)        | < 5 ms  |
+| Batch-load 500 IDs              | < 10 ms |
+| FetchPlan create + merge        | < 10 us |
+| Nested FetchPlan                | < 10 us |
+| Empty relation load             | < 5 us  |
+| No-op FetchPlan                 | < 5 us  |
+
+#### Component memory — `benchmarks/Memory/MemoryProfileBench.php`
+
+These measure an allocation **delta** around a component operation, not a process peak,
+which is what makes them attributable: `memory.peak_anonymous` tells you a request grew,
+these tell you which part of it did.
+
+| Subject                  | Budget   | Measurement               |
+| ------------------------ | -------- | ------------------------- |
+| Route registration (200) | < 512 KB | `memory_get_usage(true)`  |
+| Route matching (100x)    | < 256 KB | `memory_get_usage(true)`  |
+| Container (100 services) | < 256 KB | `memory_get_usage(true)`  |
+| Entity hydration (1000)  | < 1 MB   | `memory_get_usage(true)`  |
+| JSON response (100x)     | < 512 KB | `memory_get_usage(true)`  |
+| Full request cycle       | < 2 MB   | `memory_get_peak_usage()` |
+
+A memory budget cannot be written as a PHPBench `#[Assert]`, because PHPBench asserts over
+timing expressions. Each subject therefore measures its own delta and throws a
+`RuntimeException` naming the byte count when it exceeds the budget — a failed revolution,
+which fails the run. The `#[Assert('mode(variant.time.avg) < 30 seconds')]` on those
+subjects is not the budget; it is a hang guard, and reading it as the budget would be
+reading these subjects as unenforced.
+
+#### Boot cost — `benchmarks/Boot/`
+
+`ConfigManagerBench` and `ExtensionBootstrapBench` measure config loading and manifest
+scanning. They carry **no budget**: boot cost is dominated by how many extensions a
+deployment installs, so an absolute number would fail on a large install and pass on an
+empty one. They exist to be compared against a tagged baseline, not against a threshold.
+
+#### Running them
+
+```bash
+# ORM component benchmarks
+vendor/bin/phpbench run benchmarks/Orm/ --config=tools/php/phpbench.json --report=pulsar
+
+# Component memory profile
+vendor/bin/phpbench run benchmarks/Memory/ --config=tools/php/phpbench.json --report=pulsar
+
+# Boot cost
+vendor/bin/phpbench run benchmarks/Boot/ --config=tools/php/phpbench.json --report=pulsar
+
+# Cross-framework comparison (standalone script, not PHPBench)
+php benchmarks/Comparative/PulsarBench.php --iterations=10000 --json
+```
+
+#### Why these budgets are where they are
+
+Budgets in this tree are set at **2-5x observed typical performance**: tight enough that a
+regression of the kind that matters — an accidental N+1, a hydration path that stopped
+reusing its reflection cache — shows up, loose enough that CI variance does not. Tighten
+them as a component stabilises; a budget that has never been near its limit is measuring
+nothing. The observation environment is PHP 8.5 with OPcache on, JIT off, and neither
+Xdebug nor PCOV loaded, which `tools/php/phpbench.json` sets through `runner.php_config`
+so a local run and a CI run agree.
+
 ### Runtime-specific budgets
 
-Separate budget files for different PHP runtimes:
+Two further reference files, read by no code, recording what each runtime is expected to
+cost for the five request classes:
 
-- `tools/php/budgets.fpm.json`: PHP-FPM (cold bootstrap, per-request process)
-- `tools/php/budgets.persistent.json`: RoadRunner/FrankenPHP (warm container, amortized bootstrap)
-
-Persistent runtimes have lower budgets for request classes since bootstrap cost is amortized.
+- `tools/php/budgets.fpm.json`: PHP-FPM (cold bootstrap, per-request process). These are
+  the numbers `tests/Benchmark/EndToEndBench.php` and `MemoryProfileBench.php` assert, so
+  this file has an enforced counterpart even though nothing reads the file itself.
+- `tools/php/budgets.persistent.json`: RoadRunner/FrankenPHP (warm container, amortized
+  bootstrap). **Nothing measures these.** `tests/Benchmark` exercises the FPM-shaped path
+  only, so the warm-path targets are a written expectation and not a gate. Treat them as
+  the number to design against, never as a number something checked.
 
 ### Request-class semantic contracts
 
@@ -213,9 +344,15 @@ Benchmarks run with [PHPBench](https://phpbench.readthedocs.io/), configured in 
   "runner.iterations": [5],
   "runner.revs": [1000],
   "runner.warmup": [1],
-  "runner.retry_threshold": 5,
+  "runner.retry_threshold": 20,
   "runner.time_unit": "microseconds",
-  "runner.assert": "mode(variant.time.avg) < 10 milliseconds"
+  "runner.assert": "mode(variant.time.avg) < 10 milliseconds",
+  "runner.php_config": {
+    "opcache.enable_cli": "1",
+    "opcache.jit": "off",
+    "opcache.jit_buffer_size": "0",
+    "xdebug.mode": "off"
+  }
 }
 ```
 
@@ -224,9 +361,19 @@ Configuration breakdown:
 - **iterations**: 5. Each benchmark runs 5 times to measure variance.
 - **revs**: 1000. Each iteration executes the benchmark 1000 revolutions for statistical stability.
 - **warmup**: 1. One warmup iteration runs before measurement to prime caches and JIT.
-- **retry_threshold**: 5. Benchmarks with >5% relative standard deviation are retried to filter noise.
+- **retry_threshold**: 20. PHPBench re-runs any iteration deviating more than the threshold
+  from the variant mean, in a `while (getRejectCount() > 0)` loop with no limit — phpbench 1.7
+  never calls `SubjectMetadata::setRetryLimit()`. At 5, a variant that cannot settle does not
+  fail, it spins: one CMS subject retried more than ten times locally before landing at 3.3%,
+  and the CMS group alone did not finish inside twenty minutes. The threshold was never the
+  gate; the `#[Assert]` budgets are, and they have margin to spare over a 20% sample.
+  Individual subjects override it with `#[RetryThreshold]` where their spread is wider.
 - **time_unit**: microseconds. All results are reported in microseconds.
 - **assert**: global assertion that all benchmarks complete under 10ms (individual budgets are tighter).
+- **php_config**: pins the child interpreter — OPcache on, JIT off, Xdebug off — so a budget
+  means the same thing on CI as on the machine it was derived on. Xdebug alone moved the
+  kernel-boot subject by 2.2x. Nothing in the Tier A step should set ini flags; doing so
+  would silently invalidate every budget in `tests/Benchmark`.
 
 #### Benchmark assertions
 
@@ -244,7 +391,11 @@ If the assertion fails, PHPBench exits with a non-zero code and the CI job fails
 
 #### CI integration
 
-The benchmark suite runs as an **advisory** CI job for Tier A. Results appear in the PR job summary and are uploaded as a build artifact (14-day retention) for human review.
+The Tier A job (`Tier A: Performance Budgets (Hard Gate)` in `.github/workflows/ci.yml`) **blocks the merge**. It carries no `continue-on-error`, and it sets `shell: bash` so that `pipefail` is on - without that line the steps that pipe PHPBench into `tee` would exit with `tee`'s status and every `#[Assert]` in `tests/Benchmark` would be unenforceable. A breached budget exits 2 and fails the job.
+
+Three steps in it gate independently: the pipeline manifest integrity check (`composer bench:manifest:check`), the PHPBench assertions (`composer bench:ci`), and the OPcache/JIT/preload profile matrix (`composer bench:profiles:ci`). None is advisory.
+
+Results also appear in the PR job summary and are uploaded as a build artifact (14-day retention) for human review - that reporting is in addition to the gate, not instead of it.
 
 ```bash
 composer bench
@@ -254,14 +405,20 @@ This command runs PHPBench with the configuration from `tools/php/phpbench.json`
 
 ### Statistical assertion policy
 
-All benchmark assertions use statistical methods to reduce flakiness:
+One policy, applied by `tools/php/phpbench.json` to every tier, because all three tiers run
+the same `composer bench:ci`:
 
-- **Warmup**: N warmup iterations discarded before measurement (default: 5)
-- **Measured iterations**: minimum 50 iterations per benchmark
-- **Tier A**: assert on median (p50), +/- 5% tolerance
-- **Tier B**: assert on p90, +/- 15% tolerance
-- **Tier C**: assert on p90, +/- 10% tolerance
-- **Regression detection**: alert if p50 regresses > 5% across 3 consecutive runs
+- **Warmup**: 1 iteration, discarded.
+- **Measured iterations**: 5, of 1000 revolutions each, unless a subject overrides `#[Revs]`.
+- **Statistic**: `mode(variant.time.avg)` — the mode of the per-iteration averages, which is
+  what `#[Assert]` compares against the budget. Not a percentile, and no tolerance band.
+- **Noise handling**: iterations deviating more than 20% from the variant mean are re-run
+  (`runner.retry_threshold`), with `#[RetryThreshold]` widening it per subject where needed.
+- **Relative regression**: handled by `benchmark-regression.yml`, not by the budgets — 5%
+  against the merge base, measured on the same runner in the same job.
+
+There is no coefficient-of-variation logic that promotes or demotes a budget between
+blocking and advisory. What blocks is decided per workflow and written in the workflow.
 
 ### Memory peak measurement
 
@@ -350,9 +507,10 @@ class SessionBench
 }
 ```
 
-#### 2. Add the budget to performance-budgets.json
+#### 2. Record it in the reference table
 
-Update `tools/php/performance-budgets.json` with the new budget:
+The `#[Assert]` attribute above is the budget — that is what CI enforces. Add the same
+number to `tools/php/performance-budgets.json` so the set stays readable in one place:
 
 ```json
 {
@@ -369,7 +527,11 @@ Update `tools/php/performance-budgets.json` with the new budget:
 
 #### 3. Add runtime-specific overrides (if needed)
 
-If the budget varies by runtime, add overrides to `budgets.fpm.json` and `budgets.persistent.json`.
+If the number differs by runtime, record it in `budgets.fpm.json` or
+`budgets.persistent.json`. Both are reference tables read by no code — writing a number
+there changes nothing a build checks, and an FPM-specific budget is only enforced once it
+is an `#[Assert]` on a subject in `tests/Benchmark/EndToEndBench.php` or
+`MemoryProfileBench.php`. The persistent-runtime file has no enforced counterpart at all.
 
 #### 4. For request-class benchmarks
 
@@ -389,7 +551,11 @@ Ensure the new benchmarks pass assertions before committing. All budget changes 
 
 ### Pipeline manifest governance
 
-The file `tools/php/bench-pipeline.manifest.php` declares the exact middleware stacks and storage backends for each request-class benchmark. This manifest is content-hashed in CI; unauthorized changes fail the build.
+The file `tools/php/bench-pipeline.manifest.php` declares the exact middleware stacks and storage backends for each request-class benchmark. Its SHA-256 is recorded in `tools/php/bench-pipeline.manifest.sha256`, and `tools/ci/assert-bench-manifest-integrity.php` compares the two on every Tier A run: a manifest that has changed while the recorded digest has not fails the build.
+
+What that buys, stated narrowly: it makes a **silent** change to the benchmark contract impossible. Anyone who can edit the manifest can also re-run `--update`, so this is not a defence against a determined author — it is a guarantee that changing what the benchmarks measure means touching a file that exists for no other purpose, in the same commit, where a reviewer sees it. The sign-offs below are human steps that the gate makes visible and does not perform.
+
+Before this existed, CI computed the digest, printed it into the job summary, and compared it to nothing, while this page described it as a gate. `BenchPipelineManifestGateTest` now plants a manifest edited without its digest, a digest edited without its manifest, a missing digest and an unreadable one, and observes each refusal.
 
 #### Changing the manifest
 
@@ -397,6 +563,7 @@ The file `tools/php/bench-pipeline.manifest.php` declares the exact middleware s
 2. If the change reduces security/compliance coverage, **Architecture sign-off** is also required
 3. Changes must include: measured justification, before/after data, rationale
 4. Budget relaxations (raising thresholds) require additional Architecture sign-off
+5. Re-derive any budget the change affects, then run `composer bench:manifest:record` and commit `tools/php/bench-pipeline.manifest.sha256` alongside the manifest
 
 ### Budget tuning guide
 
@@ -404,14 +571,16 @@ The file `tools/php/bench-pipeline.manifest.php` declares the exact middleware s
 
 - **Tighten** budgets after optimizing a subsystem. If container resolution consistently runs at 30us, tighten the budget from 100us to 50us to lock in the improvement.
 - **Loosen** budgets only with justification. If a feature adds necessary complexity (e.g., parameter extraction adds overhead to routing), document the reason and adjust the budget proportionally.
-- **Never remove** a budget. If a subsystem is deprecated, mark the budget as deprecated in the JSON file rather than deleting it.
+- **Never remove** a budget. If a subsystem is deprecated, mark the `#[Assert]` and its row in the reference JSON as deprecated rather than deleting either — deleting the attribute is what silently ends the enforcement, and deleting only the JSON row leaves the gate in place with nothing describing it.
 
 #### Tuning process
 
 1. Run benchmarks locally multiple times to establish a stable baseline.
 2. Check the relative standard deviation (rstdev). If rstdev > 5%, the benchmark may be noisy and needs investigation before tightening.
 3. Set the budget to approximately 2x the observed mode to account for CI environment variance (CI runners may be slower than development machines).
-4. Update both the `#[Assert]` attribute in the benchmark file and the `max_avg` in `performance-budgets.json`.
+4. Change the `#[Assert]` attribute in the benchmark file — that is the budget — and update
+   the `max_avg` in `performance-budgets.json` to match, so the reference table does not
+   start describing a gate that no longer exists.
 5. Submit the change and verify that CI passes consistently across multiple runs.
 
 #### Environment considerations
@@ -431,13 +600,15 @@ Local development machines with faster CPUs will typically run under budget. If 
 
 ### Budget files
 
-| File                                    | Purpose                               |
-| --------------------------------------- | ------------------------------------- |
-| `tools/php/performance-budgets.json`    | All Tier A budget definitions         |
-| `tools/php/budgets.fpm.json`            | FPM-specific overrides                |
-| `tools/php/budgets.persistent.json`     | Persistent-runtime overrides          |
-| `tools/php/bench-pipeline.manifest.php` | Pipeline contracts and storage config |
-| `tools/php/phpbench.json`               | PHPBench runner configuration         |
+| File                                       | Purpose                                                       |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| `tests/Benchmark/**Bench.php`              | **The budgets.** 77 `#[Assert]` attributes; these fail builds |
+| `tools/php/performance-budgets.json`       | Reference table of the above. Read by no code                 |
+| `tools/php/budgets.fpm.json`               | Reference table, FPM request classes. Read by no code         |
+| `tools/php/budgets.persistent.json`        | Reference table, persistent runtimes. Measured by nothing     |
+| `tools/php/bench-pipeline.manifest.php`    | Pipeline contracts and storage config                         |
+| `tools/php/bench-pipeline.manifest.sha256` | Recorded digest of the manifest, compared on every Tier A run |
+| `tools/php/phpbench.json`                  | PHPBench runner configuration                                 |
 
 ### Related docs
 

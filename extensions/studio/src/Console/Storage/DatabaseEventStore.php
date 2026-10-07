@@ -332,6 +332,7 @@ final readonly class DatabaseEventStore implements EventStoreInterface
         $bindings = [];
 
         if (isset($filters['event_type'])) {
+            /** @var mixed $eventTypeFilter */
             $eventTypeFilter = $filters['event_type'];
             if (is_array($eventTypeFilter)) {
                 $placeholders = [];

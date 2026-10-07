@@ -39,7 +39,7 @@ final class SyncDriverTest extends TestCase
     public function it_throws_for_nonexistent_job_class(): void
     {
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('serialize');
+        $this->expectExceptionMessageIsOrContains('serialize');
 
         $this->driver->push('default', 'NonExistent\\Job\\Class', '{}');
     }
@@ -48,7 +48,7 @@ final class SyncDriverTest extends TestCase
     public function it_throws_for_non_queueable_class(): void
     {
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('serialize');
+        $this->expectExceptionMessageIsOrContains('serialize');
 
         $this->driver->push('default', SyncNonQueueableJob::class, '{}');
     }

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Defines a configurable attribute for product variants (e.g. size, color).
+ *
+ * @psalm-api Domain DTO; instantiated by ProductRepository from
+ *            database rows and returned to user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProductAttribute

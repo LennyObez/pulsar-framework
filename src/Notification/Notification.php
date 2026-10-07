@@ -13,6 +13,7 @@ use Pulsar\Mail\Mailable;
  *
  * Concrete notifications extend this class and implement the delivery
  * methods for channels they support (toMail, toSms, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class Notification
@@ -66,6 +67,24 @@ abstract class Notification
     public function toSms(NotifiableInterface $notifiable): SmsMessage
     {
         throw new BadMethodCallException('toSms() is not implemented for ' . static::class);
+    }
+
+    /**
+     * Build the broadcast (WebSocket) representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toBroadcast(NotifiableInterface $notifiable): array
+    {
+        throw new BadMethodCallException('toBroadcast() is not implemented for ' . static::class);
+    }
+
+    /**
+     * Build the push notification representation.
+     */
+    public function toPush(NotifiableInterface $notifiable): PushMessage
+    {
+        throw new BadMethodCallException('toPush() is not implemented for ' . static::class);
     }
 
     /**

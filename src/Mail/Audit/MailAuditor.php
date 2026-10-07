@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Audit;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Mail\Attachment;
 use Pulsar\Mail\Message;
@@ -21,7 +22,7 @@ use function array_map;
  *
  * When HMAC hashing is enabled, computes integrity hashes of message body
  * and attachments using a derived subkey. Recipient addresses are always
- * pseudonymized via HMAC — raw email addresses never appear in audit logs.
+ * pseudonymized via HMAC: raw email addresses never appear in audit logs.
  */
 #[Internal]
 final readonly class MailAuditor
@@ -75,7 +76,7 @@ final readonly class MailAuditor
             outcome: $deliveryStatus === DeliveryStatus::Failed
                 ? AuditOutcome::Failure
                 : AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('mail.auditor'),
             action: 'mail.send',
             resource: $messageId,
             metadata: $record->toMetadata(),
@@ -104,7 +105,7 @@ final readonly class MailAuditor
      */
     private function pseudonymizeRecipient(Message $message, ?string $auditKey): string
     {
-        $firstRecipient = $message->to[0]->email ?? 'unknown';
+        $firstRecipient = $message->to !== [] ? $message->to[0]->email : 'unknown';
 
         if ($this->hmac === null || $auditKey === null) {
             return 'anon';

@@ -15,7 +15,8 @@ use function is_array;
 /**
  * Converts a PSR-7 ServerRequestInterface into a Pulsar Request.
  *
- * @deprecated Since 1.0.0-rc.11. Pulsar now uses PSR-7 natively — no conversion needed.
+ * @deprecated Since 1.0.0-rc.11. Pulsar now uses PSR-7 natively: no conversion needed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Psr7ToPulsarRequest

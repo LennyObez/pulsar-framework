@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations must use parameterized queries. The value objects
  * (TableName, ColumnName) guarantee identifier safety at construction.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ValidationQueryPort

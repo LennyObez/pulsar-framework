@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Customer;
@@ -32,6 +33,7 @@ final class CustomerRepositoryTest extends TestCase
             displayName: 'Alice',
             billingAddress: ['line1' => '123 Main St', 'city' => 'London', 'postalCode' => 'SW1A 1AA', 'country' => 'GB'],
             shippingAddress: ['line1' => '456 Oak Ave', 'city' => 'Manchester', 'postalCode' => 'M1 1AA', 'country' => 'GB'],
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -44,11 +46,13 @@ final class CustomerRepositoryTest extends TestCase
             'display_name' => 'Alice',
             'billing_address' => '{"line1":"123 Main St","city":"London","postalCode":"SW1A 1AA","country":"GB"}',
             'shipping_address' => '{"line1":"456 Oak Ave","city":"Manchester","postalCode":"M1 1AA","country":"GB"}',
+            'notes' => null,
             'created_at' => '2025-06-01T10:00:00+00:00',
             'updated_at' => '2025-06-01T10:00:00+00:00',
         ])]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -79,11 +83,13 @@ final class CustomerRepositoryTest extends TestCase
             'display_name' => null,
             'billing_address' => null,
             'shipping_address' => null,
+            'notes' => null,
             'created_at' => '2025-06-01T12:00:00+00:00',
             'updated_at' => '2025-06-01T12:00:00+00:00',
         ])]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -109,11 +115,13 @@ final class CustomerRepositoryTest extends TestCase
             'display_name' => 'Charlie',
             'billing_address' => null,
             'shipping_address' => null,
+            'notes' => null,
             'created_at' => '2025-07-01T08:00:00+00:00',
             'updated_at' => '2025-07-01T08:00:00+00:00',
         ])]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -131,6 +139,7 @@ final class CustomerRepositoryTest extends TestCase
         $result = new Result([]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -150,6 +159,7 @@ final class CustomerRepositoryTest extends TestCase
             displayName: null,
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: new DateTimeImmutable(),
             updatedAt: new DateTimeImmutable(),
         );
@@ -161,6 +171,7 @@ final class CustomerRepositoryTest extends TestCase
     public function interface_is_implemented(): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $repo = new DbCustomerRepository($connection);
 
         self::assertInstanceOf(CustomerRepositoryInterface::class, $repo);

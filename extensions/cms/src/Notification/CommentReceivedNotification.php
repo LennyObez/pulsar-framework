@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Notification dispatched when a new comment is posted on content.
+ *
+ * @psalm-api Constructed by CmsNotificationDispatcher and dispatched through
+ *            the framework notification manager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentReceivedNotification implements CmsNotificationInterface
@@ -36,12 +40,12 @@ final readonly class CommentReceivedNotification implements CmsNotificationInter
 
     public function subject(): string
     {
-        return "New comment on: {$this->contentTitle}";
+        return "New comment on: $this->contentTitle";
     }
 
     public function body(): string
     {
-        return "{$this->authorName} commented on \"{$this->contentTitle}\": {$this->commentBody}";
+        return "$this->authorName commented on \"$this->contentTitle\": $this->commentBody";
     }
 
     public function metadata(): array

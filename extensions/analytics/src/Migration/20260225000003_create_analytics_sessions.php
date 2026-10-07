@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Analytics\Migration\AnalyticsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
+        $indexes = new IndexOperations($connection);
+
         $driver = $connection->driver();
 
         $connection->execute(AnalyticsDdl::adapt(<<<'SQL'
@@ -29,24 +32,16 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_session_site_session ON analytics_sessions (site_id, session_id)
-            SQL);
+        $indexes->ensure('analytics_sessions', 'idx_session_site_session', ['site_id', 'session_id'], unique: true);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_session_site_started ON analytics_sessions (site_id, started_at)
-            SQL);
+        $indexes->ensure('analytics_sessions', 'idx_session_site_started', ['site_id', 'started_at']);
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_session_site_visitor ON analytics_sessions (site_id, visitor_id)
-            SQL);
+        $indexes->ensure('analytics_sessions', 'idx_session_site_visitor', ['site_id', 'visitor_id']);
 
         // Composite index for SessionResolver::findActiveByVisitor() which queries
-        // (site_id, visitor_id, ended_at >= ?) — the three-column index covers
+        // (site_id, visitor_id, ended_at >= ?): the three-column index covers
         // the exact predicate and avoids a full table scan.
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_session_active_visitor ON analytics_sessions (site_id, visitor_id, ended_at)
-            SQL);
+        $indexes->ensure('analytics_sessions', 'idx_session_active_visitor', ['site_id', 'visitor_id', 'ended_at']);
     }
 
     public function down(ConnectionInterface $connection): void

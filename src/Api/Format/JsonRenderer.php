@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  *     "meta": { ... },
  *     "links": { ... }
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JsonRenderer implements ResponseRendererInterface

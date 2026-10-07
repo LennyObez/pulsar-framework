@@ -47,7 +47,7 @@ final readonly class ReadOnlyCachePool implements CacheItemPoolInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function clear(): bool
@@ -56,7 +56,7 @@ final readonly class ReadOnlyCachePool implements CacheItemPoolInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function deleteItem(string $key): bool
@@ -65,7 +65,7 @@ final readonly class ReadOnlyCachePool implements CacheItemPoolInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function deleteItems(array $keys): bool
@@ -74,7 +74,7 @@ final readonly class ReadOnlyCachePool implements CacheItemPoolInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function save(CacheItemInterface $item): bool
@@ -83,7 +83,7 @@ final readonly class ReadOnlyCachePool implements CacheItemPoolInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function saveDeferred(CacheItemInterface $item): bool
@@ -92,7 +92,7 @@ final readonly class ReadOnlyCachePool implements CacheItemPoolInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function commit(): bool

@@ -9,9 +9,10 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 
 /**
  * Resolves GraphQL queries for Taxonomy and TaxonomyTerm types.
+ * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class TaxonomyResolver
+readonly class TaxonomyResolver
 {
     public function __construct(
         private TaxonomyRepositoryInterface $taxonomyRepository,

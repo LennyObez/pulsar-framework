@@ -24,8 +24,11 @@ use function str_replace;
  *
  * Queries the auth_users table joined with content/comment counts
  * and filtered to users who hold at least one CMS role.
+ *
+ * @psalm-api Bound to CmsUserRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
-#[Internal(reason: 'Database persistence — use CmsUserRepositoryInterface')]
+#[Internal(reason: 'Database persistence; use CmsUserRepositoryInterface')]
 final readonly class DbCmsUserRepository implements CmsUserRepositoryInterface
 {
     private const string SQL_SELECT_USER = <<<'SQL'
@@ -91,7 +94,7 @@ final readonly class DbCmsUserRepository implements CmsUserRepositoryInterface
             $bindings['role_pattern'] = '%' . self::escapeLikePattern($role) . '%';
         }
 
-        $whereClause = $where !== [] ? ' WHERE ' . implode(' AND ', $where) : '';
+        $whereClause = ' WHERE ' . implode(' AND ', $where);
 
         // Count
         $countResult = $this->connection->query(

@@ -14,9 +14,10 @@ use function sprintf;
 
 /**
  * Value must differ from another field's value (strict comparison). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Different implements RuleInterface
+final readonly class Different implements RuleInterface
 {
     public function __construct(
         private string $otherField,

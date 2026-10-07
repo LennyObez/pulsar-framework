@@ -11,7 +11,7 @@ use function array_search;
 /**
  * In-memory recovery code store for testing and development.
  *
- * Not suitable for production — state is lost on process restart.
+ * Not suitable for production: state is lost on process restart.
  * Bind a database-backed implementation for persistent storage.
  */
 #[Internal]

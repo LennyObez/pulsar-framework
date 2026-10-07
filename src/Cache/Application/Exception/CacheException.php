@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * General cache exception for application cache operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheException extends RuntimeException implements
@@ -62,7 +63,7 @@ final class CacheException extends RuntimeException implements
     public static function aadMismatch(string $pool, string $key): self
     {
         return new self(
-            sprintf('Cache AAD verification failed for pool "%s", key "%s" — possible tampering or pool migration', $pool, $key),
+            sprintf('Cache AAD verification failed for pool "%s", key "%s": possible tampering or pool migration', $pool, $key),
         );
     }
 
@@ -70,7 +71,7 @@ final class CacheException extends RuntimeException implements
     public static function unknownKeyId(string $pool, string $keyId): self
     {
         return new self(
-            sprintf('Cache encryption key ID "%s" is unknown for pool "%s" — key rotation may be incomplete', $pool, $keyId),
+            sprintf('Cache encryption key ID "%s" is unknown for pool "%s": key rotation may be incomplete', $pool, $keyId),
         );
     }
 

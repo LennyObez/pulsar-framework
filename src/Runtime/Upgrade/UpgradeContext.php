@@ -10,10 +10,11 @@ use Pulsar\Config\RuntimeConfig;
 use Pulsar\Observability\Metrics\MetricRegistry;
 
 /**
- * Safe context for upgrade handlers — no container reference.
+ * Safe context for upgrade handlers: no container reference.
  *
  * Exposes only persistent services that are safe to use in long-lived
  * connections outside the request sandbox.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UpgradeContext

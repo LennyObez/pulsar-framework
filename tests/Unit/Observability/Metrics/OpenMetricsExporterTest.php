@@ -205,6 +205,40 @@ final class OpenMetricsExporterTest extends TestCase
     }
 
     #[Test]
+    public function exportsCounterLabelValueContainingCommaWithoutCorruption(): void
+    {
+        // A user-supplied label value may contain a literal comma (e.g. a RUM
+        // `url`). Splitting a serialised label set on commas would truncate the
+        // value and emit an orphaned label pair, so the exporter must not.
+        $registry = new MetricRegistry();
+        $counter = $registry->counter('rum_navigations');
+        $counter->increment(new LabelSet(['url' => 'https://example.com/a,b', 'method' => 'GET']));
+
+        $exporter = new OpenMetricsExporter($registry);
+        $output = $exporter->export();
+
+        // The comma survives intact inside the exported (quoted) label value,
+        // and no orphaned label is produced.
+        self::assertStringContainsString('url="https://example.com/a,b"', $output);
+        self::assertStringContainsString('method="GET"', $output);
+        self::assertStringNotContainsString('%2C', $output);
+    }
+
+    #[Test]
+    public function exportsHistogramLabelValueContainingCommaWithoutCorruption(): void
+    {
+        $registry = new MetricRegistry();
+        $histogram = $registry->histogram('rum_lcp', 'LCP', [0.1, 0.5]);
+        $histogram->observe(0.3, new LabelSet(['url' => '/list?a=1,2,3']));
+
+        $exporter = new OpenMetricsExporter($registry);
+        $output = $exporter->export();
+
+        self::assertStringContainsString('url="/list?a=1,2,3"', $output);
+        self::assertStringNotContainsString('%2C', $output);
+    }
+
+    #[Test]
     public function counterWithoutHelpOmitsHelpLine(): void
     {
         $registry = new MetricRegistry();

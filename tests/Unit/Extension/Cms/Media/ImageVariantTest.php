@@ -71,10 +71,13 @@ final class ImageVariantTest extends TestCase
             'size_bytes' => '1024',
         ]);
 
-        self::assertSame('123', $variant->path);
+        // is_string(123) = false → ''
+        self::assertSame('', $variant->path);
+        // is_numeric('600') = true → (int) '600' = 600
         self::assertSame(600, $variant->width);
         self::assertSame(400, $variant->height);
-        self::assertSame('456', $variant->format);
+        // is_string(456) = false → ''
+        self::assertSame('', $variant->format);
         self::assertSame(1024, $variant->sizeBytes);
     }
 }

@@ -56,15 +56,4 @@ return [
         'max_nesting_depth' => 3,
         'max_includes' => 10,
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Entity Serialization Ban
-    |--------------------------------------------------------------------------
-    |
-    | When enabled, returning a domain entity directly from a controller
-    | produces a framework error (dev) or 500 with audit log (prod).
-    |
-    */
-    'entity_serialization_ban' => true,
 ];

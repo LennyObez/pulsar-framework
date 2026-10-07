@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations may use MaxMind GeoIP, IP-API, or similar services.
  * Returns null when the IP cannot be resolved (e.g., localhost, private ranges).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GeoLocationResolverInterface

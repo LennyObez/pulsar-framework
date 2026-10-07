@@ -287,6 +287,72 @@ final class ApplicationTest extends TestCase
         self::assertStringContainsString('migrate', $content);
     }
 
+    /**
+     * A command registered via `addLazy()` MUST not run
+     * its factory at registration time. The first `get($name)`
+     * triggers the factory and memoises the result; a second
+     * `get()` returns the same instance without re-running it.
+     */
+    #[Test]
+    public function addLazyDefersConstructionUntilGet(): void
+    {
+        $built = 0;
+        $this->application->addLazy(
+            'lazy:demo',
+            'Demo lazy command',
+            function () use (&$built): CommandInterface {
+                $built++;
+                return $this->createCommand('lazy:demo', 'Demo lazy command');
+            },
+        );
+
+        // Registration alone must not build.
+        self::assertSame(0, $built);
+        self::assertTrue($this->application->has('lazy:demo'));
+
+        // First get triggers the factory.
+        $first = $this->application->get('lazy:demo');
+        self::assertSame(1, $built);
+        self::assertSame('lazy:demo', $first->name);
+
+        // Second get must return the SAME memoised instance.
+        $second = $this->application->get('lazy:demo');
+        self::assertSame($first, $second);
+        self::assertSame(1, $built, 'factory must not re-run on second get');
+    }
+
+    /**
+     * Lazy commands appear in `allDescriptions()` for help
+     * rendering without paying the materialisation cost — `all()`
+     * stays restricted to materialised CommandInterface entries
+     * so existing iterators (CoreRuntimeProbe) keep their typing
+     * contract.
+     */
+    #[Test]
+    public function allDescriptionsIncludesLazyButAllDoesNot(): void
+    {
+        $built = 0;
+        $this->application->addLazy(
+            'lazy:demo',
+            'Demo lazy description',
+            function () use (&$built): CommandInterface {
+                $built++;
+                return $this->createCommand('lazy:demo', 'Demo lazy description');
+            },
+        );
+
+        $descriptions = $this->application->allDescriptions();
+        self::assertArrayHasKey('lazy:demo', $descriptions);
+        self::assertSame('Demo lazy description', $descriptions['lazy:demo']);
+
+        // all() does not surface unmaterialised lazy entries.
+        self::assertArrayNotHasKey('lazy:demo', $this->application->all());
+
+        // Surfacing the description must not have built the
+        // command.
+        self::assertSame(0, $built);
+    }
+
     private function createCommand(string $name, string $description): CommandInterface
     {
         return new class ($name, $description) extends Command {

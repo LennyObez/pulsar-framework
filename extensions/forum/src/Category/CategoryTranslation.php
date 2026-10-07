@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Localized name and description for a forum category.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CategoryTranslation
@@ -49,7 +50,6 @@ final readonly class CategoryTranslation
     /**
      * Update the translated name and description.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function update(string $name, string $description): self
     {

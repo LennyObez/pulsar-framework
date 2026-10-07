@@ -28,9 +28,10 @@ use const JSON_UNESCAPED_UNICODE;
  * Build-time OpenAPI v3.1 specification generator.
  *
  * Takes pre-scanned endpoint metadata and produces a complete OpenAPI
- * specification array. No runtime reflection is performed — all type
+ * specification array. No runtime reflection is performed; all type
  * information must be provided via `EndpointMetadata` instances
  * collected at build time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SpecGenerator
@@ -314,6 +315,7 @@ final class SpecGenerator
      */
     private function paramToOpenApi(ApiParam $param): array
     {
+        /** @var array<string, mixed> $schema */
         $schema = ['type' => $param->type];
 
         if ($param->format !== null) {
@@ -325,7 +327,7 @@ final class SpecGenerator
         }
 
         if ($param->default !== null) {
-            $schema['default'] = $param->default;
+            $schema = [...$schema, 'default' => $param->default];
         }
 
         $parameter = [
@@ -343,7 +345,7 @@ final class SpecGenerator
         }
 
         if ($param->example !== null) {
-            $parameter['example'] = $param->example;
+            $parameter = [...$parameter, 'example' => $param->example];
         }
 
         return $parameter;
@@ -425,14 +427,13 @@ final class SpecGenerator
         }
 
         if ($response->headers !== null) {
-            $headers = [];
-            foreach ($response->headers as $name => $description) {
-                $headers[$name] = [
+            $obj['headers'] = array_map(
+                static fn(string $description): array => [
                     'description' => $description,
                     'schema' => ['type' => 'string'],
-                ];
-            }
-            $obj['headers'] = $headers;
+                ],
+                $response->headers,
+            );
         }
 
         return $obj;

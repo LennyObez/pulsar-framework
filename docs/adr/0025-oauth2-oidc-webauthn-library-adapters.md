@@ -2,6 +2,17 @@
 
 ## Status
 
+**Superseded by [ADR-0032](0032-homegrown-auth-with-conformance-vectors-gate.md)
+(2026-05-12).** The decision to wrap `league/oauth2-server`,
+`web-auth/webauthn-lib`, and `web-token/jwt-framework` was retracted after
+re-examination of the regulatory and audit-cost arguments. Pulsar keeps the
+homegrown implementations and gates GA on a conformance vector suite; see
+ADR-0032 for the new policy.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted
 
 ## Context

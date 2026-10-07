@@ -12,7 +12,7 @@ use SensitiveParameter;
  * In-memory TOTP secret store for testing and development.
  *
  * Encrypts secrets using the provided Encryptor (AEAD, XSalsa20-Poly1305).
- * Not suitable for production — state is lost on process restart.
+ * Not suitable for production: state is lost on process restart.
  * Bind a database-backed implementation for persistent storage.
  */
 #[Internal]

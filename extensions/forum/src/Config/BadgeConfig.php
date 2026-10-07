@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
-
-use function is_int;
+use Pulsar\Support\Coerce;
 
 /**
  * Badge system configuration with trigger thresholds.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BadgeConfig
@@ -31,11 +31,6 @@ final readonly class BadgeConfig
         public int $multilingualLocaleThreshold = 2,
     ) {}
 
-    private static function int(mixed $value, int $default): int
-    {
-        return is_int($value) ? $value : $default;
-    }
-
     /**
      * @param array<string, mixed> $data
      */
@@ -43,11 +38,11 @@ final readonly class BadgeConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            helpfulUpvoteThreshold: self::int($data['helpful_upvote_threshold'] ?? null, 10),
-            popularThreadViewThreshold: self::int($data['popular_thread_view_threshold'] ?? null, 50),
-            solverAcceptedAnswerThreshold: self::int($data['solver_accepted_answer_threshold'] ?? null, 10),
-            bugHunterConfirmedThreshold: self::int($data['bug_hunter_confirmed_threshold'] ?? null, 5),
-            multilingualLocaleThreshold: self::int($data['multilingual_locale_threshold'] ?? null, 2),
+            helpfulUpvoteThreshold: Coerce::int($data['helpful_upvote_threshold'] ?? null, 10),
+            popularThreadViewThreshold: Coerce::int($data['popular_thread_view_threshold'] ?? null, 50),
+            solverAcceptedAnswerThreshold: Coerce::int($data['solver_accepted_answer_threshold'] ?? null, 10),
+            bugHunterConfirmedThreshold: Coerce::int($data['bug_hunter_confirmed_threshold'] ?? null, 5),
+            multilingualLocaleThreshold: Coerce::int($data['multilingual_locale_threshold'] ?? null, 2),
         );
     }
 }

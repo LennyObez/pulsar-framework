@@ -9,6 +9,10 @@ use Pulsar\Api\Api;
 
 /**
  * Metadata record for a CMS backup.
+ *
+ * @psalm-api Public DTO returned from BackupServiceInterface; consumed by
+ *            admin backup-management views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Backup

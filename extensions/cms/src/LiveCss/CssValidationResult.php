@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Result of CSS content validation, including sanitized output.
+ *
+ * @psalm-api Public DTO returned from CssValidatorInterface; consumed by
+ *            LiveCssService and the admin editor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CssValidationResult

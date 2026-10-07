@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Config;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -57,6 +58,20 @@ final class DatabaseConfigTest extends TestCase
         self::assertCount(1, $config->connections);
         self::assertSame('pulsar_migrations', $config->migrationsTable);
         self::assertSame('database/migrations', $config->migrationsPath);
+    }
+
+    #[Test]
+    public function fromArrayRejectsInvalidMigrationsTableName(): void
+    {
+        $env = Environment::load(null);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#config/database\.php: invalid migrations\.table name#');
+
+        (void) DatabaseConfig::fromArray([
+            'connections' => ['sqlite' => ['driver' => 'sqlite', 'database' => ':memory:']],
+            'migrations' => ['table' => 'migrations; DROP TABLE users--'],
+        ], $env);
     }
 
     #[Test]
@@ -118,7 +133,7 @@ final class DatabaseConfigTest extends TestCase
         ], $env);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Database connection "unknown" is not configured');
+        $this->expectExceptionMessageIsOrContains('Database connection "unknown" is not configured');
 
         $config->connection('unknown');
     }

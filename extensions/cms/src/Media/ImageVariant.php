@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Media;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Represents a generated image variant with its physical dimensions,
  * output format, and file size.
+ *
+ * @psalm-api Public DTO returned from ImageVariantGenerator; consumed by
+ *            MediaDerivative records and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariant
@@ -27,11 +32,11 @@ final readonly class ImageVariant
     public static function fromArray(array $data): self
     {
         return new self(
-            path: (string) ($data['path'] ?? ''),
-            width: (int) ($data['width'] ?? 0),
-            height: (int) ($data['height'] ?? 0),
-            format: (string) ($data['format'] ?? ''),
-            sizeBytes: (int) ($data['size_bytes'] ?? 0),
+            path: Coerce::string($data['path'] ?? null),
+            width: Coerce::int($data['width'] ?? null, 0),
+            height: Coerce::int($data['height'] ?? null, 0),
+            format: Coerce::string($data['format'] ?? null),
+            sizeBytes: Coerce::int($data['size_bytes'] ?? null, 0),
         );
     }
 }

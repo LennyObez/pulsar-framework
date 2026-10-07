@@ -9,9 +9,10 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable feature flag definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class FlagDefinition
+final readonly class FlagDefinition
 {
     /**
      * @param list<string> $allowedTenants
@@ -32,38 +33,28 @@ readonly class FlagDefinition
     /**
      * Create a FlagDefinition from a raw array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     type?: string,
+     *     percentage?: int,
+     *     allowed_tenants?: list<string>,
+     *     allowed_users?: list<string>,
+     *     allowed_environments?: list<string>,
+     *     description?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
-        /** @var string $typeValue */
-        $typeValue = $data['type'] ?? 'boolean';
-
-        /** @var list<string> $allowedTenants */
-        $allowedTenants = $data['allowed_tenants'] ?? [];
-
-        /** @var list<string> $allowedUsers */
-        $allowedUsers = $data['allowed_users'] ?? [];
-
-        /** @var list<string> $allowedEnvironments */
-        $allowedEnvironments = $data['allowed_environments'] ?? [];
-
-        /** @var int $percentage */
-        $percentage = $data['percentage'] ?? 100;
-
-        /** @var string $description */
-        $description = $data['description'] ?? '';
-
         return new self(
             name: $name,
             enabled: (bool) ($data['enabled'] ?? false),
-            type: FlagType::from($typeValue),
-            percentage: $percentage,
-            allowedTenants: $allowedTenants,
-            allowedUsers: $allowedUsers,
-            allowedEnvironments: $allowedEnvironments,
-            description: $description,
+            type: FlagType::from($data['type'] ?? 'boolean'),
+            percentage: $data['percentage'] ?? 100,
+            allowedTenants: $data['allowed_tenants'] ?? [],
+            allowedUsers: $data['allowed_users'] ?? [],
+            allowedEnvironments: $data['allowed_environments'] ?? [],
+            description: $data['description'] ?? '',
         );
     }
 

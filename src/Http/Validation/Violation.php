@@ -11,6 +11,7 @@ use function strtoupper;
 
 /**
  * A single validation violation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 readonly class Violation

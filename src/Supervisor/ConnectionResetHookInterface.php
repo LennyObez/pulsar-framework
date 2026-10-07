@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations should close and re-establish database connections,
  * message broker links, or other persistent connections that may have
  * become stale or leaked.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConnectionResetHookInterface

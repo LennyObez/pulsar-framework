@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of validating a coupon code against the current cart.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PromotionValidationResult

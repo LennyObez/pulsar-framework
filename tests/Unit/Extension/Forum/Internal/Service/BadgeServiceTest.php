@@ -371,7 +371,7 @@ final class BadgeServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('UserBadge not found');
+        $this->expectExceptionMessageIsOrContains('UserBadge not found');
 
         $service->revoke('user-1', Badge::FirstPost);
     }

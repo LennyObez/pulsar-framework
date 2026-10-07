@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Observability\Log\Compliance;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -175,6 +176,23 @@ final class HipaaLogFormatterTest extends TestCase
         self::assertSame($entry->level, $result->level);
         self::assertSame($entry->message, $result->message);
         self::assertSame($entry->channel, $result->channel);
+    }
+
+    #[Test]
+    public function rejectsEmptyHmacKey(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new HipaaLogFormatter('');
+    }
+
+    #[Test]
+    public function rejectsHmacKeyShorterThanMinimum(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        // 15 bytes — one short of the 16-byte keyed-hash minimum.
+        new HipaaLogFormatter('123456789012345');
     }
 
     #[Test]

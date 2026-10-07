@@ -16,6 +16,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  *
  * Signal providers MUST be idempotent: evaluating the same context twice must
  * produce equivalent claims. Providers MUST NOT cache state across requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SignalProviderInterface
@@ -25,7 +26,7 @@ interface SignalProviderInterface
      *
      * Returns an empty ClaimSet when the provider cannot produce claims
      * (e.g., missing required context data). Implementations must never
-     * throw exceptions for missing optional data — return reduced confidence instead.
+     * throw exceptions for missing optional data; return reduced confidence instead.
      */
     public function evaluate(SignalContext $context): ClaimSet;
 

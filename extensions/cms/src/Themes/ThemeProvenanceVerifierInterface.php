@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Verifies theme package integrity (SHA-256) and authenticity (Ed25519 signature).
+ *
+ * @psalm-api Public binding contract; implemented by ThemeProvenanceVerifier
+ *            and consumed by ThemeManager during installation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThemeProvenanceVerifierInterface

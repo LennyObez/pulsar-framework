@@ -154,7 +154,13 @@ final class CacheSettingsCheckTest extends TestCase
             hmac: new HmacService(),
             cachePath: $cachePath,
             hmacKey: $hmacKey,
-            schemaVersion: 1,
+            // The constant, not a literal. Written as `1`, this helper produced a
+            // manifest of the previous schema, which `isWarm()` correctly refuses —
+            // so "the cache is warm" was being tested against a cache the framework
+            // considers stale, and the two passing cases broke the moment
+            // CacheManifest::SCHEMA_VERSION moved to 2. A fixture that names the
+            // version it is building follows the code instead of dating itself.
+            schemaVersion: CacheManifest::SCHEMA_VERSION,
             frameworkVersion: '1.0.0',
             appEnv: 'production',
             invalidationKey: 'test-key',

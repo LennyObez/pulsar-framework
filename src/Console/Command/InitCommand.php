@@ -4,18 +4,27 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use JsonException;
 use Override;
 use Pulsar\Console\Command;
+use Pulsar\Console\Command\NewProject\EnvironmentPreset;
+use Pulsar\Console\Command\NewProject\ProjectGenerator;
+use Pulsar\Console\Command\NewProject\ProjectPreset;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Random\RandomException;
+use RuntimeException;
 
-use function dirname;
+use function basename;
 use function is_string;
 use function sprintf;
 
 /**
- * Initialize a new Pulsar project.
+ * Initialize a new Pulsar project in the current (or specified) directory.
+ *
+ * Delegates to {@see ProjectGenerator} with the Minimal preset to ensure
+ * output is consistent with `pulsar new --preset=minimal`.
  */
 final class InitCommand extends Command
 {
@@ -25,14 +34,16 @@ final class InitCommand extends Command
         $this->name = 'init';
         $this->description = 'Initialize a new Pulsar project';
         $this->addArgument('directory', 'Target directory (default: current directory)');
-        $this->addOption('force', 'Overwrite existing files', 'f');
     }
 
+    /**
+     * @throws JsonException If composer.json encoding fails
+     * @throws RandomException If cryptographic random generation fails
+     */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $directory = $input->getArgument(0) ?? getcwd();
-        $force = $input->hasOption('force');
 
         if (!is_string($directory)) {
             $output->errorln('Invalid directory argument.');
@@ -49,144 +60,29 @@ final class InitCommand extends Command
             $directory = $cwd . DIRECTORY_SEPARATOR . $directory;
         }
 
-        $output->writeln(sprintf('Initializing Pulsar project in: %s', $directory));
-        $output->newLine();
+        $name = basename($directory);
 
-        // Create directory if needed
-        if (!is_dir($directory)) {
-            if (!mkdir($directory, 0o755, true)) {
-                $output->errorln('Failed to create directory.');
-                return ExitCode::Error->value;
-            }
-            $output->writeln('  Created directory');
+        if ($name === '' || $name === '.') {
+            $name = 'my-app';
         }
 
-        // Create project structure
-        $structure = [
-            'app' => [
-                'Controllers' => [],
-                'Middleware' => [],
-                'Services' => [],
-            ],
-            'config' => [],
-            'public' => [],
-            'extensions' => [],
-            'tests' => [
-                'Unit' => [],
-                'Integration' => [],
-            ],
-        ];
-
-        $this->createStructure($directory, $structure, $output);
-
-        // Create files
-        $files = [
-            'public/index.php' => $this->getIndexPhpContent(),
-            'config/app.php' => $this->getAppConfigContent(),
-            '.gitignore' => $this->getGitignoreContent(),
-        ];
-
-        foreach ($files as $path => $content) {
-            $fullPath = $directory . DIRECTORY_SEPARATOR . $path;
-
-            if (file_exists($fullPath) && !$force) {
-                $output->writeln(sprintf('  Skipped %s (already exists)', $path));
-                continue;
-            }
-
-            $dir = dirname($fullPath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0o755, true);
-            }
-
-            file_put_contents($fullPath, $content);
-            $output->writeln(sprintf('  Created %s', $path));
+        try {
+            $generator = new ProjectGenerator();
+            $generator->generate($name, ProjectPreset::Minimal, EnvironmentPreset::Local, $directory, $output);
+        } catch (RuntimeException $e) {
+            $output->newLine();
+            $output->errorln($e->getMessage());
+            return ExitCode::Error->value;
         }
 
         $output->newLine();
         $output->success('Project initialized successfully!');
         $output->newLine();
         $output->writeln('Next steps:');
-        $output->writeln('  1. cd ' . basename($directory));
-        $output->writeln('  2. composer install');
-        $output->writeln('  3. php -S localhost:8000 -t public');
+        $output->writeln(sprintf('  cd %s', basename($directory)));
+        $output->writeln('  composer install');
+        $output->writeln('  php -S localhost:8000 -t public');
 
         return ExitCode::Success->value;
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $structure
-     */
-    private function createStructure(string $base, array $structure, OutputInterface $output): void
-    {
-        foreach ($structure as $name => $contents) {
-            $path = $base . DIRECTORY_SEPARATOR . $name;
-
-            if (!is_dir($path)) {
-                mkdir($path, 0o755, true);
-                $output->writeln(sprintf('  Created %s/', $name));
-            }
-
-            /** @var array<string, array<string, mixed>> $nestedStructure */
-            $nestedStructure = $contents;
-            if ($nestedStructure !== []) {
-                $this->createStructure($path, $nestedStructure, $output);
-            }
-        }
-    }
-
-    private function getIndexPhpContent(): string
-    {
-        return <<<'PHP'
-            <?php
-
-            declare(strict_types=1);
-
-            require __DIR__ . '/../vendor/autoload.php';
-
-            use Pulsar\Core\Kernel;
-            use Pulsar\Http\Message\Response;
-
-            $kernel = new Kernel();
-
-            // Register routes
-            $kernel->router()->get('/', fn() => Response::html('<h1>Welcome to Pulsar!</h1>'));
-
-            // Run the application
-            $kernel->run();
-            PHP;
-    }
-
-    private function getAppConfigContent(): string
-    {
-        return <<<'PHP'
-            <?php
-
-            declare(strict_types=1);
-
-            return [
-                'name' => 'My Pulsar App',
-                'debug' => true,
-
-                'extensions' => [
-                    'paths' => [
-                        __DIR__ . '/../extensions',
-                    ],
-                ],
-            ];
-            PHP;
-    }
-
-    private function getGitignoreContent(): string
-    {
-        return <<<'TEXT'
-            /vendor/
-            /.idea/
-            /.vscode/
-            .env
-            .env.local
-            *.cache
-            *.log
-            TEXT;
     }
 }

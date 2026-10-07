@@ -93,7 +93,7 @@ final class RuntimeFactoryTest extends TestCase
         $factory = new RuntimeFactory($container);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('WorkerInterface not registered');
+        $this->expectExceptionMessageIsOrContains('WorkerInterface not registered');
 
         $factory->createForType(
             RuntimeType::RoadRunner,

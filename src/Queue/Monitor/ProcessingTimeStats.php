@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable snapshot of processing-time percentiles for a queue.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class ProcessingTimeStats
+final readonly class ProcessingTimeStats
 {
     public function __construct(
         public float $p50,

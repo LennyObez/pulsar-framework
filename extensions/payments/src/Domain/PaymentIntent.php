@@ -11,6 +11,7 @@ use Pulsar\Extension\Payments\Exception\PaymentException;
 
 /**
  * Immutable payment intent with state machine enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaymentIntent
@@ -32,11 +33,9 @@ final readonly class PaymentIntent
      * Transition to a new status, validating the state machine.
      *
      * @throws PaymentException If the transition is invalid
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function transitionTo(PaymentIntentStatus $newStatus): self
+    public function transitionTo(PaymentIntentStatus $newStatus): static
     {
         if (!$this->status->canTransitionTo($newStatus)) {
             throw PaymentException::invalidTransition(

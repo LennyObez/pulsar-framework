@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each mail provider has a different signature scheme;
  * implementations validate provider-specific signatures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WebhookVerifierInterface

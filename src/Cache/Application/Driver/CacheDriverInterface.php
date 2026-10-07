@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Drivers handle raw string storage only. Serialization
  * happens in the pool layer, keeping drivers simple and testable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CacheDriverInterface
@@ -37,6 +38,22 @@ interface CacheDriverInterface
      * @param int|null $ttlSeconds Seconds until expiration (null = no expiration, 0 or negative = expire immediately)
      */
     public function set(string $key, string $value, ?int $ttlSeconds): bool;
+
+    /**
+     * Store a value only if the key does not already exist ("add" / SETNX).
+     *
+     * The canonical primitive for "claim this key once" — leader election, a
+     * one-shot job guard, first-writer-wins initialization — without the
+     * read-then-write race of get()+set(). Atomic on backends that support a
+     * native conditional store (Redis SET NX, Memcached add, apcu_add); drivers
+     * without one fall back to a best-effort check-then-set (see
+     * {@see AbstractCacheDriver::add()}).
+     *
+     * @param int|null $ttlSeconds Seconds until expiration (null = no expiration, 0 or negative = expire immediately)
+     *
+     * @return bool True if the value was stored, false if the key already existed (or on failure)
+     */
+    public function add(string $key, string $value, ?int $ttlSeconds): bool;
 
     /**
      * Store multiple values.

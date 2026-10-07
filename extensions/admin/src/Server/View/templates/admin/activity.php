@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 /** @var list<array{id: string, action: string, resource: string, record_id: ?string, actor: string, timestamp: int, success: bool, detail: string}> $entries */
 $entries = $templateData['entries'] ?? [];
 ?>
@@ -13,23 +13,22 @@ $entries = $templateData['entries'] ?? [];
     <?php if ($entries === []): ?>
     <div class="admin-empty-state">
         <div class="admin-empty-state__icon">&#128340;</div>
-        <h2 class="admin-empty-state__title">No activity yet</h2>
-        <p class="admin-empty-state__description">
-            Activity is recorded when you create, edit, or delete records through the admin panel.
-            Navigate to a <a href="/admin/resources">resource</a> and perform a CRUD operation to see it logged here.
+        <h2 class="admin-empty-state__title" data-t="admin.activity.no_activity"><?= __('admin.activity.no_activity') ?></h2>
+        <p class="admin-empty-state__description" data-t="admin.activity.no_activity_hint">
+            <?= __('admin.activity.no_activity_hint') ?>
         </p>
     </div>
     <?php else: ?>
     <table class="admin-table">
         <thead>
             <tr>
-                <th>Status</th>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>Record</th>
-                <th>Actor</th>
-                <th>Time</th>
-                <th>Detail</th>
+                <th data-t="admin.activity.status"><?= __('admin.activity.status') ?></th>
+                <th data-t="admin.activity.action"><?= __('admin.activity.action') ?></th>
+                <th data-t="admin.activity.resource"><?= __('admin.activity.resource') ?></th>
+                <th data-t="admin.activity.record"><?= __('admin.activity.record') ?></th>
+                <th data-t="admin.activity.actor"><?= __('admin.activity.actor') ?></th>
+                <th data-t="admin.activity.time"><?= __('admin.activity.time') ?></th>
+                <th data-t="admin.activity.detail"><?= __('admin.activity.detail') ?></th>
             </tr>
         </thead>
         <tbody>

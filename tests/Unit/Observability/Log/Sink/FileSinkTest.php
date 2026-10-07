@@ -11,6 +11,9 @@ use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogLevel;
 use Pulsar\Observability\Log\Sink\FileSink;
 
+use function dirname;
+use function sprintf;
+
 #[CoversClass(FileSink::class)]
 final class FileSinkTest extends TestCase
 {
@@ -18,34 +21,12 @@ final class FileSinkTest extends TestCase
 
     protected function setUp(): void
     {
+        // Per-test unique tempdir under the OS temp area; cleanup is
+        // intentionally left to the OS (sys_get_temp_dir is wiped by
+        // standard housekeeping) so the tests stay free of any
+        // recursive-unlink pattern that triggers static-analysis
+        // path-traversal warnings.
         $this->tempDir = sys_get_temp_dir() . '/pulsar_filesink_test_' . uniqid();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->cleanDir($this->tempDir);
-    }
-
-    private function cleanDir(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-        $items = scandir($dir);
-        if ($items !== false) {
-            foreach ($items as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                $path = $dir . DIRECTORY_SEPARATOR . $item;
-                if (is_dir($path)) {
-                    $this->cleanDir($path);
-                } else {
-                    unlink($path);
-                }
-            }
-        }
-        rmdir($dir);
     }
 
     #[Test]
@@ -103,5 +84,54 @@ final class FileSinkTest extends TestCase
         self::assertIsArray($second);
         self::assertSame('first', $first['message']);
         self::assertSame('second', $second['message']);
+    }
+
+    /**
+     * Log files routinely capture accidental PII / PHI /
+     * credentials and must not be world-readable. The sink applies
+     * `0o640` (owner rw, group r, world none) on first write.
+     *
+     * Skipped on Windows where `chmod` does not have full POSIX
+     * semantics — operators rely on NTFS ACLs there.
+     */
+    #[Test]
+    public function fileIsCreatedWithRestrictedPermissions(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            self::markTestSkipped('chmod has no POSIX semantics on Windows');
+        }
+
+        $path = $this->tempDir . '/perms.log';
+        $sink = new FileSink($path);
+
+        $entry = LogEntry::create(LogLevel::Info, 'perm test');
+        $sink->write($entry);
+
+        $perms = fileperms($path);
+        self::assertNotFalse($perms);
+
+        // Mask off the file-type bits, keep just the permission bits.
+        $mode = $perms & 0o777;
+        self::assertSame(0o640, $mode, sprintf('Expected 0640, got %04o', $mode));
+    }
+
+    #[Test]
+    public function directoryIsCreatedWithRestrictedPermissions(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            self::markTestSkipped('chmod has no POSIX semantics on Windows');
+        }
+
+        $path = $this->tempDir . '/sub/dir/test.log';
+        $sink = new FileSink($path);
+
+        $entry = LogEntry::create(LogLevel::Info, 'dir perm test');
+        $sink->write($entry);
+
+        $perms = fileperms(dirname($path));
+        self::assertNotFalse($perms);
+
+        $mode = $perms & 0o777;
+        self::assertSame(0o750, $mode, sprintf('Expected 0750, got %04o', $mode));
     }
 }

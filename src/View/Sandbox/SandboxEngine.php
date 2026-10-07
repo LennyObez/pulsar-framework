@@ -10,7 +10,7 @@ use Pulsar\View\ViewException;
 /**
  * Sandboxed template engine for untrusted (user-provided) templates.
  *
- * Templates are parsed into an AST and interpreted — NEVER compiled to PHP.
+ * Templates are parsed into an AST and interpreted: NEVER compiled to PHP.
  * Only a restricted subset of directives is available. All output is auto-escaped.
  * Resource bounds prevent runaway execution.
  */

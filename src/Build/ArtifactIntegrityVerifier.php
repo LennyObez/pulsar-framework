@@ -27,6 +27,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Computes SHA-256 hashes of each artifact and compares them against
  * the hashes stored in the build manifest. Optionally verifies the
  * manifest signature using the central Keyring.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ArtifactIntegrityVerifier
@@ -146,9 +147,7 @@ final class ArtifactIntegrityVerifier
             'content_hashes' => $manifest->contentHashes,
         ];
 
-        /** @var non-empty-string $json */
-        $json = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-        return $json;
+        /** @var non-empty-string */
+        return json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 }

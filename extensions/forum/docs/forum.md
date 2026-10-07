@@ -351,6 +351,22 @@ The forum registers admin routes under `/admin/forum` for server-rendered manage
 - **Badges**: List, award, revoke at `/admin/forum/badges`
 - **Settings**: View and update at `/admin/forum/settings`
 
+These pages are server-rendered HTML, and an HTML form can emit `GET` or `POST`
+and nothing else — Pulsar has no server-side method-spoofing reader. The routes
+the pages submit to are therefore reachable by `POST`:
+
+| Operation       | POST path                             | Route name                           | Also answers |
+| --------------- | ------------------------------------- | ------------------------------------ | ------------ |
+| Update tag      | `/admin/forum/tags/{id}`              | `forum.admin.tags.update`            | `PUT`        |
+| Delete category | `/admin/forum/categories/{id}/delete` | `forum.admin.categories.delete.post` | —            |
+| Delete post     | `/admin/forum/posts/{id}/delete`      | `forum.admin.posts.delete.post`      | —            |
+| Delete tag      | `/admin/forum/tags/{id}/delete`       | `forum.admin.tags.delete.post`       | —            |
+| Delete thread   | `/admin/forum/threads/{id}/delete`    | `forum.admin.threads.delete.post`    | —            |
+
+The `PUT` and `DELETE` spellings on the resource paths are unchanged and remain
+available to API clients. Deletion gets its own `/delete` segment because `POST`
+on a resource path already means "apply this representation" for the update form.
+
 ### Admin DataResource implementations
 
 When the `pulsar/admin` extension is installed, the forum registers six `DataResourceInterface` implementations via `AdminGateway::registerResource()`:

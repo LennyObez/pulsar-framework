@@ -8,7 +8,7 @@ Pulsar provides a guard-based authentication system with lazy identity resolutio
 
 Authentication uses a two-tier approach to avoid paying the cost of full authentication on every request:
 
-1. **Global middleware** (`AuthenticationMiddleware`) runs on every request but only performs cheap work - creating a `SecurityContext` wrapper and setting a default `AnonymousIdentity`.
+1. **Global middleware** (`AuthenticationMiddleware`) runs on every request but only performs cheap work - creating a `SecurityContext` wrapper, publishing it into `AuthenticationState`, and setting a default `AnonymousIdentity` on the request attributes.
 2. **Route-level middleware** (`AuthorizationMiddleware`, `TwoFactorMiddleware`) triggers full identity resolution via `SecurityContext::identity()` only on protected routes.
 
 ```
@@ -16,7 +16,8 @@ Request
   │
   ▼
 AuthenticationMiddleware (global)
-  │  Sets _security_context (lazy)
+  │  Publishes the lazy SecurityContext into AuthenticationState
+  │  Sets _security_context (the same instance)
   │  Sets _identity = AnonymousIdentity
   ▼
 AuthorizationMiddleware (route-level, optional)
@@ -329,35 +330,76 @@ Pulsar includes TOTP (RFC 6238) generation and verification with recovery codes 
 
 ### Setup flow
 
+Every write and verify method takes the identity id as its **first** argument -
+replay prevention is scoped per identity, and a verifier that could not name the
+identity could not scope anything. This changed in 1.0.0-rc.8; code written
+against the older two-argument signatures does not compile.
+
 ```php
+use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
+use Pulsar\Auth\TwoFactor\VerifyReason;
+
 $manager = $container->get(TwoFactorManagerInterface::class);
 
 // 1. Begin setup - generates secret, provisioning URI, and recovery codes
 $setup = $manager->beginSetup($identity);
-// Returns:
+// Returns exactly these four keys:
 // [
-//     'secret' => '<binary>',
+//     'secret' => '<raw binary>',
 //     'secret_base32' => 'JBSWY3DPEHPK3PXP...',
 //     'provisioning_uri' => 'otpauth://totp/Pulsar:user@example.com?...',
-//     'recovery_codes' => ['A3F2-9B4C', '7D1E-F056', ...],
+//     'recovery_codes' => ['A3F2-9B4C-7D1E-F056', ...],  // plaintext, shown once
 // ]
 
-// 2. Display QR code from provisioning_uri, show recovery codes to user
+// 2. Display QR code from provisioning_uri, show recovery codes to user.
+//    Carry $setup['secret'] through this step - nothing has stored it yet.
 
 // 3. Confirm setup - user enters code from authenticator app
-$confirmed = $manager->confirmSetup($setup['secret'], $userCode);
+$result = $manager->confirmSetup($identity->id(), $setup['secret'], $userCode);
+
+if ($result->confirmed) {
+    // The secret is now stored encrypted via TotpSecretStoreInterface.
+    // Persist the recovery codes yourself - see "Recovery code storage".
+} else {
+    $result->reason; // VerifyReason::InvalidCode or VerifyReason::RateLimited
+}
 ```
+
+`confirmSetup()` returns a `Confirm2faSetupResult` (`confirmed`, `reason`), not a
+boolean: a refusal caused by the rate limiter and a refusal caused by a wrong
+code are different incidents and must not collapse into one `false`.
 
 ### Verification flow
 
 ```php
-// During login, after password verification:
-$valid = $manager->verifyCode($secret, $userCode);
+// During login, after password verification. The secret is loaded from
+// TotpSecretStoreInterface - you do not pass it.
+$result = $manager->verifyCode($identityId, $userCode, TwoFactorPurpose::Login);
+
+$result->verified;          // bool
+$result->reason;            // VerifyReason
+$result->purpose;           // the TwoFactorPurpose that was checked
+$result->acceptedTimeStep;  // ?int - the accepted step, null on failure
 
 // Recovery code fallback:
-$index = $manager->verifyRecoveryCode($userCode, $storedCodes);
+$index = $manager->verifyRecoveryCode($identityId, $userCode);
 // Returns matched index (0-based) or -1 if invalid
 ```
+
+Two failure modes look like a wrong code and are not:
+
+- `VerifyReason::NotEnrolled` - no `TotpSecretStoreInterface` is bound, or the
+  store holds no secret for this identity. Nothing was checked.
+- `VerifyReason::RateLimited` - returned both when the limiter refuses **and**
+  when no `TwoFactorRateLimiterInterface` is bound at all. `verifyCode()` fails
+  closed: an unwired limiter denies every attempt rather than allowing
+  unlimited ones. Dev and test environments bind
+  `AllowAllTwoFactorRateLimiter` explicitly so that the absence of rate
+  limiting is a visible line of wiring.
+
+`verifyCodeWithSecret()` takes an explicit secret instead of consulting the
+store. It is deprecated and scheduled for removal in 2.0; new code uses
+`verifyCode()`.
 
 ### Identity status transitions
 
@@ -397,12 +439,32 @@ $sessionGuard->updateIdentity($verified);
 
 ### AuthenticationMiddleware (global)
 
-Runs on every request. Attaches `SecurityContext` and default `AnonymousIdentity` to the request attributes. Does **not** trigger full authentication:
+Runs on every request. Builds the request's `SecurityContext`, publishes it into
+`AuthenticationState`, and attaches it plus a default `AnonymousIdentity` to the request
+attributes. Does **not** trigger full authentication:
 
 ```php
 // Registered automatically as global middleware by Kernel
-// Sets: _security_context (SecurityContext), _identity (AnonymousIdentity)
+// Publishes: the SecurityContext, into AuthenticationState
+// Sets: _security_context (the same instance), _identity and identity (AnonymousIdentity)
 ```
+
+#### The identity attributes are an output, never an input
+
+`_identity` and `identity` are written for the controllers and extensions that read them.
+Nothing in the framework reads them back to decide who is calling. They used to be read back:
+this middleware preserved an already-authenticated `identity` attribute in place of the
+context it would otherwise build, so any frame piped ahead of it could name the caller — and
+route model binding, which authorized against that attribute, believed it.
+
+Anything that legitimately knows the caller before the guards do says so through
+`AuthenticationState`, which needs the container and is therefore reachable only from the
+composition root. `pulsar serve --dev-identity` is the one such caller in the framework: it
+publishes a `SecurityContext::established()` before `Kernel::handle()` runs, and this
+middleware leaves an already-established context alone.
+
+`AuthenticationState` is registered for per-request reset, so a resident worker does not carry
+one request's caller into the next.
 
 ### AuthorizationMiddleware (route-level)
 
@@ -434,6 +496,34 @@ $route = new Route(
     middleware: ['2fa'],
 );
 ```
+
+### SensitiveOperationMiddleware (route-level)
+
+Runs `AccountTakeoverGuard` over an operation before the handler can perform it. The route names the operation it performs in its attributes, the same way it names the permissions it requires:
+
+```php
+// Apply via route middleware alias 'sensitive':
+$route = new Route(
+    methods: [Method::POST],
+    path: '/account/password',
+    handler: $handler,
+    attributes: ['sensitive_operation' => 'password_change'],
+    middleware: ['auth', 'sensitive'],
+);
+```
+
+Accepted values are the cases of `SensitiveOperation`: `password_change`, `email_change`, `mfa_disable`, `recovery_code_regenerate`, `account_delete`, `api_key_create`. The enum case itself may be passed instead of the string.
+
+Two checks run, each with a different failure mode:
+
+1. **Re-authentication window** (default 5 minutes). Changing a password from a session opened hours ago is the classic takeover: the attacker holds a stolen cookie, not the credentials. Either a fresh login or a completed step-up challenge satisfies the window, so a route already carrying `step-up` does not prompt twice.
+2. **Takeover risk.** A credential change arriving from a different address _and_ a different device than the session was opened on is refused; one of the two passes but is recorded, because a mobile network re-issuing an address is ordinary and a swapped device is not.
+
+Both outcomes are written to the HMAC-chained audit log against the authenticated identity — `auth.takeover.high_risk`, `auth.takeover.elevated_risk`, or `auth.sensitive_operation.refused` with the reason.
+
+The middleware is fail-closed throughout. A route carrying the alias without a recognised `sensitive_operation`, a request with no security context, an unauthenticated identity, a session with no metadata to compare against, and an audit sink that cannot record the decision all produce `403 Forbidden` rather than a silent pass.
+
+Behind a load balancer, bind a `TrustedProxy` so the guard compares the real client address: without one every request carries the balancer's `REMOTE_ADDR` and no address change is ever visible.
 
 ## Exceptions
 
@@ -473,18 +563,20 @@ Boot → Config → Logger → Tracer → Metrics → ErrorTracker → Exception
 
 The `createAuthServices()` method registers services conditionally based on config and container state:
 
-| Service                    | Condition                                   |
-| -------------------------- | ------------------------------------------- |
-| `PasswordHasher`           | Always                                      |
-| `SessionGuard`             | `SessionInterface` bound in container       |
-| `TokenGuard`               | `TokenResolverInterface` bound in container |
-| `AuthManager`              | Always                                      |
-| `InMemoryRoleRegistry`     | Always (populated from config roles)        |
-| `Gate`                     | Always                                      |
-| `TwoFactorManager`         | `two_factor.enabled` is `true`              |
-| `AuthenticationMiddleware` | Always (registered as global middleware)    |
-| `AuthorizationMiddleware`  | Always (alias: `'auth'`)                    |
-| `TwoFactorMiddleware`      | Always (alias: `'2fa'`)                     |
+| Service                                                 | Condition                                                                                 |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `PasswordHasher`                                        | Always                                                                                    |
+| `SessionGuard`                                          | `SessionInterface` bound in container                                                     |
+| `TokenGuard`                                            | `TokenResolverInterface` bound in container                                               |
+| `AuthManager`                                           | Always                                                                                    |
+| `InMemoryRoleRegistry`                                  | Always (populated from config roles)                                                      |
+| `Gate`                                                  | Always                                                                                    |
+| `TwoFactorManager`                                      | `two_factor.enabled` is `true`                                                            |
+| `AuthenticationMiddleware`                              | Always (registered as global middleware)                                                  |
+| `AuthorizationMiddleware`                               | Always (alias: `'auth'`)                                                                  |
+| `TwoFactorMiddleware`                                   | Always (alias: `'2fa'`)                                                                   |
+| `StepUpMiddleware`                                      | `SessionInterface` bound (alias: `'step-up'`)                                             |
+| `AccountTakeoverGuard` + `SensitiveOperationMiddleware` | `SessionInterface`, `SessionManager`, and a PSR-3 logger all bound (alias: `'sensitive'`) |
 
 ## Related docs
 
@@ -506,7 +598,7 @@ Threat model, secure defaults, and deployment guidance for Pulsar's authenticati
 | Brute force (TOTP)           | Exhaustive 6-digit code enumeration (10^6 combinations)           | Rate limiter blocks after threshold; replay guard prevents reuse of already-accepted time steps                                     |
 | Session hijacking            | Stolen session cookie via XSS or network sniffing                 | `HttpOnly`, `Secure`, `SameSite=Strict` cookie flags; session regeneration on privilege escalation                                  |
 | Session fixation             | Attacker pre-sets session ID before victim authenticates          | `regenerate()` called after 2FA verification and step-up authentication; `use_strict_mode` rejects uninitialized session IDs        |
-| TOTP replay                  | Re-submitting a previously valid TOTP code within the time window | Replay guard keyed on `(identityId, purpose, timeStep)` rejects duplicate time steps                                                |
+| TOTP replay                  | Re-submitting a previously valid TOTP code within the time window | Replay guard keyed on `(identityId, timeStep)` rejects duplicate time steps for the whole span the verifier accepts them            |
 | TOTP clock drift abuse       | Submitting codes from far-future or far-past time steps           | Verification window limits accepted time steps (default: 1 step = +/- 30 seconds)                                                   |
 | Recovery code guessing       | Brute-forcing 64-bit recovery codes                               | 64-bit entropy (2^64 combinations); keyed BLAKE2b hashing; rate limiter integration                                                 |
 | Recovery code race condition | Two concurrent requests consuming the same recovery code          | Atomic `consume()` in `RecoveryCodeStoreInterface`; exactly one request succeeds, the other receives `AlreadyUsed`                  |
@@ -590,24 +682,33 @@ Same defaults as production (security by default). Exceptions:
 
 #### Setup flow (detailed)
 
-1. Call `beginSetup()` with the authenticated identity. Returns:
-   - `secret`: raw binary secret (display only once)
+1. Call `beginSetup()` with the authenticated identity. Returns four keys, and
+   only these four:
+   - `secret`: raw binary secret (carry it to step 4, then discard)
    - `secret_base32`: Base32-encoded for manual entry
    - `provisioning_uri`: QR code URI (`otpauth://totp/...`)
    - `recovery_codes`: plaintext codes (display only once, never again)
-   - `recovery_code_set`: `RecoveryCodeSet` with hashed codes for storage
 2. User scans QR code in their authenticator app
 3. User enters a TOTP code to confirm setup
 4. Call `confirmSetup()` with the identity ID, secret, and code
 5. On success, the secret is stored encrypted via `TotpSecretStoreInterface`
 6. On failure, `Confirm2faSetupResult.reason` indicates the cause
+7. Call `rotateRecoveryCodes()` with the identity ID. **This is the step that
+   stores recovery codes.** `beginSetup()` generates a display set and hands it
+   back; it hashes nothing and writes nothing to
+   `RecoveryCodeStoreInterface`, so in the store-backed mode described below
+   the codes shown at step 1 will not verify at login.
+   `rotateRecoveryCodes()` builds a `RecoveryCodeSet`, hashes every code into
+   it, writes it through the store, and returns `RecoveryCodeRotationResult`
+   with `set` (the stored, hashed object) and `plaintextCodes` (what you
+   display). Show those and discard the step-1 list.
 
 #### Verification flow (detailed)
 
 1. Call `verifyCode()` with identity ID, code, and purpose
 2. The manager loads the secret from `TotpSecretStoreInterface`
 3. The verifier checks the code against the current and adjacent time steps
-4. The replay guard rejects previously-accepted `(identityId, purpose, timeStep)` tuples
+4. The replay guard rejects previously-accepted `(identityId, timeStep)` tuples. The purpose is deliberately outside the key: ASVS 2.8.4 requires a one-time verifier to be redeemable once within its validity period, so a code spent on `Login` cannot afterwards buy a `Setup` or a `StepUp`
 5. `Verify2faResult` contains:
    - `verified`: boolean success/failure
    - `reason`: `Valid`, `InvalidCode`, `Replayed`, `Expired`, `NotEnrolled`, `RateLimited`
@@ -618,10 +719,22 @@ Same defaults as production (security by default). Exceptions:
 #### Recovery code storage
 
 - Codes are hashed with keyed BLAKE2b using a derived subkey (master key id=3, context=`rcvrycod`)
-- Only hashes are stored; plaintext codes are shown exactly once during setup
+- Only hashes are stored; plaintext codes are shown exactly once
 - Input is canonicalized (uppercase, stripped dashes/spaces) before hashing
 - Code format: `XXXX-XXXX-XXXX-XXXX` (64-bit entropy, 16 hex characters)
 - Legacy format: `XXXX-XXXX` (32-bit entropy, detected by canonical length)
+
+`verifyRecoveryCode()` has two modes, and which one runs is decided by what was
+wired, not by an argument:
+
+| Wiring                                                           | Mode         | Behaviour                                                                                                                              |
+| ---------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Both `RecoveryCodeHasher` and `RecoveryCodeStoreInterface` bound | Store-backed | Hashes the input and asks the store to consume it atomically. The third argument is ignored. A replayed code audits as `Denied`.       |
+| Either one missing                                               | Legacy       | Compares the input against the plaintext `$validCodes` list the caller passes as the third argument. Nothing is consumed or persisted. |
+
+Store-backed is the mode to deploy. Legacy mode exists for applications that
+manage their own storage; it cannot detect reuse, because it has nowhere to
+record that a code was spent.
 
 #### Recovery code rotation
 
@@ -753,7 +866,32 @@ In-memory implementations are suitable for development and testing only. For mul
 
 #### Replay guard
 
-Bind a persistent `TotpReplayGuardInterface` implementation backed by a shared data store (Redis, database). The composite key `(identityId, purpose, timeStep)` must be globally unique across all nodes. TTL = `windowSteps * period + driftPadding` (e.g., `1 * 30 + 30 = 60` seconds).
+Bind a persistent `TotpReplayGuardInterface` implementation backed by a shared data store (Redis, database). The composite key `(identityId, timeStep)` must be globally unique across all nodes.
+
+Retention must cover the verifier's whole acceptance envelope, or the guard forgets a code while the verifier still accepts it:
+
+```
+TTL = (2 * verificationWindow + 1) * codePeriod + driftPadding
+```
+
+At shipped defaults that is `3 * 30 + 30 = 120` seconds. The bundled guards derive this themselves from the `code_period` and `verification_window` you configure; a custom implementation must do the same, and must not shorten it to `windowSteps * period`, which leaves the tail of the envelope unguarded.
+
+Expiry must also be scoped to the identity whose entry it is. A store that retires expired entries globally lets unrelated traffic decide when a victim's blocking record disappears.
+
+**Upgrading from 1.0.0-rc.10 or earlier:** the `auth_totp_replay_guard` table was keyed on `(user_id, purpose, time_step)`, which sold each code once per purpose. Re-key it before deploying — the table holds no durable state, only records younger than one acceptance envelope:
+
+```sql
+DROP TABLE auth_totp_replay_guard;
+CREATE TABLE auth_totp_replay_guard (
+    user_id VARCHAR(36) NOT NULL,
+    time_step INTEGER NOT NULL,
+    used_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, time_step)
+);
+CREATE INDEX idx_replay_guard_user_used_at ON auth_totp_replay_guard (user_id, used_at);
+```
+
+`SqliteTotpReplayGuard` re-keys itself: it drops its legacy `totp_used` table on first construction.
 
 #### Recovery code store
 

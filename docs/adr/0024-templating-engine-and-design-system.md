@@ -2,7 +2,12 @@
 
 ## Status
 
-Accepted
+Accepted, and amended by
+[ADR-0073](0073-a-directive-that-emits-a-field-nobody-reads-is-not-support.md).
+Every decision below stands as written except one entry in the trusted path's
+directive list: `@method` shipped, compiled to a hidden `_method` field, and was read
+by nothing on the server. ADR-0073 removes the directive, narrows `@form` to the verbs
+an HTML form can send, and says why neither is a regression. Read the two together.
 
 ## Context
 
@@ -30,7 +35,13 @@ Key constraints:
 
 Implement a compile-to-PHP engine for **trusted templates** and a restricted AST interpreter for **untrusted templates**:
 
-- **Trusted path** (`TemplateCompiler`): Compiles `.pulsar.php` templates to cached PHP files. Supports the full directive set (`@if`, `@foreach`, `@for`, `@while`, `@switch`, `@extends`, `@section`, `@yield`, `@include`, `@component`, `@slot`, `@auth`, `@guest`, `@can`, `@csrf`, `@method`, `@i18n`, `@php`). Output is deterministic and cacheable. Build-time compilation via `view:compile` produces deployable artifacts.
+- **Trusted path** (`TemplateCompiler`): Compiles `.pulse.php` templates to cached PHP files. Supports the full directive set (`@if`, `@foreach`, `@for`, `@while`, `@switch`, `@extends`, `@section`, `@yield`, `@include`, `@component`, `@slot`, `@auth`, `@guest`, `@can`, `@csrf`, `@method`, `@i18n`, `@php`). Output is deterministic and cacheable. Build-time compilation via `view:compile` produces deployable artifacts.
+
+  > `@method` was removed by
+  > [ADR-0073](0073-a-directive-that-emits-a-field-nobody-reads-is-not-support.md).
+  > It compiled to a hidden `_method` field, and nothing in `src/Http` or
+  > `src/Routing` has ever read one — so a form carrying it POSTed while its markup
+  > said otherwise. The rest of this list is unchanged and still in force.
 
 - **Untrusted path** (`SandboxEngine`): Parses templates into an AST and interprets them without generating PHP. Supports only safe directives (`@if`, `@foreach`, `@include` from an allowlist, `@i18n`, variable interpolation). Enforces deterministic resource bounds: step counter, loop iteration limit, output size cap, and periodic wall-clock checks. Raw output (`{!! !!}`) is blocked. `@include` uses registered template IDs rather than file paths.
 
@@ -101,7 +112,7 @@ Plates uses native PHP files as templates (no compilation step). While simple, i
 
 ### Neutral
 
-- The `.pulsar.php` template extension distinguishes Pulsar templates from plain PHP files
+- The `.pulse.php` template extension distinguishes Pulsar templates from plain PHP files
 - The playground is dev-only and adds no production footprint
 - Design token versioning follows the same semver discipline as the rest of the framework
 
@@ -123,13 +134,12 @@ Plates uses native PHP files as templates (no compilation step). While simple, i
 
 ## Migration / rollback plan
 
-**Adoption**: Add `config/view.php`, create template files in `resources/views/` with the `.pulsar.php` extension, inject `TemplateEngineInterface` in controllers. Existing raw PHP views continue to work alongside Pulsar templates.
+**Adoption**: Add `config/view.php`, create template files in `resources/views/` with the `.pulse.php` extension, inject `TemplateEngineInterface` in controllers. Existing raw PHP views continue to work alongside Pulsar templates.
 
 **Rollback**: Remove `config/view.php` to disable the View module. The `ViewWiring` service wiring skips registration when no config is present. Replace template engine calls with direct PHP output.
 
 ## Links
 
-- Plan: `.claude/plans/rc11-16-templating-design-system.md`
 - ADR-0004: Extension-first architecture (extension lifecycle via `pulsar.json`)
 - ADR-0009: Attribute-based public API surface (`#[Api]` / `#[Internal]`)
 - ADR-0011: Typed readonly configuration DTOs (ViewConfig pattern)

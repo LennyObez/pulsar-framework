@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
+use ReflectionClass;
 
 #[CoversClass(AppConfig::class)]
 final class AppConfigTest extends TestCase
@@ -63,6 +64,32 @@ final class AppConfigTest extends TestCase
     }
 
     #[Test]
+    public function parsesSignatureBlock(): void
+    {
+        $env = Environment::load();
+
+        $config = AppConfig::fromArray([
+            'signature' => ['generator' => true, 'author' => 'Lenny Obez'],
+        ], $env);
+
+        self::assertTrue($config->signature->generator);
+        self::assertSame('Lenny Obez', $config->signature->author);
+    }
+
+    #[Test]
+    public function signatureDefaultsToDisabled(): void
+    {
+        $env = Environment::load();
+
+        $config = AppConfig::fromArray([], $env);
+
+        // Off by default: no framework signal is disclosed unless opted in.
+        self::assertFalse($config->signature->generator);
+        self::assertSame('', $config->signature->author);
+        self::assertSame('', $config->signature->toHtml());
+    }
+
+    #[Test]
     public function appliesDefaults(): void
     {
         $env = Environment::load();
@@ -90,6 +117,19 @@ final class AppConfigTest extends TestCase
 
         // Staging mode: debug defaults to false
         $config = AppConfig::fromArray(['env' => 'staging'], $env);
+        self::assertFalse($config->debug);
+    }
+
+    #[Test]
+    public function unrecognizedEnvironmentFailsSecureToProduction(): void
+    {
+        $env = Environment::load();
+
+        // A typo'd / unexpected APP_ENV must NOT silently become Local (debug on,
+        // stack-trace/source disclosure); it fails secure to production.
+        $config = AppConfig::fromArray(['env' => 'prod'], $env);
+
+        self::assertSame(EnvironmentMode::Production, $config->mode);
         self::assertFalse($config->debug);
     }
 
@@ -142,5 +182,12 @@ final class AppConfigTest extends TestCase
         ], $env);
 
         self::assertFalse($config->debug);
+    }
+
+    #[Test]
+    public function classIsFinal(): void
+    {
+        $reflection = new ReflectionClass(AppConfig::class);
+        self::assertTrue($reflection->isFinal(), 'AppConfig must be final to prevent config DTO subclassing');
     }
 }

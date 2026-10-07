@@ -13,6 +13,7 @@ use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 use function array_key_exists;
 use function in_array;
 use function is_array;
+use function is_string;
 use function preg_match;
 use function str_contains;
 use function strtolower;
@@ -20,6 +21,9 @@ use function strtolower;
 /**
  * Resolves editable design tokens from a theme's manifest settings
  * and validates proposed token values by type.
+ *
+ * @psalm-api Bound to ThemeTokenResolverInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ThemeTokenResolverInterface for public API')]
 final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
@@ -50,9 +54,8 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         }
 
         /** @var array<string, mixed> $manifestData */
-        $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+        $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
 
-        /** @var list<array<string, mixed>> $tokenDefs */
         $tokenDefs = $manifestData['editable_tokens'] ?? [];
 
         if (!is_array($tokenDefs)) {
@@ -66,13 +69,27 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
                 continue;
             }
 
+            /** @var array<string, mixed> $def */
+            /** @var mixed $rawConstraints */
+            $rawConstraints = $def['constraints'] ?? [];
+            /** @var array<string, mixed> $constraintsArray */
+            $constraintsArray = is_array($rawConstraints) ? $rawConstraints : [];
+
+            /** @var mixed $rawDefault */
+            $rawDefault = $def['default'] ?? null;
+            /** @var mixed $rawLabel */
+            $rawLabel = $def['label'] ?? null;
+            /** @var mixed $rawLabelName */
+            $rawLabelName = $def['name'] ?? null;
+            /** @var mixed $rawGroup */
+            $rawGroup = $def['group'] ?? null;
             $tokens[] = new ThemeToken(
-                name: (string) $def['name'],
-                type: (string) $def['type'],
-                default: (string) ($def['default'] ?? ''),
-                label: (string) ($def['label'] ?? $def['name']),
-                group: (string) ($def['group'] ?? 'General'),
-                constraints: is_array($def['constraints'] ?? null) ? $def['constraints'] : [],
+                name: (is_string($def['name']) ? $def['name'] : ''),
+                type: (is_string($def['type']) ? $def['type'] : ''),
+                default: is_string($rawDefault) ? $rawDefault : '',
+                label: is_string($rawLabel) ? $rawLabel : (is_string($rawLabelName) ? $rawLabelName : ''),
+                group: is_string($rawGroup) ? $rawGroup : 'General',
+                constraints: $constraintsArray,
             );
         }
 
@@ -154,13 +171,19 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         $numericValue = (float) $matches[1];
 
         if (array_key_exists('min', $token->constraints)) {
-            if ($numericValue < (float) $token->constraints['min']) {
+            /** @var mixed $min */
+            $min = $token->constraints['min'];
+
+            if (is_numeric($min) && $numericValue < (float) $min) {
                 return false;
             }
         }
 
         if (array_key_exists('max', $token->constraints)) {
-            if ($numericValue > (float) $token->constraints['max']) {
+            /** @var mixed $max */
+            $max = $token->constraints['max'];
+
+            if (is_numeric($max) && $numericValue > (float) $max) {
                 return false;
             }
         }
@@ -184,18 +207,8 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
     {
         $lower = strtolower($value);
 
-        if (str_contains($lower, 'url(')) {
-            return true;
-        }
-
-        if (str_contains($lower, 'expression(')) {
-            return true;
-        }
-
-        if (str_contains($lower, 'javascript:')) {
-            return true;
-        }
-
-        return false;
+        return str_contains($lower, 'url(')
+            || str_contains($lower, 'expression(')
+            || str_contains($lower, 'javascript:');
     }
 }

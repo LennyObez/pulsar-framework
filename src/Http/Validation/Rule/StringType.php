@@ -6,7 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Http\Validation\RuleInterface;
+use Pulsar\Http\Validation\TypeRuleInterface;
 use Pulsar\Http\Validation\Violation;
 
 use function is_string;
@@ -14,9 +14,10 @@ use function sprintf;
 
 /**
  * Value must be a string. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class StringType implements RuleInterface
+final readonly class StringType implements TypeRuleInterface
 {
     public function __construct(
         private string $message = '',

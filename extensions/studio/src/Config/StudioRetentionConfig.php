@@ -7,14 +7,13 @@ namespace Pulsar\Extension\Studio\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
-
-use function is_int;
+use Pulsar\Support\Coerce;
 
 /**
  * Retention policy configuration for Studio event storage.
  */
 #[Internal]
-readonly class StudioRetentionConfig
+final readonly class StudioRetentionConfig
 {
     public function __construct(
         public int $maxAgeDays = 7,
@@ -29,23 +28,14 @@ readonly class StudioRetentionConfig
     public static function fromArray(array $data, Environment $environment): self
     {
         $retentionEnv = $environment->get('STUDIO_RETENTION_DAYS');
-        if ($retentionEnv !== null) {
-            $maxAgeDays = (int) $retentionEnv;
-        } else {
-            $rawMaxAgeDays = $data['max_age_days'] ?? 7;
-            $maxAgeDays = is_int($rawMaxAgeDays) ? $rawMaxAgeDays : (int) (is_numeric($rawMaxAgeDays) ? $rawMaxAgeDays : 7);
-        }
-
-        $rawMaxSizeMb = $data['max_size_mb'] ?? 500;
-        $maxSizeMb = is_int($rawMaxSizeMb) ? $rawMaxSizeMb : (int) (is_numeric($rawMaxSizeMb) ? $rawMaxSizeMb : 500);
-
-        $rawVacuumIntervalHours = $data['vacuum_interval_hours'] ?? 24;
-        $vacuumIntervalHours = is_int($rawVacuumIntervalHours) ? $rawVacuumIntervalHours : (int) (is_numeric($rawVacuumIntervalHours) ? $rawVacuumIntervalHours : 24);
+        $maxAgeDays = $retentionEnv !== null
+            ? (int) $retentionEnv
+            : Coerce::int($data['max_age_days'] ?? null, 7);
 
         return new self(
             maxAgeDays: $maxAgeDays,
-            maxSizeMb: $maxSizeMb,
-            vacuumIntervalHours: $vacuumIntervalHours,
+            maxSizeMb: Coerce::int($data['max_size_mb'] ?? null, 500),
+            vacuumIntervalHours: Coerce::int($data['vacuum_interval_hours'] ?? null, 24),
         );
     }
 }

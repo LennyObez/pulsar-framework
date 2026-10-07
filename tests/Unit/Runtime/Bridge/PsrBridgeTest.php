@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response as MessageResponse;
 use Pulsar\Http\Method;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
@@ -26,7 +27,7 @@ final class PsrBridgeTest extends TestCase
     {
         $this->bridge = new PsrBridge(
             static function (int $status, string $body, array $headers): ResponseInterface {
-                $response = new \Pulsar\Http\Message\Response(
+                $response = new MessageResponse(
                     statusCode: $status,
                     headers: $headers,
                     body: $body,

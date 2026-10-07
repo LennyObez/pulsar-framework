@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used during deserialization to detect version mismatches and trigger
  * payload migration through {@see VersionTransformerInterface} instances.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaVersionRegistry

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Thrown when CSRF token validation fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CsrfException extends FormException

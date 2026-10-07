@@ -1,0 +1,390 @@
+/*
+ * Pulsar CMS — Dark Mode Theme Override
+ *
+ * Applied via [data-theme="dark"] on <html>.
+ * All overrides target the CSS custom properties defined in cms-admin.css.
+ * WCAG AA contrast ratios: 4.5:1 for normal text, 3:1 for large text.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Dark Mode Design Tokens                                             */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] {
+  --cms-bg: var(--color-gray-900);
+  --cms-card-bg: var(--color-gray-800);
+  --cms-sidebar-bg: var(--color-gray-900);
+  --cms-sidebar-text: var(--color-gray-400);
+  --cms-sidebar-active: var(--color-primary-400);
+  --cms-sidebar-hover: var(--color-gray-800);
+  --cms-border-color: var(--color-gray-700);
+  --cms-text: var(--color-gray-100);
+  --cms-text-secondary: var(--color-gray-300);
+  --cms-muted-color: var(--color-gray-400);
+  --cms-subtle-bg: var(--color-gray-800);
+  --cms-focus-color: var(--color-primary-400);
+  --cms-accent: var(--ext-accent);
+  --cms-green: var(--color-success-400);
+  --cms-amber: var(--color-warning-400);
+  --cms-red: var(--color-danger-400);
+  --cms-purple: var(--color-secondary-400);
+}
+
+/* ------------------------------------------------------------------ */
+/* Body                                                                */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] body {
+  color: var(--cms-text);
+  background: var(--cms-bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Links                                                               */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] a {
+  color: var(--cms-accent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Header Bar                                                          */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-header {
+  background: var(--cms-header-bg, #0c1425);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar                                                             */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-sidebar {
+  background: var(--cms-sidebar-bg);
+}
+
+[data-theme='dark'] .cms-sidebar__link--active {
+  background: var(--cms-sidebar-hover);
+  color: var(--cms-text, #f1f5f9);
+}
+
+[data-theme='dark'] .cms-sidebar__group {
+  border-top-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards and Widgets                                                   */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-widget {
+  background: var(--cms-card-bg);
+  border-color: var(--cms-border-color);
+}
+
+[data-theme='dark'] .cms-widget__title {
+  border-bottom-color: var(--cms-border-color);
+}
+
+[data-theme='dark'] .cms-card {
+  background: var(--cms-card-bg);
+  border-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stats Grid                                                          */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-stats-grid__item {
+  background: var(--cms-subtle-bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tables                                                              */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-table th {
+  color: var(--cms-muted-color);
+}
+
+[data-theme='dark'] .cms-table th,
+[data-theme='dark'] .cms-table td {
+  border-bottom-color: var(--cms-border-color);
+}
+
+[data-theme='dark'] .cms-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                             */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-btn--primary {
+  background: var(--cms-accent);
+  color: var(--cms-btn-text, #fff);
+}
+
+[data-theme='dark'] .cms-btn--primary:hover {
+  background: var(--cms-accent-hover, #2563eb);
+}
+
+[data-theme='dark'] .cms-btn--outline {
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}
+
+[data-theme='dark'] .cms-btn--outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ------------------------------------------------------------------ */
+/* Form Inputs                                                         */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-input {
+  background: var(--cms-bg, #0f172a);
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}
+
+[data-theme='dark'] .cms-input:focus {
+  border-color: var(--cms-focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme='dark'] .cms-form-group__select {
+  background: var(--cms-bg, #0f172a);
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}
+
+[data-theme='dark'] .cms-form-group__textarea {
+  background: var(--cms-bg, #0f172a);
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Alerts                                                              */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-alert--warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: var(--cms-amber, #fbbf24);
+}
+
+/* ------------------------------------------------------------------ */
+/* Safe Mode Banner                                                    */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-safe-mode-banner {
+  background: rgba(251, 191, 36, 0.1);
+  border-bottom-color: rgba(251, 191, 36, 0.3);
+  color: var(--cms-amber, #fbbf24);
+}
+
+/* ------------------------------------------------------------------ */
+/* Activity List                                                       */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-activity-list__item {
+  border-bottom-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Health Details                                                      */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-health-details__row {
+  border-bottom-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Progress Bar                                                        */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-progress-bar {
+  background: var(--cms-subtle-bg);
+}
+
+[data-theme='dark'] .cms-progress-bar__label {
+  color: var(--cms-text, #f1f5f9);
+}
+
+/* ------------------------------------------------------------------ */
+/* Upload Zone                                                         */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-upload-zone {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--cms-border-color);
+}
+
+[data-theme='dark'] .cms-upload-zone--active {
+  border-color: var(--cms-accent);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* ------------------------------------------------------------------ */
+/* Review List                                                         */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-review-list__item {
+  border-bottom-color: var(--cms-border-color);
+}
+
+[data-theme='dark'] .cms-review-list__link:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sparkline                                                           */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-sparkline__bar {
+  background: #60a5fa;
+}
+
+/* ------------------------------------------------------------------ */
+/* Fieldset                                                            */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-fieldset {
+  border-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Skip Link (focus-visible)                                           */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .sr-only--focusable:focus-visible {
+  background: var(--cms-accent);
+  outline-color: var(--cms-focus-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Scrollbar (WebKit)                                                  */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: var(--cms-bg);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar Panels                                                      */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-sidebar-panel {
+  background: var(--cms-card-bg);
+  border-color: var(--cms-border-color);
+}
+
+[data-theme='dark'] .cms-sidebar-panel__title {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Fieldsets                                                            */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-fieldset {
+  border-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Alerts                                                              */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-alert--warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: var(--cms-amber);
+}
+
+[data-theme='dark'] .cms-alert--danger {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: var(--cms-red);
+}
+
+[data-theme='dark'] .cms-alert--info {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: rgba(96, 165, 250, 0.3);
+  color: var(--cms-accent);
+}
+
+[data-theme='dark'] .cms-alert--success {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: var(--cms-green);
+}
+
+/* ------------------------------------------------------------------ */
+/* Form Groups                                                         */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-form-group__input,
+[data-theme='dark'] .cms-form-group__textarea,
+[data-theme='dark'] .cms-form-group__select {
+  background: var(--cms-bg);
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}
+
+[data-theme='dark'] .cms-form-group__input:focus,
+[data-theme='dark'] .cms-form-group__textarea:focus,
+[data-theme='dark'] .cms-form-group__select:focus {
+  border-color: var(--cms-focus-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme='dark'] .cms-form-group__input::placeholder,
+[data-theme='dark'] .cms-form-group__textarea::placeholder {
+  color: var(--cms-muted-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Slug Field                                                          */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-slug-field {
+  border-color: var(--cms-border-color);
+  background: var(--cms-bg);
+}
+
+[data-theme='dark'] .cms-slug-field__prefix {
+  background: var(--cms-card-bg);
+  border-right-color: var(--cms-border-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Taxonomy Groups                                                     */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-taxonomy-group__tree,
+[data-theme='dark'] .cms-taxonomy-group__tags {
+  border-color: var(--cms-border-color);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ------------------------------------------------------------------ */
+/* Skeleton Loading                                                    */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2FA Pages                                                           */
+/* ------------------------------------------------------------------ */
+[data-theme='dark'] .cms-2fa-enroll__qr {
+  background: #fff;
+}
+
+[data-theme='dark'] .cms-2fa-enroll__secret {
+  background: var(--cms-bg);
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}
+
+[data-theme='dark'] .cms-2fa-recovery-codes__code {
+  background: var(--cms-bg);
+  border-color: var(--cms-border-color);
+  color: var(--cms-text);
+}

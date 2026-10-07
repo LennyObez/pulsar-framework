@@ -52,7 +52,9 @@ final class SqliteActionHistoryStore implements ActionHistoryStoreInterface
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $this->hydrateAll($stmt->fetchAll(PDO::FETCH_ASSOC));
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->hydrateAll($rows);
     }
 
     #[Override]
@@ -67,7 +69,9 @@ final class SqliteActionHistoryStore implements ActionHistoryStoreInterface
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $this->hydrateAll($stmt->fetchAll(PDO::FETCH_ASSOC));
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->hydrateAll($rows);
     }
 
     private function ensureSchema(): void
@@ -103,16 +107,20 @@ final class SqliteActionHistoryStore implements ActionHistoryStoreInterface
     private function hydrateAll(array $rows): array
     {
         return array_map(
-            static fn(array $row): ActionHistoryEntry => new ActionHistoryEntry(
-                id: (string) $row['id'],
-                action: (string) $row['action'],
-                resourceName: (string) $row['resource_name'],
-                recordId: $row['record_id'] !== null ? (string) $row['record_id'] : null,
-                actor: (string) $row['actor'],
-                timestamp: (int) $row['timestamp'],
-                success: (bool) $row['success'],
-                detail: (string) $row['detail'],
-            ),
+            /** @param array<string, mixed> $row */
+            static function (array $row): ActionHistoryEntry {
+                /** @var array{id: string, action: string, resource_name: string, record_id: string|null, actor: string, timestamp: int, success: int, detail: string} $row */
+                return new ActionHistoryEntry(
+                    id: $row['id'],
+                    action: $row['action'],
+                    resourceName: $row['resource_name'],
+                    recordId: $row['record_id'],
+                    actor: $row['actor'],
+                    timestamp: $row['timestamp'],
+                    success: (bool) $row['success'],
+                    detail: $row['detail'],
+                );
+            },
             $rows,
         );
     }

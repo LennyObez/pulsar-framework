@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Metadata for a database column.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ColumnInfo

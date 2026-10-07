@@ -73,17 +73,21 @@ final readonly class RunFormatterTool implements McpToolInterface
 
     public function execute(array $params): ToolResult
     {
-        $type = ParamValidator::validateType((string) ($params['type'] ?? ''));
+        /** @var string $typeStr */
+        $typeStr = isset($params['type']) && is_string($params['type']) ? $params['type'] : '';
+        $type = ParamValidator::validateType($typeStr);
 
         $this->accessGate->assertConcurrencyAllowed();
 
         try {
+            /** @var 'php'|'js' $type */
             $command = match ($type) {
                 'php' => [$this->composerBinary, 'cs:fix', '--no-interaction', '--no-ansi'],
                 'js' => [$this->pnpmBinary, 'format:fix'],
             };
 
             // Validate and handle optional path for PHP formatter
+            /** @var mixed $path */
             $path = $params['path'] ?? null;
             if ($type === 'php' && is_string($path) && $path !== '') {
                 $validated = ParamValidator::validatePath($path, $this->projectRoot);

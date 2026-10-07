@@ -26,7 +26,7 @@ final readonly class SpanBatchExporter
 
     public function __construct(
         OtlpTransportInterface $transport,
-        private ResourceInfo $resource,
+        ResourceInfo $resource,
         TraceRequestBuilder $builder = new TraceRequestBuilder(),
         int $maxBatchSize = 512,
         int $maxQueueSize = 2048,
@@ -35,9 +35,9 @@ final readonly class SpanBatchExporter
         /** @var BatchExporter<OtlpSpan> $batchExporter */
         $batchExporter = new BatchExporter(
             transport: $transport,
-            serializer: function (array $spans) use ($builder): string {
+            serializer: static function (array $spans) use ($builder, $resource): string {
                 /** @var list<OtlpSpan> $spans */
-                return $builder->build($spans, $this->resource);
+                return $builder->build($spans, $resource);
             },
             signalPath: '/v1/traces',
             maxBatchSize: $maxBatchSize,

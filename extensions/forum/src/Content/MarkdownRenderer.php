@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  * Wraps league/commonmark with GitHub Flavored Markdown (GFM) support
  * including tables, autolinks, strikethrough, and fenced code blocks.
  * Output MUST be passed through ForumBodyPolicy before storage/display.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MarkdownRenderer implements MarkdownRendererInterface

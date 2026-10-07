@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Forum\Internal\Service;
 
 use Pulsar\Api\Internal;
+use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extension\Forum\Badge\BadgeServiceInterface;
 use Pulsar\Extension\Forum\Config\ForumConfig;
@@ -25,7 +26,7 @@ use Pulsar\Extension\Forum\Vote\ThreadVote;
 use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
 
 /**
- * Voting service implementation — casts and removes votes with score aggregation.
+ * Voting service implementation: casts and removes votes with score aggregation.
  */
 #[Internal(reason: 'Use VoteServiceInterface for public API')]
 final readonly class VoteService implements VoteServiceInterface
@@ -78,7 +79,11 @@ final readonly class VoteService implements VoteServiceInterface
             tenantId: $tenantId,
         );
 
-        $this->threadVotes->save($vote);
+        try {
+            $this->threadVotes->save($vote);
+        } catch (DatabaseException) {
+            throw ForumException::duplicateVote($userId, $threadId);
+        }
 
         // C-1: Atomic vote score increment
         $this->threads->incrementVoteScore($threadId, $direction->value);
@@ -143,7 +148,11 @@ final readonly class VoteService implements VoteServiceInterface
             tenantId: $tenantId,
         );
 
-        $this->postVotes->save($vote);
+        try {
+            $this->postVotes->save($vote);
+        } catch (DatabaseException) {
+            throw ForumException::duplicateVote($userId, $postId);
+        }
 
         // C-1: Atomic vote score increment
         $this->posts->incrementVoteScore($postId, $direction->value);
@@ -169,8 +178,8 @@ final readonly class VoteService implements VoteServiceInterface
             tenantId: $tenantId,
         ));
 
-        // Evaluate Helpful badge when post vote score reaches a threshold
-        if ($post->voteScore >= 4 && $direction === VoteDirection::Up) {
+        // Evaluate Helpful badge: use post-increment score ($post->voteScore is pre-save)
+        if ($post->voteScore + 1 >= 5 && $direction === VoteDirection::Up) {
             $this->badgeService->award($post->authorId, Badge::Helpful, $tenantId);
         }
 
@@ -182,7 +191,7 @@ final readonly class VoteService implements VoteServiceInterface
         $vote = $this->threadVotes->findByUserAndThread($userId, $threadId);
 
         if ($vote === null) {
-            throw ForumException::notFound('ThreadVote', "{$userId}:{$threadId}");
+            throw ForumException::notFound('ThreadVote', "$userId:$threadId");
         }
 
         $thread = $this->threads->findById($threadId);
@@ -223,7 +232,7 @@ final readonly class VoteService implements VoteServiceInterface
         $vote = $this->postVotes->findByUserAndPost($userId, $postId);
 
         if ($vote === null) {
-            throw ForumException::notFound('PostVote', "{$userId}:{$postId}");
+            throw ForumException::notFound('PostVote', "$userId:$postId");
         }
 
         $post = $this->posts->findById($postId);

@@ -20,9 +20,10 @@ use function sprintf;
  * following common healthcare facility patterns.
  *
  * @see https://www.hl7.org/fhir/datatypes.html#identifier
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Mrn implements RuleInterface
+final readonly class Mrn implements RuleInterface
 {
     public function __construct(
         private string $message = '',

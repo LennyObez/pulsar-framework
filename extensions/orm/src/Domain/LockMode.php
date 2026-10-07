@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Row-level lock modes for SELECT ... FOR UPDATE / SHARE.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LockMode: string

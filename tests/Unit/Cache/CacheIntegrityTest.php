@@ -218,7 +218,7 @@ final class CacheIntegrityTest extends TestCase
         symlink($realFile, $symlink);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('symlink');
+        $this->expectExceptionMessageIsOrContains('symlink');
 
         $this->integrity->validateFile($symlink);
     }
@@ -233,7 +233,7 @@ final class CacheIntegrityTest extends TestCase
         symlink($realDir, $symlinkDir);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('symlink');
+        $this->expectExceptionMessageIsOrContains('symlink');
 
         $this->integrity->validateDirectory($symlinkDir);
     }
@@ -242,7 +242,7 @@ final class CacheIntegrityTest extends TestCase
     public function validateFileRejectsNonExistentFile(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('not a regular file');
+        $this->expectExceptionMessageIsOrContains('not a regular file');
 
         $this->integrity->validateFile($this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent.bin');
     }
@@ -254,7 +254,7 @@ final class CacheIntegrityTest extends TestCase
         file_put_contents($file, 'data');
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('not a directory');
+        $this->expectExceptionMessageIsOrContains('not a directory');
 
         $this->integrity->validateDirectory($file);
     }
@@ -406,17 +406,16 @@ final class CacheIntegrityTest extends TestCase
     public function validateDirectoryAcceptsValidDirectory(): void
     {
         // Should not throw for our temp directory
-        $this->integrity->validateDirectory($this->tempDir);
+        $this->expectNotToPerformAssertions();
 
-        // If we get here, no exception was thrown
-        $this->addToAssertionCount(1);
+        $this->integrity->validateDirectory($this->tempDir);
     }
 
     #[Test]
     public function validateDirectoryRejectsNonExistentDirectory(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('not a directory');
+        $this->expectExceptionMessageIsOrContains('not a directory');
 
         $this->integrity->validateDirectory($this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent');
     }
@@ -427,10 +426,10 @@ final class CacheIntegrityTest extends TestCase
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'valid.bin';
         file_put_contents($path, 'data');
 
+        $this->expectNotToPerformAssertions();
+
         // Should not throw
         $this->integrity->validateFile($path);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]

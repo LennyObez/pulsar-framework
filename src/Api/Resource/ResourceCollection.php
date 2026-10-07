@@ -16,6 +16,7 @@ use function count;
  *
  * Provides uniform serialization for resource lists, including pagination
  * information (total count, page details, cursors) when available.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResourceCollection

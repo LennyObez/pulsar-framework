@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\ObservabilityExport;
 
 use Override;
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
@@ -22,7 +23,12 @@ use Pulsar\Routing\RouterInterface;
  * Registers JSON Lines exporters for spans, metrics, and errors.
  * All exporters write to configurable file paths with buffered,
  * multi-process-safe I/O.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
+ * @api
  */
+#[Api(since: '1.0.0')]
 final class ObservabilityExportExtension implements ExtensionInterface
 {
     private const string DEFAULT_SPANS_PATH = 'var/observability/spans.jsonl';

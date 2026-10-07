@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * AST node representing a single sort condition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SortExpression

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Rate limiting configuration for the analytics collection endpoint.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RateLimitConfig
@@ -27,8 +29,8 @@ final readonly class RateLimitConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            maxEventsPerIpPerMinute: (int) ($data['max_events_per_ip_per_minute'] ?? 30),
-            burst: (int) ($data['burst'] ?? 5),
+            maxEventsPerIpPerMinute: Coerce::intFromInput($data['max_events_per_ip_per_minute'] ?? null, 30),
+            burst: Coerce::intFromInput($data['burst'] ?? null, 5),
         );
     }
 }

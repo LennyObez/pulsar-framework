@@ -22,6 +22,7 @@ use function rename;
  *
  * Validates MIME type by magic bytes, enforces size limits,
  * sanitizes filenames, and integrates with antivirus scanning.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UploadedFileHandler
@@ -97,9 +98,11 @@ final readonly class UploadedFileHandler
             ]);
         }
 
-        // Generate safe storage filename
+        // Generate safe storage filename. The extension is derived from the
+        // detected content type (not the client name), so a content/extension
+        // polyglot can never be written with a server-executable extension.
         $sanitizedOriginal = $this->sanitizer->sanitize($originalName);
-        $storageName = $this->sanitizer->generateStorageName($originalName);
+        $storageName = $this->sanitizer->generateStorageName($originalName, $detectedMime);
         $storageDir = $this->config->directory;
 
         if (!is_dir($storageDir)) {

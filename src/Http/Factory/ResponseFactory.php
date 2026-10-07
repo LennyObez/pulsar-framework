@@ -13,6 +13,7 @@ use Pulsar\Http\Message\Response;
 
 /**
  * PSR-17 response factory.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class ResponseFactory implements ResponseFactoryInterface

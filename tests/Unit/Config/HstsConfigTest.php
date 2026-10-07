@@ -31,9 +31,9 @@ final class HstsConfigTest extends TestCase
     #[Test]
     public function toHeaderValueProducesCorrectString(): void
     {
-        $config = new HstsConfig(maxAge: 31536000, includeSubDomains: true, preload: false);
+        $config = new HstsConfig(maxAge: 63072000, includeSubDomains: true, preload: false);
 
-        self::assertSame('max-age=31536000; includeSubDomains', $config->toHeaderValue());
+        self::assertSame('max-age=63072000; includeSubDomains', $config->toHeaderValue());
     }
 
     #[Test]
@@ -47,9 +47,9 @@ final class HstsConfigTest extends TestCase
     #[Test]
     public function toHeaderValueWithoutIncludeSubDomains(): void
     {
-        $config = new HstsConfig(maxAge: 31536000, includeSubDomains: false, preload: false);
+        $config = new HstsConfig(maxAge: 63072000, includeSubDomains: false, preload: false);
 
-        self::assertSame('max-age=31536000', $config->toHeaderValue());
+        self::assertSame('max-age=63072000', $config->toHeaderValue());
     }
 
     #[Test]
@@ -58,9 +58,36 @@ final class HstsConfigTest extends TestCase
         $config = new HstsConfig();
 
         self::assertTrue($config->enabled);
-        self::assertSame(31536000, $config->maxAge);
+        self::assertSame(63072000, $config->maxAge);
         self::assertTrue($config->includeSubDomains);
         self::assertFalse($config->preload);
+        self::assertFalse($config->emittedAtEdge);
+    }
+
+    #[Test]
+    public function isAssertedReflectsAppHstsOrEdgeTermination(): void
+    {
+        self::assertTrue(new HstsConfig(enabled: true)->isAsserted(), 'app-emitted HSTS');
+        self::assertTrue(
+            new HstsConfig(enabled: false, emittedAtEdge: true)->isAsserted(),
+            'edge-terminated HSTS',
+        );
+        self::assertFalse(
+            new HstsConfig(enabled: false, emittedAtEdge: false)->isAsserted(),
+            'neither app nor edge',
+        );
+    }
+
+    #[Test]
+    public function edgeTerminatedConfigStillEmitsNoHeader(): void
+    {
+        // emitted_at_edge must NOT make the app emit its own header (would
+        // duplicate the edge's) -- toHeaderValue is only used when enabled.
+        $config = HstsConfig::fromArray(['enabled' => false, 'emitted_at_edge' => true]);
+
+        self::assertTrue($config->emittedAtEdge);
+        self::assertFalse($config->enabled);
+        self::assertTrue($config->isAsserted());
     }
 
     #[Test]
@@ -69,7 +96,7 @@ final class HstsConfigTest extends TestCase
         $config = HstsConfig::fromArray([]);
 
         self::assertTrue($config->enabled);
-        self::assertSame(31536000, $config->maxAge);
+        self::assertSame(63072000, $config->maxAge);
         self::assertTrue($config->includeSubDomains);
         self::assertFalse($config->preload);
     }

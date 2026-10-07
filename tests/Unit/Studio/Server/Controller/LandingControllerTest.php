@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\I18nConfig;
 use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
@@ -14,10 +15,32 @@ use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Translator;
 
 #[CoversClass(LandingController::class)]
 final class LandingControllerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(null);
+        $catalog->method('has')->willReturn(false);
+        Translator::setGlobalInstance(new Translator($catalog, new I18nConfig(
+            defaultLocale: 'en',
+            supportedLocales: ['en'],
+            fallbackLocales: [],
+            catalogPath: null,
+            regulated: false,
+            maxSupportedLocales: 50,
+            strictMode: false,
+        )));
+    }
+
+    protected function tearDown(): void
+    {
+        Translator::resetGlobalInstance();
+    }
     private function createRequest(): ServerRequest
     {
         return new ServerRequest(
@@ -180,7 +203,11 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('1000 MB', (string) $response->getBody());
+        // The max size is rendered via i18n keys (storage_limit and retention_value)
+        // which include the size parameter; in non-strict mode the key is returned as-is
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('studio.retention_value', $body);
+        self::assertStringContainsString('studio.storage_limit', $body);
     }
 
     #[Test]

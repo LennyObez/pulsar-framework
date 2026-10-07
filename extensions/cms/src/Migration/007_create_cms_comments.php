@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 use Pulsar\Database\ConnectionInterface;
-use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationInterface;
+use Pulsar\Database\Schema\IndexOperations;
 use Pulsar\Extension\Cms\Migration\CmsDdl;
 
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
         $driver = $connection->driver();
+        $indexes = new IndexOperations($connection);
 
         $connection->execute(CmsDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS cms_comments (
@@ -39,21 +40,20 @@ return new class implements MigrationInterface {
             )
             SQL, $driver));
 
-        $connection->execute(<<<'SQL'
-            CREATE INDEX IF NOT EXISTS idx_comment_content_status_created ON cms_comments (content_id, status, created_at)
-            SQL);
+        $indexes->ensure(
+            'cms_comments',
+            'idx_comment_content_status_created',
+            ['content_id', 'status', 'created_at'],
+        );
 
-        // Partial index: supported by PostgreSQL and SQLite, fallback for MySQL
-        if ($driver === Driver::MySQL) {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX idx_comment_pending_tenant ON cms_comments (status, tenant_id)
-                SQL);
-        } else {
-            $connection->execute(<<<'SQL'
-                CREATE INDEX IF NOT EXISTS idx_comment_pending_tenant ON cms_comments (status, tenant_id)
-                    WHERE status = 'pending'
-                SQL);
-        }
+        // `status` stays in the key rather than only in the predicate, so an engine
+        // without partial indexes still narrows to the moderation queue on its own.
+        $indexes->ensure(
+            'cms_comments',
+            'idx_comment_pending_tenant',
+            ['status', 'tenant_id'],
+            where: "status = 'pending'",
+        );
     }
 
     public function down(ConnectionInterface $connection): void

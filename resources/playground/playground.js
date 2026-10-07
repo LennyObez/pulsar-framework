@@ -57,6 +57,10 @@
   var statusDot;
   /** @type {HTMLElement} */
   var statusText;
+  /** @type {HTMLSelectElement} */
+  var previewSource;
+  /** @type {HTMLElement} */
+  var previewTitle;
 
   // -----------------------------------------------------------------------
   // Helpers
@@ -369,6 +373,67 @@
   }
 
   // -----------------------------------------------------------------------
+  // Preview Source Switching
+  // -----------------------------------------------------------------------
+
+  /**
+   * The preview pages the playground is allowed to load, in the order the
+   * toolbar offers them. The <select> in index.html lists the same five paths;
+   * this table is what decides, so a rewritten option, an extension that
+   * repopulated the select, or a hand-edited DOM cannot point the iframe
+   * anywhere else — least of all at a javascript: URL, which would run in the
+   * playground's own origin.
+   *
+   * @type {Array<{path: string, label: string}>}
+   */
+  var PREVIEW_SOURCES = [
+    { path: '/preview/admin', label: 'Admin panel' },
+    { path: '/preview/cms', label: 'CMS dashboard' },
+    { path: '/catalog', label: 'Component catalog' },
+    { path: '/preview/forum', label: 'Forum' },
+    { path: '/preview/studio', label: 'Studio console' },
+  ];
+
+  /**
+   * Look a requested path up in the table of allowed preview pages.
+   *
+   * @param {string} path  The path the toolbar asked for
+   * @returns {{path: string, label: string}|null} The table entry, or null when
+   *     the path is not one this playground serves.
+   */
+  function findPreviewSource(path) {
+    for (var i = 0; i < PREVIEW_SOURCES.length; i++) {
+      if (PREVIEW_SOURCES[i].path === path) {
+        return PREVIEW_SOURCES[i];
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Switch the preview iframe to a different source (catalog or extension page).
+   *
+   * The iframe is pointed at the path held in the table, never at the string
+   * that arrived from the DOM, and the title comes from the same entry — so the
+   * frame and its heading can never disagree about what is on screen.
+   *
+   * @param {string} path  Requested path for the iframe
+   */
+  function switchPreviewSource(path) {
+    var source = findPreviewSource(path);
+    if (source === null) {
+      showToast('Unknown preview source.', true);
+      return;
+    }
+
+    iframe.src = source.path;
+    if (previewTitle) {
+      previewTitle.textContent = source.label;
+    }
+  }
+
+  // -----------------------------------------------------------------------
   // Responsive Preview
   // -----------------------------------------------------------------------
 
@@ -483,6 +548,8 @@
     dialogInput = document.getElementById('save-dialog-input');
     statusDot = document.querySelector('.pg-status__dot');
     statusText = document.getElementById('status-text');
+    previewSource = document.getElementById('preview-source');
+    previewTitle = document.querySelector('.pg-preview-pane__title');
 
     var editorTextarea = document.getElementById('editor-textarea');
     var editorHighlight = document.getElementById('editor-highlight');
@@ -512,6 +579,23 @@
       .then(function () {
         switchTheme('default');
       });
+
+    // Re-inject CSS whenever the iframe finishes loading a new page
+    iframe.addEventListener('load', function () {
+      try {
+        var css = PulsarEditor.getValue();
+        injectCSS(css);
+      } catch (_) {
+        // Cross-origin page — CSS injection unavailable
+      }
+    });
+
+    // Preview source selector
+    if (previewSource) {
+      previewSource.addEventListener('change', function () {
+        switchPreviewSource(previewSource.value);
+      });
+    }
 
     // Theme select change
     themeSelect.addEventListener('change', function () {

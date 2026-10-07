@@ -13,6 +13,7 @@ use Pulsar\Security\Compliance\DataClassification;
  * Computed from the {@see \Pulsar\Api\Resource\Attribute\Expose} and
  * {@see \Pulsar\Api\Resource\Attribute\ClassificationTag} attributes during
  * resource metadata resolution. Immutable for the request lifetime.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldPolicy

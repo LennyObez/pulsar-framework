@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Introspection;
 
+use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
@@ -11,15 +12,18 @@ use Pulsar\Database\Row;
 
 use function array_map;
 use function in_array;
+use function preg_match;
+use function sprintf;
 use function strtolower;
 
 /**
  * Introspects database schema using driver-specific queries.
  *
- * Works directly with ConnectionInterface — no ORM required.
+ * Works directly with ConnectionInterface: no ORM required.
+ * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DatabaseIntrospector
+final readonly class DatabaseIntrospector implements DatabaseIntrospectorInterface
 {
     public function __construct(
         private ConnectionInterface $connection,
@@ -126,6 +130,7 @@ final readonly class DatabaseIntrospector
      */
     private function sqliteColumns(string $table): array
     {
+        $this->validateIdentifier($table);
         $result = $this->connection->query("PRAGMA table_info($table)");
 
         return array_map(
@@ -145,6 +150,7 @@ final readonly class DatabaseIntrospector
      */
     private function mysqlColumns(string $table): array
     {
+        $this->validateIdentifier($table);
         $result = $this->connection->query("SHOW COLUMNS FROM $table");
 
         return array_map(
@@ -157,6 +163,22 @@ final readonly class DatabaseIntrospector
             ),
             $result->rows,
         );
+    }
+
+    /**
+     * Validates that a database identifier contains only safe characters.
+     *
+     * @throws InvalidArgumentException If the identifier contains unsafe characters
+     */
+    private function validateIdentifier(string $identifier): void
+    {
+        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $identifier) !== 1) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid database identifier "%s": identifiers must start with a letter or underscore '
+                . 'and contain only letters, digits, and underscores.',
+                $identifier,
+            ));
+        }
     }
 
     /**

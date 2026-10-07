@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Consent records capture the fact that a subject (identified by an opaque
  * string) granted or revoked consent for a specific purpose at a given time.
  * Implementations should be immutable value objects.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConsentRecordInterface

@@ -44,13 +44,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Lock Timeout
+    | Overlap Prevention
     |--------------------------------------------------------------------------
     |
-    | Seconds to hold a job lock to prevent overlapping execution.
+    | There is no global lock timeout. A job that must not overlap declares it
+    | per job, with the lifetime that suits that job's worst-case runtime:
+    |
+    |     $schedule->job(new ReportJob())
+    |         ->daily()
+    |         ->withoutOverlapping($lock, expiresAfterMinutes: 120);
+    |
+    | A `lock_timeout` key here used to be parsed and read by nothing; it is now
+    | reported as an unknown key rather than silently accepted.
     |
     */
-    'lock_timeout' => 300,
 
     /*
     |--------------------------------------------------------------------------

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for post votes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PostVoteRepositoryInterface

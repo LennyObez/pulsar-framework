@@ -10,6 +10,7 @@ use Pulsar\Extension\Orm\Domain\LockMode;
 
 use function implode;
 use function sprintf;
+use function str_replace;
 
 /**
  * SQLite SQL dialect.
@@ -20,7 +21,12 @@ final readonly class SqliteDialect implements DialectInterface
     #[Override]
     public function quoteIdentifier(string $identifier): string
     {
-        return '"' . $identifier . '"';
+        // Escape the double-quote delimiter by doubling it (and strip NUL
+        // bytes). Without this, an attacker-influenced identifier — e.g.
+        // a column name decoded from a tampered pagination cursor or a
+        // request-controlled sort field — could embed a `"` to break out
+        // of the quoted identifier into arbitrary SQL.
+        return '"' . str_replace(['"', "\0"], ['""', ''], $identifier) . '"';
     }
 
     #[Override]

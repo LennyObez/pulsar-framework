@@ -6,6 +6,7 @@ namespace Pulsar\Api\OpenApi;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function is_array;
 use function is_string;
@@ -15,9 +16,10 @@ use function is_string;
  *
  * Controls the metadata, server URLs, security schemes, and output
  * settings for the generated OpenAPI specification.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class OpenApiConfig
+final readonly class OpenApiConfig
 {
     /**
      * @param string $title API title in the info object
@@ -47,7 +49,7 @@ readonly class OpenApiConfig
         public ?string $licenseUrl = null,
         public array $servers = [],
         public array $securitySchemes = [],
-        public string $outputPath = 'storage/api/openapi.json',
+        public string $outputPath = 'var/api/openapi.json',
         public string $swaggerUiRoute = '/api/docs',
         public bool $swaggerUiEnabled = false,
     ) {}
@@ -55,72 +57,55 @@ readonly class OpenApiConfig
     /**
      * Build an OpenApiConfig from a raw config array.
      *
-     * @param array<string, mixed> $data Raw array from config/openapi.php
+     * @param array{
+     *     title?: string,
+     *     version?: string,
+     *     description?: string,
+     *     terms_of_service?: string|null,
+     *     contact_name?: string|null,
+     *     contact_email?: string|null,
+     *     contact_url?: string|null,
+     *     license_name?: string|null,
+     *     license_url?: string|null,
+     *     servers?: list<array{url: string, description: string}>,
+     *     security_schemes?: list<SecuritySchemeDefinition>,
+     *     output_path?: string,
+     *     swagger_ui_route?: string,
+     *     swagger_ui_enabled?: bool,
+     * } $data Raw array from config/openapi.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawServers = $data['servers'] ?? [];
-        $servers = is_array($rawServers) ? self::filterServers($rawServers) : [];
-
-        $rawSchemes = $data['security_schemes'] ?? [];
-        $securitySchemes = is_array($rawSchemes) ? self::filterSecuritySchemes($rawSchemes) : [];
-
-        $rawOutputPath = $data['output_path'] ?? 'storage/api/openapi.json';
-        $outputPath = is_string($rawOutputPath) ? $rawOutputPath : 'storage/api/openapi.json';
-
-        $rawSwaggerRoute = $data['swagger_ui_route'] ?? '/api/docs';
-        $swaggerUiRoute = is_string($rawSwaggerRoute) ? $rawSwaggerRoute : '/api/docs';
-
-        $swaggerUiEnabled = ($data['swagger_ui_enabled'] ?? false) === true;
-
         return new self(
-            title: self::stringOrDefault($data, 'title', 'Pulsar API'),
-            version: self::stringOrDefault($data, 'version', '1.0.0'),
-            description: self::stringOrDefault($data, 'description', ''),
-            termsOfService: self::nullableString($data, 'terms_of_service'),
-            contactName: self::nullableString($data, 'contact_name'),
-            contactEmail: self::nullableString($data, 'contact_email'),
-            contactUrl: self::nullableString($data, 'contact_url'),
-            licenseName: self::nullableString($data, 'license_name'),
-            licenseUrl: self::nullableString($data, 'license_url'),
-            servers: $servers,
-            securitySchemes: $securitySchemes,
-            outputPath: $outputPath,
-            swaggerUiRoute: $swaggerUiRoute,
-            swaggerUiEnabled: $swaggerUiEnabled,
+            title: Coerce::string($data['title'] ?? null, 'Pulsar API'),
+            version: Coerce::string($data['version'] ?? null, '1.0.0'),
+            description: Coerce::string($data['description'] ?? null),
+            termsOfService: Coerce::nullableString($data['terms_of_service'] ?? null),
+            contactName: Coerce::nullableString($data['contact_name'] ?? null),
+            contactEmail: Coerce::nullableString($data['contact_email'] ?? null),
+            contactUrl: Coerce::nullableString($data['contact_url'] ?? null),
+            licenseName: Coerce::nullableString($data['license_name'] ?? null),
+            licenseUrl: Coerce::nullableString($data['license_url'] ?? null),
+            servers: self::filterServers($data['servers'] ?? null),
+            securitySchemes: self::filterSecuritySchemes($data['security_schemes'] ?? null),
+            outputPath: Coerce::string($data['output_path'] ?? null, 'var/api/openapi.json'),
+            swaggerUiRoute: Coerce::string($data['swagger_ui_route'] ?? null, '/api/docs'),
+            swaggerUiEnabled: ($data['swagger_ui_enabled'] ?? false) === true,
         );
     }
 
     /**
-     * @param array<string, mixed> $data
-     */
-    private static function stringOrDefault(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? $default;
-
-        return is_string($value) ? $value : $default;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function nullableString(array $data, string $key): ?string
-    {
-        $value = $data[$key] ?? null;
-
-        return is_string($value) ? $value : null;
-    }
-
-    /**
-     * @param array<array-key, mixed> $items
-     *
      * @return list<array{url: string, description: string}>
      */
-    private static function filterServers(array $items): array
+    private static function filterServers(mixed $items): array
     {
-        $servers = [];
+        if (!is_array($items)) {
+            return [];
+        }
 
+        $servers = [];
+        /** @var mixed $item */
         foreach ($items as $item) {
             if (
                 is_array($item)
@@ -136,14 +121,16 @@ readonly class OpenApiConfig
     }
 
     /**
-     * @param array<array-key, mixed> $items
-     *
      * @return list<SecuritySchemeDefinition>
      */
-    private static function filterSecuritySchemes(array $items): array
+    private static function filterSecuritySchemes(mixed $items): array
     {
-        $schemes = [];
+        if (!is_array($items)) {
+            return [];
+        }
 
+        $schemes = [];
+        /** @var mixed $item */
         foreach ($items as $item) {
             if ($item instanceof SecuritySchemeDefinition) {
                 $schemes[] = $item;

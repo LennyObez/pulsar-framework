@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extensibility\Exception\ManifestException;
+use Pulsar\Extensibility\ExtensionKind;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\Manifest\ProvidesConfig;
 use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
@@ -27,6 +28,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/test-extension',
             'version' => '1.0.0',
             'extension_class' => 'Vendor\\Test\\TestExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'description' => 'A test extension',
         ];
 
@@ -43,11 +45,12 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnMissingName(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Missing required field "name"');
+        $this->expectExceptionMessageIsOrContains('Missing required field "name"');
 
         $_ = ExtensionManifest::fromArray([
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 
@@ -55,11 +58,12 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnMissingVersion(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Missing required field "version"');
+        $this->expectExceptionMessageIsOrContains('Missing required field "version"');
 
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 
@@ -67,7 +71,7 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnMissingExtensionClass(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Missing required field "extension_class"');
+        $this->expectExceptionMessageIsOrContains('Missing required field "extension_class"');
 
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',
@@ -79,12 +83,13 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnInvalidVersion(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Invalid version format');
+        $this->expectExceptionMessageIsOrContains('Invalid version format');
 
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',
             'version' => 'invalid',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 
@@ -114,6 +119,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'provides' => [
                 'services' => ['ServiceA', 'ServiceB'],
                 'commands' => ['CommandA'],
@@ -137,6 +143,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'requires' => [
                 'vendor/other' => '^1.0',
             ],
@@ -155,6 +162,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/test-extension',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertSame('test-extension', $manifest->shortName());
@@ -167,6 +175,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/test-extension',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertSame('vendor', $manifest->vendor());
@@ -179,6 +188,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'requires' => ['other' => '1.0'],
         ]);
 
@@ -192,6 +202,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertFalse($manifest->hasDependencies());
@@ -204,6 +215,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'requires' => [
                 'dep1' => '1.0',
                 'dep2' => '2.0',
@@ -220,6 +232,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
@@ -232,6 +245,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'core',
         ]);
 
@@ -245,6 +259,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'verified',
         ]);
 
@@ -258,6 +273,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'untrusted',
         ]);
 
@@ -271,9 +287,75 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'invalid',
         ]);
 
         self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
+    }
+
+    #[Test]
+    public function kindDefaultsToInfrastructureWhenMissing(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+        ]);
+
+        self::assertSame(ExtensionKind::Infrastructure, $manifest->kind);
+    }
+
+    #[Test]
+    public function kindParsesProduct(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+            'kind' => 'product',
+        ]);
+
+        self::assertSame(ExtensionKind::Product, $manifest->kind);
+        self::assertFalse($manifest->kind->loadsByDefault());
+    }
+
+    #[Test]
+    public function kindDefaultsToInfrastructureForInvalidValue(): void
+    {
+        // A typo must never silently disable an extension: an unrecognized kind
+        // is treated as infrastructure (loads by default), and the drift guard
+        // catches the misclassification.
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+            'kind' => 'prodct',
+        ]);
+
+        self::assertSame(ExtensionKind::Infrastructure, $manifest->kind);
+        self::assertTrue($manifest->kind->loadsByDefault());
+    }
+
+    #[Test]
+    public function fromArrayPreservesMigrationsInProvides(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'vendor/cms',
+            'version' => '1.0.0',
+            'extension_class' => 'Vendor\\Cms\\CmsExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+            'provides' => [
+                'services' => ['ContentService'],
+                'routes' => true,
+                'migrations' => ['src/Migration', 'database/migrations'],
+            ],
+        ]);
+
+        self::assertSame(['src/Migration', 'database/migrations'], $manifest->provides->migrations);
+        self::assertTrue($manifest->provides->hasMigrations());
     }
 }

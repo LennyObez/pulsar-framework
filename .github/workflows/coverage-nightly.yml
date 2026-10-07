@@ -1,0 +1,177 @@
+name: 'Nightly Branch Coverage'
+
+# One job. No matrix, no legs, no merge.
+#
+# Branch and condition data comes from Xdebug alone — PCOV has no notion of a
+# branch — and Xdebug costs 0.87 s per test on this runner. Over the whole
+# configuration — 46,745 tests at rc.12 — that is over 11 hours against GitHub's hard
+# six-hour ceiling for a single job. Splitting it would fit each piece and change nothing about the
+# total, so a single job means the SCOPE has to shrink. That is arithmetic, not a
+# preference.
+#
+# The scope it shrinks to is one that already exists and is already guarded:
+# tools/php/mutation/phpunit.xml pairs src/Auth, src/Security and src/Audit with
+# the tests that cover them — 3,712 at rc.12 — and tests/Unit/Tooling/MutationConfigTest
+# compares it against the shared configuration on every setting they share, so it
+# cannot loosen in silence. Mutation testing is scoped there for the same reason
+# (ADR-0042); measuring both on the same slice means the two figures describe the
+# same code.
+#
+# Cost at the measured rate: ~3,712 tests at ~1 s each, so around an hour, and
+# roughly 5 GB against the runner's 16.
+#
+# What this does NOT do: measure branch coverage for the other 2,247 files under
+# src/. Nothing can, in one job, until PCOV learns branches or the suite shrinks by
+# an order of magnitude. ADR-0042 records that.
+#
+# The Conditions figure is reported, not gated. Branch coverage has never been
+# measured on this codebase, and a floor set before the first measurement would be
+# a number someone picked rather than a standard anything met. Statements and
+# methods are gated at the same 80% the pull-request job enforces, so this cannot
+# pass while those regress. Setting the Conditions floor is the follow-up to the
+# first green run, and it belongs to whoever reads that number.
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 2 AM UTC, ahead of the nightly benchmarks and mutation run
+  workflow_dispatch:
+
+concurrency:
+  group: coverage-nightly
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  branch-coverage:
+    name: 'Branch coverage (security-critical core)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180 # measured at ~60; the margin is for a slow runner, not a guess
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: pulsar_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: pulsar_test
+        ports:
+          - 5432:5432
+        options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      memcached:
+        image: memcached:1.6-alpine
+        ports:
+          - 11211:11211
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      DB_DATABASE: pulsar_test
+
+      DB_MYSQL_HOST: 127.0.0.1
+      DB_MYSQL_PORT: '3306'
+      DB_MYSQL_USERNAME: root
+      DB_MYSQL_PASSWORD: password
+      DB_MYSQL_DATABASE: pulsar_test
+
+      DB_PGSQL_HOST: 127.0.0.1
+      DB_PGSQL_PORT: '5432'
+      DB_PGSQL_USERNAME: postgres
+      DB_PGSQL_PASSWORD: password
+      DB_PGSQL_DATABASE: pulsar_test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version-file: .php-version
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
+          ini-values: apc.enable_cli=1
+          # Xdebug, and only here. It is the sole driver that emits branch data,
+          # and the sole reason this workflow exists.
+          coverage: xdebug
+
+      - name: Build and install ext-brotli
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libbrotli-dev
+          git clone --depth=1 https://github.com/kjdev/php-ext-brotli.git /tmp/php-ext-brotli
+          cd /tmp/php-ext-brotli
+          phpize
+          ./configure --with-libbrotli
+          make -j"$(nproc)"
+          sudo make install
+          echo 'extension=brotli.so' | sudo tee "$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')/99-brotli.ini"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      # --path-coverage is what makes Xdebug emit the branch data. It stays a
+      # command-line flag rather than an attribute in the configuration: declaring
+      # it there makes every consumer of that file require Xdebug, and PHPUnit then
+      # refuses to run under PCOV at all, which is what once broke Infection.
+      - name: Measure branch coverage over the security-critical core
+        env:
+          XDEBUG_MODE: coverage
+        run: |
+          php -d memory_limit=8G \
+              vendor/bin/phpunit \
+                -c tools/php/mutation/phpunit.xml \
+                --path-coverage \
+                --coverage-clover coverage/clover.xml
+
+      # Conditions is report-only on purpose; see the header. Statements and
+      # methods are gated at the same floor the pull-request job enforces.
+      - name: Enforce statements and methods, report Conditions
+        run: php tools/ci/assert-coverage-threshold.php coverage/clover.xml 80 --report-only=Conditions
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: branch-coverage-report
+          path: coverage/
+          retention-days: 30
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo '## Branch coverage — src/Auth, src/Security, src/Audit'
+            echo ''
+            echo 'The dimension the pull-request gate cannot measure, over the slice a'
+            echo 'single job can reach. See ADR-0042.'
+            echo ''
+            echo '```'
+            php tools/ci/assert-coverage-threshold.php \
+              coverage/clover.xml 80 --report-only=Conditions 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

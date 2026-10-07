@@ -13,7 +13,7 @@ use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 use function sprintf;
 
 /**
- * Internal UPDATE builder — not exposed on the public API.
+ * Internal UPDATE builder: not exposed on the public API.
  *
  * All writes go through repositories with MutationContext.
  */
@@ -68,6 +68,7 @@ final class UpdateBuilder
     public function execute(): int
     {
         $setClauses = [];
+        /** @var mixed $value */
         foreach ($this->values as $column => $value) {
             $binding = $this->bindingCounter->next('s');
             $setClauses[] = sprintf('%s = :%s', $this->quoter->quote($column), $binding);

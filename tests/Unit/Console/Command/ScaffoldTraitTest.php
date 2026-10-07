@@ -145,7 +145,12 @@ final class ScaffoldTraitTest extends TestCase
     #[Test]
     public function remove_directory_recursive_removes_nested_structure(): void
     {
-        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_scaffold_trait_' . bin2hex(random_bytes(8));
+        // SafePath rejects paths outside cwd. Tests must use a
+        // cwd-rooted temp directory rather than `sys_get_temp_dir()`.
+        $cwd = getcwd();
+        self::assertNotFalse($cwd);
+        $tempDir = $cwd . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR
+            . 'tmp_pulsar_scaffold_trait_' . bin2hex(random_bytes(8));
         mkdir($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'deep', 0o755, true);
         file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'file.txt', 'test');
         file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'deep' . DIRECTORY_SEPARATOR . 'nested.txt', 'test');
@@ -169,7 +174,10 @@ final class ScaffoldTraitTest extends TestCase
     #[Test]
     public function list_files_recursive_returns_all_files(): void
     {
-        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_list_files_' . bin2hex(random_bytes(8));
+        $cwd = getcwd();
+        self::assertNotFalse($cwd);
+        $tempDir = $cwd . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR
+            . 'tmp_pulsar_list_files_' . bin2hex(random_bytes(8));
         mkdir($tempDir . DIRECTORY_SEPARATOR . 'sub', 0o755, true);
         file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'a.txt', 'a');
         file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'b.txt', 'b');
@@ -186,7 +194,7 @@ final class ScaffoldTraitTest extends TestCase
     #[Test]
     public function list_files_recursive_returns_empty_for_nonexistent(): void
     {
-        self::assertSame([], $this->listFilesRecursive('/nonexistent'));
+        self::assertSame([], $this->listFilesRecursive(sys_get_temp_dir() . '/pulsar_nonexistent_' . bin2hex(random_bytes(16))));
     }
 
     #[Test]

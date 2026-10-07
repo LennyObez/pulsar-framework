@@ -11,6 +11,7 @@ use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestEntry;
 use Pulsar\Integrity\ManifestFormat;
+use Pulsar\Integrity\ManifestScope;
 
 use function json_decode;
 
@@ -21,7 +22,7 @@ final class ManifestFormatTest extends TestCase
     public function it_serializes_manifest_to_json(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
@@ -29,13 +30,15 @@ final class ManifestFormatTest extends TestCase
             entries: [
                 new ManifestEntry(path: 'src/Kernel.php', hash: 'abc123def456', size: 1024),
             ],
+            scope: new ManifestScope(['src/**/*.php'], ['var/**']),
         );
 
         $json = ManifestFormat::toJson($manifest);
         $data = json_decode($json, true);
         self::assertIsArray($data);
 
-        self::assertSame(1, $data['version']);
+        self::assertSame(IntegrityManifest::VERSION, $data['version']);
+        self::assertSame(['include' => ['src/**/*.php'], 'exclude' => ['var/**']], $data['scope']);
         self::assertSame('sha256', $data['algorithm']);
         self::assertSame(1700000000, $data['generated_at']);
         self::assertSame('1.0.0-rc.2', $data['framework_version']);
@@ -52,12 +55,13 @@ final class ManifestFormatTest extends TestCase
     public function it_serializes_with_explicit_signature(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $json = ManifestFormat::toJson($manifest, 'explicit_sig_hex');
@@ -71,13 +75,14 @@ final class ManifestFormatTest extends TestCase
     public function it_serializes_with_manifest_signature_when_no_explicit_given(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
             signature: 'manifest_sig',
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $json = ManifestFormat::toJson($manifest);
@@ -91,13 +96,14 @@ final class ManifestFormatTest extends TestCase
     public function it_prefers_explicit_signature_over_manifest_signature(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
             signature: 'manifest_sig',
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $json = ManifestFormat::toJson($manifest, 'explicit_sig');
@@ -111,12 +117,13 @@ final class ManifestFormatTest extends TestCase
     public function it_omits_signature_when_null(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $json = ManifestFormat::toJson($manifest);
@@ -129,11 +136,16 @@ final class ManifestFormatTest extends TestCase
     #[Test]
     public function it_deserializes_json_to_manifest(): void
     {
-        $json = '{"version":1,"algorithm":"sha256","generated_at":1700000000,"framework_version":"1.0.0-rc.2","entry_count":1,"entries":[{"path":"src/Kernel.php","hash":"abc123","size":1024}]}';
+        $json = '{"version":2,"algorithm":"sha256","generated_at":1700000000,"framework_version":"1.0.0-rc.2","entry_count":1,'
+            . '"scope":{"include":["src\/**\/*.php"],"exclude":["var\/**"]},'
+            . '"entries":[{"path":"src/Kernel.php","hash":"abc123","size":1024}]}';
 
         $manifest = ManifestFormat::fromJson($json);
 
-        self::assertSame(1, $manifest->version);
+        self::assertSame(IntegrityManifest::VERSION, $manifest->version);
+        self::assertNotNull($manifest->scope);
+        self::assertSame(['src/**/*.php'], $manifest->scope->include);
+        self::assertSame(['var/**'], $manifest->scope->exclude);
         self::assertSame('sha256', $manifest->algorithm);
         self::assertSame(1700000000, $manifest->generatedAt);
         self::assertSame('1.0.0-rc.2', $manifest->frameworkVersion);
@@ -148,7 +160,8 @@ final class ManifestFormatTest extends TestCase
     #[Test]
     public function it_deserializes_json_with_signature(): void
     {
-        $json = '{"version":1,"algorithm":"sha256","generated_at":1700000000,"framework_version":"1.0.0-rc.2","entry_count":0,"entries":[],"signature":"sig_value"}';
+        $json = '{"version":2,"algorithm":"sha256","generated_at":1700000000,"framework_version":"1.0.0-rc.2","entry_count":0,'
+            . '"scope":{"include":[],"exclude":[]},"entries":[],"signature":"sig_value"}';
 
         $manifest = ManifestFormat::fromJson($json);
 
@@ -159,7 +172,7 @@ final class ManifestFormatTest extends TestCase
     public function it_round_trips_serialize_and_deserialize(): void
     {
         $original = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
@@ -169,10 +182,15 @@ final class ManifestFormatTest extends TestCase
                 new ManifestEntry(path: 'src/Core.php', hash: 'hash2', size: 512),
             ],
             signature: 'test_sig',
+            scope: new ManifestScope(['src/**/*.php', 'config/**/*.php'], ['var/**']),
         );
 
         $json = ManifestFormat::toJson($original);
         $restored = ManifestFormat::fromJson($json);
+
+        self::assertNotNull($restored->scope);
+        self::assertSame(['src/**/*.php', 'config/**/*.php'], $restored->scope->include);
+        self::assertSame(['var/**'], $restored->scope->exclude);
 
         self::assertSame($original->version, $restored->version);
         self::assertSame($original->algorithm, $restored->algorithm);
@@ -185,11 +203,34 @@ final class ManifestFormatTest extends TestCase
         self::assertSame('src/Core.php', $restored->entries[1]->path);
     }
 
+    /**
+     * A manifest with no scope cannot be written out: an empty scope round-trips
+     * into one that covers nothing and therefore reports no additions, whatever
+     * lands in the tree.
+     */
+    #[Test]
+    public function it_refuses_to_serialize_a_manifest_without_a_scope(): void
+    {
+        $manifest = new IntegrityManifest(
+            version: IntegrityManifest::VERSION,
+            algorithm: 'sha256',
+            generatedAt: 1700000000,
+            frameworkVersion: '1.0.0-rc.2',
+            entryCount: 0,
+            entries: [],
+        );
+
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('declares no scope');
+
+        $_ = ManifestFormat::toJson($manifest);
+    }
+
     #[Test]
     public function it_throws_on_invalid_json(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('corrupted');
+        $this->expectExceptionMessageIsOrContains('corrupted');
 
         $_ = ManifestFormat::fromJson('{not valid json');
     }
@@ -198,7 +239,7 @@ final class ManifestFormatTest extends TestCase
     public function it_throws_on_non_object_root(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('expected JSON object at root');
+        $this->expectExceptionMessageIsOrContains('expected JSON object at root');
 
         $_ = ManifestFormat::fromJson('"just a string"');
     }
@@ -207,7 +248,7 @@ final class ManifestFormatTest extends TestCase
     public function it_throws_on_missing_version(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "version" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "version" field');
 
         $_ = ManifestFormat::fromJson('{"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
     }
@@ -216,7 +257,7 @@ final class ManifestFormatTest extends TestCase
     public function it_throws_on_invalid_version_type(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "version" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "version" field');
 
         $_ = ManifestFormat::fromJson('{"version":"not_int","algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
     }
@@ -225,113 +266,166 @@ final class ManifestFormatTest extends TestCase
     public function it_throws_on_missing_algorithm(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "algorithm" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "algorithm" field');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
     }
 
     #[Test]
     public function it_throws_on_missing_generated_at(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "generated_at" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "generated_at" field');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","framework_version":"x","entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","framework_version":"x","entry_count":0,"entries":[]}');
     }
 
     #[Test]
     public function it_throws_on_missing_framework_version(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "framework_version" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "framework_version" field');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"entry_count":0,"entries":[]}');
     }
 
     #[Test]
     public function it_throws_on_missing_entry_count(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "entry_count" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "entry_count" field');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entries":[]}');
     }
 
     #[Test]
     public function it_throws_on_missing_entries(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('missing or invalid "entries" field');
+        $this->expectExceptionMessageIsOrContains('missing or invalid "entries" field');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0}');
     }
 
     #[Test]
     public function it_throws_on_non_object_entry(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('entry at index 0 is not an object');
+        $this->expectExceptionMessageIsOrContains('entry at index 0 is not an object');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":["bad"]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"scope":{"include":[],"exclude":[]},"entries":["bad"]}');
     }
 
     #[Test]
     public function it_throws_on_entry_missing_path(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('entry at index 0 has missing or invalid "path"');
+        $this->expectExceptionMessageIsOrContains('entry at index 0 has missing or invalid "path"');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"hash":"abc","size":10}]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"scope":{"include":[],"exclude":[]},"entries":[{"hash":"abc","size":10}]}');
     }
 
     #[Test]
     public function it_throws_on_entry_missing_hash(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('entry at index 0 has missing or invalid "hash"');
+        $this->expectExceptionMessageIsOrContains('entry at index 0 has missing or invalid "hash"');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"path":"a.php","size":10}]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"scope":{"include":[],"exclude":[]},"entries":[{"path":"a.php","size":10}]}');
     }
 
     #[Test]
     public function it_throws_on_entry_missing_size(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('entry at index 0 has missing or invalid "size"');
+        $this->expectExceptionMessageIsOrContains('entry at index 0 has missing or invalid "size"');
 
-        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"path":"a.php","hash":"abc"}]}');
+        $_ = ManifestFormat::fromJson('{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"scope":{"include":[],"exclude":[]},"entries":[{"path":"a.php","hash":"abc"}]}');
     }
 
     #[Test]
     public function it_reports_correct_entry_index_on_error(): void
     {
         $this->expectException(IntegrityException::class);
-        $this->expectExceptionMessage('entry at index 1 has missing or invalid "hash"');
+        $this->expectExceptionMessageIsOrContains('entry at index 1 has missing or invalid "hash"');
 
-        $json = '{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":2,"entries":[{"path":"a.php","hash":"abc","size":10},{"path":"b.php","size":20}]}';
+        $json = '{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":2,"scope":{"include":[],"exclude":[]},'
+            . '"entries":[{"path":"a.php","hash":"abc","size":10},{"path":"b.php","size":20}]}';
         $_ = ManifestFormat::fromJson($json);
     }
 
     #[Test]
     public function it_ignores_non_string_signature_on_deserialize(): void
     {
-        $json = '{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[],"signature":12345}';
+        $json = '{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,'
+            . '"scope":{"include":[],"exclude":[]},"entries":[],"signature":12345}';
 
         $manifest = ManifestFormat::fromJson($json);
 
         self::assertNull($manifest->signature);
     }
 
+    /**
+     * A version 1 manifest carries no scope, so the verifier would be back to
+     * inferring which files ought to exist. Refuse it rather than half-check it.
+     */
+    #[Test]
+    public function it_rejects_a_manifest_from_an_older_schema(): void
+    {
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('unsupported schema version 1');
+
+        $_ = ManifestFormat::fromJson(
+            '{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}',
+        );
+    }
+
+    #[Test]
+    public function it_throws_on_missing_scope(): void
+    {
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('missing or invalid "scope" field');
+
+        $_ = ManifestFormat::fromJson(
+            '{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}',
+        );
+    }
+
+    #[Test]
+    public function it_throws_on_missing_scope_include(): void
+    {
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('missing or invalid "scope.include" field');
+
+        $_ = ManifestFormat::fromJson(
+            '{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,'
+            . '"scope":{"exclude":[]},"entries":[]}',
+        );
+    }
+
+    #[Test]
+    public function it_throws_on_a_non_string_pattern(): void
+    {
+        $this->expectException(IntegrityException::class);
+        $this->expectExceptionMessageIsOrContains('scope.exclude entry at index 1 is not a string');
+
+        $_ = ManifestFormat::fromJson(
+            '{"version":2,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,'
+            . '"scope":{"include":[],"exclude":["var/**",42]},"entries":[]}',
+        );
+    }
+
     #[Test]
     public function it_produces_pretty_printed_json(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $json = ManifestFormat::toJson($manifest);
@@ -344,7 +438,7 @@ final class ManifestFormatTest extends TestCase
     public function it_does_not_escape_slashes_in_paths(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: 1700000000,
             frameworkVersion: '1.0.0-rc.2',
@@ -352,6 +446,7 @@ final class ManifestFormatTest extends TestCase
             entries: [
                 new ManifestEntry(path: 'src/Core/Kernel.php', hash: 'abc', size: 100),
             ],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
 
         $json = ManifestFormat::toJson($manifest);

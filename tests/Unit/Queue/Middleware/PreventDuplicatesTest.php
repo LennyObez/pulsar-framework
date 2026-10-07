@@ -63,7 +63,7 @@ final class PreventDuplicatesTest extends TestCase
         $envelope = $this->createEnvelope(idempotencyKey: 'dup-key');
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('Duplicate job');
+        $this->expectExceptionMessageIsOrContains('Duplicate job');
 
         $middleware->handle($envelope, static fn(JobEnvelope $e): string => 'should-not-reach');
     }

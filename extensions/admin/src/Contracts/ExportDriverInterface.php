@@ -9,6 +9,7 @@ use Pulsar\Extension\Admin\Domain\ExportFormat;
 
 /**
  * Contract for export format drivers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ExportDriverInterface

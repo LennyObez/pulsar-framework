@@ -15,9 +15,10 @@ use function sprintf;
 
 /**
  * Value must be a valid URL slug (lowercase alphanumeric with hyphens). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Slug implements RuleInterface
+final readonly class Slug implements RuleInterface
 {
     public function __construct(
         private string $message = '',

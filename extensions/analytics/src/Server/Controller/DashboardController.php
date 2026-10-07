@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Analytics\Server\Controller;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Http\Message\Response;
@@ -21,27 +20,27 @@ final readonly class DashboardController
         private AnalyticsConfig $config,
     ) {}
 
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         return $this->renderTemplate('dashboard');
     }
 
-    public function sites(ServerRequestInterface $request): Response
+    public function sites(): Response
     {
         return $this->renderTemplate('sites');
     }
 
-    public function goals(ServerRequestInterface $request): Response
+    public function goals(): Response
     {
         return $this->renderTemplate('goals');
     }
 
-    public function settings(ServerRequestInterface $request): Response
+    public function settings(): Response
     {
         return $this->renderTemplate('settings');
     }
 
-    public function asset(ServerRequestInterface $request, string $path): Response
+    public function asset(string $path): Response
     {
         // Reject obviously malicious paths before filesystem access
         if (str_contains($path, '..') || str_contains($path, "\0")) {
@@ -69,6 +68,8 @@ final readonly class DashboardController
             return Response::json(['error' => 'Not found'], 404);
         }
 
+        /** @var non-falsy-string $fullPath */
+
         $contentType = match ($extension) {
             'css' => 'text/css; charset=utf-8',
             'js' => 'application/javascript; charset=utf-8',
@@ -77,7 +78,6 @@ final readonly class DashboardController
             'woff2' => 'font/woff2',
             'woff' => 'font/woff',
             'ico' => 'image/x-icon',
-            default => 'application/octet-stream',
         };
 
         return new Response(
@@ -86,7 +86,7 @@ final readonly class DashboardController
                 'Cache-Control' => 'public, max-age=86400',
                 'X-Content-Type-Options' => 'nosniff',
             ],
-            body: file_get_contents($fullPath) ?: '',
+            body: (string) file_get_contents($fullPath),
         );
     }
 
@@ -99,7 +99,7 @@ final readonly class DashboardController
         }
 
         ob_start();
-        $config = $this->config;
+        extract(['config' => $this->config]);
         require $templatePath;
         $content = ob_get_clean();
 

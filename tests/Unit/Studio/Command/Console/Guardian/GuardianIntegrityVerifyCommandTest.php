@@ -16,6 +16,7 @@ use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianIntegrityVerifyComm
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestFormat;
+use Pulsar\Integrity\ManifestScope;
 use Pulsar\Integrity\ManifestVerifier;
 
 #[CoversClass(GuardianIntegrityVerifyCommand::class)]
@@ -327,12 +328,13 @@ final class GuardianIntegrityVerifyCommandTest extends TestCase
     public function it_verifies_empty_manifest(): void
     {
         $manifest = new IntegrityManifest(
-            version: 1,
+            version: IntegrityManifest::VERSION,
             algorithm: 'sha256',
             generatedAt: time(),
             frameworkVersion: '1.0.0-rc.2',
             entryCount: 0,
             entries: [],
+            scope: new ManifestScope(['src/**/*.php'], []),
         );
         $manifestPath = $this->tempDir . DIRECTORY_SEPARATOR . 'manifest.json';
         file_put_contents($manifestPath, ManifestFormat::toJson($manifest));

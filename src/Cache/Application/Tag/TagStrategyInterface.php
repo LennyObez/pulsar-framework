@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tag invalidation strategy contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TagStrategyInterface

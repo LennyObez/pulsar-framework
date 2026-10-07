@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Webhook;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Mail\Audit\DeliveryStatus;
 use Pulsar\Security\Audit\AuditEvent;
@@ -33,20 +34,23 @@ final readonly class BounceHandler
      */
     public function process(WebhookRequest $request): array
     {
+        /** @var mixed $decoded */
         $decoded = json_decode($request->payload, true);
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 
+        /** @var mixed $rawMessageId */
         $rawMessageId = $data['message_id'] ?? null;
         $messageId = is_string($rawMessageId) ? $rawMessageId : null;
 
+        /** @var mixed $rawBounceType */
         $rawBounceType = $data['bounce_type'] ?? null;
         $bounceType = is_string($rawBounceType) ? $rawBounceType : 'unknown';
 
         $this->auditLogger?->log(
             event: AuditEvent::Communication,
             outcome: AuditOutcome::Failure,
-            actor: null,
+            actor: AuditActor::system('mail.webhook.bounce'),
             action: 'mail.bounce',
             resource: $messageId ?? '',
             metadata: [

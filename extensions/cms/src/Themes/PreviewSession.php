@@ -9,6 +9,10 @@ use Pulsar\Api\Api;
 
 /**
  * Represents an active theme preview session bound to a specific user.
+ *
+ * @psalm-api Public DTO returned from PreviewSessionRepositoryInterface;
+ *            consumed by ThemeManager and preview middleware.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PreviewSession

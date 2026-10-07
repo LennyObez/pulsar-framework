@@ -45,6 +45,7 @@ use const ENT_QUOTES;
  *
  * Produces WCAG 2.1 AA compliant HTML with proper ARIA attributes,
  * labels, error display, and focus management for error summaries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmlFormRenderer implements FormRendererInterface
@@ -154,7 +155,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
     #[Override]
     public function renderCsrfField(FormInterface $form): string
     {
-        if (!$form instanceof Form) {
+        if (! $form instanceof Form) {
             return '';
         }
 
@@ -177,6 +178,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
     private function renderInput(FieldInterface $field, bool $hasErrors, array $errors): string
     {
         $attrs = $this->buildFieldAttributes($field, $hasErrors);
+        /** @var mixed $value */
         $value = $field->getValue();
 
         if (is_string($value) || is_int($value) || is_float($value)) {
@@ -234,6 +236,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
             $attrs['placeholder'] = $this->esc($field->getPlaceholder());
         }
 
+        /** @var mixed $rawValue */
         $rawValue = $field->getValue();
         $value = $this->esc(is_string($rawValue) ? $rawValue : '');
 
@@ -258,6 +261,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
             $options .= sprintf('<option value="">%s</option>', $this->esc($field->getPlaceholder()));
         }
 
+        /** @var mixed $fieldValue */
         $fieldValue = $field->getValue();
         $fieldValueStr = is_string($fieldValue) || is_int($fieldValue) ? (string) $fieldValue : '';
 
@@ -339,6 +343,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
             $html .= '</div>';
         }
 
+        /** @var mixed $radioValue */
         $radioValue = $field->getValue();
         $radioValueStr = is_string($radioValue) || is_int($radioValue) ? (string) $radioValue : '';
 
@@ -414,7 +419,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
         $html .= sprintf(
             '<div class="form-policy-text" id="%s-policy">%s</div>',
             $this->esc($field->getId()),
-            $this->esc($field->getPolicyText()),
+            $this->esc($field->policyText),
         );
 
         $html .= $this->renderErrors($field, $errors);

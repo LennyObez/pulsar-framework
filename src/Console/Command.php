@@ -6,12 +6,14 @@ namespace Pulsar\Console;
 
 use Pulsar\Api\Api;
 
+use function array_keys;
 use function sprintf;
 
 /**
  * Abstract base class for console commands.
  *
  * Provides common functionality and a structured approach to command implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class Command implements CommandInterface
@@ -75,7 +77,7 @@ abstract class Command implements CommandInterface
     {
         $usage = $this->name;
 
-        foreach ($this->options as $name => $config) {
+        foreach (array_keys($this->options) as $name) {
             $usage .= sprintf(' [--%s]', $name);
         }
 

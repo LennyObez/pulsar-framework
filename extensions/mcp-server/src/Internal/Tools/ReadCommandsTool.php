@@ -15,6 +15,7 @@ use function array_map;
 use function array_slice;
 use function array_values;
 use function count;
+use function is_int;
 use function is_string;
 use function json_encode;
 use function str_starts_with;
@@ -73,6 +74,7 @@ final readonly class ReadCommandsTool implements McpToolInterface
         $commands = $snapshot->commandReference->commands;
 
         // Filter by namespace
+        /** @var mixed $nsFilter */
         $nsFilter = $params['namespace'] ?? null;
         if (is_string($nsFilter) && $nsFilter !== '') {
             $prefix = $nsFilter . ':';
@@ -84,8 +86,10 @@ final readonly class ReadCommandsTool implements McpToolInterface
         }
 
         // Pagination
-        $limit = (int) ($params['limit'] ?? 100);
+        /** @var int $limit */
+        $limit = isset($params['limit']) && is_int($params['limit']) ? $params['limit'] : 100;
         $totalCount = count($commands);
+        /** @var mixed $cursor */
         $cursor = $params['cursor'] ?? null;
         $offset = is_string($cursor) && $cursor !== '' ? (int) $cursor : 0;
 

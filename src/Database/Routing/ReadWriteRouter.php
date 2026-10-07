@@ -17,6 +17,7 @@ use function strtoupper;
  *
  * Supports pinning all traffic to the primary after write operations,
  * with both request-scoped and timed stickiness modes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ReadWriteRouter implements ReadWriteRouterInterface

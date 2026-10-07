@@ -17,12 +17,16 @@ use function substr;
 
 use const STR_PAD_LEFT;
 
+/**
+ * @psalm-api Static utility invoked by name from CMS services to generate
+ *            UUIDv7 identifiers for new entities; never instantiated.
+ */
 #[Internal]
 final class UuidGenerator
 {
     public static function v7(): string
     {
-        $time = (int) (microtime(true) * 1000);
+        $time = (int) (microtime(true) * 1000.0);
         $hex = str_pad(dechex($time), 12, '0', STR_PAD_LEFT);
         $random = bin2hex(random_bytes(8));
 
@@ -31,7 +35,7 @@ final class UuidGenerator
             substr($hex, 0, 8),
             substr($hex, 8, 4),
             substr($random, 0, 3),
-            dechex(0x80 | (hexdec(substr($random, 3, 2)) & 0x3F)) . substr($random, 5, 2),
+            dechex(0x80 | ((int) hexdec(substr($random, 3, 2)) & 0x3F)) . substr($random, 5, 2),
             substr($random, 7, 12),
         );
     }

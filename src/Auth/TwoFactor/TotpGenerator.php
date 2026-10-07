@@ -26,6 +26,7 @@ use function unpack;
 
 /**
  * TOTP (Time-Based One-Time Password) generator per RFC 6238.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TotpGenerator

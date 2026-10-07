@@ -21,6 +21,7 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use function array_map;
 use function array_unique;
 use function in_array;
+use function is_string;
 use function preg_match_all;
 
 use const PREG_SET_ORDER;
@@ -29,6 +30,10 @@ use const PREG_SET_ORDER;
  * Checks link health by extracting URLs from content bodies and verifying HTTP responses.
  */
 #[Internal(reason: 'Use LinkHealthServiceInterface for public API')]
+/**
+ * @psalm-api Bound to LinkHealthServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class LinkHealthChecker implements LinkHealthServiceInterface
 {
     /** Total timeout for link checks (seconds). */
@@ -105,7 +110,7 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
                 }
 
                 $page++;
-            } while ($paginatedContent->items !== [] && $page <= (int) ceil($paginatedContent->total / 100));
+            } while ($paginatedContent->items !== [] && $page <= (int) ceil(($paginatedContent->total ?? 0) / 100));
         }
 
         $this->eventDispatcher->dispatch(new LinkHealthCheckCompleted(
@@ -202,7 +207,7 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
             }
         }
 
-        return array_unique($urls);
+        return array_values(array_unique($urls));
     }
 
     /**
@@ -212,7 +217,6 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
     {
         $now = new DateTimeImmutable();
         $statusCode = null;
-        $isBroken = false;
         $isRedirected = false;
 
         $context = stream_context_create([
@@ -235,7 +239,7 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
             $isBroken = true;
         } else {
             // Parse the HTTP status code from the first header line
-            $statusLine = $headers[0] ?? '';
+            $statusLine = is_string($headers[0] ?? null) ? $headers[0] : '';
 
             if (preg_match('/HTTP\/[\d.]+\s+(\d{3})/', $statusLine, $m)) {
                 $statusCode = (int) $m[1];

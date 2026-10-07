@@ -17,6 +17,9 @@ use Pulsar\Security\Audit\AuditOutcome;
  *
  * Sanitizes comment bodies through CommentBodyPolicy, validates state transitions,
  * and emits audit events for all moderation actions.
+ *
+ * @psalm-api Bound to CommentServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CommentServiceInterface for public API')]
 final readonly class CommentService implements CommentServiceInterface
@@ -73,7 +76,7 @@ final readonly class CommentService implements CommentServiceInterface
             AuditOutcome::Success,
             $authorId,
             'cms.comment.submitted',
-            "comment:{$comment->id}",
+            "comment:$comment->id",
             ['content_id' => $contentId, 'status' => $comment->status->value],
         );
 
@@ -113,7 +116,7 @@ final readonly class CommentService implements CommentServiceInterface
             AuditOutcome::Success,
             $comment->authorId,
             'cms.comment.edited',
-            "comment:{$commentId}",
+            "comment:$commentId",
             ['content_id' => $comment->contentId],
         );
 
@@ -140,8 +143,8 @@ final readonly class CommentService implements CommentServiceInterface
             AuditEvent::DataModification,
             AuditOutcome::Success,
             $moderatorId,
-            "cms.comment.{$target->value}",
-            "comment:{$commentId}",
+            "cms.comment.$target->value",
+            "comment:$commentId",
             [
                 'content_id' => $comment->contentId,
                 'from_status' => $comment->status->value,

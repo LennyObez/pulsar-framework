@@ -72,10 +72,12 @@ final readonly class ConfigSchemaReflector
                 $typeName = '?' . $typeName;
             }
 
+            /** @var mixed $default */
             $default = $this->extractDefault($property);
 
             // Scrub sensitive defaults
             $scrubbed = $this->scrubber->scrub([$property->getName() => $default]);
+            /** @var mixed $scrubbedDefault */
             $scrubbedDefault = $scrubbed[$property->getName()];
 
             $properties[] = new ConfigPropertySchema(
@@ -94,6 +96,7 @@ final readonly class ConfigSchemaReflector
     private function extractDefault(ReflectionProperty $property): mixed
     {
         if ($property->hasDefaultValue()) {
+            /** @var mixed $default */
             $default = $property->getDefaultValue();
 
             // If default is an object (e.g., nested config DTO via `new`), represent as class name
@@ -105,12 +108,13 @@ final readonly class ConfigSchemaReflector
         }
 
         if ($property->isPromoted()) {
-            // Promoted properties — check constructor parameters
+            // Promoted properties: check constructor parameters
             $constructor = $property->getDeclaringClass()->getConstructor();
 
             if ($constructor !== null) {
                 foreach ($constructor->getParameters() as $param) {
                     if ($param->getName() === $property->getName() && $param->isDefaultValueAvailable()) {
+                        /** @var mixed $default */
                         $default = $param->getDefaultValue();
 
                         if (is_object($default)) {

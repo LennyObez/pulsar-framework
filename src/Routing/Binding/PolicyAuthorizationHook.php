@@ -17,7 +17,7 @@ use Pulsar\Routing\Binding\Contract\AuthorizationHookInterface;
  * Builds a PolicyContext with the 'view' permission and the resolved
  * model, then asks the Gate whether the identity is allowed.
  */
-#[Internal(reason: 'Default implementation — consumers may provide their own AuthorizationHookInterface')]
+#[Internal(reason: 'Default implementation; consumers may provide their own AuthorizationHookInterface')]
 final readonly class PolicyAuthorizationHook implements AuthorizationHookInterface
 {
     public function __construct(

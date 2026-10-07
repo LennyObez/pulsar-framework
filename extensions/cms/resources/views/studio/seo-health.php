@@ -1,6 +1,6 @@
 <?php
 /**
- * CMS Studio — SEO Health Report Panel.
+ * CMS Studio: SEO Health Report Panel.
  *
  * @var int|null $brokenLinkCount
  * @var list<array{id: string, sourceContentId: string, sourceLocale: string, targetUrl: string, httpStatusCode: int|null, lastCheckedAt: string}>|null $brokenLinks

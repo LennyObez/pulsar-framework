@@ -12,7 +12,6 @@ use Pulsar\Extension\Cms\Commerce\Promotion;
 use Pulsar\Extension\Cms\Commerce\PromotionType;
 
 #[CoversClass(Promotion::class)]
-#[CoversClass(PromotionType::class)]
 final class PromotionTest extends TestCase
 {
     // ── Promotion types ─────────────────────────────────────────────

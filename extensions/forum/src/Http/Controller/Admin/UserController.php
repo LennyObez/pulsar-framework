@@ -19,12 +19,14 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_int;
+use function is_numeric;
 use function is_string;
 
 /**
- * Admin controller for user management — ban, unban, promote, view profile.
+ * Admin controller for user management: ban, unban, promote, view profile.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class UserController
 {
     use RendersAdminView;
@@ -39,7 +41,7 @@ final readonly class UserController
     ) {}
 
     /**
-     * GET /admin/forum/users/{userId} — View a user's forum profile.
+     * GET /admin/forum/users/{userId}: View a user's forum profile.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -71,7 +73,7 @@ final readonly class UserController
     }
 
     /**
-     * POST /admin/forum/users/{userId}/ban — Ban a user.
+     * POST /admin/forum/users/{userId}/ban: Ban a user.
      */
     public function ban(ServerRequestInterface $request, string $userId): Response
     {
@@ -81,14 +83,18 @@ final readonly class UserController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($reason === '') {
             return Response::json(['error' => 'Ban reason is required'], 422);
         }
 
-        $expiresAt = is_string($body['expires_at'] ?? null) && $body['expires_at'] !== ''
-            ? new DateTimeImmutable($body['expires_at'])
+        /** @var mixed $rawExpiresAt */
+        $rawExpiresAt = $body['expires_at'] ?? null;
+        $expiresAt = is_string($rawExpiresAt) && $rawExpiresAt !== ''
+            ? new DateTimeImmutable($rawExpiresAt)
             : null;
 
         try {
@@ -101,7 +107,7 @@ final readonly class UserController
     }
 
     /**
-     * POST /admin/forum/users/{userId}/unban — Unban a user.
+     * POST /admin/forum/users/{userId}/unban: Unban a user.
      */
     public function unban(ServerRequestInterface $request, string $userId): Response
     {
@@ -118,7 +124,7 @@ final readonly class UserController
     }
 
     /**
-     * POST /admin/forum/users/{userId}/promote — Add reputation points.
+     * POST /admin/forum/users/{userId}/promote: Add reputation points.
      */
     public function promote(ServerRequestInterface $request, string $userId): Response
     {
@@ -128,8 +134,12 @@ final readonly class UserController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $points = is_numeric($body['points'] ?? null) ? (int) $body['points'] : 0;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'admin_promotion';
+        /** @var mixed $rawPoints */
+        $rawPoints = $body['points'] ?? null;
+        $points = (is_int($rawPoints) || is_string($rawPoints)) && is_numeric($rawPoints) ? (int) $rawPoints : 0;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'admin_promotion';
 
         if ($points === 0) {
             return Response::json(['error' => 'Points must be non-zero'], 422);

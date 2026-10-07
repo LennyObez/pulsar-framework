@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
+use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\SessionConfig;
 
 #[CoversClass(SessionConfig::class)]
@@ -122,9 +123,19 @@ final class SessionConfigTest extends TestCase
         self::assertSame(3600, $config->cookieReplayWindow);
     }
 
+    protected function tearDown(): void
+    {
+        // Defensive cleanup: the cookie-secure tests toggle these env vars.
+        putenv('APP_ENV');
+        putenv('SESSION_COOKIE_SECURE');
+    }
+
     #[Test]
     public function fromArrayDefaults(): void
     {
+        // cookie_secure defaults are env-aware; pin production so the secure
+        // default is asserted deterministically here.
+        putenv('APP_ENV=production');
         $env = Environment::load();
 
         $config = SessionConfig::fromArray([], $env);
@@ -140,6 +151,103 @@ final class SessionConfigTest extends TestCase
         self::assertSame(3, $config->maxConcurrentSessions);
         self::assertSame('/', $config->cookiePath);
         self::assertSame('', $config->cookieDomain);
+    }
+
+    #[Test]
+    public function cookieSecureDefaultsToTrueInProduction(): void
+    {
+        putenv('APP_ENV=production');
+
+        self::assertTrue(SessionConfig::fromArray([], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function cookieSecureDefaultsToFalseOutsideProduction(): void
+    {
+        // The dev-server scenario: over plain http a Secure cookie is never
+        // returned, so every CSRF-protected POST 403s. Default it off in dev.
+        putenv('APP_ENV=local');
+
+        self::assertFalse(SessionConfig::fromArray([], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function explicitCookieSecureConfigWinsOverEnvDefault(): void
+    {
+        putenv('APP_ENV=local');
+
+        self::assertTrue(SessionConfig::fromArray(['cookie_secure' => true], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function sessionCookieSecureEnvVarOverridesEverything(): void
+    {
+        putenv('APP_ENV=production');
+        putenv('SESSION_COOKIE_SECURE=false');
+
+        // Explicit env opt-out wins even over a true config in production.
+        self::assertFalse(SessionConfig::fromArray(['cookie_secure' => true], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function fromArrayAcceptsCompliantHostPrefixCombination(): void
+    {
+        $env = Environment::load();
+
+        $config = SessionConfig::fromArray([
+            'cookie_host_prefix' => true,
+            'cookie_secure' => true,
+            'cookie_path' => '/',
+            'cookie_domain' => '',
+        ], $env);
+
+        self::assertTrue($config->cookieHostPrefix);
+        self::assertSame('__Host-PULSAR_SESSION', $config->effectiveCookieName());
+    }
+
+    #[Test]
+    public function fromArrayRejectsHostPrefixWithoutSecure(): void
+    {
+        $env = Environment::load();
+
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('cookie_host_prefix');
+
+        (void) SessionConfig::fromArray([
+            'cookie_host_prefix' => true,
+            'cookie_secure' => false,
+        ], $env);
+    }
+
+    #[Test]
+    public function fromArrayRejectsHostPrefixWithNonRootPath(): void
+    {
+        $env = Environment::load();
+
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('cookie_host_prefix');
+
+        (void) SessionConfig::fromArray([
+            'cookie_host_prefix' => true,
+            'cookie_secure' => true,
+            'cookie_path' => '/admin',
+        ], $env);
+    }
+
+    #[Test]
+    public function fromArrayRejectsHostPrefixWithDomain(): void
+    {
+        $env = Environment::load();
+
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageIsOrContains('cookie_host_prefix');
+
+        (void) SessionConfig::fromArray([
+            'cookie_host_prefix' => true,
+            'cookie_secure' => true,
+            'cookie_path' => '/',
+            'cookie_domain' => 'example.com',
+        ], $env);
     }
 
     #[Test]

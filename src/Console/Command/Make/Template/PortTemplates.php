@@ -42,8 +42,8 @@ final readonly class PortTemplates
              * Port interface for $name operations.
              */
             #[Api(since: '1.0.0')]
-            interface {$interfaceName}
-            {{$methodStubs}}
+            interface $interfaceName
+            {$methodStubs}
             PHP;
     }
 }

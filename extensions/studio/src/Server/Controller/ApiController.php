@@ -34,34 +34,40 @@ final readonly class ApiController
     ) {}
 
     /**
-     * GET /studio/api/events — paginated JSON event listing.
+     * GET /studio/api/events: paginated JSON event listing.
      */
     public function events(ServerRequestInterface $request): Response
     {
         $filters = [];
 
+        /** @var mixed $types */
         $types = $request->getAttribute('_query_types');
         if (is_string($types)) {
             $filters['event_type'] = explode(',', $types);
         }
 
+        /** @var mixed $requestId */
         $requestId = $request->getAttribute('_query_request_id');
         if (is_string($requestId)) {
             $filters['request_id'] = $requestId;
         }
 
+        /** @var mixed $sinceUs */
         $sinceUs = $request->getAttribute('_query_since');
         if (is_int($sinceUs) || is_string($sinceUs)) {
             $filters['since_us'] = (int) $sinceUs;
         }
 
+        /** @var mixed $sinceId */
         $sinceId = $request->getAttribute('_query_since_id');
         if (is_int($sinceId) || is_string($sinceId)) {
             $filters['since_id'] = (int) $sinceId;
         }
 
+        /** @var mixed $limitAttr */
         $limitAttr = $request->getAttribute('_query_limit');
         $limit = (is_int($limitAttr) || is_string($limitAttr)) ? (int) $limitAttr : 50;
+        /** @var mixed $offsetAttr */
         $offsetAttr = $request->getAttribute('_query_offset');
         $offset = (is_int($offsetAttr) || is_string($offsetAttr)) ? (int) $offsetAttr : 0;
 
@@ -77,7 +83,7 @@ final readonly class ApiController
     }
 
     /**
-     * GET /studio/api/live — Server-Sent Events stream.
+     * GET /studio/api/live: Server-Sent Events stream.
      *
      * @throws JsonException
      */
@@ -85,6 +91,7 @@ final readonly class ApiController
     {
         $filters = [];
 
+        /** @var mixed $types */
         $types = $request->getAttribute('_query_types');
         if (is_string($types)) {
             $filters['event_type'] = explode(',', $types);

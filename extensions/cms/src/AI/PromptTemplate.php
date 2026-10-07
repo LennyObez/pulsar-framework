@@ -12,6 +12,10 @@ use function str_replace;
  * Immutable prompt template with named placeholders for LLM prompts.
  *
  * Placeholders use `{name}` syntax and are replaced during rendering.
+ *
+ * @psalm-api Public DTO registered with PromptTemplateRegistry; consumed by
+ *            ContentAssistant and extension code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PromptTemplate
@@ -34,7 +38,7 @@ final readonly class PromptTemplate
         $result = $this->template;
 
         foreach ($variables as $key => $value) {
-            $result = str_replace("{{$key}}", (string) $value, $result);
+            $result = str_replace('{' . $key . '}', (string) $value, $result);
         }
 
         return $result;

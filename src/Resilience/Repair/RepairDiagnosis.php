@@ -8,9 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Diagnosis result from a repair job.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RepairDiagnosis
+final readonly class RepairDiagnosis
 {
     /**
      * @param list<string> $findings

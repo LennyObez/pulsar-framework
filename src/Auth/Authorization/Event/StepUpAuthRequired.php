@@ -13,15 +13,13 @@ use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
-use function is_float;
-use function is_int;
-use function is_string;
 
 /**
  * Dispatched when a step-up authentication is required for an operation.
  *
  * Supports controls for zero-trust architecture requirements
  * and PCI-DSS multi-factor authentication policies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]
@@ -57,28 +55,29 @@ final readonly class StepUpAuthRequired implements EnvelopeRequiredEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     identity_id?: string,
+     *     permission?: string,
+     *     trust_score?: float|int,
+     *     required_level?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     occurred_at?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $occurredAt = is_string($data['occurred_at'] ?? null)
-            ? new DateTimeImmutable($data['occurred_at'])
-            : new DateTimeImmutable();
-
-        $trustScore = $data['trust_score'] ?? 0.0;
-        if (is_int($trustScore)) {
-            $trustScore = (float) $trustScore;
-        }
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            identityId: is_string($data['identity_id'] ?? null) ? $data['identity_id'] : '',
-            permission: is_string($data['permission'] ?? null) ? $data['permission'] : '',
-            trustScore: is_float($trustScore) ? $trustScore : 0.0,
-            requiredLevel: is_string($data['required_level'] ?? null) ? $data['required_level'] : '',
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            occurredAt: $occurredAt,
+            identityId: $data['identity_id'] ?? '',
+            permission: $data['permission'] ?? '',
+            trustScore: (float) ($data['trust_score'] ?? 0.0),
+            requiredLevel: $data['required_level'] ?? '',
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 

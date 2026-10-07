@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application\Driver;
 
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
+use Pulsar\Support\RedisReply;
 use Redis;
 use Throwable;
 
-use function array_combine;
+use function array_fill_keys;
 use function array_keys;
-use function array_map;
 use function is_array;
 use function is_string;
 
@@ -21,7 +22,7 @@ use function is_string;
  * TTL support, pipelining for batch operations, and atomic counters.
  */
 #[Internal]
-final class RedisDriver extends AbstractCacheDriver
+final class RedisDriver extends AbstractCacheDriver implements PrefixClearableInterface
 {
     public function __construct(
         private readonly Redis $redis,
@@ -46,16 +47,14 @@ final class RedisDriver extends AbstractCacheDriver
 
         $values = $this->redis->mget($keys);
 
-        /** @psalm-suppress TypeDoesNotContainType — ext-redis mget() can return false on connection failure */
         if (!is_array($values)) {
-            return array_combine($keys, array_map(static fn(string $_): null => null, $keys));
+            return array_fill_keys($keys, null);
         }
 
         $result = [];
 
         foreach ($keys as $i => $key) {
-            $value = $values[$i] ?? false;
-            $result[$key] = is_string($value) ? $value : null;
+            $result[$key] = Coerce::nullableString($values[$i] ?? null);
         }
 
         return $result;
@@ -72,10 +71,29 @@ final class RedisDriver extends AbstractCacheDriver
         }
 
         if ($ttl !== null) {
-            return $this->redis->setex($key, $ttl, $value);
+            return RedisReply::success($this->redis->setex($key, $ttl, $value));
         }
 
-        return $this->redis->set($key, $value);
+        return RedisReply::success($this->redis->set($key, $value));
+    }
+
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        $ttl = $this->normalizeTtl($ttlSeconds);
+
+        if ($this->isExpiredTtl($ttl)) {
+            return !$this->has($key);
+        }
+
+        // SET key value NX [EX ttl]: stores only when the key is absent and
+        // returns false when the NX condition fails — atomic in one round-trip.
+        $options = $ttl !== null ? ['nx', 'ex' => $ttl] : ['nx'];
+
+        try {
+            return $this->redis->set($key, $value, $options) !== false;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     public function setMultiple(array $values, ?int $ttlSeconds): bool
@@ -92,6 +110,13 @@ final class RedisDriver extends AbstractCacheDriver
 
         $pipe = $this->redis->pipeline();
 
+        // pipeline() answers false when it cannot be opened. Calling setex() on that
+        // false is a fatal on a non-object — a crash the previous hand-written stub
+        // hid by declaring the return as `self`.
+        if (!$pipe instanceof Redis) {
+            return false;
+        }
+
         foreach ($values as $key => $value) {
             if ($ttl !== null) {
                 $pipe->setex($key, $ttl, $value);
@@ -106,7 +131,7 @@ final class RedisDriver extends AbstractCacheDriver
             return false;
         }
 
-        return array_all($results, static fn(mixed $result): bool => $result !== false);
+        return array_all(RedisReply::items($results), static fn(mixed $result): bool => $result !== false);
     }
 
     public function delete(string $key): bool
@@ -129,18 +154,42 @@ final class RedisDriver extends AbstractCacheDriver
 
     public function has(string $key): bool
     {
-        return (bool) $this->redis->exists($key);
+        return RedisReply::count($this->redis->exists($key)) > 0;
     }
 
     public function clear(): bool
     {
-        return $this->redis->flushDB();
+        return RedisReply::success($this->redis->flushDB());
+    }
+
+    /**
+     * Delete exactly the keys under a prefix via cursor-based SCAN + UNLINK —
+     * never KEYS (which blocks the server) and never FLUSHDB (which wipes
+     * every pool and application sharing the database). The configured prefix
+     * charset excludes glob metacharacters, so the MATCH pattern is literal.
+     */
+    public function clearByPrefix(string $prefix): bool
+    {
+        $iterator = null;
+
+        do {
+            // SCAN yields mixed entries; UNLINK needs strings, and passing a
+            // non-string through would be a TypeError mid-sweep, leaving the rest
+            // of the prefix un-deleted.
+            $keys = RedisReply::strings($this->redis->scan($iterator, $prefix . '*', 1000));
+
+            if ($keys !== []) {
+                $this->redis->unlink(...$keys);
+            }
+        } while ($iterator !== 0 && $iterator !== null && $iterator !== '0');
+
+        return true;
     }
 
     public function increment(string $key, int $step = 1): int|false
     {
         try {
-            return $this->redis->incrBy($key, $step);
+            return RedisReply::intOrFalse($this->redis->incrBy($key, $step));
         } catch (Throwable) {
             return false;
         }
@@ -149,7 +198,7 @@ final class RedisDriver extends AbstractCacheDriver
     public function decrement(string $key, int $step = 1): int|false
     {
         try {
-            return $this->redis->decrBy($key, $step);
+            return RedisReply::intOrFalse($this->redis->decrBy($key, $step));
         } catch (Throwable) {
             return false;
         }

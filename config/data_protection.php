@@ -63,6 +63,13 @@ return [
     |
     | Controls how automated purging behaves.
     |
+    | The policies above are APPLIED by two things and nothing else: the
+    | `data:purge` console command, and the `data-protection:purge` scheduled job
+    | that DataRetentionWiring registers from the cron expression below. Neither
+    | runs on its own — the job needs `pulsar scheduler:tick` and the scheduler
+    | enabled in config/scheduler.php — so a deployment decides when deletion
+    | starts, and can watch it in dry-run mode first.
+    |
     */
     'purge' => [
         // Maximum number of records to purge per batch run
@@ -73,6 +80,10 @@ return [
 
         // Dry-run mode: count but do not delete expired records
         'dry_run' => false,
+
+        // Cron expression for the scheduled purge. Set to '' to register no job at
+        // all, keeping the policies above and running them only via `data:purge`.
+        'schedule' => '0 3 * * *',
     ],
 
     /*

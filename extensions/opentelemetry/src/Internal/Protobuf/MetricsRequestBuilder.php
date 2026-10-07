@@ -155,6 +155,7 @@ final readonly class MetricsRequestBuilder
         $w = new ProtobufWriter();
 
         // NumberDataPoint.time_unix_nano (field 3, fixed64)
+        /** @var mixed $timeNano */
         $timeNano = $dp['time_unix_nano'] ?? null;
 
         if (is_int($timeNano)) {
@@ -163,6 +164,7 @@ final readonly class MetricsRequestBuilder
 
         // NumberDataPoint.as_double (field 4) or as_int (field 6)
         if (isset($dp['value'])) {
+            /** @var mixed $value */
             $value = $dp['value'];
 
             if (is_float($value)) {
@@ -194,6 +196,7 @@ final readonly class MetricsRequestBuilder
         $w = new ProtobufWriter();
 
         // HistogramDataPoint.time_unix_nano (field 3, fixed64)
+        /** @var mixed $hdpTimeNano */
         $hdpTimeNano = $dp['time_unix_nano'] ?? null;
 
         if (is_int($hdpTimeNano)) {
@@ -201,6 +204,7 @@ final readonly class MetricsRequestBuilder
         }
 
         // HistogramDataPoint.count (field 4, fixed64)
+        /** @var mixed $hdpCount */
         $hdpCount = $dp['count'] ?? null;
 
         if (is_int($hdpCount)) {
@@ -208,6 +212,7 @@ final readonly class MetricsRequestBuilder
         }
 
         // HistogramDataPoint.sum (field 5, double/fixed64 wire type 1)
+        /** @var mixed $hdpSum */
         $hdpSum = $dp['sum'] ?? null;
 
         if (is_float($hdpSum) || is_int($hdpSum)) {
@@ -216,6 +221,7 @@ final readonly class MetricsRequestBuilder
 
         // HistogramDataPoint.bucket_counts (field 6, repeated fixed64)
         if (isset($dp['bucket_counts']) && is_array($dp['bucket_counts'])) {
+            /** @var mixed $count */
             foreach ($dp['bucket_counts'] as $count) {
                 if (is_int($count)) {
                     $w->writeFixed64Field(OtlpFieldNumbers::HDP_BUCKET_COUNTS, $count);
@@ -225,6 +231,7 @@ final readonly class MetricsRequestBuilder
 
         // HistogramDataPoint.explicit_bounds (field 7, repeated double)
         if (isset($dp['explicit_bounds']) && is_array($dp['explicit_bounds'])) {
+            /** @var mixed $bound */
             foreach ($dp['explicit_bounds'] as $bound) {
                 if (is_float($bound) || is_int($bound)) {
                     $w->writeDoubleField(OtlpFieldNumbers::HDP_EXPLICIT_BOUNDS, (float) $bound);

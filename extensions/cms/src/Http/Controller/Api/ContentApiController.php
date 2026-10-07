@@ -23,6 +23,7 @@ use function array_flip;
 use function array_intersect_key;
 use function array_map;
 use function explode;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -34,7 +35,7 @@ use function min;
  * and soft deletion. Authentication is handled by the CmsApiKeyMiddleware
  * in the middleware pipeline.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class ContentApiController
 {
     public function __construct(
@@ -46,16 +47,24 @@ final readonly class ContentApiController
     ) {}
 
     /**
-     * GET /api/v1/content — List content with pagination and filtering.
+     * GET /api/v1/content: List content with pagination and filtering.
      */
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
 
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
-        $contentType = is_string($params['type'] ?? null) ? $params['type'] : null;
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        /** @var mixed $rawType */
+        $rawType = $params['type'] ?? null;
+        $contentType = is_string($rawType) ? $rawType : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -68,6 +77,7 @@ final readonly class ContentApiController
             $tenantId,
         );
 
+        /** @var array<string, mixed> $params */
         $fieldsFilter = $this->parseFieldsFilter($params);
 
         $data = array_map(
@@ -82,7 +92,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * GET /api/v1/content/{id} — Show a single content item with all related data.
+     * GET /api/v1/content/{id}: Show a single content item with all related data.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -93,7 +103,9 @@ final readonly class ContentApiController
         }
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
 
         $translations = $this->translationRepository->findByContentId($id);
         $blocks = $this->blockRepository->findByContentAndLocale($id, $locale);
@@ -138,7 +150,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * POST /api/v1/content — Create new content from JSON body.
+     * POST /api/v1/content: Create new content from JSON body.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -155,7 +167,10 @@ final readonly class ContentApiController
             ], 422);
         }
 
-        $contentType = ContentType::tryFrom((string) ($body['content_type'] ?? 'page'));
+        /** @var mixed $rawContentTypeValue */
+        $rawContentTypeValue = $body['content_type'] ?? null;
+        $contentTypeStr = is_string($rawContentTypeValue) ? $rawContentTypeValue : 'page';
+        $contentType = ContentType::tryFrom($contentTypeStr);
 
         if ($contentType === null) {
             return Response::json([
@@ -165,22 +180,36 @@ final readonly class ContentApiController
             ], 422);
         }
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
-        $title = (string) $body['title'];
-        $slugSegment = (string) $body['slug'];
-        $bodyContent = (string) ($body['body'] ?? '');
+        /** @var mixed $rawLocaleBody */
+        $rawLocaleBody = $body['locale'] ?? null;
+        $locale = is_string($rawLocaleBody) ? $rawLocaleBody : $this->config->defaultLocale;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+        $bodyContent = is_string($rawBody) ? $rawBody : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
+        /** @var mixed $rawAuthorId */
+        $rawAuthorId = $body['author_id'] ?? null;
+        /** @var mixed $rawTemplate */
+        $rawTemplate = $body['template'] ?? null;
+        /** @var mixed $rawParentId */
+        $rawParentId = $body['parent_id'] ?? null;
         $contentId = UuidGenerator::v7();
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: (string) ($body['author_id'] ?? 'api'),
+            authorId: is_string($rawAuthorId) ? $rawAuthorId : 'api',
             tenantId: $tenantId,
-            template: is_string($body['template'] ?? null) ? $body['template'] : null,
-            parentId: is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null,
+            template: is_string($rawTemplate) ? $rawTemplate : null,
+            parentId: is_string($rawParentId) ? $rawParentId : null,
         );
 
         $this->contentRepository->save($content);
@@ -197,6 +226,13 @@ final readonly class ContentApiController
 
         $translationId = UuidGenerator::v7();
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
+
         try {
             $translation = ContentTranslation::create(
                 id: $translationId,
@@ -206,9 +242,9 @@ final readonly class ContentApiController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $bodyContent,
-                excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : null,
-                metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : null,
-                metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : null,
+                excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+                metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+                metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
             );
         } catch (CmsException $e) {
             return Response::json([
@@ -229,7 +265,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * PUT /api/v1/content/{id} — Update existing content.
+     * PUT /api/v1/content/{id}: Update existing content.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -242,16 +278,24 @@ final readonly class ContentApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
         if ($translation === null) {
             return Response::json(['error' => 'Translation not found for locale', 'status' => 404], 404);
         }
 
-        $title = (string) ($body['title'] ?? $translation->title);
-        $bodyContent = (string) ($body['body'] ?? $translation->body);
-        $slugSegment = (string) ($body['slug'] ?? $translation->slugSegment);
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : $translation->title;
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+        $bodyContent = is_string($rawBody) ? $rawBody : $translation->body;
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : $translation->slugSegment;
 
         $path = $translation->path;
 
@@ -266,6 +310,13 @@ final readonly class ContentApiController
             }
         }
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
+
         try {
             $updatedTranslation = ContentTranslation::create(
                 id: $translation->id,
@@ -275,9 +326,9 @@ final readonly class ContentApiController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $bodyContent,
-                excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : $translation->excerpt,
-                metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : $translation->metaTitle,
-                metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : $translation->metaDescription,
+                excerpt: is_string($rawExcerpt) ? $rawExcerpt : $translation->excerpt,
+                metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : $translation->metaTitle,
+                metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : $translation->metaDescription,
             );
         } catch (CmsException $e) {
             return Response::json([
@@ -295,9 +346,9 @@ final readonly class ContentApiController
     }
 
     /**
-     * DELETE /api/v1/content/{id} — Soft delete content.
+     * DELETE /api/v1/content/{id}: Soft delete content.
      */
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         $content = $this->contentRepository->findById($id);
 
@@ -326,7 +377,7 @@ final readonly class ContentApiController
             return null;
         }
 
-        return array_filter(explode(',', $fields), static fn(string $f) => $f !== '');
+        return array_values(array_filter(explode(',', $fields), static fn(string $f) => $f !== ''));
     }
 
     /**

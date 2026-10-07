@@ -17,7 +17,6 @@ use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceHandler;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceRequest;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardResult;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceHandler;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
@@ -42,6 +41,7 @@ use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceResult;
  *
  * Delegates to feature handlers for each operation, providing a single
  * entry point for programmatic admin interactions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdminGateway
@@ -152,6 +152,16 @@ final readonly class AdminGateway
      */
     public function export(string $resourceName, ExportFormat $format, array $filters = []): ExportResourceResult
     {
+        // export-fetchall-forbidden matches any `->execute()` whose receiver is named for
+        // export/report/backfill, to catch `Pulsar\Database\Statement::execute()`
+        // materialising a whole result set through fetchAll(). This receiver is an
+        // ExportResourceHandler, not a Statement: `execute()` dispatches a request object
+        // and issues no SQL. The rows it eventually reads are bounded by
+        // ExportResourceRequest::$maxRows (10,000 by default), passed to the query as a
+        // page size, so the unbounded materialisation the rule guards against cannot occur
+        // on this path. The suppression sits on the matched line's own predecessor because
+        // that is the only placement Semgrep honours.
+        // nosemgrep: tools.security.pulsar.security.export-fetchall-forbidden
         return $this->exportHandler->execute(new ExportResourceRequest(
             resourceName: $resourceName,
             format: $format,
@@ -166,7 +176,7 @@ final readonly class AdminGateway
 
     public function dashboard(): DashboardResult
     {
-        return $this->dashboardHandler->execute(new DashboardRequest());
+        return $this->dashboardHandler->execute();
     }
 
     /**

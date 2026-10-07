@@ -16,6 +16,7 @@ use function function_exists;
  * Resolves the active runtime type by explicit configuration or auto-detection.
  *
  * Detection priority: FrankenPHP > RoadRunner > Persistent > FPM (fallback).
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class RuntimeResolver
@@ -35,7 +36,7 @@ final readonly class RuntimeResolver
      * @param Closure(): bool|null $socketsDetector    Custom detector for sockets extension availability
      */
     public function __construct(
-        private Environment $environment,
+        Environment $environment,
         ?Closure $frankenPhpDetector = null,
         ?Closure $roadRunnerDetector = null,
         ?Closure $socketsDetector = null,
@@ -44,7 +45,7 @@ final readonly class RuntimeResolver
             ?? static fn(): bool => function_exists('frankenphp_handle_request');
 
         $this->roadRunnerDetector = $roadRunnerDetector
-            ?? fn(): bool => $this->environment->has('RR_MODE');
+            ?? static fn(): bool => $environment->has('RR_MODE');
 
         $this->socketsDetector = $socketsDetector
             ?? static fn(): bool => extension_loaded('sockets');

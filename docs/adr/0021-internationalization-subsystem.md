@@ -95,14 +95,14 @@ The linter integrates with the console command system for CI pipeline execution:
 
 ### URL-Prefix Locale Routing (Addendum)
 
-When `url_strategy` is set to `path_prefix`, a `LocalePrefixMiddleware` runs early in the HTTP pipeline. It extracts the locale from the first path segment (e.g., `/fr/about` → `fr`), strips the prefix, and sets `_locale`/`_locale_prefix` request attributes. This allows routes to be registered without locale prefixes — a single route definition serves all locales.
+When `url_strategy` is set to `path_prefix`, a `LocalePrefixMiddleware` runs early in the HTTP pipeline. It extracts the locale from the first path segment (e.g., `/fr/about` → `fr`), strips the prefix, and sets `_locale`/`_locale_prefix` request attributes. This allows routes to be registered without locale prefixes: a single route definition serves all locales.
 
 Key components:
 
 | Component                    | Responsibility                                                           |
 | ---------------------------- | ------------------------------------------------------------------------ |
 | `UrlPrefixExtractor`         | Extract, strip, and build locale path prefixes with security protections |
-| `LocalePrefixMiddleware`     | HTTP middleware — prefix detection, stripping, canonical redirect        |
+| `LocalePrefixMiddleware`     | HTTP middleware: prefix detection, stripping, canonical redirect         |
 | `LocaleUrlGenerator`         | Build locale-prefixed URLs, alternate URLs, and hreflang link sets       |
 | `HreflangLink`               | Value object for `<link rel="alternate" hreflang="...">` tags            |
 | `LocaleUrlResolverInterface` | Extension point for translated slug resolution (e.g., CMS content)       |

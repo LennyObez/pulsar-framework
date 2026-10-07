@@ -23,7 +23,6 @@ use SodiumException;
 
 use function count;
 use function in_array;
-use function is_string;
 use function sprintf;
 use function strlen;
 
@@ -65,13 +64,12 @@ final class ShowContainerCommand extends Command
 
         $bindings = $container->getBindings();
         $instances = $container->getInstances();
-        $filter = $input->getOption('filter');
+        $filter = $input->getNullableStringOption('filter');
 
         // Apply filter
-        if (is_string($filter)) {
-            $filterString = $filter;
-            $bindings = array_filter($bindings, fn(string $id) => str_contains($id, $filterString));
-            $instances = array_filter($instances, fn(string $id) => str_contains($id, $filterString));
+        if ($filter !== null) {
+            $bindings = array_filter($bindings, fn(string $id) => str_contains($id, $filter));
+            $instances = array_filter($instances, fn(string $id) => str_contains($id, $filter));
         }
 
         $output->writeln(sprintf('Container Bindings (%d):', count($bindings)));

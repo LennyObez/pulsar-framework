@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * An immutable email message ready for transport.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Message

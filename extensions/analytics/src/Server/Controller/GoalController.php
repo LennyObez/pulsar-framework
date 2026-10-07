@@ -11,6 +11,8 @@ use Pulsar\Extension\Analytics\Domain\GoalType;
 use Pulsar\Extension\Analytics\Exception\AnalyticsException;
 use Pulsar\Http\Message\Response;
 
+use function is_string;
+
 /**
  * Goal CRUD API controller.
  */
@@ -24,7 +26,9 @@ final readonly class GoalController
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $siteId = (string) ($params['site_id'] ?? '');
+        /** @var mixed $rawSiteId */
+        $rawSiteId = $params['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
         if ($siteId === '') {
             return Response::json(['error' => 'site_id is required'], 400);
@@ -49,10 +53,18 @@ final readonly class GoalController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $siteId = (string) ($body['site_id'] ?? '');
-        $name = (string) ($body['name'] ?? '');
-        $goalTypeStr = (string) ($body['goal_type'] ?? '');
-        $targetValue = (string) ($body['target_value'] ?? '');
+        /** @var mixed $rawSiteId */
+        $rawSiteId = $body['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawGoalType */
+        $rawGoalType = $body['goal_type'] ?? null;
+        $goalTypeStr = is_string($rawGoalType) ? $rawGoalType : '';
+        /** @var mixed $rawTargetValue */
+        $rawTargetValue = $body['target_value'] ?? null;
+        $targetValue = is_string($rawTargetValue) ? $rawTargetValue : '';
 
         if ($siteId === '' || $name === '' || $goalTypeStr === '' || $targetValue === '') {
             return Response::json(['error' => 'site_id, name, goal_type, and target_value are required'], 400);
@@ -76,7 +88,7 @@ final readonly class GoalController
         ], 201);
     }
 
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $goal = $this->goalService->findById($id);
 
@@ -99,9 +111,15 @@ final readonly class GoalController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = (string) ($body['name'] ?? '');
-        $goalTypeStr = (string) ($body['goal_type'] ?? '');
-        $targetValue = (string) ($body['target_value'] ?? '');
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawGoalType */
+        $rawGoalType = $body['goal_type'] ?? null;
+        $goalTypeStr = is_string($rawGoalType) ? $rawGoalType : '';
+        /** @var mixed $rawTargetValue */
+        $rawTargetValue = $body['target_value'] ?? null;
+        $targetValue = is_string($rawTargetValue) ? $rawTargetValue : '';
 
         if ($name === '' || $goalTypeStr === '' || $targetValue === '') {
             return Response::json(['error' => 'name, goal_type, and target_value are required'], 400);
@@ -129,7 +147,7 @@ final readonly class GoalController
         ]);
     }
 
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         try {
             $this->goalService->delete($id);

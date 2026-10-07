@@ -19,7 +19,7 @@ use function is_string;
 /**
  * Admin controller for tag CRUD.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class TagController
 {
     use RendersAdminView;
@@ -32,7 +32,7 @@ final readonly class TagController
     ) {}
 
     /**
-     * GET /admin/forum/tags — List all tags.
+     * GET /admin/forum/tags: List all tags.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -49,7 +49,7 @@ final readonly class TagController
     }
 
     /**
-     * GET /admin/forum/tags/{id} — Show a single tag.
+     * GET /admin/forum/tags/{id}: Show a single tag.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -68,7 +68,7 @@ final readonly class TagController
     }
 
     /**
-     * POST /admin/forum/tags — Create a new tag.
+     * POST /admin/forum/tags: Create a new tag.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -78,14 +78,20 @@ final readonly class TagController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $slug = is_string($body['slug'] ?? null) ? $body['slug'] : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slug = is_string($rawSlug) ? $rawSlug : '';
 
         if ($name === '' || $slug === '') {
             return Response::json(['error' => 'Name and slug are required'], 422);
         }
 
-        $description = is_string($body['description'] ?? null) ? $body['description'] : null;
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        $description = is_string($rawDescription) ? $rawDescription : null;
 
         $tag = $this->tagService->createTag($name, $slug, $description);
 
@@ -93,7 +99,7 @@ final readonly class TagController
     }
 
     /**
-     * PUT /admin/forum/tags/{id} — Update a tag.
+     * PUT /admin/forum/tags/{id}: Update a tag.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -109,14 +115,21 @@ final readonly class TagController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        if (is_string($body['name'] ?? null) || is_string($body['slug'] ?? null)) {
-            $name = is_string($body['name'] ?? null) ? $body['name'] : $tag->name;
-            $slug = is_string($body['slug'] ?? null) ? $body['slug'] : $tag->slug;
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+
+        if (is_string($rawName) || is_string($rawSlug)) {
+            $name = is_string($rawName) ? $rawName : $tag->name;
+            $slug = is_string($rawSlug) ? $rawSlug : $tag->slug;
             $tag = $tag->rename($name, $slug);
         }
 
-        if (is_string($body['description'] ?? null)) {
-            $tag = $tag->describe($body['description']);
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        if (is_string($rawDescription)) {
+            $tag = $tag->describe($rawDescription);
         }
 
         $this->tagRepository->save($tag);
@@ -125,7 +138,7 @@ final readonly class TagController
     }
 
     /**
-     * DELETE /admin/forum/tags/{id} — Delete a tag.
+     * DELETE /admin/forum/tags/{id}: Delete a tag.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

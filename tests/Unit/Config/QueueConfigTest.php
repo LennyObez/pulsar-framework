@@ -89,6 +89,34 @@ final class QueueConfigTest extends TestCase
         self::assertSame(2.0, $config->retryMultiplier);
         self::assertTrue($config->deadLetterEnabled);
         self::assertSame(30, $config->deadLetterRetentionDays);
+        self::assertFalse($config->encryptPayloads);
+        self::assertFalse($config->enforceEffectClassification);
+        self::assertFalse($config->preventDuplicates);
+        self::assertSame(300, $config->preventDuplicatesTtlSeconds);
+        self::assertFalse($config->rateLimitEnabled);
+        self::assertSame(1, $config->rateLimitTtlSeconds);
+        self::assertSame(0, $config->rateLimitTimeoutMs);
+    }
+
+    #[Test]
+    public function fromArrayParsesTheMiddlewareBlock(): void
+    {
+        $config = QueueConfig::fromArray([
+            'middleware' => [
+                'encrypt_payloads' => true,
+                'enforce_effect_classification' => true,
+                'prevent_duplicates' => ['enabled' => true, 'ttl_seconds' => 60],
+                'rate_limit' => ['enabled' => true, 'ttl_seconds' => 2, 'timeout_ms' => 500],
+            ],
+        ], $this->environment);
+
+        self::assertTrue($config->encryptPayloads);
+        self::assertTrue($config->enforceEffectClassification);
+        self::assertTrue($config->preventDuplicates);
+        self::assertSame(60, $config->preventDuplicatesTtlSeconds);
+        self::assertTrue($config->rateLimitEnabled);
+        self::assertSame(2, $config->rateLimitTtlSeconds);
+        self::assertSame(500, $config->rateLimitTimeoutMs);
     }
 
     #[Test]

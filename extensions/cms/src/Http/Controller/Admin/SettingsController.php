@@ -13,22 +13,23 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function count;
+use function is_array;
 use function is_string;
 
 /**
  * Admin controller for CMS site settings management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class SettingsController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class SettingsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private SettingsServiceInterface $settingsService,
-        private GateInterface $gate,
         private CmsConfig $config,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function show(ServerRequestInterface $request, string $group): Response
     {
@@ -55,12 +56,17 @@ final readonly class SettingsController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
+        $reason = is_string($rawReason) ? $rawReason : null;
 
         /** @var array<string, mixed> $settings */
-        $settings = (array) ($body['settings'] ?? []);
+        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
+        /** @var mixed $value */
         foreach ($settings as $key => $value) {
             $this->settingsService->set($group, $key, $value, $locale, $reason);
         }
@@ -74,6 +80,7 @@ final readonly class SettingsController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : $this->config->defaultLocale;

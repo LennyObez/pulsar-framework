@@ -10,6 +10,13 @@ use function mb_strlen;
 use function mb_substr;
 use function preg_replace;
 
+/**
+ * Search engine results preview snippet (title, URL, meta description).
+ *
+ * @psalm-api Public DTO produced from content metadata; consumed by SEO
+ *            preview admin panels.
+ * @api
+ */
 #[Api(since: '1.0.0')]
 final readonly class SerpPreview
 {

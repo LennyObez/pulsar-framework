@@ -12,11 +12,12 @@ use Pulsar\Cache\Application\Exception\FenceTokenMismatchException;
  *
  * Provides lock liveness verification before callback execution by refreshing
  * the lock to confirm the caller still holds it. However, the lock can still
- * expire during callback execution — this class cannot prevent that.
+ * expire during callback execution: this class cannot prevent that.
  *
  * For true distributed fencing, the downstream resource (database, API, etc.)
  * must independently validate the fencing token at write time. This executor
- * reduces — but does not eliminate — the window for stale-lock writes.
+ * reduces: but does not eliminate: the window for stale-lock writes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FencedExecutor

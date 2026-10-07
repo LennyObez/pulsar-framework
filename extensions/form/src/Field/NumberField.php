@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Numeric input field with optional min/max/step constraints.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class NumberField extends AbstractField

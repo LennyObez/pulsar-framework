@@ -438,19 +438,69 @@ final class NotificationsServiceProvider implements ServiceProviderInterface
 
 ### 5. Register the extension
 
-Ensure the extension path is included in your `config/app.php`:
+There is nothing to register. Discovery scans a **fixed** location: the
+`extensions/` directory beside `config/`. Put the extension there and it is
+found.
+
+There is no `extensions.paths` setting. `ExtensionDiscovery::discover()` derives
+the project root from the config path, appends `extensions`, and loads every
+`pulsar.json` manifest under it; a `paths` key in `config/app.php` is read by
+nothing and adds no directory. The scaffolded `public/index.php` scans two fixed
+roots - `vendor/pulsar/framework/extensions` for the bundled ones and
+`<project>/extensions` for yours - and to load an extension from anywhere else
+you call `loadFromPaths()` yourself, as shown under
+[Programmatic discovery](#programmatic-discovery).
+
+What `config/app.php` **does** control is which of the discovered extensions
+boot:
 
 ```php
 return [
     'extensions' => [
-        'paths' => [
-            __DIR__ . '/../extensions',
+        // Exclusive allowlist. Present: only these load. Absent: everything
+        // discovered loads, except off-by-default products.
+        'enabled' => [
+            'myapp/notifications',
         ],
+
+        // Additive opt-in for bundled products, which stay off until listed
+        // here whatever 'enabled' says.
+        'enabled_products' => [],
     ],
 ];
 ```
 
-The extension loader discovers all `pulsar.json` manifests under the configured paths automatically.
+Names are the manifest's `name` field. Non-string entries are dropped rather
+than trusted, so a malformed list cannot smuggle a non-name into either control.
+Both keys are optional; omitting `enabled` means "load what you find", and
+omitting `enabled_products` means "load no products".
+
+### Programmatic discovery
+
+To discover and load extensions programmatically (e.g. in a custom entry point):
+
+```php
+use Pulsar\Extensibility\ExtensionBootstrap;
+
+// Static factory creates a bootstrap with a default ExtensionLoader
+$extensions = ExtensionBootstrap::create();
+
+// Discover extensions from one or more directories
+$extensions->loadFromPaths([
+    __DIR__ . '/../extensions',      // Scans for pulsar.json in subdirectories
+    __DIR__ . '/../vendor/acme/ext', // Individual extension directory
+]);
+
+// Check for any load warnings (skipped extensions, version mismatches)
+foreach ($extensions->getLoadWarnings() as $warning) {
+    error_log($warning);
+}
+
+// Pass to Kernel constructor
+$kernel = new Kernel(extensionBootstrap: $extensions);
+```
+
+`loadFromPaths()` performs four steps: manifest discovery, version validation, class validation, and dependency-order sorting. Extensions that fail validation are skipped with a warning (logged via the injected `LoggerInterface`).
 
 ## Debugging extensions
 
@@ -460,6 +510,35 @@ Use the CLI to inspect extensions:
 php bin/pulsar diagnostics        # Shows loaded extension count
 php bin/pulsar show:container     # Shows all container bindings (including extension services)
 php bin/pulsar show:routes        # Shows all routes (including extension routes)
+```
+
+## Registering routes
+
+Extensions register their routes during `boot()`. Routes are first-registered-wins
+and application routes register before extensions, so an extension route on the
+same method and path as a project route is treated as a collision: it is excluded
+from matching, logged as a warning in production, and fails the boot in debug mode
+(see [ADR-0034](adr/0034-route-registration-precedence.md)).
+
+Because of this, an extension must not claim a bare top-level path
+unconditionally. Make routes **opt-in and prefix-configurable** so an application
+that owns a path can disable or relocate them. The `pulsar/booking` extension is
+the reference: `config/booking.php` exposes `routes_enabled`, `route_prefix`, and
+`admin_route_prefix`, and `boot()` returns early when routes are disabled and
+prefixes every path with the configured value.
+
+```php
+public function boot(ContainerInterface $container, RouterInterface $router): void
+{
+    $config = $container->get(BookingConfig::class);
+
+    if (!$config->routesEnabled) {
+        return;
+    }
+
+    $router->get($config->routePrefix, [BookingController::class, 'form'], 'booking.form');
+    // ...
+}
 ```
 
 ## Error handling
@@ -474,40 +553,224 @@ All exceptions use static factory methods for clear, contextual error messages.
 
 ## Trust tier enforcement
 
+### Where an extension's tier comes from
+
+Before reading what a tier permits, be clear about what confers one. **A tier is granted by the host application, never by the extension.**
+
+- `pulsar.json` may declare `trust_tier`. That is a **request**, and it is unauthenticated: the manifest sits in the same directory as the code it describes, and **Pulsar verifies no extension signature anywhere** — there is no publisher key, no trust store, and no verifier on any load or install path. Treat a `trust_tier` you read out of a manifest exactly as you would treat a claim in a README.
+- `config/extensions.php` — the host's file, not the extension's — maps extension names to the tier the operator is willing to grant.
+- The effective tier used at boot is `min(requested, granted)`, and an extension the host has not listed gets `Community` no matter what its manifest says. So the manifest can only ever **lower** an extension's privileges, which is why parsing it unverified is safe.
+
+The practical consequence for an operator: everything above Community in your deployment is there because you typed a name into `config/extensions.php`. Review that file the way you would review a list of packages you have decided to trust, because that is exactly what it is.
+
 ### Framework-enforced boundaries
 
 The extension system enforces capability restrictions at the PHP runtime level through scoped proxies:
 
-| Resource              | Enforcement mechanism    | Capability required   |
-| --------------------- | ------------------------ | --------------------- |
-| Container services    | `ScopedContainerProxy`   | Per-service (see map) |
-| Route registration    | `ScopedRouterProxy`      | `RouteRegister`       |
-| Environment variables | `ScopedEnvironmentProxy` | `EnvRead`             |
-| Sensitive env vars    | `ScopedEnvironmentProxy` | `CryptoKeyAccess`     |
+| Resource                     | Enforcement mechanism  | Capability required                         |
+| ---------------------------- | ---------------------- | ------------------------------------------- |
+| Container services           | `ScopedContainerProxy` | Per-service (see `ServiceRestrictionMap`)   |
+| Route registration           | `ScopedRouterProxy`    | `RouteRegister` / `RouteRegisterGlobal`     |
+| `Config\Environment` service | `ScopedContainerProxy` | `EnvRead` (via the service restriction map) |
 
-These proxies intercept calls and check the extension's effective trust tier against the `CapabilityPolicy`. Violations throw `CapabilityDeniedException` (container) or return null (environment).
+These proxies intercept calls and check the extension's effective trust tier against the `CapabilityPolicy`. Violations throw `CapabilityDeniedException`.
+
+The container is a genuine chokepoint: an extension cannot obtain a restricted service without going through it. A capability whose subject is reachable by any other means is listed below instead, because a gate the constrained code can walk around is not enforcement.
+
+#### What the scoped container will not give you, at any tier below Core
+
+The proxy checks the service ID you ask for **and the object that comes back**, because an
+ID is a name your composition root chose and says nothing about what is behind it.
+
+- **A container or a router is exchanged for your own scoped one.** Resolving
+  `ContainerInterface` or `RouterInterface` by name is refused outright with an explanatory
+  error; anywhere the framework hands you a container without your asking — a factory
+  closure you registered, a decorator closure, a deferred provider's `register()` — you get
+  the same scoped proxy you already had, not the real container.
+- **The configuration registry is narrowed to your own sections.** One
+  `ExtensionConfigRegistry` holds every installed extension's `config/<name>.php`, and a
+  `payments` section carries a webhook secret in a real deployment. Resolving it below Core
+  returns a view holding only the sections **your** extension ships — the section name is
+  your config file's basename with `-` normalised to `_`, so `config/my-thing.php` is
+  `my_thing`. An operator's override of one of your sections still reaches you; another
+  extension's section answers `has()` false and `section()` `[]`. An extension that ships no
+  `config/` directory receives an empty registry, which is what every `fromArray()` already
+  reads as "not configured".
+- **Anything else that dispenses services is refused.** The kernel, the
+  `ExtensionBootstrap`, the `ExtensionRegistry`, a wiring, the config manager, the
+  middleware pipeline and registry, the argument-resolver registry.
+- **`$container->call()` resolves through your scope.** Type-hinting a parameter is asking
+  for a service by another name, and it is answered by the same rules `get()` uses.
+- **Binding a class NAME builds it in your scope.** `bind('id', Mine::class)` would let the
+  _container_ choose that constructor's arguments, so the binding becomes a factory that
+  builds `Mine` here instead: each parameter is resolved through your own `get()`, and so is
+  each of ITS parameters, with no depth limit. The same applies to your service providers,
+  your route handlers, your route middleware, your model resolvers and your CLI commands —
+  everything the framework constructs from a class name you supplied. This replaced an
+  earlier check that predicted what the container would put in a constructor: a prediction
+  can be walked around by adding one collaborator or by declaring the class after binding
+  it, and both were.
+- **`has()` answers for your scope, not for the host.** It is true when you can actually
+  resolve the id and false when the host bound something your tier may not have, so
+  `if ($c->has($x)) { $c->get($x); }` does what PSR-11 says it does. A service you can see
+  in the host's composition root may therefore read as "not configured" to you; that is a
+  missing capability grant, not a bug to code around.
+- **Another extension's PUBLISHED types are resolvable; the rest of it is not.** A type is
+  reachable from your scope when the extension that ships it names it in its own
+  manifest's `provides.services`. You declare nothing to consume one — the decision is the
+  provider's, and it is anchored to the file the type is declared in, so a manifest cannot
+  publish a class its extension does not ship. Guard the call with `has()` so your
+  extension still boots when the other one is not installed.
+
+If you need the container inside something you bind, register a **factory closure**:
+`bind('id', fn(ContainerInterface $c) => new Mine($c))`. A closure registered through the
+scoped container is invoked with that scoped container.
 
 ### Operationally-enforced boundaries
 
-Some capabilities cannot be enforced at the PHP level because PHP has no native process sandboxing. These require operational controls in production:
+Some capabilities cannot be enforced at the PHP level because PHP has no native process sandboxing, and because the underlying operation is a global function any loaded code may call. These require operational controls in production:
 
-| Capability        | Why PHP cannot enforce it          | Recommended operational control                                   |
-| ----------------- | ---------------------------------- | ----------------------------------------------------------------- |
-| `FilesystemWrite` | PHP can write to any writable path | Use `open_basedir` in `php.ini` to restrict paths                 |
-| `NetworkEgress`   | PHP can open sockets to any host   | Use firewall rules or network policies (Kubernetes NetworkPolicy) |
-| `ProcessExec`     | `exec()`/`proc_open()` are global  | Use `disable_functions` in `php.ini`                              |
-| `DatabaseRaw`     | DSN credentials are available      | Use separate database users with restricted privileges            |
+| Capability        | Why PHP cannot enforce it                                          | Recommended operational control                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FilesystemWrite` | PHP can write to any writable path                                 | Use `open_basedir` in `php.ini` to restrict paths                                                                                                   |
+| `NetworkEgress`   | PHP can open sockets to any host                                   | Use firewall rules or network policies (Kubernetes NetworkPolicy)                                                                                   |
+| `ProcessExec`     | `exec()`/`proc_open()` are global                                  | Use `disable_functions` in `php.ini`                                                                                                                |
+| `DatabaseRaw`     | DSN credentials are available                                      | Use separate database users with restricted privileges                                                                                              |
+| `EnvRead`         | `getenv()`, `$_ENV` and `$_SERVER` are readable by any loaded code | Keep secrets out of the environment of a process that loads untrusted extensions — use a secret store, and rotate anything the environment has held |
+
+`EnvRead` gates the `Pulsar\Config\Environment` **service** at the container, which is worth having: it stops an honest extension from reaching the framework's environment reader. It does not and cannot stop `getenv()`. Pulsar shipped a `ScopedEnvironmentProxy` that filtered sensitive variable names by tier; it was reachable from nothing and, had it been wired, would have been bypassed by one call to a global function, so it was removed rather than left in place implying a boundary that does not exist.
 
 **Production recommendation**: Set `disable_functions = exec,passthru,shell_exec,system,proc_open,popen` in `php.ini` for application workers. Only CLI console workers that need process execution should have these functions enabled.
 
+### Where each capability is enforced
+
+A capability that gates nothing is a claim, and this page is cited for SOX, HIPAA and
+PCI-DSS controls. Three capabilities — `MiddlewareRegister`, `CommandRegister` and
+`AuditWrite` — were in that state: declared in `ExtensionCapability`, granted by
+`CapabilityPolicy`, printed in the tier table, and consulted by no code anywhere in
+`src/`. They now have enforcement sites, each pinned by a test that fails if the check is
+removed:
+
+| Capability           | Enforcement site                                                                                                                      | Test that pins it                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MiddlewareRegister` | `ServiceRestrictionMap` prices `MiddlewarePipelineInterface` and `MiddlewareRegistry`, the two ids the Kernel binds (`:149-150`)      | `ServiceRestrictionMapTest::globalMiddlewareCostsMiddlewareRegister`, `SandboxEscapeRoutesTest::middlewareRegisterNowGatesTheGlobalPipeline`                  |
+| `CommandRegister`    | `ExtensionBootstrap::buildCommand()` charges the declaring extension's tier before it constructs the command (`:682-690`)             | `SandboxEscapeRoutesTest::aCommandFromATierWithoutCommandRegisterIsRefused`, `BundledExtensionContractTest::noCommandTheManifestPromisesIsDeniedByItsOwnTier` |
+| `AuditWrite`         | `ServiceRestrictionMap` prices `AuditLoggerInterface` and `AuditLogger` (`:104-105`); both were on the safe list until this was fixed | `ServiceRestrictionMapTest::theAuditLoggerCostsAuditWriteRatherThanBeingSafeListed`, `SandboxEscapeRoutesTest::auditWriteNowGatesTheAuditLogger`              |
+
+The audit sink and the audit logger are priced separately, because they are different
+powers: draining or reconfiguring the sink is `AuditSinkAccess` (Core and Verified),
+appending an entry is `AuditWrite` (down to Community, never Untrusted).
+
+`ProcessExec` still prices nothing, and that is a statement rather than an omission: the
+framework exposes no process-execution service to price — `ServeCommand` calls `proc_open()`
+directly — and the capability is granted to Core alone, which bypasses the restriction map
+entirely. The map used to name `Pulsar\Process\ProcessManagerInterface`, a type that has
+never existed here, which made an inert grant look enforced.
+`ServiceRestrictionMapTest::processExecPricesNothingBecauseThereIsNoProcessService` holds
+the map to that.
+
+An earlier revision of this section said all three were "never checked" and cited
+`tests/Integration/Extensibility/SandboxOpenGapsTest.php` as scanning `src/` to keep the
+claim honest. That test does no such scan: it executes the escapes that remain **open** —
+reflection reaching the unscoped container, an Untrusted extension reading the host route
+table, and forged event dispatch — and has never had anything to do with these three
+capabilities. Those gaps are described under [What the sandbox is not](#what-the-sandbox-is-not)
+and in ADR-0023.
+
+### What the sandbox is not
+
+It is not a memory boundary. An extension is PHP running in your process, so
+`ReflectionProperty` reads `ScopedContainerProxy`'s private `$inner` and returns the real
+container in one line, at any tier. PHP offers no way to withhold that from in-process
+code, and ADR-0023 weighed process isolation and rejected it on cost.
+
+What the tier system buys, then, is that reach is **explicit and auditable** rather than
+ambient: an extension that takes the documented route is confined, and one that does not
+has to do something that looks exactly like what it is. Installing an extension is still a
+decision to run someone else's code. Tier it accordingly, and read
+[ADR-0023](adr/0023-extension-trust-tiers.md) — "What this does not stop" — before relying
+on it for a compliance control.
+
 ### Trust tier summary
 
-| Tier      | Container | Routes   | Env read | Sensitive env | Filesystem | Network | Process exec |
-| --------- | --------- | -------- | -------- | ------------- | ---------- | ------- | ------------ |
-| Core      | Full      | Global   | Yes      | Yes           | Yes        | Yes     | Yes          |
-| Verified  | Most      | Global   | Yes      | With grant    | Yes        | Yes     | No           |
-| Community | Limited   | Prefixed | No       | No            | No         | No      | No           |
-| Untrusted | Read-only | No       | No       | No            | No         | No      | No           |
+**[ADR-0023](adr/0023-extension-trust-tiers.md) owns the capability model.** Its matrix is
+the per-capability statement of what each tier is granted, and `CapabilityPolicy::defaults()`
+is the code that grants it. This table is a second view of the same facts for a different
+question — not "which capabilities" but "what can this extension actually reach" — so every
+column names the capability it renders, and `TrustTierDocumentationTest` checks each cell
+against the policy. It cannot drift from the ADR without failing the build.
+
+Every cell means "may resolve the framework service that does this", because the container
+is where the check happens. None of them means the extension is prevented from doing it by
+other means — see the operational table above.
+
+| Tier      | Container | Routes   | `EnvRead` | `FilesystemWrite` | `NetworkEgress` | `ProcessExec` |
+| --------- | --------- | -------- | --------- | ----------------- | --------------- | ------------- |
+| Core      | Full      | Global   | yes       | yes               | yes             | yes           |
+| Verified  | Most      | Global   | yes       | yes               | yes             | no            |
+| Community | Limited   | Prefixed | no        | no                | no              | no            |
+| Untrusted | Read-only | No       | no        | no                | no              | no            |
+
+The last four columns are the capabilities gating the `Environment` service, the
+`Filesystem` service, the HTTP client and the process manager. The first two are words
+rather than yes/no because the answer is graded, and each word is one capability:
+
+- **Container** — `Full` may override an existing binding (`ContainerWrite`); `Most` may
+  decorate one (`ServiceDecorate`); `Limited` may register its own (`ServiceRegister`);
+  `Read-only` may only resolve (`ContainerRead`).
+- **Routes** — `Global` may register any path (`RouteRegisterGlobal`); `Prefixed` may
+  register under its own prefix (`RouteRegister`); `No` may not register at all.
+
+The host can grant a specific capability to a specific extension with `additional_capabilities` in `config/extensions.php` without moving it to a higher tier.
+
+**This reaches container capabilities only.** `ScopedContainerProxy` consults the per-extension grants; `ScopedRouterProxy` is constructed with the tier and the policy alone and never sees them, so `RouteRegister` and `RouteRegisterGlobal` cannot be granted this way — a Community extension given `RouteRegisterGlobal` in `additional_capabilities` still cannot call `model()` or register an unprefixed route. The failure is a refusal rather than an unintended grant, so it is safe, but it is silent: raise the extension's tier if it genuinely needs global route registration.
+
+**A name the framework does not have is a configuration error.** A `tier` that is not one of the four, or an `additional_capabilities` entry that does not match a capability name exactly, refuses the boot and says which names exist. Both used to be swallowed — the tier resolved to `community`, the capability was filtered out of the list — which fails in the safe direction and is why it went unnoticed: `config/extensions.php` is the record of what each extension was granted, and it could read as a grant that had been made while the runtime made none.
+
+## Admin theme integration
+
+The Admin extension ships its own layout and styles. Projects can customize the admin panel appearance without forking the extension.
+
+### Theme configuration
+
+Set the theme key in `config/admin.php`:
+
+```php
+return [
+    'theme' => 'dark',  // Built-in themes: 'light' (default), 'dark'
+];
+```
+
+### CSS custom properties
+
+The admin panel uses CSS custom properties from `resources/ui/css/tokens.css` for colors, spacing, typography, and other design tokens. Override any token in your project stylesheet:
+
+```css
+:root {
+  --pulsar-color-primary: #1a73e8;
+  --pulsar-color-surface: #fafafa;
+  --pulsar-font-family-heading: 'Montserrat', sans-serif;
+}
+```
+
+### Load order
+
+Extension CSS loads after the base `pulsar-ui.css` stylesheet. This means extension styles can rely on base tokens, and project-level overrides applied after extensions take final precedence:
+
+1. `resources/ui/css/base.css` (framework base, includes `@font-face` declarations)
+2. `resources/ui/css/tokens.css` (design tokens)
+3. Extension stylesheets (e.g., admin, analytics, studio)
+4. Project stylesheets (highest specificity)
+
+To inject a project stylesheet into the admin layout, register it in `config/admin.php`:
+
+```php
+return [
+    'extra_css' => [
+        '/css/admin-overrides.css',
+    ],
+];
+```
 
 ## Concurrency constraints
 

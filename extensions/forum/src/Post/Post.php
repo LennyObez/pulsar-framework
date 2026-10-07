@@ -9,11 +9,12 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
- * Forum post entity — represents a reply within a thread.
+ * Forum post entity: represents a reply within a thread.
  *
  * Supports threaded replies via parentId, time-limited editing, solution
  * marking, and vote scoring. Stores both Markdown source and pre-rendered
  * sanitized HTML. Hashed IP and user agent for anti-abuse without PII retention.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Post
@@ -78,7 +79,7 @@ final readonly class Post
     ): self {
         $now = new DateTimeImmutable();
         $editWindowExpiry = $editWindowMinutes > 0
-            ? $now->modify("+{$editWindowMinutes} minutes")
+            ? $now->modify("+$editWindowMinutes minutes")
             : null;
 
         return new self(
@@ -107,7 +108,6 @@ final readonly class Post
      * Edit the post body within the edit window.
      *
      * @throws ForumException If the edit window has expired
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function edit(string $newBody, string $newBodyHtml, string $editedBy): self
     {
@@ -130,7 +130,6 @@ final readonly class Post
     /**
      * Mark this post as the accepted solution.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function markAsSolution(): self
     {
@@ -143,7 +142,6 @@ final readonly class Post
     /**
      * Remove the solution mark from this post.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function unmarkAsSolution(): self
     {
@@ -156,7 +154,6 @@ final readonly class Post
     /**
      * Update the aggregate vote score.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function updateVoteScore(int $delta): self
     {

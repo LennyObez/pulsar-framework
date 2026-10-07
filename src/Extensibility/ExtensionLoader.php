@@ -5,14 +5,26 @@ declare(strict_types=1);
 namespace Pulsar\Extensibility;
 
 use DirectoryIterator;
+use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Core\Version;
 use Pulsar\Extensibility\Exception\DependencyException;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\Exception\ManifestException;
 
+use function class_exists;
 use function count;
+use function dirname;
+use function file_exists;
+use function file_get_contents;
 use function in_array;
+use function is_a;
+use function json_decode;
+use function json_validate;
+use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Discovers and validates extension manifests.
@@ -25,6 +37,10 @@ final class ExtensionLoader
     /**
      * Discover extension manifests in the given paths.
      *
+     * Each path may be:
+     *   - A parent directory containing extension subdirectories (e.g. `extensions/`)
+     *   - An individual extension directory containing a `pulsar.json` directly
+     *
      * @param list<string> $paths Directories to scan for extensions
      * @return list<ExtensionManifest>
      * @throws ManifestException If a manifest is invalid
@@ -32,13 +48,34 @@ final class ExtensionLoader
     public function discover(array $paths): array
     {
         $manifests = [];
+        $seen = [];
 
         foreach ($paths as $path) {
             if (!is_dir($path)) {
                 continue;
             }
 
-            $manifests = [...$manifests, ...$this->scanDirectory($path)];
+            // If the path itself contains a manifest, load it directly
+            $directManifest = $path . DIRECTORY_SEPARATOR . self::MANIFEST_FILENAME;
+
+            if (file_exists($directManifest)) {
+                $manifest = $this->readManifest($directManifest);
+
+                if (!isset($seen[$manifest->name])) {
+                    $manifests[] = $manifest;
+                    $seen[$manifest->name] = true;
+                }
+
+                continue;
+            }
+
+            // Otherwise scan for extension subdirectories
+            foreach ($this->scanDirectory($path) as $manifest) {
+                if (!isset($seen[$manifest->name])) {
+                    $manifests[] = $manifest;
+                    $seen[$manifest->name] = true;
+                }
+            }
         }
 
         return $manifests;
@@ -46,6 +83,10 @@ final class ExtensionLoader
 
     /**
      * Scan a directory for extension manifests.
+     *
+     * Checks each subdirectory for a pulsar.json manifest. If a subdirectory
+     * does not contain a manifest, it is scanned recursively (one level) to
+     * support grouped layouts like extensions/compliance/dora/.
      *
      * @return list<ExtensionManifest>
      */
@@ -62,7 +103,10 @@ final class ExtensionLoader
             $manifestPath = $item->getPathname() . DIRECTORY_SEPARATOR . self::MANIFEST_FILENAME;
 
             if (file_exists($manifestPath)) {
-                $manifests[] = ExtensionManifest::fromFile($manifestPath);
+                $manifests[] = $this->readManifest($manifestPath);
+            } else {
+                // Recurse into subdirectory groups (e.g., extensions/compliance/)
+                $manifests = [...$manifests, ...$this->scanDirectory($item->getPathname())];
             }
         }
 
@@ -121,17 +165,58 @@ final class ExtensionLoader
             $byName[$manifest->name] = $manifest;
         }
 
-        // Validate all dependencies exist
-        foreach ($manifests as $manifest) {
+        // Validate every dependency twice — first that the required
+        // extension is present, then that its version satisfies the
+        // constraint declared in the requiring manifest's
+        // `requires.extensions` map. Presence alone is not enough: an
+        // extension declaring `requires: { auth: ^1.0 }` would load
+        // happily against `auth: 2.0` and BC-breaking changes would
+        // sneak through. Constraints are parsed with Composer's Semver
+        // so the syntax matches what manifest authors already know.
+        /** @var list<string> $skipped */
+        $skipped = [];
+        $manifests = array_filter($manifests, function (ExtensionManifest $manifest) use ($byName, &$skipped): bool {
             foreach ($manifest->getDependencies() as $dependency) {
                 if (!isset($byName[$dependency])) {
-                    throw DependencyException::missingDependency($manifest->name, $dependency);
+                    $skipped[] = $manifest->name . ' (requires ' . $dependency . ')';
+
+                    return false;
+                }
+
+                $constraint = $manifest->getDependencyVersionConstraint($dependency);
+
+                if ($constraint !== null && $constraint !== '*' && $constraint !== '') {
+                    $providedVersion = $byName[$dependency]->version;
+
+                    if (!\Composer\Semver\Semver::satisfies($providedVersion, $constraint)) {
+                        $skipped[] = sprintf(
+                            '%s (requires %s %s, found %s)',
+                            $manifest->name,
+                            $dependency,
+                            $constraint,
+                            $providedVersion,
+                        );
+
+                        return false;
+                    }
                 }
             }
+
+            return true;
+        });
+
+        // Rebuild lookup after filtering
+        $byName = [];
+        foreach ($manifests as $manifest) {
+            $byName[$manifest->name] = $manifest;
+        }
+
+        if ($skipped !== []) {
+            error_log('Extensions skipped due to missing dependencies: ' . implode(', ', $skipped));
         }
 
         // Topological sort using Kahn's algorithm
-        return $this->topologicalSort($manifests, $byName);
+        return $this->topologicalSort(array_values($manifests), $byName);
     }
 
     /**
@@ -205,19 +290,48 @@ final class ExtensionLoader
     {
         $class = $manifest->extensionClass;
 
-        if (!class_exists($class)) {
+        if (!class_exists($class) || !is_a($class, ExtensionInterface::class, true)) {
             throw ExtensionException::registrationFailed(
                 $manifest->name,
-                'Extension class does not exist: ' . $class,
+                'Extension class does not exist or does not implement ExtensionInterface: ' . $class,
             );
         }
 
-        $instance = new $class();
+        /** @var class-string<ExtensionInterface> $class */
+        return new $class();
+    }
 
-        if (!$instance instanceof ExtensionInterface) {
-            throw ExtensionException::invalidExtensionClass($class);
+    /**
+     * Read a manifest from a pulsar.json on disk.
+     *
+     * Lives here rather than on ExtensionManifest. A manifest is a value — every
+     * field a string, an enum or a nested config value — and it was only ever
+     * classified as a service because a static factory on it read a file. Loading
+     * is this class's job; parsing an array the manifest already knew how to do.
+     *
+     * @throws ManifestException If the file cannot be read or parsed
+     */
+    #[NoDiscard]
+    public function readManifest(string $path): ExtensionManifest
+    {
+        if (!file_exists($path)) {
+            throw ManifestException::fileNotFound($path);
         }
 
-        return $instance;
+        $content = file_get_contents($path)
+            ?: throw ManifestException::fileNotFound($path);
+
+        if (!json_validate($content)) {
+            throw ManifestException::invalidJson($path, 'Invalid JSON');
+        }
+
+        try {
+            /** @var array<string, mixed> $data */
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw ManifestException::invalidJson($path, $e->getMessage());
+        }
+
+        return ExtensionManifest::fromArray($data, dirname($path));
     }
 }

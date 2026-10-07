@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each contributor produces named sections of key-value data. The size in bytes
  * is tracked to enforce per-contributor resource limits.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContributedMetadata

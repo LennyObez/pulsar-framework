@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Schema for a single configuration property (name, type, and default value).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConfigPropertySchema

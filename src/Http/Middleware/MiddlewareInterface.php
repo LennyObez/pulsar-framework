@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Extends PSR-15 MiddlewareInterface directly. All Pulsar middleware
  * is PSR-15 compatible without adapters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MiddlewareInterface extends PsrMiddlewareInterface {}

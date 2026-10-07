@@ -10,8 +10,12 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigOverrides;
+use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Config\Exception\MissingConfigException;
 use Pulsar\Config\ObservabilityConfig;
+use RuntimeException;
 
 #[CoversClass(ConfigManager::class)]
 final class ConfigManagerTest extends TestCase
@@ -172,10 +176,10 @@ final class ConfigManagerTest extends TestCase
     #[Test]
     public function throwsForMissingConfigFile(): void
     {
-        // Directory exists but no files
+        // Directory exists but no files — validation catches this before loadConfigFile
         $manager = new ConfigManager(configPath: $this->tempDir);
 
-        $this->expectException(ConfigException::class);
+        $this->expectException(MissingConfigException::class);
         $manager->load();
     }
 
@@ -205,7 +209,7 @@ final class ConfigManagerTest extends TestCase
 
         self::assertInstanceOf(AppConfig::class, $repo->get(AppConfig::class));
         self::assertInstanceOf(ObservabilityConfig::class, $repo->get(ObservabilityConfig::class));
-        self::assertInstanceOf(\Pulsar\Config\Environment::class, $env);
+        self::assertInstanceOf(Environment::class, $env);
     }
 
     #[Test]
@@ -254,4 +258,109 @@ final class ConfigManagerTest extends TestCase
         $appConfig = $manager->repository()->get(AppConfig::class);
         self::assertSame('FromEnvFile', $appConfig->name);
     }
+
+    /**
+     * Extension-registered loaders run during `load()` AFTER the
+     * framework's hardcoded sections, so they can read framework
+     * config. The DTO they produce lands in the repository keyed
+     * by its class-string — extensions resolve it via
+     * `repository()->get(...)`.
+     */
+    #[Test]
+    public function extensionLoaderProducesConfigInRepository(): void
+    {
+        $this->writeConfigFiles();
+        file_put_contents(
+            $this->tempDir . '/myext.php',
+            "<?php return ['enabled' => true, 'rate' => 42];",
+        );
+
+        $loader = new class implements \Pulsar\Config\ConfigLoaderInterface {
+            public function configClass(): string
+            {
+                return ExtensionConfigStub::class;
+            }
+
+            public function load(array $data, Environment $environment, ConfigRepository $repository): object
+            {
+                /** @var bool $enabled */
+                $enabled = $data['enabled'] ?? false;
+                /** @var int $rate */
+                $rate = $data['rate'] ?? 0;
+                return new ExtensionConfigStub($enabled, $rate);
+            }
+        };
+
+        $manager = new ConfigManager(configPath: $this->tempDir);
+        $manager->registerLoader('myext', $loader, optional: false);
+        $manager->load();
+
+        $resolved = $manager->repository()->get(ExtensionConfigStub::class);
+        self::assertSame(true, $resolved->enabled);
+        self::assertSame(42, $resolved->rate);
+    }
+
+    /**
+     * An optional loader whose config file is absent simply skips
+     * — no exception, no entry in the repository. A required
+     * loader (`optional: false`) throws when the file is missing.
+     */
+    #[Test]
+    public function optionalExtensionLoaderSkipsWhenFileMissing(): void
+    {
+        $this->writeConfigFiles();
+
+        $loader = new class implements \Pulsar\Config\ConfigLoaderInterface {
+            public function configClass(): string
+            {
+                return ExtensionConfigStub::class;
+            }
+
+            public function load(array $data, Environment $environment, ConfigRepository $repository): object
+            {
+                throw new RuntimeException('factory should not be called when file is missing');
+            }
+        };
+
+        $manager = new ConfigManager(configPath: $this->tempDir);
+        $manager->registerLoader('absent', $loader, optional: true);
+        $manager->load();
+
+        self::assertFalse($manager->repository()->has(ExtensionConfigStub::class));
+    }
+
+    #[Test]
+    public function requiredExtensionLoaderThrowsWhenFileMissing(): void
+    {
+        $this->writeConfigFiles();
+
+        $loader = new class implements \Pulsar\Config\ConfigLoaderInterface {
+            public function configClass(): string
+            {
+                return ExtensionConfigStub::class;
+            }
+
+            public function load(array $data, Environment $environment, ConfigRepository $repository): object
+            {
+                return new ExtensionConfigStub(false, 0);
+            }
+        };
+
+        $manager = new ConfigManager(configPath: $this->tempDir);
+        $manager->registerLoader('absent', $loader, optional: false);
+
+        $this->expectException(MissingConfigException::class);
+        $manager->load();
+    }
+}
+
+/**
+ * @internal stub DTO used by the extension-loader tests above.
+ */
+final readonly class ExtensionConfigStub
+{
+    public function __construct(
+        public bool $enabled,
+        public int $rate,
+    ) {}
 }

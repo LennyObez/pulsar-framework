@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Grant: all required claims are satisfied, access is allowed.
  * Deny: one or more required claims are missing or insufficient, access is refused.
  * StepUp: claims are partially satisfied; additional authentication is required.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PolicyDecision: string

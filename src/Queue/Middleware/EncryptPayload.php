@@ -14,7 +14,7 @@ use Pulsar\Queue\Envelope\JobEnvelope;
  * Encrypts/decrypts job payloads using AEAD (XChaCha20-Poly1305) with AAD binding.
  *
  * AAD composition: tenant_id | queue | job_class | schema_version | correlation_id | attempt
- * This binds the ciphertext to the envelope context — any modification to AAD fields
+ * This binds the ciphertext to the envelope context: any modification to AAD fields
  * will cause decryption to fail, providing tamper detection.
  *
  * On dispatch: if the job class has the #[Encrypted] attribute, encrypts the payload
@@ -66,7 +66,6 @@ final readonly class EncryptPayload implements JobMiddlewareInterface
             jobClass: $envelope->jobClass,
             schemaVersion: $envelope->schemaVersion,
             correlationId: $envelope->correlationId,
-            attempt: $envelope->attempt,
         );
 
         $result = $this->encryptor->encrypt($envelope->payload, $aad);
@@ -104,7 +103,6 @@ final readonly class EncryptPayload implements JobMiddlewareInterface
             jobClass: $envelope->jobClass,
             schemaVersion: $envelope->schemaVersion,
             correlationId: $envelope->correlationId,
-            attempt: $envelope->attempt,
         );
 
         $plaintext = $this->encryptor->decrypt($envelope->payload, $aad, $envelope->keyId);

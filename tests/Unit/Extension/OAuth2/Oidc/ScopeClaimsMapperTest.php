@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\OAuth2\Oidc;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Oidc\ScopeClaimsMapper;
+use Pulsar\Extension\Auth\OAuth2\Oidc\ScopeClaimsMapper;
 
 #[CoversClass(ScopeClaimsMapper::class)]
 final class ScopeClaimsMapperTest extends TestCase

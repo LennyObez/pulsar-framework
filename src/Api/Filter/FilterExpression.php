@@ -11,7 +11,8 @@ use Pulsar\Api\Api;
  * AST node representing a single filter condition.
  *
  * Each expression maps a registered field name, an enumerated operator,
- * and a typed value. This is the output of parsing — never raw input.
+ * and a typed value. This is the output of parsing: never raw input.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterExpression

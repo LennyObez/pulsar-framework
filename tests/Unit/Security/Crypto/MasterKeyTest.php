@@ -10,18 +10,41 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Exception\SecurityException;
+use SensitiveParameterValue;
+use Throwable;
 
+use function ini_get;
+use function ini_set;
+use function sprintf;
 use function strlen;
 
 #[CoversClass(MasterKey::class)]
 final class MasterKeyTest extends TestCase
 {
     private string $validHex;
+    private string $ignoreArgs;
+    private string $paramMaxLen;
 
     protected function setUp(): void
     {
         // 32-byte key hex-encoded
         $this->validHex = sodium_bin2hex(random_bytes(32));
+
+        // The redaction tests below are only meaningful when the engine records
+        // frame arguments and prints them in full: with zend.exception_ignore_args=1
+        // no argument reaches a trace, and zend.exception_string_param_max_len
+        // defaults to 15, which would truncate a 64-char key and let a leak pass
+        // a "does not contain the key" assertion.
+        $this->ignoreArgs = (string) ini_get('zend.exception_ignore_args');
+        $this->paramMaxLen = (string) ini_get('zend.exception_string_param_max_len');
+        ini_set('zend.exception_ignore_args', '0');
+        ini_set('zend.exception_string_param_max_len', '1000');
+    }
+
+    protected function tearDown(): void
+    {
+        ini_set('zend.exception_ignore_args', $this->ignoreArgs);
+        ini_set('zend.exception_string_param_max_len', $this->paramMaxLen);
     }
 
     #[Test]
@@ -36,7 +59,7 @@ final class MasterKeyTest extends TestCase
     public function fromHexThrowsForInvalidLength(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('expected');
+        $this->expectExceptionMessageIsOrContains('expected');
 
         $_ = MasterKey::fromHex(sodium_bin2hex(random_bytes(16))); // 16 bytes, need 32
     }
@@ -92,7 +115,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('KDF context must be exactly 8 bytes, got 2');
+        $this->expectExceptionMessageIsOrContains('KDF context must be exactly 8 bytes, got 2');
 
         $masterKey->deriveSubKey(1, 'ab');
     }
@@ -103,7 +126,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('KDF context must be exactly 8 bytes, got 27');
+        $this->expectExceptionMessageIsOrContains('KDF context must be exactly 8 bytes, got 27');
 
         $masterKey->deriveSubKey(1, 'this_is_a_very_long_context');
     }
@@ -122,7 +145,7 @@ final class MasterKeyTest extends TestCase
     public function fromEnvironmentThrowsWhenMissing(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('PULSAR_MASTER_KEY');
+        $this->expectExceptionMessageIsOrContains('PULSAR_MASTER_KEY');
 
         $_ = MasterKey::fromEnvironment('');
     }
@@ -235,7 +258,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization');
+        $this->expectExceptionMessageIsOrContains('Serialization');
 
         serialize($masterKey);
     }
@@ -246,7 +269,7 @@ final class MasterKeyTest extends TestCase
         $shortPrevious = sodium_bin2hex(random_bytes(16));
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('previous key');
+        $this->expectExceptionMessageIsOrContains('previous key');
 
         $_ = MasterKey::fromHex($this->validHex, $shortPrevious);
     }
@@ -271,5 +294,111 @@ final class MasterKeyTest extends TestCase
         $debug = $masterKey->__debugInfo();
 
         self::assertSame('[NONE]', $debug['previousRawKey']);
+    }
+
+    #[Test]
+    public function unserializationIsForbidden(): void
+    {
+        $masterKey = MasterKey::fromHex($this->validHex);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessageIsOrContains('Serialization of MasterKey is forbidden');
+
+        $masterKey->__unserialize([]);
+    }
+
+    #[Test]
+    public function normalizeContextRejectsWrongLength(): void
+    {
+        $masterKey = MasterKey::fromHex($this->validHex);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('exactly 8 bytes');
+
+        $masterKey->deriveSubKey(1, 'toolong_ctx');
+    }
+
+    #[Test]
+    public function fromHexKeepsTheKeyOutOfTheExceptionTrace(): void
+    {
+        // A well-formed key of the wrong length, not 'zz': sodium_hex2bin() marks its
+        // own parameter sensitive, so a malformed-hex failure drops the arguments of
+        // every frame and would prove nothing. Here MasterKey itself raises, and the
+        // fromHex() frame carries whatever the caller passed.
+        $wrongLengthHex = sodium_bin2hex(random_bytes(16));
+
+        try {
+            $_ = MasterKey::fromHex($wrongLengthHex);
+            self::fail('fromHex() accepted a 16-byte key');
+        } catch (SecurityException $e) {
+            self::assertParameterRedacted($e, 'fromHex', 0, $wrongLengthHex);
+        }
+    }
+
+    #[Test]
+    public function fromHexKeepsTheCurrentKeyOutOfTheTraceWhenThePreviousKeyIsRejected(): void
+    {
+        // The rotation window is where a live key leaks most cheaply: a misconfigured
+        // PULSAR_MASTER_KEY_PREVIOUS raises while the valid current key sits in the
+        // same frame.
+        $shortPreviousHex = sodium_bin2hex(random_bytes(16));
+
+        try {
+            $_ = MasterKey::fromHex($this->validHex, $shortPreviousHex);
+            self::fail('fromHex() accepted a 16-byte previous key');
+        } catch (SecurityException $e) {
+            self::assertParameterRedacted($e, 'fromHex', 0, $this->validHex);
+            self::assertParameterRedacted($e, 'fromHex', 1, $shortPreviousHex);
+        }
+    }
+
+    #[Test]
+    public function fromEnvironmentKeepsTheKeyOutOfTheExceptionTrace(): void
+    {
+        $wrongLengthHex = sodium_bin2hex(random_bytes(16));
+
+        try {
+            $_ = MasterKey::fromEnvironment($wrongLengthHex);
+            self::fail('fromEnvironment() accepted a 16-byte key');
+        } catch (SecurityException $e) {
+            self::assertParameterRedacted($e, 'fromEnvironment', 0, $wrongLengthHex);
+            self::assertParameterRedacted($e, 'fromHex', 0, $wrongLengthHex);
+        }
+    }
+
+    /**
+     * Assert that argument $position of the $function frame reaches the trace as a
+     * redaction placeholder, and that $secret appears in neither the rendered trace
+     * nor the rendered exception.
+     */
+    private static function assertParameterRedacted(
+        Throwable $e,
+        string $function,
+        int $position,
+        string $secret,
+    ): void {
+        $frame = null;
+
+        foreach ($e->getTrace() as $candidate) {
+            if (($candidate['function'] ?? null) === $function) {
+                $frame = $candidate;
+
+                break;
+            }
+        }
+
+        self::assertNotNull($frame, sprintf('No %s() frame in the trace', $function));
+
+        $arguments = $frame['args'] ?? [];
+        self::assertNotSame([], $arguments, sprintf('%s() frame recorded no arguments', $function));
+
+        self::assertInstanceOf(
+            SensitiveParameterValue::class,
+            $arguments[$position] ?? null,
+            sprintf('%s() argument %d reaches the trace unredacted', $function, $position),
+        );
+
+        self::assertStringNotContainsString($secret, $e->getTraceAsString());
+        self::assertStringNotContainsString($secret, (string) $e);
     }
 }

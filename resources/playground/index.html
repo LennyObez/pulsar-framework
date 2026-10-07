@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-extension="playground" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Pulsar UI Playground</title>
+    <link rel="stylesheet" href="/ui/css/pulsar-ui.css" />
     <link rel="stylesheet" href="/playground.css" />
   </head>
   <body>
@@ -69,6 +70,31 @@
             </svg>
             Delete
           </button>
+        </div>
+
+        <div class="pg-toolbar__separator" aria-hidden="true"></div>
+
+        <!-- Preview source selector -->
+        <div class="pg-toolbar__group">
+          <label class="pg-toolbar__label" for="preview-source">Source</label>
+          <select class="pg-toolbar__select" id="preview-source">
+            <option value="/preview/admin">Admin panel</option>
+            <option value="/preview/cms">CMS dashboard</option>
+            <option value="/catalog" selected>Component catalog</option>
+            <option value="/preview/forum">Forum</option>
+            <option value="/preview/studio">Studio console</option>
+          </select>
+        </div>
+
+        <div class="pg-toolbar__separator" aria-hidden="true"></div>
+
+        <!-- Language selector -->
+        <div class="pg-toolbar__group">
+          <div
+            data-language-selector
+            data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb"
+            data-current="en"
+          ></div>
         </div>
 
         <div class="pg-toolbar__separator" aria-hidden="true"></div>
@@ -180,6 +206,7 @@
               id="catalog-frame"
               src="/catalog"
               title="Component catalog preview"
+              sandbox="allow-scripts allow-same-origin"
             ></iframe>
           </div>
         </div>
@@ -227,6 +254,7 @@
       </div>
     </div>
 
+    <script src="/ui/js/language-selector.js" defer></script>
     <script src="/editor.js"></script>
     <script src="/playground.js"></script>
   </body>

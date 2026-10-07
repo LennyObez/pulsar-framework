@@ -131,7 +131,11 @@ Rejected: creates tight coupling between modules. Event-driven architecture enab
 - `EventEnvelope.payloadHash` (SHA-256) enables tamper detection for events persisted to event stores or transmitted over network boundaries
 - `#[RequiresEnvelope]` enforces that security-sensitive events always carry audit metadata (actor, tenant, correlation ID)
 - Storm protection prevents resource exhaustion from malicious or buggy event loops
-- `ReplAuditLogger` integration (ADR-0022) logs security events dispatched through the system
+- `ReplAuditLogger` (ADR-0022) is **not** part of this subsystem, and this line used to say
+  it was. It takes an `AuditLoggerInterface`, not an event dispatcher; it logs REPL session
+  starts and ends and individual command executions, and nothing dispatched through the
+  event system reaches it. What this subsystem contributes to a security record is the two
+  bullets above — the payload hash and `#[RequiresEnvelope]`
 
 ## Performance impact
 

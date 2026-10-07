@@ -19,6 +19,7 @@ use function in_array;
  *
  * Ensures that only fields explicitly marked with {@see Attribute\Expose} can be
  * requested. Unknown fields produce a 400 Bad Request response.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldAllowlist
@@ -113,7 +114,7 @@ final readonly class FieldAllowlist
 
     /**
      * Filter the requested fields to only those that are in the allowlist.
-     * Unlike validate(), this does not throw on unknown fields — it silently ignores them.
+     * Unlike validate(), this does not throw on unknown fields; it silently ignores them.
      *
      * @param list<string> $requestedFields
      * @return list<string>

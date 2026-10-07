@@ -41,7 +41,7 @@ return [
     | Path to the JSON file when storage is 'file'.
     |
     */
-    'file_path' => 'storage/flags.json',
+    'file_path' => 'var/flags/flags.json',
 
     /*
     |--------------------------------------------------------------------------

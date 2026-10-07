@@ -46,7 +46,9 @@ final readonly class ListBlock implements BlockTypeInterface
     {
         /** @var list<string> $items */
         $items = $data['items'] ?? [];
-        $ordered = (bool) ($data['ordered'] ?? false);
+        /** @var mixed $rawOrdered */
+        $rawOrdered = $data['ordered'] ?? null;
+        $ordered = is_bool($rawOrdered) ? $rawOrdered : false;
 
         $tag = $ordered ? 'ol' : 'ul';
         $listItems = [];
@@ -55,7 +57,7 @@ final readonly class ListBlock implements BlockTypeInterface
             $listItems[] = '<li>' . htmlspecialchars($item, ENT_QUOTES, 'UTF-8') . '</li>';
         }
 
-        return "<{$tag}>" . implode('', $listItems) . "</{$tag}>";
+        return "<$tag>" . implode('', $listItems) . "</$tag>";
     }
 
     #[Override]
@@ -66,9 +68,10 @@ final readonly class ListBlock implements BlockTypeInterface
         if (!isset($data['items']) || !is_array($data['items'])) {
             $errors[] = 'items is required and must be an array';
         } else {
+            /** @var mixed $item */
             foreach ($data['items'] as $index => $item) {
                 if (!is_string($item)) {
-                    $errors[] = "items[{$index}] must be a string";
+                    $errors[] = "items[$index] must be a string";
                 }
             }
         }

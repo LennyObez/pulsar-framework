@@ -16,10 +16,11 @@ use function sprintf;
 
 /**
  * Field is required when ANY of the specified fields are present (non-null) in data.
- * Does NOT skip null — it checks the condition and fails if required and missing.
+ * Does NOT skip null; it checks the condition and fails if required and missing.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class RequiredWith implements RuleInterface
+final readonly class RequiredWith implements RuleInterface
 {
     /** @var list<string> */
     private array $fields;

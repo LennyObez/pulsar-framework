@@ -11,9 +11,10 @@ use Pulsar\Api\Api;
  *
  * Carries the translated message along with metadata used
  * by the linter and template engines.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class TranslationEntry
+final readonly class TranslationEntry
 {
     public function __construct(
         public string $key,

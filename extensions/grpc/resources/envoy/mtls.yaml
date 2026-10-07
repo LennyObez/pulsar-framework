@@ -1,0 +1,115 @@
+# Envoy configuration with mutual TLS (mTLS) upstream
+#
+# Listens on HTTP/1.1 (port 8080), translates gRPC-Web, and forwards to
+# the upstream gRPC server (port 50051) with client certificate authentication.
+#
+# This configuration:
+# - Verifies client certificates against a trusted CA
+# - Validates Subject Alternative Names (SANs)
+# - Forwards client identity to the upstream via x-forwarded-client-cert header
+#
+# Usage:
+#   envoy -c mtls.yaml
+#
+# Replace certificate paths with your actual file paths.
+
+admin:
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9901
+
+static_resources:
+  listeners:
+    - name: grpc_mtls_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8443
+      filter_chains:
+        - transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              require_client_certificate: true
+              common_tls_context:
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /etc/envoy/certs/server.crt
+                    private_key:
+                      filename: /etc/envoy/certs/server.key
+                validation_context:
+                  trusted_ca:
+                    filename: /etc/envoy/certs/ca.crt
+                  match_typed_subject_alt_names:
+                    - san_type: DNS
+                      matcher:
+                        exact: 'service.pulsar.local'
+                    - san_type: URI
+                      matcher:
+                        prefix: 'spiffe://pulsar.local/'
+          filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                codec_type: AUTO
+                stat_prefix: grpc_mtls
+                forward_client_cert_details: SANITIZE_SET
+                set_current_client_cert_details:
+                  uri: true
+                  dns: true
+                  subject: true
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: grpc_services
+                      domains: ['*']
+                      routes:
+                        - match:
+                            prefix: '/'
+                          route:
+                            cluster: grpc_backend_mtls
+                            timeout: 60s
+                http_filters:
+                  - name: envoy.filters.http.grpc_web
+                    typed_config:
+                      '@type': type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: grpc_backend_mtls
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+              - certificate_chain:
+                  filename: /etc/envoy/certs/client.crt
+                private_key:
+                  filename: /etc/envoy/certs/client.key
+            validation_context:
+              trusted_ca:
+                filename: /etc/envoy/certs/upstream-ca.crt
+              match_typed_subject_alt_names:
+                - san_type: DNS
+                  matcher:
+                    exact: 'grpc-server.pulsar.local'
+      load_assignment:
+        cluster_name: grpc_backend_mtls
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 50051

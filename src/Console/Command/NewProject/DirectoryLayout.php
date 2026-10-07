@@ -19,7 +19,7 @@ final class DirectoryLayout
         'public',
         'src',
         'var/cache',
-        'var/log',
+        'var/logs',
     ];
 
     /** @var list<string> Additional directories for the Web preset. */

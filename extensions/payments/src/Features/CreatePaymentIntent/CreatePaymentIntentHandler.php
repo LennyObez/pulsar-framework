@@ -19,11 +19,13 @@ use Pulsar\Extension\Payments\Internal\Support\ParametersHasher;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use SodiumException;
 use Throwable;
 
 use function strlen;
@@ -45,12 +47,14 @@ final readonly class CreatePaymentIntentHandler
         private LoggerInterface $logger,
         private ClockInterface $clock,
         private PaymentsConfig $config,
+        // Signs/verifies idempotency-cache payloads. Required so
+        // a forged store row cannot replay as a synthesised intent.
+        private SignedIdempotencyEnvelope $envelope,
     ) {}
 
     /**
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function execute(CreatePaymentIntentRequest $request): CreatePaymentIntentResult
     {
@@ -81,7 +85,7 @@ final readonly class CreatePaymentIntentHandler
             $payload = $claim->resultPayload;
 
             return new CreatePaymentIntentResult(
-                intent: $this->deserializeIntent($payload),
+                intent: $this->deserializeIntent($request->idempotencyKey, $payload),
                 replayed: true,
             );
         }
@@ -124,23 +128,34 @@ final readonly class CreatePaymentIntentHandler
 
     private function commitResult(string $key, PaymentIntent $intent): void
     {
-        $payload = json_encode([
-            'schema_version' => 1,
-            'type' => 'payment_intent',
-            'data' => [
-                'id' => $intent->id,
-                'amount' => $intent->amount->amount,
-                'currency' => $intent->amount->currency->value,
-                'status' => $intent->status->value,
-                'provider' => $intent->provider,
-                'idempotency_key' => $intent->idempotencyKey,
-                'created_at' => $intent->createdAt->getTimestamp(),
-                'metadata' => $intent->metadata,
-            ],
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        // Encode + seal can throw JsonException / SodiumException
+        // — wrap into the domain exception so the handler's contract
+        // matches PaymentGatewayInterface's reduced @throws set.
+        try {
+            $payload = json_encode([
+                'schema_version' => 1,
+                'type' => 'payment_intent',
+                'data' => [
+                    'id' => $intent->id,
+                    'amount' => $intent->amount->amount,
+                    'currency' => $intent->amount->currency->value,
+                    'status' => $intent->status->value,
+                    'provider' => $intent->provider,
+                    'idempotency_key' => $intent->idempotencyKey,
+                    'created_at' => $intent->createdAt->getTimestamp(),
+                    'metadata' => $intent->metadata,
+                ],
+            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+
+            // Bind the payload to the idempotency key with a HMAC
+            // envelope so a tampered store row cannot replay a forged intent.
+            $sealed = $this->envelope->seal($key, $payload);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($key, $e);
+        }
 
         try {
-            $this->idempotencyStore->commit($key, $payload);
+            $this->idempotencyStore->commit($key, $sealed);
         } catch (Throwable $e) {
             $this->logger->critical('Failed to commit idempotency result', [
                 'key' => $key,
@@ -152,10 +167,17 @@ final readonly class CreatePaymentIntentHandler
         }
     }
 
-    private function deserializeIntent(string $payload): PaymentIntent
+    private function deserializeIntent(string $idempotencyKey, string $sealed): PaymentIntent
     {
-        /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
-        $envelope = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $payload = $this->envelope->open($idempotencyKey, $sealed);
+
+            /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
+            $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($idempotencyKey, $e);
+        }
+
         $data = $envelope['data'];
 
         /** @var array<string, mixed> $metadata */

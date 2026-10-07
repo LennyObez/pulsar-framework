@@ -23,7 +23,7 @@ use function strtolower;
  * Starts the UI playground development server.
  *
  * Serves a component catalog with a live CSS editor for real-time
- * theme customization. Dev-only — disabled in production environments.
+ * theme customization. Dev-only: disabled in production environments.
  */
 #[Internal(reason: 'CLI command implementation')]
 final class PlaygroundServeCommand extends Command

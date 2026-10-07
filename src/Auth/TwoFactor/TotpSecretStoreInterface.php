@@ -13,6 +13,7 @@ use SensitiveParameter;
  * Implementations must encrypt secrets at rest. The framework provides
  * InMemoryTotpSecretStore for testing; production deployments bind a
  * database-backed implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TotpSecretStoreInterface

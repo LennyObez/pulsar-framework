@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Provides a serializable summary of pagination state that renderers
  * can include in response envelopes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginationMeta

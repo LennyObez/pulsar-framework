@@ -10,7 +10,8 @@ use Pulsar\Extension\Forum\Vote\PostVote;
 use Pulsar\Extension\Forum\Vote\ThreadVote;
 
 /**
- * Voting service — cast and remove votes on threads and posts.
+ * Voting service: cast and remove votes on threads and posts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface VoteServiceInterface

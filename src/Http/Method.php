@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * HTTP request methods.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Method: string

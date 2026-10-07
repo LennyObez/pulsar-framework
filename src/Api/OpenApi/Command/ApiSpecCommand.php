@@ -20,7 +20,6 @@ use function count;
 use function dirname;
 use function file_put_contents;
 use function is_dir;
-use function is_string;
 use function mkdir;
 use function sprintf;
 
@@ -54,10 +53,7 @@ final class ApiSpecCommand extends Command
     {
         $this->kernel->boot();
 
-        $outputPath = $input->getOption('output');
-        if (!is_string($outputPath)) {
-            $outputPath = $this->config->outputPath;
-        }
+        $outputPath = $input->getStringOption('output', $this->config->outputPath);
 
         $output->writeln('Scanning routes for OpenAPI documentation...');
 

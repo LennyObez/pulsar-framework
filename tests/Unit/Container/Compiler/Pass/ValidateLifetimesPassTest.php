@@ -37,7 +37,7 @@ final class ValidateLifetimesPassTest extends TestCase
         $pass = new ValidateLifetimesPass();
 
         $this->expectException(ScopeWideningException::class);
-        $this->expectExceptionMessage('Scope widening');
+        $this->expectExceptionMessageIsOrContains('Scope widening');
 
         $pass->process($builder);
     }

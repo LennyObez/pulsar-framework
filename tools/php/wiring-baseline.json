@@ -218,18 +218,6 @@
       "fqcn": "Pulsar\\Extension\\McpServer\\Console\\McpServeCommand"
     },
     {
-      "file": "extensions/oauth2/src/Adapter/OAuth2TokenResolver.php",
-      "fqcn": "Pulsar\\Extension\\OAuth2\\Adapter\\OAuth2TokenResolver"
-    },
-    {
-      "file": "extensions/oauth2/src/Contract/TokenIssuerInterface.php",
-      "fqcn": "Pulsar\\Extension\\OAuth2\\Contract\\TokenIssuerInterface"
-    },
-    {
-      "file": "extensions/oauth2/src/OAuth2Extension.php",
-      "fqcn": "Pulsar\\Extension\\OAuth2\\OAuth2Extension"
-    },
-    {
       "file": "extensions/opentelemetry/src/Internal/Exception/OpenTelemetryException.php",
       "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Internal\\Exception\\OpenTelemetryException"
     },
@@ -300,10 +288,6 @@
     {
       "file": "extensions/studio/src/Console/Event/Payload/TenancyPayload.php",
       "fqcn": "Pulsar\\Extension\\Studio\\Console\\Event\\Payload\\TenancyPayload"
-    },
-    {
-      "file": "extensions/webauthn/src/WebAuthnExtension.php",
-      "fqcn": "Pulsar\\Extension\\WebAuthn\\WebAuthnExtension"
     },
     {
       "file": "src/Http/Factory/RequestFactory.php",

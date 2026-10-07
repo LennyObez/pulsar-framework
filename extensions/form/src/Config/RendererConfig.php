@@ -6,11 +6,11 @@ namespace Pulsar\Extension\Form\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * Form renderer theming configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RendererConfig
@@ -30,11 +30,11 @@ final readonly class RendererConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            theme: is_string($data['theme'] ?? null) ? $data['theme'] : 'default',
-            errorClass: is_string($data['error_class'] ?? null) ? $data['error_class'] : 'form-error',
-            labelClass: is_string($data['label_class'] ?? null) ? $data['label_class'] : 'form-label',
-            inputClass: is_string($data['input_class'] ?? null) ? $data['input_class'] : 'form-input',
-            errorSummaryClass: is_string($data['error_summary_class'] ?? null) ? $data['error_summary_class'] : 'form-error-summary',
+            theme: Coerce::string($data['theme'] ?? null, 'default'),
+            errorClass: Coerce::string($data['error_class'] ?? null, 'form-error'),
+            labelClass: Coerce::string($data['label_class'] ?? null, 'form-label'),
+            inputClass: Coerce::string($data['input_class'] ?? null, 'form-input'),
+            errorSummaryClass: Coerce::string($data['error_summary_class'] ?? null, 'form-error-summary'),
         );
     }
 }

@@ -1,0 +1,19 @@
+{
+  "name": "banking",
+  "description": "Financial services starter kit with support for PCI-DSS, PSD2, and DORA controls",
+  "version": "1.0.0",
+  "requiredPulsarVersion": "^1.0",
+  "compliancePresets": ["PCI-DSS", "PSD2", "DORA"],
+  "files": {
+    "config/encryption.php": "config/encryption.php",
+    "config/audit.php": "config/audit.php",
+    "config/pci-logging.php": "config/pci-logging.php",
+    "src/Transaction.php": "src/Entity/Transaction.php",
+    "src/Account.php": "src/Entity/Account.php",
+    "src/PaymentIntent.php": "src/Entity/PaymentIntent.php",
+    "src/KycProfile.php": "src/Entity/KycProfile.php",
+    "tests/TransactionTest.php": "tests/Unit/Entity/TransactionTest.php",
+    "tests/PaymentFlowTest.php": "tests/Unit/Entity/PaymentFlowTest.php"
+  },
+  "postInstallCommands": []
+}

@@ -12,6 +12,7 @@ use Pulsar\View\ViewException;
 use function array_key_exists;
 use function array_pop;
 use function count;
+use function implode;
 use function ob_get_clean;
 use function ob_start;
 
@@ -30,6 +31,12 @@ final class TemplateInheritance
     /** @var list<string> Stack of section names currently being captured */
     private array $sectionStack = [];
 
+    /** @var array<string, list<string>> Stack name → ordered contributions (@push) */
+    private array $stacks = [];
+
+    /** @var list<string> Names of @push blocks currently capturing (nesting) */
+    private array $pushStack = [];
+
     /** The parent template name, set by @extends */
     private ?string $parent = null;
 
@@ -39,8 +46,11 @@ final class TemplateInheritance
     /** @var list<array{name: string}> Slot stack */
     private array $slotStack = [];
 
-    /** @var array<string, array<string, string>> Component name → slot name → content */
+    /** @var array<int, array<string, string>> Component stack depth → slot name → content */
     private array $componentSlots = [];
+
+    /** @var array<string, true> Identifiers of @once blocks already rendered this request */
+    private array $onceIds = [];
 
     /** Callback for rendering sub-templates (set by the engine) */
     private ?Closure $renderCallback = null;
@@ -76,7 +86,7 @@ final class TemplateInheritance
      * Start a new section (called by @section).
      *
      * When called with a second argument (@section('name', 'content')), sets the
-     * section inline without starting output buffering — no @endsection needed.
+     * section inline without starting output buffering: no @endsection needed.
      */
     public function startSection(string $name, ?string $content = null): void
     {
@@ -130,6 +140,47 @@ final class TemplateInheritance
     public function hasSection(string $name): bool
     {
         return array_key_exists($name, $this->sections);
+    }
+
+    /**
+     * Begin capturing a @push block onto the named stack.
+     *
+     * Stacks live on the engine ($__env), like sections, so contributions
+     * survive the @extends boundary — a child's @push reaches the parent
+     * layout's @stack even though the parent renders in a separate pass.
+     */
+    public function startPush(string $name): void
+    {
+        $this->pushStack[] = $name;
+        ob_start();
+    }
+
+    /**
+     * Finish the current @push block, appending its content to the stack.
+     *
+     * @throws ViewException If there is no open @push.
+     */
+    public function stopPush(): void
+    {
+        if ($this->pushStack === []) {
+            throw ViewException::invalidDirective('endpush', 'no matching @push');
+        }
+
+        $name = array_pop($this->pushStack);
+        $this->stacks[$name][] = (string) ob_get_clean();
+    }
+
+    /**
+     * Render a stack (called by @stack): all @push contributions, in order.
+     *
+     * Stacks live on $__env, so they survive the @extends boundary — the child
+     * (which @pushes) always renders before the parent layout (which @stacks),
+     * so by the time @stack runs the contributions are already present.
+     */
+    #[NoDiscard]
+    public function renderStack(string $name): string
+    {
+        return implode('', $this->stacks[$name] ?? []);
     }
 
     /**
@@ -196,7 +247,9 @@ final class TemplateInheritance
     public function startComponent(string $name, array $data = []): void
     {
         $this->componentStack[] = ['name' => $name, 'data' => $data];
-        $this->componentSlots[$name] = [];
+        // Key slots by stack depth, not name, so nesting two components of the
+        // same name does not let the inner instance wipe the outer's slots.
+        $this->componentSlots[count($this->componentStack) - 1] = [];
         ob_start();
     }
 
@@ -216,8 +269,10 @@ final class TemplateInheritance
         $name = $component['name'];
         $data = $component['data'];
 
-        $slots = $this->componentSlots[$name] ?? [];
-        unset($this->componentSlots[$name]);
+        // The popped component lived at depth count() (its former last index).
+        $depth = count($this->componentStack);
+        $slots = $this->componentSlots[$depth] ?? [];
+        unset($this->componentSlots[$depth]);
 
         $data['slot'] = $defaultContent;
 
@@ -258,13 +313,31 @@ final class TemplateInheritance
             throw ViewException::invalidDirective('endslot', 'no enclosing @component');
         }
 
-        $componentName = $this->componentStack[count($this->componentStack) - 1]['name'];
+        $componentDepth = count($this->componentStack) - 1;
 
-        if (!isset($this->componentSlots[$componentName])) {
-            $this->componentSlots[$componentName] = [];
+        if (!isset($this->componentSlots[$componentDepth])) {
+            $this->componentSlots[$componentDepth] = [];
         }
 
-        $this->componentSlots[$componentName][$slot['name']] = $content;
+        $this->componentSlots[$componentDepth][$slot['name']] = $content;
+    }
+
+    /**
+     * Register a @once block by id and report whether it should render now.
+     *
+     * The registry lives on the shared $__env, so a @once block inside a partial
+     * that is @included N times renders only on the first encounter — the
+     * once-per-request contract — instead of once per isolated template execution.
+     */
+    public function renderOnce(string $id): bool
+    {
+        if (array_key_exists($id, $this->onceIds)) {
+            return false;
+        }
+
+        $this->onceIds[$id] = true;
+
+        return true;
     }
 
     /**
@@ -274,9 +347,12 @@ final class TemplateInheritance
     {
         $this->sections = [];
         $this->sectionStack = [];
+        $this->stacks = [];
+        $this->pushStack = [];
         $this->parent = null;
         $this->componentStack = [];
         $this->slotStack = [];
         $this->componentSlots = [];
+        $this->onceIds = [];
     }
 }

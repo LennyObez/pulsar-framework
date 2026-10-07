@@ -173,6 +173,16 @@ final class InMemoryTaxonomyRepository implements TaxonomyRepositoryInterface
     /** @var array<string, list<TaxonomyTermTranslation>> */
     private array $termTranslations = [];
 
+    public function findByImportId(string $importId): ?Taxonomy
+    {
+        return null;
+    }
+
+    public function findTermByImportId(string $importId): ?TaxonomyTerm
+    {
+        return null;
+    }
+
     public function findBySlug(string $slug, ?string $tenantId = null): ?Taxonomy
     {
         foreach ($this->taxonomies as $taxonomy) {
@@ -231,6 +241,13 @@ final class InMemoryTaxonomyRepository implements TaxonomyRepositoryInterface
     {
         $this->terms[$term->id] = $term;
         $this->termTranslations[$term->id] = $translations;
+    }
+
+    public function updateTermParent(string $termId, string $parentId): void
+    {
+        if (isset($this->terms[$termId])) {
+            $this->terms[$termId] = $this->terms[$termId]->withParent($parentId);
+        }
     }
 }
 

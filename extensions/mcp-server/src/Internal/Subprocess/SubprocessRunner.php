@@ -4,21 +4,26 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer\Internal\Subprocess;
 
+use LogicException;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
 
 use function array_merge;
+use function defined;
 use function fclose;
 use function fread;
 use function getenv;
 use function hrtime;
+use function is_array;
+use function is_int;
 use function is_resource;
 use function max;
 use function proc_close;
 use function proc_get_status;
 use function proc_open;
 use function proc_terminate;
+use function spl_object_id;
 use function stream_set_blocking;
 use function strlen;
 use function substr;
@@ -29,11 +34,24 @@ use function usleep;
  *
  * All subprocess output is passed through the redaction pipeline before being
  * returned, ensuring sensitive data never reaches the MCP wire protocol.
+ *
+ * **Cancellation contract**: A single SubprocessRunner instance MUST be shared
+ * between the fiber that calls {@see run()} and the fiber/handler that calls
+ * {@see cancel()}. The `$cancelled` flag is polled inside the run loop, so
+ * calling `cancel()` on a different instance has no effect. Use the same
+ * object reference in both the spawning fiber and the MCP
+ * `notifications/cancelled` handler.
  */
-#[Internal]
+#[Internal(reason: 'MCP subprocess execution; not part of public API')]
 final class SubprocessRunner
 {
     private bool $cancelled = false;
+
+    /**
+     * Object ID captured at construction time. Used by {@see assertSameInstance()}
+     * to verify that the caller holds a reference to this exact instance.
+     */
+    private readonly int $identity;
 
     /**
      * @param string $projectRoot Working directory for subprocess execution
@@ -46,7 +64,28 @@ final class SubprocessRunner
         private readonly int $timeout,
         private readonly int $maxOutputBytes,
         private readonly McpRedactionPipelineInterface $redactionPipeline,
-    ) {}
+    ) {
+        $this->identity = spl_object_id($this);
+    }
+
+    /**
+     * Assert that the given reference points to this exact instance.
+     *
+     * Call this in the cancellation handler to guard against accidentally
+     * holding a stale or cloned runner reference. Throws if the object
+     * identities do not match.
+     *
+     * @throws LogicException When the reference is not the same instance
+     */
+    public function assertSameInstance(self $other): void
+    {
+        if ($this->identity !== $other->identity) {
+            throw new LogicException(
+                'SubprocessRunner cancellation requires the same instance that called run(). '
+                . 'Ensure the spawning fiber and the cancellation handler share one reference.',
+            );
+        }
+    }
 
     /**
      * Run a subprocess command with timeout and output capping.
@@ -64,9 +103,24 @@ final class SubprocessRunner
             2 => ['pipe', 'w'],
         ];
 
-        $osEnv = getenv();
-        $mergedEnv = array_merge($osEnv, ['CI' => '1'], $env);
+        // Build the child environment from an explicit allowlist rather than
+        // inheriting the parent's full env. The MCP server is invoked by
+        // potentially untrusted clients, so inheriting `getenv()` wholesale
+        // would hand every secret in the runner's environment (COMPOSER_AUTH,
+        // GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, …) to every tool subprocess.
+        // The allowlist is the minimum set a PHP/composer/git tool needs to
+        // run; everything else must be declared explicitly in `$env` by the
+        // caller.
+        $mergedEnv = $this->buildChildEnvironment($env);
 
+        // Array form ($command is `list<string>`) bypasses shell
+        // interpretation entirely — proc_open hands argv directly
+        // to execvp. Each argument is a separate string with no
+        // splitting / globbing / variable expansion, so command
+        // injection via a $command element is structurally
+        // impossible. The McpAccessGate caller validates the path
+        // and arguments via ParamValidator before reaching here.
+        // nosemgrep: php.lang.security.exec-use.exec-use
         $process = proc_open($command, $descriptors, $pipes, $this->projectRoot, $mergedEnv);
 
         if (!is_resource($process)) {
@@ -89,14 +143,14 @@ final class SubprocessRunner
             $nowNs = hrtime(true);
 
             if ($this->isCancelled()) {
-                proc_terminate($process);
+                $this->forceTerminate($process, $status);
 
                 break;
             }
 
             if ($nowNs >= $deadline) {
                 $timedOut = true;
-                proc_terminate($process);
+                $this->forceTerminate($process, $status);
 
                 break;
             }
@@ -117,16 +171,31 @@ final class SubprocessRunner
             }
 
             if (strlen($stdout) + strlen($stderr) > $this->maxOutputBytes) {
+                $this->forceTerminate($process, $status);
+
                 break;
             }
 
             usleep(10_000);
         }
 
+        // Close the pipes BEFORE proc_close so a child still
+        // blocked on `write()` to a full pipe gets SIGPIPE and exits
+        // promptly. Otherwise proc_close waits for the child, the
+        // child waits for a pipe drain, and the runner deadlocks.
         fclose($pipes[1]);
         fclose($pipes[2]);
 
-        $exitCode = proc_close($process);
+        // SIGTERM (proc_terminate's default) is just a
+        // request — a misbehaving / hung child can install a
+        // handler that ignores it. Wait briefly for the
+        // already-issued terminate to land, then escalate to
+        // SIGKILL on UNIX (signal 9). On Windows proc_terminate
+        // uses TerminateProcess which is already unavoidable, so
+        // the second call is a no-op there. Without the
+        // escalation a hung child becomes a zombie that the LLM
+        // workflow can accumulate by spamming tool calls.
+        $exitCode = $this->awaitExit($process);
 
         $totalBytes = strlen($stdout) + strlen($stderr);
         $truncated = false;
@@ -165,6 +234,165 @@ final class SubprocessRunner
             isError: $exitCode !== 0,
             meta: [],
         );
+    }
+
+    /**
+     * Wait for an already-terminating subprocess and
+     * escalate to SIGKILL if it does not exit within the grace
+     * window. proc_terminate's default signal is SIGTERM, which
+     * a misbehaving child can install a handler for and ignore;
+     * SIGKILL bypasses any handler and is the cooperative-process
+     * contract end-state.
+     *
+     * On Windows, `proc_open` wraps every command through
+     * `cmd.exe /c`. `proc_terminate` then kills the cmd.exe
+     * wrapper but the actual child PHP process can keep running
+     * to completion — a `sleep(10)` survives a 1s timeout. Walk
+     * the process tree via `taskkill /T /F /PID` (called through
+     * proc_open in array form so the PID flows in as a separate
+     * argv entry and never touches a shell). On UNIX,
+     * `proc_terminate` already targets the right pgid, so the
+     * standard path is sufficient.
+     *
+     * @param resource $process
+     */
+    private function awaitExit($process): int
+    {
+        $graceDeadlineNs = hrtime(true) + 1_500_000_000; // 1.5s
+
+        while (hrtime(true) < $graceDeadlineNs) {
+            $status = proc_get_status($process);
+            if (!$status['running']) {
+                return proc_close($process);
+            }
+
+            usleep(50_000);
+        }
+
+        $status = proc_get_status($process);
+        $pid = $status['pid'];
+
+        if (PHP_OS_FAMILY === 'Windows' && $pid > 0) {
+            $this->windowsForceKillTree($pid);
+        } else {
+            $signal = defined('SIGKILL') ? SIGKILL : 9;
+            proc_terminate($process, $signal);
+        }
+
+        return proc_close($process);
+    }
+
+    /**
+     * Terminate the subprocess unconditionally,
+     * walking the tree on Windows so the cmd.exe wrapper
+     * AND the actual child both die. On UNIX, proc_terminate
+     * already targets the right pgid.
+     *
+     * This is the fast-path used by the timeout / cancel /
+     * cap-exceeded branches; awaitExit() handles the slow-path
+     * grace+escalate sequence for cooperative shutdowns.
+     *
+     * @param resource $process
+     * @param array<string, mixed>|false $status proc_get_status() snapshot
+     */
+    private function forceTerminate($process, array|false $status): void
+    {
+        $pid = is_array($status) && isset($status['pid']) && is_int($status['pid'])
+            ? $status['pid']
+            : 0;
+
+        if (PHP_OS_FAMILY === 'Windows' && $pid > 0) {
+            $this->windowsForceKillTree($pid);
+            return;
+        }
+
+        proc_terminate($process);
+    }
+
+    /**
+     * Assemble the child process environment from an explicit
+     * allowlist of inherited variables plus the caller-supplied overrides.
+     *
+     * The allowlist names variables that must flow into composer / git / PHP
+     * subprocesses to function (e.g. PATH for executable resolution, HOME for
+     * dotfile lookup, COMPOSER_HOME for cache reuse). Everything else from the
+     * runner's env (secrets, CI tokens, AWS credentials, etc.) is dropped.
+     *
+     * Caller overrides win over the inherited values; the special CI=1 flag
+     * is appended so existing tooling that branches on it keeps working.
+     *
+     * @param array<string, string> $callerEnv
+     * @return array<string, string>
+     */
+    private function buildChildEnvironment(array $callerEnv): array
+    {
+        $inheritAllowlist = [
+            'PATH',
+            'PATHEXT',
+            'HOME',
+            'USERPROFILE',
+            'TEMP',
+            'TMP',
+            'TMPDIR',
+            'LANG',
+            'LC_ALL',
+            'TZ',
+            'SYSTEMROOT',
+            'COMSPEC',
+            'COMPOSER_HOME',
+            'COMPOSER_CACHE_DIR',
+            'XDG_CACHE_HOME',
+            'XDG_CONFIG_HOME',
+        ];
+
+        $inherited = [];
+
+        foreach ($inheritAllowlist as $name) {
+            $value = getenv($name);
+
+            if ($value !== false && $value !== '') {
+                $inherited[$name] = $value;
+            }
+        }
+
+        return array_merge($inherited, ['CI' => '1'], $callerEnv);
+    }
+
+    /**
+     * Force-kill the cmd.exe wrapper PHP gave us AND
+     * its descendants on Windows. Uses proc_open array form so
+     * the PID flows as a separate argv entry — taskkill receives
+     * it positionally, never via shell expansion. Output is
+     * discarded; the call is best-effort because the most common
+     * case is "child already died from the earlier SIGTERM" and
+     * taskkill's "process not found" exit is expected.
+     */
+    private function windowsForceKillTree(int $pid): void
+    {
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        // nosemgrep: php.lang.security.exec-use.exec-use
+        $handle = proc_open(
+            ['taskkill', '/T', '/F', '/PID', (string) $pid],
+            $descriptors,
+            $pipes,
+        );
+
+        if (!is_resource($handle)) {
+            return;
+        }
+
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+
+        proc_close($handle);
     }
 
     /**

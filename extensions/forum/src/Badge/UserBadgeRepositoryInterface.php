@@ -9,6 +9,7 @@ use Pulsar\Extension\Forum\Domain\Badge;
 
 /**
  * Repository interface for user badges.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface UserBadgeRepositoryInterface

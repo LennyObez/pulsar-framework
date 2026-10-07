@@ -95,6 +95,7 @@ final readonly class NetworkSignalProvider implements SignalProviderInterface
     private function extractClientIp(SignalContext $context): string
     {
         $serverParams = $context->request->getServerParams();
+        /** @var mixed $remoteAddr */
         $remoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
 
         return is_string($remoteAddr) ? $remoteAddr : '127.0.0.1';
@@ -152,21 +153,17 @@ final readonly class NetworkSignalProvider implements SignalProviderInterface
             return false;
         }
 
-        foreach (self::PRIVATE_RANGES as $range) {
+        return array_any(self::PRIVATE_RANGES, static function (string $range) use ($long): bool {
             [$subnet, $bits] = explode('/', $range);
             $subnetLong = ip2long($subnet);
 
             if ($subnetLong === false) {
-                continue;
+                return false;
             }
 
             $mask = -1 << (32 - (int) $bits);
 
-            if (($long & $mask) === ($subnetLong & $mask)) {
-                return true;
-            }
-        }
-
-        return false;
+            return ($long & $mask) === ($subnetLong & $mask);
+        });
     }
 }

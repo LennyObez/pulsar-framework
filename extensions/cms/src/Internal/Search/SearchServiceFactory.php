@@ -12,8 +12,11 @@ use Pulsar\Extension\Cms\Search\SearchServiceInterface;
 
 /**
  * Creates the appropriate search service adapter based on the database driver.
+ *
+ * @psalm-api Static factory invoked by name from the CMS service provider to
+ *            wire SearchServiceInterface in the DI container.
  */
-#[Internal(reason: 'Search adapter factory — use SearchServiceInterface')]
+#[Internal(reason: 'Search adapter factory; use SearchServiceInterface')]
 final readonly class SearchServiceFactory
 {
     public static function create(

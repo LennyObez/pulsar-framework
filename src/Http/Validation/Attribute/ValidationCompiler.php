@@ -20,6 +20,7 @@ use function var_export;
  *
  * Produces a PHP array artifact that CompiledValidationMap loads at runtime
  * without reflection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationCompiler

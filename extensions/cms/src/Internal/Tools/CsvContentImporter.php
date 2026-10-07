@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Internal\Tools;
 
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 
 use function array_combine;
 use function count;
@@ -12,6 +13,7 @@ use function fclose;
 use function fgetcsv;
 use function fopen;
 use function fwrite;
+use function is_array;
 use function rewind;
 
 /**
@@ -20,11 +22,22 @@ use function rewind;
  * Expects a header row matching the column names produced by {@see CsvContentExporter}.
  * Maps each row into content and translation data arrays.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class CsvContentImporter
 {
+    public function __construct(
+        private SafeHtmlPolicy $safeHtmlPolicy,
+    ) {}
+
     /**
      * Parse a CSV string into content data arrays.
+     *
+     * Body fields are sanitized through SafeHtmlPolicy before storage
+     * to prevent stored XSS via imported CSV content.
      *
      * @return list<array{content: array<string, mixed>, translation: array<string, mixed>}>
      */
@@ -39,17 +52,18 @@ final readonly class CsvContentImporter
         fwrite($stream, $csv);
         rewind($stream);
 
-        $headers = fgetcsv($stream);
+        $headers = fgetcsv($stream, escape: '');
 
-        if ($headers === false || $headers === [null]) {
+        if (!is_array($headers) || $headers === [null]) {
             fclose($stream);
 
             return [];
         }
 
+        /** @var list<string> $headers */
         $results = [];
 
-        while (($row = fgetcsv($stream)) !== false) {
+        while (is_array($row = fgetcsv($stream, escape: ''))) {
             if (count($row) !== count($headers)) {
                 continue;
             }
@@ -71,7 +85,7 @@ final readonly class CsvContentImporter
                     'title' => $mapped['title'] ?? '',
                     'slug' => $mapped['slug'] ?? '',
                     'path' => $mapped['path'] ?? '',
-                    'body' => $mapped['body'] ?? '',
+                    'body' => $this->safeHtmlPolicy->sanitize($mapped['body'] ?? ''),
                     'excerpt' => ($mapped['excerpt'] ?? '') !== '' ? $mapped['excerpt'] : null,
                     'meta_title' => ($mapped['meta_title'] ?? '') !== '' ? $mapped['meta_title'] : null,
                     'meta_description' => ($mapped['meta_description'] ?? '') !== '' ? $mapped['meta_description'] : null,

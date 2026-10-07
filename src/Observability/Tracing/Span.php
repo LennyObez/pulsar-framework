@@ -13,6 +13,7 @@ use function hrtime;
  *
  * Spans track name, start/end times (via hrtime), attributes, and status.
  * Calling {@see end()} is idempotent.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Span
@@ -33,7 +34,7 @@ final class Span
     }
 
     /**
-     * End this span. Idempotent — subsequent calls are no-ops.
+     * End this span. Idempotent: subsequent calls are no-ops.
      */
     public function end(): void
     {

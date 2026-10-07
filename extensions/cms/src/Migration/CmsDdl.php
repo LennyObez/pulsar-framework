@@ -13,6 +13,11 @@ use Pulsar\Database\Driver;
  * Handles common PostgreSQL type and default substitutions for SQLite and MySQL.
  * Structural differences (indexes, CHECK constraints) are handled per-migration
  * with driver conditionals.
+ *
+ * @psalm-api Static utility class invoked by name from CMS migration files.
+ *            The migrations themselves are anonymous-class file returns loaded
+ *            by the migration runner.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CmsDdl
@@ -21,7 +26,7 @@ final class CmsDdl
      * Adapt PostgreSQL DDL to the target driver.
      *
      * Handles: TIMESTAMPTZ, JSONB, TSVECTOR, DOUBLE PRECISION, DEFAULT NOW().
-     * Does NOT handle structural differences (indexes, CHECK constraints) — those
+     * Does NOT handle structural differences (indexes, CHECK constraints); those
      * are handled per-migration with driver conditionals.
      */
     public static function adapt(string $sql, Driver $driver): string

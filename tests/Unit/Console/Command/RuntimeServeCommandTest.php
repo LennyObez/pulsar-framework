@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pulsar\Config\Environment;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Console\Command\RuntimeServeCommand;
@@ -15,9 +17,12 @@ use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
-use Pulsar\Runtime\RuntimeFactory;
+use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
+use Pulsar\Runtime\RuntimeCollectorInterface;
 use Pulsar\Runtime\RuntimeInterface;
 use Pulsar\Runtime\RuntimeResolver;
+use Pulsar\Runtime\RuntimeType;
+use Pulsar\Runtime\Upgrade\UpgradeContext;
 
 use function extension_loaded;
 
@@ -39,16 +44,16 @@ final class RuntimeServeCommandTest extends TestCase
         );
     }
 
-    private function createFactory(?RuntimeInterface $runtime = null): RuntimeFactory
+    private function createFactory(?RuntimeInterface $runtime = null): PersistentRuntimeFactoryInterface
     {
-        $container = $this->createStub(ContainerInterface::class);
         $kernelContainer = $this->createStub(ContainerInterface::class);
         $this->kernel->method('container')->willReturn($kernelContainer);
 
-        $factory = $this->createStub(RuntimeFactory::class);
+        $factory = $this->createStub(PersistentRuntimeFactoryInterface::class);
 
         if ($runtime !== null) {
             $factory->method('createForType')->willReturn($runtime);
+            $factory->method('create')->willReturn($runtime);
         }
 
         return $factory;
@@ -344,7 +349,7 @@ final class RuntimeServeCommandTest extends TestCase
 
         $runtime = $this->createStub(RuntimeInterface::class);
         $factory = $this->createFactory($runtime);
-        $config = new RuntimeConfig(host: '127.0.0.1', port: 8080, fiberConcurrency: 16);
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 8080, fiberConcurrency: 1);
 
         $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
         $output = new BufferedOutput();
@@ -352,6 +357,170 @@ final class RuntimeServeCommandTest extends TestCase
         $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
 
         self::assertSame(ExitCode::Success->value, $exit);
-        self::assertStringContainsString('concurrency: 16', $output->buffer);
+        self::assertStringContainsString('concurrency: 1', $output->buffer);
+    }
+
+    #[Test]
+    public function concurrencyAboveOneIsRefusedForThePersistentRuntime(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        // The runtime cannot isolate two requests that interleave, so it does
+        // not interleave them. Reported as a command error rather than an
+        // uncaught exception out of the runtime constructor.
+        $factory = $this->createFactory($this->createStub(RuntimeInterface::class));
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 8080, fiberConcurrency: 16);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('fiber_concurrency=16 is refused', $output->errorBuffer);
+        self::assertStringContainsString('SessionManager', $output->errorBuffer);
+        self::assertStringContainsString('worker processes', $output->errorBuffer);
+        self::assertSame('', $output->buffer, 'the worker must not announce that it is starting');
+    }
+
+    #[Test]
+    public function theRefusalIsRaisedBeforeTheRuntimeIsBuilt(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        // A factory that would hand back a runtime is never consulted: the
+        // command must not reach construction, and must not call start().
+        $factory = $this->createStub(PersistentRuntimeFactoryInterface::class);
+        $factory->method('createForType')->willThrowException(
+            new LogicException('the factory must not be reached'),
+        );
+
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 8080, fiberConcurrency: 4);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        self::assertSame(
+            ExitCode::Error->value,
+            $command->execute(new ArrayInput('runtime:serve'), $output),
+        );
+    }
+
+    /**
+     * The command rebuilds {@see RuntimeConfig} to fold in its options. A field
+     * the rebuild omits is not left alone — it is reset to the constructor
+     * default. `driver`, `drain_timeout_seconds` and `health_endpoint` were all
+     * omitted, so `config/runtime.php` could ask for a 90-second drain and get a
+     * 30-second one every time the worker was started, with nothing printed.
+     *
+     * One test per field, so each of the three is observed on its own rather
+     * than hidden behind whichever assertion happens to fail first.
+     */
+    #[Test]
+    public function theConfiguredDriverSurvivesTheRebuild(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $base = new RuntimeConfig(host: '127.0.0.1', port: 8080, driver: 'frankenphp');
+
+        $captured = $this->runAndCaptureConfig($base, ['port' => '9090']);
+
+        // The command-line override still applies; the base field is not lost.
+        self::assertSame(9090, $captured->port);
+        self::assertSame('frankenphp', $captured->driver, 'the configured driver was reset to "auto"');
+    }
+
+    #[Test]
+    public function theConfiguredDrainTimeoutSurvivesTheRebuild(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $base = new RuntimeConfig(host: '127.0.0.1', port: 8080, drainTimeoutSeconds: 90);
+
+        $captured = $this->runAndCaptureConfig($base, []);
+
+        self::assertSame(90, $captured->drainTimeoutSeconds, 'the configured drain timeout was reset to 30');
+    }
+
+    #[Test]
+    public function theDisabledHealthEndpointSurvivesTheRebuild(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $base = new RuntimeConfig(host: '127.0.0.1', port: 8080, healthEndpoint: false);
+
+        $captured = $this->runAndCaptureConfig($base, []);
+
+        self::assertFalse($captured->healthEndpoint, 'the disabled /_health endpoint was re-enabled');
+    }
+
+    /**
+     * Unknown-key reporting (ADR-0036) travels on the DTO. A rebuild that drops
+     * it hands the runtime a config claiming `config/runtime.php` was clean.
+     */
+    #[Test]
+    public function unknownConfigKeysSurviveTheRebuild(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $base = new RuntimeConfig(host: '127.0.0.1', port: 8080, unknownKeys: ['drain_timout_seconds']);
+
+        $captured = $this->runAndCaptureConfig($base, []);
+
+        self::assertSame(['drain_timout_seconds'], $captured->unknownConfigKeys());
+    }
+
+    /**
+     * Run `runtime:serve` and return the {@see RuntimeConfig} it handed to the
+     * runtime factory.
+     *
+     * @param array<string, string> $options Command-line options to pass
+     */
+    private function runAndCaptureConfig(RuntimeConfig $base, array $options): RuntimeConfig
+    {
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $this->kernel->method('container')->willReturn($this->createStub(ContainerInterface::class));
+
+        $captured = null;
+        $factory = $this->createStub(PersistentRuntimeFactoryInterface::class);
+        $factory->method('createForType')->willReturnCallback(
+            static function (
+                RuntimeType $type,
+                KernelInterface $kernel,
+                RuntimeConfig $config,
+                ?LoggerInterface $logger = null,
+                ?RuntimeCollectorInterface $collector = null,
+                ?UpgradeContext $upgradeContext = null,
+            ) use (&$captured, $runtime): RuntimeInterface {
+                $captured = $config;
+
+                return $runtime;
+            },
+        );
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $base);
+        $output = new BufferedOutput();
+
+        self::assertSame(
+            ExitCode::Success->value,
+            $command->execute(new ArrayInput('runtime:serve', [], $options), $output),
+            $output->errorBuffer,
+        );
+
+        self::assertInstanceOf(RuntimeConfig::class, $captured, 'the factory was never handed a config');
+
+        return $captured;
     }
 }

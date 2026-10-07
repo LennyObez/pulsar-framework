@@ -19,8 +19,11 @@ use function is_string;
  *
  * Applies X-Robots-Tag, Link (canonical), and content language headers
  * based on the CMS configuration and the current request context.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsSeoHeadersMiddleware implements MiddlewareInterface
 {
     public function __construct(
@@ -36,6 +39,7 @@ final readonly class CmsSeoHeadersMiddleware implements MiddlewareInterface
         $response = $response->withHeader('X-Robots-Tag', $this->config->seo->defaultRobots);
 
         // Add Content-Language header from the locale attribute
+        /** @var mixed $locale */
         $locale = $request->getAttribute('locale');
 
         if (is_string($locale) && $locale !== '') {

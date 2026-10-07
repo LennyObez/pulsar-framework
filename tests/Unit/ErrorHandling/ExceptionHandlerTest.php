@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\ErrorHandling;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
@@ -19,10 +18,7 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\RoutingException;
 use RuntimeException;
-use Stringable;
-
-use function is_scalar;
-use function is_string;
+use Throwable;
 
 #[CoversClass(ExceptionHandler::class)]
 final class ExceptionHandlerTest extends TestCase
@@ -73,6 +69,20 @@ final class ExceptionHandlerTest extends TestCase
 
         self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
         self::assertSame('GET, PUT', $response->getHeaderLine('Allow'));
+    }
+
+    #[Test]
+    public function routingException501ReturnsNotImplemented(): void
+    {
+        // An unrecognized HTTP verb is mapped to 501, not a generic 500.
+        $handler = new ExceptionHandler(new DevelopmentRenderer());
+
+        $response = $handler->handle(
+            RoutingException::notImplemented('PROPFIND'),
+            $this->createRequest('/test'),
+        );
+
+        self::assertSame(ResponseStatus::NotImplemented->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -226,63 +236,57 @@ final class ExceptionHandlerTest extends TestCase
         self::assertCount(1, $logger->logs);
         self::assertArrayNotHasKey('correlation_id', $logger->logs[0]['context']);
     }
-}
 
-/**
- * @internal Test helper: collects log calls.
- */
-final class TestLogger implements LoggerInterface
-{
-    /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
-    public array $logs = [];
-
-    public function emergency(string|Stringable $message, array $context = []): void
+    #[Test]
+    public function fallbackBodyRendersCompleteHtmlDocument(): void
     {
-        $this->log('emergency', $message, $context);
+        // Use a renderer that always throws to trigger the fallback
+        $failingRenderer = new class implements \Pulsar\ErrorHandling\ExceptionRendererInterface {
+            public function render(Throwable $exception, \Psr\Http\Message\ServerRequestInterface $request, ResponseStatus $status): string
+            {
+                throw new RuntimeException('Renderer failed — database connection lost');
+            }
+        };
+
+        $handler = new ExceptionHandler($failingRenderer);
+
+        $response = $handler->handle(
+            new RuntimeException('Database went away'),
+            $this->createRequest(),
+        );
+
+        $body = (string) $response->getBody();
+
+        // Should produce a complete HTML document, not just a fragment
+        self::assertStringContainsString('<!DOCTYPE html>', $body);
+        self::assertStringContainsString('<html lang="en">', $body);
+        self::assertStringContainsString('<meta charset="utf-8">', $body);
+        self::assertStringContainsString('<title>500 Internal Server Error</title>', $body);
+        self::assertStringContainsString('Return to homepage', $body);
+        self::assertSame(500, $response->getStatusCode());
     }
 
-    public function alert(string|Stringable $message, array $context = []): void
+    #[Test]
+    public function fallbackBodyFor404RendersNotFoundPage(): void
     {
-        $this->log('alert', $message, $context);
-    }
+        $failingRenderer = new class implements \Pulsar\ErrorHandling\ExceptionRendererInterface {
+            public function render(Throwable $exception, \Psr\Http\Message\ServerRequestInterface $request, ResponseStatus $status): string
+            {
+                throw new RuntimeException('Template engine broken');
+            }
+        };
 
-    public function critical(string|Stringable $message, array $context = []): void
-    {
-        $this->log('critical', $message, $context);
-    }
+        $handler = new ExceptionHandler($failingRenderer);
 
-    public function error(string|Stringable $message, array $context = []): void
-    {
-        $this->log('error', $message, $context);
-    }
+        $response = $handler->handle(
+            RoutingException::notFound('/missing-page'),
+            $this->createRequest('/missing-page'),
+        );
 
-    public function warning(string|Stringable $message, array $context = []): void
-    {
-        $this->log('warning', $message, $context);
-    }
+        $body = (string) $response->getBody();
 
-    public function notice(string|Stringable $message, array $context = []): void
-    {
-        $this->log('notice', $message, $context);
-    }
-
-    public function info(string|Stringable $message, array $context = []): void
-    {
-        $this->log('info', $message, $context);
-    }
-
-    public function debug(string|Stringable $message, array $context = []): void
-    {
-        $this->log('debug', $message, $context);
-    }
-
-    public function log(mixed $level, string|Stringable $message, array $context = []): void
-    {
-        /** @var array<string, mixed> $context */
-        $this->logs[] = [
-            'level' => is_string($level) ? $level : (is_scalar($level) ? (string) $level : 'unknown'),
-            'message' => (string) $message,
-            'context' => $context,
-        ];
+        self::assertStringContainsString('<!DOCTYPE html>', $body);
+        self::assertStringContainsString('<title>404 Not Found</title>', $body);
+        self::assertSame(404, $response->getStatusCode());
     }
 }

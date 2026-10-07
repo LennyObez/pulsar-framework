@@ -69,7 +69,7 @@ final class BackupRestoreValidationTest extends TestCase
             });
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Invalid column name');
+        $this->expectExceptionMessageIsOrContains('Invalid column name');
 
         $this->service->restoreBackup($backupId, 'test reason', 'actor-001');
     }
@@ -147,7 +147,7 @@ final class BackupRestoreValidationTest extends TestCase
             });
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Invalid column name');
+        $this->expectExceptionMessageIsOrContains('Invalid column name');
 
         $this->service->restoreBackup($backupId, 'test', 'actor-001');
     }

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
-
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * Tracker script and endpoint configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TrackingConfig
@@ -31,12 +31,9 @@ final readonly class TrackingConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            trackerEndpoint: (string) ($data['tracker_endpoint'] ?? '/plsr/api/event'),
-            scriptEndpoint: (string) ($data['script_endpoint'] ?? '/plsr/js/tracker.js'),
-            extensions: array_values(array_filter(
-                (array) ($data['extensions'] ?? []),
-                static fn(mixed $v): bool => is_string($v) && $v !== '',
-            )),
+            trackerEndpoint: Coerce::stringFromInput($data['tracker_endpoint'] ?? null, '/plsr/api/event'),
+            scriptEndpoint: Coerce::stringFromInput($data['script_endpoint'] ?? null, '/plsr/js/tracker.js'),
+            extensions: Coerce::stringListFromInput($data['extensions'] ?? null),
         );
     }
 }

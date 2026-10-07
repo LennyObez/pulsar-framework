@@ -15,6 +15,7 @@ use function array_merge;
  *
  * Maps to the OpenTelemetry Resource semantic conventions. Converts
  * to the internal protobuf ResourceInfo for OTLP export.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResourceInfo

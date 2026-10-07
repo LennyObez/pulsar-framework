@@ -30,7 +30,9 @@ final class CtaBlockTest extends TestCase
     {
         $html = $this->block->render(['text' => 'Buy Now', 'url' => '/shop']);
 
-        self::assertSame('<a href="/shop" class="cta-button">Buy Now</a>', $html);
+        self::assertStringContainsString('<a href="/shop" class="cta-button">Buy Now</a>', $html);
+        self::assertStringContainsString('application/ld+json', $html);
+        self::assertStringContainsString('"@type":"ViewAction"', $html);
     }
 
     #[Test]
@@ -53,8 +55,9 @@ final class CtaBlockTest extends TestCase
             'url' => '/shop',
         ]);
 
-        self::assertStringNotContainsString('<script>', $html);
+        // Anchor text is HTML-escaped; JSON-LD uses JSON_HEX_TAG so no raw <script> in either
         self::assertStringContainsString('&lt;script&gt;', $html);
+        self::assertStringNotContainsString('<script>xss', $html);
     }
 
     #[Test]

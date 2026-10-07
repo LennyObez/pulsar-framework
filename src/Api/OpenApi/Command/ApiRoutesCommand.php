@@ -60,8 +60,8 @@ final class ApiRoutesCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $methodFilter = $input->getOption('method');
-        $pathFilter = $input->getOption('path');
+        $methodFilter = $input->getNullableStringOption('method');
+        $pathFilter = $input->getNullableStringOption('path');
 
         $table = new TableFormatter();
         $table->setHeaders(['Method', 'Path', 'Name', 'Handler', 'Middleware']);
@@ -70,11 +70,11 @@ final class ApiRoutesCommand extends Command
         foreach ($routes as $route) {
             $methods = implode('|', array_map(static fn($m) => $m->value, $route->methods));
 
-            if (is_string($methodFilter) && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
+            if ($methodFilter !== null && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
                 continue;
             }
 
-            if (is_string($pathFilter) && !str_contains($route->path, $pathFilter)) {
+            if ($pathFilter !== null && !str_contains($route->path, $pathFilter)) {
                 continue;
             }
 
@@ -103,10 +103,7 @@ final class ApiRoutesCommand extends Command
         return ExitCode::Success->value;
     }
 
-    /**
-     * @param array{0: class-string, 1: string}|callable|class-string $handler
-     */
-    private function formatHandler(array|string|callable $handler): string
+    private function formatHandler(mixed $handler): string
     {
         if (is_string($handler)) {
             return $handler;

@@ -15,9 +15,10 @@ use function str_contains;
 
 /**
  * Value must contain the given substring. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
-readonly class Contains implements RuleInterface
+final readonly class Contains implements RuleInterface
 {
     public function __construct(
         private string $needle,

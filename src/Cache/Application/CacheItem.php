@@ -14,6 +14,7 @@ use function time;
 
 /**
  * PSR-6 CacheItemInterface implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheItem implements CacheItemInterface
@@ -21,7 +22,7 @@ final class CacheItem implements CacheItemInterface
     private mixed $value = null;
     private bool $isHit = false;
 
-    public private(set) ?DateTimeInterface $expiration = null { get => $this->expiration; }
+    public private(set) ?DateTimeInterface $expiration = null;
 
     public function __construct(
         private readonly string $key,

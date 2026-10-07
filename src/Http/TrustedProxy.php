@@ -17,8 +17,10 @@ use function ip2long;
 use function is_string;
 use function str_contains;
 use function substr;
+use function trim;
 use function unpack;
 
+use const FILTER_FLAG_IPV6;
 use const FILTER_VALIDATE_IP;
 
 /**
@@ -26,6 +28,7 @@ use const FILTER_VALIDATE_IP;
  *
  * When the request arrives through a trusted proxy, reads X-Forwarded-For
  * and walks right-to-left to find the first untrusted (client) IP.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TrustedProxy
@@ -42,11 +45,32 @@ final readonly class TrustedProxy
      *
      * If REMOTE_ADDR is a trusted proxy, walks X-Forwarded-For right-to-left
      * and returns the first untrusted IP. Otherwise returns REMOTE_ADDR.
+     *
+     * Every candidate is validated against `FILTER_VALIDATE_IP` before
+     * being returned, so downstream consumers (rate limiters, audit
+     * loggers) cannot be poisoned with malformed values like
+     * `"); DROP TABLE"` or huge user-supplied strings injected into
+     * `X-Forwarded-For` (CWE-20).
      */
     public function resolveClientIp(ServerRequestInterface $request): string
     {
-        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
-        $remoteAddr = is_string($remoteAddr) ? $remoteAddr : '127.0.0.1';
+        /** @var mixed $remoteAddrRaw */
+        $remoteAddrRaw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+
+        // Missing / non-string REMOTE_ADDR: fall back to loopback so the
+        // (typically test-only) caller still gets a workable IP. A string
+        // value is taken at face value; only the trust check below decides
+        // whether to consult `X-Forwarded-For`.
+        $remoteAddr = is_string($remoteAddrRaw) ? $remoteAddrRaw : '127.0.0.1';
+
+        // String but malformed REMOTE_ADDR: it cannot match any trusted
+        // CIDR, so there is no question of walking `X-Forwarded-For`.
+        // Return the raw value so audit logs see exactly what the
+        // connection presented; never let an unparsable bytes pivot us
+        // into reading attacker-controlled forwarding headers.
+        if (filter_var($remoteAddr, FILTER_VALIDATE_IP) === false) {
+            return $remoteAddr;
+        }
 
         if (!$this->isTrusted($remoteAddr)) {
             return $remoteAddr;
@@ -59,12 +83,41 @@ final readonly class TrustedProxy
 
         $ips = array_map(trim(...), explode(',', $forwarded));
         for ($i = count($ips) - 1; $i >= 0; $i--) {
-            if (!$this->isTrusted($ips[$i])) {
-                return $ips[$i];
+            $candidate = $ips[$i];
+
+            if (filter_var($candidate, FILTER_VALIDATE_IP) === false) {
+                // Malformed entry: skip without leaking it. An attacker
+                // who controls X-Forwarded-For cannot inject a poisoned
+                // value because the lookup falls through to REMOTE_ADDR.
+                continue;
+            }
+
+            if (!$this->isTrusted($candidate)) {
+                return $candidate;
             }
         }
 
         return $remoteAddr;
+    }
+
+    /**
+     * Public predicate exposing the same trust evaluation that
+     * drives `resolveClientIp()`. `TracingMiddleware` consults this
+     * to decide whether an inbound `traceparent` header is honoured
+     * (only from a trusted upstream) or discarded (untrusted client
+     * trying to spoof trace topology / sampling).
+     *
+     * Malformed inputs (non-IP strings) return `false` so the caller
+     * fails closed: an unparseable REMOTE_ADDR cannot accidentally
+     * be classified as trusted.
+     */
+    public function isTrustedSource(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return false;
+        }
+
+        return $this->isTrusted($ip);
     }
 
     private function isTrusted(string $ip): bool

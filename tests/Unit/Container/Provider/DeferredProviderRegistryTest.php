@@ -113,7 +113,7 @@ final class DeferredProviderRegistryTest extends TestCase
         $registry->register($providerA);
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('already claimed');
+        $this->expectExceptionMessageIsOrContains('already claimed');
 
         $registry->register($providerB);
     }

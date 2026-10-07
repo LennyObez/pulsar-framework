@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a job is dispatched to a queue.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobDispatched extends QueueEvent

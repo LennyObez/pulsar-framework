@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Repository for A/B test experiments, variants, and conversion events.
+ *
+ * @psalm-api Public binding contract; implemented by DbExperimentRepository and
+ *            consumed by ExperimentService and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ExperimentRepositoryInterface

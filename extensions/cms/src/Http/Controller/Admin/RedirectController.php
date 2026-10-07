@@ -17,6 +17,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 use function array_map;
 use function count;
 use function in_array;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -28,16 +29,16 @@ use function sprintf;
  * Provides CRUD operations for redirects: listing with pagination,
  * creation, deletion, bulk CSV import with dry-run, and CSV export.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class RedirectController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class RedirectController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private RedirectManagerInterface $redirectManager,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List all redirects with pagination.
@@ -48,8 +49,12 @@ final readonly class RedirectController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 50)));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 50));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -89,11 +94,21 @@ final readonly class RedirectController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $fromPath = is_string($body['from_path'] ?? null) ? $body['from_path'] : '';
-        $toPath = is_string($body['to_path'] ?? null) ? $body['to_path'] : '';
-        $statusCode = (int) ($body['status_code'] ?? 301);
-        $locale = is_string($body['locale'] ?? null) && $body['locale'] !== '' ? $body['locale'] : null;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Created via admin';
+        /** @var mixed $rawFromPath */
+        $rawFromPath = $body['from_path'] ?? null;
+        $fromPath = is_string($rawFromPath) ? $rawFromPath : '';
+        /** @var mixed $rawToPath */
+        $rawToPath = $body['to_path'] ?? null;
+        $toPath = is_string($rawToPath) ? $rawToPath : '';
+        /** @var mixed $rawStatusCode */
+        $rawStatusCode = $body['status_code'] ?? null;
+        $statusCode = is_int($rawStatusCode) ? $rawStatusCode : 301;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) && $rawLocale !== '' ? $rawLocale : null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Created via admin';
 
         if ($fromPath === '' || $toPath === '') {
             return Response::json(['error' => 'Both from_path and to_path are required'], 400);
@@ -251,7 +266,7 @@ final readonly class RedirectController
     private function escapeCsv(string $value): string
     {
         // Protect against CSV formula injection: prefix dangerous leading characters
-        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             $value = "\t" . $value;
         }
 

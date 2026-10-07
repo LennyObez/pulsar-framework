@@ -7,11 +7,16 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Themes\InstalledTheme;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use ThemeRepositoryInterface for public API')]
+/**
+ * @psalm-api Bound to ThemeRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
+#[Internal(reason: 'Raw-DB repository; use ThemeRepositoryInterface for public API')]
 final readonly class DbThemeRepository implements ThemeRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -34,38 +39,23 @@ final readonly class DbThemeRepository implements ThemeRepositoryInterface
         ORDER BY installed_at DESC
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_installed_themes (
-            id, tenant_id, slug, display_name, version, description,
-            author_name, author_url, license, manifest_hash, package_hash,
-            provenance_verified, signature_verified, is_active, storage_path,
-            installed_at, installed_by, activated_at, activated_by,
-            deactivated_at, deleted_at
-        ) VALUES (
-            :id, :tenant_id, :slug, :display_name, :version, :description,
-            :author_name, :author_url, :license, :manifest_hash, :package_hash,
-            :provenance_verified, :signature_verified, :is_active, :storage_path,
-            :installed_at, :installed_by, :activated_at, :activated_by,
-            :deactivated_at, :deleted_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            display_name = EXCLUDED.display_name,
-            version = EXCLUDED.version,
-            description = EXCLUDED.description,
-            author_name = EXCLUDED.author_name,
-            author_url = EXCLUDED.author_url,
-            license = EXCLUDED.license,
-            manifest_hash = EXCLUDED.manifest_hash,
-            package_hash = EXCLUDED.package_hash,
-            provenance_verified = EXCLUDED.provenance_verified,
-            signature_verified = EXCLUDED.signature_verified,
-            is_active = EXCLUDED.is_active,
-            storage_path = EXCLUDED.storage_path,
-            activated_at = EXCLUDED.activated_at,
-            activated_by = EXCLUDED.activated_by,
-            deactivated_at = EXCLUDED.deactivated_at,
-            deleted_at = EXCLUDED.deleted_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'slug', 'display_name', 'version', 'description',
+        'author_name', 'author_url', 'license', 'manifest_hash', 'package_hash',
+        'provenance_verified', 'signature_verified', 'is_active', 'storage_path',
+        'installed_at', 'installed_by', 'activated_at', 'activated_by',
+        'deactivated_at', 'deleted_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'display_name', 'version', 'description',
+        'author_name', 'author_url', 'license',
+        'manifest_hash', 'package_hash',
+        'provenance_verified', 'signature_verified',
+        'is_active', 'storage_path',
+        'activated_at', 'activated_by',
+        'deactivated_at', 'deleted_at',
+    ];
 
     private const string SQL_DELETE = <<<'SQL'
         UPDATE cms_installed_themes SET deleted_at = :deleted_at WHERE id = :id
@@ -144,7 +134,15 @@ final readonly class DbThemeRepository implements ThemeRepositoryInterface
 
     public function save(InstalledTheme $theme): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_installed_themes',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $theme->id,
             'tenant_id' => $theme->tenantId,
             'slug' => $theme->slug,

@@ -11,6 +11,7 @@ use Pulsar\Config\StorageDriver;
 
 /**
  * Storage manager that provides disk-based storage adapter resolution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StorageManager

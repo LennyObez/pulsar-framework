@@ -23,6 +23,9 @@ use function sqrt;
 /**
  * Orchestrates A/B test experiment lifecycle: creation, variant management,
  * traffic splitting, conversion recording, and statistical results.
+ *
+ * @psalm-api Resolved from the DI container by admin controllers and
+ *            scheduled jobs; not instantiated by name.
  */
 #[Internal(reason: 'A/B test implementation detail')]
 final readonly class ExperimentService
@@ -219,7 +222,7 @@ final readonly class ExperimentService
         }
 
         $n = (float) $impressions;
-        $p = $conversions / $n;
+        $p = (float) $conversions / $n;
 
         // z = 1.96 for 95% confidence
         $z = 1.96;

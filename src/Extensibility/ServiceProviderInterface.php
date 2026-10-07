@@ -13,6 +13,7 @@ use Pulsar\Container\ContainerInterface;
  * Service providers encapsulate service registration logic and can be
  * shared across multiple extensions. They allow for organized, modular
  * service configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ServiceProviderInterface

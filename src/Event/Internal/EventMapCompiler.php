@@ -48,7 +48,7 @@ final class EventMapCompiler
             $moduleIds = [];
 
             foreach ($rawListeners as $entry) {
-                $parsed = $this->parseListenerCallable($entry['callable'], $entry['fqcn']);
+                $parsed = $this->parseListenerCallable($entry['callable']);
                 $compiledListeners[] = [
                     'class' => $parsed['class'],
                     'method' => $parsed['method'],
@@ -130,11 +130,11 @@ final class EventMapCompiler
      *
      * @return array{class: string, method: string}
      */
-    private function parseListenerCallable(callable $listener, string $fqcn): array
+    private function parseListenerCallable(callable $listener): array
     {
-        if (is_array($listener) && isset($listener[0], $listener[1])) {
-            /** @var array{0: object|string, 1: string} $listener */
-            $class = is_string($listener[0]) ? $listener[0] : $listener[0]::class;
+        if (is_array($listener)) {
+            $target = $listener[0];
+            $class = is_string($target) ? $target : $target::class;
 
             return ['class' => $class, 'method' => $listener[1]];
         }
@@ -148,7 +148,7 @@ final class EventMapCompiler
             return ['class' => $listener::class, 'method' => '__invoke'];
         }
 
-        // Closures cannot be compiled — fail hard
+        // Closures cannot be compiled; fail hard
         throw EventException::invalidListener('closures cannot be compiled; use an invokable class or [class, method] array');
     }
 }

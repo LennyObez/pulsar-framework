@@ -19,8 +19,6 @@ final class SchemaManager
 {
     private const string SCHEMA_VERSION = '1';
 
-    private function __construct() {}
-
     /**
      * Ensure the Studio schema exists, creating tables and indexes as needed.
      */

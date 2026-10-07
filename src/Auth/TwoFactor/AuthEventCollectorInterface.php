@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Uses an allowlist approach: only known-safe metadata keys are passed
  * (action, outcome, identity_id, purpose, reason, code_index, provider).
  * Unknown keys are stripped to prevent accidental secret leakage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthEventCollectorInterface

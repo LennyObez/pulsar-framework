@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tag-based cache API.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TaggedCacheInterface

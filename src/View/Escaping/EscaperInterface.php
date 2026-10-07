@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations handle escaping for specific output contexts (HTML, URL,
  * attribute, JavaScript, CSS) to prevent injection attacks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EscaperInterface

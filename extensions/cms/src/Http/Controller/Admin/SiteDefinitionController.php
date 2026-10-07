@@ -20,17 +20,20 @@ use function is_string;
  * Processes N.3 schema site definitions which include taxonomies, media,
  * content, menus, settings, redirects, and SEO configuration.
  * All execute operations require step-up authentication.
+ *
+ * Uses the unified import backend so that both CLI and GUI share the same
+ * code path, returning structured ImportResult with per-type counts.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
-final readonly class SiteDefinitionController
+#[Internal(reason: 'CMS admin controller; implementation detail')]
+final readonly class SiteDefinitionController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ImportExportServiceInterface $importExport,
-        private GateInterface $gate,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function form(ServerRequestInterface $request): Response
     {
@@ -57,7 +60,7 @@ final readonly class SiteDefinitionController
         }
 
         try {
-            $result = $this->importExport->importSiteDefinition($jsonContent, dryRun: true);
+            $result = $this->importExport->importUnifiedFile($jsonContent, dryRun: true);
 
             return Response::json($result->toArray());
         } catch (CmsException $e) {
@@ -78,7 +81,7 @@ final readonly class SiteDefinitionController
         }
 
         try {
-            $result = $this->importExport->importSiteDefinition($jsonContent, dryRun: false);
+            $result = $this->importExport->importUnifiedFile($jsonContent, dryRun: false);
 
             return Response::json([
                 'status' => 'imported',
@@ -94,6 +97,7 @@ final readonly class SiteDefinitionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $content */
         $content = $body['json_content'] ?? null;
 
         if (is_string($content) && $content !== '') {
